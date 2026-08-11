@@ -287,3 +287,92 @@ def test_adding_an_event_without_saying_which_kind_is_refused(company, employee)
         )
 
     assert caught.value.code == "type_required"
+
+
+# ------------------------------------------------------- notice to the person
+
+# Recommended by the legal review of 11/08/2026: a correction does not depend on
+# the person agreeing, but it cannot happen without them finding out.
+
+
+@pytest.mark.django_db
+def test_the_person_is_told_when_their_record_changes(
+    company, employee, manager, django_capture_on_commit_callbacks
+):
+    """The notice goes out on commit, so the person never hears about a change
+    that then rolls back. That is why the test has to capture the callbacks."""
+    from django.core import mail
+
+    with freeze_time("2026-08-10 06:00:00"):
+        original = register_punch(employee=employee, company=company)
+
+    correction = request_correction(
+        employee=employee,
+        company=company,
+        requested_by=employee,
+        kind=CorrectionKind.MODIFY,
+        target=original,
+        reason="El reloj iba adelantado.",
+        proposed_timestamp=original.timestamp + timedelta(minutes=20),
+    )
+    with django_capture_on_commit_callbacks(execute=True):
+        approve_correction(correction, resolved_by=manager)
+
+    assert len(mail.outbox) == 1
+    message = mail.outbox[0]
+    assert message.to == [employee.email]
+    assert "El reloj iba adelantado." in message.body  # the reason travels
+    assert "Luisa Ferrer" in message.body  # and who decided
+
+
+@pytest.mark.django_db
+def test_nobody_is_told_about_their_own_approved_request(
+    company, employee, django_capture_on_commit_callbacks
+):
+    """They already know: they asked for it."""
+    from django.core import mail
+
+    correction = request_correction(
+        employee=employee,
+        company=company,
+        requested_by=employee,
+        kind=CorrectionKind.ADD,
+        reason="Olvidé fichar la salida.",
+        proposed_type="OUT",
+        proposed_timestamp=timezone.now() - timedelta(hours=1),
+    )
+    with django_capture_on_commit_callbacks(execute=True):
+        approve_correction(correction, resolved_by=employee)
+
+    assert len(mail.outbox) == 0
+
+
+@pytest.mark.django_db
+def test_a_failed_notice_does_not_undo_the_correction(
+    company, employee, manager, monkeypatch, django_capture_on_commit_callbacks
+):
+    """The record is what matters; the email is a courtesy that must not break it."""
+
+    def explode(*args, **kwargs):
+        raise RuntimeError("el servidor de correo está caído")
+
+    monkeypatch.setattr("django.core.mail.send_mail", explode)
+
+    with freeze_time("2026-08-10 06:00:00"):
+        original = register_punch(employee=employee, company=company)
+
+    correction = request_correction(
+        employee=employee,
+        company=company,
+        requested_by=employee,
+        kind=CorrectionKind.VOID,
+        target=original,
+        reason="Fiché por error.",
+    )
+    with django_capture_on_commit_callbacks(execute=True):
+        approve_correction(correction, resolved_by=manager)
+
+    correction.refresh_from_db()
+    original.refresh_from_db()
+    assert correction.status == CorrectionStatus.APPROVED
+    assert not original.is_active

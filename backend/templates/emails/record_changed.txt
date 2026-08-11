@@ -1,0 +1,13 @@
+{% load i18n %}{% blocktranslate %}Hello {{ first_name }},
+
+Your working time record has been changed at {{ company }}.{% endblocktranslate %}
+
+{{ summary }}
+
+{% blocktranslate %}Reason given: {{ reason }}
+Decided by: {{ resolver }} on {{ decided_on }}.{% endblocktranslate %}
+
+{% blocktranslate %}The previous version has not been deleted: both are kept in your
+history, and you can download your full record at any time.
+
+If this does not match what happened, tell whoever manages your working time.{% endblocktranslate %}

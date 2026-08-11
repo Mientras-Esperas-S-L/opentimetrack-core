@@ -218,6 +218,9 @@ def approve_correction(correction: PunchCorrection, *, resolved_by, note: str = 
     correction.result = result
     correction.save()
 
+    # After committing: the person must not learn of a change that then rolls back.
+    transaction.on_commit(lambda: notify_employee(correction))
+
     return result
 
 
@@ -263,3 +266,81 @@ def _void(punch: Punch, replaced_by: Punch | None = None) -> None:
     if replaced_by is not None:
         punch.replaced_by = replaced_by
     punch.save(update_fields=["is_active", "voided_at", "replaced_by"])
+
+
+def notify_employee(correction: PunchCorrection) -> None:
+    """Tells the person their record changed.
+
+    Recommended by the legal review of 11/08/2026: a correction is not made
+    conditional on their agreement, but it cannot happen without them finding
+    out. Silence would turn a legitimate correction into something that looks
+    like it was done behind their back.
+
+    Nobody is notified of their own approved request: they already know.
+
+    Nothing here may raise. It runs after the transaction commits, so the
+    correction is already saved: letting an exception through would return an
+    error to somebody whose change did go in, and they would try again.
+    """
+    import logging
+
+    from django.conf import settings
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+    from django.utils.formats import date_format
+
+    log = logging.getLogger(__name__)
+
+    if correction.resolved_by_id == correction.employee_id:
+        return
+    if not correction.employee.email:
+        return
+
+    try:
+        _send_change_notice(correction, settings, send_mail, render_to_string, date_format)
+    except Exception:
+        # Worth a full trace: silence here means people stop being told their
+        # record changed, and nobody would notice.
+        log.exception("Could not notify %s of correction %s", correction.employee_id, correction.pk)
+
+
+def _send_change_notice(correction, settings, send_mail, render_to_string, date_format) -> None:
+    zone = correction.tenant.tzinfo
+    when = correction.proposed_timestamp or (
+        correction.target.timestamp if correction.target else None
+    )
+    local = when.astimezone(zone).strftime("%d/%m/%Y %H:%M") if when else ""
+
+    summaries = {
+        CorrectionKind.ADD: _("An entry was added: %(kind)s at %(when)s."),
+        CorrectionKind.MODIFY: _("The time of an entry was changed to %(when)s."),
+        CorrectionKind.VOID: _("An entry recorded at %(when)s was voided."),
+    }
+    summary = summaries[correction.kind] % {
+        "when": local,
+        "kind": correction.get_proposed_type_display() if correction.proposed_type else "",
+    }
+
+    body = render_to_string(
+        "emails/record_changed.txt",
+        {
+            "first_name": correction.employee.first_name,
+            "company": correction.tenant.name,
+            "summary": summary,
+            "reason": correction.reason,
+            "resolver": correction.resolved_by.get_full_name() if correction.resolved_by else "",
+            "decided_on": date_format(
+                correction.resolved_at.astimezone(zone), "SHORT_DATETIME_FORMAT"
+            )
+            if correction.resolved_at
+            else "",
+        },
+    )
+
+    send_mail(
+        subject=_("Your working time record has changed"),
+        message=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[correction.employee.email],
+        fail_silently=True,  # a failed notice must not undo an approved correction
+    )
