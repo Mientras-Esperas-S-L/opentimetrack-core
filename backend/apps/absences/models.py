@@ -52,7 +52,14 @@ class Absence(TenantOwnedModel):
     resolved_at = models.DateTimeField(_("resolved at"), null=True, blank=True)
 
     justification = models.FileField(
-        _("supporting document"), upload_to="justifications/%Y/%m/", blank=True
+        _("supporting document"),
+        upload_to="justifications/%Y/%m/",
+        blank=True,
+        help_text=_(
+            "Not available for sick leave: the medical certificate is not stored "
+            "here. Since RD 1060/2022 the worker no longer hands it to the "
+            "employer --- the INSS sends the data to the company directly."
+        ),
     )
 
     class Meta:
@@ -67,7 +74,16 @@ class Absence(TenantOwnedModel):
             models.CheckConstraint(
                 condition=models.Q(end_date__gte=models.F("start_date")),
                 name="absence_ends_after_it_starts",
-            )
+            ),
+            # In the database, not just in a form. A medical certificate is
+            # health data (art. 9 GDPR), and the ways into this table are many:
+            # an import, a shell, a serializer somebody forgets to validate. A
+            # check that lives here cannot be walked around.
+            models.CheckConstraint(
+                condition=~models.Q(absence_type=AbsenceType.SICK_LEAVE)
+                | models.Q(justification=""),
+                name="no_medical_certificate_is_stored",
+            ),
         ]
 
     def __str__(self) -> str:
@@ -76,6 +92,20 @@ class Absence(TenantOwnedModel):
     def clean(self):
         if self.end_date and self.start_date and self.end_date < self.start_date:
             raise ValidationError({"end_date": _("The end date cannot precede the start date.")})
+
+        # Said properly, because "invalid field" would send somebody looking for
+        # the bug rather than reading the reason.
+        if self.absence_type == AbsenceType.SICK_LEAVE and self.justification:
+            raise ValidationError(
+                {
+                    "justification": _(
+                        "The medical certificate is not stored. Recording the absence, "
+                        "its dates and its status is enough for working-time purposes, "
+                        "and since RD 1060/2022 the worker does not hand the certificate "
+                        "to the employer: the INSS sends the data to the company."
+                    )
+                }
+            )
 
     @property
     def days(self) -> int:
