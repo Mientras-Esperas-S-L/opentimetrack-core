@@ -91,7 +91,7 @@ class SignOutView(APIView):
 
     permission_classes = [IsAuthenticatedInTenant]
 
-    @extend_schema(responses={204: None})
+    @extend_schema(request=None, responses={204: None})
     def post(self, request):
         token = request.data.get("refresh")
         if token:
@@ -126,6 +126,9 @@ class UserViewSet(viewsets.ModelViewSet):
     Managers may read; only administrators create, change or deactivate.
     """
 
+    # Declared only so the schema generator can infer the model without running
+    # get_queryset, which needs an authenticated caller. Never used at runtime.
+    queryset = User.objects.none()
     serializer_class = UserSerializer
     permission_classes = [IsManagerOrAdmin]
     filterset_fields = ["role", "department", "is_active"]
@@ -155,6 +158,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 @extend_schema(tags=["organisation"])
 class DepartmentViewSet(viewsets.ModelViewSet):
+    queryset = Department.objects.none()
     serializer_class = DepartmentSerializer
     permission_classes = [ReadForAllWriteForAdmin]
     filterset_fields = ["is_active"]

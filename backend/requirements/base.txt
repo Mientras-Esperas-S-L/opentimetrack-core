@@ -22,6 +22,9 @@ boto3==1.43.68
 # Contraseñas (RF-01.6: hashing fuerte)
 argon2-cffi==25.1.0
 
+# Reports
+reportlab==5.0.0
+
 # Servidor
 gunicorn==26.0.0
 whitenoise==6.12.0

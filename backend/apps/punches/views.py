@@ -44,6 +44,7 @@ class PunchViewSet(
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet,
 ):
+    queryset = Punch.objects.none()  # see the note in UserViewSet
     serializer_class = PunchSerializer
     permission_classes = [IsAuthenticatedInTenant]
     filterset_fields = ["employee", "punch_type", "source", "is_active"]
