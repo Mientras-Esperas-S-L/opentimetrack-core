@@ -20,7 +20,7 @@ const NOMBRES = {
 
 function Comprobacion({ nombre, ok, detalle }) {
   return (
-    <Stack direction="row" spacing={1.5} alignItems="center">
+    <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
       {ok ? (
         <CheckCircleIcon color="success" fontSize="small" />
       ) : (
@@ -52,7 +52,10 @@ export default function App() {
       </Typography>
 
       <Paper variant="outlined" sx={{ p: 3 }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+        <Stack
+          direction="row"
+          sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
+        >
           <Typography variant="h2">Estado del servicio</Typography>
           {data && (
             <Chip

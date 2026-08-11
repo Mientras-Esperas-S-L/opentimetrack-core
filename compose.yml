@@ -54,13 +54,16 @@ services:
       VITE_API_URL: http://localhost:8000/api
 
   db:
-    image: docker.io/library/postgres:16-alpine
+    image: docker.io/library/postgres:18-alpine
     environment:
       POSTGRES_USER: ott
       POSTGRES_PASSWORD: ott
       POSTGRES_DB: opentimetrack
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # PostgreSQL 18 recomienda montar el directorio padre, no el de datos: así
+      # los datos quedan en un subdirectorio y una futura actualizacion mayor con
+      # `pg_upgrade --link` no tropieza con el limite del punto de montaje.
+      - pgdata:/var/lib/postgresql
     ports:
       - "5432:5432"
     healthcheck:
@@ -70,7 +73,7 @@ services:
       retries: 10
 
   redis:
-    image: docker.io/library/redis:7-alpine
+    image: docker.io/library/redis:8-alpine
     command: redis-server --save 60 1 --loglevel warning
     volumes:
       - redisdata:/data

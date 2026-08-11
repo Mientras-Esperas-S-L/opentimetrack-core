@@ -2,12 +2,12 @@
 name = "opentimetrack-core"
 version = "0.1.0"
 description = "Servicio de registro horario conforme al Art. 34.9 ET"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 license = { text = "AGPL-3.0-or-later" }
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py314"
 extend-exclude = ["migrations", "staticfiles"]
 
 [tool.ruff.lint]

@@ -1,15 +1,15 @@
 -r base.txt
 
 # Calidad
-ruff==0.8.4
+ruff==0.16.2
 
 # Pruebas
-pytest==8.3.4
-pytest-django==4.9.0
-pytest-cov==6.0.0
-factory-boy==3.3.1
-freezegun==1.5.1
+pytest==9.1.1
+pytest-django==4.14.0
+pytest-cov==7.1.0
+factory-boy==3.3.3
+freezegun==1.5.5
 
 # Utilidades
-django-extensions==3.2.3
-ipython==8.31.0
+django-extensions==4.1
+ipython==9.16.1
