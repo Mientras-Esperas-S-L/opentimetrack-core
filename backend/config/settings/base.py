@@ -8,6 +8,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -33,11 +34,12 @@ THIRD_PARTY_APPS = [
     "django_filters",
     "corsheaders",
     "drf_spectacular",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
-# El orden importa: `common` y `tenants` son la base y no dependen de nadie.
-# Ver la vista de componentes: ninguna app de dominio importa de otra salvo por
-# esta jerarquía, y `audit` se entera de lo que pasa por señales.
+# Order matters: `common` and `tenants` are the base and depend on nobody. No
+# domain app imports another except through that hierarchy, and `audit` learns
+# what happened through signals.
 LOCAL_APPS = [
     "apps.common",
     "apps.tenants",
@@ -55,9 +57,14 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # Resolves the active language from the Accept-Language header.
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # After authentication: both need to know who is calling.
+    "apps.common.middleware.TenantMiddleware",
+    "apps.common.middleware.LocaleAndTimeZoneMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -99,8 +106,21 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --------------------------------------------------------------- autenticación
 
-# RF-01.6: hashing fuerte. Argon2 primero; el resto queda como respaldo para
-# poder verificar contraseñas antiguas si alguna vez se importan.
+AUTH_USER_MODEL = "users.User"
+
+# Email is unique per company rather than globally, so authentication has to
+# resolve the company first. See apps/users/backends.py.
+# Exactly one, on purpose. Leaving ModelBackend behind as a fallback would undo
+# our security rejections: it only looks at the address and is_active, so it
+# would accept an email that is ambiguous across companies, or someone from a
+# deactivated company. TenantEmailBackend inherits from ModelBackend, so the
+# Django admin's permission resolution is preserved.
+AUTHENTICATION_BACKENDS = [
+    "apps.users.backends.TenantEmailBackend",
+]
+
+# RF-01.6: strong hashing. Argon2 first; the rest stay as fallbacks so legacy
+# passwords can still be verified if any are ever imported.
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
@@ -169,12 +189,36 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# ------------------------------------------------------------ internacionalización
+# ------------------------------------------------------------ internationalisation
 
-LANGUAGE_CODE = "es-es"
-# El almacenamiento es siempre UTC; cada inquilino presenta en su zona.
+# Spanish is the reference translation because the first legal framework covered
+# is the Spanish one, but nothing in the domain is tied to a country: every
+# user-facing string goes through gettext and every tenant carries its own time
+# zone. Adding a locale is dropping a .po file in locale/.
+LANGUAGE_CODE = env("LANGUAGE_CODE", default="es")
+
+LANGUAGES = [
+    ("es", _("Spanish")),
+    ("en", _("English")),
+    ("ca", _("Catalan")),
+    ("gl", _("Galician")),
+    ("eu", _("Basque")),
+    ("fr", _("French")),
+    ("pt", _("Portuguese")),
+    ("de", _("German")),
+]
+
+LOCALE_PATHS = [BASE_DIR / "locale"]
+
+# Storage is always UTC. Each tenant renders in its own zone, which is a field of
+# the tenant, not a global setting: a single deployment can serve a company in
+# Madrid and another one in the Canary Islands -- two zones inside Spain alone --
+# or anywhere else.
 TIME_ZONE = "UTC"
+DEFAULT_TENANT_TIME_ZONE = env("DEFAULT_TENANT_TIME_ZONE", default="Europe/Madrid")
+
 USE_I18N = True
+USE_L10N = True
 USE_TZ = True
 
 # ------------------------------------------------------------------------ correo
@@ -194,7 +238,7 @@ LOGGING = {
     },
     "root": {"handlers": ["console"], "level": env("LOG_LEVEL", default="INFO")},
     "loggers": {
-        # Canal propio para eventos con relevancia de seguridad.
+        # Dedicated channel for security-relevant events.
         "security": {"handlers": ["console"], "level": "INFO", "propagate": False},
     },
 }

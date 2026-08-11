@@ -1,9 +1,9 @@
-"""Modelos base y aislamiento entre empresas.
+"""Base models and tenant isolation.
 
-Aquí vive la pieza más delicada del sistema: el filtrado por inquilino. Una
-consulta que se escape de su empresa es una brecha de privacidad, no un fallo
-funcional, así que el aislamiento no se deja a que cada vista se acuerde de
-filtrar: va en el gestor por defecto del modelo.
+This is the most delicate piece in the system. A query that escapes its tenant is
+not a functional bug: it is a privacy breach that mixes the working hours of two
+different companies. So isolation is not left to each view remembering to filter
+-- it lives in the model's default manager.
 """
 
 from __future__ import annotations
@@ -13,80 +13,73 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
-# Inquilino de la petición en curso. Se usa una variable de contexto y no un
-# atributo de módulo porque esto tiene que ser correcto también con servidores
-# asíncronos, donde varias peticiones comparten hilo.
-_inquilino_actual: ContextVar[uuid.UUID | None] = ContextVar("inquilino_actual", default=None)
-
-
-def obtener_inquilino_actual() -> uuid.UUID | None:
-    return _inquilino_actual.get()
+# Tenant of the request in flight. A context variable rather than a module
+# attribute, because this has to stay correct under async servers too, where
+# several requests share a thread.
+_current_tenant: ContextVar[uuid.UUID | None] = ContextVar("current_tenant", default=None)
 
 
-def fijar_inquilino_actual(tenant_id: uuid.UUID | None):
-    return _inquilino_actual.set(tenant_id)
+def get_current_tenant() -> uuid.UUID | None:
+    return _current_tenant.get()
 
 
-def restaurar_inquilino(token) -> None:
-    _inquilino_actual.reset(token)
+def set_current_tenant(tenant_id: uuid.UUID | None):
+    return _current_tenant.set(tenant_id)
+
+
+def reset_current_tenant(token) -> None:
+    _current_tenant.reset(token)
 
 
 @contextmanager
-def inquilino(tenant_id: uuid.UUID | None):
-    """Ejecuta un bloque en el contexto de una empresa concreta."""
-    token = fijar_inquilino_actual(tenant_id)
+def tenant_context(tenant_id: uuid.UUID | None):
+    """Run a block scoped to one tenant."""
+    token = set_current_tenant(tenant_id)
     try:
         yield
     finally:
-        restaurar_inquilino(token)
-
-
-class SinAlcanceDeInquilino(Exception):
-    """Se consultó un modelo por inquilino sin haber fijado cuál.
-
-    Es un error de programación, no una condición esperada. Fallar aquí es
-    preferible a devolver datos de todas las empresas.
-    """
+        reset_current_tenant(token)
 
 
 class BaseModel(models.Model):
-    """Identificador opaco y marcas de tiempo, comunes a todo el dominio."""
+    """Opaque identifier and timestamps, shared by the whole domain."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
 
     class Meta:
         abstract = True
 
 
 class TenantQuerySet(models.QuerySet):
-    def del_inquilino(self, tenant_id):
+    def for_tenant(self, tenant_id):
         return self.filter(tenant_id=tenant_id)
 
 
 class TenantManager(models.Manager):
-    """Gestor por defecto: filtra por el inquilino del contexto, siempre.
+    """Default manager: always filters by the tenant in context.
 
-    Si no hay inquilino fijado, no devuelve nada en lugar de devolverlo todo.
-    Esa asimetría es deliberada: el fallo por defecto tiene que ser no ver datos,
-    nunca verlos de más.
+    With no tenant set it returns nothing rather than everything. That asymmetry
+    is deliberate -- the default failure mode has to be seeing no data, never
+    seeing too much.
     """
 
     def get_queryset(self):
         qs = TenantQuerySet(self.model, using=self._db)
-        tenant_id = obtener_inquilino_actual()
+        tenant_id = get_current_tenant()
         if tenant_id is None:
             return qs.none()
         return qs.filter(tenant_id=tenant_id)
 
 
-class TodosLosInquilinosManager(models.Manager):
-    """Gestor sin filtrar. Para migraciones, tareas de sistema y pruebas.
+class AllTenantsManager(models.Manager):
+    """Unfiltered manager, for migrations, system tasks and tests.
 
-    Su nombre es largo a propósito: en una revisión de código, ver
-    `objects_all_tenants` en una vista tiene que cantar.
+    The name is long on purpose: seeing `objects_all_tenants` inside a view
+    should stand out in review.
     """
 
     def get_queryset(self):
@@ -94,18 +87,19 @@ class TodosLosInquilinosManager(models.Manager):
 
 
 class TenantOwnedModel(BaseModel):
-    """Todo lo que pertenece a una empresa hereda de aquí."""
+    """Everything that belongs to a company inherits from here."""
 
     tenant = models.ForeignKey(
         "tenants.Tenant",
         on_delete=models.CASCADE,
         related_name="%(class)ss",
         db_index=True,
+        verbose_name=_("company"),
     )
 
-    # El gestor por defecto filtra. El sin filtrar hay que pedirlo por su nombre.
+    # The default manager filters. The unfiltered one must be asked for by name.
     objects = TenantManager()
-    objects_all_tenants = TodosLosInquilinosManager()
+    objects_all_tenants = AllTenantsManager()
 
     class Meta:
         abstract = True

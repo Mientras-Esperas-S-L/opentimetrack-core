@@ -1,1 +1,82 @@
-# Los modelos de esta app llegan en su fase del roadmap.
+"""Leave requests.
+
+Their reason for being here is not HR bookkeeping: approved leave blocks clocking
+in, so this is part of the legal record too.
+"""
+
+from __future__ import annotations
+
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+from apps.common.models import TenantOwnedModel
+
+
+class AbsenceType(models.TextChoices):
+    VACATION = "VACATION", _("Holiday")
+    SICK_LEAVE = "SICK_LEAVE", _("Sick leave")
+    PERSONAL = "PERSONAL", _("Personal leave")
+    OTHER = "OTHER", _("Other")
+
+
+class AbsenceStatus(models.TextChoices):
+    PENDING = "PENDING", _("Pending")
+    APPROVED = "APPROVED", _("Approved")
+    REJECTED = "REJECTED", _("Rejected")
+
+
+class Absence(TenantOwnedModel):
+    employee = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="absences",
+        verbose_name=_("employee"),
+    )
+    absence_type = models.CharField(_("type"), max_length=20, choices=AbsenceType)
+    start_date = models.DateField(_("from"))
+    end_date = models.DateField(_("to"))
+    reason = models.TextField(_("reason"), blank=True)
+
+    status = models.CharField(
+        _("status"), max_length=10, choices=AbsenceStatus, default=AbsenceStatus.PENDING
+    )
+    approved_by = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="absences_resolved",
+        verbose_name=_("resolved by"),
+    )
+    resolved_at = models.DateTimeField(_("resolved at"), null=True, blank=True)
+
+    justification = models.FileField(
+        _("supporting document"), upload_to="justifications/%Y/%m/", blank=True
+    )
+
+    class Meta:
+        verbose_name = _("absence")
+        verbose_name_plural = _("absences")
+        ordering = ["-start_date"]
+        indexes = [
+            models.Index(fields=["tenant", "employee", "status"]),
+            models.Index(fields=["employee", "status", "start_date", "end_date"]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(end_date__gte=models.F("start_date")),
+                name="absence_ends_after_it_starts",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_absence_type_display()} {self.start_date} → {self.end_date}"
+
+    def clean(self):
+        if self.end_date and self.start_date and self.end_date < self.start_date:
+            raise ValidationError({"end_date": _("The end date cannot precede the start date.")})
+
+    @property
+    def days(self) -> int:
+        return (self.end_date - self.start_date).days + 1
