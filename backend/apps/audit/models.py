@@ -1,1 +1,1 @@
-# Los modelos de esta app llegan en su fase del roadmap.
+# This app's models arrive in their phase of the roadmap.

@@ -56,6 +56,25 @@ class Tenant(BaseModel):
         validators=[validate_time_zone],
         help_text=_("IANA name. Storage is always UTC; this only affects display."),
     )
+    record_retention_years = models.PositiveSmallIntegerField(
+        _("record retention (years)"),
+        default=4,
+        help_text=_(
+            "How long clock events are kept. Four years is the floor set by "
+            "art. 34.9 ET; a longer period needs its own justification, since "
+            "keeping data because it might be useful is not a basis."
+        ),
+    )
+    security_metadata_retention_days = models.PositiveSmallIntegerField(
+        _("security metadata retention (days)"),
+        default=365,
+        help_text=_(
+            "How long the IP address, device and user agent of each event are "
+            "kept. They serve to spot anomalies, not to prove working time: "
+            "purging them leaves the record intact."
+        ),
+    )
+
     settings = models.JSONField(_("settings"), default=dict, blank=True)
     is_active = models.BooleanField(_("active"), default=True)
 

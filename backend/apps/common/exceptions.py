@@ -61,9 +61,9 @@ def api_exception_handler(exc, context):
     response = drf_exception_handler(exc, context)
 
     if response is None:
-        # Excepción no controlada: que Django la registre y la propague. En
-        # producción DEBUG está apagado y el cliente recibe un 500 sin detalles.
-        logger.exception("Excepción no controlada en %s", context.get("view"))
+        # Unhandled: let Django log it and pass it on. In production DEBUG is
+        # off and the client gets a 500 with no details.
+        logger.exception("Unhandled exception in %s", context.get("view"))
         return None
 
     if isinstance(exc, BusinessRuleError):

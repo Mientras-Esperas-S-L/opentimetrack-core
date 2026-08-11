@@ -5,10 +5,10 @@ from .base import env
 
 DEBUG = True
 
-# En desarrollo cualquier host vale; el aislamiento lo da el contenedor.
+# Any host will do in development; the container provides the isolation.
 ALLOWED_HOSTS = ["*"]
 
-# El SPA de Vite corre fuera del contenedor de la API.
+# The Vite SPA runs outside the API container.
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",
     default=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -18,5 +18,5 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 INSTALLED_APPS += ["django_extensions"]
 
-# Contraseñas cortas en desarrollo, para no pelearse con los datos de ejemplo.
+# Short passwords in development, so the sample data is not a fight.
 AUTH_PASSWORD_VALIDATORS = []

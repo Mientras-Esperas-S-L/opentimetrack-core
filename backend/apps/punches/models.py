@@ -21,6 +21,13 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.common.models import TenantOwnedModel
 
+#: Version of the hash payload used for events recorded from now on.
+#:
+#: Never rewrite a stored hash to match a new payload: that is exactly the
+#: manipulation the hash exists to make visible. Add a version instead, and let
+#: old events keep verifying under the rules they were recorded with.
+CURRENT_HASH_VERSION = 2
+
 
 class PunchType(models.TextChoices):
     IN = "IN", _("Clock in")
@@ -78,11 +85,17 @@ class Punch(TenantOwnedModel):
         help_text=_("Set when somebody other than the employee created the record."),
     )
 
+    # Security metadata, not part of the legal record. Kept to spot anomalies
+    # and disputed events, purged on its own schedule --- see
+    # `purge_security_metadata`. The working-time record survives it.
     ip_address = models.GenericIPAddressField(_("IP address"), null=True, blank=True)
     device_id = models.CharField(_("device"), max_length=100, blank=True)
     user_agent = models.CharField(_("user agent"), max_length=255, blank=True)
 
     hash_integrity = models.CharField(_("integrity hash"), max_length=64, editable=False)
+    hash_version = models.PositiveSmallIntegerField(
+        _("hash version"), default=CURRENT_HASH_VERSION, editable=False
+    )
 
     # Soft delete: a voided event stays readable and auditable.
     is_active = models.BooleanField(_("valid"), default=True)
@@ -116,27 +129,65 @@ class Punch(TenantOwnedModel):
     def compute_hash(self) -> str:
         """Fingerprint of the facts that must not change afterwards.
 
+        What it is worth: it detects accidental alteration and inconsistent
+        restores. It is **not** proof of immutability --- whoever can write to
+        this table can recompute it. External sealing is a separate matter.
+
         Deliberately excludes the mutable fields (`is_active`, `voided_at`): the
         hash proves the event was recorded as stated, and voiding it is a later
         act that leaves its own trail.
+
+        Each event is verified under the version it was recorded with, so a
+        change here never invalidates what is already stored.
         """
-        payload = "|".join(
-            [
-                str(self.employee_id),
-                str(self.tenant_id),
-                self.timestamp.isoformat(),
-                self.punch_type,
-                self.ip_address or "",
-                self.source,
-            ]
+        if self.hash_version == 1:
+            return self._hash_v1()
+        return self._hash_v2()
+
+    def _hash_v1(self) -> str:
+        """Original payload. Included the IP, which turned out to be a mistake.
+
+        A record hashed this way cannot have its IP purged without failing
+        verification for good, so `purge_security_metadata` leaves it alone.
+        """
+        return self._digest(
+            str(self.employee_id),
+            str(self.tenant_id),
+            self.timestamp.isoformat(),
+            self.punch_type,
+            self.ip_address or "",
+            self.source,
         )
-        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+    def _hash_v2(self) -> str:
+        """Attribution instead of network metadata.
+
+        The IP comes out: it is kept for security, is subject to minimisation,
+        and does not belong to the working-time record --- binding it into the
+        hash made deleting it impossible. What goes in is who the event is
+        about, when, of what kind, and **who produced it**, which is the part a
+        delegated punch needs pinned down.
+        """
+        return self._digest(
+            str(self.employee_id),
+            str(self.tenant_id),
+            self.timestamp.isoformat(),
+            self.punch_type,
+            self.source,
+            self.source_application,
+            str(self.recorded_by_id or ""),
+        )
+
+    @staticmethod
+    def _digest(*parts: str) -> str:
+        return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
 
     def verify_hash(self) -> bool:
         return self.hash_integrity == self.compute_hash()
 
     def save(self, *args, **kwargs):
         if not self.hash_integrity:
+            self.hash_version = CURRENT_HASH_VERSION
             self.hash_integrity = self.compute_hash()
         super().save(*args, **kwargs)
 
