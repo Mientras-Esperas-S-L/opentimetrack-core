@@ -124,6 +124,8 @@ export const rejectCorrection = (id, note = '') => post(`/corrections/${id}/reje
 // --------------------------------------------------------------------- absences
 
 export const getAbsences = async (params) => rows(await get('/absences/', params))
+export const getAbsenceCalendar = async (from, to) =>
+  rows(await get('/absences/calendar/', { from, to }))
 export const getPendingAbsences = async () => rows(await get('/absences/pending/'))
 export const getLeaveBalance = (employee) => get('/absences/balance/', employee ? { employee } : {})
 export const requestAbsence = (payload) => post('/absences/', payload)
@@ -140,8 +142,16 @@ export const updateEmployee = async (id, payload) =>
   (await api.patch(`/employees/${id}/`, payload)).data
 export const deactivateEmployee = async (id) => (await api.delete(`/employees/${id}/`)).data
 
-export const getDepartments = async () => rows(await get('/departments/'))
+export const getDepartments = async (params) => rows(await get('/departments/', params))
 export const createDepartment = (payload) => post('/departments/', payload)
+export const updateDepartment = async (id, payload) =>
+  (await api.patch(`/departments/${id}/`, payload)).data
+export const deleteDepartment = async (id) => (await api.delete(`/departments/${id}/`)).data
+
+// -------------------------------------------------------------------- company
+
+export const getCompany = () => get('/company/')
+export const updateCompany = async (payload) => (await api.patch('/company/', payload)).data
 
 // -------------------------------------------------------------------- overview
 

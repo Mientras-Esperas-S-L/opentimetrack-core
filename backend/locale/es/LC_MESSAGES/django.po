@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-11 18:16+0000\n"
+"POT-Creation-Date: 2026-08-11 18:40+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -116,6 +116,9 @@ msgstr "Esa persona no pertenece a esta empresa."
 msgid "You can only see your own balance."
 msgstr "Solo puedes consultar tu propio saldo."
 
+msgid "Give 'from' and 'to' as YYYY-MM-DD."
+msgstr "Indica 'from' y 'to' con el formato AAAA-MM-DD."
+
 msgid "Invalid credential."
 msgstr "Credencial no válida."
 
@@ -145,6 +148,10 @@ msgstr "La aplicación no tiene el permiso necesario."
 
 msgid "That event does not exist."
 msgstr "Ese fichaje no existe."
+
+#| msgid "You may only request your own record."
+msgid "You can only ask for corrections to your own record."
+msgstr "Solo puedes pedir correcciones de tu propio registro."
 
 msgid "Add a missing event"
 msgstr "Añadir un fichaje que falta"
@@ -635,7 +642,6 @@ msgid ""
 "company is left with nobody able to manage it."
 msgstr "Es el único administrador activo. Nombra antes a otro, o la empresa se queda sin nadie que pueda gestionarla."
 
-#| msgid "You can only see your own balance."
 msgid "You cannot deactivate your own account."
 msgstr "No puedes dar de baja tu propia cuenta."
 

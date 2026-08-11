@@ -54,6 +54,8 @@ class CorrectionSerializer(serializers.ModelSerializer):
 
 class CorrectionRequestSerializer(serializers.Serializer):
     kind = serializers.ChoiceField(choices=CorrectionKind.choices)
+    # Only a manager may name somebody else; anyone else corrects their own.
+    employee = serializers.UUIDField(required=False, allow_null=True)
     target = serializers.UUIDField(required=False, allow_null=True)
     proposed_type = serializers.CharField(required=False, allow_blank=True)
     proposed_timestamp = serializers.DateTimeField(required=False, allow_null=True)
@@ -113,8 +115,10 @@ class CorrectionViewSet(
                     message=_("That event does not exist."),
                 )
 
+        employee = self._subject(request, data.get("employee"))
+
         correction = request_correction(
-            employee=request.user,
+            employee=employee,
             company=request.user.tenant,
             requested_by=request.user,
             kind=data["kind"],
@@ -124,6 +128,34 @@ class CorrectionViewSet(
             proposed_timestamp=data.get("proposed_timestamp"),
         )
         return Response(CorrectionSerializer(correction).data, status=status.HTTP_201_CREATED)
+
+    def _subject(self, request, employee_id):
+        """Whose record the correction is about.
+
+        ADR-0014: a manager may correct without a prior request, but through the
+        same procedure and with the same mandatory reason. Nobody touches a time
+        without leaving why --- and the request records both the person it
+        concerns and the person who filed it, which are not the same field.
+        """
+        if not employee_id or str(employee_id) == str(request.user.id):
+            return request.user
+
+        if not request.user.can_manage:
+            raise BusinessRuleError(
+                code="not_your_record",
+                message=_("You can only ask for corrections to your own record."),
+            )
+
+        from apps.users.models import User
+
+        # Scoped to the company: an id from elsewhere is simply not found.
+        employee = User.objects.filter(tenant=request.user.tenant, pk=employee_id).first()
+        if employee is None:
+            raise BusinessRuleError(
+                code="unknown_employee",
+                message=_("That person is not in this company."),
+            )
+        return employee
 
     @extend_schema(
         summary="Approve a correction",

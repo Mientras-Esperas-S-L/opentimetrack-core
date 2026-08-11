@@ -1,6 +1,12 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
 import Chip from '@mui/material/Chip'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
@@ -15,9 +21,10 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
+import EditNoteIcon from '@mui/icons-material/EditNote'
 
-import { getEmployees, getPunches } from '../../services/api.js'
-import { Empty, Loading, PageHeader, SourceChip } from '../../components/common.jsx'
+import { getEmployees, getPunches, requestCorrection } from '../../services/api.js'
+import { Empty, ErrorNote, Loading, PageHeader, SourceChip } from '../../components/common.jsx'
 import { dateOf, timeOf } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 
@@ -37,11 +44,122 @@ function byDay(punches, zone) {
   return [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]))
 }
 
+/** Filing a correction from the panel.
+ *
+ *  ADR-0014: a manager may correct without a prior request, but through the
+ *  same procedure and the same mandatory reason. Nobody touches a time without
+ *  leaving why --- and the record keeps who it concerns and who filed it as two
+ *  separate facts.
+ */
+function CorrectionDialog({ open, employee, punch, people, onClose, onSubmit, saving, error }) {
+  const [form, setForm] = useState({ kind: 'ADD', proposed_type: 'OUT', when: '', reason: '' })
+  const [loaded, setLoaded] = useState(null)
+
+  const key = punch?.id ?? employee ?? 'new'
+  if (open && loaded !== key) {
+    setLoaded(key)
+    setForm({
+      kind: punch ? 'MODIFY' : 'ADD',
+      proposed_type: punch?.punch_type ?? 'OUT',
+      when: '',
+      reason: '',
+    })
+  }
+  if (!open && loaded !== null) setLoaded(null)
+
+  const set = (field) => (event) => setForm({ ...form, [field]: event.target.value })
+  const name = people.find((p) => p.id === employee)
+  const subject = punch?.employee_name ?? (name ? `${name.first_name} ${name.last_name}`.trim() : '')
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          onSubmit({
+            employee: punch?.employee ?? employee,
+            target: punch?.id,
+            kind: form.kind,
+            proposed_type: form.kind === 'ADD' ? form.proposed_type : undefined,
+            proposed_timestamp: form.when ? new Date(form.when).toISOString() : undefined,
+            reason: form.reason,
+          })
+        }}
+      >
+        <DialogTitle>Corregir el registro{subject ? ` de ${subject}` : ''}</DialogTitle>
+        <DialogContent>
+          <ErrorNote error={error} />
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            La corrección queda registrada con tu nombre, el momento y el motivo. El fichaje
+            original no se borra: queda anulado y legible, y se avisará a la persona.
+          </Typography>
+          <Stack sx={{ gap: 2, pt: 0.5 }}>
+            {punch ? (
+              <Alert severity="info" variant="outlined">
+                Fichaje seleccionado: {punch.punch_type === 'IN' ? 'entrada' : 'salida'} de las{' '}
+                {timeOf(punch.timestamp)} del {dateOf(punch.timestamp)}
+              </Alert>
+            ) : (
+              <TextField select label="Qué falta" value={form.proposed_type} onChange={set('proposed_type')}>
+                <MenuItem value="IN">Una entrada</MenuItem>
+                <MenuItem value="OUT">Una salida</MenuItem>
+              </TextField>
+            )}
+
+            {punch && (
+              <TextField select label="Qué hacer" value={form.kind} onChange={set('kind')}>
+                <MenuItem value="MODIFY">Cambiar la hora</MenuItem>
+                <MenuItem value="VOID">Anular el fichaje</MenuItem>
+              </TextField>
+            )}
+
+            {form.kind !== 'VOID' && (
+              <TextField
+                required
+                fullWidth
+                type="datetime-local"
+                label="Hora real"
+                value={form.when}
+                onChange={set('when')}
+                slotProps={{ inputLabel: { shrink: true } }}
+                helperText="No puede ser una hora futura."
+              />
+            )}
+
+            <TextField
+              required
+              fullWidth
+              multiline
+              minRows={3}
+              label="Motivo"
+              placeholder="Por ejemplo: el operario avisó de que la tableta estaba sin batería."
+              value={form.reason}
+              onChange={set('reason')}
+              helperText="Obligatorio. Una corrección sin motivo no se distingue de una manipulación."
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose} color="inherit">
+            Cancelar
+          </Button>
+          <Button type="submit" variant="contained" disabled={saving}>
+            Registrar corrección
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
+  )
+}
+
 export default function Timesheet() {
   const { session } = useAuth()
   const zone = session?.tenant?.time_zone
+  const queryClient = useQueryClient()
 
   const [employee, setEmployee] = useState('')
+  const [correcting, setCorrecting] = useState(null) // {punch} | {} = new event
+  const [error, setError] = useState(null)
 
   const { data: people = [] } = useQuery({
     queryKey: ['employees', 'for-filter'],
@@ -53,6 +171,18 @@ export default function Timesheet() {
     queryFn: () => getPunches({ employee: employee || undefined, ordering: '-timestamp' }),
   })
 
+  const correct = useMutation({
+    mutationFn: requestCorrection,
+    onSuccess: () => {
+      setCorrecting(null)
+      setError(null)
+      queryClient.invalidateQueries({ queryKey: ['punches'] })
+      queryClient.invalidateQueries({ queryKey: ['corrections'] })
+      queryClient.invalidateQueries({ queryKey: ['overview'] })
+    },
+    onError: setError,
+  })
+
   const days = byDay(punches ?? [], zone)
 
   return (
@@ -60,7 +190,16 @@ export default function Timesheet() {
       <PageHeader
         title="Fichajes"
         subtitle="El registro tal y como está guardado. Un fichaje anulado sigue siendo legible: no se borra nada."
+        action={
+          employee && (
+            <Button variant="outlined" startIcon={<EditNoteIcon />} onClick={() => setCorrecting({})}>
+              Corregir
+            </Button>
+          )
+        }
       />
+
+      <ErrorNote error={error} onClose={() => setError(null)} />
 
       <TextField
         select
@@ -148,7 +287,21 @@ export default function Timesheet() {
                           </TableCell>
                         )}
                         <TableCell align="right">
-                          <SourceChip source={punch.source} />
+                          <Stack
+                            direction="row"
+                            sx={{ gap: 1, justifyContent: 'flex-end', alignItems: 'center' }}
+                          >
+                            <SourceChip source={punch.source} />
+                            {punch.is_active !== false && (
+                              <Button
+                                size="small"
+                                sx={{ minWidth: 0, px: 1 }}
+                                onClick={() => setCorrecting({ punch })}
+                              >
+                                Corregir
+                              </Button>
+                            )}
+                          </Stack>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -159,6 +312,20 @@ export default function Timesheet() {
           ))}
         </Stack>
       )}
+
+      <CorrectionDialog
+        open={correcting !== null}
+        punch={correcting?.punch}
+        employee={employee}
+        people={people}
+        saving={correct.isPending}
+        error={error}
+        onClose={() => {
+          setCorrecting(null)
+          setError(null)
+        }}
+        onSubmit={correct.mutate}
+      />
     </>
   )
 }

@@ -10,6 +10,9 @@ import MyTime from './pages/me/MyTime.jsx'
 import MyLeave from './pages/me/MyLeave.jsx'
 import Overview from './pages/admin/Overview.jsx'
 import People from './pages/admin/People.jsx'
+import Departments from './pages/admin/Departments.jsx'
+import TeamCalendar from './pages/admin/TeamCalendar.jsx'
+import Settings from './pages/admin/Settings.jsx'
 import Timesheet from './pages/admin/Timesheet.jsx'
 import Decisions from './pages/admin/Decisions.jsx'
 import Reports from './pages/admin/Reports.jsx'
@@ -41,6 +44,9 @@ export default function App() {
           <Route path="panel" element={<RequireManager />}>
             <Route index element={<Overview />} />
             <Route path="personas" element={<People />} />
+            <Route path="departamentos" element={<Departments />} />
+            <Route path="calendario" element={<TeamCalendar />} />
+            <Route path="ajustes" element={<Settings />} />
             <Route path="fichajes" element={<Timesheet />} />
             <Route path="decisiones" element={<Decisions />} />
             <Route path="informes" element={<Reports />} />

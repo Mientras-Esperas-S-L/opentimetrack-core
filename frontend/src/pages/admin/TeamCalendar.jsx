@@ -1,0 +1,241 @@
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import Box from '@mui/material/Box'
+import Chip from '@mui/material/Chip'
+import IconButton from '@mui/material/IconButton'
+import Paper from '@mui/material/Paper'
+import Stack from '@mui/material/Stack'
+import Tooltip from '@mui/material/Tooltip'
+import Typography from '@mui/material/Typography'
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import TodayIcon from '@mui/icons-material/Today'
+
+import { getAbsenceCalendar } from '../../services/api.js'
+import { Empty, Loading, PageHeader } from '../../components/common.jsx'
+
+/** Colour by kind, not by person.
+ *
+ *  The question this screen answers is "can I approve August?", and what
+ *  matters for that is how many people are away and why --- not who is who. A
+ *  palette per person would need a legend nobody reads and would run out at
+ *  twelve people.
+ */
+const KIND_COLOUR = {
+  VACATION: 'primary.main',
+  SICK_LEAVE: 'secondary.main',
+  PERSONAL: 'success.main',
+  OTHER: 'text.disabled',
+}
+
+const monthLabel = (year, month) =>
+  new Date(year, month, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+
+const iso = (year, month, day) =>
+  `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+
+const daysIn = (year, month) => new Date(year, month + 1, 0).getDate()
+
+/** Monday-first weekday index. JS gives Sunday as 0, and a Spanish calendar
+ *  starting on Sunday looks broken to everyone reading it. */
+const weekdayOf = (year, month, day) => (new Date(year, month, day).getDay() + 6) % 7
+
+export default function TeamCalendar() {
+  const today = new Date()
+  const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() })
+
+  const total = daysIn(cursor.year, cursor.month)
+  const from = iso(cursor.year, cursor.month, 1)
+  const to = iso(cursor.year, cursor.month, total)
+
+  const { data: absences, isLoading } = useQuery({
+    queryKey: ['absence-calendar', from, to],
+    queryFn: () => getAbsenceCalendar(from, to),
+  })
+
+  const move = (delta) => {
+    const next = new Date(cursor.year, cursor.month + delta, 1)
+    setCursor({ year: next.getFullYear(), month: next.getMonth() })
+  }
+
+  const rows = absences ?? []
+
+  // One row per person, so a name is not repeated down the grid.
+  const byPerson = new Map()
+  for (const absence of rows) {
+    if (!byPerson.has(absence.employee)) {
+      byPerson.set(absence.employee, { name: absence.employee_name, spans: [] })
+    }
+    byPerson.get(absence.employee).spans.push(absence)
+  }
+  const people = [...byPerson.values()].sort((a, b) => a.name.localeCompare(b.name))
+
+  const dayNumbers = Array.from({ length: total }, (_, i) => i + 1)
+  const isToday = (day) =>
+    cursor.year === today.getFullYear() &&
+    cursor.month === today.getMonth() &&
+    day === today.getDate()
+
+  /** Which absence, if any, covers this day for this person. */
+  const spanOn = (spans, day) => {
+    const stamp = iso(cursor.year, cursor.month, day)
+    return spans.find((s) => s.start_date <= stamp && s.end_date >= stamp)
+  }
+
+  return (
+    <>
+      <PageHeader
+        title="Calendario del equipo"
+        subtitle="Quién está fuera y cuándo. Las solicitudes sin resolver aparecen rayadas: cuentan para decidir, pero todavía no son un hecho."
+      />
+
+      <Stack direction="row" sx={{ alignItems: 'center', gap: 1, mb: 2 }}>
+        <IconButton onClick={() => move(-1)} aria-label="Mes anterior">
+          <ChevronLeftIcon />
+        </IconButton>
+        <Typography sx={{ fontWeight: 600, minWidth: 190, textTransform: 'capitalize' }}>
+          {monthLabel(cursor.year, cursor.month)}
+        </Typography>
+        <IconButton onClick={() => move(1)} aria-label="Mes siguiente">
+          <ChevronRightIcon />
+        </IconButton>
+        <IconButton
+          onClick={() => setCursor({ year: today.getFullYear(), month: today.getMonth() })}
+          aria-label="Volver a hoy"
+        >
+          <TodayIcon />
+        </IconButton>
+
+        <Box sx={{ flexGrow: 1 }} />
+
+        <Stack direction="row" sx={{ gap: 1, flexWrap: 'wrap' }}>
+          {Object.entries({ VACATION: 'Vacaciones', SICK_LEAVE: 'Baja', PERSONAL: 'Permiso' }).map(
+            ([kind, label]) => (
+              <Stack key={kind} direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
+                <Box sx={{ width: 12, height: 12, borderRadius: 0.5, bgcolor: KIND_COLOUR[kind] }} />
+                <Typography variant="caption" color="text.secondary">
+                  {label}
+                </Typography>
+              </Stack>
+            ),
+          )}
+        </Stack>
+      </Stack>
+
+      {isLoading ? (
+        <Loading rows={4} />
+      ) : people.length === 0 ? (
+        <Empty>Nadie tiene ausencias este mes.</Empty>
+      ) : (
+        <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+          <Box sx={{ minWidth: 40 * total + 180 }}>
+            {/* Day numbers. Weekends are tinted so a span reads at a glance
+                without counting cells. */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: `180px repeat(${total}, 1fr)`,
+                borderBottom: 1,
+                borderColor: 'divider',
+              }}
+            >
+              <Box sx={{ p: 1 }} />
+              {dayNumbers.map((day) => {
+                const weekday = weekdayOf(cursor.year, cursor.month, day)
+                return (
+                  <Box
+                    key={day}
+                    sx={{
+                      py: 1,
+                      textAlign: 'center',
+                      bgcolor: weekday >= 5 ? 'action.hover' : 'transparent',
+                      ...(isToday(day) && { bgcolor: 'primary.main', color: 'primary.contrastText' }),
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{ fontSize: '0.68rem', fontVariantNumeric: 'tabular-nums' }}
+                    >
+                      {day}
+                    </Typography>
+                  </Box>
+                )
+              })}
+            </Box>
+
+            {people.map((person, index) => (
+              <Box
+                key={person.name + index}
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: `180px repeat(${total}, 1fr)`,
+                  borderBottom: index < people.length - 1 ? 1 : 0,
+                  borderColor: 'divider',
+                  minHeight: 40,
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  noWrap
+                  sx={{ px: 1.5, alignSelf: 'center', fontWeight: 500 }}
+                >
+                  {person.name}
+                </Typography>
+
+                {dayNumbers.map((day) => {
+                  const span = spanOn(person.spans, day)
+                  const weekday = weekdayOf(cursor.year, cursor.month, day)
+                  const colour = span ? KIND_COLOUR[span.absence_type] : null
+                  const pending = span?.status === 'PENDING'
+
+                  const cell = (
+                    <Box
+                      sx={{
+                        m: 0.4,
+                        borderRadius: 0.5,
+                        bgcolor: weekday >= 5 && !span ? 'action.hover' : 'transparent',
+                        ...(span &&
+                          (pending
+                            ? {
+                                // Hatched, not a lighter shade: asked-for and
+                                // granted are different states, not degrees.
+                                backgroundImage: (t) =>
+                                  `repeating-linear-gradient(45deg, ${
+                                    t.palette[span.absence_type === 'SICK_LEAVE' ? 'secondary' : 'primary'].main
+                                  } 0 3px, transparent 3px 7px)`,
+                              }
+                            : { bgcolor: colour })),
+                      }}
+                    />
+                  )
+
+                  return span ? (
+                    <Tooltip
+                      key={day}
+                      title={`${span.type_display}${pending ? ' (sin resolver)' : ''} · ${span.days} ${span.days === 1 ? 'día' : 'días'}`}
+                    >
+                      {cell}
+                    </Tooltip>
+                  ) : (
+                    <Box key={day} sx={{ display: 'contents' }}>
+                      {cell}
+                    </Box>
+                  )
+                })}
+              </Box>
+            ))}
+          </Box>
+        </Paper>
+      )}
+
+      {rows.some((a) => a.status === 'PENDING') && (
+        <Chip
+          size="small"
+          color="warning"
+          sx={{ mt: 2 }}
+          label={`${rows.filter((a) => a.status === 'PENDING').length} sin resolver este mes`}
+        />
+      )}
+    </>
+  )
+}

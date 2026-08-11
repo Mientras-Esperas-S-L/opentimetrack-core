@@ -7,8 +7,10 @@ company.
 
 from __future__ import annotations
 
+from datetime import date
+
 from django.utils.translation import gettext_lazy as _
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -156,6 +158,43 @@ class AbsenceViewSet(
 
         balance = vacation_balance(employee, request.user.tenant)
         return Response({"employee": str(employee.id), **balance.as_dict()})
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("from", str, description="YYYY-MM-DD"),
+            OpenApiParameter("to", str, description="YYYY-MM-DD"),
+        ],
+        responses={200: AbsenceSerializer(many=True)},
+    )
+    @action(detail=False, methods=["get"])
+    def calendar(self, request):
+        """Everything overlapping a window, for the team calendar.
+
+        Overlap, not containment: leave running from June to July has to appear
+        when looking at July, and a filter on `start_date` alone would drop it.
+        That off-by-one is invisible until somebody books over a colleague's
+        holiday because the calendar did not show it.
+
+        A worker sees their own; a manager sees the company. Pending requests
+        come too, drawn differently: deciding whether to approve August needs to
+        show what else is already asked for.
+        """
+        try:
+            first = date.fromisoformat(request.query_params["from"])
+            last = date.fromisoformat(request.query_params["to"])
+        except (KeyError, ValueError) as exc:
+            raise BusinessRuleError(
+                code="bad_window",
+                message=_("Give 'from' and 'to' as YYYY-MM-DD."),
+            ) from exc
+
+        window = (
+            self.get_queryset()
+            .filter(start_date__lte=last, end_date__gte=first)
+            .exclude(status=AbsenceStatus.REJECTED)
+            .order_by("start_date")
+        )
+        return Response(AbsenceSerializer(window, many=True).data)
 
     @extend_schema(responses={200: AbsenceSerializer(many=True)})
     @action(detail=False, methods=["get"])

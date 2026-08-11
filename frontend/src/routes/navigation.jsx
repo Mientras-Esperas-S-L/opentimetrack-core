@@ -1,9 +1,12 @@
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import BeachAccessIcon from '@mui/icons-material/BeachAccess'
+import ApartmentIcon from '@mui/icons-material/Apartment'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import DescriptionIcon from '@mui/icons-material/Description'
 import GroupsIcon from '@mui/icons-material/Groups'
 import HistoryIcon from '@mui/icons-material/History'
 import RuleIcon from '@mui/icons-material/Rule'
+import SettingsIcon from '@mui/icons-material/Settings'
 import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard'
 
 /** The two halves of the application, kept in one place.
@@ -24,7 +27,10 @@ export const NAV_ME = [
 export const NAV_ADMIN = [
   { to: '/panel', label: 'Resumen', icon: <SpaceDashboardIcon /> },
   { to: '/panel/personas', label: 'Personas', icon: <GroupsIcon /> },
+  { to: '/panel/departamentos', label: 'Departamentos', icon: <ApartmentIcon /> },
+  { to: '/panel/calendario', label: 'Calendario', icon: <CalendarMonthIcon /> },
   { to: '/panel/fichajes', label: 'Fichajes', icon: <AccessTimeIcon /> },
   { to: '/panel/decisiones', label: 'Por decidir', icon: <RuleIcon /> },
   { to: '/panel/informes', label: 'Informes', icon: <DescriptionIcon /> },
+  { to: '/panel/ajustes', label: 'Ajustes', icon: <SettingsIcon /> },
 ]
