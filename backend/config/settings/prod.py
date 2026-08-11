@@ -22,7 +22,7 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
 
-# Supporting documents go to S3/MinIO, never to the container's disk.
+# Supporting documents go to object storage, never to the container's disk.
 #
 # Encryption at rest is OFF unless asked for. It is not a default because
 # SSE-S3 needs a key manager on the storage side, and turning it on without one
@@ -41,6 +41,15 @@ _storage_options = {
     "default_acl": "private",
     "querystring_auth": True,
     "querystring_expire": 300,
+    # Signature version 4, explicitly. Left to the default, boto signs with v2
+    # (AWSAccessKeyId=…&Signature=…), which AWS no longer accepts in regions
+    # created after 2014 and which several providers reject outright. It works
+    # against SeaweedFS in development, so the failure would only appear on the
+    # day of the first real deployment.
+    "signature_version": "s3v4",
+    # Providers that are not AWS still want a region in the signature; without
+    # one boto sends an empty string and some of them refuse it.
+    "region_name": env("STORAGE_REGION", default="us-east-1"),
 }
 
 STORAGE_ENCRYPTION = env("STORAGE_ENCRYPTION", default="")

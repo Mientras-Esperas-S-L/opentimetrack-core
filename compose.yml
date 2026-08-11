@@ -85,24 +85,43 @@ services:
       timeout: 3s
       retries: 10
 
-  minio:
-    image: docker.io/minio/minio:latest
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+  # Almacen de objetos compatible con S3, donde van los justificantes.
+  #
+  # Era MinIO hasta el 12/08/2026. Sus duenos archivaron el repositorio el
+  # 25/04/2026 y lo dejaron en solo lectura: sin mantenimiento, sin parches y
+  # sin binarios precompilados para la version libre. No se puede pedir a nadie
+  # que despliegue eso, y menos en la pieza que guarda documentos de personas.
+  # Ver ADR-0016.
+  #
+  # SeaweedFS es Apache 2.0 y esta vivo. El codigo no nota el cambio: sigue
+  # hablando S3 por django-storages.
+  storage:
+    image: docker.io/chrislusf/seaweedfs:latest
+    command: server -dir=/data -s3 -s3.config=/etc/seaweedfs/s3.json -master.volumeSizeLimitMB=64
     volumes:
-      - miniodata:/data
+      - storagedata:/data
+      - ./deploy/seaweedfs/s3.json:/etc/seaweedfs/s3.json:z
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      # 8333 es la API S3; 8888 el explorador de ficheros, util en desarrollo.
+      - "8333:8333"
+      - "8888:8888"
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      # Sin firmar, S3 responde 403: eso ya prueba que el servicio esta en pie.
+      # Un 200 aqui significaria que acepta peticiones sin autenticar.
+      #
+      # 127.0.0.1 y no localhost: dentro del contenedor localhost resuelve a
+      # ::1 y SeaweedFS solo escucha en IPv4, asi que con el nombre da
+      # "connection refused" para siempre y el servicio nunca llega a sano.
+      #
+      # Sin -q: es -S quien imprime la cabecera, y -q la silencia.
+      test: ["CMD-SHELL", "wget -S -O /dev/null http://127.0.0.1:8333/ 2>&1 | grep -q '403'"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 6
+      # El servidor de volumenes tarda en registrarse; 20 s se quedaban cortos.
+      start_period: 45s
 
 volumes:
   pgdata:
   redisdata:
-  miniodata:
+  storagedata:

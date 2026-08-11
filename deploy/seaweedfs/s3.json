@@ -1,0 +1,11 @@
+{
+  "identities": [
+    {
+      "name": "opentimetrack",
+      "credentials": [
+        { "accessKey": "ott-dev-access", "secretKey": "ott-dev-secret" }
+      ],
+      "actions": ["Read", "Write", "List", "Tagging", "Admin"]
+    }
+  ]
+}
