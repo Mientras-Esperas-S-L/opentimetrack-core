@@ -35,8 +35,11 @@ class TenantEmailBackend(ModelBackend):
     """
 
     def authenticate(self, request, email=None, password=None, tenant_id=None, **kwargs):
+        # Django's own login form always calls this with `username=`, whatever
+        # USERNAME_FIELD is named, so the alias is not optional: without it the
+        # admin site cannot sign anybody in.
         if email is None:
-            email = kwargs.get(User.USERNAME_FIELD)
+            email = kwargs.get("username") or kwargs.get(User.USERNAME_FIELD)
         if not email or password is None:
             return None
 
