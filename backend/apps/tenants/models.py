@@ -167,6 +167,7 @@ from apps.tenants.applications import (  # noqa: E402
     ApplicationCredential,
     ApplicationScope,
 )
+from apps.tenants.rules import WorkingTimeRules  # noqa: E402
 
 __all__ = [
     "Application",
@@ -174,4 +175,5 @@ __all__ = [
     "ApplicationScope",
     "Tenant",
     "TenantLimits",
+    "WorkingTimeRules",
 ]

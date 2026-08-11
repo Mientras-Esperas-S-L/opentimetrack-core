@@ -148,6 +148,24 @@ export const updateDepartment = async (id, payload) =>
   (await api.patch(`/departments/${id}/`, payload)).data
 export const deleteDepartment = async (id) => (await api.delete(`/departments/${id}/`)).data
 
+// ---------------------------------------------------------------------- shifts
+
+export const getShiftPatterns = async () => rows(await get('/shift-patterns/'))
+export const createShiftPattern = (payload) => post('/shift-patterns/', payload)
+export const updateShiftPattern = async (id, payload) =>
+  (await api.patch(`/shift-patterns/${id}/`, payload)).data
+export const deleteShiftPattern = async (id) => (await api.delete(`/shift-patterns/${id}/`)).data
+
+export const getRoster = async (from, to) => rows(await get('/shifts/roster/', { from, to }))
+export const assignShifts = (payload) => post('/shifts/assign/', payload)
+export const clearShifts = (payload) => post('/shifts/clear/', payload)
+export const reviewRoster = (from, to) => get('/shifts/review/', { from, to })
+export const getMyShiftToday = () => get('/shifts/today/')
+
+export const getWorkingTimeRules = () => get('/working-time-rules/')
+export const updateWorkingTimeRules = async (payload) =>
+  (await api.patch('/working-time-rules/', payload)).data
+
 // -------------------------------------------------------------------- company
 
 export const getCompany = () => get('/company/')

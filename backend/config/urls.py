@@ -17,6 +17,7 @@ from apps.punches.delegated import DelegatedPunchView
 from apps.punches.views import PunchViewSet
 from apps.reports.overview import OverviewView
 from apps.reports.views import ReportView
+from apps.shifts.views import ShiftPatternViewSet, ShiftViewSet, WorkingTimeRulesView
 from apps.tenants.views import CompanyView
 from apps.users.views import (
     DepartmentViewSet,
@@ -35,6 +36,8 @@ router.register("departments", DepartmentViewSet, basename="department")
 router.register("punches", PunchViewSet, basename="punch")
 router.register("corrections", CorrectionViewSet, basename="correction")
 router.register("absences", AbsenceViewSet, basename="absence")
+router.register("shift-patterns", ShiftPatternViewSet, basename="shift-pattern")
+router.register("shifts", ShiftViewSet, basename="shift")
 
 auth_patterns = [
     path("register/", SignUpView.as_view(), name="register"),
@@ -51,6 +54,7 @@ urlpatterns = [
     path("api/reports/working-time/", ReportView.as_view(), name="working-time-report"),
     path("api/overview/", OverviewView.as_view(), name="overview"),
     path("api/company/", CompanyView.as_view(), name="company"),
+    path("api/working-time-rules/", WorkingTimeRulesView.as_view(), name="working-time-rules"),
     path(
         "api/punches/delegated/",
         DelegatedPunchView.as_view(),

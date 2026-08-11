@@ -12,6 +12,8 @@ import Overview from './pages/admin/Overview.jsx'
 import People from './pages/admin/People.jsx'
 import Departments from './pages/admin/Departments.jsx'
 import TeamCalendar from './pages/admin/TeamCalendar.jsx'
+import Roster from './pages/admin/Roster.jsx'
+import ShiftPatterns from './pages/admin/ShiftPatterns.jsx'
 import Settings from './pages/admin/Settings.jsx'
 import Timesheet from './pages/admin/Timesheet.jsx'
 import Decisions from './pages/admin/Decisions.jsx'
@@ -46,6 +48,8 @@ export default function App() {
             <Route path="personas" element={<People />} />
             <Route path="departamentos" element={<Departments />} />
             <Route path="calendario" element={<TeamCalendar />} />
+            <Route path="cuadrante" element={<Roster />} />
+            <Route path="turnos" element={<ShiftPatterns />} />
             <Route path="ajustes" element={<Settings />} />
             <Route path="fichajes" element={<Timesheet />} />
             <Route path="decisiones" element={<Decisions />} />

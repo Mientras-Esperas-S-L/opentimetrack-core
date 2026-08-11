@@ -46,6 +46,7 @@ LOCAL_APPS = [
     "apps.users",
     "apps.punches",
     "apps.absences",
+    "apps.shifts",
     "apps.audit",
     "apps.reports",
 ]

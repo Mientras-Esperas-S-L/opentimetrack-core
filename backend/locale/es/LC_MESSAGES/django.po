@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-11 18:40+0000\n"
+"POT-Creation-Date: 2026-08-11 20:17+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,7 +17,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? "
 "1 : 2;\n"
-
 msgid "Holiday"
 msgstr "Vacaciones"
 
@@ -149,7 +148,6 @@ msgstr "La aplicación no tiene el permiso necesario."
 msgid "That event does not exist."
 msgstr "Ese fichaje no existe."
 
-#| msgid "You may only request your own record."
 msgid "You can only ask for corrections to your own record."
 msgstr "Solo puedes pedir correcciones de tu propio registro."
 
@@ -392,6 +390,79 @@ msgstr "Solo puedes pedir tu propio registro."
 msgid "That person does not exist."
 msgstr "Esa persona no existe."
 
+msgid "A shift needs at least one time span."
+msgstr "Un turno necesita al menos un tramo horario."
+
+msgid "Each span needs a start and an end."
+msgstr "Cada tramo necesita una hora de inicio y una de fin."
+
+msgid "Times are written as HH:MM."
+msgstr "Las horas se escriben como HH:MM."
+
+msgid "name"
+msgstr "nombre"
+
+msgid "time spans"
+msgstr "tramos horarios"
+
+msgid "Pairs of start and end times. Two of them make a split day."
+msgstr "Pares de hora de inicio y fin. Dos de ellos hacen una jornada partida."
+
+msgid "colour"
+msgstr "color"
+
+msgid "Hex, for the roster. Never the only way a shift is identified."
+msgstr "Hexadecimal, para el cuadrante. Nunca es lo único que identifica un turno."
+
+msgid "active"
+msgstr "activo"
+
+msgid "shift pattern"
+msgstr "turno"
+
+msgid "shift patterns"
+msgstr "turnos"
+
+msgid "day"
+msgstr "día"
+
+msgid "pattern"
+msgstr "turno"
+
+msgid "note"
+msgstr "nota"
+
+msgid "shift"
+msgstr "turno asignado"
+
+msgid "shifts"
+msgstr "turnos asignados"
+
+msgid "Choose at least one day."
+msgstr "Elige al menos un día."
+
+#, python-format
+msgid "Only %(hours)s h of rest since the previous shift."
+msgstr "Solo %(hours)s h de descanso desde el turno anterior."
+
+#, python-format
+msgid "%(hours)s h rostered that week, over the %(limit)s h configured."
+msgstr "%(hours)s h planificadas esa semana, por encima de las %(limit)s h configuradas."
+
+#, python-format
+msgid "A continuous day of %(hours)s h needs a break of %(minutes)s min."
+msgstr "Una jornada continuada de %(hours)s h necesita un descanso de %(minutes)s min."
+
+#, python-format
+msgid "Rostered on a day of approved %(kind)s."
+msgstr "Con turno asignado en un día de %(kind)s aprobada."
+
+msgid "That shift pattern does not exist."
+msgstr "Ese turno no existe."
+
+msgid "Somebody in that list is not in this company."
+msgstr "Alguien de esa lista no pertenece a esta empresa."
+
 msgid "Clock in with the employee's own identity"
 msgstr "Fichar con la identidad de la propia persona"
 
@@ -410,9 +481,6 @@ msgstr "Crear y modificar personas"
 msgid "Receive outbound events"
 msgstr "Recibir eventos salientes"
 
-msgid "name"
-msgstr "nombre"
-
 msgid "description"
 msgstr "descripción"
 
@@ -421,9 +489,6 @@ msgstr "permisos"
 
 msgid "List of granted scopes. Empty means the application can do nothing."
 msgstr "Lista de permisos concedidos. Vacía significa que la aplicación no puede hacer nada."
-
-msgid "active"
-msgstr "activo"
 
 msgid "authorised by"
 msgstr "autorizada por"
@@ -549,6 +614,74 @@ msgstr "funciones activadas"
 
 msgid "company limits"
 msgstr "límites de la empresa"
+
+msgid "weekly hours"
+msgstr "horas semanales"
+
+msgid ""
+"Art. 34.1 ET: 40 hours a week on average over the reference period. An "
+"ordinary legal maximum; the agreement or the contract may improve it."
+msgstr "Art. 34.1 ET: 40 horas semanales de promedio en el periodo de cómputo. Es el máximo legal ordinario; el convenio o el contrato pueden mejorarlo."
+
+msgid "rest between working days (hours)"
+msgstr "descanso entre jornadas (horas)"
+
+msgid ""
+"Art. 34.3 ET. RD 1561/1995 modifies it for particular sectors, which is why "
+"departing from it is reported and not prevented."
+msgstr "Art. 34.3 ET. El RD 1561/1995 lo modifica en sectores concretos, y por eso apartarse de él se avisa pero no se impide."
+
+msgid "weekly rest (hours)"
+msgstr "descanso semanal (horas)"
+
+msgid ""
+"Art. 37.1 ET: a day and a half uninterrupted. It may be accumulated over "
+"periods of up to fourteen days."
+msgstr "Art. 37.1 ET: día y medio ininterrumpido. Se puede acumular en periodos de hasta catorce días."
+
+msgid "a continuous day needs a break after (hours)"
+msgstr "una jornada continuada necesita descanso a partir de (horas)"
+
+msgid ""
+"Art. 34.4 ET: fifteen minutes when the continuous day exceeds six hours."
+msgstr "Art. 34.4 ET: quince minutos cuando la jornada continuada excede de seis horas."
+
+msgid "break (minutes)"
+msgstr "descanso (minutos)"
+
+msgid "the break counts as working time"
+msgstr "el descanso computa como trabajo efectivo"
+
+msgid ""
+"Only when the agreement or the contract says so. Assuming it would overstate "
+"the hours worked."
+msgstr "Solo cuando lo dice el convenio o el contrato. Darlo por hecho inflaría las horas trabajadas."
+
+msgid "overtime hours per year"
+msgstr "horas extraordinarias al año"
+
+msgid "Art. 35.2 ET."
+msgstr "Art. 35.2 ET."
+
+msgid "night work starts at"
+msgstr "el trabajo nocturno empieza a las"
+
+msgid "Art. 36.1 ET: between 22:00 and 06:00."
+msgstr "Art. 36.1 ET: entre las 22:00 y las 06:00."
+
+msgid "night work ends at"
+msgstr "el trabajo nocturno acaba a las"
+
+msgid "notice for roster changes (days)"
+msgstr "preaviso de cambios de cuadrante (días)"
+
+msgid ""
+"Art. 34.2 ET requires five days' notice for irregular distribution of the "
+"working day. Art. 38.3 ET asks for the holiday calendar two months ahead."
+msgstr "El art. 34.2 ET exige cinco días de preaviso para la distribución irregular de la jornada. El art. 38.3 ET pide el calendario de vacaciones con dos meses de antelación."
+
+msgid "working time rules"
+msgstr "reglas de jornada"
 
 msgid "department"
 msgstr "departamento"

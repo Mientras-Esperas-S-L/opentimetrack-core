@@ -1,0 +1,376 @@
+"""Rosters: the arithmetic, and the line that must not be crossed.
+
+The line first, because everything else is detail: **a shift is not the
+record**. Nothing here may ever produce a clock event. A record that filled
+itself in from the plan would be the exact fiction art. 34.9 ET exists to
+prevent, and it would be indistinguishable from a real one.
+
+The arithmetic that keeps breaking in this kind of code is midnight. A night
+shift from 22:00 to 06:00 is eight hours, not minus sixteen, and the rest before
+it is measured from the previous day's end --- which is itself on another date.
+"""
+
+from __future__ import annotations
+
+from datetime import date, timedelta
+
+import pytest
+from django.core.exceptions import ValidationError
+
+from apps.absences.models import AbsenceType
+from apps.absences.services import approve_absence, request_absence
+from apps.common.exceptions import BusinessRuleError
+from apps.common.models import tenant_context
+from apps.shifts.models import Shift, ShiftPattern, span_minutes
+from apps.shifts.services import (
+    assign_pattern,
+    expected_vs_worked,
+    review_roster,
+    weekdays_in,
+)
+from apps.tenants.models import Tenant
+from apps.tenants.rules import WorkingTimeRules
+from apps.users.models import Role, User
+
+PASSWORD = "a-sufficiently-long-password"
+
+MORNING = [{"start": "08:00", "end": "16:00"}]
+NIGHT = [{"start": "22:00", "end": "06:00"}]
+SPLIT = [{"start": "09:00", "end": "13:00"}, {"start": "15:00", "end": "19:00"}]
+
+
+@pytest.fixture
+def company(db):
+    return Tenant.objects.create(name="ACME Ltd", tax_id="B11111111", time_zone="Europe/Madrid")
+
+
+@pytest.fixture
+def worker(company):
+    with tenant_context(company.id):
+        yield User.objects.create_user(
+            email="ana@example.com", password=PASSWORD, tenant=company, first_name="Ana"
+        )
+
+
+def pattern(company, name, segments):
+    with tenant_context(company.id):
+        return ShiftPattern.objects.create(tenant=company, name=name, segments=segments)
+
+
+def shift(company, worker, day, segments):
+    with tenant_context(company.id):
+        return Shift.objects.create(tenant=company, employee=worker, day=day, segments=segments)
+
+
+# ---------------------------------------------------------------------- midnight
+
+
+def test_a_night_span_is_eight_hours_not_minus_sixteen():
+    """The one that breaks first in every roster implementation."""
+    assert span_minutes({"start": "22:00", "end": "06:00"}) == 8 * 60
+    assert span_minutes({"start": "08:00", "end": "16:00"}) == 8 * 60
+    assert span_minutes({"start": "23:30", "end": "00:30"}) == 60
+
+
+@pytest.mark.django_db
+def test_a_night_shift_ends_on_the_following_day(company, worker):
+    night = shift(company, worker, date(2026, 9, 1), NIGHT)
+
+    assert night.starts_at.date() == date(2026, 9, 1)
+    assert night.ends_at.date() == date(2026, 9, 2)
+    assert night.minutes == 8 * 60
+
+
+@pytest.mark.django_db
+def test_a_split_day_adds_its_spans(company, worker):
+    split = shift(company, worker, date(2026, 9, 1), SPLIT)
+
+    assert split.minutes == 8 * 60
+    assert split.starts_at.hour == 9
+    assert split.ends_at.hour == 19
+
+
+# ------------------------------------------------------------------- assigning
+
+
+@pytest.mark.django_db
+def test_assigning_copies_the_spans_rather_than_pointing_at_them(company, worker):
+    """Editing "morning" next month must not rewrite a day already published:
+    people arranged their lives around it."""
+    morning = pattern(company, "Mañana", MORNING)
+    with tenant_context(company.id):
+        assign_pattern(employee=worker, company=company, pattern=morning, days=[date(2026, 9, 1)])
+
+        morning.segments = [{"start": "06:00", "end": "14:00"}]
+        morning.save(update_fields=["segments"])
+
+        stored = Shift.objects.get(employee=worker, day=date(2026, 9, 1))
+
+    assert stored.segments == MORNING
+
+
+@pytest.mark.django_db
+def test_reassigning_replaces_instead_of_clashing(company, worker):
+    """A roster gets redrawn. Refusing would turn one action into two with a
+    broken state in between."""
+    morning = pattern(company, "Mañana", MORNING)
+    night = pattern(company, "Noche", NIGHT)
+    days = [date(2026, 9, 1), date(2026, 9, 2)]
+
+    with tenant_context(company.id):
+        assign_pattern(employee=worker, company=company, pattern=morning, days=days)
+        assign_pattern(employee=worker, company=company, pattern=night, days=days)
+
+        assert Shift.objects.filter(employee=worker).count() == 2
+        assert Shift.objects.get(employee=worker, day=days[0]).segments == NIGHT
+
+
+@pytest.mark.django_db
+def test_one_shift_per_person_per_day(company, worker):
+    """A split day is several spans in one shift, not two shifts. Otherwise
+    "what is expected today" has no single answer."""
+    from django.db import IntegrityError, transaction
+
+    shift(company, worker, date(2026, 9, 1), MORNING)
+
+    with pytest.raises(IntegrityError), transaction.atomic(), tenant_context(company.id):
+        Shift.objects.create(tenant=company, employee=worker, day=date(2026, 9, 1), segments=NIGHT)
+
+
+@pytest.mark.django_db
+def test_assigning_nothing_is_refused(company, worker):
+    morning = pattern(company, "Mañana", MORNING)
+    with pytest.raises(BusinessRuleError) as caught, tenant_context(company.id):
+        assign_pattern(employee=worker, company=company, pattern=morning, days=[])
+    assert caught.value.code == "no_days"
+
+
+def test_weekdays_picks_the_right_days():
+    """Monday to Friday of the first full week of September 2026."""
+    days = weekdays_in(date(2026, 9, 1), date(2026, 9, 13), [0, 1, 2, 3, 4])
+
+    assert date(2026, 9, 5) not in days  # Saturday
+    assert date(2026, 9, 6) not in days  # Sunday
+    assert date(2026, 9, 7) in days  # Monday
+    assert len(days) == 9
+
+
+# -------------------------------------------------------------------- segments
+
+
+@pytest.mark.django_db
+def test_a_shift_with_no_spans_is_refused(company, worker):
+    with pytest.raises(ValidationError):
+        Shift(tenant=company, employee=worker, day=date(2026, 9, 1), segments=[]).clean()
+
+
+@pytest.mark.django_db
+def test_a_malformed_span_is_caught_when_saved_not_later(company, worker):
+    """Otherwise it does not fail until something compares the roster against a
+    real day, by which time it has been on a screen for a week."""
+    for broken in ([{"start": "08:00"}], [{"start": "8am", "end": "4pm"}], ["08:00-16:00"]):
+        with pytest.raises(ValidationError):
+            Shift(tenant=company, employee=worker, day=date(2026, 9, 1), segments=broken).clean()
+
+
+# --------------------------------------------------------------------- review
+
+
+@pytest.mark.django_db
+def test_a_short_rest_between_days_is_reported(company, worker):
+    """Closing at 22:00 and opening at 06:00 is eight hours of rest."""
+    with tenant_context(company.id):
+        shift(company, worker, date(2026, 9, 1), [{"start": "14:00", "end": "22:00"}])
+        shift(company, worker, date(2026, 9, 2), [{"start": "06:00", "end": "14:00"}])
+
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    rest = [f for f in findings if f.code == "short_daily_rest"]
+    assert len(rest) == 1
+    assert rest[0].day == date(2026, 9, 2)
+    assert rest[0].basis == "Art. 34.3 ET"
+
+
+@pytest.mark.django_db
+def test_a_lawful_rest_is_not_reported(company, worker):
+    with tenant_context(company.id):
+        shift(company, worker, date(2026, 9, 1), MORNING)  # ends 16:00
+        shift(company, worker, date(2026, 9, 2), MORNING)  # starts 08:00 -> 16 h
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    assert [f for f in findings if f.code == "short_daily_rest"] == []
+
+
+@pytest.mark.django_db
+def test_the_review_looks_one_day_past_the_window(company, worker):
+    """Rest is a property of the boundary between two shifts, so a month checked
+    in isolation would miss a clash with the month before."""
+    with tenant_context(company.id):
+        shift(company, worker, date(2026, 8, 31), [{"start": "14:00", "end": "22:00"}])
+        shift(company, worker, date(2026, 9, 1), [{"start": "06:00", "end": "14:00"}])
+
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    assert [f.code for f in findings if f.code == "short_daily_rest"] == ["short_daily_rest"]
+
+
+@pytest.mark.django_db
+def test_too_many_hours_in_a_week_are_reported(company, worker):
+    with tenant_context(company.id):
+        # Monday to Sunday, 8 h a day = 56 h
+        for offset in range(7):
+            shift(company, worker, date(2026, 9, 7) + timedelta(days=offset), MORNING)
+
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    weekly = [f for f in findings if f.code == "weekly_hours_exceeded"]
+    assert len(weekly) == 1
+    assert weekly[0].basis == "Art. 34.1 ET"
+
+
+@pytest.mark.django_db
+def test_a_week_only_half_inside_the_window_is_not_reported(company, worker):
+    """Reporting a half-counted week as an excess is worse than saying nothing:
+    whoever reads it goes looking for hours that are not there."""
+    with tenant_context(company.id):
+        for offset in range(7):
+            shift(company, worker, date(2026, 9, 7) + timedelta(days=offset), MORNING)
+
+        # Window cuts the week in half.
+        findings = review_roster(company=company, first=date(2026, 9, 9), last=date(2026, 9, 30))
+
+    assert [f for f in findings if f.code == "weekly_hours_exceeded"] == []
+
+
+@pytest.mark.django_db
+def test_a_long_continuous_day_is_owed_a_break(company, worker):
+    with tenant_context(company.id):
+        shift(company, worker, date(2026, 9, 1), [{"start": "08:00", "end": "17:00"}])
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    owed = [f for f in findings if f.code == "break_owed"]
+    assert len(owed) == 1
+    assert owed[0].basis == "Art. 34.4 ET"
+
+
+@pytest.mark.django_db
+def test_a_split_day_is_not_owed_one(company, worker):
+    with tenant_context(company.id):
+        shift(company, worker, date(2026, 9, 1), SPLIT)  # 8 h, but in two spans
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    assert [f for f in findings if f.code == "break_owed"] == []
+
+
+@pytest.mark.django_db
+def test_being_rostered_on_approved_leave_is_reported(company, worker):
+    """The most ordinary planning mistake, and the one that reaches the worker
+    fastest: they turn up, or they do not and it looks like an absence."""
+    with tenant_context(company.id):
+        boss = User.objects.create_user(
+            email="boss@example.com",
+            password=PASSWORD,
+            tenant=company,
+            first_name="Jefa",
+            role=Role.MANAGER,
+        )
+        absence = request_absence(
+            employee=worker,
+            company=company,
+            absence_type=AbsenceType.VACATION,
+            start_date=date(2026, 9, 7),
+            end_date=date(2026, 9, 11),
+        )
+        approve_absence(absence, resolved_by=boss)
+
+        shift(company, worker, date(2026, 9, 9), MORNING)
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    clashes = [f for f in findings if f.code == "rostered_on_leave"]
+    assert len(clashes) == 1
+    assert clashes[0].day == date(2026, 9, 9)
+
+
+@pytest.mark.django_db
+def test_nothing_is_ever_refused_only_reported(company, worker):
+    """The decision recorded in apps.tenants.rules. RD 1561/1995 modifies the
+    rest periods for transport, on-call work and shift handovers, all lawfully;
+    refusing would make the product unusable there and would mean deciding a
+    compliance question that is not ours."""
+    with tenant_context(company.id):
+        shift(company, worker, date(2026, 9, 1), [{"start": "08:00", "end": "23:00"}])
+        awful = shift(company, worker, date(2026, 9, 2), [{"start": "01:00", "end": "23:00"}])
+
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    assert awful.pk is not None  # saved, not refused
+    assert len(findings) > 0  # and reported
+
+
+@pytest.mark.django_db
+def test_the_rules_are_the_companys_own(company, worker):
+    """They are data, not constants: a company on a 35-hour agreement gets
+    warned at 35, not at 40."""
+    with tenant_context(company.id):
+        rules = WorkingTimeRules.for_company(company)
+        rules.weekly_hours = 20
+        rules.save(update_fields=["weekly_hours"])
+
+        for offset in range(5):
+            shift(company, worker, date(2026, 9, 7) + timedelta(days=offset), MORNING)  # 40 h
+
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    assert any(f.code == "weekly_hours_exceeded" for f in findings)
+
+
+# ------------------------------------------------- the roster is not the record
+
+
+@pytest.mark.django_db
+def test_a_roster_never_creates_a_clock_event(company, worker):
+    """The line the whole module lives on. A record that filled itself in from
+    the plan would be the fiction art. 34.9 ET exists to prevent --- and it would
+    look identical to a real one."""
+    from apps.punches.models import Punch
+
+    morning = pattern(company, "Mañana", MORNING)
+    with tenant_context(company.id):
+        assign_pattern(
+            employee=worker,
+            company=company,
+            pattern=morning,
+            days=[date(2026, 9, 1), date(2026, 9, 2)],
+        )
+
+    assert Punch.objects_all_tenants.count() == 0
+
+
+@pytest.mark.django_db
+def test_expected_against_worked_reports_both_without_mixing_them(company, worker):
+    from django.utils import timezone
+
+    from apps.punches.services import register_punch
+
+    today = timezone.localdate()
+    with tenant_context(company.id):
+        shift(company, worker, today, MORNING)
+        register_punch(employee=worker, company=company)  # in, still open
+
+        result = expected_vs_worked(employee=worker, company=company, day=today)
+
+    assert result["expected_minutes"] == 480
+    assert result["worked_minutes"] == 0  # nothing closed yet
+    assert result["difference_minutes"] == -480
+    assert result["has_shift"] is True
+
+
+@pytest.mark.django_db
+def test_a_day_with_no_shift_says_so(company, worker):
+    from django.utils import timezone
+
+    with tenant_context(company.id):
+        result = expected_vs_worked(employee=worker, company=company, day=timezone.localdate())
+
+    assert result["has_shift"] is False
+    assert result["expected_minutes"] == 0
