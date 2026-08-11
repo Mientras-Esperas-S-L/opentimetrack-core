@@ -22,7 +22,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from apps.reports.services import ReportData, _format_hours
+from apps.reports.services import ReportData, _format_hours, day_notes
 
 INK = colors.HexColor("#1a1a1a")
 MUTED = colors.HexColor("#5f6b66")
@@ -103,13 +103,7 @@ def render_pdf(data: ReportData) -> bytes:
         if not row.entries and not row.absence:
             continue
 
-        notes = "; ".join(row.incidents)
-        if row.delegated:
-            notes = (
-                f"{notes}; {_('recorded by an application')}"
-                if notes
-                else _("recorded by an application")
-            )
+        notes = day_notes(row)
 
         if row.absence and not row.entries:
             rows.append([f"{row.day:%d/%m}", "—", "—", "00:00", row.absence])

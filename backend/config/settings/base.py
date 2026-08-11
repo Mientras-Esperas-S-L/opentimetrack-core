@@ -141,6 +141,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
+        # Applications first: their token carries a prefix, so it is cheap to
+        # recognise and it hands over to JWT when it is not one of theirs.
+        "apps.common.authentication.ApplicationAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),

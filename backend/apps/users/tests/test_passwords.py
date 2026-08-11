@@ -32,8 +32,12 @@ def globex(db):
 
 def make_user(tenant, email="ana@example.com", **extra):
     return User.objects.create_user(
-        email=email, password=PASSWORD, tenant=tenant,
-        first_name="Ana", last_name="García", **extra,
+        email=email,
+        password=PASSWORD,
+        tenant=tenant,
+        first_name="Ana",
+        last_name="García",
+        **extra,
     )
 
 
@@ -143,8 +147,11 @@ def test_somebody_invited_without_a_password_can_get_in(client, acme):
     one would be worse -- and without this the person could never sign in.
     """
     user = User.objects.create_user(
-        email="nueva@example.com", password=None, tenant=acme,
-        first_name="Nueva", last_name="Persona",
+        email="nueva@example.com",
+        password=None,
+        tenant=acme,
+        first_name="Nueva",
+        last_name="Persona",
     )
     user.set_unusable_password()
     user.save()

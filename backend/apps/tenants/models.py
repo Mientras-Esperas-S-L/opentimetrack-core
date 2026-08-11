@@ -107,3 +107,20 @@ class TenantLimits(BaseModel):
 
     def allows_another_admin(self, current: int) -> bool:
         return self.max_admins is None or current < self.max_admins
+
+
+# Applications live in their own module for readability, but Django needs them
+# imported here to discover the models.
+from apps.tenants.applications import (  # noqa: E402
+    Application,
+    ApplicationCredential,
+    ApplicationScope,
+)
+
+__all__ = [
+    "Application",
+    "ApplicationCredential",
+    "ApplicationScope",
+    "Tenant",
+    "TenantLimits",
+]

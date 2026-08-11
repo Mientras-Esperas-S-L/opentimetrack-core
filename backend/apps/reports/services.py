@@ -156,6 +156,19 @@ def _fingerprint(data: ReportData) -> str:
 # ------------------------------------------------------------------------- CSV
 
 
+def day_notes(row: DayRow) -> str:
+    """Notes for one day: incidents, and whether an application recorded it.
+
+    Delegation is stated in both outputs, and it is stated here rather than in
+    each renderer so the two cannot drift apart -- which they already did once,
+    with the PDF saying it and the CSV keeping quiet.
+    """
+    notes = list(row.incidents)
+    if row.delegated:
+        notes.append(_("recorded by an application"))
+    return "; ".join(notes)
+
+
 def to_csv(data: ReportData) -> str:
     buffer = io.StringIO()
     writer = csv.writer(buffer, delimiter=";")
@@ -184,7 +197,7 @@ def to_csv(data: ReportData) -> str:
                     entry.strftime("%H:%M"),
                     exit_.strftime("%H:%M") if exit_ else "",
                     _format_hours(row.seconds) if index == 0 else "",
-                    "; ".join(row.incidents) if index == 0 else "",
+                    day_notes(row) if index == 0 else "",
                 ]
             )
 

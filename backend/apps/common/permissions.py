@@ -73,3 +73,31 @@ class IsOwnerOrCanManage(IsAuthenticatedInTenant):
         if request.user.can_manage:
             return True
         return getattr(obj, "employee_id", None) == request.user.id
+
+
+class HasApplicationScope(BasePermission):
+    """The caller is an application and carries the required permission.
+
+    The scope is declared on the view as `required_scope`. A view without it
+    denies access rather than allowing it: forgetting to declare a permission
+    must not open a door.
+    """
+
+    message = _("The application does not carry the required permission.")
+
+    def has_permission(self, request, view) -> bool:
+        caller = request.user
+        if not (caller and getattr(caller, "is_authenticated", False)):
+            return False
+        if not hasattr(caller, "allows"):
+            return False  # a person, not an application
+
+        scope = getattr(view, "required_scope", None)
+        if scope is None:
+            return False
+
+        if not caller.allows(scope):
+            return False
+
+        set_current_tenant(caller.tenant_id)
+        return True
