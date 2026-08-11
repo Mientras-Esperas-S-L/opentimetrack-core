@@ -1,8 +1,18 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 
-import Clock from './pages/Clock.jsx'
+import AppShell from './routes/AppShell.jsx'
+import RequireManager from './routes/RequireManager.jsx'
 import SignIn from './pages/SignIn.jsx'
+import Clock from './pages/Clock.jsx'
+import MyTime from './pages/me/MyTime.jsx'
+import MyLeave from './pages/me/MyLeave.jsx'
+import Overview from './pages/admin/Overview.jsx'
+import People from './pages/admin/People.jsx'
+import Timesheet from './pages/admin/Timesheet.jsx'
+import Decisions from './pages/admin/Decisions.jsx'
+import Reports from './pages/admin/Reports.jsx'
 import { useAuth } from './hooks/useAuth.js'
 
 export default function App() {
@@ -16,5 +26,29 @@ export default function App() {
     )
   }
 
-  return session ? <Clock /> : <SignIn />
+  if (!session) return <SignIn />
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route index element={<Clock />} />
+          <Route path="mi-jornada" element={<MyTime />} />
+          <Route path="mis-ausencias" element={<MyLeave />} />
+
+          {/* Guarded again here, not only hidden from the menu: a hidden link
+              is not a permission, and these routes read other people's data. */}
+          <Route path="panel" element={<RequireManager />}>
+            <Route index element={<Overview />} />
+            <Route path="personas" element={<People />} />
+            <Route path="fichajes" element={<Timesheet />} />
+            <Route path="decisiones" element={<Decisions />} />
+            <Route path="informes" element={<Reports />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  )
 }

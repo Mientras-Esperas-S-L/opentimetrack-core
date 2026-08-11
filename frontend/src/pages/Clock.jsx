@@ -5,7 +5,6 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
-import Container from '@mui/material/Container'
 import Divider from '@mui/material/Divider'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
@@ -15,22 +14,7 @@ import LogoutIcon from '@mui/icons-material/Logout'
 
 import { useAuth } from '../hooks/useAuth.js'
 import { clock, getToday } from '../services/api.js'
-
-const pad = (n) => String(n).padStart(2, '0')
-
-function formatDuration(totalSeconds) {
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  return `${pad(hours)}:${pad(minutes)}`
-}
-
-function formatTime(iso, timeZone) {
-  return new Date(iso).toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone,
-  })
-}
+import { hhmm, timeOf } from '../components/format.js'
 
 /** Counts up while a segment is open, so the figure is not stale on screen.
  *
@@ -57,8 +41,14 @@ function useLiveSeconds(baseSeconds, running) {
   return running ? baseSeconds + counter.ticks : baseSeconds
 }
 
+const STATES = {
+  WORKING: { label: 'Trabajando', color: 'success' },
+  OFF: { label: 'Jornada cerrada', color: 'default' },
+  NOT_STARTED: { label: 'Sin empezar', color: 'default' },
+}
+
 export default function Clock() {
-  const { session, signOut } = useAuth()
+  const { session } = useAuth()
   const queryClient = useQueryClient()
   const [error, setError] = useState(null)
 
@@ -69,62 +59,62 @@ export default function Clock() {
   })
 
   const punch = useMutation({
-    mutationFn: () => clock(`web-${navigator.platform || 'unknown'}`),
+    mutationFn: () => clock(`web-${navigator.userAgentData?.platform ?? navigator.platform ?? 'unknown'}`),
     onSuccess: () => {
       setError(null)
       queryClient.invalidateQueries({ queryKey: ['today'] })
+      queryClient.invalidateQueries({ queryKey: ['overview'] })
+      queryClient.invalidateQueries({ queryKey: ['punches'] })
     },
-    onError: (failure) => setError(failure),
+    onError: setError,
   })
 
   const working = today?.state === 'WORKING'
   const seconds = useLiveSeconds(today?.worked_seconds ?? 0, working)
+  const state = STATES[today?.state] ?? STATES.NOT_STARTED
 
   return (
-    <Container maxWidth="sm" sx={{ py: 6 }}>
-      <Stack
-        direction="row"
-        sx={{ alignItems: 'flex-start', justifyContent: 'space-between', mb: 4 }}
-      >
-        <Box>
-          <Typography variant="h2">{session.user.full_name}</Typography>
-          <Typography variant="body2" color="text.secondary">
-            {session.tenant.name}
-          </Typography>
-        </Box>
-        <Button size="small" onClick={signOut}>
-          Sign out
-        </Button>
-      </Stack>
+    <Box sx={{ maxWidth: 560, mx: 'auto' }}>
+      <Typography variant="h1" sx={{ fontSize: '1.5rem', mb: 0.5 }}>
+        Hola, {session?.user?.first_name || session?.user?.full_name}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        {new Date().toLocaleDateString('es-ES', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+        })}
+      </Typography>
 
-      <Paper variant="outlined" sx={{ p: 4, textAlign: 'center' }}>
+      <Paper variant="outlined" sx={{ p: { xs: 3, sm: 4 }, textAlign: 'center' }}>
         {isLoading ? (
           <CircularProgress />
         ) : (
           <>
-            <Chip
-              label={working ? 'Working' : today?.state === 'OFF' ? 'Day closed' : 'Not started'}
-              color={working ? 'success' : 'default'}
-              sx={{ mb: 3 }}
-            />
+            <Chip label={state.label} color={state.color} sx={{ mb: 3 }} />
 
             <Typography
               sx={{
-                fontSize: '3.5rem',
+                fontSize: { xs: '3.2rem', sm: '3.8rem' },
                 fontWeight: 300,
                 fontVariantNumeric: 'tabular-nums',
                 lineHeight: 1,
                 mb: 0.5,
               }}
             >
-              {formatDuration(seconds)}
+              {hhmm(seconds)}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-              worked today
+              trabajadas hoy
             </Typography>
 
             {error && (
-              <Alert severity="warning" variant="outlined" sx={{ mb: 3, textAlign: 'left' }}>
+              <Alert
+                severity="warning"
+                variant="outlined"
+                sx={{ mb: 3, textAlign: 'left' }}
+                onClose={() => setError(null)}
+              >
                 {error.message}
               </Alert>
             )}
@@ -139,40 +129,40 @@ export default function Clock() {
               disabled={punch.isPending}
               sx={{ py: 2, px: 6, fontSize: '1.15rem', borderRadius: 2 }}
             >
-              {punch.isPending ? 'Recording…' : working ? 'Clock out' : 'Clock in'}
+              {punch.isPending ? 'Registrando…' : working ? 'Fichar salida' : 'Fichar entrada'}
             </Button>
           </>
         )}
       </Paper>
 
       {today?.segments?.length > 0 && (
-        <Paper variant="outlined" sx={{ p: 3, mt: 3 }}>
-          <Typography variant="h2" sx={{ fontSize: '1.1rem', mb: 2 }}>
-            Today
+        <Paper variant="outlined" sx={{ p: 3, mt: 2 }}>
+          <Typography variant="h2" sx={{ fontSize: '1rem', mb: 2 }}>
+            Hoy
           </Typography>
           <Stack spacing={1.5} divider={<Divider flexItem />}>
-            {today.segments.map((segment, index) => (
+            {today.segments.map((segment) => (
               <Stack
-                key={index}
+                key={segment.in}
                 direction="row"
                 sx={{ justifyContent: 'space-between', alignItems: 'center' }}
               >
                 <Typography sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {formatTime(segment.in, today.time_zone)}
+                  {timeOf(segment.in, today.time_zone)}
                   {' → '}
-                  {segment.out ? formatTime(segment.out, today.time_zone) : '…'}
+                  {segment.out ? timeOf(segment.out, today.time_zone) : '…'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {formatDuration(segment.seconds)}
+                  {hhmm(segment.seconds)}
                 </Typography>
               </Stack>
             ))}
           </Stack>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-            Times shown in {today.time_zone}. Recorded by the server.
+            Horas de {today.time_zone}. Las pone el servidor, no tu dispositivo.
           </Typography>
         </Paper>
       )}
-    </Container>
+    </Box>
   )
 }

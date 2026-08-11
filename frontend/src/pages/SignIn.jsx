@@ -42,7 +42,7 @@ export default function SignIn() {
         OpenTimeTrack
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 4 }}>
-        Sign in to record your working time.
+        Entra para registrar tu jornada.
       </Typography>
 
       <Paper variant="outlined" sx={{ p: 3 }}>
@@ -55,7 +55,7 @@ export default function SignIn() {
             )}
 
             <TextField
-              label="Email"
+              label="Correo electrónico"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -65,7 +65,7 @@ export default function SignIn() {
               fullWidth
             />
             <TextField
-              label="Password"
+              label="Contraseña"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -76,7 +76,7 @@ export default function SignIn() {
 
             {needsCompany && (
               <TextField
-                label="Company tax number"
+                label="CIF o NIF de la empresa"
                 value={taxId}
                 onChange={(e) => setTaxId(e.target.value)}
                 helperText="Only needed when the same address belongs to several companies."
@@ -85,7 +85,7 @@ export default function SignIn() {
             )}
 
             <Button type="submit" variant="contained" size="large" disabled={busy} fullWidth>
-              {busy ? 'Signing in…' : 'Sign in'}
+              {busy ? 'Entrando…' : 'Entrar'}
             </Button>
           </Stack>
         </Box>

@@ -1,0 +1,713 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-11 18:16+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? "
+"1 : 2;\n"
+
+msgid "Holiday"
+msgstr "Vacaciones"
+
+msgid "Sick leave"
+msgstr "Baja médica"
+
+msgid "Personal leave"
+msgstr "Permiso"
+
+msgid "Other"
+msgstr "Otro"
+
+msgid "Pending"
+msgstr "Pendiente"
+
+msgid "Approved"
+msgstr "Aprobada"
+
+msgid "Rejected"
+msgstr "Rechazada"
+
+msgid "employee"
+msgstr "persona trabajadora"
+
+msgid "type"
+msgstr "tipo"
+
+msgid "from"
+msgstr "desde"
+
+msgid "to"
+msgstr "hasta"
+
+msgid "reason"
+msgstr "motivo"
+
+msgid "status"
+msgstr "estado"
+
+msgid "resolved by"
+msgstr "resuelta por"
+
+msgid "resolved at"
+msgstr "resuelta el"
+
+msgid "supporting document"
+msgstr "justificante"
+
+msgid ""
+"Not available for sick leave: the medical certificate is not stored here. "
+"Since RD 1060/2022 the worker no longer hands it to the employer --- the "
+"INSS sends the data to the company directly."
+msgstr "No disponible en las bajas médicas: el parte no se guarda aquí. Desde el RD 1060/2022 el trabajador ya no lo entrega a la empresa: el INSS le remite los datos directamente."
+
+msgid "absence"
+msgstr "ausencia"
+
+msgid "absences"
+msgstr "ausencias"
+
+msgid "The end date cannot precede the start date."
+msgstr "La fecha final no puede ir antes que la inicial."
+
+msgid ""
+"The medical certificate is not stored. Recording the absence, its dates and "
+"its status is enough for working-time purposes, and since RD 1060/2022 the "
+"worker does not hand the certificate to the employer: the INSS sends the "
+"data to the company."
+msgstr "El parte de baja no se almacena. Para el control horario basta con registrar la ausencia, sus fechas y su estado, y desde el RD 1060/2022 el trabajador no entrega el parte a la empresa: se lo remite el INSS."
+
+msgid ""
+"The medical certificate is not stored. Recording the absence, its dates and "
+"its status is enough, and since RD 1060/2022 the worker does not hand the "
+"certificate to the employer."
+msgstr "El parte de baja no se almacena. Basta con registrar la ausencia, sus fechas y su estado, y desde el RD 1060/2022 el trabajador no entrega el parte a la empresa."
+
+#, python-format
+msgid "There is already leave recorded between %(from)s and %(to)s."
+msgstr "Ya hay una ausencia registrada entre el %(from)s y el %(to)s."
+
+msgid "Leave has since been approved for those dates."
+msgstr "Mientras tanto se ha aprobado otra ausencia para esas fechas."
+
+msgid "That request belongs to somebody else."
+msgstr "Esa solicitud es de otra persona."
+
+msgid "This request has already been resolved."
+msgstr "Esta solicitud ya está resuelta."
+
+msgid "Leave can only be requested for yourself."
+msgstr "Solo puedes solicitar ausencias para ti."
+
+msgid "That person is not in this company."
+msgstr "Esa persona no pertenece a esta empresa."
+
+msgid "You can only see your own balance."
+msgstr "Solo puedes consultar tu propio saldo."
+
+msgid "Invalid credential."
+msgstr "Credencial no válida."
+
+msgid "created at"
+msgstr "creado el"
+
+msgid "updated at"
+msgstr "actualizado el"
+
+msgid "company"
+msgstr "empresa"
+
+msgid "A valid session is required."
+msgstr "Hace falta una sesión válida."
+
+msgid "Only an administrator may perform this operation."
+msgstr "Solo un administrador puede hacer esta operación."
+
+msgid "Manager or administrator profile required."
+msgstr "Hace falta perfil de responsable o de administración."
+
+msgid "Only an administrator may modify this resource."
+msgstr "Solo un administrador puede modificar este recurso."
+
+msgid "The application does not carry the required permission."
+msgstr "La aplicación no tiene el permiso necesario."
+
+msgid "That event does not exist."
+msgstr "Ese fichaje no existe."
+
+msgid "Add a missing event"
+msgstr "Añadir un fichaje que falta"
+
+msgid "Change the time of an event"
+msgstr "Cambiar la hora de un fichaje"
+
+msgid "Void an event that should not exist"
+msgstr "Anular un fichaje que no debió existir"
+
+msgid "kind"
+msgstr "tipo"
+
+msgid "event concerned"
+msgstr "fichaje afectado"
+
+msgid "proposed time"
+msgstr "hora propuesta"
+
+msgid "Why the record does not match what happened. Required."
+msgstr "Por qué el registro no coincide con lo ocurrido. Obligatorio."
+
+msgid "requested by"
+msgstr "solicitada por"
+
+msgid "resolution note"
+msgstr "nota de la resolución"
+
+msgid "resulting event"
+msgstr "fichaje resultante"
+
+msgid "record correction"
+msgstr "corrección del registro"
+
+msgid "record corrections"
+msgstr "correcciones del registro"
+
+msgid "State why the record does not match what happened."
+msgstr "Indica por qué el registro no coincide con lo ocurrido."
+
+msgid "Say which event is being corrected."
+msgstr "Indica qué fichaje se corrige."
+
+msgid "Give the time the event actually happened."
+msgstr "Indica la hora real a la que ocurrió."
+
+msgid "The time cannot be in the future."
+msgstr "La hora no puede ser futura."
+
+msgid "That event belongs to somebody else."
+msgstr "Ese fichaje es de otra persona."
+
+msgid "Say whether the missing event is an entry or an exit."
+msgstr "Indica si el fichaje que falta es una entrada o una salida."
+
+#, python-format
+msgid "An entry was added: %(kind)s at %(when)s."
+msgstr "Se ha añadido un fichaje: %(kind)s a las %(when)s."
+
+#, python-format
+msgid "The time of an entry was changed to %(when)s."
+msgstr "Se ha cambiado la hora de un fichaje a las %(when)s."
+
+#, python-format
+msgid "An entry recorded at %(when)s was voided."
+msgstr "Se ha anulado el fichaje registrado a las %(when)s."
+
+msgid "Your working time record has changed"
+msgstr "Tu registro de jornada ha cambiado"
+
+msgid "The reference matches more than one person."
+msgstr "La referencia coincide con más de una persona."
+
+msgid "No active person matches that reference."
+msgstr "Ninguna persona activa coincide con esa referencia."
+
+msgid "Clock in"
+msgstr "Entrada"
+
+msgid "Clock out"
+msgstr "Salida"
+
+msgid "Web panel"
+msgstr "Panel web"
+
+msgid "Mobile app"
+msgstr "App móvil"
+
+msgid "External application, employee identity"
+msgstr "Aplicación externa, con la identidad de la persona"
+
+msgid "External application, on behalf of the employee"
+msgstr "Aplicación externa, en nombre de la persona"
+
+msgid "Shared terminal"
+msgstr "Terminal compartido"
+
+msgid "Manual correction by an administrator"
+msgstr "Corrección manual de un administrador"
+
+msgid "Data import"
+msgstr "Importación de datos"
+
+msgid "timestamp"
+msgstr "momento"
+
+msgid "source"
+msgstr "origen"
+
+msgid "source application"
+msgstr "aplicación de origen"
+
+msgid "Which application recorded it, when it was not this one."
+msgstr "Qué aplicación lo registró, cuando no fue esta."
+
+msgid "recorded by"
+msgstr "registrado por"
+
+msgid "Set when somebody other than the employee created the record."
+msgstr "Se rellena cuando el registro lo creó alguien que no es la propia persona."
+
+msgid "IP address"
+msgstr "dirección IP"
+
+msgid "device"
+msgstr "dispositivo"
+
+msgid "user agent"
+msgstr "agente de usuario"
+
+msgid "integrity hash"
+msgstr "huella de integridad"
+
+msgid "hash version"
+msgstr "versión de la huella"
+
+msgid "valid"
+msgstr "válido"
+
+msgid "voided at"
+msgstr "anulado el"
+
+msgid "replaced by"
+msgstr "sustituido por"
+
+msgid "clock event"
+msgstr "fichaje"
+
+msgid "clock events"
+msgstr "fichajes"
+
+msgid "This person is deactivated and cannot clock in or out."
+msgstr "Esta persona está dada de baja y no puede fichar."
+
+msgid "You cannot clock in: you have approved leave for today."
+msgstr "No puedes fichar: tienes una ausencia aprobada para hoy."
+
+msgid "It was already void."
+msgstr "Ya estaba anulado."
+
+msgid "Working time record"
+msgstr "Registro de jornada"
+
+msgid "Article 34.9 of the Spanish Workers' Statute (Royal Decree-Law 8/2019)"
+msgstr "Artículo 34.9 del Estatuto de los Trabajadores (Real Decreto-ley 8/2019)"
+
+msgid "Company"
+msgstr "Empresa"
+
+msgid "Tax number"
+msgstr "CIF/NIF"
+
+msgid "Employee"
+msgstr "Persona trabajadora"
+
+msgid "Staff number"
+msgstr "Nº de empleado"
+
+msgid "Period"
+msgstr "Periodo"
+
+msgid "Time zone"
+msgstr "Zona horaria"
+
+msgid "Date"
+msgstr "Fecha"
+
+msgid "Entry"
+msgstr "Entrada"
+
+msgid "Exit"
+msgstr "Salida"
+
+msgid "Hours"
+msgstr "Horas"
+
+msgid "Notes"
+msgstr "Observaciones"
+
+msgid "No records in this period"
+msgstr "Sin registros en este periodo"
+
+msgid "Total for the period"
+msgstr "Total del periodo"
+
+msgid ""
+"Times are recorded by the server, never by the device that requested them, "
+"and are shown in the time zone stated above."
+msgstr "Las horas las registra el servidor, nunca el dispositivo que las solicitó, y se muestran en la zona horaria indicada arriba."
+
+msgid "Generated"
+msgstr "Generado"
+
+msgid "Verification hash"
+msgstr "Huella de verificación"
+
+msgid "two entries with no exit in between"
+msgstr "dos entradas sin salida entre medias"
+
+msgid "exit with no matching entry"
+msgstr "salida sin entrada previa"
+
+msgid "entry with no exit"
+msgstr "entrada sin salida"
+
+msgid "recorded by an application"
+msgstr "registrado por una aplicación"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Dates must be written as YYYY-MM-DD."
+msgstr "Las fechas se escriben como AAAA-MM-DD."
+
+msgid "You may only request your own record."
+msgstr "Solo puedes pedir tu propio registro."
+
+msgid "That person does not exist."
+msgstr "Esa persona no existe."
+
+msgid "Clock in with the employee's own identity"
+msgstr "Fichar con la identidad de la propia persona"
+
+msgid "Clock in on behalf of an employee"
+msgstr "Fichar en nombre de una persona"
+
+msgid "Read clock events and day status"
+msgstr "Consultar fichajes y estado del día"
+
+msgid "Read the list of people"
+msgstr "Consultar la lista de personas"
+
+msgid "Create and update people"
+msgstr "Crear y modificar personas"
+
+msgid "Receive outbound events"
+msgstr "Recibir eventos salientes"
+
+msgid "name"
+msgstr "nombre"
+
+msgid "description"
+msgstr "descripción"
+
+msgid "permissions"
+msgstr "permisos"
+
+msgid "List of granted scopes. Empty means the application can do nothing."
+msgstr "Lista de permisos concedidos. Vacía significa que la aplicación no puede hacer nada."
+
+msgid "active"
+msgstr "activo"
+
+msgid "authorised by"
+msgstr "autorizada por"
+
+msgid "application"
+msgstr "aplicación"
+
+msgid "applications"
+msgstr "aplicaciones"
+
+msgid "label"
+msgstr "etiqueta"
+
+msgid "token hash"
+msgstr "huella del testigo"
+
+msgid "hint"
+msgstr "pista"
+
+msgid "Last characters, to tell one credential from another in the interface."
+msgstr "Últimos caracteres, para distinguir una credencial de otra en la interfaz."
+
+msgid "expires at"
+msgstr "caduca el"
+
+msgid "revoked at"
+msgstr "revocada el"
+
+msgid "last used"
+msgstr "último uso"
+
+msgid "application credential"
+msgstr "credencial de aplicación"
+
+msgid "application credentials"
+msgstr "credenciales de aplicación"
+
+#, python-format
+msgid "%(value)s is not a valid IANA time zone."
+msgstr "%(value)s no es una zona horaria IANA válida."
+
+msgid "legal name"
+msgstr "razón social"
+
+msgid "tax identifier"
+msgstr "identificador fiscal"
+
+msgid "Company tax number (CIF/NIF, VAT, EIN…)."
+msgstr "Identificador fiscal de la empresa (CIF/NIF, VAT, EIN…)."
+
+msgid "country"
+msgstr "país"
+
+msgid "ISO 3166-1 alpha-2 code. Selects the applicable legal rules."
+msgstr "Código ISO 3166-1 alfa-2. Determina las reglas legales aplicables."
+
+msgid "time zone"
+msgstr "zona horaria"
+
+msgid "IANA name. Storage is always UTC; this only affects display."
+msgstr "Nombre IANA. El almacenamiento siempre es UTC; esto solo afecta a cómo se muestra."
+
+msgid "language"
+msgstr "idioma"
+
+msgid ""
+"Language the company works in. A person can override it for themselves; the "
+"browser's setting is only used when neither is set."
+msgstr "Idioma en el que trabaja la empresa. Una persona puede cambiarlo para sí misma; el ajuste del navegador solo se usa cuando no hay ninguno de los dos."
+
+msgid "annual leave days"
+msgstr "días de vacaciones al año"
+
+msgid ""
+"Working days of holiday per reference period. Art. 38 ET sets a floor of 30 "
+"calendar days; the agreement may give more. An individual employee can be "
+"given a different figure."
+msgstr "Días laborables de vacaciones por periodo de cómputo. El art. 38 ET fija un mínimo de 30 días naturales; el convenio puede dar más. A una persona concreta se le puede asignar otra cifra."
+
+msgid "reference period starts in"
+msgstr "el periodo de cómputo empieza en"
+
+msgid ""
+"Month the holiday reference period begins. 1 = calendar year. The period is "
+"not necessarily the calendar year: the agreement decides."
+msgstr "Mes en que empieza el periodo de cómputo de las vacaciones. 1 = año natural. El periodo no es necesariamente el año natural: lo decide el convenio."
+
+msgid "record retention (years)"
+msgstr "conservación del registro (años)"
+
+msgid ""
+"How long clock events are kept. Four years is the floor set by art. 34.9 ET; "
+"a longer period needs its own justification, since keeping data because it "
+"might be useful is not a basis."
+msgstr "Cuánto se conservan los fichajes. Cuatro años es el mínimo del art. 34.9 ET; conservar más tiempo necesita su propia justificación, porque guardar datos por si acaso no es una base."
+
+msgid "security metadata retention (days)"
+msgstr "conservación de los metadatos de seguridad (días)"
+
+msgid ""
+"How long the IP address, device and user agent of each event are kept. They "
+"serve to spot anomalies, not to prove working time: purging them leaves the "
+"record intact."
+msgstr "Cuánto se conservan la dirección IP, el dispositivo y el agente de usuario de cada fichaje. Sirven para detectar anomalías, no para acreditar la jornada: borrarlos deja el registro intacto."
+
+msgid "settings"
+msgstr "ajustes"
+
+msgid "companies"
+msgstr "empresas"
+
+msgid "maximum employees"
+msgstr "máximo de personas"
+
+msgid "maximum administrators"
+msgstr "máximo de administradores"
+
+msgid "maximum storage (MB)"
+msgstr "almacenamiento máximo (MB)"
+
+msgid "enabled features"
+msgstr "funciones activadas"
+
+msgid "company limits"
+msgstr "límites de la empresa"
+
+msgid "department"
+msgstr "departamento"
+
+msgid "departments"
+msgstr "departamentos"
+
+msgid "Manager"
+msgstr "Responsable"
+
+msgid "Administrator"
+msgstr "Administración"
+
+msgid "Null only for platform superusers on self-hosted installs."
+msgstr "Vacío solo para superusuarios de plataforma en instalaciones autoalojadas."
+
+msgid "email address"
+msgstr "correo electrónico"
+
+msgid "first name"
+msgstr "nombre"
+
+msgid "last name"
+msgstr "apellidos"
+
+msgid "role"
+msgstr "perfil"
+
+msgid "staff number"
+msgstr "nº de empleado"
+
+msgid ""
+"The person's identifier in the company's own systems. Acts as a bridge when "
+"an external application records clock events on their behalf."
+msgstr "El identificador de la persona en los sistemas de la propia empresa. Sirve de puente cuando una aplicación externa registra fichajes en su nombre."
+
+msgid "Overrides the company language for this person."
+msgstr "Sustituye el idioma de la empresa para esta persona."
+
+msgid ""
+"Overrides the company figure for this person. Empty means the company's. "
+"Part-time and mid-year joiners are the usual reason."
+msgstr "Sustituye la cifra de la empresa para esta persona. Vacío significa la de la empresa. Lo habitual es la jornada parcial y las altas a mitad de periodo."
+
+msgid "identity provider subject"
+msgstr "identificador en el proveedor de identidad"
+
+msgid "issuer"
+msgstr "emisor"
+
+msgid "admin site access"
+msgstr "acceso al sitio de administración"
+
+msgid "date joined"
+msgstr "fecha de alta"
+
+msgid "person"
+msgstr "persona"
+
+msgid "people"
+msgstr "personas"
+
+msgid "the platform"
+msgstr "la plataforma"
+
+#, python-format
+msgid "Your account at %(company)s"
+msgstr "Tu cuenta en %(company)s"
+
+#, python-format
+msgid "Reset your password at %(company)s"
+msgstr "Restablecer tu contraseña en %(company)s"
+
+msgid "Somebody in this company already uses it."
+msgstr "Ya lo usa alguien de esta empresa."
+
+msgid "That department belongs to another company."
+msgstr "Ese departamento es de otra empresa."
+
+msgid "The employee limit for this company is reached."
+msgstr "Se ha alcanzado el límite de personas de esta empresa."
+
+msgid "A company with this tax number already exists."
+msgstr "Ya existe una empresa con este identificador fiscal."
+
+msgid "Wrong credentials."
+msgstr "Credenciales incorrectas."
+
+msgid ""
+"This is the only active administrator. Appoint another one first, or the "
+"company is left with nobody able to manage it."
+msgstr "Es el único administrador activo. Nombra antes a otro, o la empresa se queda sin nadie que pueda gestionarla."
+
+#| msgid "You can only see your own balance."
+msgid "You cannot deactivate your own account."
+msgstr "No puedes dar de baja tu propia cuenta."
+
+msgid "The link is not valid or has already been used."
+msgstr "El enlace no es válido o ya se ha usado."
+
+msgid "Spanish"
+msgstr "Español"
+
+msgid "English"
+msgstr "Inglés"
+
+msgid "Catalan"
+msgstr "Catalán"
+
+msgid "Galician"
+msgstr "Gallego"
+
+msgid "Basque"
+msgstr "Euskera"
+
+msgid "French"
+msgstr "Francés"
+
+msgid "Portuguese"
+msgstr "Portugués"
+
+msgid "German"
+msgstr "Alemán"
+
+#, python-format
+msgid ""
+"Hello %(user.first_name)s,\n"
+"\n"
+"An account has been created for you at %(company)s to record your working "
+"time."
+msgstr "Hola %(user.first_name)s:\n\nSe te ha creado una cuenta en %(company)s para registrar tu jornada."
+
+#, python-format
+msgid ""
+"Hello %(user.first_name)s,\n"
+"\n"
+"Somebody asked to reset the password of your account at %(company)s."
+msgstr "Hola %(user.first_name)s:\n\nAlguien ha pedido restablecer la contraseña de tu cuenta en %(company)s."
+
+msgid "Open this link to set your password:"
+msgstr "Abre este enlace para establecer tu contraseña:"
+
+#, python-format
+msgid ""
+"The link works once and expires in %(hours)s hours.\n"
+"\n"
+"If it was not you, ignore this message: nothing changes until the link is "
+"used."
+msgstr "El enlace sirve una sola vez y caduca en %(hours)s horas.\n\nSi no has sido tú, ignora este mensaje: no cambia nada hasta que se use el enlace."
+
+#, python-format
+msgid ""
+"Hello %(first_name)s,\n"
+"\n"
+"Your working time record has been changed at %(company)s."
+msgstr "Hola %(first_name)s:\n\nTu registro de jornada en %(company)s ha cambiado."
+
+#, python-format
+msgid ""
+"Reason given: %(reason)s\n"
+"Decided by: %(resolver)s on %(decided_on)s."
+msgstr "Motivo indicado: %(reason)s\nResuelto por: %(resolver)s el %(decided_on)s."
+
+msgid ""
+"The previous version has not been deleted: both are kept in your\n"
+"history, and you can download your full record at any time.\n"
+"\n"
+"If this does not match what happened, tell whoever manages your working time."
+msgstr "La versión anterior no se ha borrado: las dos quedan en tu\nhistorial, y puedes descargar tu registro completo cuando quieras.\n\nSi esto no coincide con lo que pasó, díselo a quien gestione tu jornada."

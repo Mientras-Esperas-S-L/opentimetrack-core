@@ -17,7 +17,7 @@ User = get_user_model()
 class TenantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenant
-        fields = ["id", "name", "tax_id", "country", "time_zone"]
+        fields = ["id", "name", "tax_id", "country", "time_zone", "language"]
         read_only_fields = ["id"]
 
 
@@ -50,6 +50,7 @@ class UserSerializer(serializers.ModelSerializer):
             "department",
             "department_name",
             "locale",
+            "annual_leave_days",
             "is_active",
             "is_federated",
             "date_joined",

@@ -16,6 +16,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.common.exceptions import BusinessRuleError
 from apps.common.models import set_current_tenant
 from apps.common.permissions import (
     IsAdmin,
@@ -23,7 +24,7 @@ from apps.common.permissions import (
     IsManagerOrAdmin,
     ReadForAllWriteForAdmin,
 )
-from apps.users.models import Department
+from apps.users.models import Department, Role
 from apps.users.passwords import resolve_token, send_account_email
 from apps.users.serializers import (
     DepartmentSerializer,
@@ -156,8 +157,55 @@ class UserViewSet(viewsets.ModelViewSet):
             return [IsAdmin()]
         return super().get_permissions()
 
+    def _refuse_if_it_leaves_no_admin(self, person, *, new_role=None, deactivating=False):
+        """Stops a company ending up with nobody able to administer it.
+
+        A company in that state cannot add people, resolve requests, or undo
+        whatever caused it: the only way out is somebody with database access.
+
+        The realistic way in is **not** deactivation --- only an administrator can
+        deactivate, so their own existence guarantees another one remains --- but
+        **demotion**: the sole administrator changing their own role to employee.
+        That is one dropdown away and answers 200 happily.
+
+        `get_queryset`, not `User.objects`: people are not a TenantOwnedModel,
+        because sign-in has to find them before the company is known, so the
+        default manager spans every company. Counting with it would let another
+        company's administrator stand in for this one's.
+        """
+        stays_admin = not deactivating and (new_role or person.role) == Role.ADMIN
+        if stays_admin:
+            return
+
+        others = self.get_queryset().filter(role=Role.ADMIN, is_active=True).exclude(pk=person.pk)
+        if person.role == Role.ADMIN and person.is_active and not others.exists():
+            raise BusinessRuleError(
+                code="last_administrator",
+                message=_(
+                    "This is the only active administrator. Appoint another one first, "
+                    "or the company is left with nobody able to manage it."
+                ),
+            )
+
+    def perform_update(self, serializer):
+        new_role = serializer.validated_data.get("role")
+        if new_role:
+            self._refuse_if_it_leaves_no_admin(serializer.instance, new_role=new_role)
+        serializer.save()
+
     def perform_destroy(self, instance):
         """Deactivate rather than delete: their clock events must survive."""
+        # Found by deactivating the wrong account while testing the panel and
+        # then being unable to sign back in. Undoing it needs somebody else with
+        # the same privilege, and there may not be one.
+        if instance.id == self.request.user.id:
+            raise BusinessRuleError(
+                code="cannot_deactivate_yourself",
+                message=_("You cannot deactivate your own account."),
+            )
+
+        self._refuse_if_it_leaves_no_admin(instance, deactivating=True)
+
         instance.is_active = False
         instance.save(update_fields=["is_active"])
 

@@ -43,3 +43,6 @@ minio-data/
 
 # Playwright MCP
 .playwright-mcp/
+
+# Uploaded files. Test runs leave sample documents here.
+backend/media/

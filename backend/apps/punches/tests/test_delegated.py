@@ -225,19 +225,45 @@ def test_delegation_reaches_the_report(client, company, employee):
 
     Both outputs are checked, because they drifted apart once already -- the PDF
     said it and the CSV kept quiet.
+
+    The language is pinned rather than left to the settings. The note is
+    translated, so without this the test passes or fails depending on which
+    catalogues happen to be compiled --- which is exactly what happened when the
+    Spanish one arrived.
     """
     _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
     as_application(client, token).post(reverse("punch-delegated"), {"employee_ref": "EMP-0003"})
 
-    from django.utils import timezone
+    from django.utils import timezone, translation
 
     today = timezone.now().astimezone(company.tzinfo).date()
-    with tenant_context(company.id):
+    with tenant_context(company.id), translation.override("en"):
         report = build_report(employee=employee, company=company, date_from=today, date_to=today)
 
         assert report.rows[0].delegated
         assert "application" in day_notes(report.rows[0])
         assert "application" in to_csv(report)
+
+
+@pytest.mark.django_db
+def test_the_delegation_note_is_translated(client, company, employee):
+    """And it reaches the report in Spanish too.
+
+    Worth its own test: the note is what tells an inspector the record was not
+    made by the person, so it failing to translate would leave an English
+    sentence in the middle of a Spanish document --- or, worse, go unnoticed.
+    """
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+    as_application(client, token).post(reverse("punch-delegated"), {"employee_ref": "EMP-0003"})
+
+    from django.utils import timezone, translation
+
+    today = timezone.now().astimezone(company.tzinfo).date()
+    with tenant_context(company.id), translation.override("es"):
+        report = build_report(employee=employee, company=company, date_from=today, date_to=today)
+
+        assert "aplicación" in day_notes(report.rows[0])
+        assert "aplicación" in to_csv(report)
 
 
 @pytest.mark.django_db

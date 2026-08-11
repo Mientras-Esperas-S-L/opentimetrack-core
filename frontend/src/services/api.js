@@ -31,8 +31,28 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = tokens.access
   if (token) config.headers.Authorization = `Bearer ${token}`
+
+  // Labels that reach the screen --- absence types, clock-event origins, error
+  // messages --- are translated server-side, and Django picks the language from
+  // this header. Without it the API answers in English regardless of the
+  // interface, which is how "Holiday" ended up next to "Vacaciones".
+  config.headers['Accept-Language'] = preferredLanguage
   return config
 })
+
+/** Language for API responses.
+ *
+ *  Order: the person's own setting, then their company's, then the browser.
+ *  The browser is the weakest of the three because it says where somebody is
+ *  sitting, not what language their employer works in --- and a phone set to
+ *  English does not mean the worker wants their payslip terms in English.
+ */
+let preferredLanguage = navigator.language || 'es'
+
+export const setPreferredLanguage = (session) => {
+  preferredLanguage =
+    session?.user?.locale || session?.tenant?.language || navigator.language || 'es'
+}
 
 // Every API error has the same shape: { error: { code, message, details } }.
 // It is normalised here so no component has to dig through the response.
@@ -53,29 +73,98 @@ api.interceptors.response.use(
   },
 )
 
-export const getHealth = async () => (await api.get('/health/')).data
+const get = async (path, params) => (await api.get(path, { params })).data
+const post = async (path, body, config) => (await api.post(path, body, config)).data
+
+// A list endpoint is paginated; a plain array comes back from the custom
+// actions. Callers should not have to know which, so it is flattened here.
+const rows = (data) => (Array.isArray(data) ? data : (data?.results ?? []))
+
+export const getHealth = () => get('/health/')
+
+// ------------------------------------------------------------------- session
 
 export const signIn = async (credentials) => {
-  const { data } = await api.post('/auth/token/', credentials)
+  const data = await post('/auth/token/', credentials)
   tokens.save(data)
   return data
 }
 
 export const signUp = async (payload) => {
-  const { data } = await api.post('/auth/register/', payload)
+  const data = await post('/auth/register/', payload)
   tokens.save(data)
   return data
 }
 
 export const signOut = async () => {
   try {
-    await api.post('/auth/logout/', { refresh: tokens.refresh })
+    await post('/auth/logout/', { refresh: tokens.refresh })
   } finally {
     tokens.clear()
   }
 }
 
-export const getMe = async () => (await api.get('/auth/me/')).data
-export const getToday = async () => (await api.get('/punches/today/')).data
-export const clock = async (deviceId) => (await api.post('/punches/', { device_id: deviceId })).data
-export const getPunches = async (params) => (await api.get('/punches/', { params })).data
+export const getMe = () => get('/auth/me/')
+
+// ---------------------------------------------------------------- clock events
+
+export const getToday = () => get('/punches/today/')
+export const clock = (deviceId) => post('/punches/', { device_id: deviceId })
+export const getPunches = async (params) => rows(await get('/punches/', params))
+export const voidPunch = async (id, reason) =>
+  (await api.patch(`/punches/${id}/void/`, { reason })).data
+
+// ----------------------------------------------------------------- corrections
+
+export const getCorrections = async (params) => rows(await get('/corrections/', params))
+export const requestCorrection = (payload) => post('/corrections/', payload)
+export const approveCorrection = (id, note = '') => post(`/corrections/${id}/approve/`, { note })
+export const rejectCorrection = (id, note = '') => post(`/corrections/${id}/reject/`, { note })
+
+// --------------------------------------------------------------------- absences
+
+export const getAbsences = async (params) => rows(await get('/absences/', params))
+export const getPendingAbsences = async () => rows(await get('/absences/pending/'))
+export const getLeaveBalance = (employee) => get('/absences/balance/', employee ? { employee } : {})
+export const requestAbsence = (payload) => post('/absences/', payload)
+export const approveAbsence = (id) => post(`/absences/${id}/approve/`)
+export const rejectAbsence = (id) => post(`/absences/${id}/reject/`)
+export const cancelAbsence = (id) => post(`/absences/${id}/cancel/`)
+
+// ---------------------------------------------------------------------- people
+
+export const getEmployees = async (params) => rows(await get('/employees/', params))
+export const getEmployee = (id) => get(`/employees/${id}/`)
+export const createEmployee = (payload) => post('/employees/', payload)
+export const updateEmployee = async (id, payload) =>
+  (await api.patch(`/employees/${id}/`, payload)).data
+export const deactivateEmployee = async (id) => (await api.delete(`/employees/${id}/`)).data
+
+export const getDepartments = async () => rows(await get('/departments/'))
+export const createDepartment = (payload) => post('/departments/', payload)
+
+// -------------------------------------------------------------------- overview
+
+export const getOverview = () => get('/overview/')
+
+// --------------------------------------------------------------------- reports
+
+/** The report is always a file --- PDF or CSV --- never JSON, so there is only
+ *  this one call. `format` is a query parameter, not an Accept header: the view
+ *  declares renderers for both so DRF treats it as content negotiation.
+ *
+ *  Returns the blob and the filename the server chose, plus the fingerprint it
+ *  puts in a header so a consumer can check the document without opening it.
+ */
+export const downloadReport = async (params) => {
+  const response = await api.get('/reports/working-time/', { params, responseType: 'blob' })
+
+  const disposition = response.headers['content-disposition'] ?? ''
+  const match = disposition.match(/filename="?([^"]+)"?/)
+
+  return {
+    blob: response.data,
+    filename: match?.[1] ?? `informe.${params.format ?? 'pdf'}`,
+    fingerprint: response.headers['x-report-hash'] ?? '',
+  }
+}

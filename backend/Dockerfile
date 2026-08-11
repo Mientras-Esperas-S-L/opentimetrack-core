@@ -8,9 +8,11 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# libpq para psycopg; curl para la comprobación de salud del contenedor.
+# libpq for psycopg; curl for the container health check; gettext because the
+# project ships translations and without it `compilemessages` cannot run --- the
+# catalogues stay uncompiled and every string falls back to English.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq5 curl \
+    && apt-get install -y --no-install-recommends libpq5 curl gettext \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------- desarrollo

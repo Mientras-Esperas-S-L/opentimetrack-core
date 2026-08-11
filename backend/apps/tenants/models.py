@@ -56,6 +56,38 @@ class Tenant(BaseModel):
         validators=[validate_time_zone],
         help_text=_("IANA name. Storage is always UTC; this only affects display."),
     )
+    language = models.CharField(
+        _("language"),
+        max_length=10,
+        default=settings.LANGUAGE_CODE,
+        choices=settings.LANGUAGES,
+        help_text=_(
+            "Language the company works in. A person can override it for "
+            "themselves; the browser's setting is only used when neither is set."
+        ),
+    )
+
+    # Holiday entitlement comes from the collective agreement, so both of these
+    # are parameters the company sets, not truths the system knows.
+    annual_leave_days = models.PositiveSmallIntegerField(
+        _("annual leave days"),
+        default=22,
+        help_text=_(
+            "Working days of holiday per reference period. Art. 38 ET sets a floor "
+            "of 30 calendar days; the agreement may give more. An individual "
+            "employee can be given a different figure."
+        ),
+    )
+    leave_year_start_month = models.PositiveSmallIntegerField(
+        _("reference period starts in"),
+        default=1,
+        choices=[(m, m) for m in range(1, 13)],
+        help_text=_(
+            "Month the holiday reference period begins. 1 = calendar year. The "
+            "period is not necessarily the calendar year: the agreement decides."
+        ),
+    )
+
     record_retention_years = models.PositiveSmallIntegerField(
         _("record retention (years)"),
         default=4,

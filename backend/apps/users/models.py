@@ -127,6 +127,15 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         blank=True,
         help_text=_("Overrides the company language for this person."),
     )
+    annual_leave_days = models.PositiveSmallIntegerField(
+        _("annual leave days"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Overrides the company figure for this person. Empty means the "
+            "company's. Part-time and mid-year joiners are the usual reason."
+        ),
+    )
 
     # Federated identity. `oidc_sub` is the provider-issued identifier and does
     # not change when the person changes email address or surname.

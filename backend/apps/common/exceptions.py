@@ -33,16 +33,16 @@ CODE_BY_STATUS = {
 
 
 class BusinessRuleError(exceptions.APIException):
-    """Regla de negocio incumplida. Responde 409, no 400.
+    """A business rule was broken. Answers 409, not 400.
 
-    Un 400 dice «lo que me has mandado está mal escrito»; esto dice «está bien
-    escrito pero no se puede hacer», que es distinto y el cliente lo trata de
-    otra forma. Ejemplo: fichar con una ausencia aprobada para hoy.
+    A 400 says "what you sent me is malformed"; this says "it is well
+    formed but cannot be done", which is a different thing and the client
+    handles it differently. Example: clocking in with approved leave for today.
     """
 
     status_code = 409
     default_code = "business_rule_violated"
-    default_detail = "La operación no es posible en el estado actual."
+    default_detail = "The operation is not possible in the current state."
 
     def __init__(self, code: str, message: str, details: dict | None = None):
         self.code = code

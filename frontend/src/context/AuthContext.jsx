@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { getMe, signIn as apiSignIn, signOut as apiSignOut, tokens } from '../services/api.js'
+import {
+  getMe,
+  setPreferredLanguage,
+  signIn as apiSignIn,
+  signOut as apiSignOut,
+  tokens,
+} from '../services/api.js'
 import { AuthContext } from './authContext.js'
 
 export function AuthProvider({ children }) {
@@ -19,7 +25,10 @@ export function AuthProvider({ children }) {
       }
       try {
         const data = await getMe()
-        if (!cancelled) setSession(data)
+        if (!cancelled) {
+          setPreferredLanguage(data)
+          setSession(data)
+        }
       } catch {
         tokens.clear()
       } finally {
@@ -35,6 +44,7 @@ export function AuthProvider({ children }) {
 
   const signIn = useCallback(async (credentials) => {
     const data = await apiSignIn(credentials)
+    setPreferredLanguage(data)
     setSession({ user: data.user, tenant: data.tenant })
     return data
   }, [])
