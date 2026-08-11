@@ -1,0 +1,27 @@
+# Núcleo
+Django==5.1.5
+djangorestframework==3.15.2
+django-environ==0.11.2
+psycopg[binary]==3.2.3
+
+# API
+drf-spectacular==0.28.0
+django-filter==24.3
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.6.0
+
+# Infraestructura
+redis==5.2.1
+django-redis==5.4.0
+celery==5.4.0
+
+# Almacenamiento S3 / MinIO
+django-storages==1.14.4
+boto3==1.35.81
+
+# Contraseñas (RF-01.6: hashing fuerte)
+argon2-cffi==23.1.0
+
+# Servidor
+gunicorn==23.0.0
+whitenoise==6.8.2

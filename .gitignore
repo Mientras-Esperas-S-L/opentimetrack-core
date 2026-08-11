@@ -40,3 +40,6 @@ minio-data/
 .idea/
 *.swp
 .DS_Store
+
+# Playwright MCP
+.playwright-mcp/

@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ott
+          POSTGRES_PASSWORD: ott
+          POSTGRES_DB: opentimetrack_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ott"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      SECRET_KEY: ci-only-not-a-secret
+      DEBUG: "true"
+      DATABASE_URL: postgresql://ott:ott@localhost:5432/opentimetrack_test
+      REDIS_URL: redis://localhost:6379/0
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements/*.txt
+
+      - name: Instalar dependencias
+        run: pip install -r requirements/dev.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Formato
+        run: ruff format --check .
+
+      - name: Migraciones sin generar
+        # Si un modelo cambió y nadie hizo makemigrations, la CI cae aquí y no
+        # en el despliegue.
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Pruebas
+        run: pytest --cov=apps --cov-report=term-missing
+
+      - name: El esquema OpenAPI compila
+        # Un cambio de API sin reflejo en el esquema rompe el contrato con los
+        # clientes; se detecta aquí.
+        run: python manage.py spectacular --fail-on-warn --file /dev/null
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Construir
+        run: npm run build

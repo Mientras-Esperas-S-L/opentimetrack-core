@@ -1,0 +1,50 @@
+[project]
+name = "opentimetrack-core"
+version = "0.1.0"
+description = "Servicio de registro horario conforme al Art. 34.9 ET"
+requires-python = ">=3.12"
+license = { text = "AGPL-3.0-or-later" }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["migrations", "staticfiles"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # isort: stdlib -> terceros -> locales
+    "UP",   # pyupgrade
+    "B",    # bugbear
+    "C4",   # comprehensions
+    "DJ",   # reglas propias de Django
+    "S",    # bandit: seguridad
+    "T20",  # sin print() olvidados
+    "RUF",
+]
+ignore = [
+    "S101",  # assert: pytest lo usa por diseño
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*/tests/*" = ["S105", "S106"]      # credenciales de prueba
+"config/settings/*" = ["F403", "F405"]  # el patrón de settings usa import *
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.dev"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "--strict-markers --disable-warnings"
+testpaths = ["apps"]
+
+[tool.coverage.run]
+source = ["apps"]
+omit = ["*/migrations/*", "*/tests/*", "*/apps.py"]
+
+[tool.coverage.report]
+# Objetivo declarado: 85 % en las apps de dominio.
+fail_under = 0
+show_missing = true
