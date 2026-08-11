@@ -16,6 +16,8 @@ from apps.reports.views import ReportView
 from apps.users.views import (
     DepartmentViewSet,
     MeView,
+    PasswordResetRequestView,
+    PasswordSetView,
     SignInView,
     SignOutView,
     SignUpView,
@@ -32,6 +34,8 @@ auth_patterns = [
     path("token/", SignInView.as_view(), name="token"),
     path("logout/", SignOutView.as_view(), name="logout"),
     path("me/", MeView.as_view(), name="me"),
+    path("password-reset/", PasswordResetRequestView.as_view(), name="password-reset"),
+    path("set-password/", PasswordSetView.as_view(), name="set-password"),
 ]
 
 urlpatterns = [

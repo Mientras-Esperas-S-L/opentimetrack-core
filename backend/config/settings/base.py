@@ -224,6 +224,14 @@ USE_TZ = True
 # ------------------------------------------------------------------------ correo
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-reply@opentimetrack.local")
+
+# Where the password links point. The panel lives apart from the API, so it
+# cannot be derived from the request.
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
+
+# How long an account link lasts, in seconds.
+PASSWORD_RESET_TIMEOUT = env.int("PASSWORD_RESET_TIMEOUT", default=60 * 60 * 24)
 
 # ------------------------------------------------------------------------ registro
 

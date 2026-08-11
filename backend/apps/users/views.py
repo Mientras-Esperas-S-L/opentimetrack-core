@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import logging
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -21,8 +24,11 @@ from apps.common.permissions import (
     ReadForAllWriteForAdmin,
 )
 from apps.users.models import Department
+from apps.users.passwords import resolve_token, send_account_email
 from apps.users.serializers import (
     DepartmentSerializer,
+    PasswordResetRequestSerializer,
+    PasswordSetSerializer,
     SignInSerializer,
     SignUpSerializer,
     TenantSerializer,
@@ -169,3 +175,67 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(tenant=self.request.user.tenant)
+
+
+@extend_schema(tags=["auth"])
+class PasswordResetRequestView(APIView):
+    """Asks for a link to set a new password.
+
+    Always answers 204, whether the address exists or not. Telling them apart
+    would turn this into a way of finding out who works where.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes: list = []
+    throttle_scope = "login"
+
+    @extend_schema(request=PasswordResetRequestSerializer, responses={204: None}, auth=[])
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"].strip().lower()
+
+        # One link per account: the same address may belong to several
+        # companies, and each message names its own.
+        for user in User.objects.filter(email__iexact=email, is_active=True):
+            if user.is_federated:
+                # Their credentials belong to the identity provider; a link from
+                # here would set a password that can never be used.
+                logger.info("Recovery requested for a federated account: %s", user.email)
+                continue
+            send_account_email(user, base_url=settings.FRONTEND_URL)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["auth"])
+class PasswordSetView(APIView):
+    """Sets the password from the link, and signs the person in."""
+
+    permission_classes = [AllowAny]
+    authentication_classes: list = []
+    throttle_scope = "login"
+
+    @extend_schema(request=PasswordSetSerializer, responses={200: None}, auth=[])
+    def post(self, request):
+        serializer = PasswordSetSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = resolve_token(serializer.validated_data["uid"], serializer.validated_data["token"])
+        if user is None:
+            raise DRFValidationError(
+                {"detail": _("The link is not valid or has already been used.")}
+            )
+
+        user.set_password(serializer.validated_data["password"])
+        user.save(update_fields=["password"])
+        set_current_tenant(user.tenant_id)
+
+        # Straight in, so nobody has to type the password they just chose.
+        return Response(
+            {
+                **issue_tokens(user),
+                "user": UserSerializer(user).data,
+                "tenant": TenantSerializer(user.tenant).data if user.tenant else None,
+            }
+        )
