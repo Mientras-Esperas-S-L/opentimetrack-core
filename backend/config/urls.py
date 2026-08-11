@@ -11,6 +11,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.routers import DefaultRouter
 
 from apps.common.views import HealthView
+from apps.punches.correction_views import CorrectionViewSet
 from apps.punches.delegated import DelegatedPunchView
 from apps.punches.views import PunchViewSet
 from apps.reports.views import ReportView
@@ -29,6 +30,7 @@ router = DefaultRouter()
 router.register("employees", UserViewSet, basename="employee")
 router.register("departments", DepartmentViewSet, basename="department")
 router.register("punches", PunchViewSet, basename="punch")
+router.register("corrections", CorrectionViewSet, basename="correction")
 
 auth_patterns = [
     path("register/", SignUpView.as_view(), name="register"),

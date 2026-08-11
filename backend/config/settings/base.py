@@ -178,6 +178,12 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "SCHEMA_PATH_PREFIX": "/api/",
     "COMPONENT_SPLIT_REQUEST": True,
+    # PunchType appears both on the clock event and on a correction request.
+    # Without this the generator invents two names for one set of choices, and a
+    # client generated from the schema ends up with duplicate types.
+    "ENUM_NAME_OVERRIDES": {
+        "PunchTypeEnum": "apps.punches.models.PunchType.choices",
+    },
 }
 
 # --------------------------------------------------------------- almacenamiento

@@ -146,3 +146,21 @@ class Punch(TenantOwnedModel):
     def was_delegated(self) -> bool:
         """True when somebody other than the employee produced the record."""
         return self.source in {PunchSource.DELEGATED, PunchSource.ADMIN, PunchSource.IMPORT}
+
+
+# Corrections live in their own module for readability; Django needs them
+# imported here to discover the model.
+from apps.punches.corrections import (  # noqa: E402
+    CorrectionKind,
+    CorrectionStatus,
+    PunchCorrection,
+)
+
+__all__ = [
+    "CorrectionKind",
+    "CorrectionStatus",
+    "Punch",
+    "PunchCorrection",
+    "PunchSource",
+    "PunchType",
+]
