@@ -122,6 +122,11 @@ ESPANA = LegalFramework(
         # Tampoco incumple un artículo: es un error de planificación, como el de
         # poner a alguien de vacaciones.
         "outside_the_contract": Citation(""),
+        # Sobre lo fichado, no sobre lo planificado. El art. 34.1 habla de horas
+        # trabajadas, y quien no tiene cuadrante ---horario flexible--- no tenía
+        # ninguna comprobación.
+        "worked_over_the_maximum": Citation("Art. 34.1 ET"),
+        "worked_over_the_contract": Citation("Art. 12.5 ET"),
         "break_owed": Citation("Art. 34.4 ET"),
         "short_weekly_rest": Citation("Art. 37.1 ET"),
         "looks_like_night_work": Citation("Art. 36.1 ET"),

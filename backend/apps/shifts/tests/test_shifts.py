@@ -12,7 +12,7 @@ it is measured from the previous day's end --- which is itself on another date.
 
 from __future__ import annotations
 
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -312,6 +312,40 @@ def test_every_finding_says_who_it_is_about(company, worker):
     assert len(findings) > 1, "the roster was meant to break several rules"
     nameless = [f.code for f in findings if not f.employee_name]
     assert nameless == []
+
+
+@pytest.mark.django_db
+def test_a_finding_about_somebody_with_no_roster_still_names_them(company, worker):
+    """The case the pass above cannot cover, and it came out blank on screen.
+
+    The names come from the roster, and the whole point of checking the record
+    is to reach people who have none --- anybody with no fixed schedule. Their
+    warning has to carry its own name.
+    """
+    from apps.punches.models import Punch, PunchSource, PunchType
+    from apps.users.models import WorkingTimeRegime
+
+    with tenant_context(company.id):
+        worker.regime = WorkingTimeRegime.VARIABLE
+        worker.save(update_fields=["regime"])
+
+        # A full week of long days, and not one shift.
+        for offset in range(6):
+            day = date(2026, 9, 7) + timedelta(days=offset)
+            for hour, kind in ((7, PunchType.IN), (19, PunchType.OUT)):
+                Punch.objects.create(
+                    tenant=company,
+                    employee=worker,
+                    timestamp=datetime.combine(day, time(hour, 0), tzinfo=company.tzinfo),
+                    punch_type=kind,
+                    source=PunchSource.WEB,
+                )
+
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    worked = [f for f in findings if f.code == "worked_over_the_maximum"]
+    assert worked, "seventy-two hours in a week and nothing said so"
+    assert worked[0].employee_name == worker.get_full_name()
 
 
 @pytest.mark.django_db

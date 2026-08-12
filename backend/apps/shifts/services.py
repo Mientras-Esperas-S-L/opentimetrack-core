@@ -151,6 +151,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
         findings.extend(_check_under_eighteen(roster, rules, framework.minors, first, last))
     findings.extend(_check_leave_clashes(first, last, employee))
     findings.extend(_check_outside_the_contract(by_person))
+    findings.extend(_check_time_actually_worked(company, rules, first, last, employee))
 
     # The citation comes from the company's country, not from the place the
     # finding was built. Nine of them used to be typed in beside each `Finding`,
@@ -161,8 +162,15 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     # Filled in one pass rather than at each of the nine places a Finding is
     # built: one of them would be forgotten, and a warning about a person whose
     # name is missing reads like a bug in the warning.
+    # Only the blanks. The names map is built from the roster, and somebody with
+    # no fixed schedule has no roster at all --- their findings come from the
+    # record and already carry the name. Overwriting would blank exactly the
+    # people the worked-time check exists for.
     names = {shift.employee_id: shift.employee.get_full_name() for shift in shifts}
-    findings = [replace(f, employee_name=names.get(f.employee_id, "")) for f in findings]
+    findings = [
+        f if f.employee_name else replace(f, employee_name=names.get(f.employee_id, ""))
+        for f in findings
+    ]
 
     return sorted(findings, key=lambda f: (f.day, f.code))
 
@@ -477,6 +485,91 @@ def _check_under_eighteen(roster, rules, minors, first, last) -> list[Finding]:
                 )
             )
 
+    return found
+
+
+def _check_time_actually_worked(company, rules, first, last, employee) -> list[Finding]:
+    """The same limits, against the record instead of the plan.
+
+    Every other check here reads the roster, and that leaves two holes.
+
+    Somebody with no fixed schedule has no roster at all --- which is right,
+    there is nothing to plan --- and so had **no limits check of any kind**. They
+    could work sixty hours a week and nothing said a word.
+
+    And for everybody else the roster is a plan. A company that rosters forty
+    and works fifty is over the maximum, and art. 34.1 ET is about hours
+    actually worked, not hours intended.
+
+    So this reads punches. Weeks only fully inside the window, for the same
+    reason as the roster check: a half-counted week reported as an excess sends
+    somebody looking for hours that are not there.
+    """
+    from apps.punches.models import Punch, PunchType
+
+    zone = company.tzinfo
+    punches = Punch.objects.filter(
+        timestamp__gte=datetime.combine(first, dt_time.min, tzinfo=zone),
+        timestamp__lt=datetime.combine(last + timedelta(days=1), dt_time.min, tzinfo=zone),
+        is_active=True,
+    ).select_related("employee")
+    if employee is not None:
+        punches = punches.filter(employee=employee)
+
+    # Pair each person's events into worked spans. An unclosed one is left out
+    # rather than guessed at: inventing an end would put hours in the total that
+    # nobody recorded.
+    spans: dict = {}
+    for punch in punches.order_by("employee_id", "timestamp"):
+        bucket = spans.setdefault(
+            punch.employee_id, {"person": punch.employee, "open": None, "weeks": {}}
+        )
+        if punch.punch_type == PunchType.IN:
+            bucket["open"] = punch.timestamp
+        elif bucket["open"] is not None:
+            local = bucket["open"].astimezone(zone)
+            year, week, _weekday = local.date().isocalendar()
+            hours = (punch.timestamp - bucket["open"]).total_seconds() / 3600
+            bucket["weeks"][(year, week)] = bucket["weeks"].get((year, week), 0) + hours
+            bucket["open"] = None
+
+    ceiling = float(rules.weekly_hours)
+    found = []
+    for employee_id, bucket in spans.items():
+        person = bucket["person"]
+        agreed_pair = person.agreed_hours(rules)
+        agreed = agreed_pair[0] if agreed_pair and agreed_pair[1] == "WEEK" else None
+
+        for (year, week), hours in bucket["weeks"].items():
+            monday = date.fromisocalendar(year, week, 1)
+            if monday < first or monday + timedelta(days=6) > last:
+                continue
+
+            if hours > ceiling:
+                found.append(
+                    Finding(
+                        day=monday,
+                        employee_id=employee_id,
+                        code="worked_over_the_maximum",
+                        employee_name=person.get_full_name(),
+                        message=_(
+                            "%(hours)s h actually worked that week, over the %(limit)s h "
+                            "maximum. This is the record, not the roster."
+                        )
+                        % {"hours": f"{hours:.1f}", "limit": f"{ceiling:g}"},
+                    )
+                )
+            elif agreed is not None and hours > agreed:
+                found.append(
+                    Finding(
+                        day=monday,
+                        employee_id=employee_id,
+                        code="worked_over_the_contract",
+                        employee_name=person.get_full_name(),
+                        message=_("%(hours)s h actually worked against %(agreed)s h contracted.")
+                        % {"hours": f"{hours:.1f}", "agreed": f"{agreed:g}"},
+                    )
+                )
     return found
 
 
