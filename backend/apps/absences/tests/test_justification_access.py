@@ -175,3 +175,80 @@ def test_with_a_filesystem_it_serves_the_bytes(company):
     assert response.status_code == 200
     assert b"contenido en disco" in b"".join(response.streaming_content)
     assert "attachment" in response.headers.get("Content-Disposition", "")
+
+
+# ------------------------------------------------------ what may be attached
+#
+# The field accepted anything of any size. Access control was the half that had
+# been thought about; this is the other half.
+
+
+def attach(client, name, content, content_type, day="2026-09-01"):
+    return client.post(
+        "/api/absences/",
+        {
+            "absence_type": AbsenceType.PERSONAL,
+            "start_date": day,
+            "end_date": day,
+            "justification": SimpleUploadedFile(name, content, content_type=content_type),
+        },
+        format="multipart",
+    )
+
+
+@pytest.mark.django_db
+def test_a_supporting_document_that_is_not_a_document_is_refused(company):
+    """On object storage this matters more than it looks. That path redirects
+    to a signed URL, so the file comes back from the storage domain with the
+    content type it was uploaded with: an .html would render there, on a domain
+    the company trusts, with somebody else's document inside it."""
+    worker = make(company, "ana@example.com")
+
+    response = attach(client_for(worker), "trampa.html", b"<script>alert(1)</script>", "text/html")
+
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_renaming_it_does_not_get_it_in(company):
+    """A whitelist on the extension is only worth anything if the extension is
+    what is checked, not the content type the client claims."""
+    worker = make(company, "ana@example.com")
+
+    response = attach(client_for(worker), "trampa.svg", b"<svg onload=alert(1)>", "application/pdf")
+
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_a_pdf_is_accepted(company):
+    """The check on the check: a whitelist that refuses the ordinary case is
+    not a whitelist, it is an outage."""
+    worker = make(company, "ana@example.com")
+
+    response = attach(client_for(worker), "parte.pdf", b"%PDF-1.4 fake", "application/pdf")
+
+    assert response.status_code == 201
+
+
+@pytest.mark.django_db
+def test_a_photo_of_the_document_is_accepted(company):
+    """How most of them actually arrive."""
+    worker = make(company, "ana@example.com")
+
+    response = attach(client_for(worker), "foto.jpg", b"\xff\xd8\xff fake", "image/jpeg")
+
+    assert response.status_code == 201
+
+
+@pytest.mark.django_db
+def test_an_oversized_file_is_refused(company):
+    """No limit meant the disk on a filesystem deployment and the bill on
+    object storage, at the discretion of anybody with a session."""
+    worker = make(company, "ana@example.com")
+
+    response = attach(
+        client_for(worker), "enorme.pdf", b"x" * (11 * 1024 * 1024), "application/pdf"
+    )
+
+    assert response.status_code == 400

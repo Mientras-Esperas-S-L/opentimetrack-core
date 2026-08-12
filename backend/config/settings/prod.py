@@ -57,6 +57,12 @@ _storage_options = {
     # against SeaweedFS in development, so the failure would only appear on the
     # day of the first real deployment.
     "signature_version": "s3v4",
+    # Downloaded, never rendered. This path redirects to a signed URL, so the
+    # file comes back from the storage domain and not from ours: without this
+    # header an uploaded .html would render there, on a domain the company
+    # trusts, carrying somebody else's document. The extension whitelist in
+    # apps/absences/uploads.py is the other half.
+    "object_parameters": {"ContentDisposition": "attachment"},
     # Providers that are not AWS still want a region in the signature; without
     # one boto sends an empty string and some of them refuse it.
     "region_name": env("STORAGE_REGION", default="us-east-1"),
@@ -64,7 +70,10 @@ _storage_options = {
 
 STORAGE_ENCRYPTION = env("STORAGE_ENCRYPTION", default="")
 if STORAGE_ENCRYPTION:
-    _storage_options["object_parameters"] = {"ServerSideEncryption": STORAGE_ENCRYPTION}
+    # Merged, not replaced: assigning here used to be safe and now would drop
+    # the ContentDisposition above, so turning encryption on would quietly turn
+    # the download-only header off.
+    _storage_options["object_parameters"]["ServerSideEncryption"] = STORAGE_ENCRYPTION
 
 STORAGE_BACKEND = env("STORAGE_BACKEND", default="s3")
 

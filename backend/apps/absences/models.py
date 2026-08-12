@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from apps.absences.uploads import validate_extension, validate_size
 from apps.common.models import TenantOwnedModel
 
 
@@ -55,6 +56,7 @@ class Absence(TenantOwnedModel):
         _("supporting document"),
         upload_to="justifications/%Y/%m/",
         blank=True,
+        validators=[validate_extension, validate_size],
         help_text=_(
             "Not available for sick leave: the medical certificate is not stored "
             "here. Since RD 1060/2022 the worker no longer hands it to the "

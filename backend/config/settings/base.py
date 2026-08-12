@@ -163,11 +163,31 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
     "EXCEPTION_HANDLER": "apps.common.exceptions.api_exception_handler",
+    # Without these three, the rates below are decoration. DRF only reads
+    # `throttle_scope` when ScopedRateThrottle is among the classes, and only
+    # applies the anon/user rates when those classes are listed --- so the four
+    # limits were declared and nothing enforced them: unlimited password
+    # guessing against /api/auth/token/, and unlimited recovery mail to any
+    # address somebody cared to name.
+    "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.ScopedRateThrottle",
+        "rest_framework.throttling.AnonRateThrottle",
+        # Not DRF's UserRateThrottle: it keys on `request.user.pk`, and an
+        # application authenticates as a stand-in with no primary key. See
+        # apps/common/throttling.py.
+        "apps.common.throttling.PersonRateThrottle",
+        "apps.common.throttling.ApplicationRateThrottle",
+    ),
     "DEFAULT_THROTTLE_RATES": {
         "anon": "60/min",
         "user": "1000/hour",
+        # Password guessing and recovery mail. Per address for anonymous
+        # callers, which is what an attacker varies last.
         "login": "5/min",
         "punch": "10/min",
+        # An integration polls, so it gets more room than a person --- and its
+        # own bucket, so a loop in one client cannot starve the staff.
+        "application": "6000/hour",
     },
 }
 

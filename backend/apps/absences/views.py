@@ -25,6 +25,7 @@ from apps.absences.services import (
     request_absence,
     vacation_balance,
 )
+from apps.absences.uploads import validate_extension, validate_size
 from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
@@ -75,7 +76,15 @@ class AbsenceRequestSerializer(serializers.Serializer):
     start_date = serializers.DateField()
     end_date = serializers.DateField()
     reason = serializers.CharField(required=False, allow_blank=True, default="")
-    justification = serializers.FileField(required=False, allow_null=True)
+    # The same two validators the model carries. Without them here the model's
+    # `full_clean` still refuses --- but as a Django ValidationError, which DRF
+    # does not translate, so a file that was too big came back as a 500 instead
+    # of a message saying how big the limit is.
+    justification = serializers.FileField(
+        required=False,
+        allow_null=True,
+        validators=[validate_extension, validate_size],
+    )
     # Managers may file leave on somebody's behalf; an employee may not.
     employee = serializers.UUIDField(required=False, allow_null=True)
 
