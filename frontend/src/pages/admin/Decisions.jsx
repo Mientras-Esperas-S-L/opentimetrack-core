@@ -236,7 +236,20 @@ export default function Decisions() {
                 reason={absence.reason}
                 onApprove={() => decide.mutate({ action: approveAbsence, id: absence.id })}
                 onReject={() => openReject(rejectAbsence, absence.id, false)}
-              />
+              >
+                {/* Aquí y no en otra pantalla: quien decide lo necesita **al
+                    decidir**, y si hay que ir a buscarlo nadie lo mira. No
+                    impide aprobar: todos los topes del catálogo son el suelo
+                    legal y el convenio mejora cualquiera. */}
+                {absence.over_the_limit && (
+                  <Alert severity="warning" variant="outlined" sx={{ mt: 1.5 }}>
+                    Con esto se pasaría del tope: lleva{' '}
+                    <strong>{absence.over_the_limit.used}</strong> de{' '}
+                    {absence.over_the_limit.allowance}. Se puede aprobar igual —el convenio
+                    puede dar más de lo que consta en el catálogo—, pero conviene saberlo.
+                  </Alert>
+                )}
+              </RequestCard>
             ))}
           </Stack>
         ))}

@@ -25,6 +25,7 @@ import {
   getAbsences,
   getLeaveBalance,
   getLeaveTypes,
+  getLeaveUsage,
   PAGE_SIZE,
   requestAbsence,
 } from '../../services/api.js'
@@ -117,6 +118,26 @@ const FAMILIES = {
   UNPAID_LEAVE: 'Sin sueldo',
 }
 
+const UNITS = {
+  DAYS_CALENDAR: 'días naturales',
+  DAYS_WORKING: 'días laborables',
+  HOURS: 'horas',
+  WEEKS: 'semanas',
+}
+
+const PERIODS = {
+  YEAR: 'este año',
+  MONTH: 'este mes',
+  WEEK: 'esta semana',
+  DAY: 'hoy',
+}
+
+/** Sin decimales cuando no los tiene: «2 de 4», no «2,00 de 4,00». */
+const formatAmount = (value) => {
+  const n = Number(value ?? 0)
+  return (n % 1 === 0 ? n.toString() : n.toFixed(2).replace(/0$/, '')).replace('.', ',')
+}
+
 const hoursBetween = (from, to) => {
   if (!from || !to) return 0
   const [h1, m1] = from.split(':').map(Number)
@@ -124,7 +145,7 @@ const hoursBetween = (from, to) => {
   return Math.max(0, (h2 * 60 + m2 - (h1 * 60 + m1)) / 60)
 }
 
-function LeaveDialog({ open, onClose, onSubmit, saving, error, types }) {
+function LeaveDialog({ open, onClose, onSubmit, saving, error, types, usage }) {
   const [form, setForm] = useState({
     leave_type: null,
     start_date: today(),
@@ -141,6 +162,9 @@ function LeaveDialog({ open, onClose, onSubmit, saving, error, types }) {
   // redondearía o convertiría el saldo en un decimal que la ley no usa, así que
   // el servidor lo rechaza y aquí ni se ofrece.
   const canBePartial = Boolean(kind) && kind.family !== 'VACATION'
+  // Lo que le queda de este permiso, si tiene tope y se acumula. Aquí y no en
+  // otra pantalla: es justo antes de pedir cuando sirve de algo.
+  const left = usage?.find((row) => row.leave_type === kind?.id) ?? null
 
   const set = (field) => (event) => {
     const next = { ...form, [field]: event.target.value }
@@ -229,6 +253,22 @@ function LeaveDialog({ open, onClose, onSubmit, saving, error, types }) {
                 />
               )}
             />
+
+            {left && (
+              <Alert
+                severity={left.remaining <= 0 ? 'warning' : 'info'}
+                variant="outlined"
+              >
+                Llevas <strong>{formatAmount(left.used)}</strong> de{' '}
+                {formatAmount(left.allowance)} {UNITS[left.unit] ?? ''}{' '}
+                {PERIODS[left.period] ?? ''}.{' '}
+                {left.remaining > 0
+                  ? `Te quedan ${formatAmount(left.remaining)}.`
+                  : 'No te queda nada de este permiso en este periodo.'}
+                {left.estimated &&
+                  ' La duración de tu jornada se ha estimado: no hay cuadrante de ese día.'}
+              </Alert>
+            )}
 
             {/* La nota del artículo, cuando la hay. Es lo que evita la consulta
                 a la gestoría: quién cuenta como familiar, si hay que avisar,
@@ -376,6 +416,10 @@ export default function MyLeave() {
     queryKey: ['leave-types'],
     queryFn: () => getLeaveTypes(),
   })
+  const { data: leaveUsage = [] } = useQuery({
+    queryKey: ['leave-usage'],
+    queryFn: () => getLeaveUsage(),
+  })
   const { data: absences, isLoading } = useQuery({
     queryKey: ['absences', 'mine', page],
     queryFn: () => getAbsences({ page }),
@@ -518,6 +562,7 @@ export default function MyLeave() {
       <LeaveDialog
         open={asking}
         types={leaveTypes}
+        usage={leaveUsage}
         saving={ask.isPending}
         error={error}
         onClose={() => {

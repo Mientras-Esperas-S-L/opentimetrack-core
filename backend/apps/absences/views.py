@@ -22,11 +22,13 @@ from apps.absences.models import Absence, AbsenceStatus, AbsenceType, LeaveType
 from apps.absences.services import (
     approve_absence,
     cancel_absence,
+    leave_over_the_limit,
     reject_absence,
     request_absence,
     vacation_balance,
 )
 from apps.absences.uploads import validate_extension, validate_size
+from apps.absences.usage import usage_summary
 from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
@@ -52,6 +54,16 @@ class AbsenceSerializer(serializers.ModelSerializer):
     #: able to say "art. 37.3.b" beside a row without a second request per row.
     basis = serializers.CharField(source="leave_type.basis", read_only=True, default="")
     hours = serializers.FloatField(read_only=True)
+    #: Lo que queda del permiso, cuando lo pedido se pasa. Va con la solicitud
+    #: porque quien decide lo necesita **al decidir**, y buscarlo aparte
+    #: significa que nadie lo mira.
+    over_the_limit = serializers.SerializerMethodField()
+
+    def get_over_the_limit(self, obj) -> dict | None:
+        if obj.status != AbsenceStatus.PENDING:
+            return None
+        return leave_over_the_limit(obj)
+
     # Whether there is one, not where it lives. The raw URL would be a bearer
     # secret sitting in every list response; the file comes from the
     # `justification` action, which checks who is asking.
@@ -77,6 +89,7 @@ class AbsenceSerializer(serializers.ModelSerializer):
             "end_time",
             "hours",
             "days",
+            "over_the_limit",
             "reason",
             "status",
             "status_display",
@@ -159,6 +172,30 @@ class LeaveTypeViewSet(viewsets.ModelViewSet):
                 % {"count": used},
             )
         instance.delete()
+
+    @extend_schema(
+        parameters=[OpenApiParameter("employee", str, description="UUID; defaults to the caller")],
+        responses={200: dict},
+    )
+    @action(detail=False, methods=["get"])
+    def usage(self, request):
+        """What is left of each leave that has a limit.
+
+        The question the catalogue could not answer: it says art. 37.9 grants
+        four days a year, and this says two of them are gone.
+        """
+        employee = request.user
+        wanted = request.query_params.get("employee")
+        if wanted and wanted != str(request.user.id):
+            person = person_in_scope(request.user, wanted)
+            if person is None:
+                raise BusinessRuleError(
+                    code="unknown_employee",
+                    message=_("That person is not in this company."),
+                )
+            employee = person
+
+        return Response(usage_summary(employee, request.user.tenant))
 
     @extend_schema(request=None, responses={200: dict})
     @action(detail=False, methods=["post"], permission_classes=[IsAdmin])

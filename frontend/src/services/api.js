@@ -237,6 +237,11 @@ export const updateLeaveType = async (id, payload) =>
   (await api.patch(`/leave-types/${id}/`, payload)).data
 export const seedLeaveTypes = () => post('/leave-types/seed/', {})
 
+/** Lo que queda de cada permiso con tope. El catálogo dice que el art. 37.9 da
+ *  cuatro días al año; esto dice que van dos. */
+export const getLeaveUsage = async (params) =>
+  (await get('/leave-types/usage/', params)).data
+
 // ---------------------------------------------------------------------- shifts
 
 export const getShiftPatterns = async () => rows(await get('/shift-patterns/'))

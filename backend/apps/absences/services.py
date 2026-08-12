@@ -214,7 +214,9 @@ def request_absence(
             ),
         )
 
-    clash = _overlapping(employee, start_date, end_date).first()
+    clash = _overlapping(
+        employee, start_date, end_date, start_time=start_time, end_time=end_time
+    ).first()
     if clash is not None:
         raise BusinessRuleError(
             code="overlapping_absence",
@@ -253,11 +255,25 @@ def request_absence(
     return absence
 
 
-def _overlapping(employee, start_date: date, end_date: date, exclude_pk=None):
+def _overlapping(
+    employee,
+    start_date: date,
+    end_date: date,
+    exclude_pk=None,
+    start_time=None,
+    end_time=None,
+):
     """Anything already there for those dates, approved or still waiting.
 
     Pending requests count: letting two overlapping requests sit in the queue
     means whoever approves them second creates a contradiction nobody catches.
+
+    **Two part-days on the same date do not clash unless the hours do.** Two
+    hours at the doctor in the morning and one looking for work in the afternoon
+    are two absences on one Tuesday and no contradiction at all --- and art.
+    53.2's six hours a week is a permit somebody is *expected* to split. Refusing
+    them was what the date-only check did, and it made every hourly permit
+    unusable after the first request of the day.
     """
     qs = Absence.objects.filter(
         Q(status=AbsenceStatus.APPROVED) | Q(status=AbsenceStatus.PENDING),
@@ -265,10 +281,47 @@ def _overlapping(employee, start_date: date, end_date: date, exclude_pk=None):
         start_date__lte=end_date,
         end_date__gte=start_date,
     )
-    return qs.exclude(pk=exclude_pk) if exclude_pk else qs
+    if exclude_pk:
+        qs = qs.exclude(pk=exclude_pk)
+
+    if start_time is None or end_time is None:
+        # A whole-day request clashes with anything on those dates, part-day
+        # included: the day is claimed entirely.
+        return qs
+
+    # A part-day one clashes with whole-day absences, and with part-days whose
+    # hours actually cross. Half-open on purpose: leaving at eleven and starting
+    # again at eleven is one thing after another, not two at once.
+    return qs.filter(
+        Q(start_time__isnull=True) | Q(start_time__lt=end_time, end_time__gt=start_time)
+    )
 
 
 # -------------------------------------------------------------------- resolving
+
+
+def leave_over_the_limit(absence) -> dict | None:
+    """Whether approving this would go past what its leave type grants.
+
+    Reported, never refused. Every allowance in the catalogue is the statutory
+    floor and the collective agreement improves any of them; a company that has
+    not updated its copy would find the product refusing days its people are
+    entitled to, which is worse than the warning it replaced.
+
+    Read at the moment of deciding rather than stored on the absence: the
+    allowance can change between asking and answering, and the figure that
+    matters is the one in force when somebody says yes.
+    """
+    from apps.absences.usage import leave_usage
+
+    kind = absence.leave_type
+    if kind is None or kind.amount is None:
+        return None
+
+    usage = leave_usage(absence.employee, kind, absence.tenant, absence.start_date)
+    if usage.remaining is None or usage.remaining >= 0:
+        return None
+    return usage.as_dict()
 
 
 def approve_absence(absence: Absence, *, resolved_by) -> Absence:
