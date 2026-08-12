@@ -26,6 +26,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.absences.models import Absence, AbsenceStatus, AbsenceType
 from apps.common.exceptions import BusinessRuleError
+from apps.common.four_eyes import refuse_self_decision
 
 # ------------------------------------------------------------------- the period
 
@@ -191,6 +192,15 @@ def _overlapping(employee, start_date: date, end_date: date, exclude_pk=None):
 def approve_absence(absence: Absence, *, resolved_by) -> Absence:
     _must_be_open(absence)
 
+    # Less grave than the working-time record --- leave is the company's to grant
+    # --- but the same principle, and an auditor asks the same question.
+    refuse_self_decision(
+        subject=absence.employee,
+        decider=resolved_by,
+        company=absence.tenant,
+        what=_("leave"),
+    )
+
     # Re-checked at approval, not only at request: something else may have been
     # approved for those dates in between.
     clash = _overlapping(absence.employee, absence.start_date, absence.end_date, absence.pk)
@@ -210,6 +220,15 @@ def approve_absence(absence: Absence, *, resolved_by) -> Absence:
 def reject_absence(absence: Absence, *, resolved_by) -> Absence:
     """Turned down requests are kept: a refused claim is history too."""
     _must_be_open(absence)
+
+    # Refusing your own is harmless in itself, but allowing it would leave the
+    # rule half applied and invite somebody to wonder which half.
+    refuse_self_decision(
+        subject=absence.employee,
+        decider=resolved_by,
+        company=absence.tenant,
+        what=_("leave"),
+    )
 
     absence.status = AbsenceStatus.REJECTED
     absence.approved_by = resolved_by

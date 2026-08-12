@@ -608,3 +608,165 @@ def test_an_absence_of_another_company_is_not_found_by_id(company, people):
     response = client_for(people["admin"]).get(f"/api/absences/{absence.pk}/")
 
     assert response.status_code == 404
+
+
+# ==========================================================================
+# Deciding on your own case
+# ==========================================================================
+#
+# The two above are about somebody reaching a role they should not have. These
+# are about somebody using the role they legitimately do have, on themselves.
+
+
+@pytest.mark.django_db
+def test_a_manager_cannot_approve_a_change_to_their_own_record(people):
+    """The one that matters most. A manager who can approve their own
+    correction can write their own hours: file it, approve it, done, with no
+    second pair of eyes anywhere in the path.
+
+    Nothing about the role makes this necessary --- there is always an
+    administrator, and in a company with a single person there is nothing to
+    falsify against."""
+    boss = client_for(people["manager"])
+    correction = ask_correction(boss).data
+
+    response = boss.post(f"/api/corrections/{correction['id']}/approve/", {}, format="json")
+
+    assert response.status_code == 409, "a manager approved a change to their own working time"
+    assert response.data["error"]["code"] == "cannot_decide_your_own"
+
+
+@pytest.mark.django_db
+def test_an_administrator_cannot_either(people):
+    """Same reasoning, and the role with the most reach. If the register can be
+    rewritten by one person acting alone, its value as evidence rests on
+    trusting that person --- which is what a register is for not having to do."""
+    admin = client_for(people["admin"])
+    correction = ask_correction(admin).data
+
+    response = admin.post(f"/api/corrections/{correction['id']}/approve/", {}, format="json")
+
+    assert response.status_code == 409
+
+
+@pytest.mark.django_db
+def test_a_manager_cannot_approve_their_own_leave(people):
+    """Less grave than the hours --- leave is the company's to grant --- but it is
+    the same principle and an auditor asks the same question."""
+    boss = client_for(people["manager"])
+    absence = ask_absence(boss).data
+
+    response = boss.post(f"/api/absences/{absence['id']}/approve/", {}, format="json")
+
+    assert response.status_code == 409
+
+
+@pytest.mark.django_db
+def test_the_only_administrator_may_still_resolve_their_own(company):
+    """The exception that has to keep working. A self-employed person, or a
+    two-person business where only one administers, would otherwise be unable
+    to correct their own record at all --- unable to use the product."""
+    alone = make(company, "sola@acme.test", Role.ADMIN)
+    client = client_for(alone)
+    correction = ask_correction(client).data
+
+    response = client.post(f"/api/corrections/{correction['id']}/approve/", {}, format="json")
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_and_the_record_says_it_was_resolved_alone(company):
+    """Allowed is not the same as unremarkable. A change a second person
+    approved and one the same person filed and resolved are different evidence,
+    and the register has to keep them apart --- that being the whole point of
+    the procedure."""
+    alone = make(company, "sola@acme.test", Role.ADMIN)
+    client = client_for(alone)
+    correction = ask_correction(client).data
+
+    body = client.post(
+        f"/api/corrections/{correction['id']}/approve/",
+        {"note": "Corrijo mi salida."},
+        format="json",
+    ).json()
+
+    assert "Corrijo mi salida." in body["resolution_note"]
+    assert "no other manager or administrator" in body["resolution_note"].lower() or (
+        "ningún otro" in body["resolution_note"].lower()
+    )
+
+
+@pytest.mark.django_db
+def test_a_second_administrator_closes_the_exception(company):
+    """The moment somebody else exists, the door shuts. Nothing to configure:
+    the rule follows the company's own shape."""
+    alone = make(company, "sola@acme.test", Role.ADMIN)
+    client = client_for(alone)
+    correction = ask_correction(client).data
+    make(company, "segunda@acme.test", Role.ADMIN)
+
+    response = client.post(f"/api/corrections/{correction['id']}/approve/", {}, format="json")
+
+    assert response.status_code == 409
+
+
+@pytest.mark.django_db
+def test_a_manager_may_still_resolve_a_colleagues(people):
+    """The fix must not turn into "managers cannot approve anything"."""
+    correction = ask_correction(client_for(people["worker"])).data
+
+    response = client_for(people["manager"]).post(
+        f"/api/corrections/{correction['id']}/approve/", {}, format="json"
+    )
+
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_a_lone_administrator_of_another_company_is_not_a_second_pair_of_eyes(company):
+    """The subtle way this check could have been wrong: `User.objects` spans
+    every company, because sign-in has to find people before the company is
+    known. Without the tenant filter, somebody else's manager would count."""
+    alone = make(company, "sola@acme.test", Role.ADMIN)
+    other = Tenant.objects.create(name="Globex", tax_id="B22222222")
+    make(other, "ajena@globex.test", Role.ADMIN)
+
+    client = client_for(alone)
+    correction = ask_correction(client).data
+    response = client.post(f"/api/corrections/{correction['id']}/approve/", {}, format="json")
+
+    assert response.status_code == 200, "another company's administrator counted as a second person"
+
+
+@pytest.mark.django_db
+def test_a_manager_cannot_route_around_it_by_proposing_on_themselves(people, company):
+    """The other door. `propose_correction` is the company acting on somebody
+    else's record, and it lands in AWAITING_EMPLOYEE waiting for that person to
+    authorise it. Aimed at yourself, you are both parties: propose, accept,
+    applied --- and the four-eyes check on `approve` never runs, because this
+    path does not go through it."""
+    from apps.punches.corrections import accept_correction, propose_correction
+
+    with tenant_context(company.id):
+        mine = propose_correction(
+            employee=people["manager"],
+            company=company,
+            proposed_by=people["manager"],
+            kind="ADD",
+            proposed_type="OUT",
+            proposed_timestamp=timezone.now() - timedelta(hours=1),
+            reason="Me olvidé de fichar.",
+        )
+
+    from apps.common.exceptions import BusinessRuleError
+
+    with tenant_context(company.id), pytest.raises(BusinessRuleError) as caught:
+        accept_correction(mine, employee=people["manager"])
+
+    # The exact code, not "something raised": a refusal for a different reason
+    # would leave this door open and the test green.
+    assert caught.value.code == "cannot_decide_your_own"
+    mine.refresh_from_db()
+    assert mine.status == "AWAITING_EMPLOYEE"
+    assert mine.result is None

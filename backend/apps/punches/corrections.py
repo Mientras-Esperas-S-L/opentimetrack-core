@@ -23,6 +23,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.common.exceptions import BusinessRuleError
+from apps.common.four_eyes import refuse_self_decision
 from apps.common.models import TenantOwnedModel
 from apps.punches.models import Punch, PunchSource, PunchType
 
@@ -440,6 +441,23 @@ def _inform_representatives(correction: PunchCorrection) -> None:
 
 
 @transaction.atomic
+def _note_alone(note: str) -> str:
+    """Marks a decision nobody else could have taken.
+
+    It goes in the resolution note rather than a new column because that is
+    what already travels to the inspection report: a reader has to be able to
+    tell a change a second person approved from one the same person filed and
+    resolved, and a silent allowance would erase exactly that difference.
+    """
+    mark = str(
+        _(
+            "Resolved by the same person who is the subject: no other manager or administrator "
+            "exists in the company."
+        )
+    )
+    return f"{note}\n\n{mark}".strip() if note else mark
+
+
 def approve_correction(correction: PunchCorrection, *, resolved_by, note: str = "") -> Punch | None:
     """Applies the correction, leaving the previous version readable."""
     if not correction.is_open:
@@ -447,6 +465,17 @@ def approve_correction(correction: PunchCorrection, *, resolved_by, note: str = 
             code="already_resolved",
             message=_("This request has already been resolved."),
         )
+
+    # A manager filing a correction on their own record and approving it was
+    # two clicks, both theirs. See apps/common/four_eyes.py for why this is
+    # refused rather than merely logged, and why the sole-administrator case
+    # still goes through.
+    alone = refuse_self_decision(
+        subject=correction.employee,
+        decider=resolved_by,
+        company=correction.tenant,
+        what=_("a change to the working-time record"),
+    )
 
     # Set before building anything: the resulting event records who approved it,
     # and "who changed it" is one of the three things the record has to state.
@@ -467,7 +496,7 @@ def approve_correction(correction: PunchCorrection, *, resolved_by, note: str = 
         _void(correction.target, replaced_by=result)
 
     correction.status = CorrectionStatus.APPROVED
-    correction.resolution_note = note
+    correction.resolution_note = _note_alone(note) if alone else note
     correction.result = result
     correction.save()
 
