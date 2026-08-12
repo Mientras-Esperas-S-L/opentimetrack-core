@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
 from django.db import transaction
-from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -349,7 +348,7 @@ def _check_no_approved_absence(employee, company) -> None:
     level: the dependency graph in the component view only allows it the other
     way round.
     """
-    from apps.absences.models import Absence, AbsenceStatus
+    from apps.absences.models import STOPS_THE_WHOLE_DAY, Absence, AbsenceStatus
 
     today = timezone.now().astimezone(company.tzinfo).date()
 
@@ -365,8 +364,7 @@ def _check_no_approved_absence(employee, company) -> None:
             start_date__lte=today,
             end_date__gte=today,
         )
-        .filter(start_time__isnull=True)
-        .filter(Q(reduction_share__isnull=True) | Q(reduction_share__gte=100))
+        .filter(STOPS_THE_WHOLE_DAY)
         .first()
     )
 

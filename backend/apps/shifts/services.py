@@ -23,7 +23,7 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from apps import legal
-from apps.absences.models import Absence, AbsenceStatus
+from apps.absences.models import STOPS_THE_WHOLE_DAY, Absence, AbsenceStatus
 from apps.common.exceptions import BusinessRuleError
 from apps.shifts.models import Shift, ShiftPattern, working_days_between
 from apps.tenants.rules import WorkingTimeRules
@@ -989,9 +989,15 @@ def _check_leave_clashes(first, last, employee) -> list[Finding]:
     The most ordinary planning mistake there is, and the one that reaches the
     worker fastest: they turn up, or they do not and it looks like an absence.
     """
+    # Only what stops the whole day. The two kinds this filter excludes are
+    # people who are SUPPOSED to be rostered: a part-day absence works the rest
+    # of the day, and a reducing suspension (an ERTE at 40 %) works the other
+    # 60 % for months. Without it, one person on a partial ERTE produced
+    # twenty-one false warnings in a single month --- and a warning that is
+    # wrong twenty-three times out of thirty buries the seven that are right.
     absences = Absence.objects.filter(
         status=AbsenceStatus.APPROVED, start_date__lte=last, end_date__gte=first
-    )
+    ).filter(STOPS_THE_WHOLE_DAY)
     if employee is not None:
         absences = absences.filter(employee=employee)
 

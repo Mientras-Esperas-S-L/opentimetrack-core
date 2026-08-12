@@ -24,7 +24,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from apps.absences.models import Absence, AbsenceStatus, AbsenceType
+from apps.absences.models import REDUCES_THE_DAY, Absence, AbsenceStatus, AbsenceType
 from apps.common.exceptions import BusinessRuleError
 from apps.common.four_eyes import refuse_self_decision
 
@@ -216,7 +216,12 @@ def request_absence(
         )
 
     clash = _overlapping(
-        employee, start_date, end_date, start_time=start_time, end_time=end_time
+        employee,
+        start_date,
+        end_date,
+        start_time=start_time,
+        end_time=end_time,
+        reduction_share=reduction_share,
     ).first()
     if clash is not None:
         raise BusinessRuleError(
@@ -232,6 +237,15 @@ def request_absence(
     # Reducing a day only means something while the contract is suspended.
     # Anywhere else it would look like a setting and do nothing, which is the
     # worst kind of field.
+    if reduction_share is not None and (start_time or end_time):
+        raise BusinessRuleError(
+            code="reduction_takes_no_hours",
+            message=_(
+                "A reduction covers whole days at a smaller share. For hours away on "
+                "one day, leave the reduction empty."
+            ),
+        )
+
     if reduction_share is not None and absence_type != AbsenceType.SUSPENSION:
         raise BusinessRuleError(
             code="reduction_needs_a_suspension",
@@ -276,6 +290,7 @@ def _overlapping(
     exclude_pk=None,
     start_time=None,
     end_time=None,
+    reduction_share=None,
 ):
     """Anything already there for those dates, approved or still waiting.
 
@@ -285,9 +300,15 @@ def _overlapping(
     **Two part-days on the same date do not clash unless the hours do.** Two
     hours at the doctor in the morning and one looking for work in the afternoon
     are two absences on one Tuesday and no contradiction at all --- and art.
-    53.2's six hours a week is a permit somebody is *expected* to split. Refusing
-    them was what the date-only check did, and it made every hourly permit
-    unusable after the first request of the day.
+    53.2's six hours a week is a permit somebody is *expected* to split.
+
+    **A suspension that reduces the day runs in its own lane.** Somebody on an
+    ERTE at 40 % works the other 60 % for months: they still fall ill, still
+    sit exams, still take their booked holiday. Treating the reduction as "the
+    day is claimed" made every other absence impossible for its whole duration
+    --- the product refused a medical appointment because of an ERTE. So a
+    reduction only clashes with another reduction, which *is* a contradiction:
+    nobody's day can be reduced twice at once.
     """
     qs = Absence.objects.filter(
         Q(status=AbsenceStatus.APPROVED) | Q(status=AbsenceStatus.PENDING),
@@ -298,9 +319,15 @@ def _overlapping(
     if exclude_pk:
         qs = qs.exclude(pk=exclude_pk)
 
+    if reduction_share is not None and reduction_share < 100:
+        return qs.filter(REDUCES_THE_DAY)
+
+    # Existing reductions never claim the day for anybody else.
+    qs = qs.exclude(REDUCES_THE_DAY)
+
     if start_time is None or end_time is None:
-        # A whole-day request clashes with anything on those dates, part-day
-        # included: the day is claimed entirely.
+        # A whole-day request clashes with anything left on those dates,
+        # part-day included: the day is claimed entirely.
         return qs
 
     # A part-day one clashes with whole-day absences, and with part-days whose
@@ -326,16 +353,43 @@ def leave_over_the_limit(absence) -> dict | None:
     allowance can change between asking and answering, and the figure that
     matters is the one in force when somebody says yes.
     """
-    from apps.absences.usage import leave_usage
+    from apps.absences.usage import event_request_amount, leave_usage
 
     kind = absence.leave_type
     if kind is None or kind.amount is None:
         return None
 
     usage = leave_usage(absence.employee, kind, absence.tenant, absence.start_date)
-    if usage.remaining is None or usage.remaining >= 0:
+    if usage.remaining is not None:
+        return None if usage.remaining >= 0 else usage.as_dict()
+
+    # Per-event permits accumulate nothing, so "what is left" is undefined ---
+    # which used to mean the approver saw no warning at all while the requester
+    # did, and the person deciding was the one flying blind. The comparison
+    # that exists is this request against the grant, with the travelling extra
+    # included: four days of bereavement with a journey is lawful, and warning
+    # about it would teach people to ignore the warning.
+    asked = event_request_amount(absence, kind)
+    if asked is None:
         return None
-    return usage.as_dict()
+    ceiling = float(kind.amount) + float(kind.extra_when_travelling or 0)
+    if asked <= ceiling:
+        return None
+    return {
+        "leave_type": str(kind.pk),
+        "name": kind.name,
+        "unit": kind.unit,
+        "period": kind.period,
+        "period_start": None,
+        "period_end": None,
+        "used": round(asked, 2),
+        "requests": 1,
+        "allowance": float(kind.amount),
+        "travel_extra": float(kind.extra_when_travelling or 0),
+        "remaining": round(float(kind.amount) - asked, 2),
+        "over": True,
+        "estimated": False,
+    }
 
 
 def approve_absence(absence: Absence, *, resolved_by) -> Absence:

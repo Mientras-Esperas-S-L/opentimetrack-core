@@ -5,7 +5,19 @@ topes consumidos y suspensiones. Cada hallazgo está **verificado en código y,
 los tres primeros, reproducidos con datos** antes de escribirse aquí. Al final,
 el análisis de si el producto se ha extralimitado.
 
-Estado: **hallazgos abiertos, sin arreglar**. Cada uno lleva su severidad.
+Estado tras la tarde del 12/08: **los tres GRAVES, el tope por evento, el % de
+reducción visible y el `initiated_by` del §4 están arreglados y verificados en
+navegador** (commit del mismo día). Quedan abiertos los demás MEDIOS y los
+menores; siguen listados abajo tal como se encontraron.
+
+Del barrido de hardcodeos pedido después: las cifras legales viven todas en
+`apps/legal` (limpio); quedan como deuda conocida los 8 formatos `es-ES` del
+frontend y los textos de artículos en los hints de People.jsx —válidos solo
+para España; deberían servirse del framework legal como ya hacen las citas de
+Ajustes—, el mínimo de contraseña (12) como candidato a ajuste de empresa, y el
+lunes-viernes de respaldo en vacaciones sin cuadrante. `NIGHT_EVIDENCE_DAYS=3`,
+el techo de 4000 celdas y `PAGE_SIZE=50` son constantes técnicas documentadas,
+no configuración que falte.
 
 ---
 

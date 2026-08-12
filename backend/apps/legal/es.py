@@ -381,6 +381,7 @@ ESPANA = LegalFramework(
             family=LeaveFamily.SUSPENSION,
             basis="Art. 45.1.e ET",
             paid=False,
+            initiated_by="COMPANY",
             amount=None,
             note="Cuando no cabe adaptar el puesto ni cambiar de función. Paga la "
             "mutua, y es contingencia profesional.",
@@ -391,6 +392,7 @@ ESPANA = LegalFramework(
             family=LeaveFamily.SUSPENSION,
             basis="Art. 45.1.e ET",
             paid=False,
+            initiated_by="COMPANY",
             amount=None,
             note="Hasta que el menor cumpla nueve meses.",
         ),
@@ -441,6 +443,7 @@ ESPANA = LegalFramework(
             family=LeaveFamily.SUSPENSION,
             basis="Art. 47 ET",
             paid=False,
+            initiated_by="COMPANY",
             amount=None,
             note="Puede **suspender** el contrato o **reducir la jornada** entre un 10 y "
             "un 70 %. Si reduce, pon el porcentaje en la solicitud: el cuadrante pasa a "
@@ -452,6 +455,7 @@ ESPANA = LegalFramework(
             family=LeaveFamily.SUSPENSION,
             basis="Art. 47 bis ET",
             paid=False,
+            initiated_by="COMPANY",
             amount=None,
             note="Igual que el ERTE en cuanto a jornada. Lo activa el Consejo de "
             "Ministros para un sector o para toda la economía.",
@@ -462,6 +466,7 @@ ESPANA = LegalFramework(
             family=LeaveFamily.SUSPENSION,
             basis="Art. 45.1.h ET",
             paid=False,
+            initiated_by="COMPANY",
             amount=None,
             needs_justification=True,
             note="Sanción. La duración la fija el convenio según la falta.",
@@ -472,9 +477,11 @@ ESPANA = LegalFramework(
             family=LeaveFamily.SUSPENSION,
             basis="Art. 45.1.l ET",
             paid=False,
+            initiated_by="COMPANY",
             amount=None,
             note="Se registra porque explica el hueco del día, no para contar nada. "
-            "Es un derecho fundamental y el registro no lo valora.",
+            "Es un derecho fundamental: se ejerce, no se pide, y por eso la anota la "
+            "empresa como hecho en vez de pasar por una cola de aprobación.",
         ),
         LeaveKind(
             code="es.lockout",
@@ -482,6 +489,7 @@ ESPANA = LegalFramework(
             family=LeaveFamily.SUSPENSION,
             basis="Art. 45.1.m ET",
             paid=False,
+            initiated_by="COMPANY",
             amount=None,
         ),
         LeaveKind(
@@ -490,6 +498,7 @@ ESPANA = LegalFramework(
             family=LeaveFamily.SUSPENSION,
             basis="Art. 45.1.g ET",
             paid=False,
+            initiated_by="COMPANY",
             amount=None,
             note="Mientras no haya sentencia condenatoria.",
         ),

@@ -126,11 +126,15 @@ class LeaveTypeSerializer(serializers.ModelSerializer):
             "allowance",
             "measured_in_hours",
             "paid",
+            "initiated_by",
             "needs_justification",
             "note",
             "is_active",
         ]
-        read_only_fields = ["id", "allowance", "measured_in_hours"]
+        # `code` is how the seed recognises its own rows: editable, it breaks
+        # re-seeding (the original comes back as a duplicate) or trips the
+        # unique constraint. Renaming is what `name` is for.
+        read_only_fields = ["id", "code", "allowance", "measured_in_hours"]
 
     def get_allowance(self, obj) -> str:
         if obj.amount is None:
@@ -297,6 +301,19 @@ class AbsenceViewSet(
                     message=_("That leave type does not exist or is no longer in use."),
                 )
 
+        # Company-recorded kinds --- an ERTE, a disciplinary suspension, a
+        # strike --- are the company's own acts or accomplished facts. A person
+        # cannot request one for themselves, and the request-approve queue is
+        # the wrong shape for them: there is nothing to decide, only to record.
+        if kind is not None and kind.initiated_by == "COMPANY" and not request.user.can_manage:
+            raise BusinessRuleError(
+                code="company_recorded",
+                message=_(
+                    "This kind of leave is recorded by the company, not requested. "
+                    "Talk to whoever manages your working time."
+                ),
+            )
+
         absence = request_absence(
             employee=employee,
             company=request.user.tenant,
@@ -310,6 +327,32 @@ class AbsenceViewSet(
             reason=data.get("reason", ""),
             justification=data.get("justification"),
         )
+
+        if kind is not None and kind.initiated_by == "COMPANY":
+            # Straight into force, with the same audit trail an approval leaves.
+            # The four-eyes rule still gets its say: a manager recording their
+            # own suspension falls back to the pending queue for somebody else
+            # to resolve, which is exactly what that rule is for.
+            try:
+                absence = approve_absence(absence, resolved_by=request.user)
+            except BusinessRuleError:
+                pass
+            else:
+                record(
+                    action=AuditAction.ABSENCE_APPROVED,
+                    actor=request.user,
+                    target=absence.employee,
+                    target_type="user",
+                    target_label=absence.employee.get_full_name(),
+                    changes={
+                        "type": absence.absence_type,
+                        "from": absence.start_date.isoformat(),
+                        "to": absence.end_date.isoformat(),
+                        "recorded_by_company": True,
+                    },
+                    request=request,
+                )
+
         return Response(AbsenceSerializer(absence).data, status=status.HTTP_201_CREATED)
 
     def _employee_in_company(self, employee_id):

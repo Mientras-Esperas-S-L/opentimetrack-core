@@ -212,11 +212,11 @@ function Palette({ patterns, tool, onPick }) {
         color={tool?.kind === 'erase' ? 'error' : 'default'}
         sx={{ cursor: 'pointer' }}
       />
-      {tool && (
-        <Typography variant="caption" color="text.secondary">
-          Arrastra sobre el cuadrante. Esc para soltar la herramienta.
-        </Typography>
-      )}
+      <Typography variant="caption" color="text.secondary">
+        {tool
+          ? 'Arrastra sobre el cuadrante. Esc para soltar la herramienta.'
+          : 'Sin herramienta, arrastra un turno para moverlo de día o de persona.'}
+      </Typography>
     </Stack>
   )
 }
@@ -409,13 +409,29 @@ export default function Roster() {
     box && row >= box.top && row <= box.bottom && day >= box.left && day <= box.right
 
   const startDrag = (row, day) => (event) => {
-    if (!tool || painting) return
+    if (painting) return
+
+    // With a tool picked, dragging paints. Without one, dragging an existing
+    // block MOVES it --- the gesture everybody tries first on a grid like
+    // this, and the one that used to do nothing.
+    if (!tool) {
+      const person = rostered[row]
+      const held = person?.days[iso(month.year, month.month, day)]
+      if (!held) return
+      event.currentTarget.releasePointerCapture?.(event.pointerId)
+      event.preventDefault()
+      const next = { kind: 'move', anchor: { row, day }, focus: { row, day }, shift: held }
+      dragRef.current = next
+      setDrag(next)
+      return
+    }
+
     // Without this the first cell captures the pointer and no other cell ever
     // sees `pointerenter`, so the drag paints one square. It is the default on
     // touch, and it is why this used mouse events and did not work on a tablet.
     event.currentTarget.releasePointerCapture?.(event.pointerId)
     event.preventDefault()
-    const next = { anchor: { row, day }, focus: { row, day } }
+    const next = { kind: 'brush', anchor: { row, day }, focus: { row, day } }
     dragRef.current = next
     setDrag(next)
   }
@@ -442,7 +458,36 @@ export default function Roster() {
       const current = dragRef.current
       dragRef.current = null
       setDrag(null)
-      if (!current || !tool) return
+      if (!current) return
+
+      if (current.kind === 'move') {
+        const { anchor, focus, shift } = current
+        if (anchor.row === focus.row && anchor.day === focus.day) return
+        const source = rostered[anchor.row]
+        const target = rostered[focus.row]
+        if (!source || !target) return
+
+        const fromDay = iso(month.year, month.month, anchor.day)
+        const toDay = iso(month.year, month.month, focus.day)
+        // Move = the destination becomes what was held and the origin is
+        // rubbed out, in ONE stroke, so undo restores both cells at once ---
+        // including whatever the destination held before being covered.
+        setUndo([
+          asCell(target, toDay, target.days[toDay]),
+          asCell(source, fromDay, source.days[fromDay]),
+        ])
+        paint.mutate([
+          {
+            employee: target.id,
+            day: toDay,
+            ...(shift.pattern ? { pattern: shift.pattern } : { segments: shift.segments }),
+          },
+          { employee: source.id, day: fromDay },
+        ])
+        return
+      }
+
+      if (!tool) return
 
       const top = Math.min(current.anchor.row, current.focus.row)
       const bottom = Math.max(current.anchor.row, current.focus.row)
@@ -632,15 +677,26 @@ export default function Roster() {
                   {dayNumbers.map((day) => {
                     const shift = person.days[iso(month.year, month.month, day)]
                     const weekday = weekdayOf(month.year, month.month, day)
-                    const selected = inBox(index, day)
+                    const moving = drag?.kind === 'move'
+                    const isMoveSource =
+                      moving && drag.anchor.row === index && drag.anchor.day === day
+                    const isMoveTarget =
+                      moving && !isMoveSource && drag.focus.row === index && drag.focus.day === day
+                    const selected = drag?.kind === 'brush' && inBox(index, day)
 
-                    // While a rectangle is being dragged, the cells inside it
+                    // While something is being dragged, the cells it covers
                     // show what they are about to become. Painting a fortnight
-                    // and finding out afterwards is not a preview.
+                    // --- or dropping a shift --- and finding out afterwards is
+                    // not a preview.
                     const preview =
                       selected && tool?.kind === 'paint'
                         ? { colour: tool.pattern.colour, letter: tool.pattern.name.slice(0, 1) }
-                        : null
+                        : isMoveTarget
+                          ? {
+                              colour: drag.shift.colour,
+                              letter: drag.shift.pattern_name || '·',
+                            }
+                          : null
                     const erasing = selected && tool?.kind === 'erase'
 
                     const cell = {
@@ -648,12 +704,14 @@ export default function Roster() {
                       borderRadius: 0.5,
                       display: 'grid',
                       placeItems: 'center',
-                      cursor: tool ? 'crosshair' : 'default',
+                      cursor: tool ? 'crosshair' : shift ? 'grab' : 'default',
                       touchAction: tool ? 'none' : 'auto',
-                      outline: selected ? '2px solid' : 'none',
+                      outline: selected || isMoveTarget ? '2px solid' : 'none',
                       outlineColor: erasing ? 'error.main' : 'primary.main',
                       outlineOffset: '-1px',
-                      opacity: erasing ? 0.35 : 1,
+                      // The origin fades while it is being carried, so the eye
+                      // reads "from here, to there" without a legend.
+                      opacity: erasing || isMoveSource ? 0.35 : 1,
                     }
                     const handlers = {
                       onPointerDown: startDrag(index, day),

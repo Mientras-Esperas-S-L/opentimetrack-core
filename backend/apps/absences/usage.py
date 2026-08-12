@@ -175,6 +175,35 @@ def _whole_day_hours(absence, company) -> tuple[float, bool]:
     return float(WorkingTimeRules.for_company(company).weekly_hours) / 5, True
 
 
+def event_request_amount(absence, leave_type) -> float | None:
+    """How much one request asks for, in the permit's own unit.
+
+    For the per-event permits, where nothing accumulates and the only
+    comparison that means anything is this request against the grant. The unit
+    conversion is the whole point: fifteen *calendar days* for a wedding, eight
+    *weeks* of parental leave --- comparing either against a plain count of
+    days is how a form ends up warning anybody who asks for more than eight
+    days of an eight-week permit.
+
+    None means there is nothing meaningful to compare: an hours permit taken
+    as whole days, or a part-day slice of a days permit, neither of which can
+    overshoot a whole-unit grant in a way worth warning about.
+    """
+    if leave_type.unit == LeaveUnit.HOURS:
+        return absence.hours if absence.is_partial else None
+    if absence.is_partial:
+        return None
+
+    days = (absence.end_date - absence.start_date).days + 1
+    if leave_type.unit == LeaveUnit.WEEKS:
+        return round(days / 7, 2)
+    if leave_type.unit == LeaveUnit.DAYS_WORKING:
+        from apps.absences.services import _days_within
+
+        return float(_days_within(absence, absence.start_date, absence.end_date, working_days=True))
+    return float(days)
+
+
 def usage_summary(employee, company, on: date | None = None) -> list[dict]:
     """Every leave with a limit, and what is left of it.
 

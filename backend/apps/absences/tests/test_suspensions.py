@@ -219,3 +219,293 @@ def test_a_pending_suspension_does_not_block_anything(company, worker):
 
     with tenant_context(company.id):
         assert register_punch(employee=worker, company=company) is not None
+
+
+# ---------------------------------------------- la reducción convive (12/08)
+#
+# El ERTE parcial trataba el día como reclamado entero, y durante meses no se
+# podía pedir ni una visita médica. La reducción va ahora por su propio carril:
+# solo choca con otra reducción, que sí es una contradicción.
+
+
+@pytest.mark.django_db
+def test_holiday_can_be_booked_during_a_partial_erte(company, worker):
+    today = date.today()
+    suspend(company, worker, "es.erte", today, today + timedelta(days=90), share=40)
+
+    with tenant_context(company.id):
+        absence = request_absence(
+            employee=worker,
+            company=company,
+            absence_type="VACATION",
+            start_date=today + timedelta(days=14),
+            end_date=today + timedelta(days=18),
+        )
+
+    assert absence.pk is not None
+
+
+@pytest.mark.django_db
+def test_and_so_can_a_medical_appointment(company, worker):
+    from datetime import time
+
+    today = date.today()
+    suspend(company, worker, "es.erte", today, today + timedelta(days=90), share=40)
+
+    with tenant_context(company.id):
+        absence = request_absence(
+            employee=worker,
+            company=company,
+            leave_type=LeaveType.objects.get(code="es.medical"),
+            start_date=today + timedelta(days=7),
+            end_date=today + timedelta(days=7),
+            start_time=time(9, 0),
+            end_time=time(11, 0),
+        )
+
+    assert absence.is_partial
+
+
+@pytest.mark.django_db
+def test_two_reductions_at_once_are_a_contradiction(company, worker):
+    """El único choque que una reducción sí tiene: la jornada de nadie puede
+    estar reducida dos veces a la vez."""
+    today = date.today()
+    suspend(company, worker, "es.erte", today, today + timedelta(days=90), share=40)
+
+    with tenant_context(company.id), pytest.raises(BusinessRuleError) as caught:
+        request_absence(
+            employee=worker,
+            company=company,
+            leave_type=LeaveType.objects.get(code="es.red"),
+            start_date=today + timedelta(days=30),
+            end_date=today + timedelta(days=60),
+            reduction_share=20,
+        )
+
+    assert caught.value.code == "overlapping_absence"
+
+
+@pytest.mark.django_db
+def test_a_full_suspension_still_claims_its_days(company, worker):
+    """La excedencia sí para el contrato: unas vacaciones dentro siguen siendo
+    una contradicción."""
+    suspend(company, worker, "es.unpaid_leave", date(2026, 9, 1), date(2026, 12, 20))
+
+    with tenant_context(company.id), pytest.raises(BusinessRuleError) as caught:
+        request_absence(
+            employee=worker,
+            company=company,
+            absence_type="VACATION",
+            start_date=date(2026, 10, 5),
+            end_date=date(2026, 10, 9),
+        )
+
+    assert caught.value.code == "overlapping_absence"
+
+
+@pytest.mark.django_db
+def test_a_reduction_takes_no_hours(company, worker):
+    """Reducción y horas son dos formas incompatibles del mismo día."""
+    from datetime import time
+
+    with tenant_context(company.id), pytest.raises(BusinessRuleError) as caught:
+        request_absence(
+            employee=worker,
+            company=company,
+            leave_type=LeaveType.objects.get(code="es.erte"),
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 9, 1),
+            start_time=time(9, 0),
+            end_time=time(13, 0),
+            reduction_share=40,
+        )
+
+    assert caught.value.code == "reduction_takes_no_hours"
+
+
+# ------------------------------------------ el cuadrante deja de acusar (12/08)
+
+
+@pytest.mark.django_db
+def test_the_roster_does_not_flag_somebody_on_a_partial_erte(company, worker):
+    """Quien tiene la jornada reducida DEBE estar en el cuadrante, al 60 %.
+    Avisar de cada día suyo era el falso positivo que enterraba los avisos
+    buenos: 23 de 30 en el mes de la demo."""
+    monday = date(2026, 9, 7)
+    with tenant_context(company.id):
+        suspend(company, worker, "es.erte", monday, monday + timedelta(days=90), share=40)
+        for offset in range(5):
+            Shift.objects.create(
+                tenant=company,
+                employee=worker,
+                day=monday + timedelta(days=offset),
+                segments=[{"start": "09:00", "end": "14:00"}],
+            )
+        findings = review_roster(company=company, first=monday, last=monday + timedelta(days=13))
+
+    assert [f for f in findings if f.code == "rostered_on_leave"] == []
+
+
+@pytest.mark.django_db
+def test_nor_somebody_with_two_hours_at_the_doctor(company, worker):
+    from datetime import time
+
+    monday = date(2026, 9, 7)
+    with tenant_context(company.id):
+        absence = request_absence(
+            employee=worker,
+            company=company,
+            leave_type=LeaveType.objects.get(code="es.medical"),
+            start_date=monday,
+            end_date=monday,
+            start_time=time(9, 0),
+            end_time=time(11, 0),
+        )
+        absence.status = AbsenceStatus.APPROVED
+        absence.save(update_fields=["status"])
+        Shift.objects.create(
+            tenant=company,
+            employee=worker,
+            day=monday,
+            segments=[{"start": "08:00", "end": "16:00"}],
+        )
+        findings = review_roster(company=company, first=monday, last=monday + timedelta(days=6))
+
+    assert [f for f in findings if f.code == "rostered_on_leave"] == []
+
+
+@pytest.mark.django_db
+def test_but_a_whole_day_absence_still_is_flagged(company, worker):
+    """El aviso existe para esto: planificar a quien no va a venir."""
+    monday = date(2026, 9, 7)
+    with tenant_context(company.id):
+        suspend(company, worker, "es.unpaid_leave", monday, monday + timedelta(days=30))
+        Shift.objects.create(
+            tenant=company,
+            employee=worker,
+            day=monday + timedelta(days=2),
+            segments=[{"start": "08:00", "end": "16:00"}],
+        )
+        findings = review_roster(company=company, first=monday, last=monday + timedelta(days=6))
+
+    assert any(f.code == "rostered_on_leave" for f in findings)
+
+
+# ------------------------------------------------ quién registra qué (12/08)
+
+
+def client_for(user):
+    from rest_framework.test import APIClient
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+    return client
+
+
+@pytest.fixture
+def staff(company):
+    with tenant_context(company.id):
+        from apps.users.models import Role
+
+        yield {
+            "boss": User.objects.create_user(
+                email="jefa@example.com",
+                password=PASSWORD,
+                tenant=company,
+                first_name="Luisa",
+                role=Role.MANAGER,
+            ),
+            "admin": User.objects.create_user(
+                email="dire@example.com",
+                password=PASSWORD,
+                tenant=company,
+                first_name="Ana",
+                role=Role.ADMIN,
+            ),
+        }
+
+
+@pytest.mark.django_db
+def test_a_worker_cannot_request_an_erte_for_themselves(company, worker, staff):
+    """Un ERTE es un acto de la empresa. Que la persona pudiera solicitárselo
+    era la extralimitación de modelado que señaló la auditoría."""
+    with tenant_context(company.id):
+        erte = LeaveType.objects.get(code="es.erte")
+
+    response = client_for(worker).post(
+        "/api/absences/",
+        {
+            "leave_type": str(erte.id),
+            "start_date": "2026-09-01",
+            "end_date": "2026-11-30",
+            "reduction_share": 40,
+        },
+        format="json",
+    )
+
+    assert response.status_code >= 400
+    assert response.json()["error"]["code"] == "company_recorded"
+
+
+@pytest.mark.django_db
+def test_the_company_records_it_directly_in_force(company, worker, staff):
+    """Sin cola: no hay nada que decidir, solo que registrar."""
+    with tenant_context(company.id):
+        erte = LeaveType.objects.get(code="es.erte")
+
+    response = client_for(staff["boss"]).post(
+        "/api/absences/",
+        {
+            "employee": str(worker.id),
+            "leave_type": str(erte.id),
+            "start_date": "2026-09-01",
+            "end_date": "2026-11-30",
+            "reduction_share": 40,
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "APPROVED"
+
+
+@pytest.mark.django_db
+def test_a_manager_recording_their_own_falls_back_to_the_queue(company, worker, staff):
+    """Los cuatro ojos mandan también aquí: registrarse una suspensión a uno
+    mismo queda pendiente para que la resuelva otra persona."""
+    with tenant_context(company.id):
+        strike = LeaveType.objects.get(code="es.strike")
+
+    response = client_for(staff["boss"]).post(
+        "/api/absences/",
+        {
+            "leave_type": str(strike.id),
+            "start_date": "2026-09-01",
+            "end_date": "2026-09-01",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "PENDING"
+
+
+@pytest.mark.django_db
+def test_an_excedencia_is_still_the_persons_to_request(company, worker, staff):
+    """Las excedencias las pide la persona: siguen el flujo de siempre."""
+    with tenant_context(company.id):
+        kind = LeaveType.objects.get(code="es.unpaid_leave")
+
+    response = client_for(worker).post(
+        "/api/absences/",
+        {
+            "leave_type": str(kind.id),
+            "start_date": "2026-09-01",
+            "end_date": "2027-01-31",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "PENDING"

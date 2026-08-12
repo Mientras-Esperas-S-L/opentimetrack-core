@@ -16,7 +16,15 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import TodayIcon from '@mui/icons-material/Today'
 
-import { approveAbsence, getAbsenceCalendar, rejectAbsence } from '../../services/api.js'
+import {
+  approveAbsence,
+  getAbsenceCalendar,
+  rejectAbsence,
+  requestAbsence,
+} from '../../services/api.js'
+import AddIcon from '@mui/icons-material/Add'
+
+import LeaveDialog from '../../components/LeaveDialog.jsx'
 import { Empty, Loading, PageHeader, StatusChip } from '../../components/common.jsx'
 import { dayRange, leaveLabel, leaveLength } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -83,6 +91,14 @@ function AbsenceDialog({ absence, canDecide, busy, onClose, onApprove, onReject 
 const KIND_COLOUR = {
   VACATION: 'primary.main',
   SICK_LEAVE: 'secondary.main',
+  PAID_LEAVE: 'success.main',
+  UNPAID_LEAVE: 'warning.main',
+  // Meses sin jornada esperada (o con jornada reducida): lo contrario de
+  // invisible. Estuvo sin color y la fila de alguien en ERTE salía vacía,
+  // como si no pasara nada.
+  SUSPENSION: 'info.main',
+  // Los dos de antes del catálogo, para que los registros viejos no pierdan
+  // su color.
   PERSONAL: 'success.main',
   OTHER: 'text.disabled',
 }
@@ -127,6 +143,25 @@ export default function TeamCalendar() {
     },
   })
 
+  // Registrar una ausencia en nombre de alguien: la baja que llama por
+  // teléfono, y lo que no se solicita porque lo decide la empresa --- un ERTE,
+  // una huelga, una suspensión. El servidor pone en vigor directamente lo que
+  // registra la empresa; lo demás entra en la cola como siempre.
+  const [recording, setRecording] = useState(false)
+  const [recordError, setRecordError] = useState(null)
+  const record = useMutation({
+    mutationFn: requestAbsence,
+    onSuccess: () => {
+      setRecording(false)
+      setRecordError(null)
+      queryClient.invalidateQueries({ queryKey: ['absence-calendar'] })
+      queryClient.invalidateQueries({ queryKey: ['absences'] })
+      queryClient.invalidateQueries({ queryKey: ['leave-usage'] })
+      queryClient.invalidateQueries({ queryKey: ['overview'] })
+    },
+    onError: setRecordError,
+  })
+
   const move = (delta) => {
     const next = new Date(cursor.year, cursor.month + delta, 1)
     setCursor({ year: next.getFullYear(), month: next.getMonth() })
@@ -161,6 +196,25 @@ export default function TeamCalendar() {
       <PageHeader
         title="Calendario del equipo"
         subtitle="Quién está fuera y cuándo. Las solicitudes sin resolver aparecen rayadas: cuentan para decidir, pero todavía no son un hecho."
+        action={
+          canManage && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setRecording(true)}>
+              Registrar ausencia
+            </Button>
+          )
+        }
+      />
+
+      <LeaveDialog
+        forPerson
+        open={recording}
+        saving={record.isPending}
+        error={recordError}
+        onClose={() => {
+          setRecording(false)
+          setRecordError(null)
+        }}
+        onSubmit={record.mutate}
       />
 
       <Stack direction="row" sx={{ alignItems: 'center', gap: 1, mb: 2 }}>
@@ -183,7 +237,13 @@ export default function TeamCalendar() {
         <Box sx={{ flexGrow: 1 }} />
 
         <Stack direction="row" sx={{ gap: 1, flexWrap: 'wrap' }}>
-          {Object.entries({ VACATION: 'Vacaciones', SICK_LEAVE: 'Baja', PERSONAL: 'Permiso' }).map(
+          {Object.entries({
+            VACATION: 'Vacaciones',
+            SICK_LEAVE: 'Baja',
+            PAID_LEAVE: 'Permiso',
+            UNPAID_LEAVE: 'Sin sueldo',
+            SUSPENSION: 'Suspensión',
+          }).map(
             ([kind, label]) => (
               <Stack key={kind} direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
                 <Box sx={{ width: 12, height: 12, borderRadius: 0.5, bgcolor: KIND_COLOUR[kind] }} />

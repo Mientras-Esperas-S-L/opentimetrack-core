@@ -226,6 +226,9 @@ class LeaveKind:
     extra_when_travelling: float = 0
 
     needs_justification: bool = False
+    #: PERSON asks through the request flow; COMPANY records it directly, in
+    #: force, because it is the company's own act or an accomplished fact.
+    initiated_by: str = "PERSON"
     note: str = ""
 
 

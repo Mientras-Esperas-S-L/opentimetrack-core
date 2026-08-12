@@ -39,6 +39,7 @@ def seed_leave_types(company) -> dict:
             period=kind.per,
             extra_when_travelling=kind.extra_when_travelling,
             paid=kind.paid,
+            initiated_by=kind.initiated_by,
             needs_justification=kind.needs_justification,
             note=kind.note,
         )

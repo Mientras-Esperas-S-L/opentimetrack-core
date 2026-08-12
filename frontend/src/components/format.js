@@ -87,5 +87,12 @@ export const leaveLength = (absence) => {
     const shown = hours.toFixed(hours % 1 === 0 ? 0 : 1).replace('.', ',')
     return `${absence.start_time.slice(0, 5)}–${absence.end_time.slice(0, 5)} · ${shown} h`
   }
+  // Una suspensión que reduce en vez de parar es OTRA cosa que «91 días
+  // fuera», y quien la lee —sobre todo quien la aprueba— necesita el dato que
+  // la define.
+  if (absence.reduction_share != null && Number(absence.reduction_share) < 100) {
+    const share = Number(absence.reduction_share)
+    return `${absence.days} ${absence.days === 1 ? 'día' : 'días'} · reduce la jornada un ${share % 1 === 0 ? share : share.toFixed(1).replace('.', ',')} %`
+  }
   return `${absence.days} ${absence.days === 1 ? 'día' : 'días'}`
 }

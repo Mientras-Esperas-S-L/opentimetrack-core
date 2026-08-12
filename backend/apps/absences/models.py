@@ -134,6 +134,22 @@ class LeaveType(TenantOwnedModel):
         help_text=_("Art. 37.3.b bis adds two days when the event needs a journey."),
     )
 
+    #: Who puts it into the record. The request-and-approve flow fits what a
+    #: person asks for; it does not fit what the company decides (an ERTE, a
+    #: disciplinary suspension) or a fact nobody approves (a strike --- the
+    #: right is exercised, not granted). Company-recorded kinds never appear in
+    #: the worker's request dialog and never sit in the pending queue: whoever
+    #: manages working time records them, already in force.
+    initiated_by = models.CharField(
+        _("who records it"),
+        max_length=8,
+        choices=[
+            ("PERSON", _("The person requests it")),
+            ("COMPANY", _("The company records it")),
+        ],
+        default="PERSON",
+    )
+
     paid = models.BooleanField(_("paid"), default=True)
     needs_justification = models.BooleanField(_("needs a supporting document"), default=False)
     note = models.TextField(_("note"), blank=True)
@@ -163,6 +179,25 @@ class LeaveType(TenantOwnedModel):
         what the form offers first --- any leave can still be part of a day.
         """
         return self.unit == LeaveUnit.HOURS or self.amount is None
+
+
+#: Absences that claim their days entirely: no work is expected at all.
+#:
+#: Two kinds do not qualify, and both are people who DO work that day: a
+#: part-day absence (hours at the doctor, the rest of the day worked) and a
+#: suspension that reduces the working day instead of stopping it (an ERTE at
+#: 40 % still expects the other 60 %). Every place that asks "is this person
+#: off?" must use this same filter --- the punch block and the roster clash
+#: each had their own copy of half of it, and each was wrong in a different
+#: way.
+STOPS_THE_WHOLE_DAY = models.Q(start_time__isnull=True) & (
+    models.Q(reduction_share__isnull=True) | models.Q(reduction_share__gte=100)
+)
+
+#: Suspensions that reduce the day rather than stop it. The complement of the
+#: reduction part of the filter above, named because the overlap check needs
+#: to ask for exactly these.
+REDUCES_THE_DAY = models.Q(reduction_share__isnull=False, reduction_share__lt=100)
 
 
 class AbsenceStatus(models.TextChoices):

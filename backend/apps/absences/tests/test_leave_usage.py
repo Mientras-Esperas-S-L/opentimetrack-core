@@ -356,3 +356,57 @@ def test_a_whole_day_still_claims_the_whole_day(company, world):
             start_time=time(9, 0),
             end_time=time(11, 0),
         )
+
+
+# ----------------------------------------- el tope por evento avisa (12/08)
+#
+# Los permisos «por evento» no acumulan nada, así que «lo que queda» no existe
+# --- y quien aprobaba no veía ningún aviso mientras quien pedía sí. La
+# comparación que sí existe es esta solicitud contra lo que concede, en SU
+# unidad.
+
+
+@pytest.mark.django_db
+def test_a_thirty_day_wedding_warns_the_approver(company, world):
+    absence = ask(company, world["worker"], "es.marriage", date(2026, 10, 1), date(2026, 10, 30))
+
+    with tenant_context(company.id):
+        over = leave_over_the_limit(absence)
+
+    assert over is not None
+    assert over["used"] == 30
+    assert over["allowance"] == 15
+
+
+@pytest.mark.django_db
+def test_weeks_are_compared_in_weeks(company, world):
+    """Ocho semanas de permiso parental son 56 días: pedir 42 (seis semanas) no
+    puede avisar, y pedir 70 (diez) sí."""
+    fine = ask(company, world["worker"], "es.parental", date(2026, 3, 2), date(2026, 4, 12))
+    with tenant_context(company.id):
+        assert leave_over_the_limit(fine) is None
+
+    over = ask(company, world["worker"], "es.parental", date(2027, 3, 1), date(2027, 5, 9))
+    with tenant_context(company.id):
+        result = leave_over_the_limit(over)
+
+    assert result is not None
+    assert result["used"] == 10.0
+    assert result["allowance"] == 8
+
+
+@pytest.mark.django_db
+def test_the_travelling_extra_is_not_an_excess(company, world):
+    """Cuatro días de luto con desplazamiento son lícitos (2+2): avisar de eso
+    enseñaría a ignorar el aviso. Cinco ya no."""
+    fine = ask(company, world["worker"], "es.bereavement", date(2026, 3, 2), date(2026, 3, 5))
+    with tenant_context(company.id):
+        assert leave_over_the_limit(fine) is None
+
+    over = ask(company, world["worker"], "es.bereavement", date(2026, 6, 1), date(2026, 6, 5))
+    with tenant_context(company.id):
+        result = leave_over_the_limit(over)
+
+    assert result is not None
+    assert result["used"] == 5
+    assert result["travel_extra"] == 2

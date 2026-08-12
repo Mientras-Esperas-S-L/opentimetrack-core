@@ -48,6 +48,12 @@ const KIND_LABELS = {
  *  deliberate: a refusal is what the person will read and ask about, and it
  *  should not be as effortless as a yes.
  */
+/** «2,5», no «2.5»: los decimales del aviso se leen en español. */
+const fmt = (value) => {
+  const n = Number(value ?? 0)
+  return (n % 1 === 0 ? n.toString() : n.toFixed(2).replace(/0$/, '')).replace('.', ',')
+}
+
 function RequestCard({ title, meta, reason, children, onApprove, onReject, busy }) {
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
@@ -243,10 +249,23 @@ export default function Decisions() {
                     legal y el convenio mejora cualquiera. */}
                 {absence.over_the_limit && (
                   <Alert severity="warning" variant="outlined" sx={{ mt: 1.5 }}>
-                    Con esto se pasaría del tope: lleva{' '}
-                    <strong>{absence.over_the_limit.used}</strong> de{' '}
-                    {absence.over_the_limit.allowance}. Se puede aprobar igual —el convenio
-                    puede dar más de lo que consta en el catálogo—, pero conviene saberlo.
+                    {absence.over_the_limit.period === 'EVENT' ? (
+                      <>
+                        Pide <strong>{fmt(absence.over_the_limit.used)}</strong> y el permiso
+                        da {fmt(absence.over_the_limit.allowance)}
+                        {absence.over_the_limit.travel_extra > 0 &&
+                          ` (+${fmt(absence.over_the_limit.travel_extra)} si hay desplazamiento)`}
+                        .
+                      </>
+                    ) : (
+                      <>
+                        Con esto se pasaría del tope: lleva{' '}
+                        <strong>{fmt(absence.over_the_limit.used)}</strong> de{' '}
+                        {fmt(absence.over_the_limit.allowance)} en este periodo.
+                      </>
+                    )}{' '}
+                    Se puede aprobar igual —el convenio puede dar más de lo que consta en el
+                    catálogo—, pero conviene saberlo.
                   </Alert>
                 )}
               </RequestCard>
