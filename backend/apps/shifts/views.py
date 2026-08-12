@@ -231,7 +231,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
         findings = review_roster(
             company=request.user.tenant, first=first, last=last, employee=employee
         )
-        return Response({"findings": [f.as_dict() for f in findings]})
+        return Response({"findings": _grouped(findings)})
 
     @extend_schema(responses={200: dict})
     @action(detail=False, methods=["get"], url_path="today")
@@ -240,6 +240,40 @@ class ShiftViewSet(viewsets.ModelViewSet):
         return Response(
             expected_vs_worked(employee=request.user, company=request.user.tenant, day=date.today())
         )
+
+
+def _grouped(findings):
+    """One row per person and kind, not one per day.
+
+    A month of real data produced a hundred and fifty-six warnings, and a
+    hundred and thirty of them were the same sentence about the same person on
+    consecutive days: somebody whose shift pattern is nine hours continuous is
+    owed a break every one of them.
+
+    Each of those is true and the list of them is useless --- a wall nobody
+    reads is the same as no warning at all, and it buries the three that were
+    about something else. So they are folded: the count, the first day, and the
+    days themselves for anybody who wants them.
+
+    Folded here rather than in `review_roster` because the per-day findings are
+    the accurate answer and the tests check them. This is presentation.
+    """
+    grouped: dict = {}
+    for finding in findings:
+        row = finding.as_dict()
+        key = (row["employee"], row["code"])
+        if key not in grouped:
+            grouped[key] = {**row, "days": [], "count": 0}
+        grouped[key]["days"].append(row["day"])
+        grouped[key]["count"] += 1
+
+    out = []
+    for row in grouped.values():
+        row["days"].sort()
+        # The earliest, so the list still sorts by when the problem starts.
+        row["day"] = row["days"][0]
+        out.append(row)
+    return sorted(out, key=lambda r: (r["day"], r["code"]))
 
 
 class RulesSerializer(serializers.ModelSerializer):

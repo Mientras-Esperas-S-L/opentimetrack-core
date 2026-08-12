@@ -165,58 +165,118 @@ def test_it_can_be_cleared(as_admin, company):
     assert not person.age_is_known
 
 
-# ------------------------------------------------------------------ part time
+# --------------------------------------------------- the working-time regime
+#
+# Not a list of contract types. What the product needs to know is which limits
+# apply and what hours beyond the agreed ones are called --- and within one
+# company there will be people on forty hours, on twenty-five, on a reduced
+# day, and with no agreed figure at all.
 
 
 @pytest.mark.django_db
-def test_part_time_needs_its_percentage(as_admin, company):
-    """Art. 3.b asks for both. Part time with no percentage leaves empty the
-    figure the article actually requires."""
+def test_a_part_time_contract_needs_its_hours(as_admin, company):
+    """Art. 3.b asks for the agreed figure. Without it there is nothing to
+    measure against, and the roster would fall back to the company's forty."""
     person = make(company, "parcial@example.com")
 
-    response = patch(as_admin, person, part_time=True)
+    response = patch(as_admin, person, regime="PART_TIME")
 
     assert response.status_code == 400
-    assert "part_time_percentage" in response.data["error"]["details"]
+    assert "contracted_hours" in response.data["error"]["details"]
 
 
 @pytest.mark.django_db
-def test_a_percentage_without_part_time_is_refused(as_admin, company):
-    """The leftover somebody forgot to clear when a contract went full time."""
-    person = make(company, "parcial@example.com")
+def test_hours_on_a_contract_with_no_agreed_figure_are_refused(as_admin, company):
+    """The leftover somebody forgot to clear when the terms changed."""
+    person = make(company, "suelto@example.com")
 
-    response = patch(as_admin, person, part_time=False, part_time_percentage="50")
+    response = patch(as_admin, person, regime="VARIABLE", contracted_hours="20")
 
     assert response.status_code == 400
 
 
 @pytest.mark.django_db
-def test_a_percentage_of_a_hundred_is_refused(as_admin, company):
-    """It is a fraction of a full day. A hundred per cent is full time, and
-    zero is not a contract."""
-    person = make(company, "parcial@example.com")
+def test_a_week_longer_than_the_company_week_is_refused(as_admin, company):
+    """Art. 34.1 ET is a ceiling: no contract may agree past it. Forty-five
+    here is either a typo or a contract that does not hold."""
+    person = make(company, "larga@example.com")
 
-    assert patch(as_admin, person, part_time=True, part_time_percentage="100").status_code == 400
-    assert patch(as_admin, person, part_time=True, part_time_percentage="0").status_code == 400
+    response = patch(as_admin, person, regime="FULL_TIME", contracted_hours="45")
+
+    assert response.status_code == 400
 
 
 @pytest.mark.django_db
-def test_part_time_together_with_its_percentage_is_accepted(as_admin, company):
+def test_twenty_five_hours_a_week_is_accepted_and_its_share_worked_out(as_admin, company):
+    """The percentage art. 3.b asks for is derived, not typed. Two fields
+    saying the same thing end up disagreeing."""
+    from apps.tenants.rules import WorkingTimeRules
+
     person = make(company, "parcial@example.com")
 
-    response = patch(as_admin, person, part_time=True, part_time_percentage="62.5")
+    response = patch(as_admin, person, regime="PART_TIME", contracted_hours="25")
 
     assert response.status_code == 200
     person.refresh_from_db()
-    assert person.part_time
-    assert str(person.part_time_percentage) == "62.50"
+    with tenant_context(company.id):
+        rules = WorkingTimeRules.for_company(company)
+    assert person.agreed_hours(rules) == (25.0, "WEEK")
+    assert person.share_of_full_time(rules) == 62.5
 
 
 @pytest.mark.django_db
-def test_marking_part_time_is_what_refuses_the_overtime(as_admin, company):
-    """Art. 12.4.c. Until the field could be set, this never triggered."""
+def test_an_annual_figure_is_kept_as_annual(as_admin, company):
+    """The state gardening agreement sets 1700 hours a year and no weekly
+    figure. Dividing by 52 would invent a number nobody agreed to."""
+    from apps.tenants.rules import WorkingTimeRules
+
+    person = make(company, "anual@example.com")
+
+    response = patch(
+        as_admin, person, regime="FULL_TIME", contracted_hours="1700", contracted_period="YEAR"
+    )
+
+    assert response.status_code == 200
+    person.refresh_from_db()
+    with tenant_context(company.id):
+        rules = WorkingTimeRules.for_company(company)
+    assert person.agreed_hours(rules) == (1700.0, "YEAR")
+    # No weekly share: the two are not the same period, and pretending they are
+    # is the mistake this guards against.
+    assert person.share_of_full_time(rules) is None
+
+
+@pytest.mark.django_db
+def test_a_reduced_day_is_not_part_time(as_admin, company):
+    """The distinction that costs money if it is wrong. A reduction under
+    art. 37.6 is a full-time contract worked less, so the overtime ban of
+    art. 12.4.c does not reach it. Filing both as "part time" would deny
+    overtime to people entitled to it."""
+    from apps.punches.models import HoursNature, OvertimeSettlement
+    from apps.punches.services import register_punch
+
+    person = make(company, "reducida@example.com")
+    patch(as_admin, person, regime="REDUCED", contracted_hours="30")
+    person.refresh_from_db()
+
+    assert not person.part_time
+
+    with tenant_context(company.id):
+        event = register_punch(
+            employee=person,
+            company=company,
+            hours_nature=HoursNature.OVERTIME,
+            overtime_settlement=OvertimeSettlement.PAID,
+        )
+
+    assert event.pk is not None
+
+
+@pytest.mark.django_db
+def test_part_time_is_what_refuses_the_overtime(as_admin, company):
+    """Art. 12.4.c, and the other side of the test above."""
     person = make(company, "parcial@example.com")
-    patch(as_admin, person, part_time=True, part_time_percentage="50")
+    patch(as_admin, person, regime="PART_TIME", contracted_hours="25")
     person.refresh_from_db()
 
     with tenant_context(company.id), pytest.raises(BusinessRuleError) as caught:
@@ -230,6 +290,37 @@ def test_marking_part_time_is_what_refuses_the_overtime(as_admin, company):
     assert caught.value.code == "overtime_not_available_part_time"
 
 
+@pytest.mark.django_db
+def test_a_full_time_contract_with_nothing_written_uses_the_company_week(as_admin, company):
+    """Full time *is* the ordinary week. Asking every full-timer to retype it
+    invites a typo in the one value already known."""
+    from apps.tenants.rules import WorkingTimeRules
+
+    person = make(company, "completa@example.com")
+
+    with tenant_context(company.id):
+        rules = WorkingTimeRules.for_company(company)
+
+    assert person.agreed_hours(rules) == (40.0, "WEEK")
+
+
+@pytest.mark.django_db
+def test_no_agreed_figure_means_none(as_admin, company):
+    """And the caller has to handle it rather than get a zero, which would read
+    as "contracted for nothing"."""
+    from apps.tenants.rules import WorkingTimeRules
+
+    person = make(company, "suelto@example.com")
+    patch(as_admin, person, regime="VARIABLE")
+    person.refresh_from_db()
+
+    with tenant_context(company.id):
+        rules = WorkingTimeRules.for_company(company)
+
+    assert person.agreed_hours(rules) is None
+    assert not person.has_agreed_hours
+
+
 # ------------------------------------------- what reaches the inspection report
 
 
@@ -240,7 +331,7 @@ def test_the_agreed_hours_reach_the_report(as_admin, company):
     from apps.reports.services import build_report
 
     person = make(company, "ana@example.com")
-    patch(as_admin, person, contracted_schedule="L-V 09:00-17:00", part_time=False)
+    patch(as_admin, person, contracted_schedule="L-V 09:00-17:00", regime="FULL_TIME")
     person.refresh_from_db()  # build_report reads the object, not the row
 
     with tenant_context(company.id):
@@ -252,7 +343,7 @@ def test_the_agreed_hours_reach_the_report(as_admin, company):
         )
 
     assert data.contracted_schedule == "L-V 09:00-17:00"
-    assert data.part_time is False
+    assert data.regime == "Full time"
 
 
 @pytest.mark.django_db

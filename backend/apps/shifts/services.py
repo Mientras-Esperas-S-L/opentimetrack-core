@@ -150,6 +150,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
         findings.extend(_check_night_work(roster, rules, first, last))
         findings.extend(_check_under_eighteen(roster, rules, framework.minors, first, last))
     findings.extend(_check_leave_clashes(first, last, employee))
+    findings.extend(_check_outside_the_contract(by_person))
 
     # The citation comes from the company's country, not from the place the
     # finding was built. Nine of them used to be typed in beside each `Finding`,
@@ -184,18 +185,43 @@ def _check_daily_rest(roster, rules, first, last) -> list[Finding]:
 
 
 def _check_weekly_hours(employee_id, roster, rules, first, last) -> list[Finding]:
-    """Hours per ISO week. Weeks only partly inside the window are skipped.
+    """Hours per week, against two different things.
 
-    Reporting a half-counted week as an excess would be worse than saying
-    nothing: whoever reads it would go looking for hours that are not there and
-    stop trusting the rest of the warnings.
+    They used to be one check against the company's figure, which meant a
+    twenty-five hour contract rostered for thirty-eight said nothing at all:
+    thirty-eight is under forty, so the legal ceiling was fine and nobody was
+    looking at the contract.
+
+    They are not the same question and they do not have the same answer:
+
+    **Over the legal maximum** is a breach. Art. 34.1 ET sets it and no contract
+    may go above it.
+
+    **Over what was agreed** is not. Those extra hours are lawful and they are a
+    *different kind of hour* --- complementary, under art. 12.5 for part-time
+    work --- with their own cap and their own duty to be recorded separately.
+    Reporting it as an excess would be wrong; saying nothing loses the only
+    signal that the roster is asking for hours nobody agreed to.
+
+    Weeks only partly inside the window are skipped. Reporting a half-counted
+    week as an excess would be worse than saying nothing: whoever reads it goes
+    looking for hours that are not there and stops trusting the rest.
     """
     weeks: dict = {}
     for shift in roster:
         year, week, _weekday = shift.day.isocalendar()
         weeks.setdefault((year, week), []).append(shift)
 
-    limit = float(rules.weekly_hours)
+    ceiling = float(rules.weekly_hours)
+    person = roster[0].employee
+
+    # Only a weekly figure can be compared week by week. An annual one --- 1700
+    # hours in the gardening agreement --- is met or missed over a year, and
+    # dividing it by 52 would produce a number nobody agreed to and that no
+    # single week is supposed to match.
+    agreed_pair = person.agreed_hours(rules)
+    agreed = agreed_pair[0] if agreed_pair and agreed_pair[1] == "WEEK" else None
+
     found = []
     for (_year, _week), shifts_of_week in weeks.items():
         monday = min(s.day for s in shifts_of_week) - timedelta(
@@ -206,16 +232,54 @@ def _check_weekly_hours(employee_id, roster, rules, first, last) -> list[Finding
             continue
 
         hours = sum(s.minutes for s in shifts_of_week) / 60
-        if hours > limit:
+
+        if hours > ceiling:
             found.append(
                 Finding(
                     day=monday,
                     employee_id=employee_id,
                     code="weekly_hours_exceeded",
                     message=_("%(hours)s h rostered that week, over the %(limit)s h configured.")
-                    % {"hours": f"{hours:.1f}", "limit": f"{limit:g}"},
+                    % {"hours": f"{hours:.1f}", "limit": f"{ceiling:g}"},
                 )
             )
+        # Only when it is not already over the ceiling: two warnings about the
+        # same week would bury the more serious one.
+        elif agreed is not None and hours > agreed:
+            found.append(
+                Finding(
+                    day=monday,
+                    employee_id=employee_id,
+                    code="over_contracted_hours",
+                    message=_(
+                        "%(hours)s h rostered that week against %(agreed)s h contracted. "
+                        "The %(extra)s h over are complementary hours and count towards "
+                        "their own limit."
+                    )
+                    % {
+                        "hours": f"{hours:.1f}",
+                        "agreed": f"{agreed:g}",
+                        "extra": f"{hours - agreed:.1f}",
+                    },
+                )
+            )
+
+    # Somebody with no agreed weekly figure has nothing to be measured against.
+    # Said once for the window rather than passed over in silence: a roster
+    # screen with no warnings should mean "nothing to say", not "not looked at".
+    if not person.has_agreed_hours and roster:
+        found.append(
+            Finding(
+                day=first,
+                employee_id=employee_id,
+                code="no_agreed_weekly_hours",
+                message=_(
+                    "No agreed weekly hours on this contract, so the weekly total is "
+                    "not checked. Only the legal maximum applies."
+                ),
+            )
+        )
+
     return found
 
 
@@ -413,6 +477,34 @@ def _check_under_eighteen(roster, rules, minors, first, last) -> list[Finding]:
                 )
             )
 
+    return found
+
+
+def _check_outside_the_contract(by_person) -> list[Finding]:
+    """Somebody rostered on a day their contract does not cover.
+
+    Within one company there will be open-ended contracts, six-month ones and
+    permanent-seasonal ones, and a roster drawn a month ahead does not know
+    which ended last Friday. Nothing else catches it: the person still exists,
+    is still active, and every other check passes happily on a day they are not
+    engaged for.
+    """
+    found = []
+    for _employee_id, roster in by_person.items():
+        person = roster[0].employee
+        if not (person.contract_start or person.contract_end):
+            continue
+        for shift in roster:
+            if person.is_engaged_on(shift.day):
+                continue
+            found.append(
+                Finding(
+                    day=shift.day,
+                    employee_id=shift.employee_id,
+                    code="outside_the_contract",
+                    message=_("Rostered on a day outside the dates of their contract."),
+                )
+            )
     return found
 
 

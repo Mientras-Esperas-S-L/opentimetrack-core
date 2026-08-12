@@ -18,7 +18,12 @@ from __future__ import annotations
 
 from datetime import time
 
-from apps.legal.base import Citation, LegalFramework, MinorProtections
+from apps.legal.base import (
+    Citation,
+    ComplementaryHours,
+    LegalFramework,
+    MinorProtections,
+)
 
 ESPANA = LegalFramework(
     country="ES",
@@ -36,6 +41,7 @@ ESPANA = LegalFramework(
         "night_ends_at": time(6, 0),
         "correction_consent_days": 7,
         "roster_notice_days": 5,
+        "complementary_hours_share": 30,
     },
     # ------------------------------------------------------------ de dónde salen
     citations={
@@ -82,6 +88,13 @@ ESPANA = LegalFramework(
             "asiento y no fija plazo para responder. Sin plazo, una propuesta quedaría "
             "colgada para siempre; lo pone la empresa y está a la vista.",
         ),
+        "complementary_hours_share": Citation(
+            "Art. 12.5.c ET",
+            "Hasta el 30 % de las horas ordinarias pactadas, y el convenio puede "
+            "subirlo al 60 %. Es lo único que limita cuánto se puede pedir por "
+            "encima de un contrato parcial, porque las horas extraordinarias las "
+            "prohíbe el art. 12.4.c.",
+        ),
         "roster_notice_days": Citation(
             "Art. 34.2 ET",
             "Cinco días de preaviso para la distribución irregular de la jornada. El "
@@ -102,6 +115,13 @@ ESPANA = LegalFramework(
     finding_citations={
         "short_daily_rest": Citation("Art. 34.3 ET"),
         "weekly_hours_exceeded": Citation("Art. 34.1 ET"),
+        # No es un incumplimiento: las horas por encima de lo pactado en jornada
+        # parcial son complementarias, lícitas y con su propio tope.
+        "over_contracted_hours": Citation("Art. 12.5 ET"),
+        "no_agreed_weekly_hours": Citation(""),
+        # Tampoco incumple un artículo: es un error de planificación, como el de
+        # poner a alguien de vacaciones.
+        "outside_the_contract": Citation(""),
         "break_owed": Citation("Art. 34.4 ET"),
         "short_weekly_rest": Citation("Art. 37.1 ET"),
         "looks_like_night_work": Citation("Art. 36.1 ET"),
@@ -113,6 +133,27 @@ ESPANA = LegalFramework(
         # el que antes le llega a la persona. Sin cita a propósito.
         "rostered_on_leave": Citation(""),
     },
+    # -------------------------------------------------- horas complementarias
+    #
+    # Lo único que protege de verdad a quien tiene jornada parcial. El art.
+    # 12.4.c le prohíbe las horas extraordinarias, y lo que le deja hacer a
+    # cambio son estas; sin tope, esa prohibición no le sirve de nada.
+    #
+    # Art. 12.5.c: las pactadas no pueden pasar del 30 % de las ordinarias, y el
+    # convenio puede subirlo hasta el 60 %. Por eso el porcentaje acaba siendo
+    # un valor que la empresa configura, con este como punto de partida.
+    #
+    # Art. 12.5.h: «se registrarán día a día y se totalizarán mensualmente»,
+    # que es de dónde sale el periodo.
+    complementary=ComplementaryHours(
+        max_share=0.30,
+        period_months=1,
+        citation=Citation(
+            "Art. 12.5.c ET",
+            "Hasta el 30 % de las horas ordinarias, ampliable al 60 % por convenio. "
+            "Se totalizan mensualmente (art. 12.5.h).",
+        ),
+    ),
     # ------------------------------------------------------ menores de 18 años
     #
     # No son ajustes y no pueden serlo. Ningún convenio puede rebajarlos, así

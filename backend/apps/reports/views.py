@@ -258,7 +258,8 @@ class PayrollSummaryView(APIView):
                 "break_seconds": data.total_break_seconds,
                 "days": len([r for r in data.rows if r.seconds or r.absence]),
                 "fingerprint": data.fingerprint,
-                "part_time": data.part_time,
+                "regime": data.regime,
+                "contracted_hours": data.contracted_hours,
                 "contracted_schedule": data.contracted_schedule,
             }
         )

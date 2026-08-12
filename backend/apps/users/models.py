@@ -46,6 +46,48 @@ class Department(TenantOwnedModel):
         return self.name
 
 
+class WorkingTimeRegime(models.TextChoices):
+    """Which set of rules applies to somebody's working day.
+
+    Not a list of contract types. Spain has dozens and almost none of them
+    change anything about recording time; what changes it is which limits apply
+    and what hours beyond the agreed ones are called.
+
+    The distinction that costs money if it is wrong is **part time against
+    reduced**. They look the same on a roster and the law treats them
+    differently: art. 12.4.c forbids overtime on a part-time contract, and a
+    reduced working day under art. 37.6 is a full-time contract worked less, so
+    that ban does not reach it. A system that filed both as "part time" would
+    refuse overtime to people entitled to it.
+
+    Deliberately **not** here: whether the work is seasonal. A permanent-
+    seasonal contract (art. 16 ET) is full or part time *while it is active* ---
+    it is a different axis, and folding it in would force a choice between two
+    facts that are both true.
+    """
+
+    FULL_TIME = "FULL_TIME", _("Full time")
+    PART_TIME = "PART_TIME", _("Part time")
+    REDUCED = "REDUCED", _("Reduced working day")
+    TRAINING = "TRAINING", _("Training contract")
+    VARIABLE = "VARIABLE", _("No agreed figure")
+
+
+class HoursPeriod(models.TextChoices):
+    """What the agreed figure is a figure *of*.
+
+    A week is the obvious one and not the commonest. Spanish collective
+    agreements very often set the year --- the state gardening agreement says
+    1700 hours a year and no weekly figure at all --- and a product that only
+    understood weeks would either ignore that or invent a division nobody
+    agreed to.
+    """
+
+    WEEK = "WEEK", _("a week")
+    MONTH = "MONTH", _("a month")
+    YEAR = "YEAR", _("a year")
+
+
 class Role(models.TextChoices):
     EMPLOYEE = "EMPLOYEE", _("Employee")
     MANAGER = "MANAGER", _("Manager")
@@ -128,21 +170,65 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         help_text=_("Overrides the company language for this person."),
     )
     # Art. 3.b of the pending decree: the record has to state the working-time
-    # regime, full or part time, the contracted hours, and the percentage when
-    # part time. It belongs to the person rather than to each event --- it is
-    # what was agreed, not what happened on a given day.
-    part_time = models.BooleanField(
-        _("part time"),
-        default=False,
-        help_text=_("Art. 3.b. Part-time work is counted differently (art. 12 ET)."),
+    # regime, the contracted hours, and the percentage when part time. It
+    # belongs to the person rather than to each event --- it is what was agreed,
+    # not what happened on a given day.
+    #
+    # There used to be a boolean and a percentage here, and no number of hours,
+    # so the roster compared everybody against the company's weekly limit:
+    # somebody contracted for twenty-five hours could be rostered for
+    # thirty-eight without a word, because thirty-eight is under forty.
+    regime = models.CharField(
+        _("working-time regime"),
+        max_length=12,
+        choices=WorkingTimeRegime,
+        default=WorkingTimeRegime.FULL_TIME,
+        help_text=_("Art. 3.b. Decides which limits apply, not just how many hours."),
     )
-    part_time_percentage = models.DecimalField(
-        _("percentage of a full day"),
-        max_digits=5,
-        decimal_places=2,
+    contracted_hours = models.DecimalField(
+        _("contracted hours"),
+        max_digits=6,
+        decimal_places=1,
         null=True,
         blank=True,
-        help_text=_("Only for part time. Art. 3.b asks for it explicitly."),
+        help_text=_(
+            "The figure the contract agreed. Empty on a full-time contract means "
+            "the company's own; empty with no agreed figure means there is none."
+        ),
+    )
+    contracted_period = models.CharField(
+        _("over"),
+        max_length=8,
+        choices=HoursPeriod,
+        default=HoursPeriod.WEEK,
+        help_text=_("Whether the figure above is a week, a month or a year."),
+    )
+
+    # How long the relationship lasts, and whether the work is continuous. A
+    # separate axis from the regime on purpose: a permanent-seasonal contract is
+    # full or part time *while it is active*, and a six-month contract records
+    # time exactly like an open-ended one. Folding either into the regime would
+    # force a choice between two facts that are both true.
+    contract_start = models.DateField(
+        _("contract starts"),
+        null=True,
+        blank=True,
+        help_text=_("Empty means it was already running when the company started here."),
+    )
+    contract_end = models.DateField(
+        _("contract ends"),
+        null=True,
+        blank=True,
+        help_text=_("Empty means open-ended. A date makes it fixed-term."),
+    )
+    seasonal = models.BooleanField(
+        _("permanent seasonal"),
+        default=False,
+        help_text=_(
+            "Art. 16 ET: the work comes in periods of activity. Outside them there "
+            "is no expected working day, and the roster says so instead of "
+            "reporting an absence."
+        ),
     )
     contracted_schedule = models.CharField(
         _("agreed hours"),
@@ -279,6 +365,75 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     def is_federated(self) -> bool:
         """Their credentials are governed by an external provider, not by us."""
         return bool(self.oidc_sub)
+
+    @property
+    def part_time(self) -> bool:
+        """Whether the part-time regime applies, which is a narrower question
+        than "does this person work fewer hours".
+
+        A reduced working day under art. 37.6 is fewer hours and is **not**
+        part-time work: the contract stays full time and the overtime ban of
+        art. 12.4.c does not reach it. Answering this by hours worked rather
+        than by regime would deny overtime to people entitled to it.
+        """
+        return self.regime == WorkingTimeRegime.PART_TIME
+
+    def is_engaged_on(self, day) -> bool:
+        """Whether the relationship covers that day.
+
+        Asked per day rather than once, for the same reason the age is: a
+        roster drawn for a period that ends mid-month has to know where it
+        stops, and a single answer would either extend it or cut it short.
+
+        A permanent-seasonal contract is engaged whenever it is not ended: the
+        periods of activity within it are a separate thing, and the system does
+        not model the call-up yet --- which is a gap worth naming rather than a
+        question to answer wrongly.
+        """
+        if self.contract_start and day < self.contract_start:
+            return False
+        if self.contract_end and day > self.contract_end:
+            return False
+        return True
+
+    @property
+    def has_agreed_hours(self) -> bool:
+        """Whether there is any figure to measure against at all."""
+        return self.regime != WorkingTimeRegime.VARIABLE
+
+    def agreed_hours(self, rules) -> tuple[float, str] | None:
+        """The agreed figure and the period it covers, or None.
+
+        Returns the period rather than converting to weeks. Dividing 1700 hours
+        a year by 52 produces a number nobody agreed to and that no week is
+        supposed to match: an annual figure is met or missed over a year, and
+        saying so is more use than a weekly average that is wrong every week.
+        """
+        if not self.has_agreed_hours:
+            return None
+        if self.contracted_hours is not None:
+            return float(self.contracted_hours), self.contracted_period
+        if self.regime in {WorkingTimeRegime.FULL_TIME, WorkingTimeRegime.REDUCED}:
+            # Full time with nothing written down is the company's own week.
+            # Not a guess: full time *is* the ordinary week, and asking every
+            # full-timer to retype it invites typos in a value already known.
+            return float(rules.weekly_hours), HoursPeriod.WEEK
+        return None
+
+    def share_of_full_time(self, rules) -> float | None:
+        """The percentage art. 3.b asks for, worked out rather than typed.
+
+        Two fields saying the same thing end up disagreeing, and the one that
+        reaches the inspection report should be the one derived from the hours
+        actually agreed. Only comparable when both are the same period.
+        """
+        agreed = self.agreed_hours(rules)
+        if agreed is None:
+            return None
+        hours, period = agreed
+        if period != HoursPeriod.WEEK or not rules.weekly_hours:
+            return None
+        return round(hours / float(rules.weekly_hours) * 100, 2)
 
     @property
     def can_manage(self) -> bool:

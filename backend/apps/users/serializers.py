@@ -57,8 +57,12 @@ class UserSerializer(serializers.ModelSerializer):
             # works under. Part of the record's minimum content, so it has to
             # reach the report --- and to reach it, somebody has to be able to
             # enter it.
-            "part_time",
-            "part_time_percentage",
+            "regime",
+            "contracted_hours",
+            "contracted_period",
+            "contract_start",
+            "contract_end",
+            "seasonal",
             "contracted_schedule",
             "default_work_mode",
             # Only for the under-eighteen protections. Without it none of them
@@ -89,8 +93,12 @@ class UserWriteSerializer(serializers.ModelSerializer):
             "employee_id",
             "department",
             "locale",
-            "part_time",
-            "part_time_percentage",
+            "regime",
+            "contracted_hours",
+            "contracted_period",
+            "contract_start",
+            "contract_end",
+            "seasonal",
             "contracted_schedule",
             "default_work_mode",
             "date_of_birth",
@@ -147,38 +155,65 @@ class UserWriteSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        """The percentage and the part-time flag have to agree.
+        """The figure and the regime have to agree.
 
-        Art. 3.b asks for both, and they only mean anything together: a
-        percentage on a full-time contract is a leftover somebody forgot to
-        clear, and part time with no percentage is the field the article
-        actually requires left empty.
+        Art. 3.b asks for the regime and the agreed hours, and they only mean
+        anything together: a part-time contract without a figure leaves empty
+        the number the article requires, and a figure on a contract with no
+        agreed hours is a leftover somebody forgot to clear when the terms
+        changed.
         """
-        part_time = attrs.get("part_time", getattr(self.instance, "part_time", False))
-        percentage = attrs.get(
-            "part_time_percentage", getattr(self.instance, "part_time_percentage", None)
+        from apps.users.models import HoursPeriod, WorkingTimeRegime
+
+        current = self.instance
+        regime = attrs.get("regime", getattr(current, "regime", WorkingTimeRegime.FULL_TIME))
+        hours = attrs.get("contracted_hours", getattr(current, "contracted_hours", None))
+        period = attrs.get(
+            "contracted_period", getattr(current, "contracted_period", HoursPeriod.WEEK)
         )
 
-        if part_time and percentage is None:
-            raise serializers.ValidationError(
-                {"part_time_percentage": _("Art. 3.b asks for it whenever the work is part time.")}
-            )
-        if not part_time and percentage is not None:
+        if regime == WorkingTimeRegime.VARIABLE and hours is not None:
             raise serializers.ValidationError(
                 {
-                    "part_time_percentage": _(
-                        "Only applies to part-time work. Clear it or mark the contract part time."
+                    "contracted_hours": _(
+                        "There is no agreed figure on this regime. Clear it, or choose "
+                        "one that has hours."
                     )
                 }
             )
-        if percentage is not None and not (0 < percentage < 100):
+
+        if regime in {WorkingTimeRegime.PART_TIME, WorkingTimeRegime.TRAINING} and hours is None:
             raise serializers.ValidationError(
-                {
-                    "part_time_percentage": _(
-                        "It is a fraction of a full day: above zero and below a hundred."
-                    )
-                }
+                {"contracted_hours": _("Art. 3.b asks for the agreed hours on this regime.")}
             )
+
+        start = attrs.get("contract_start", getattr(current, "contract_start", None))
+        finish = attrs.get("contract_end", getattr(current, "contract_end", None))
+        if start and finish and finish < start:
+            raise serializers.ValidationError({"contract_end": _("It ends before it starts.")})
+
+        if hours is not None and hours <= 0:
+            raise serializers.ValidationError({"contracted_hours": _("It has to be above zero.")})
+
+        # A weekly figure above the company's ordinary week is either a typo or
+        # a contract that does not hold: art. 34.1 ET is a ceiling and no
+        # contract may agree past it.
+        if hours is not None and period == HoursPeriod.WEEK:
+            from apps.tenants.rules import WorkingTimeRules
+
+            company = self.context["request"].user.tenant
+            ceiling = WorkingTimeRules.for_company(company).weekly_hours
+            if hours > ceiling:
+                raise serializers.ValidationError(
+                    {
+                        "contracted_hours": _(
+                            "%(hours)s h a week is above the company's %(ceiling)s h. A "
+                            "contract cannot agree past the legal maximum."
+                        )
+                        % {"hours": f"{hours:g}", "ceiling": f"{ceiling:g}"}
+                    }
+                )
+
         return attrs
 
     def create(self, validated):

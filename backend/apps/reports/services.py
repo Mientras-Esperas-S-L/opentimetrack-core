@@ -68,8 +68,8 @@ class ReportData:
     fingerprint: str = ""
 
     # Art. 3.b: the agreed regime, which is what the hours are measured against.
-    part_time: bool = False
-    part_time_percentage: str = ""
+    regime: str = ""
+    contracted_hours: str = ""
     contracted_schedule: str = ""
 
     # Art. 3.j asks for a daily **and monthly** total. Daily is each row; this
@@ -126,10 +126,35 @@ def _format_hours(seconds: int) -> str:
     return f"{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}"
 
 
+def _agreed_as_text(employee, rules) -> str:
+    """The agreed hours as art. 3.b wants them stated.
+
+    The period is spelled out because the number alone is ambiguous: "1700" is
+    a year in the gardening agreement and would read as nonsense as a week. And
+    the share of a full day only appears for part-time work, which is the only
+    regime the article asks it for.
+    """
+    agreed = employee.agreed_hours(rules)
+    if agreed is None:
+        return ""
+
+    hours, period = agreed
+    labels = {"WEEK": _("a week"), "MONTH": _("a month"), "YEAR": _("a year")}
+    text = f"{hours:g} h {labels.get(period, '')}".strip()
+
+    share = employee.share_of_full_time(rules)
+    if share is not None and employee.part_time:
+        text += f" ({share:g} %)"
+    return text
+
+
 def build_report(*, employee, company, date_from: date, date_to: date) -> ReportData:
     """Collect the working days of one person over a period."""
     from django.utils import timezone
 
+    from apps.tenants.rules import WorkingTimeRules
+
+    rules = WorkingTimeRules.for_company(company)
     zone = company.tzinfo
 
     punches = list(
@@ -254,10 +279,10 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
         rows=rows,
         total_seconds=total,
         generated_at=timezone.now(),
-        part_time=employee.part_time,
-        part_time_percentage=(
-            f"{employee.part_time_percentage:g}" if employee.part_time_percentage else ""
-        ),
+        regime=employee.get_regime_display(),
+        # Art. 3.b asks for the agreed hours and, when part time, the share of a
+        # full day. Both from the same source so they cannot disagree.
+        contracted_hours=_agreed_as_text(employee, rules),
         contracted_schedule=employee.contracted_schedule,
         monthly_seconds=monthly,
         total_break_seconds=sum(r.break_seconds for r in rows),

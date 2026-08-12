@@ -283,10 +283,10 @@ def test_the_arrangement_is_named(company, worker):
 def test_the_agreed_regime_reaches_the_report(company, worker):
     """3.b: full or part time, the agreed hours, and the percentage."""
     with tenant_context(company.id):
-        worker.part_time = True
-        worker.part_time_percentage = 50
+        worker.regime = "PART_TIME"
+        worker.contracted_hours = 20
         worker.contracted_schedule = "L-V 09:00-13:00"
-        worker.save(update_fields=["part_time", "part_time_percentage", "contracted_schedule"])
+        worker.save(update_fields=["regime", "contracted_hours", "contracted_schedule"])
 
         report = build_report(
             employee=worker,
@@ -295,8 +295,10 @@ def test_the_agreed_regime_reaches_the_report(company, worker):
             date_to=timezone.datetime(2026, 9, 1).date(),
         )
 
-    assert report.part_time is True
-    assert report.part_time_percentage == "50"
+    # Art. 3.b: the regime and the agreed hours, with the share of a full day
+    # worked out rather than typed --- 20 of the company's 40 is half.
+    assert report.regime == "Part time"
+    assert report.contracted_hours == "20 h a week (50 %)"
     assert report.contracted_schedule == "L-V 09:00-13:00"
 
 
@@ -424,8 +426,9 @@ def test_part_time_work_admits_no_overtime(company, worker):
     realizar horas extraordinarias, salvo en los supuestos a los que se refiere
     el artículo 35.3». What they have instead is complementary hours."""
     with tenant_context(company.id):
-        worker.part_time = True
-        worker.save(update_fields=["part_time"])
+        worker.regime = "PART_TIME"
+        worker.contracted_hours = 20
+        worker.save(update_fields=["regime", "contracted_hours"])
 
         with pytest.raises(BusinessRuleError) as caught:
             punch(
@@ -443,8 +446,9 @@ def test_part_time_work_does_admit_the_force_majeure_exception(company, worker):
     """The «salvo» of art. 12.4.c: hours worked to prevent or repair urgent
     damage (art. 35.3) are open to everybody."""
     with tenant_context(company.id):
-        worker.part_time = True
-        worker.save(update_fields=["part_time"])
+        worker.regime = "PART_TIME"
+        worker.contracted_hours = 20
+        worker.save(update_fields=["regime", "contracted_hours"])
 
         event = punch(
             company,
@@ -462,8 +466,9 @@ def test_part_time_work_does_admit_the_force_majeure_exception(company, worker):
 def test_part_time_work_admits_complementary_hours(company, worker):
     """Which is the mechanism art. 12.5 gives them instead."""
     with tenant_context(company.id):
-        worker.part_time = True
-        worker.save(update_fields=["part_time"])
+        worker.regime = "PART_TIME"
+        worker.contracted_hours = 20
+        worker.save(update_fields=["regime", "contracted_hours"])
         event = punch(company, worker, hours_nature=HoursNature.COMPLEMENTARY)
 
     assert event.hours_nature == HoursNature.COMPLEMENTARY

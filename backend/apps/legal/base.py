@@ -72,6 +72,26 @@ class MinorProtections:
 
 
 @dataclass(frozen=True)
+class ComplementaryHours:
+    """The cap on hours a part-timer may work beyond the contract.
+
+    The one protection that part-time work actually has, and the one nothing
+    was checking. Overtime is forbidden on a part-time contract; what is
+    allowed instead is this, and if it has no ceiling then the ban on overtime
+    buys the worker nothing.
+
+    `max_share` is a fraction of the contracted hours, over the reference
+    period. A collective agreement may raise it, which is why it lands on
+    `WorkingTimeRules` as a figure the company sets rather than staying here.
+    """
+
+    max_share: float
+    #: How the period is counted: the cap is on the total, not week by week.
+    period_months: int = 1
+    citation: Citation = field(default_factory=lambda: Citation(""))
+
+
+@dataclass(frozen=True)
 class LegalFramework:
     """One country's answer to "what does the law say here"."""
 
@@ -92,6 +112,7 @@ class LegalFramework:
     finding_citations: dict[str, Citation]
 
     minors: MinorProtections
+    complementary: ComplementaryHours | None = None
 
     def citation(self, key: str) -> Citation:
         """The citation for a field, or an empty one.
@@ -134,6 +155,9 @@ DIRECTIVE = LegalFramework(
         "break_after_hours": Citation("Art. 4 Dir. 2003/88/CE"),
     },
     finding_citations={},
+    # Nothing here: complementary hours are a national construction and the
+    # directive does not know them. A country without them checks nothing.
+    complementary=None,
     minors=MinorProtections(
         # Directive 94/33/EC on the protection of young people at work.
         max_daily_hours=8,

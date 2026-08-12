@@ -94,6 +94,14 @@ class WorkingTimeRules(BaseModel):
             "anyway, recorded as made without agreement."
         ),
     )
+    complementary_hours_share = models.PositiveSmallIntegerField(
+        _("complementary hours, max % of the contract"),
+        default=30,
+        help_text=_(
+            "Cap on hours a part-time contract may work beyond what was agreed, "
+            "as a percentage of it."
+        ),
+    )
     roster_notice_days = models.PositiveSmallIntegerField(
         _("notice for roster changes (days)"),
         default=5,

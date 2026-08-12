@@ -185,10 +185,20 @@ function Findings({ findings }) {
       <Stack component="ul" sx={{ m: 0, pl: 2.5, gap: 0.5 }}>
         {findings.slice(0, 8).map((finding, i) => (
           <Typography component="li" variant="body2" key={i}>
-            <strong>{finding.employee_name}</strong>, {dateOf(finding.day)}: {finding.message}{' '}
-            <Typography component="span" variant="caption" color="text.secondary">
-              ({finding.basis})
-            </Typography>
+            <strong>{finding.employee_name}</strong>
+            {/* One row per person and kind. Somebody whose pattern is nine
+                hours continuous is owed a break every day of the month, and
+                twenty-one identical lines bury the three that were about
+                something else. */}
+            {finding.count > 1
+              ? `, ${finding.count} días desde el ${dateOf(finding.day)}: `
+              : `, ${dateOf(finding.day)}: `}
+            {finding.message}{' '}
+            {finding.basis && (
+              <Typography component="span" variant="caption" color="text.secondary">
+                ({finding.basis})
+              </Typography>
+            )}
           </Typography>
         ))}
         {findings.length > 8 && (
