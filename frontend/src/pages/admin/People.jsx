@@ -48,6 +48,7 @@ import {
   Pager,
 } from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
+import { useDebounced } from '../../hooks/useDebounced.js'
 
 const ROLES = [
   { value: 'EMPLOYEE', label: 'Persona trabajadora' },
@@ -369,11 +370,15 @@ export default function People() {
   const [confirming, setConfirming] = useState(null)
   const [page, setPage] = useState(1)
 
+  // The box updates on every keystroke --- it has to, or typing feels broken ---
+  // but the request waits for a pause.
+  const asked = useDebounced(search)
+
   const { data, isLoading } = useQuery({
-    queryKey: ['employees', { search, showInactive, page }],
+    queryKey: ['employees', { asked, showInactive, page }],
     queryFn: () =>
       getEmployees({
-        search: search || undefined,
+        search: asked || undefined,
         ...(showInactive ? {} : { is_active: true }),
         page,
       }),

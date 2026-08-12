@@ -5,6 +5,7 @@ import Chip from '@mui/material/Chip'
 import TextField from '@mui/material/TextField'
 
 import { getEmployees } from '../services/api.js'
+import { useDebounced } from '../hooks/useDebounced.js'
 
 /** Picking a person, by typing rather than by scrolling.
  *
@@ -31,9 +32,11 @@ export default function EmployeePicker({
 }) {
   const [typed, setTyped] = useState('')
 
-  // Two characters before asking. One matches most of the company and makes a
-  // request per keystroke to learn nothing.
-  const search = typed.trim().length >= 2 ? typed.trim() : undefined
+  // Two characters before asking, and only once typing pauses. One character
+  // matches most of the company, and a request per keystroke asks eight times
+  // to learn what the eighth answer says.
+  const settled = useDebounced(typed)
+  const search = settled.trim().length >= 2 ? settled.trim() : undefined
 
   const { data, isFetching } = useQuery({
     queryKey: ['employees', 'picker', search],

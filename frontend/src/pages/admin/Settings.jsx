@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
+import Autocomplete from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import FormControlLabel from '@mui/material/FormControlLabel'
@@ -22,17 +23,37 @@ import { useAuth } from '../../hooks/useAuth.js'
 
 /** Spain spans two, and both are in daily use. The rest of the list is there
  *  because the product is not Spain-only, even if the rules currently are. */
-const ZONES = [
-  'Europe/Madrid',
-  'Atlantic/Canary',
-  'Europe/Lisbon',
-  'Europe/Paris',
-  'Europe/London',
-  'America/Mexico_City',
-  'America/Bogota',
-  'America/Argentina/Buenos_Aires',
-  'UTC',
-]
+/** Every zone the browser knows, with the likely ones first.
+ *
+ *  It used to be a list of nine in a plain Select. The field accepts any IANA
+ *  zone, so a company configured through the API with one of the other three
+ *  hundred saw the dropdown **blank** --- and saving anything else on this
+ *  screen would have quietly changed their zone to whatever they picked to get
+ *  rid of the empty box.
+ *
+ *  `supportedValuesOf` is in every browser this app supports; the fallback is
+ *  there so a very old one degrades to the short list rather than to nothing.
+ */
+const LIKELY = ['Europe/Madrid', 'Atlantic/Canary', 'Europe/Lisbon', 'UTC']
+
+const ZONES = (() => {
+  const all = Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone') : LIKELY
+  const rest = all.filter((zone) => !LIKELY.includes(zone))
+  return [...LIKELY.filter((zone) => all.includes(zone) || zone === 'UTC'), ...rest]
+})()
+
+/** "Europe/Madrid · UTC+02:00", so a choice can be checked at a glance. */
+const offsetOf = (zone) => {
+  try {
+    const parts = new Intl.DateTimeFormat('es-ES', {
+      timeZone: zone,
+      timeZoneName: 'shortOffset',
+    }).formatToParts(new Date())
+    return parts.find((part) => part.type === 'timeZoneName')?.value ?? ''
+  } catch {
+    return ''
+  }
+}
 
 const LANGUAGES = [
   ['es', 'Español'],
@@ -187,19 +208,40 @@ export default function Settings() {
           hint="Las horas se guardan siempre en UTC. La zona solo decide cómo se muestran."
         >
           <Stack sx={{ gap: 2 }}>
-            <TextField
-              select
+            <Autocomplete
               fullWidth
-              label="Zona horaria"
-              value={form.time_zone}
-              onChange={set('time_zone')}
-            >
-              {ZONES.map((zone) => (
-                <MenuItem key={zone} value={zone}>
-                  {zone}
-                </MenuItem>
-              ))}
-            </TextField>
+              disableClearable
+              options={ZONES}
+              value={form.time_zone || 'Europe/Madrid'}
+              onChange={(_, zone) => {
+                setSaved(false)
+                setForm({ ...form, time_zone: zone })
+              }}
+              getOptionLabel={(zone) => zone}
+              renderOption={(props, zone) => {
+                const { key, ...rest } = props
+                return (
+                  <li key={key} {...rest}>
+                    <Stack
+                      direction="row"
+                      sx={{ gap: 1, width: '100%', justifyContent: 'space-between' }}
+                    >
+                      <span>{zone}</span>
+                      <Typography variant="caption" color="text.secondary">
+                        {offsetOf(zone)}
+                      </Typography>
+                    </Stack>
+                  </li>
+                )
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Zona horaria"
+                  helperText={`Ahora mismo, ${offsetOf(form.time_zone || 'Europe/Madrid')}.`}
+                />
+              )}
+            />
             <TextField
               select
               fullWidth
