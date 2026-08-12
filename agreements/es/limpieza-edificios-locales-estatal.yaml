@@ -1,0 +1,104 @@
+# Convenio colectivo sectorial de limpieza de edificios y locales. Estatal.
+#
+# Esta ficha no tiene ni una cifra de jornada, y eso es lo que dice. Su
+# artículo 10 reparte materias por niveles de negociación: reserva unas al
+# ámbito estatal y manda Jornada, Descansos y Vacaciones al convenio provincial
+# o de comunidad autónoma. No es que se nos haya escapado el artículo: es que
+# no existe.
+#
+# Para una empresa de limpieza esto es la información útil. Sin ficha, buscaría
+# el mínimo legal y se quedaría corta. Con ella sabe que hay un convenio
+# provincial que tiene que encontrar, y cuál es su artículo.
+
+format: 1
+
+agreement:
+  name: Convenio colectivo sectorial de limpieza de edificios y locales
+  scope: state
+  activities:
+    - Limpieza e higienización de edificios y locales
+    - Limpieza de hospitales, centros e instituciones sanitarias
+    - Limpieza de industrias
+    - Limpieza de elementos de transporte terrestre, aéreo, marítimo y fluvial
+    - Limpieza de maquinaria y espacios
+  regcon: "99100125012013"
+  valid_from: 2013-05-23
+  source:
+    publication: BOE-A-2013-5424
+    published_on: 2013-05-23
+    url: https://www.boe.es/buscar/doc.php?id=BOE-A-2013-5424
+
+# Vacío a propósito. El convenio estatal no fija ningún parámetro de tiempo de
+# trabajo, y rellenar esto con los mínimos del Estatuto sería atribuirle al
+# convenio algo que no dice.
+working_time: {}
+
+defers:
+  weekly_hours:
+    basis: "Art. 10.2.B"
+    to: provincial
+    note: >-
+      «Serán materias negociables en este ámbito provincial o de comunidad
+      autónoma las siguientes: [...] Jornada. Descansos. Vacaciones.» La lista
+      del ámbito estatal (art. 10.2.A) no las incluye.
+
+  annual_hours:
+    basis: "Art. 10.2.B"
+    to: provincial
+
+  max_daily_hours:
+    basis: "Art. 10.2.B"
+    to: provincial
+
+  break_after_hours:
+    basis: "Art. 10.2.B"
+    to: provincial
+
+  break_minutes:
+    basis: "Art. 10.2.B"
+    to: provincial
+
+  break_counts_as_work:
+    basis: "Art. 10.2.B"
+    to: provincial
+
+  weekly_rest_hours:
+    basis: "Art. 10.2.B"
+    to: provincial
+
+  annual_leave_days:
+    basis: "Art. 10.2.B"
+    to: provincial
+
+  annual_overtime_hours:
+    basis: "Art. 10.2.B"
+    to: provincial
+    note: >-
+      El art. 10.2.B manda al ámbito provincial el «Abono y compensación de
+      horas extraordinarias». El tope anual del art. 35.2 ET sigue rigiendo.
+
+provenance:
+  transcribed_by: Green City Control
+  verified_on: 2026-08-12
+  notes: >-
+    Comprobado contra el PDF oficial del BOE, no solo contra el XML: la lista
+    del art. 10 pierde las cabeceras de nivel al convertirse a XML y las
+    materias estatales y provinciales quedan pegadas en un solo bloque. Leído
+    en el PDF, donde el diseño las separa. Leídos completos los artículos 3, 7,
+    10, 11 y 12.
+
+    Sin `valid_until` porque el art. 7.1 lo prorroga automáticamente por
+    periodos anuales salvo denuncia expresa con tres meses de antelación. El
+    texto es de 2013 y sigue vivo: la última modificación es de 26/01/2026,
+    BOE-A-2026-2705, que añade medidas de igualdad y no discriminación LGTBI y
+    no toca jornada ni vacaciones.
+
+    El art. 7.2 fija un tope de cinco años de ultraactividad si no se alcanza
+    un nuevo acuerdo, del que el art. 7.3 excluye subrogación, régimen
+    disciplinario y clasificación profesional, que siguen vigentes sin límite.
+    Ninguna de las tres es materia de tiempo de trabajo.
+
+    El art. 11.d) declara nulos los acuerdos de ámbito inferior que regulen
+    materias reservadas al estatal. Jornada no está entre las reservadas, así
+    que el convenio provincial es el que manda y esta ficha no puede
+    sustituirlo.

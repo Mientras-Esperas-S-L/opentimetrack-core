@@ -1,0 +1,128 @@
+# Convenio general del sector de saneamiento público, limpieza viaria, riegos,
+# recogida, tratamiento y eliminación de residuos, limpieza y conservación de
+# alcantarillado. Estatal, 2024-2028.
+#
+# Es un convenio marco: su artículo 40 NO fija la jornada, la manda al convenio
+# de ámbito inferior. Por eso casi todo esta ficha está en `defers` y no en
+# `working_time`. La diferencia importa: si un convenio calla, rige el mínimo
+# legal y la empresa ha terminado; si delega, hay otro convenio que buscar.
+#
+# Su artículo 40 mete además el registro de jornada dentro del convenio, con
+# requisitos que van más allá del art. 34.9 ET. Ver `provenance.notes`.
+
+format: 1
+
+agreement:
+  name: >-
+    Convenio colectivo general del sector de saneamiento público, limpieza
+    viaria, riegos, recogida, tratamiento y eliminación de residuos, limpieza y
+    conservación de alcantarillado
+  scope: state
+  activities:
+    - Limpieza pública viaria
+    - Limpieza de playas, aguas litorales, ríos y cauces fluviales
+    - Limpieza de zonas terrestres de puertos y aeropuertos
+    - Riegos
+    - Recogida de residuos, selectiva o no
+    - Tratamiento y eliminación de residuos sólidos urbanos
+    - Saneamiento y conservación de alcantarillado
+  regcon: "99010035011996"
+  valid_from: 2024-10-26
+  valid_until: 2028-12-31
+  source:
+    publication: BOE-A-2024-22044
+    published_on: 2024-10-25
+    url: https://www.boe.es/buscar/doc.php?id=BOE-A-2024-22044
+
+working_time:
+  break_after_hours:
+    value: 6
+    basis: "Art. 40.A"
+    note: >-
+      «Siempre que la duración de la jornada diaria continuada exceda de seis
+      horas, deberá establecerse un período de descanso.» Coincide con el
+      art. 34.4 ET y no fija su duración, que queda al convenio inferior.
+
+  annual_leave_days:
+    value: 30
+    basis: "Art. 46"
+    note: >-
+      «treinta días naturales», por años naturales. Es el mínimo del art. 38.1
+      ET sin mejora. En días naturales, así que el sistema no lo escribe solo:
+      el campo de la empresa cuenta laborables y la conversión depende de la
+      semana de trabajo.
+
+  leave_days_are_working_days:
+    value: false
+    basis: "Art. 46"
+
+defers:
+  weekly_hours:
+    basis: "Art. 40.A"
+    to: provincial
+    note: >-
+      «Los convenios colectivos de ámbito inferior establecerán la jornada de
+      trabajo pactada y su distribución durante su vigencia.» El convenio marco
+      no da ninguna cifra de jornada: hay que ir al convenio provincial o de
+      empresa. Sin él, lo único aplicable es el máximo del art. 34.1 ET.
+
+  annual_hours:
+    basis: "Art. 40.A"
+    to: provincial
+
+  break_minutes:
+    basis: "Art. 40.A"
+    to: provincial
+    note: >-
+      Obliga a que haya descanso pasadas seis horas pero no dice cuánto dura.
+
+  break_counts_as_work:
+    basis: "Art. 40.A"
+    to: provincial
+    note: >-
+      «Este período de descanso se considerará tiempo de trabajo efectivo
+      cuando así esté establecido o se establezca en convenio colectivo o
+      contrato de trabajo.» Remite al art. 34.4 ET sin decidirlo. A diferencia
+      del convenio de jardinería, que sí lo decide, aquí hay que mirar el
+      convenio de ámbito inferior antes de tocar este ajuste.
+
+  annual_overtime_hours:
+    basis: "Art. 37"
+    to: provincial
+    note: >-
+      El valor y el número se negocian en el ámbito inferior, «con el límite
+      establecido en el artículo 35.2 del Estatuto de los Trabajadores». El
+      tope de 80 sigue rigiendo como techo.
+
+provenance:
+  transcribed_by: Green City Control
+  verified_on: 2026-08-12
+  notes: >-
+    Comprobado contra el XML oficial del BOE. Leídos completos los artículos 4,
+    5, 6, 7, 9, 37, 38, 40, 41, 42, 43 y 46.
+
+    Modificaciones posteriores revisadas y sin efecto sobre el tiempo de
+    trabajo: BOE-A-2025-16675, de 29/07/2025, añade los anexos IV y V; y
+    BOE-A-2026-3794, de 06/02/2026, suprime la disposición adicional segunda
+    sobre jubilación parcial. Ninguna de las dos menciona jornada ni vacaciones.
+
+    Tres cosas del convenio que este formato no sabe representar y que afectan
+    al cálculo de horas:
+
+    Art. 38, horas extraordinarias obligatorias. Por el carácter público del
+    servicio, son de realización obligatoria las que hagan falta para terminar
+    el servicio por ausencias imprevistas u otras causas. Siguen contando para
+    el tope del art. 35.2 ET, pero no son voluntarias.
+
+    Art. 43, prolongación de jornada. Para mantenimiento y reparación y para
+    quien abre o cierra el trabajo de los demás, el exceso sobre la jornada
+    ordinaria NO se computa como hora extraordinaria y se abona a prorrata.
+    Un sistema que las marque como extra contará de más contra el tope.
+
+    Art. 42, cómputo bisemanal para vigilantes y guardas exclusivamente.
+
+    Sobre el propio registro horario: el art. 40 lo regula dentro del convenio
+    y exige que el sistema «imposibilite la manipulación, alteración o creación
+    posterior del registro», que facilite a la persona el acceso a lo
+    almacenado y que se conserve cuatro años. Se aplica salvo que la empresa ya
+    tenga un procedimiento propio conforme al art. 34.9 ET.

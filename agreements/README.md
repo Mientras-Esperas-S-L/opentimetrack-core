@@ -61,6 +61,29 @@ lea la ficha tiene derecho a saber cuál se hizo y a decir que está mal.
 
 Un valor sin `basis` no se acepta: el esquema lo rechaza.
 
+### Callar y delegar no son lo mismo
+
+Hay convenios marco que no fijan la jornada: la mandan expresamente al convenio
+provincial. Eso va en `defers`, no se omite.
+
+```yaml
+defers:
+  weekly_hours:
+    basis: "Art. 40.A"
+    to: provincial
+```
+
+La diferencia cambia lo que tiene que hacer la empresa. Si el convenio **calla**,
+rige el mínimo legal y ha terminado. Si **delega**, hay otro convenio que buscar,
+y nadie busca lo que no sabe que existe.
+
+Una delegación no lleva valor. Ponerlo sería inventar justo lo que el texto dice
+que no decide. Y un parámetro no puede estar en `working_time` y en `defers` a la
+vez: si lo está, una de las dos lecturas del convenio está mal.
+
+Dos de las tres fichas publicadas son marcos. La de limpieza de edificios tiene
+el `working_time` vacío entero.
+
 ## Verificado y sin verificar
 
 `provenance.verified_on` es la fecha en que alguien abrió el boletín y comparó.

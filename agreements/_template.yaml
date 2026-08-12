@@ -46,6 +46,19 @@ working_time:
     # note:  # Si has hecho una conversión o has elegido entre supuestos,
     #        # dilo aquí. Quien lea la ficha tiene derecho a discutirlo.
 
+# Parámetros que el convenio manda EXPRESAMENTE a un convenio de ámbito
+# inferior. Borra la sección si no delega nada.
+#
+# No es lo mismo que callar. Si calla, rige el mínimo legal y la empresa ha
+# terminado. Si delega, hay otro convenio que buscar. Una delegación no lleva
+# valor: sería inventar lo que el texto dice que no decide.
+#
+# defers:
+#   weekly_hours:
+#     basis: "Art. NN"
+#     to: provincial   # autonomous | provincial | company | contract
+#     note:
+
 provenance:
   transcribed_by: # Quién responde de esta transcripción
   # verified_by:  # Quién la comprobó, si es otra persona

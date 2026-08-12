@@ -84,6 +84,18 @@ class Ficha:
     values: dict[str, Any] = field(default_factory=dict)
 
     @property
+    def defers(self) -> dict[str, dict[str, str]]:
+        """Parameters the agreement hands to a lower-scope one.
+
+        Not the same as saying nothing. Silence means the statutory minimum
+        applies and the company is done; a deferral means the figure exists
+        somewhere else and somebody has to go and find it. A framework
+        agreement can defer nearly everything, and then its ficha is almost
+        entirely this section.
+        """
+        return self.data.get("defers", {})
+
+    @property
     def name(self) -> str:
         return self.data["agreement"]["name"]
 
@@ -134,6 +146,16 @@ def load(path: Path) -> Ficha:
     except jsonschema.ValidationError as exc:
         where = ".".join(str(p) for p in exc.absolute_path) or "(root)"
         raise FichaError(f"{where}: {exc.message}") from exc
+
+    # A figure cannot be both fixed and handed to somebody else. When a ficha
+    # says both, one of the two readings is wrong, and guessing which would be
+    # picking a number on the reader's behalf. The schema cannot see this: it
+    # would need to enumerate every key twice and the error would be unreadable.
+    if both := sorted(set(raw.get("working_time", {})) & set(raw.get("defers", {}))):
+        raise FichaError(
+            _("%(keys)s: fixed and deferred at the same time; one of the two readings "
+              "of the agreement is wrong") % {"keys": ", ".join(both)}
+        )
 
     values = {key: entry["value"] for key, entry in raw.get("working_time", {}).items()}
     return Ficha(path=path, data=raw, values=values)

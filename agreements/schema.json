@@ -79,6 +79,26 @@
       }
     },
 
+    "defers": {
+      "description": "Parámetros que el convenio manda expresamente al convenio de ámbito inferior. No es lo mismo que callar: si calla rige el mínimo legal, y si delega hay que ir a buscar otro convenio. Un convenio marco puede tener aquí casi todo.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "annual_hours": { "$ref": "#/$defs/deferral" },
+        "weekly_hours": { "$ref": "#/$defs/deferral" },
+        "max_daily_hours": { "$ref": "#/$defs/deferral" },
+        "daily_rest_hours": { "$ref": "#/$defs/deferral" },
+        "weekly_rest_hours": { "$ref": "#/$defs/deferral" },
+        "break_after_hours": { "$ref": "#/$defs/deferral" },
+        "break_minutes": { "$ref": "#/$defs/deferral" },
+        "break_counts_as_work": { "$ref": "#/$defs/deferral" },
+        "annual_overtime_hours": { "$ref": "#/$defs/deferral" },
+        "annual_leave_days": { "$ref": "#/$defs/deferral" },
+        "leave_days_are_working_days": { "$ref": "#/$defs/deferral" },
+        "leave_year_start_month": { "$ref": "#/$defs/deferral" }
+      }
+    },
+
     "provenance": {
       "type": "object",
       "required": ["transcribed_by", "verified_on"],
@@ -121,6 +141,20 @@
       "properties": {
         "value": { "type": "boolean" },
         "basis": { "type": "string", "minLength": 3 },
+        "note": { "type": "string" }
+      }
+    },
+    "deferral": {
+      "description": "Una delegación no tiene valor: tiene el artículo que delega. Poner un valor aquí sería inventar lo que el convenio dice expresamente que no decide.",
+      "type": "object",
+      "required": ["basis"],
+      "additionalProperties": false,
+      "properties": {
+        "basis": { "type": "string", "minLength": 3 },
+        "to": {
+          "description": "A qué ámbito lo manda.",
+          "enum": ["autonomous", "provincial", "company", "contract"]
+        },
         "note": { "type": "string" }
       }
     }

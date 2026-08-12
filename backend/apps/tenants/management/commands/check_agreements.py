@@ -79,6 +79,17 @@ class Command(BaseCommand):
                     f"    note     transcribed but not yet applied: {', '.join(sorted(orphans))}"
                 )
 
+            # Deferrals are the opposite of a gap and read the same on a screen.
+            # "Not in the agreement" means the statutory minimum applies and the
+            # company is done; "the agreement sends you elsewhere" means there is
+            # another agreement to find, and nobody looks for what they were not
+            # told about.
+            if ficha.defers:
+                self.stdout.write(
+                    f"    note     left to a lower-scope agreement: "
+                    f"{', '.join(sorted(ficha.defers))}"
+                )
+
         self.stdout.write("")
         summary = f"{len(fichas)} fichas · {errors} errors · {warnings} warnings"
 

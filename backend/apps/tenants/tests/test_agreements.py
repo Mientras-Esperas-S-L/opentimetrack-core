@@ -422,6 +422,87 @@ def test_the_gardening_agreement_transcribes_what_the_boe_says():
     assert ficha.values["leave_days_are_working_days"] is True
 
 
+def test_the_cleaning_agreement_fixes_no_working_time_at_all():
+    """Art. 10.2 splits subjects across bargaining levels and keeps Jornada,
+    Descansos and Vacaciones out of the state list. An empty `working_time` is
+    the transcription being right. A company reading this learns there is a
+    provincial agreement to find, which is the one thing it needs."""
+    ficha = shipped("limpieza-edificios-locales-estatal.yaml")
+
+    assert ficha.values == {}
+    assert ficha.defers["weekly_hours"]["basis"] == "Art. 10.2.B"
+    assert ficha.defers["annual_leave_days"]["to"] == "provincial"
+
+
+def test_the_sanitation_agreement_fixes_almost_nothing_and_says_where_to_look():
+    """It is a framework agreement: art. 40.A hands the working day to the
+    lower-scope one. Recording that as an absence would tell a company the
+    statutory minimum applies and it is done, when in fact there is another
+    agreement it has to go and find."""
+    ficha = shipped("saneamiento-limpieza-viaria-estatal.yaml")
+
+    assert "weekly_hours" not in ficha.values
+    assert ficha.defers["weekly_hours"]["basis"] == "Art. 40.A"
+    assert ficha.defers["weekly_hours"]["to"] == "provincial"
+
+
+def test_the_two_shipped_agreements_disagree_about_the_break_and_both_are_right():
+    """Gardening decides it (art. 16: working time). Sanitation refuses to
+    decide it (art. 40.A: whatever the lower-scope agreement says). Same
+    question, two different answers, and the ficha has to keep them apart ---
+    the second is not a gap in the transcription."""
+    gardening = shipped("jardineria-estatal.yaml")
+    sanitation = shipped("saneamiento-limpieza-viaria-estatal.yaml")
+
+    assert gardening.values["break_counts_as_work"] is True
+    assert "break_counts_as_work" not in sanitation.values
+    assert "break_counts_as_work" in sanitation.defers
+
+
+def test_a_figure_cannot_be_fixed_and_deferred_at_once(tmp_path):
+    """One of the two readings of the agreement is wrong, and picking one would
+    be choosing a number on the reader's behalf."""
+    ficha = with_values(weekly_hours=38)
+    ficha["defers"] = {"weekly_hours": {"basis": "Art. 2"}}
+
+    with pytest.raises(agreements.FichaError, match="fixed and deferred"):
+        agreements.load(write(tmp_path, ficha))
+
+
+def test_a_deferral_may_not_carry_a_value(tmp_path):
+    """The whole point is that the agreement does not give one. A value here
+    would be inventing what the text says expressly it does not decide."""
+    ficha = yaml.safe_load(yaml.safe_dump(MINIMAL))
+    ficha["defers"] = {"weekly_hours": {"basis": "Art. 2", "value": 38}}
+
+    with pytest.raises(agreements.FichaError):
+        agreements.load(write(tmp_path, ficha))
+
+
+def test_a_deferral_still_needs_the_article_that_defers(tmp_path):
+    ficha = yaml.safe_load(yaml.safe_dump(MINIMAL))
+    ficha["defers"] = {"weekly_hours": {"to": "provincial"}}
+
+    with pytest.raises(agreements.FichaError, match="basis"):
+        agreements.load(write(tmp_path, ficha))
+
+
+@pytest.mark.django_db
+def test_a_deferred_figure_leaves_the_company_setting_alone(tmp_path, company):
+    """There is nothing to write. The company keeps its own value until
+    somebody finds the agreement that fixes it."""
+    ficha = yaml.safe_load(yaml.safe_dump(MINIMAL))
+    ficha["defers"] = {"weekly_hours": {"basis": "Art. 40.A", "to": "provincial"}}
+
+    with tenant_context(company.id):
+        rules = WorkingTimeRules.for_company(company)
+        applied = agreements.apply_to_rules(agreements.load(write(tmp_path, ficha)), rules)
+        rules.refresh_from_db()
+
+    assert applied.changed == {}
+    assert rules.weekly_hours == Decimal("40.0")
+
+
 def test_what_the_gardening_agreement_does_not_fix_is_absent():
     """Weekly rest and the overtime cap are not in the convenio, so the
     Estatuto governs. Their absence is the transcription being right, not
