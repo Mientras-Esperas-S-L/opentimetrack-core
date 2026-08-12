@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.contrib.auth import authenticate, get_user_model
 from django.db import transaction
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -51,6 +52,21 @@ class UserSerializer(serializers.ModelSerializer):
             "department_name",
             "locale",
             "annual_leave_days",
+            # Art. 3.b and 3.e of the pending decree: the regime the person
+            # works under. Part of the record's minimum content, so it has to
+            # reach the report --- and to reach it, somebody has to be able to
+            # enter it.
+            "part_time",
+            "part_time_percentage",
+            "contracted_schedule",
+            "default_work_mode",
+            # Only for the under-eighteen protections. Without it none of them
+            # apply, and `age_is_known` stays false, which is the system saying
+            # it does not know rather than assuming an adult.
+            "date_of_birth",
+            # Art. 4.b: informed when somebody disagrees with a change to their
+            # record. With nobody marked, that obligation can never be met.
+            "is_worker_representative",
             "is_active",
             "is_federated",
             "date_joined",
@@ -72,6 +88,12 @@ class UserWriteSerializer(serializers.ModelSerializer):
             "employee_id",
             "department",
             "locale",
+            "part_time",
+            "part_time_percentage",
+            "contracted_schedule",
+            "default_work_mode",
+            "date_of_birth",
+            "is_worker_representative",
             "is_active",
             "password",
         ]
@@ -93,6 +115,68 @@ class UserWriteSerializer(serializers.ModelSerializer):
         if value is not None and value.tenant_id != self.context["request"].user.tenant_id:
             raise serializers.ValidationError(_("That department belongs to another company."))
         return value
+
+    def validate_date_of_birth(self, value):
+        """Refuses a date that cannot belong to somebody who works here.
+
+        This field decides whether the under-eighteen protections apply, so a
+        typo in it is not cosmetic: a mistyped year turns a minor into an adult
+        and the eight-hour limit, the thirty-minute break and the ban on night
+        work all stop being checked, silently.
+        """
+        if value is None:
+            return value
+
+        today = timezone.localdate()
+        if value >= today:
+            raise serializers.ValidationError(_("It cannot be today or a future date."))
+
+        age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
+        # Art. 6.1 ET forbids work below sixteen. Anything under it is a typo or
+        # something nobody should be recording as an employee.
+        if age < 16:
+            raise serializers.ValidationError(
+                _("That gives an age of %(age)s. Art. 6.1 ET does not allow work below sixteen.")
+                % {"age": age}
+            )
+        if age > 100:
+            raise serializers.ValidationError(_("That gives an age of over a hundred years."))
+        return value
+
+    def validate(self, attrs):
+        """The percentage and the part-time flag have to agree.
+
+        Art. 3.b asks for both, and they only mean anything together: a
+        percentage on a full-time contract is a leftover somebody forgot to
+        clear, and part time with no percentage is the field the article
+        actually requires left empty.
+        """
+        part_time = attrs.get("part_time", getattr(self.instance, "part_time", False))
+        percentage = attrs.get(
+            "part_time_percentage", getattr(self.instance, "part_time_percentage", None)
+        )
+
+        if part_time and percentage is None:
+            raise serializers.ValidationError(
+                {"part_time_percentage": _("Art. 3.b asks for it whenever the work is part time.")}
+            )
+        if not part_time and percentage is not None:
+            raise serializers.ValidationError(
+                {
+                    "part_time_percentage": _(
+                        "Only applies to part-time work. Clear it or mark the contract part time."
+                    )
+                }
+            )
+        if percentage is not None and not (0 < percentage < 100):
+            raise serializers.ValidationError(
+                {
+                    "part_time_percentage": _(
+                        "It is a fraction of a full day: above zero and below a hundred."
+                    )
+                }
+            )
+        return attrs
 
     def create(self, validated):
         password = validated.pop("password", None)

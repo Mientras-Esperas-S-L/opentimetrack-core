@@ -8,6 +8,7 @@ import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
+import Divider from '@mui/material/Divider'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
@@ -64,7 +65,33 @@ const EMPTY_FORM = {
   role: 'EMPLOYEE',
   department: '',
   annual_leave_days: '',
+  // Art. 3.b and 3.e of the pending decree, plus the two fields the domain
+  // logic reads and nothing could fill: without a date of birth no
+  // under-eighteen protection is ever applied, and with nobody marked as a
+  // representative the art. 4.b notice can never reach anyone.
+  date_of_birth: '',
+  part_time: false,
+  part_time_percentage: '',
+  contracted_schedule: '',
+  default_work_mode: 'ONSITE',
+  is_worker_representative: false,
 }
+
+const fromPerson = (person) => ({
+  first_name: person.first_name ?? '',
+  last_name: person.last_name ?? '',
+  email: person.email ?? '',
+  employee_id: person.employee_id ?? '',
+  role: person.role ?? 'EMPLOYEE',
+  department: person.department ?? '',
+  annual_leave_days: person.annual_leave_days ?? '',
+  date_of_birth: person.date_of_birth ?? '',
+  part_time: Boolean(person.part_time),
+  part_time_percentage: person.part_time_percentage ?? '',
+  contracted_schedule: person.contracted_schedule ?? '',
+  default_work_mode: person.default_work_mode || 'ONSITE',
+  is_worker_representative: Boolean(person.is_worker_representative),
+})
 
 function PersonDialog({ open, person, departments, onClose, onSave, saving, error }) {
   const [form, setForm] = useState(EMPTY_FORM)
@@ -73,19 +100,7 @@ function PersonDialog({ open, person, departments, onClose, onSave, saving, erro
   // Fills the form when a different person is opened, without an effect.
   if (open && loaded !== (person?.id ?? 'new')) {
     setLoaded(person?.id ?? 'new')
-    setForm(
-      person
-        ? {
-            first_name: person.first_name ?? '',
-            last_name: person.last_name ?? '',
-            email: person.email ?? '',
-            employee_id: person.employee_id ?? '',
-            role: person.role ?? 'EMPLOYEE',
-            department: person.department ?? '',
-            annual_leave_days: person.annual_leave_days ?? '',
-          }
-        : EMPTY_FORM,
-    )
+    setForm(person ? fromPerson(person) : EMPTY_FORM)
   }
   if (!open && loaded !== null) setLoaded(null)
 
@@ -97,6 +112,15 @@ function PersonDialog({ open, person, departments, onClose, onSave, saving, erro
       ...form,
       department: form.department || null,
       annual_leave_days: form.annual_leave_days === '' ? null : Number(form.annual_leave_days),
+      date_of_birth: form.date_of_birth || null,
+      contracted_schedule: form.contracted_schedule.trim(),
+      // Null rather than empty when the contract is not part time: the server
+      // refuses a percentage without the flag, and sending '' would fail a
+      // validation about a field the person never filled in.
+      part_time_percentage:
+        form.part_time && form.part_time_percentage !== ''
+          ? Number(form.part_time_percentage)
+          : null,
     })
   }
 
@@ -173,6 +197,98 @@ function PersonDialog({ open, person, departments, onClose, onSave, saving, erro
                 helperText="Vacío = los de la empresa."
               />
             </Stack>
+
+            <Divider textAlign="left" sx={{ mt: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                Contrato
+              </Typography>
+            </Divider>
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+              <TextField
+                fullWidth
+                type="date"
+                label="Fecha de nacimiento"
+                value={form.date_of_birth}
+                onChange={set('date_of_birth')}
+                slotProps={{ inputLabel: { shrink: true } }}
+                // Not a nicety: this is the only thing that turns the
+                // under-eighteen protections on. Empty means they are not being
+                // applied, and somebody should know that rather than assume.
+                helperText="Solo para aplicar las protecciones de menores de 18. Sin ella no se aplican."
+              />
+              <TextField
+                select
+                fullWidth
+                label="Modalidad habitual"
+                value={form.default_work_mode}
+                onChange={set('default_work_mode')}
+                helperText="Cada fichaje puede registrar la otra."
+              >
+                <MenuItem value="ONSITE">Presencial</MenuItem>
+                <MenuItem value="REMOTE">A distancia</MenuItem>
+              </TextField>
+            </Stack>
+
+            <TextField
+              fullWidth
+              label="Horario contratado"
+              placeholder="L-V 09:00-17:00"
+              value={form.contracted_schedule}
+              onChange={set('contracted_schedule')}
+              helperText="Va en el informe de Inspección: es contenido obligatorio del registro."
+            />
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2, alignItems: 'center' }}>
+              <FormControlLabel
+                sx={{ flexShrink: 0 }}
+                control={
+                  <Switch
+                    checked={form.part_time}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        part_time: event.target.checked,
+                        // Clearing it here saves a validation error later: the
+                        // server refuses a percentage on a full-time contract.
+                        part_time_percentage: event.target.checked
+                          ? form.part_time_percentage
+                          : '',
+                      })
+                    }
+                  />
+                }
+                label="Jornada parcial"
+              />
+              {form.part_time && (
+                <TextField
+                  required
+                  fullWidth
+                  type="number"
+                  label="Porcentaje de jornada"
+                  value={form.part_time_percentage}
+                  onChange={set('part_time_percentage')}
+                  slotProps={{ htmlInput: { min: 1, max: 99, step: 0.5 } }}
+                  helperText="Sobre la jornada completa. No se pueden hacer horas extra (art. 12.4.c ET)."
+                />
+              )}
+            </Stack>
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={form.is_worker_representative}
+                  onChange={(event) =>
+                    setForm({ ...form, is_worker_representative: event.target.checked })
+                  }
+                />
+              }
+              label="Representante legal de las personas trabajadoras"
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ mt: -1.5 }}>
+              Se le informa cuando alguien discrepa de un cambio en su registro (art. 4.b) y puede
+              consultar el registro de la empresa (art. 6.2).
+            </Typography>
           </Stack>
         </DialogContent>
         <DialogActions>

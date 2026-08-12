@@ -12,6 +12,7 @@ import Typography from '@mui/material/Typography'
 
 import {
   getCompany,
+  getEmployees,
   getWorkingTimeRules,
   updateCompany,
   updateWorkingTimeRules,
@@ -59,6 +60,10 @@ export default function Settings() {
   const [rules, setRules] = useState(null)
 
   const { data: company, isLoading } = useQuery({ queryKey: ['company'], queryFn: getCompany })
+  const representatives = useQuery({
+    queryKey: ['employees', 'representatives'],
+    queryFn: () => getEmployees({ is_worker_representative: true, is_active: true }),
+  })
   const { data: storedRules } = useQuery({
     queryKey: ['working-time-rules'],
     queryFn: getWorkingTimeRules,
@@ -144,6 +149,19 @@ export default function Settings() {
       />
 
       <ErrorNote error={error} onClose={() => setError(null)} />
+
+      {/* Art. 4.b says the workers' representation must be informed when
+          somebody disagrees with a change to their record. The system cannot
+          know who they are, and with nobody marked the notice reaches nobody
+          --- which the correction records honestly, but only after the fact.
+          Better said here, once, where it can be fixed. */}
+      {representatives.data && representatives.data.count === 0 && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          No hay ninguna persona marcada como representante legal. El art. 4.b obliga a informarla
+          cuando alguien discrepa de un cambio en su registro, y sin nadie marcado ese aviso no
+          llega a ninguna parte. Se marca en la ficha de cada persona, en <strong>Personas</strong>.
+        </Alert>
+      )}
       {saved && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSaved(false)}>
           Ajustes guardados.
