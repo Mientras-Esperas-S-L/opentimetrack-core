@@ -17,7 +17,8 @@ from rest_framework import mixins, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.absences.models import Absence, AbsenceStatus, AbsenceType
+from apps.absences.catalogue import seed_leave_types
+from apps.absences.models import Absence, AbsenceStatus, AbsenceType, LeaveType
 from apps.absences.services import (
     approve_absence,
     cancel_absence,
@@ -29,7 +30,12 @@ from apps.absences.uploads import validate_extension, validate_size
 from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
-from apps.common.permissions import IsAuthenticatedInTenant, IsManagerOrAdmin
+from apps.common.permissions import (
+    IsAdmin,
+    IsAuthenticatedInTenant,
+    IsManagerOrAdmin,
+    ReadForAllWriteForAdmin,
+)
 from apps.common.scope import person_in_scope, visible_people
 
 
@@ -41,6 +47,11 @@ class AbsenceSerializer(serializers.ModelSerializer):
         source="approved_by.get_full_name", read_only=True, default=""
     )
     days = serializers.IntegerField(read_only=True)
+    leave_type_name = serializers.CharField(source="leave_type.name", read_only=True, default=None)
+    #: Served with the absence rather than looked up: a list of leave has to be
+    #: able to say "art. 37.3.b" beside a row without a second request per row.
+    basis = serializers.CharField(source="leave_type.basis", read_only=True, default="")
+    hours = serializers.FloatField(read_only=True)
     # Whether there is one, not where it lives. The raw URL would be a bearer
     # secret sitting in every list response; the file comes from the
     # `justification` action, which checks who is asking.
@@ -57,8 +68,14 @@ class AbsenceSerializer(serializers.ModelSerializer):
             "employee_name",
             "absence_type",
             "type_display",
+            "leave_type",
+            "leave_type_name",
+            "basis",
             "start_date",
             "end_date",
+            "start_time",
+            "end_time",
+            "hours",
             "days",
             "reason",
             "status",
@@ -72,8 +89,87 @@ class AbsenceSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class LeaveTypeSerializer(serializers.ModelSerializer):
+    #: How much it grants, said the way a person reads it: "15 días naturales
+    #: cada vez", "4 días laborables al año". Three fields that only mean
+    #: something together, so the screen does not have to reassemble them and
+    #: get the plural wrong.
+    allowance = serializers.SerializerMethodField()
+    measured_in_hours = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = LeaveType
+        fields = [
+            "id",
+            "code",
+            "name",
+            "family",
+            "basis",
+            "amount",
+            "unit",
+            "period",
+            "extra_when_travelling",
+            "allowance",
+            "measured_in_hours",
+            "paid",
+            "needs_justification",
+            "note",
+            "is_active",
+        ]
+        read_only_fields = ["id", "allowance", "measured_in_hours"]
+
+    def get_allowance(self, obj) -> str:
+        if obj.amount is None:
+            return str(_("the time it takes"))
+        amount = f"{obj.amount.normalize():f}".rstrip(".")
+        return f"{amount} {obj.get_unit_display()} · {obj.get_period_display()}"
+
+
+@extend_schema(tags=["absences"])
+class LeaveTypeViewSet(viewsets.ModelViewSet):
+    """The company's catalogue. Anyone reads; an administrator writes.
+
+    Read for everybody because a person cannot ask for leave they cannot see,
+    and because the entitlement and its article are exactly what they need to
+    know before asking.
+    """
+
+    queryset = LeaveType.objects.none()
+    serializer_class = LeaveTypeSerializer
+    permission_classes = [ReadForAllWriteForAdmin]
+    filterset_fields = ["family", "is_active"]
+
+    def get_queryset(self):
+        return LeaveType.objects.all()
+
+    def perform_create(self, serializer):
+        # No code: a code is how the seed recognises one of its own, and a row
+        # the company invented has no counterpart to recognise.
+        serializer.save(tenant=self.request.user.tenant, code="")
+
+    def perform_destroy(self, instance):
+        used = instance.absences.count()
+        if used:
+            raise BusinessRuleError(
+                code="leave_type_in_use",
+                message=_(
+                    "%(count)s absences use it. Deactivate it instead: deleting would "
+                    "take the reason off records that have to survive four years."
+                )
+                % {"count": used},
+            )
+        instance.delete()
+
+    @extend_schema(request=None, responses={200: dict})
+    @action(detail=False, methods=["post"], permission_classes=[IsAdmin])
+    def seed(self, request):
+        """Brings in the country's catalogue. Adds what is missing, touches nothing."""
+        result = seed_leave_types(request.user.tenant)
+        return Response(result)
+
+
 class AbsenceRequestSerializer(serializers.Serializer):
-    absence_type = serializers.ChoiceField(choices=AbsenceType.choices)
+    absence_type = serializers.ChoiceField(choices=AbsenceType.choices, required=False)
     start_date = serializers.DateField()
     end_date = serializers.DateField()
     reason = serializers.CharField(required=False, allow_blank=True, default="")
@@ -88,6 +184,20 @@ class AbsenceRequestSerializer(serializers.Serializer):
     )
     # Managers may file leave on somebody's behalf; an employee may not.
     employee = serializers.UUIDField(required=False, allow_null=True)
+
+    #: The specific kind. Optional so older clients keep working with just the
+    #: family, which is all there was before the catalogue.
+    leave_type = serializers.UUIDField(required=False, allow_null=True)
+    #: Part of a day. Both or neither.
+    start_time = serializers.TimeField(required=False, allow_null=True)
+    end_time = serializers.TimeField(required=False, allow_null=True)
+
+    def validate(self, attrs):
+        if bool(attrs.get("start_time")) != bool(attrs.get("end_time")):
+            raise serializers.ValidationError(
+                {"end_time": _("Give both times, or neither: half of a range is not one.")}
+            )
+        return attrs
 
 
 class AbsenceViewSet(
@@ -130,12 +240,24 @@ class AbsenceViewSet(
                 )
             employee = self._employee_in_company(data["employee"])
 
+        kind = None
+        if data.get("leave_type"):
+            kind = LeaveType.objects.filter(pk=data["leave_type"], is_active=True).first()
+            if kind is None:
+                raise BusinessRuleError(
+                    code="unknown_leave_type",
+                    message=_("That leave type does not exist or is no longer in use."),
+                )
+
         absence = request_absence(
             employee=employee,
             company=request.user.tenant,
-            absence_type=data["absence_type"],
+            absence_type=data.get("absence_type") or "",
+            leave_type=kind,
             start_date=data["start_date"],
             end_date=data["end_date"],
+            start_time=data.get("start_time"),
+            end_time=data.get("end_time"),
             reason=data.get("reason", ""),
             justification=data.get("justification"),
         )

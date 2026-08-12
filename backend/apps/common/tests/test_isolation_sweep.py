@@ -24,7 +24,7 @@ import pytest
 from django.urls import get_resolver
 from rest_framework.test import APIClient
 
-from apps.absences.models import AbsenceType
+from apps.absences.models import AbsenceType, LeaveType
 from apps.absences.services import request_absence
 from apps.audit.models import AuditAction, AuditLog
 from apps.common.models import tenant_context
@@ -71,6 +71,9 @@ def build_company(name, tax_id, email_domain):
         holiday = PublicHoliday.objects.create(
             tenant=company, day=date(2026, 12, 25), name="Navidad", workplace=workplace
         )
+        leave_type = LeaveType.objects.create(
+            tenant=company, name=f"Mudanza {name}", family="PAID_LEAVE", amount=1
+        )
         punch = register_punch(employee=worker, company=company)
         absence = request_absence(
             employee=worker,
@@ -115,6 +118,7 @@ def build_company(name, tax_id, email_domain):
         "department": department,
         "workplace": workplace,
         "holiday": holiday,
+        "leave_type": leave_type,
         "punch": punch,
         "absence": absence,
         "correction": correction,
@@ -152,6 +156,7 @@ def detail_urls(world):
         "department": f"/api/departments/{world['department'].id}/",
         "workplace": f"/api/workplaces/{world['workplace'].id}/",
         "holiday": f"/api/holidays/{world['holiday'].id}/",
+        "leave type": f"/api/leave-types/{world['leave_type'].id}/",
         "shift": f"/api/shifts/{world['shift'].id}/",
         "shift pattern": f"/api/shift-patterns/{world['pattern'].id}/",
         "audit entry": f"/api/audit/{world['audit'].id}/",
@@ -166,6 +171,7 @@ COLLECTIONS = [
     "/api/departments/",
     "/api/workplaces/",
     "/api/holidays/",
+    "/api/leave-types/",
     "/api/shifts/",
     "/api/shift-patterns/",
     "/api/audit/",
@@ -257,6 +263,7 @@ def test_no_collection_shows_another_companys_rows(ours, theirs):
         "/api/departments/",
         "/api/workplaces/",
         "/api/holidays/",
+        "/api/leave-types/",
         "/api/shifts/",
         "/api/shift-patterns/",
         "/api/audit/",
@@ -313,6 +320,7 @@ def test_they_cannot_change_or_resolve_anything_of_ours(ours, theirs):
         # Giving somebody else's company a day off, or taking one away, changes
         # both their roster warnings and everybody's holiday balance.
         ("delete", f"/api/holidays/{ours['holiday'].id}/", None),
+        ("patch", f"/api/leave-types/{ours['leave_type'].id}/", {"amount": 99}),
     ]
     landed = []
 
@@ -373,7 +381,7 @@ def test_a_worker_cannot_read_a_colleagues_things(ours):
         # The workplace is on that list on purpose rather than by omission: a
         # person is entitled to know where their record is kept and which
         # holiday calendar is being applied to them.
-        if label in {"department", "shift pattern", "workplace", "holiday"}:
+        if label in {"department", "shift pattern", "workplace", "holiday", "leave type"}:
             continue
         response = colleague.get(url)
         if response.status_code not in (403, 404):
@@ -519,6 +527,9 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^workplaces/(?P<pk>[^/.]+)/$",
         "api/^holidays/$",
         "api/^holidays/(?P<pk>[^/.]+)/$",
+        "api/^leave-types/$",
+        "api/^leave-types/(?P<pk>[^/.]+)/$",
+        "api/^leave-types/seed/$",
         "api/^shifts/$",
         "api/^shifts/(?P<pk>[^/.]+)/$",
         "api/^shifts/today/$",

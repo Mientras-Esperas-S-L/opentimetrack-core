@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
+import Alert from '@mui/material/Alert'
+import Autocomplete from '@mui/material/Autocomplete'
+import ToggleButton from '@mui/material/ToggleButton'
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -20,6 +24,7 @@ import {
   downloadJustification,
   getAbsences,
   getLeaveBalance,
+  getLeaveTypes,
   PAGE_SIZE,
   requestAbsence,
 } from '../../services/api.js'
@@ -33,14 +38,7 @@ import {
   Panel,
   StatusChip,
 } from '../../components/common.jsx'
-import { dateOf, dayRange } from '../../components/format.js'
-
-const TYPES = [
-  { value: 'VACATION', label: 'Vacaciones' },
-  { value: 'PERSONAL', label: 'Permiso' },
-  { value: 'SICK_LEAVE', label: 'Baja médica' },
-  { value: 'OTHER', label: 'Otro' },
-]
+import { dateOf, dayRange, leaveLabel, leaveLength } from '../../components/format.js'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -106,53 +104,140 @@ function Balance({ balance }) {
   )
 }
 
-function LeaveDialog({ open, onClose, onSubmit, saving, error }) {
+/** El grupo al que pertenece cada permiso, para agrupar el desplegable.
+ *
+ *  Diecisiete entradas en una lista plana son diecisiete entradas que hay que
+ *  leer enteras. Agrupadas son cuatro decisiones: si son vacaciones, una baja,
+ *  un permiso retribuido o uno sin sueldo.
+ */
+const FAMILIES = {
+  VACATION: 'Vacaciones',
+  SICK_LEAVE: 'Bajas',
+  PAID_LEAVE: 'Permisos retribuidos',
+  UNPAID_LEAVE: 'Sin sueldo',
+}
+
+const hoursBetween = (from, to) => {
+  if (!from || !to) return 0
+  const [h1, m1] = from.split(':').map(Number)
+  const [h2, m2] = to.split(':').map(Number)
+  return Math.max(0, (h2 * 60 + m2 - (h1 * 60 + m1)) / 60)
+}
+
+function LeaveDialog({ open, onClose, onSubmit, saving, error, types }) {
   const [form, setForm] = useState({
-    absence_type: 'VACATION',
+    leave_type: null,
     start_date: today(),
     end_date: today(),
+    start_time: '',
+    end_time: '',
     reason: '',
   })
+  const [partial, setPartial] = useState(false)
+
+  const kind = types.find((type) => type.id === form.leave_type) ?? null
+  const isSick = kind?.family === 'SICK_LEAVE'
+  // Las vacaciones se cuentan en días contra un saldo en días. Medio día
+  // redondearía o convertiría el saldo en un decimal que la ley no usa, así que
+  // el servidor lo rechaza y aquí ni se ofrece.
+  const canBePartial = Boolean(kind) && kind.family !== 'VACATION'
 
   const set = (field) => (event) => {
     const next = { ...form, [field]: event.target.value }
-    // Moving the start past the end is almost always a mis-click, not an
-    // intent to book backwards. The end follows instead of erroring.
+    // Mover el inicio más allá del fin casi siempre es un clic torcido, no la
+    // intención de reservar hacia atrás. El fin sigue al inicio en vez de dar
+    // un error.
     if (field === 'start_date' && next.end_date < next.start_date) {
       next.end_date = next.start_date
     }
     setForm(next)
   }
 
-  const isSick = form.absence_type === 'SICK_LEAVE'
-  const days =
-    (new Date(form.end_date) - new Date(form.start_date)) / 86400000 + 1 || 0
+  const pick = (chosen) => {
+    setForm({ ...form, leave_type: chosen?.id ?? null })
+    // Los que no tienen tope y los que se cuentan en horas —una consulta, un
+    // examen, los cuatro días del art. 37.9— se piden por horas casi siempre.
+    // Se ofrece esa forma primero en vez de esconderla tras un interruptor.
+    setPartial(Boolean(chosen?.measured_in_hours) && chosen?.family !== 'VACATION')
+  }
+
+  const days = (new Date(form.end_date) - new Date(form.start_date)) / 86400000 + 1 || 0
+  const hours = hoursBetween(form.start_time, form.end_time)
+
+  // Aviso, no impedimento: el convenio mejora cualquiera de estas cifras, y la
+  // copia de la empresa puede llevar la del Estatuto sin haberse actualizado.
+  const overAllowance =
+    kind?.amount != null &&
+    !partial &&
+    kind.period === 'EVENT' &&
+    kind.unit !== 'HOURS' &&
+    days > Number(kind.amount)
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <form
         onSubmit={(event) => {
           event.preventDefault()
-          onSubmit(form)
+          onSubmit({
+            leave_type: form.leave_type,
+            start_date: form.start_date,
+            end_date: partial ? form.start_date : form.end_date,
+            start_time: partial ? form.start_time : null,
+            end_time: partial ? form.end_time : null,
+            reason: form.reason,
+          })
         }}
       >
         <DialogTitle>Solicitar ausencia</DialogTitle>
         <DialogContent>
           <ErrorNote error={error} />
           <Stack sx={{ gap: 2, pt: 1 }}>
-            <TextField
-              select
-              fullWidth
-              label="Tipo"
-              value={form.absence_type}
-              onChange={set('absence_type')}
-            >
-              {TYPES.map((type) => (
-                <MenuItem key={type.value} value={type.value}>
-                  {type.label}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Autocomplete
+              options={[...types].sort((a, b) =>
+                (FAMILIES[a.family] ?? '').localeCompare(FAMILIES[b.family] ?? '')
+              )}
+              groupBy={(option) => FAMILIES[option.family] ?? 'Otros'}
+              getOptionLabel={(option) => option.name}
+              value={kind}
+              onChange={(_, chosen) => pick(chosen)}
+              isOptionEqualToValue={(option, chosen) => option.id === chosen.id}
+              renderOption={(props, option) => {
+                const { key, ...rest } = props
+                return (
+                  <li key={key} {...rest}>
+                    <Stack sx={{ py: 0.25 }}>
+                      <Typography variant="body2">{option.name}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {option.allowance}
+                        {option.basis ? ` · ${option.basis}` : ''}
+                        {option.paid ? '' : ' · sin sueldo'}
+                      </Typography>
+                    </Stack>
+                  </li>
+                )
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  required
+                  label="Qué pides"
+                  helperText={
+                    kind
+                      ? [kind.allowance, kind.basis].filter(Boolean).join(' · ')
+                      : 'Escribe para buscar entre los permisos de tu empresa.'
+                  }
+                />
+              )}
+            />
+
+            {/* La nota del artículo, cuando la hay. Es lo que evita la consulta
+                a la gestoría: quién cuenta como familiar, si hay que avisar,
+                hasta cuándo se puede pedir. */}
+            {kind?.note && (
+              <Alert severity="info" variant="outlined">
+                {kind.note}
+              </Alert>
+            )}
 
             {isSick && (
               <Typography variant="body2" color="text.secondary">
@@ -161,44 +246,107 @@ function LeaveDialog({ open, onClose, onSubmit, saving, error }) {
               </Typography>
             )}
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
-              <TextField
-                required
-                fullWidth
-                type="date"
-                label="Desde"
-                value={form.start_date}
-                onChange={set('start_date')}
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
-              <TextField
-                required
-                fullWidth
-                type="date"
-                label="Hasta"
-                value={form.end_date}
-                onChange={set('end_date')}
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
-            </Stack>
+            {canBePartial && (
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={partial ? 'part' : 'whole'}
+                onChange={(_, next) => next && setPartial(next === 'part')}
+              >
+                <ToggleButton value="whole">Días completos</ToggleButton>
+                <ToggleButton value="part">Parte de un día</ToggleButton>
+              </ToggleButtonGroup>
+            )}
 
-            {days > 0 && (
-              <Typography variant="body2" color="text.secondary">
-                Son <strong>{days}</strong> {days === 1 ? 'día' : 'días'}.
-              </Typography>
+            {partial ? (
+              <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+                <TextField
+                  required
+                  fullWidth
+                  type="date"
+                  label="Día"
+                  value={form.start_date}
+                  onChange={set('start_date')}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                <TextField
+                  required
+                  type="time"
+                  label="Desde"
+                  value={form.start_time}
+                  onChange={set('start_time')}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                <TextField
+                  required
+                  type="time"
+                  label="Hasta"
+                  value={form.end_time}
+                  onChange={set('end_time')}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </Stack>
+            ) : (
+              <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+                <TextField
+                  required
+                  fullWidth
+                  type="date"
+                  label="Desde"
+                  value={form.start_date}
+                  onChange={set('start_date')}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                <TextField
+                  required
+                  fullWidth
+                  type="date"
+                  label="Hasta"
+                  value={form.end_date}
+                  onChange={set('end_date')}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </Stack>
+            )}
+
+            {partial
+              ? hours > 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    Son <strong>{hours.toString().replace('.', ',')}</strong>{' '}
+                    {hours === 1 ? 'hora' : 'horas'}.
+                  </Typography>
+                )
+              : days > 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    Son <strong>{days}</strong> {days === 1 ? 'día' : 'días'}.
+                    {kind?.family === 'VACATION' &&
+                      ' Del saldo solo salen los que ibas a trabajar: ni fines de semana ni festivos.'}
+                  </Typography>
+                )}
+
+            {overAllowance && (
+              <Alert severity="warning" variant="outlined">
+                {kind.name} da {kind.allowance}, y estás pidiendo {days}. No se impide: el
+                convenio puede dar más de lo que consta aquí. Quien lo resuelva lo verá.
+                {Number(kind.extra_when_travelling) > 0 &&
+                  ` Si hay desplazamiento, son ${Number(kind.extra_when_travelling)} días más.`}
+              </Alert>
             )}
 
             <TextField
               fullWidth
               multiline
               minRows={2}
-              label="Motivo (opcional)"
+              label={kind?.needs_justification ? 'Motivo' : 'Motivo (opcional)'}
+              required={Boolean(kind?.needs_justification) && !isSick}
               value={form.reason}
               onChange={set('reason')}
               helperText={
                 isSick
                   ? 'No hace falta indicar la dolencia.'
-                  : 'Lo verá quien resuelva la solicitud.'
+                  : kind?.needs_justification
+                    ? 'Este permiso pide justificante. Puedes adjuntarlo después.'
+                    : 'Lo verá quien resuelva la solicitud.'
               }
             />
           </Stack>
@@ -207,7 +355,7 @@ function LeaveDialog({ open, onClose, onSubmit, saving, error }) {
           <Button onClick={onClose} color="inherit">
             Cancelar
           </Button>
-          <Button type="submit" variant="contained" disabled={saving}>
+          <Button type="submit" variant="contained" disabled={saving || !form.leave_type}>
             Solicitar
           </Button>
         </DialogActions>
@@ -224,6 +372,10 @@ export default function MyLeave() {
   const [confirming, setConfirming] = useState(null)
 
   const { data: balance } = useQuery({ queryKey: ['leave-balance'], queryFn: () => getLeaveBalance() })
+  const { data: leaveTypes = [] } = useQuery({
+    queryKey: ['leave-types'],
+    queryFn: () => getLeaveTypes(),
+  })
   const { data: absences, isLoading } = useQuery({
     queryKey: ['absences', 'mine', page],
     queryFn: () => getAbsences({ page }),
@@ -286,15 +438,19 @@ export default function MyLeave() {
                 sx={{ gap: 1.5, justifyContent: 'space-between', alignItems: { sm: 'center' } }}
               >
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ fontWeight: 600 }}>
-                    {absence.type_display}
-                    <Typography component="span" color="text.secondary" sx={{ fontWeight: 400 }}>
-                      {' · '}
-                      {absence.days} {absence.days === 1 ? 'día' : 'días'}
-                    </Typography>
-                  </Typography>
+                  {/* El nombre arriba y la duración abajo, con las fechas. Estuvo
+                      un rato diciendo «Visita médica · 1 días» y repitiendo la
+                      duración dos líneas seguidas: la de arriba contaba días
+                      completos incluso cuando la ausencia eran dos horas y
+                      media. */}
+                  <Typography sx={{ fontWeight: 600 }}>{leaveLabel(absence)}</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {dayRange(absence.start_date, absence.end_date)}
+                    {dayRange(absence.start_date, absence.end_date)} · {leaveLength(absence)}
+                    {absence.basis && (
+                      <Typography component="span" variant="caption" sx={{ ml: 1 }}>
+                        ({absence.basis})
+                      </Typography>
+                    )}
                   </Typography>
                   {absence.reason && (
                     <Typography variant="body2" sx={{ mt: 0.5, fontStyle: 'italic' }}>
@@ -326,7 +482,7 @@ export default function MyLeave() {
                       onClick={() =>
                         setConfirming({
                           title: 'Retirar la solicitud',
-                          body: `${absence.type_display} · ${dayRange(absence.start_date, absence.end_date)}`,
+                          body: `${leaveLabel(absence)} · ${dayRange(absence.start_date, absence.end_date)}`,
                           detail:
                             'Deja de estar pendiente de respuesta. Puedes volver a pedirla, pero esta solicitud queda retirada en el historial.',
                           verb: 'Retirar',
@@ -361,6 +517,7 @@ export default function MyLeave() {
 
       <LeaveDialog
         open={asking}
+        types={leaveTypes}
         saving={ask.isPending}
         error={error}
         onClose={() => {

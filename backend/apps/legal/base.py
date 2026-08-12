@@ -164,6 +164,64 @@ class ShiftWork:
     citations: dict[str, Citation] = field(default_factory=dict)
 
 
+class LeaveFamily:
+    """The four things an absence can be, as far as this product is concerned.
+
+    Not a taxonomy of labour law --- that has dozens of boxes --- but the
+    smallest set that changes **behaviour**:
+
+    `VACATION` spends the holiday balance. `SICK_LEAVE` never stores a
+    certificate, because since RD 1060/2022 the worker does not hand one over.
+    `PAID_LEAVE` and `UNPAID_LEAVE` differ in nothing this product does and in
+    everything payroll does, so the distinction is carried rather than acted on.
+    """
+
+    VACATION = "VACATION"
+    SICK_LEAVE = "SICK_LEAVE"
+    PAID_LEAVE = "PAID_LEAVE"
+    UNPAID_LEAVE = "UNPAID_LEAVE"
+
+
+@dataclass(frozen=True)
+class LeaveKind:
+    """One entry in a country's catalogue of leave.
+
+    Everything a company needs a starting point for. It is a *starting point*
+    and not a rule: a collective agreement improves any of these, so what the
+    framework carries gets copied into the company's own catalogue and the
+    company edits its copy. Nothing here is read at runtime once that copy
+    exists --- which is what stops a change of ours from silently rewriting a
+    figure somebody agreed to.
+
+    `amount` of None means "el tiempo indispensable": the law grants the time
+    the thing takes and no more, which is exactly the case that needs an
+    absence measured in hours rather than in days.
+    """
+
+    code: str
+    name: str
+    family: str
+
+    basis: str = ""
+    paid: bool = True
+
+    #: How much, in `unit`, per `per`. None means the indispensable time.
+    amount: float | None = None
+    #: DAYS_CALENDAR · DAYS_WORKING · HOURS · WEEKS
+    unit: str = "DAYS_CALENDAR"
+    #: EVENT · YEAR · WEEK · DAY
+    per: str = "EVENT"
+
+    #: Art. 37.3.b bis adds two days when the event needs a journey. Kept as a
+    #: figure rather than folded into `amount`, because the entitlement is two
+    #: days and four is a condition, and a catalogue that said four would be
+    #: giving away days nobody granted.
+    extra_when_travelling: float = 0
+
+    needs_justification: bool = False
+    note: str = ""
+
+
 @dataclass(frozen=True)
 class LegalFramework:
     """One country's answer to "what does the law say here"."""
@@ -186,6 +244,11 @@ class LegalFramework:
 
     minors: MinorProtections
     complementary: ComplementaryHours | None = None
+    #: The country's catalogue of leave, copied into each company on setup.
+    #: Empty is legitimate: a country whose leave is entirely a matter of
+    #: contract has nothing statutory to seed.
+    leave_types: tuple[LeaveKind, ...] = ()
+
     #: The subdivisions that set their own public holidays, as code -> name.
     #: Empty for a country where holidays are national and nothing else, which
     #: is most of them --- so the workplace form simply does not ask.

@@ -111,26 +111,39 @@ laboral.
 
 ## 3. Permisos retribuidos
 
-**El hueco más grande que hay.** Existen cuatro tipos de ausencia —vacaciones,
-baja médica, permiso personal y otros— así que los ocho permisos del art. 37.3
-caben todos en «permiso personal». Eso es como no tenerlos: no se puede contar
-cuántos se han usado, ni comprobar la duración, ni justificar nada.
+**Cubiertos.** Hay un catálogo por empresa, sembrado del que trae el país, con
+la duración de cada permiso, su unidad, su periodo, el artículo del que sale y
+si pide justificante. Antes eran cuatro tipos de ausencia y los ocho permisos
+del art. 37.3 caían todos en «permiso personal», que es como no tenerlos.
 
-| Permiso | Duración | Base | Estado |
-|---|---|---|---|
-| Matrimonio o registro de pareja de hecho | 15 días naturales | 37.3.a | **A medias** |
-| Accidente o enfermedad grave, hospitalización, o intervención con reposo domiciliario | 5 días | 37.3.b | **A medias** |
-| Fallecimiento de cónyuge, pareja o pariente hasta 2.º grado | 2 días, +2 con desplazamiento | 37.3.b bis | **A medias** |
-| Traslado del domicilio habitual | 1 día | 37.3.c | **A medias** |
-| Deber inexcusable de carácter público y personal | El indispensable | 37.3.d | **A medias** |
-| Funciones sindicales o de representación | Según convenio | 37.3.e | **A medias** |
-| Exámenes prenatales, preparación al parto, sesiones de adopción | El indispensable | 37.3.f | **A medias** |
-| Fuerza mayor familiar | Horas equivalentes a 4 días al año | 37.9 | **A medias** |
+Se **copia**, no se referencia: el convenio mejora cualquiera de estas cifras,
+la empresa edita su copia, y una corrección nuestra no puede reescribir lo que
+alguien negoció.
 
-Dos detalles del RDL 5/2023 que un catálogo hecho a ojo se salta: el permiso de
-cinco días alcanza también a **quien conviva en el mismo domicilio** y requiera
-cuidado efectivo, aunque no haya parentesco; y los cuatro días de fuerza mayor
-se cuentan **en horas**, no en días.
+| Permiso | Duración | Base |
+|---|---|---|
+| Matrimonio o registro de pareja de hecho | 15 días naturales, cada vez | 37.3.a |
+| Accidente o enfermedad graves, hospitalización, o intervención con reposo | 5 días naturales, cada vez | 37.3.b |
+| Fallecimiento de familiar hasta 2.º grado | 2 días naturales, +2 con desplazamiento | 37.3.b bis |
+| Traslado del domicilio habitual | 1 día natural | 37.3.c |
+| Deber inexcusable de carácter público y personal | El tiempo indispensable | 37.3.d |
+| Funciones sindicales o de representación | Crédito horario, al mes | 37.3.e |
+| Exámenes prenatales, preparación al parto, sesiones de adopción | El tiempo indispensable | 37.3.f |
+| Fuerza mayor familiar | 4 días laborables al año, **en horas** | 37.9 |
+| Lactancia | 1 hora al día | 37.4 |
+| Exámenes de formación reglada | El tiempo indispensable | 23.1.a |
+| Búsqueda de empleo durante el preaviso | 6 horas a la semana | 53.2 |
+| Permiso parental, **no retribuido** | 8 semanas | 48 bis |
+| Visita médica y asuntos propios | Del convenio | — |
+
+Los dos detalles del RDL 5/2023 que un catálogo hecho a ojo se salta están en la
+nota de cada uno: el permiso de cinco días alcanza a **quien conviva en el mismo
+domicilio** aunque no haya parentesco, y los cuatro días de fuerza mayor se
+cuentan **en horas**.
+
+Lo que sigue faltando: **contar lo consumido contra el tope.** El catálogo dice
+cuánto da cada permiso y avisa al pedir de más, pero no lleva la cuenta de
+cuántos días de fuerza mayor van este año.
 
 ### Reducciones y ausencias por cuidados
 
@@ -150,24 +163,18 @@ se cuentan **en horas**, no en días.
 
 ## 4. Ausencias de parte del día
 
-Una ausencia va hoy de una fecha a otra, sin horas. Eso significa que **irse a
-las once por enfermedad no se puede registrar**: el fichaje de salida queda a
-las 11:00, el día suma tres horas y no hay nada que diga por qué.
+**Cubierto.** Una ausencia puede llevar hora de inicio y de fin, y entonces es
+de un solo día. Irse a las once con fiebre ya se registra, que era el caso más
+frecuente de toda esta lista y no se podía guardar de ninguna manera.
 
-Es el caso más frecuente de toda esta lista, y afecta a cosas que el Estatuto ya
-cuenta en horas.
-
-| Situación | Base | Estado |
-|---|---|---|
-| Ausencia de parte del día | — | **Falta.** Irse a media mañana, llegar tarde con permiso, salir dos horas y volver |
-| Permisos contados en horas y no en días | 37.9, 37.4, 23.1.a | **Falta** |
-| Baja médica que empieza a media jornada | 45.1.c | **Falta.** Las horas trabajadas antes de irse son jornada efectiva |
-| Visita médica | Convenio | **Falta.** No está en el Estatuto: sale del convenio, y casi siempre en horas |
-
-Técnicamente falta poco —horas de inicio y fin en la ausencia, y que el cotejo
-entre lo previsto y lo trabajado las descuente—. De producto falta más: una
-ausencia por horas cambia el saldo de vacaciones, la lectura del cuadrante y lo
-que sale en el informe.
+| Regla | Estado |
+|---|---|
+| Ausencia de parte del día | **Cubierto** |
+| Permisos contados en horas | **Cubierto** — el formulario los ofrece por horas antes que por días cuando esa es su forma |
+| Una parcial **no** bloquea el fichaje | **Cubierto** — quien se fue a las once trabajó la mañana, e impedirle fichar la salida dejaría el día abierto |
+| Una parcial no toca el saldo de vacaciones | **Cubierto** |
+| Las vacaciones siguen siendo de días completos | **Cubierto** — se rechaza medio día: el saldo está en días y redondear regalaría o se comería uno |
+| Parte de un día es **un** día | **Cubierto** — «del lunes a las dos al miércoles a las once» se rechaza |
 
 ---
 
@@ -314,22 +321,20 @@ trabaja**. Un modelo de organización completo es otra herramienta.
 
 Ordenado por lo que más se nota en un cliente real, no por dificultad.
 
-1. **Ausencias por horas.** Que una ausencia pueda empezar y acabar a una hora y
-   no solo en una fecha. Es lo que más ocurre y hoy no se puede registrar.
-2. **Catálogo de permisos retribuidos**, con duración, base legal, si consume
-   vacaciones y si exige justificante. Sin esto no se puede decir cuántos días
-   de permiso lleva alguien, que es la primera pregunta de una gestoría.
-3. **Transcribir la resolución del BOE de 2026**, que es lo único que le falta
+1. **Contar lo consumido contra el tope de cada permiso.** El catálogo ya dice
+   cuánto da cada uno; falta responder «cuántos días de fuerza mayor llevas
+   este año», que es la primera pregunta de una gestoría.
+2. **Transcribir la resolución del BOE de 2026**, que es lo único que le falta
    al calendario para estar completo.
-4. **Suspensiones del contrato**, empezando por la IT con su contingencia, el
+3. **Suspensiones del contrato**, empezando por la IT con su contingencia, el
    nacimiento y cuidado del menor, y el ERTE de reducción de jornada.
-5. **Saldos de devolución**: horas extra compensadas, relevo de turno,
+4. **Saldos de devolución**: horas extra compensadas, relevo de turno,
    distribución irregular. Convertir los avisos en una cuenta.
 7. **Vacaciones**: devengo proporcional y traslado por IT.
-7. **Llamamiento del fijo discontinuo** (art. 16), ya señalado en el código.
-8. **Topes que se guardan y no se comprueban**: 80 horas extra al año, 30 % de
+6. **Llamamiento del fijo discontinuo** (art. 16), ya señalado en el código.
+7. **Topes que se guardan y no se comprueban**: 80 horas extra al año, 30 % de
    complementarias al mes, 65/85 % del contrato formativo.
-9. **Historia de la adscripción a departamento**, cuando el informe empiece a
+8. **Historia de la adscripción a departamento**, cuando el informe empiece a
     mentir.
 
 ---

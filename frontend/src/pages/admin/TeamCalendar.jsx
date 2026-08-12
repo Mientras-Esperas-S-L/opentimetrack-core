@@ -18,7 +18,7 @@ import TodayIcon from '@mui/icons-material/Today'
 
 import { approveAbsence, getAbsenceCalendar, rejectAbsence } from '../../services/api.js'
 import { Empty, Loading, PageHeader, StatusChip } from '../../components/common.jsx'
-import { dayRange } from '../../components/format.js'
+import { dayRange, leaveLabel, leaveLength } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 
 /** What is behind a coloured band, and what can be done about it.
@@ -37,7 +37,7 @@ function AbsenceDialog({ absence, canDecide, busy, onClose, onApprove, onReject 
       <DialogContent>
         <Stack sx={{ gap: 1 }}>
           <Stack direction="row" sx={{ gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Typography sx={{ fontWeight: 600 }}>{absence?.type_display}</Typography>
+            <Typography sx={{ fontWeight: 600 }}>{leaveLabel(absence)}</Typography>
             <StatusChip status={absence?.status} label={absence?.status_display} />
           </Stack>
           <Typography variant="body2" color="text.secondary">
@@ -307,7 +307,7 @@ export default function TeamCalendar() {
                   return span ? (
                     <Tooltip
                       key={day}
-                      title={`${span.type_display}${pending ? ' (sin resolver)' : ''} · ${span.days} ${span.days === 1 ? 'día' : 'días'}`}
+                      title={`${leaveLabel(span)}${pending ? ' (sin resolver)' : ''} · ${leaveLength(span)}`}
                     >
                       {cell}
                     </Tooltip>

@@ -227,6 +227,16 @@ export const getHolidays = async (params) => rows(await get('/holidays/', params
 export const createHoliday = (payload) => post('/holidays/', payload)
 export const deleteHoliday = async (id) => (await api.delete(`/holidays/${id}/`)).data
 
+/** El catálogo de permisos de la empresa. Cualquiera lo lee: nadie puede pedir
+ *  un permiso que no ve, y lo que necesita saber antes de pedirlo es cuánto da
+ *  y de qué artículo sale. */
+export const getLeaveTypes = async (params) =>
+  rows(await get('/leave-types/', { is_active: true, ...params }))
+export const createLeaveType = (payload) => post('/leave-types/', payload)
+export const updateLeaveType = async (id, payload) =>
+  (await api.patch(`/leave-types/${id}/`, payload)).data
+export const seedLeaveTypes = () => post('/leave-types/seed/', {})
+
 // ---------------------------------------------------------------------- shifts
 
 export const getShiftPatterns = async () => rows(await get('/shift-patterns/'))

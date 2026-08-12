@@ -21,6 +21,8 @@ from datetime import time
 from apps.legal.base import (
     Citation,
     ComplementaryHours,
+    LeaveFamily,
+    LeaveKind,
     LegalFramework,
     MinorProtections,
     NightWork,
@@ -169,6 +171,199 @@ ESPANA = LegalFramework(
             "Art. 12.5.c ET",
             "Hasta el 30 % de las horas ordinarias, ampliable al 60 % por convenio. "
             "Se totalizan mensualmente (art. 12.5.h).",
+        ),
+    ),
+    # ------------------------------------------------------------- permisos
+    #
+    # El art. 37.3, tal y como quedó tras el RDL 5/2023, más los que están
+    # repartidos por otros artículos y en la práctica se piden igual.
+    #
+    # Dos detalles que un catálogo hecho de memoria se salta y son del 5/2023:
+    # el permiso de cinco días alcanza a quien conviva en el mismo domicilio
+    # aunque no haya parentesco; y los cuatro días de fuerza mayor se cuentan
+    # **en horas**, no en días.
+    #
+    # Son el punto de partida de cada empresa, no la regla: el convenio mejora
+    # cualquiera de estos, y lo que se copia a la empresa es lo que manda desde
+    # ese momento.
+    leave_types=(
+        LeaveKind(
+            code="es.vacation",
+            name="Vacaciones",
+            family=LeaveFamily.VACATION,
+            basis="Art. 38 ET",
+            amount=None,
+            note="La cifra sale de los ajustes de la empresa, no de aquí: es la única "
+            "que depende del convenio persona a persona.",
+        ),
+        LeaveKind(
+            code="es.sick.common",
+            name="Baja por enfermedad común o accidente no laboral",
+            family=LeaveFamily.SICK_LEAVE,
+            basis="Art. 45.1.c ET",
+            amount=None,
+            note="No se guarda el parte: desde el RD 1060/2022 el INSS se lo manda "
+            "directamente a la empresa.",
+        ),
+        LeaveKind(
+            code="es.sick.work",
+            name="Baja por accidente de trabajo o enfermedad profesional",
+            family=LeaveFamily.SICK_LEAVE,
+            basis="Art. 45.1.c ET",
+            amount=None,
+            note="Otra contingencia que la común, y otra entidad la que paga. Se "
+            "distinguen porque el informe y la cotización no las tratan igual.",
+        ),
+        # ---------------------------------------------------------- art. 37.3
+        LeaveKind(
+            code="es.marriage",
+            name="Matrimonio o registro de pareja de hecho",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 37.3.a ET",
+            amount=15,
+            unit="DAYS_CALENDAR",
+            per="EVENT",
+            needs_justification=True,
+        ),
+        LeaveKind(
+            code="es.family_illness",
+            name="Accidente o enfermedad graves, hospitalización o intervención",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 37.3.b ET",
+            amount=5,
+            unit="DAYS_CALENDAR",
+            per="EVENT",
+            needs_justification=True,
+            note="Cónyuge, pareja de hecho o parientes hasta segundo grado, y también "
+            "cualquier persona que conviva en el mismo domicilio y necesite cuidado "
+            "efectivo, aunque no haya parentesco (RDL 5/2023).",
+        ),
+        LeaveKind(
+            code="es.bereavement",
+            name="Fallecimiento de familiar hasta segundo grado",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 37.3.b bis ET",
+            amount=2,
+            unit="DAYS_CALENDAR",
+            per="EVENT",
+            extra_when_travelling=2,
+            needs_justification=True,
+        ),
+        LeaveKind(
+            code="es.moving_house",
+            name="Traslado del domicilio habitual",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 37.3.c ET",
+            amount=1,
+            unit="DAYS_CALENDAR",
+            per="EVENT",
+        ),
+        LeaveKind(
+            code="es.public_duty",
+            name="Deber inexcusable de carácter público y personal",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 37.3.d ET",
+            amount=None,
+            needs_justification=True,
+            note="El tiempo indispensable. Incluye el ejercicio del sufragio activo, "
+            "el jurado y las citaciones judiciales.",
+        ),
+        LeaveKind(
+            code="es.union_duties",
+            name="Funciones sindicales o de representación",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 37.3.e ET",
+            amount=None,
+            unit="HOURS",
+            per="MONTH",
+            note="El crédito horario lo fija el art. 68.e según el tamaño de la "
+            "plantilla, y el convenio puede ampliarlo. Ponlo aquí cuando lo sepas.",
+        ),
+        LeaveKind(
+            code="es.prenatal",
+            name="Exámenes prenatales y preparación al parto",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 37.3.f ET",
+            amount=None,
+            note="El tiempo indispensable, dentro de la jornada. También las sesiones "
+            "preceptivas de información en adopción y acogimiento.",
+        ),
+        LeaveKind(
+            code="es.force_majeure",
+            name="Fuerza mayor familiar",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 37.9 ET",
+            amount=4,
+            unit="DAYS_WORKING",
+            per="YEAR",
+            note="El artículo lo dice en horas: «las horas de ausencia ... equivalentes "
+            "a cuatro días al año». Por eso se pide por horas y no por días sueltos.",
+        ),
+        # -------------------------------------------- cuidados y otros permisos
+        LeaveKind(
+            code="es.breastfeeding",
+            name="Lactancia",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 37.4 ET",
+            amount=1,
+            unit="HOURS",
+            per="DAY",
+            note="Una hora de ausencia, divisible en dos fracciones, o media hora de "
+            "reducción, hasta que el menor cumpla nueve meses. Acumulable en jornadas "
+            "completas cuando lo permita el convenio.",
+        ),
+        LeaveKind(
+            code="es.exams",
+            name="Exámenes de formación reglada",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 23.1.a ET",
+            amount=None,
+            needs_justification=True,
+        ),
+        LeaveKind(
+            code="es.job_search",
+            name="Búsqueda de empleo durante el preaviso",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 53.2 ET",
+            amount=6,
+            unit="HOURS",
+            per="WEEK",
+            note="Solo durante el preaviso de un despido por causas objetivas.",
+        ),
+        LeaveKind(
+            code="es.parental",
+            name="Permiso parental",
+            family=LeaveFamily.UNPAID_LEAVE,
+            basis="Art. 48 bis ET",
+            paid=False,
+            amount=8,
+            unit="WEEKS",
+            per="EVENT",
+            note="Hasta que el menor cumpla ocho años. **No retribuido**, que es lo que "
+            "más se confunde de él.",
+        ),
+        # ---------------------------------------------------------- de convenio
+        LeaveKind(
+            code="es.medical",
+            name="Visita médica",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="",
+            amount=None,
+            unit="HOURS",
+            needs_justification=True,
+            note="No está en el Estatuto: sale del convenio, y casi siempre en horas. "
+            "Se incluye porque lo pide todo el mundo; ajusta el tope al tuyo.",
+        ),
+        LeaveKind(
+            code="es.personal_days",
+            name="Asuntos propios",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="",
+            amount=None,
+            unit="DAYS_WORKING",
+            per="YEAR",
+            note="Tampoco está en el Estatuto. Los da el convenio y no son vacaciones: "
+            "no salen del mismo saldo. Pon los tuyos.",
         ),
     ),
     # ------------------------------------------------- comunidades autónomas

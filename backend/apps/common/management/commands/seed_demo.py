@@ -39,7 +39,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
-from apps.absences.models import Absence, AbsenceStatus, AbsenceType
+from apps.absences.catalogue import seed_leave_types
+from apps.absences.models import Absence, AbsenceStatus, AbsenceType, LeaveType
 from apps.common.models import tenant_context
 from apps.punches.corrections import (
     apply_without_agreement,
@@ -110,6 +111,7 @@ class Command(BaseCommand):
             patterns = self._patterns(company)
             self._roster(company, people, patterns, weeks=options["weeks"])
             self._history(company, people, weeks=options["weeks"])
+            seed_leave_types(company)
             self._absences(company, people)
             self._corrections(company, people)
 
@@ -747,6 +749,43 @@ class Command(BaseCommand):
                 reason=reason,
                 approved_by=people["manager"] if status != AbsenceStatus.PENDING else None,
                 resolved_at=timezone.now() if status != AbsenceStatus.PENDING else None,
+            )
+
+        self._partial_absences(company, people, today)
+
+    def _partial_absences(self, company, people, today):
+        """Parts of a day, which is the commonest absence there is.
+
+        Somebody leaving at eleven with a fever, an hour at the doctor, a
+        family emergency counted in hours because art. 37.9 counts it in hours.
+        None of these could be recorded until the leave had times, and every one
+        of them left a short day in the record with nothing to explain it.
+        """
+        catalogue = {kind.code: kind for kind in LeaveType.objects.all()}
+        wanted = [
+            ("worker", "es.medical", -3, time(11, 0), time(13, 30), "Consulta del especialista"),
+            ("delegate", "es.force_majeure", -1, time(9, 0), time(12, 0), "Aviso del colegio"),
+            ("parttime", "es.exams", 4, time(15, 0), time(19, 0), "Examen de FP"),
+            ("rotating", "es.breastfeeding", -2, time(6, 0), time(7, 0), ""),
+        ]
+        for key, code, offset, opens, closes, reason in wanted:
+            kind = catalogue.get(code)
+            if kind is None:
+                continue
+            day = today + timedelta(days=offset)
+            Absence.objects.create(
+                tenant=company,
+                employee=people[key],
+                leave_type=kind,
+                absence_type=kind.family,
+                start_date=day,
+                end_date=day,
+                start_time=opens,
+                end_time=closes,
+                reason=reason,
+                status=AbsenceStatus.APPROVED if offset < 0 else AbsenceStatus.PENDING,
+                approved_by=people["manager"] if offset < 0 else None,
+                resolved_at=timezone.now() if offset < 0 else None,
             )
 
     # ------------------------------------------------------------- corrections

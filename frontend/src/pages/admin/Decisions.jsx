@@ -33,7 +33,7 @@ import {
   SourceChip,
   StatusChip,
 } from '../../components/common.jsx'
-import { dateOf, dayRange, timeOf } from '../../components/format.js'
+import { dateOf, dayRange, leaveLabel, leaveLength, timeOf } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 
 const KIND_LABELS = {
@@ -232,7 +232,7 @@ export default function Decisions() {
                 key={absence.id}
                 busy={decide.isPending}
                 title={absence.employee_name}
-                meta={`${absence.type_display} · ${dayRange(absence.start_date, absence.end_date)} · ${absence.days} ${absence.days === 1 ? 'día' : 'días'}`}
+                meta={`${leaveLabel(absence)} · ${dayRange(absence.start_date, absence.end_date)} · ${leaveLength(absence)}`}
                 reason={absence.reason}
                 onApprove={() => decide.mutate({ action: approveAbsence, id: absence.id })}
                 onReject={() => openReject(rejectAbsence, absence.id, false)}

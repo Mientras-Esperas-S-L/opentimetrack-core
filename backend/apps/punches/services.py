@@ -352,12 +352,20 @@ def _check_no_approved_absence(employee, company) -> None:
 
     today = timezone.now().astimezone(company.tzinfo).date()
 
-    absence = Absence.objects.filter(
-        employee=employee,
-        status=AbsenceStatus.APPROVED,
-        start_date__lte=today,
-        end_date__gte=today,
-    ).first()
+    # Whole-day leave only. Somebody who left at eleven with a fever has an
+    # approved absence for today and still worked the morning --- blocking their
+    # clock-out would leave the day open, which is the one thing a record must
+    # never do.
+    absence = (
+        Absence.objects.filter(
+            employee=employee,
+            status=AbsenceStatus.APPROVED,
+            start_date__lte=today,
+            end_date__gte=today,
+        )
+        .filter(start_time__isnull=True)
+        .first()
+    )
 
     if absence is not None:
         raise BusinessRuleError(

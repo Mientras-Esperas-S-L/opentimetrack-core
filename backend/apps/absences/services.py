@@ -104,7 +104,7 @@ def vacation_balance(employee, company, day: date | None = None) -> LeaveBalance
         absence_type=AbsenceType.VACATION,
         start_date__lte=end,
         end_date__gte=start,
-    )
+    ).filter(start_time__isnull=True)
 
     # The unit belongs to the company, alongside the figure. Counting in one
     # unit against an entitlement expressed in the other is how this went wrong.
@@ -177,13 +177,27 @@ def request_absence(
     *,
     employee,
     company,
-    absence_type: str,
+    absence_type: str = "",
+    leave_type=None,
     start_date: date,
     end_date: date,
+    start_time=None,
+    end_time=None,
     reason: str = "",
     justification=None,
 ) -> Absence:
-    """Records the request. Nothing is blocked until somebody approves it."""
+    """Records the request. Nothing is blocked until somebody approves it.
+
+    The family comes from the leave type when there is one, so the two cannot
+    disagree. `absence_type` on its own is still accepted: it is what every
+    caller passed before there was a catalogue, and breaking them to add a
+    field would be charging for the improvement.
+    """
+    if leave_type is not None:
+        absence_type = leave_type.family
+    if not absence_type:
+        raise BusinessRuleError(code="no_type", message=_("Say what kind of leave it is."))
+
     if end_date < start_date:
         raise BusinessRuleError(
             code="ends_before_it_starts",
@@ -208,12 +222,28 @@ def request_absence(
             % {"from": clash.start_date, "to": clash.end_date},
         )
 
+    # Holiday is counted in days against a balance in days. Half a day of it
+    # would either round --- giving away or eating a day nobody decided --- or
+    # turn the balance into a decimal that the law does not use. The permits are
+    # where part-days belong, and that is where they are allowed.
+    if (start_time or end_time) and absence_type == AbsenceType.VACATION:
+        raise BusinessRuleError(
+            code="holiday_is_whole_days",
+            message=_(
+                "Holiday is taken in whole days. For part of a day, use the leave type "
+                "that fits: a medical appointment, family emergency, an exam."
+            ),
+        )
+
     absence = Absence(
         tenant=company,
         employee=employee,
         absence_type=absence_type,
+        leave_type=leave_type,
         start_date=start_date,
         end_date=end_date,
+        start_time=start_time,
+        end_time=end_time,
         reason=reason.strip(),
     )
     if justification:

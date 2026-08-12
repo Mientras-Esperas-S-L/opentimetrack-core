@@ -10,7 +10,7 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.routers import DefaultRouter
 
-from apps.absences.views import AbsenceViewSet
+from apps.absences.views import AbsenceViewSet, LeaveTypeViewSet
 from apps.audit.views import AuditLogViewSet
 from apps.common.views import HealthView
 from apps.punches.correction_views import CorrectionViewSet
@@ -43,6 +43,7 @@ router.register("shift-patterns", ShiftPatternViewSet, basename="shift-pattern")
 router.register("shifts", ShiftViewSet, basename="shift")
 router.register("workplaces", WorkplaceViewSet, basename="workplace")
 router.register("holidays", PublicHolidayViewSet, basename="holiday")
+router.register("leave-types", LeaveTypeViewSet, basename="leave-type")
 router.register("audit", AuditLogViewSet, basename="audit")
 router.register("applications", ApplicationViewSet, basename="application")
 

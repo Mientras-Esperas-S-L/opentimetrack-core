@@ -68,3 +68,24 @@ export const monthBounds = ({ year, month }) => ({
 /** "agosto de 2026", for a month header. */
 export const monthName = ({ year, month }) =>
   new Date(year, month, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+
+/** Cómo se llama una ausencia y cuánto dura, en una línea.
+ *
+ *  Vivía repetido en cuatro pantallas cuando solo había cuatro tipos y todas
+ *  las ausencias eran de días completos. Ahora hay un catálogo de diecisiete y
+ *  las hay de parte de un día, así que las cuatro copias habrían divergido a la
+ *  primera: unas dirían «Permiso» donde otras dicen «Visita médica», y ninguna
+ *  diría las horas.
+ */
+export const leaveLabel = (absence) =>
+  absence?.leave_type_name || absence?.type_display || ''
+
+export const leaveLength = (absence) => {
+  if (!absence) return ''
+  if (absence.start_time && absence.end_time) {
+    const hours = Number(absence.hours ?? 0)
+    const shown = hours.toFixed(hours % 1 === 0 ? 0 : 1).replace('.', ',')
+    return `${absence.start_time.slice(0, 5)}–${absence.end_time.slice(0, 5)} · ${shown} h`
+  }
+  return `${absence.days} ${absence.days === 1 ? 'día' : 'días'}`
+}
