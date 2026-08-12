@@ -116,6 +116,7 @@ const FAMILIES = {
   SICK_LEAVE: 'Bajas',
   PAID_LEAVE: 'Permisos retribuidos',
   UNPAID_LEAVE: 'Sin sueldo',
+  SUSPENSION: 'Suspensión del contrato',
 }
 
 const UNITS = {
@@ -152,6 +153,7 @@ function LeaveDialog({ open, onClose, onSubmit, saving, error, types, usage }) {
     end_date: today(),
     start_time: '',
     end_time: '',
+    reduction_share: '',
     reason: '',
   })
   const [partial, setPartial] = useState(false)
@@ -162,6 +164,10 @@ function LeaveDialog({ open, onClose, onSubmit, saving, error, types, usage }) {
   // redondearía o convertiría el saldo en un decimal que la ley no usa, así que
   // el servidor lo rechaza y aquí ni se ofrece.
   const canBePartial = Boolean(kind) && kind.family !== 'VACATION'
+  // Un ERTE puede suspender el contrato o reducir la jornada. Solo se pregunta
+  // en una suspensión: en cualquier otro sitio parecería un ajuste y no haría
+  // nada, que es la peor clase de campo.
+  const canReduce = kind?.family === 'SUSPENSION'
   // Lo que le queda de este permiso, si tiene tope y se acumula. Aquí y no en
   // otra pantalla: es justo antes de pedir cuando sirve de algo.
   const left = usage?.find((row) => row.leave_type === kind?.id) ?? null
@@ -208,6 +214,8 @@ function LeaveDialog({ open, onClose, onSubmit, saving, error, types, usage }) {
             end_date: partial ? form.start_date : form.end_date,
             start_time: partial ? form.start_time : null,
             end_time: partial ? form.end_time : null,
+            reduction_share:
+              canReduce && form.reduction_share !== '' ? Number(form.reduction_share) : null,
             reason: form.reason,
           })
         }}
@@ -371,6 +379,24 @@ function LeaveDialog({ open, onClose, onSubmit, saving, error, types, usage }) {
                 {Number(kind.extra_when_travelling) > 0 &&
                   ` Si hay desplazamiento, son ${Number(kind.extra_when_travelling)} días más.`}
               </Alert>
+            )}
+
+            {canReduce && (
+              <>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Reducción de jornada (%)"
+                  value={form.reduction_share}
+                  onChange={set('reduction_share')}
+                  slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
+                  helperText={
+                    form.reduction_share === '' || Number(form.reduction_share) >= 100
+                      ? 'Vacío o 100 suspende el contrato entero: no se espera jornada.'
+                      : `Se sigue trabajando el ${100 - Number(form.reduction_share)} %. El cuadrante pasa a medirse contra esa jornada.`
+                  }
+                />
+              </>
             )}
 
             <TextField

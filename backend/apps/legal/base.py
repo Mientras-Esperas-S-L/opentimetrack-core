@@ -174,12 +174,19 @@ class LeaveFamily:
     certificate, because since RD 1060/2022 the worker does not hand one over.
     `PAID_LEAVE` and `UNPAID_LEAVE` differ in nothing this product does and in
     everything payroll does, so the distinction is carried rather than acted on.
+    `SUSPENSION` is the contract stopping rather than a day off: it runs in
+    months, spends nothing, and --- for the one kind that reduces the working
+    day instead of stopping it --- changes what the roster is measured against.
     """
 
     VACATION = "VACATION"
     SICK_LEAVE = "SICK_LEAVE"
     PAID_LEAVE = "PAID_LEAVE"
     UNPAID_LEAVE = "UNPAID_LEAVE"
+    #: The contract itself is suspended: there is no duty to work at all, or ---
+    #: in the one case that is not all-or-nothing --- a smaller one. Months
+    #: rather than days, and nothing to spend from an allowance.
+    SUSPENSION = "SUSPENSION"
 
 
 @dataclass(frozen=True)

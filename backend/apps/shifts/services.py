@@ -397,6 +397,19 @@ def _check_weekly_hours(employee_id, roster, rules, first, last) -> list[Finding
 
         hours = sum(s.minutes for s in shifts_of_week) / 60
 
+        # A week inside an ERTE that reduces the day is measured against the
+        # reduced **contract**, not the full one. Without this, the whole roster
+        # of a company on a partial ERTE reads as somebody being over their
+        # hours every single week --- which is the opposite of what happened.
+        #
+        # The legal maximum does **not** move with it. Art. 34.1 is a ceiling
+        # for everybody and an ERTE reduces what was agreed, not what the law
+        # allows. Scaling that as well was the first version of this, and it
+        # turned "over the contract" --- which during an ERTE is a serious
+        # matter --- into "over the legal maximum", a different accusation.
+        share = _reduced_share(person, monday, sunday)
+        week_agreed = agreed * share if agreed is not None else None
+
         if hours > ceiling:
             found.append(
                 Finding(
@@ -409,7 +422,7 @@ def _check_weekly_hours(employee_id, roster, rules, first, last) -> list[Finding
             )
         # Only when it is not already over the ceiling: two warnings about the
         # same week would bury the more serious one.
-        elif agreed is not None and hours > agreed:
+        elif week_agreed is not None and hours > week_agreed:
             found.append(
                 Finding(
                     day=monday,
@@ -422,8 +435,8 @@ def _check_weekly_hours(employee_id, roster, rules, first, last) -> list[Finding
                     )
                     % {
                         "hours": f"{hours:.1f}",
-                        "agreed": f"{agreed:g}",
-                        "extra": f"{hours - agreed:.1f}",
+                        "agreed": f"{week_agreed:g}",
+                        "extra": f"{hours - week_agreed:.1f}",
                     },
                 )
             )
@@ -445,6 +458,31 @@ def _check_weekly_hours(employee_id, roster, rules, first, last) -> list[Finding
         )
 
     return found
+
+
+def _reduced_share(person, first, last) -> float:
+    """How much of the ordinary day is still expected, over that stretch.
+
+    One unless there is an approved suspension that **reduces** rather than
+    stops --- an ERTE under art. 47 taking forty per cent off for six months.
+    The smallest share wins when two overlap, which should not happen and is the
+    safe answer if it ever does.
+    """
+    from apps.absences.models import Absence, AbsenceStatus
+
+    reductions = Absence.objects.filter(
+        employee=person,
+        status=AbsenceStatus.APPROVED,
+        start_date__lte=last,
+        end_date__gte=first,
+        reduction_share__isnull=False,
+        reduction_share__lt=100,
+    ).values_list("reduction_share", flat=True)
+
+    share = 1.0
+    for reduced in reductions:
+        share = min(share, max(0.0, 1 - float(reduced) / 100))
+    return share
 
 
 def _check_breaks(roster, rules, first, last) -> list[Finding]:

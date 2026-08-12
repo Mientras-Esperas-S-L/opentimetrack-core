@@ -48,3 +48,16 @@ porque cuando falle de verdad nadie lo va a mirar.
 Y al mirar por qué falla algo, comprobar **desde cuándo**: `gh run list`. Tres
 de los cuatro avisos del esquema eran anteriores a lo que yo había tocado, y
 haberlo dado por supuesto me habría llevado a buscarlos en mi propio cambio.
+
+## `set -e` no basta cuando hay tubería (12/08/2026)
+
+`podman exec ... | grep -v "graph driver"` devuelve el código de salida del
+**grep**, no el del comando. Con `set -e` puesto y todo, un `KeyError` en la
+semilla pasó por delante sin abortar nada, y solo se notó porque la comprobación
+de después no imprimió nada.
+
+Es la misma familia que la de encadenar con `&&` y leer «458 passed» como éxito.
+
+**Regla:** `set -eo pipefail` siempre que haya una tubería. Y cuando un paso
+imprime cero líneas donde debería imprimir algo, eso **es** el fallo: no seguir
+adelante a ver si el siguiente sale bien.

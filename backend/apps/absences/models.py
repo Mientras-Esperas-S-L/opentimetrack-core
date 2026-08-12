@@ -28,6 +28,7 @@ class AbsenceType(models.TextChoices):
     SICK_LEAVE = "SICK_LEAVE", _("Sick leave")
     PAID_LEAVE = "PAID_LEAVE", _("Paid leave")
     UNPAID_LEAVE = "UNPAID_LEAVE", _("Unpaid leave")
+    SUSPENSION = "SUSPENSION", _("Contract suspended")
 
     # Written before the catalogue existed. Not offered to new absences and not
     # removed either: the rows that carry them have to stay readable, and a
@@ -93,6 +94,7 @@ class LeaveType(TenantOwnedModel):
             ("SICK_LEAVE", _("Sick leave")),
             ("PAID_LEAVE", _("Paid leave")),
             ("UNPAID_LEAVE", _("Unpaid leave")),
+            ("SUSPENSION", _("Contract suspended")),
         ],
         default="PAID_LEAVE",
         help_text=_(
@@ -206,6 +208,26 @@ class Absence(TenantOwnedModel):
     # every sum in this app honest about what a partial day is.
     start_time = models.TimeField(_("from (time)"), null=True, blank=True)
     end_time = models.TimeField(_("to (time)"), null=True, blank=True)
+
+    # The one suspension that is not all-or-nothing. An ERTE under art. 47 can
+    # suspend the contract **or reduce the working day** by a percentage, for
+    # months. The second shape does not fit "no work expected": the person still
+    # comes in, for less time, and a roster read against their full contract
+    # comes out as a breach on every single week.
+    #
+    # Empty means the whole of it, which is what every other absence is. A
+    # figure means the share of the day that stops --- 40 means they work 60 %.
+    reduction_share = models.DecimalField(
+        _("share reduced (%)"),
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_(
+            "Only for a suspension that reduces the working day instead of stopping "
+            "it. Empty means the whole day. 40 means they still work 60 %."
+        ),
+    )
     reason = models.TextField(_("reason"), blank=True)
 
     status = models.CharField(
@@ -259,6 +281,27 @@ class Absence(TenantOwnedModel):
 
     def __str__(self) -> str:
         return f"{self.get_absence_type_display()} {self.start_date} → {self.end_date}"
+
+    @property
+    def stops_the_whole_day(self) -> bool:
+        """Whether nothing at all is expected on these days.
+
+        Everything except a part-day absence and an ERTE that reduces rather
+        than suspends. Those two are why clocking in is not simply forbidden
+        whenever there is approved leave.
+        """
+        return not self.is_partial and (self.reduction_share is None or self.reduction_share >= 100)
+
+    @property
+    def working_share(self) -> float:
+        """The fraction of the ordinary day still expected, as 0..1.
+
+        One for anything that is not a partial reduction, so a caller can
+        multiply by it without asking which kind it has in its hands.
+        """
+        if self.reduction_share is None:
+            return 1.0
+        return max(0.0, 1 - float(self.reduction_share) / 100)
 
     @property
     def is_partial(self) -> bool:

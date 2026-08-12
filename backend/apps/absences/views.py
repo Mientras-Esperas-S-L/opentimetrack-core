@@ -89,6 +89,7 @@ class AbsenceSerializer(serializers.ModelSerializer):
             "end_time",
             "hours",
             "days",
+            "reduction_share",
             "over_the_limit",
             "reason",
             "status",
@@ -228,6 +229,16 @@ class AbsenceRequestSerializer(serializers.Serializer):
     #: Part of a day. Both or neither.
     start_time = serializers.TimeField(required=False, allow_null=True)
     end_time = serializers.TimeField(required=False, allow_null=True)
+    #: Only for a suspension that reduces the working day instead of stopping
+    #: it. Between 10 and 70 for an ERTE under art. 47.
+    reduction_share = serializers.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        required=False,
+        allow_null=True,
+        min_value=1,
+        max_value=100,
+    )
 
     def validate(self, attrs):
         if bool(attrs.get("start_time")) != bool(attrs.get("end_time")):
@@ -295,6 +306,7 @@ class AbsenceViewSet(
             end_date=data["end_date"],
             start_time=data.get("start_time"),
             end_time=data.get("end_time"),
+            reduction_share=data.get("reduction_share"),
             reason=data.get("reason", ""),
             justification=data.get("justification"),
         )

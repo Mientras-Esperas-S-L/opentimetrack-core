@@ -141,9 +141,12 @@ nota de cada uno: el permiso de cinco días alcanza a **quien conviva en el mism
 domicilio** aunque no haya parentesco, y los cuatro días de fuerza mayor se
 cuentan **en horas**.
 
-Lo que sigue faltando: **contar lo consumido contra el tope.** El catálogo dice
-cuánto da cada permiso y avisa al pedir de más, pero no lleva la cuenta de
-cuántos días de fuerza mayor van este año.
+**Y se lleva la cuenta.** Cuánto va consumido de cada permiso con tope, en su
+propia unidad y su propio periodo: año natural para los del art. 37.9, semana
+para las seis horas del art. 53.2, día para la lactancia. Una parte de día
+contra un tope en días cuenta como fracción. El aviso sale al elegir el permiso
+y en la tarjeta de quien lo aprueba, y **nunca impide**: todos los topes son el
+suelo legal y el convenio mejora cualquiera.
 
 ### Reducciones y ausencias por cuidados
 
@@ -180,36 +183,31 @@ frecuente de toda esta lista y no se podía guardar de ninguna manera.
 
 ## 5. Suspensiones del contrato
 
-No son permisos: el contrato queda suspendido y no hay obligación de trabajar.
-Entran porque durante ellas **no debe esperarse jornada**, y hoy casi todas
-caerían en «baja médica» u «otros».
+**Cubiertas.** No son permisos: el contrato se para y no hay obligación de
+trabajar. Entran porque durante ellas **no debe esperarse jornada**, que es lo
+que explica el hueco en el registro. La tramitación —el parte al INSS, el
+expediente del ERTE— se hace en otro sitio.
 
-Lo que entra es el **efecto sobre la jornada**. La tramitación —el parte al
-INSS, el expediente del ERTE— se hace en otro sitio.
+Las quince del art. 45 están en el catálogo: nacimiento y cuidado del menor,
+adopción, riesgo durante el embarazo y durante la lactancia, las cuatro
+excedencias, ERTE, mecanismo RED, suspensión de empleo y sueldo, huelga, cierre
+patronal, privación de libertad y violencia de género.
 
-| Suspensión | Base | Estado |
-|---|---|---|
-| IT por enfermedad común o accidente no laboral | 45.1.c | **A medias.** Como «baja médica», sin distinguir contingencia |
-| IT por accidente de trabajo o enfermedad profesional | 45.1.c | **Falta.** Otra contingencia, y otra entidad la que paga |
-| Nacimiento y cuidado del menor, 16 semanas ampliables | 48.4 | **Falta** |
-| Riesgo durante el embarazo | 45.1.e | **Falta** |
-| Riesgo durante la lactancia natural | 45.1.e | **Falta** |
-| Adopción, guarda con fines de adopción, acogimiento | 48.5 | **Falta** |
-| Excedencia voluntaria | 46.2 | **Falta** |
-| Excedencia por cuidado de hijos, hasta 3 años | 46.3 | **Falta** |
-| Excedencia por cuidado de familiares, hasta 2 años | 46.3 | **Falta** |
-| Excedencia forzosa por cargo público o sindical | 46.1 | **Falta** |
-| ERTE por causas ETOP o fuerza mayor | 47 | **Falta** |
-| Mecanismo RED | 47 bis | **Falta** |
-| Suspensión de empleo y sueldo | 45.1.h | **Falta** |
-| Huelga | 45.1.l | **Falta** |
-| Cierre patronal | 45.1.m | **Falta** |
-| Privación de libertad sin sentencia | 45.1.g | **Falta** |
-| Violencia de género | 45.1.n | **Falta** |
+Ninguna va marcada como retribuida, porque la empresa no paga: lo hace la
+Seguridad Social, la mutua, o nadie. Quién paga en cada caso está en su nota.
 
-El ERTE de **reducción de jornada** es el que más duele que falte: no suspende
-el contrato, reduce el porcentaje durante un periodo. Sin eso, el cuadrante
-entero de una empresa en ERTE parcial se lee como incumplimiento.
+### El ERTE que reduce en vez de parar
+
+La única que no encajaba. El art. 47 permite **suspender el contrato o reducir
+la jornada** entre un 10 y un 70 %, durante meses. La segunda forma no es «no se
+espera jornada»: la persona sigue viniendo, por menos tiempo.
+
+| | |
+|---|---|
+| Se pide con un porcentaje | Vacío o 100 suspende entero; 40 significa que se sigue trabajando el 60 % |
+| No bloquea el fichaje | Quien tiene la jornada reducida un 40 % viene por el otro 60 % |
+| El cuadrante se mide contra la jornada reducida | Sin esto, el cuadrante entero de una empresa en ERTE parcial se leía como que todo el mundo se pasa de sus horas todas las semanas |
+| El **máximo legal no se reduce** | El art. 34.1 es un techo para todos; el ERTE reduce lo pactado, no lo que la ley permite |
 
 ---
 
@@ -321,20 +319,15 @@ trabaja**. Un modelo de organización completo es otra herramienta.
 
 Ordenado por lo que más se nota en un cliente real, no por dificultad.
 
-1. **Contar lo consumido contra el tope de cada permiso.** El catálogo ya dice
-   cuánto da cada uno; falta responder «cuántos días de fuerza mayor llevas
-   este año», que es la primera pregunta de una gestoría.
-2. **Transcribir la resolución del BOE de 2026**, que es lo único que le falta
+1. **Transcribir la resolución del BOE de 2026**, que es lo único que le falta
    al calendario para estar completo.
-3. **Suspensiones del contrato**, empezando por la IT con su contingencia, el
-   nacimiento y cuidado del menor, y el ERTE de reducción de jornada.
-4. **Saldos de devolución**: horas extra compensadas, relevo de turno,
+3. **Saldos de devolución**: horas extra compensadas, relevo de turno,
    distribución irregular. Convertir los avisos en una cuenta.
 7. **Vacaciones**: devengo proporcional y traslado por IT.
-6. **Llamamiento del fijo discontinuo** (art. 16), ya señalado en el código.
-7. **Topes que se guardan y no se comprueban**: 80 horas extra al año, 30 % de
+5. **Llamamiento del fijo discontinuo** (art. 16), ya señalado en el código.
+6. **Topes que se guardan y no se comprueban**: 80 horas extra al año, 30 % de
    complementarias al mes, 65/85 % del contrato formativo.
-8. **Historia de la adscripción a departamento**, cuando el informe empiece a
+7. **Historia de la adscripción a departamento**, cuando el informe empiece a
     mentir.
 
 ---

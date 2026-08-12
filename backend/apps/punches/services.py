@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -352,10 +353,11 @@ def _check_no_approved_absence(employee, company) -> None:
 
     today = timezone.now().astimezone(company.tzinfo).date()
 
-    # Whole-day leave only. Somebody who left at eleven with a fever has an
-    # approved absence for today and still worked the morning --- blocking their
-    # clock-out would leave the day open, which is the one thing a record must
-    # never do.
+    # Only what stops the whole day. Two things do not, and both are ordinary:
+    # somebody who left at eleven with a fever worked the morning --- blocking
+    # their clock-out would leave the day open, the one thing a record must
+    # never do --- and somebody on an ERTE that reduces their day by forty per
+    # cent still comes in for the other sixty.
     absence = (
         Absence.objects.filter(
             employee=employee,
@@ -364,6 +366,7 @@ def _check_no_approved_absence(employee, company) -> None:
             end_date__gte=today,
         )
         .filter(start_time__isnull=True)
+        .filter(Q(reduction_share__isnull=True) | Q(reduction_share__gte=100))
         .first()
     )
 

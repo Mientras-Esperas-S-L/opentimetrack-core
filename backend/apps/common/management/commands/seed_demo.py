@@ -752,6 +752,38 @@ class Command(BaseCommand):
             )
 
         self._partial_absences(company, people, today)
+        self._suspensions(company, people, today)
+
+    def _suspensions(self, company, people, today):
+        """Dos: una que para el contrato y una que lo encoge.
+
+        La segunda es la que hace falta ver. Un ERTE que reduce la jornada un
+        cuarenta por ciento no suspende nada: la persona sigue viniendo, por
+        menos tiempo, y sin él su cuadrante se leería como que se pasa de sus
+        horas todas las semanas.
+        """
+        catalogue = {kind.code: kind for kind in LeaveType.objects.all()}
+        wanted = [
+            ("seasonal", "es.unpaid_leave", -60, 200, None, "Excedencia voluntaria"),
+            ("parttime2", "es.erte", -20, 70, 40, "ERTE de reducción, 40 %"),
+        ]
+        for key, code, begins, ends, share, reason in wanted:
+            kind = catalogue.get(code)
+            if kind is None:
+                continue
+            Absence.objects.create(
+                tenant=company,
+                employee=people[key],
+                leave_type=kind,
+                absence_type=kind.family,
+                start_date=today + timedelta(days=begins),
+                end_date=today + timedelta(days=ends),
+                reduction_share=share,
+                reason=reason,
+                status=AbsenceStatus.APPROVED,
+                approved_by=people["admin"],
+                resolved_at=timezone.now(),
+            )
 
     def _partial_absences(self, company, people, today):
         """Parts of a day, which is the commonest absence there is.

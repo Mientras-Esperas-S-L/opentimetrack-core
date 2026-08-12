@@ -183,6 +183,7 @@ def request_absence(
     end_date: date,
     start_time=None,
     end_time=None,
+    reduction_share=None,
     reason: str = "",
     justification=None,
 ) -> Absence:
@@ -228,6 +229,18 @@ def request_absence(
     # would either round --- giving away or eating a day nobody decided --- or
     # turn the balance into a decimal that the law does not use. The permits are
     # where part-days belong, and that is where they are allowed.
+    # Reducing a day only means something while the contract is suspended.
+    # Anywhere else it would look like a setting and do nothing, which is the
+    # worst kind of field.
+    if reduction_share is not None and absence_type != AbsenceType.SUSPENSION:
+        raise BusinessRuleError(
+            code="reduction_needs_a_suspension",
+            message=_(
+                "Only a suspension can reduce the working day. For fewer hours by "
+                "agreement, change the contracted figure on the person."
+            ),
+        )
+
     if (start_time or end_time) and absence_type == AbsenceType.VACATION:
         raise BusinessRuleError(
             code="holiday_is_whole_days",
@@ -246,6 +259,7 @@ def request_absence(
         end_date=end_date,
         start_time=start_time,
         end_time=end_time,
+        reduction_share=reduction_share,
         reason=reason.strip(),
     )
     if justification:

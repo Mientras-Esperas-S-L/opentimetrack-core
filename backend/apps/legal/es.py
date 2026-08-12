@@ -342,6 +342,167 @@ ESPANA = LegalFramework(
             note="Hasta que el menor cumpla ocho años. **No retribuido**, que es lo que "
             "más se confunde de él.",
         ),
+        # ------------------------------------------------------- suspensiones
+        #
+        # Art. 45: el contrato se suspende y no hay obligación de trabajar.
+        # Entran porque durante ellas **no debe esperarse jornada**, que es lo
+        # que explica el hueco en el registro. La tramitación --- el parte al
+        # INSS, el expediente del ERTE --- se hace en otro sitio.
+        #
+        # Ninguna va marcada como retribuida: la empresa no paga. Lo hace la
+        # Seguridad Social, la mutua, o nadie. Quién paga se dice en la nota,
+        # porque el campo solo distingue si sale de la nómina.
+        LeaveKind(
+            code="es.birth",
+            name="Nacimiento y cuidado del menor",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 48.4 ET",
+            paid=False,
+            amount=16,
+            unit="WEEKS",
+            per="EVENT",
+            note="Dieciséis semanas, ampliables. Las seis primeras, inmediatamente "
+            "después del parto, son obligatorias y a jornada completa. Paga la "
+            "Seguridad Social.",
+        ),
+        LeaveKind(
+            code="es.adoption",
+            name="Adopción, guarda con fines de adopción o acogimiento",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 48.5 ET",
+            paid=False,
+            amount=16,
+            unit="WEEKS",
+            per="EVENT",
+        ),
+        LeaveKind(
+            code="es.pregnancy_risk",
+            name="Riesgo durante el embarazo",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 45.1.e ET",
+            paid=False,
+            amount=None,
+            note="Cuando no cabe adaptar el puesto ni cambiar de función. Paga la "
+            "mutua, y es contingencia profesional.",
+        ),
+        LeaveKind(
+            code="es.breastfeeding_risk",
+            name="Riesgo durante la lactancia natural",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 45.1.e ET",
+            paid=False,
+            amount=None,
+            note="Hasta que el menor cumpla nueve meses.",
+        ),
+        LeaveKind(
+            code="es.unpaid_leave",
+            name="Excedencia voluntaria",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 46.2 ET",
+            paid=False,
+            amount=None,
+            note="Entre cuatro meses y cinco años, con al menos un año de antigüedad. "
+            "Solo da derecho preferente al reingreso, no a reserva del puesto.",
+        ),
+        LeaveKind(
+            code="es.childcare_leave",
+            name="Excedencia por cuidado de hijos",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 46.3 ET",
+            paid=False,
+            # Tres años. Sin cifra a propósito: la unidad más larga de este
+            # catálogo son semanas, y poner 156 sería exacto y ilegible. Una
+            # cifra falsa se lee y se cree; un hueco con la nota al lado, no.
+            amount=None,
+            note="Hasta tres años. El primero reserva el mismo puesto; después, uno "
+            "del mismo grupo profesional.",
+        ),
+        LeaveKind(
+            code="es.family_care_leave",
+            name="Excedencia por cuidado de familiares",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 46.3 ET",
+            paid=False,
+            amount=None,
+            note="Hasta dos años, salvo que el convenio dé más.",
+        ),
+        LeaveKind(
+            code="es.public_office_leave",
+            name="Excedencia forzosa por cargo público o sindical",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 46.1 ET",
+            paid=False,
+            amount=None,
+            note="Da derecho a la conservación del puesto y al cómputo de antigüedad.",
+        ),
+        LeaveKind(
+            code="es.erte",
+            name="ERTE",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 47 ET",
+            paid=False,
+            amount=None,
+            note="Puede **suspender** el contrato o **reducir la jornada** entre un 10 y "
+            "un 70 %. Si reduce, pon el porcentaje en la solicitud: el cuadrante pasa a "
+            "medirse contra la jornada reducida en vez de contra el contrato entero.",
+        ),
+        LeaveKind(
+            code="es.red",
+            name="Mecanismo RED",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 47 bis ET",
+            paid=False,
+            amount=None,
+            note="Igual que el ERTE en cuanto a jornada. Lo activa el Consejo de "
+            "Ministros para un sector o para toda la economía.",
+        ),
+        LeaveKind(
+            code="es.disciplinary",
+            name="Suspensión de empleo y sueldo",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 45.1.h ET",
+            paid=False,
+            amount=None,
+            needs_justification=True,
+            note="Sanción. La duración la fija el convenio según la falta.",
+        ),
+        LeaveKind(
+            code="es.strike",
+            name="Huelga",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 45.1.l ET",
+            paid=False,
+            amount=None,
+            note="Se registra porque explica el hueco del día, no para contar nada. "
+            "Es un derecho fundamental y el registro no lo valora.",
+        ),
+        LeaveKind(
+            code="es.lockout",
+            name="Cierre patronal",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 45.1.m ET",
+            paid=False,
+            amount=None,
+        ),
+        LeaveKind(
+            code="es.custody",
+            name="Privación de libertad sin sentencia",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 45.1.g ET",
+            paid=False,
+            amount=None,
+            note="Mientras no haya sentencia condenatoria.",
+        ),
+        LeaveKind(
+            code="es.gender_violence_suspension",
+            name="Suspensión por violencia de género",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 45.1.n ET",
+            paid=False,
+            amount=None,
+            note="Hasta seis meses, prorrogables por el juez hasta dieciocho. Cuenta "
+            "como periodo de cotización efectiva.",
+        ),
         # ---------------------------------------------------------- de convenio
         LeaveKind(
             code="es.medical",
