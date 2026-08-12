@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from apps.audit.services import record_view_of_others
 from apps.common.filters import LocalDayRangeFilter
 from apps.common.permissions import IsAuthenticatedInTenant
+from apps.common.scope import visible_people
 from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource
 from apps.punches.serializers import PunchSerializer, PunchWriteSerializer
 from apps.punches.services import build_day_status, register_punch
@@ -85,9 +86,13 @@ class PunchViewSet(
         qs = Punch.objects.select_related("employee").all()
 
         # A worker sees their own history, which the law grants them, and only
-        # their own. Managers and administrators see the whole company.
-        if not self.request.user.can_manage:
-            qs = qs.filter(employee=self.request.user)
+        # their own. A manager sees the departments they answer for.
+        # Their own if they are not a manager; the departments they answer for
+        # if they are. `visible_people` returns None for "no restriction", so an
+        # administrator adds no join.
+        scope = visible_people(self.request.user)
+        if scope is not None:
+            qs = qs.filter(employee__in=scope)
 
         # `date_from` and `date_to` used to be applied here with
         # `timestamp__date__gte`, which under USE_TZ converts using the

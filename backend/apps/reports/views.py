@@ -19,6 +19,7 @@ from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import IsAuthenticatedInTenant
+from apps.common.scope import people_queryset, person_in_scope
 from apps.reports.payroll import PayrollSummary, period_containing
 from apps.reports.pdf import render_pdf
 from apps.reports.renderers import CSVRenderer, PDFRenderer
@@ -93,7 +94,9 @@ class ReportView(APIView):
             # lookup is scoped to the company, so an id from elsewhere is a 404.
             if not request.user.can_manage:
                 raise ValidationError({"detail": _("You may only request your own record.")})
-            employee = User.objects.filter(tenant=company, pk=requested).first()
+            # Scoped, and a person out of reach answers the same as one who does
+            # not exist: the difference would say who works here.
+            employee = person_in_scope(request.user, requested)
             if employee is None:
                 raise ValidationError({"detail": _("That person does not exist.")})
 
@@ -145,7 +148,7 @@ class ReportView(APIView):
         if not request.user.can_manage:
             raise ValidationError({"detail": _("You may only request your own record.")})
 
-        people = User.objects.filter(tenant=company, is_active=True)
+        people = people_queryset(request.user).filter(is_active=True)
         department = request.query_params.get("department")
         if department:
             people = people.filter(department_id=department)
@@ -332,7 +335,7 @@ def _employee_for(request):
             code="not_your_summary",
             message=_("You may only ask for your own summary."),
         )
-    person = User.objects.filter(tenant=request.user.tenant, pk=wanted).first()
+    person = person_in_scope(request.user, wanted)
     if person is None:
         raise BusinessRuleError(
             code="unknown_employee", message=_("That person is not in this company.")

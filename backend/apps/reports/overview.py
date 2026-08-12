@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
@@ -21,6 +21,7 @@ from rest_framework.views import APIView
 
 from apps.absences.models import Absence, AbsenceStatus
 from apps.common.permissions import IsAuthenticatedInTenant
+from apps.common.scope import visible_people
 from apps.punches.corrections import CorrectionStatus, PunchCorrection
 from apps.punches.models import Punch, PunchType
 from apps.punches.services import build_day_status, local_day_bounds
@@ -48,24 +49,31 @@ class OverviewView(APIView):
                 }
             )
 
+        # Every figure below counts people, so every one of them is scoped.
+        # A headcount of the whole company next to a queue holding only your own
+        # department is two numbers that do not belong on the same screen.
+        scope = visible_people(request.user)
+        mine = Q() if scope is None else Q(employee__in=scope)
+        people = User.objects.filter(tenant=company) if scope is None else scope
+
         return Response(
             {
-                "scope": "company",
+                "scope": "company" if scope is None else "departments",
                 "date": today.isoformat(),
-                "headcount": User.objects.filter(is_active=True).count(),
-                "working_now": self._working_now(company, start, end),
-                "off_today": self._off_today(today),
+                "headcount": people.filter(is_active=True).count(),
+                "working_now": self._working_now(company, start, end, scope),
+                "off_today": self._off_today(today, scope),
                 "awaiting_decision": {
-                    "absences": Absence.objects.filter(status=AbsenceStatus.PENDING).count(),
+                    "absences": Absence.objects.filter(mine, status=AbsenceStatus.PENDING).count(),
                     "corrections": PunchCorrection.objects.filter(
-                        status=CorrectionStatus.PENDING
+                        mine, status=CorrectionStatus.PENDING
                     ).count(),
                 },
                 "week": self._week(company),
             }
         )
 
-    def _working_now(self, company, start, end) -> list[dict]:
+    def _working_now(self, company, start, end, scope) -> list[dict]:
         """Whoever's last event today was a clock-in.
 
         Computed from the events rather than a status field on the person: a
@@ -77,6 +85,8 @@ class OverviewView(APIView):
             .select_related("employee")
             .order_by("employee_id", "timestamp")
         )
+        if scope is not None:
+            today_punches = today_punches.filter(employee__in=scope)
 
         last_by_person: dict = {}
         for punch in today_punches:
@@ -95,7 +105,7 @@ class OverviewView(APIView):
             for p in inside
         ]
 
-    def _off_today(self, today) -> list[dict]:
+    def _off_today(self, today, scope) -> list[dict]:
         approved = (
             Absence.objects.filter(
                 status=AbsenceStatus.APPROVED,
@@ -105,6 +115,8 @@ class OverviewView(APIView):
             .select_related("employee")
             .order_by("employee__last_name")
         )
+        if scope is not None:
+            approved = approved.filter(employee__in=scope)
         return [
             {
                 "employee": str(a.employee_id),

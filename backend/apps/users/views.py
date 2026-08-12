@@ -27,6 +27,7 @@ from apps.common.permissions import (
     IsManagerOrAdmin,
     ReadForAllWriteForAdmin,
 )
+from apps.common.scope import people_queryset
 from apps.users.models import Department, Role
 from apps.users.passwords import resolve_token, send_account_email
 from apps.users.serializers import (
@@ -176,8 +177,9 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         # Users are not a TenantOwnedModel -- sign-in has to find them before the
-        # company is known -- so the scoping is explicit here.
-        return User.objects.filter(tenant=self.request.user.tenant).select_related("department")
+        # company is known -- so the scoping is explicit here, and it is by what
+        # the caller answers for rather than by company.
+        return people_queryset(self.request.user).select_related("department")
 
     def get_serializer_class(self):
         if self.action in {"create", "update", "partial_update"}:

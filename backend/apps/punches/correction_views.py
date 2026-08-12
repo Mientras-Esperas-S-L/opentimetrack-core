@@ -12,6 +12,7 @@ from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import IsAuthenticatedInTenant, IsManagerOrAdmin
+from apps.common.scope import visible_people
 from apps.punches.corrections import (
     CorrectionKind,
     PunchCorrection,
@@ -108,8 +109,12 @@ class CorrectionViewSet(
 
     def get_queryset(self):
         qs = PunchCorrection.objects.select_related("employee", "target", "result").all()
-        if not self.request.user.can_manage:
-            qs = qs.filter(employee=self.request.user)
+        # Their own if they are not a manager; the departments they answer for
+        # if they are. `visible_people` returns None for "no restriction", so an
+        # administrator adds no join.
+        scope = visible_people(self.request.user)
+        if scope is not None:
+            qs = qs.filter(employee__in=scope)
         return qs
 
     @extend_schema(

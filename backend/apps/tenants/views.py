@@ -17,6 +17,7 @@ from rest_framework.views import APIView
 from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.common.permissions import IsAdmin, IsAuthenticatedInTenant
+from apps.common.scope import unassigned_managers
 from apps.tenants.models import Tenant, validate_time_zone
 
 
@@ -33,6 +34,7 @@ class CompanySerializer(serializers.ModelSerializer):
             "annual_leave_days",
             "leave_days_are_working_days",
             "leave_year_start_month",
+            "managers_see_whole_company",
             "record_retention_years",
             "security_metadata_retention_days",
         ]
@@ -62,9 +64,21 @@ class CompanyView(APIView):
     def get_permissions(self):
         return [IsAdmin()] if self.request.method == "PATCH" else [IsAuthenticatedInTenant()]
 
-    @extend_schema(responses={200: CompanySerializer})
+    @extend_schema(responses={200: dict})
     def get(self, request):
-        return Response(CompanySerializer(request.user.tenant).data)
+        # Alongside the settings, the one consequence of them that nobody would
+        # otherwise see. Scoping managers by department only bites once somebody
+        # is put in charge of one; until then every manager reads the whole
+        # company, and a trade nobody can see is not a trade, it is a hole.
+        loose = unassigned_managers(request.user.tenant)
+        return Response(
+            {
+                **CompanySerializer(request.user.tenant).data,
+                "managers_without_department": [
+                    {"id": str(person.id), "name": person.get_full_name()} for person in loose
+                ],
+            }
+        )
 
     @extend_schema(request=CompanySerializer, responses={200: CompanySerializer})
     def patch(self, request):

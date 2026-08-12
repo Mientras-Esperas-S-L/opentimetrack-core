@@ -25,6 +25,7 @@ from apps.common.permissions import (
     IsManagerOrAdmin,
     ReadForAllWriteForAdmin,
 )
+from apps.common.scope import visible_people
 from apps.shifts.models import Shift, ShiftPattern, validate_segments
 from apps.shifts.services import (
     assign_pattern,
@@ -158,8 +159,12 @@ class ShiftViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = Shift.objects.select_related("employee", "pattern")
-        if not self.request.user.can_manage:
-            qs = qs.filter(employee=self.request.user)
+        # Their own if they are not a manager; the departments they answer for
+        # if they are. `visible_people` returns None for "no restriction", so an
+        # administrator adds no join.
+        scope = visible_people(self.request.user)
+        if scope is not None:
+            qs = qs.filter(employee__in=scope)
         return qs
 
     #: Everything that writes a roster. Kept as a constant next to the actions

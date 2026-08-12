@@ -25,14 +25,50 @@ class TenantSerializer(serializers.ModelSerializer):
 
 class DepartmentSerializer(serializers.ModelSerializer):
     people_count = serializers.SerializerMethodField()
+    manager_names = serializers.SerializerMethodField()
 
     class Meta:
         model = Department
-        fields = ["id", "name", "description", "is_active", "people_count"]
-        read_only_fields = ["id", "people_count"]
+        fields = [
+            "id",
+            "name",
+            "description",
+            "is_active",
+            "people_count",
+            # Who answers for it, which is what decides who reads whose record.
+            "managers",
+            "manager_names",
+        ]
+        read_only_fields = ["id", "people_count", "manager_names"]
 
     def get_people_count(self, obj) -> int:
         return obj.users.filter(is_active=True).count()
+
+    def get_manager_names(self, obj) -> list[str]:
+        return [person.get_full_name() for person in obj.managers.all()]
+
+    def validate_managers(self, value):
+        """Somebody in this company, and somebody who can actually manage.
+
+        Putting an employee in charge of a department would not grant them
+        anything --- the scope only applies to the manager profile --- so it
+        would read as a permission given and be none at all.
+        """
+        company = self.context["request"].user.tenant
+        for person in value:
+            if person.tenant_id != company.id:
+                raise serializers.ValidationError(
+                    _("Somebody in that list is not in this company.")
+                )
+            if not person.can_manage:
+                raise serializers.ValidationError(
+                    _(
+                        "%(name)s does not have a manager profile, so putting them in "
+                        "charge would grant nothing."
+                    )
+                    % {"name": person.get_full_name()}
+                )
+        return value
 
 
 class UserSerializer(serializers.ModelSerializer):

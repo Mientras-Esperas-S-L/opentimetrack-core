@@ -104,6 +104,19 @@ class Tenant(BaseModel):
         ),
     )
 
+    # A manager used to see the whole company, everywhere, with departments as
+    # nothing but a filter. In a product where an absence can say somebody is
+    # ill, that is not a small default to have got wrong.
+    managers_see_whole_company = models.BooleanField(
+        _("managers see the whole company"),
+        default=False,
+        help_text=_(
+            "Off: a manager reads and resolves only for the departments they were "
+            "put in charge of. On: for everybody, which is what a company small "
+            "enough not to have departments wants."
+        ),
+    )
+
     payroll_period = models.CharField(
         _("pay period"),
         max_length=16,

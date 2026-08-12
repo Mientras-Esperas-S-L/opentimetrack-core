@@ -31,6 +31,24 @@ class Department(TenantOwnedModel):
     description = models.TextField(_("description"), blank=True)
     is_active = models.BooleanField(_("active"), default=True)
 
+    # Who answers for it. Several, because holiday does not stop for the one
+    # person who can approve it, and because a large department is usually run
+    # by more than one.
+    #
+    # Not "the manager who belongs here": somebody in the office can perfectly
+    # well run the gardening crew, and reading the scope off membership would
+    # hand them the office's records instead of the ones they answer for.
+    managers = models.ManyToManyField(
+        "users.User",
+        blank=True,
+        related_name="departments_managed",
+        verbose_name=_("managers"),
+        help_text=_(
+            "Who may read and resolve for the people in it. Only has an effect on "
+            "the manager profile: an administrator sees the whole company."
+        ),
+    )
+
     class Meta:
         verbose_name = _("department")
         verbose_name_plural = _("departments")

@@ -30,6 +30,7 @@ from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import IsAuthenticatedInTenant, IsManagerOrAdmin
+from apps.common.scope import person_in_scope, visible_people
 
 
 class AbsenceSerializer(serializers.ModelSerializer):
@@ -106,8 +107,12 @@ class AbsenceViewSet(
 
     def get_queryset(self):
         qs = Absence.objects.select_related("employee", "approved_by")
-        if not self.request.user.can_manage:
-            qs = qs.filter(employee=self.request.user)
+        # Their own if they are not a manager; the departments they answer for
+        # if they are. `visible_people` returns None for "no restriction", so an
+        # administrator adds no join.
+        scope = visible_people(self.request.user)
+        if scope is not None:
+            qs = qs.filter(employee__in=scope)
         return qs
 
     @extend_schema(request=AbsenceRequestSerializer, responses={201: AbsenceSerializer})
@@ -137,27 +142,32 @@ class AbsenceViewSet(
         return Response(AbsenceSerializer(absence).data, status=status.HTTP_201_CREATED)
 
     def _employee_in_company(self, employee_id):
-        """Somebody in **this** company, or nothing.
+        """Somebody the caller may read, or nothing.
 
-        The `tenant=` filter is the whole point and it was missing. People are
-        not a `TenantOwnedModel` --- sign-in has to find them before the company
-        is known --- so `User.objects` spans every company. A comment here
-        claimed the manager was tenant-scoped; it is not, and the result was
-        that an administrator could read the holiday balance of somebody in
-        another company by passing their id.
+        Two mistakes have lived on this line, and the second was found the same
+        way as the first.
 
-        Found by the isolation sweep in apps/common/tests. Same mistake as the
-        one fixed in `UserViewSet.perform_destroy`, in a place the fix missed.
+        It started as `User.objects.get(pk=...)`. People are not a
+        `TenantOwnedModel` --- sign-in has to find them before the company is
+        known --- so that manager spans every company, and an administrator
+        could read the holiday balance of somebody in another one by passing
+        their id. A `tenant=` filter fixed it.
+
+        Then the scope stopped being the company. `tenant=` was no longer the
+        answer, and the balance endpoint went on handing a manager the figures
+        of anybody in the building while the list next to it showed them their
+        own crew. The check that catches both is the same: ask the scope, not
+        the company.
         """
-        from apps.users.models import User
-
-        try:
-            return User.objects.get(pk=employee_id, tenant=self.request.user.tenant)
-        except (User.DoesNotExist, ValueError, TypeError) as exc:
+        person = person_in_scope(self.request.user, employee_id)
+        if person is None:
+            # Indistinguishable from "does not exist", on purpose. Saying the
+            # person is real but out of reach is saying who works here.
             raise BusinessRuleError(
                 code="unknown_employee",
                 message=_("That person is not in this company."),
-            ) from exc
+            )
+        return person
 
     @extend_schema(request=None, responses={200: AbsenceSerializer})
     @action(detail=True, methods=["post"], permission_classes=[IsManagerOrAdmin])
@@ -310,4 +320,10 @@ class AbsenceViewSet(
             .select_related("employee")
             .order_by("start_date")
         )
+        # The queue is what a manager opens the panel to deal with, so it has to
+        # hold what they can actually decide. Showing a request they cannot
+        # resolve is offering work that fails on the second click.
+        scope = visible_people(request.user)
+        if scope is not None:
+            queue = queue.filter(employee__in=scope)
         return Response(AbsenceSerializer(queue, many=True).data)

@@ -276,6 +276,43 @@ export default function Settings() {
         </Panel>
 
         <Panel
+          title="Quién ve a quién"
+          hint="Un responsable lee y resuelve por su gente. Administración ve toda la empresa."
+        >
+          <Stack sx={{ gap: 2 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={Boolean(form.managers_see_whole_company)}
+                  onChange={(event) =>
+                    setForm({ ...form, managers_see_whole_company: event.target.checked })
+                  }
+                />
+              }
+              label="Los responsables ven toda la empresa"
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
+              {form.managers_see_whole_company
+                ? 'Cualquier responsable lee el registro y las ausencias de toda la plantilla, lleve el departamento que lleve.'
+                : 'Cada responsable lee solo los departamentos que lleva. Se asigna en Departamentos.'}
+            </Typography>
+
+            {/* La una concesión de este diseño, dicha en voz alta: acotar por
+                departamento no empieza a aplicar hasta que alguien lleva uno,
+                porque si no una empresa recién creada tendría un responsable
+                que no ve a nadie. */}
+            {!form.managers_see_whole_company &&
+              company?.managers_without_department?.length > 0 && (
+                <Alert severity="warning" variant="outlined">
+                  {company.managers_without_department.length === 1
+                    ? `${company.managers_without_department[0].name} no lleva ningún departamento, así que ve a toda la empresa.`
+                    : `${company.managers_without_department.length} responsables no llevan ningún departamento, así que ven a toda la empresa: ${company.managers_without_department.map((m) => m.name).join(', ')}.`}
+                </Alert>
+              )}
+          </Stack>
+        </Panel>
+
+        <Panel
           title="Vacaciones"
           hint="Estos valores salen del convenio. El sistema no los conoce: los aplica."
         >

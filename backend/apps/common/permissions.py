@@ -70,9 +70,18 @@ class IsOwnerOrCanManage(IsAuthenticatedInTenant):
     """
 
     def has_object_permission(self, request, view, obj) -> bool:
-        if request.user.can_manage:
+        owner_id = getattr(obj, "employee_id", None)
+        if owner_id == request.user.id:
             return True
-        return getattr(obj, "employee_id", None) == request.user.id
+        if not request.user.can_manage:
+            return False
+        # "Their scope" used to mean the whole company. It now means the
+        # departments they answer for, and the object check has to agree with
+        # the list check or a row hidden from the list is still readable by id.
+        from apps.common.scope import visible_people
+
+        scope = visible_people(request.user)
+        return scope is None or scope.filter(pk=owner_id).exists()
 
 
 class HasApplicationScope(BasePermission):

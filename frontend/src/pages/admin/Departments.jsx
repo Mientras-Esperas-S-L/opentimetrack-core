@@ -26,15 +26,20 @@ import {
   Loading,
   PageHeader,
 } from '../../components/common.jsx'
+import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
 function DepartmentDialog({ open, department, onClose, onSave, saving, error }) {
-  const [form, setForm] = useState({ name: '', description: '' })
+  const [form, setForm] = useState({ name: '', description: '', managers: [] })
   const [loaded, setLoaded] = useState(null)
 
   if (open && loaded !== (department?.id ?? 'new')) {
     setLoaded(department?.id ?? 'new')
-    setForm({ name: department?.name ?? '', description: department?.description ?? '' })
+    setForm({
+      name: department?.name ?? '',
+      description: department?.description ?? '',
+      managers: department?.managers ?? [],
+    })
   }
   if (!open && loaded !== null) setLoaded(null)
 
@@ -65,6 +70,18 @@ function DepartmentDialog({ open, department, onClose, onSave, saving, error }) 
               label="Descripción (opcional)"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
+            {/* Quién responde por él, que es lo que decide quién puede leer el
+                registro de quién. No es «el responsable que está aquí dentro»:
+                alguien de oficina puede llevar perfectamente la brigada de
+                jardinería, y leerlo de la pertenencia le daría los registros de
+                oficina en vez de los que le tocan. */}
+            <EmployeePicker
+              multiple
+              label="Quién lo lleva"
+              value={form.managers}
+              onChange={(ids) => setForm({ ...form, managers: ids })}
+              helperText="Responsables que pueden leer y resolver por su gente. Sin nadie aquí, todos los responsables de la empresa ven a todo el mundo."
             />
           </Stack>
         </DialogContent>
@@ -166,6 +183,11 @@ export default function Departments() {
                         : `${department.people_count} personas`
                     }
                   />
+                  {department.manager_names?.length > 0 && (
+                    <Typography variant="caption" color="text.secondary">
+                      Lo lleva {department.manager_names.join(', ')}
+                    </Typography>
+                  )}
                 </Box>
 
                 {isAdmin && (
