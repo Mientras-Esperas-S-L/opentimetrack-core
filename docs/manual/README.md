@@ -240,10 +240,42 @@ informe debe salir del dato real.
   la persona es adulta.
 - **Horario contratado.** Va en el informe de Inspección: es contenido
   obligatorio del registro.
-- **Jornada parcial** y su porcentaje. Activarla impide horas extra (art. 12.4.c
-  del Estatuto), que en parcial son horas complementarias y se cuentan aparte.
 - **Representante legal.** A quien se avisa cuando alguien discrepa de un
   cambio en su registro. Si no hay nadie marcado, Ajustes lo avisa.
+
+**Nocturnidad y turnos** es la tercera sección, y va aparte porque son hechos
+que conviven con los anteriores: alguien nocturno puede ser de jornada completa
+o parcial, indefinido o de temporada.
+
+- **Trabajador nocturno.** No es el turno, es una condición de la persona
+  (art. 36.1 ET): quien normalmente hace **tres horas o más** de su jornada
+  diaria entre las 22:00 y las 6:00, o un tercio de la jornada anual. Un bar que
+  cierra a las 22:30 toca la franja todos los días y no es trabajo nocturno.
+  Quien tiene esa condición arrastra un **promedio de ocho horas en quince
+  días**, la **prohibición de horas extraordinarias** y una evaluación de salud
+  (art. 36.4).
+
+  Déjalo en *Según el cuadrante* y se lee de lo planificado. La empresa puede
+  responder *Sí* o *No*: a veces lo sabe antes que el cuadrante, porque contrató
+  a alguien expresamente para noches y todavía no hay nada planificado. Cuando
+  responde, el aviso deja de ser condicional y pasa a ser un límite.
+
+- **Turnos rotativos.** No añade límites: **quita** los que no tocan. Un equipo
+  que sale de noches y entra de mañanas no puede descansar doce horas en el
+  relevo, y el art. 19.a del RD 1561/1995 permite bajar hasta siete ese día
+  compensando la diferencia en cuatro semanas. Sin esta casilla, el cuadrante
+  avisaba de cada relevo como si fuera un incumplimiento. El descanso semanal
+  también se acumula en cuatro semanas en vez de catorce días (art. 19.b).
+
+- **Se ofreció para las noches.** El art. 36.3 no deja a nadie más de **dos
+  semanas seguidas** en el turno de noche salvo adscripción voluntaria. El
+  cuadrante no distingue a quien se ofrece de a quien dejan ahí, así que se
+  anota.
+
+> Los días libres de más que suele tener un turno de noche no salen del
+> Estatuto. Salen del convenio, o del art. 36.2, que permite compensar la
+> nocturnidad con descansos en vez de con un plus. OpenTimeTrack no los inventa:
+> se planifican en el cuadrante como cualquier otro descanso.
 
 Al guardar se envía automáticamente el correo con el enlace de acceso.
 
@@ -290,8 +322,32 @@ asignada no se puede eliminar: primero hay que moverla.
 **Turnos** define las formas de jornada: nombre, tramos horarios y color.
 **Cuadrante** las pinta sobre el calendario.
 
-Para asignar: **Asignar turno**, elige el turno, escribe para buscar a las
-personas, el rango de fechas y los días de la semana.
+### Pintar arrastrando
+
+La forma rápida. Encima de la rejilla hay una **paleta** con los turnos
+definidos y una goma. Coge uno y **arrastra sobre el cuadrante**: la selección
+es un rectángulo de personas por días, que es como se monta una rota de verdad
+—un bloque del equipo sobre un bloque del calendario—. Las celdas dentro del
+arrastre enseñan en qué se van a convertir antes de soltar.
+
+Mientras no cojas una herramienta no se puede pintar nada: cogerla es el
+consentimiento.
+
+Al soltar aparece **Deshacer**, y no se va solo. Devuelve cada día exactamente a
+lo que tenía, aunque el trazo hubiera pasado por encima de cuatro turnos
+distintos y dos huecos. Es un nivel: si se te escapa, se vuelve a pintar.
+
+**Añadir al cuadrante** trae a la rejilla a alguien que todavía no tiene ningún
+turno. Sin eso no tendría fila y no habría dónde dibujar.
+
+`Esc` suelta la herramienta.
+
+### Asignar por rangos
+
+Cuando el bloque es grande y regular —«de lunes a viernes todo septiembre»— sale
+más a cuenta el diálogo: **Asignar turno**, elige el turno, escribe para buscar
+a las personas, el rango de fechas y los días de la semana. Es también el camino
+que funciona con teclado.
 
 **El cuadrante no es el registro.** Es lo previsto; lo fichado se guarda aparte
 y es lo que vale como prueba.
@@ -309,9 +365,18 @@ Tres avisos que conviene no confundir:
 |---|---|
 | Pasa del máximo legal | Incumplimiento. Art. 34.1 ET, y ningún contrato puede pactar por encima |
 | Pasa de lo contratado | **No** es incumplimiento. Esas horas son complementarias (art. 12.5 ET), tienen su propio tope y hay que registrarlas como tales |
-| Sin cifra pactada | No se comprueba el total semanal, porque no hay contra qué. Se dice en vez de callarlo | El RD
-1561/1995 modifica varias reglas en sectores concretos, y un sistema que se
-negara a guardar sería inservible en transporte o en guardias; avisa y decide
+| Sin cifra pactada | No se comprueba el total semanal, porque no hay contra qué. Se dice en vez de callarlo |
+
+Y tres de nocturnidad y turnos, que se leen igual:
+
+| Aviso | Qué significa |
+|---|---|
+| Se parece a trabajo nocturno | Nadie ha respondido si esa persona tiene la condición del art. 36.1, y el cuadrante dice que sí lo parece. Es una decisión de la empresa, no un incumplimiento |
+| Promedio de trabajador nocturno | Más de ocho horas diarias de media en quince días. Es un **promedio**: nueve horas un martes no incumplen nada si la quincena sale a ocho |
+| Descanso en relevo de turno | **No** es incumplimiento. Es la reducción que permite el art. 19.a del RD 1561/1995 al cambiar de equipo; la diferencia hay que devolverla en cuatro semanas, y por eso se anota |
+
+El RD 1561/1995 modifica varias reglas en sectores concretos, y un sistema que
+se negara a guardar sería inservible en transporte o en guardias; avisa y decide
 la empresa.
 
 **Vaciar el mes** borra los turnos del mes de todo el mundo. Pide confirmación
