@@ -160,7 +160,7 @@ export default function MyTime() {
     enabled: Boolean(me),
   })
 
-  const { data: corrections = [] } = useQuery({
+  const { data: corrections } = useQuery({
     queryKey: ['corrections', 'mine'],
     queryFn: () => getCorrections({ employee: me }),
     enabled: Boolean(me),
@@ -176,7 +176,8 @@ export default function MyTime() {
     onError: setError,
   })
 
-  const days = byDay(punches ?? [], zone)
+  const correctionRows = corrections?.rows ?? []
+  const days = byDay(punches?.rows ?? [], zone)
 
   return (
     <>
@@ -192,10 +193,10 @@ export default function MyTime() {
 
       <ErrorNote error={error} onClose={() => setError(null)} />
 
-      {corrections.length > 0 && (
+      {correctionRows.length > 0 && (
         <Panel title="Mis solicitudes de corrección" sx={{ mb: 3 }}>
           <Stack sx={{ gap: 1 }}>
-            {corrections.slice(0, 5).map((correction) => (
+            {correctionRows.slice(0, 5).map((correction) => (
               <Stack
                 key={correction.id}
                 direction="row"

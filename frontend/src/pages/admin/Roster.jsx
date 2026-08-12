@@ -27,12 +27,18 @@ import EditCalendarIcon from '@mui/icons-material/EditCalendar'
 import {
   assignShifts,
   clearShifts,
-  getEmployees,
   getRoster,
   getShiftPatterns,
   reviewRoster,
 } from '../../services/api.js'
-import { Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
+import EmployeePicker from '../../components/EmployeePicker.jsx'
+import {
+  ConfirmDialog,
+  Empty,
+  ErrorNote,
+  Loading,
+  PageHeader,
+} from '../../components/common.jsx'
 import { dateOf } from '../../components/format.js'
 
 const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
@@ -46,7 +52,7 @@ const weekdayOf = (year, month, day) => (new Date(year, month, day).getDay() + 6
 
 const hhmm = (minutes) => `${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}m` : ''}`
 
-function AssignDialog({ open, people, patterns, month, onClose, onSubmit, saving, error }) {
+function AssignDialog({ open, patterns, month, onClose, onSubmit, saving, error }) {
   const first = iso(month.year, month.month, 1)
   const last = iso(month.year, month.month, daysIn(month.year, month.month))
 
@@ -87,22 +93,19 @@ function AssignDialog({ open, people, patterns, month, onClose, onSubmit, saving
               ))}
             </TextField>
 
-            <TextField
-              select
+            {/* Was a plain multi-select of the whole workforce, which meant
+                scrolling to find each person --- and, because the list came from
+                a paginated endpoint, only ever offered the first fifty. In a
+                company of two hundred, three quarters of the staff could not be
+                rostered at all and nothing on screen said so. */}
+            <EmployeePicker
+              multiple
               required
-              fullWidth
               label="A quién"
               value={form.employees}
-              onChange={set('employees')}
-              slotProps={{ select: { multiple: true } }}
-              helperText="Se puede asignar a varias personas a la vez."
-            >
-              {people.map((person) => (
-                <MenuItem key={person.id} value={person.id}>
-                  {`${person.first_name} ${person.last_name}`.trim() || person.email}
-                </MenuItem>
-              ))}
-            </TextField>
+              onChange={(ids) => setForm({ ...form, employees: ids })}
+              helperText="Escribe para buscar. Se puede asignar a varias personas a la vez."
+            />
 
             <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
               <TextField
@@ -166,13 +169,8 @@ function AssignDialog({ open, people, patterns, month, onClose, onSubmit, saving
  *  while "Ana, 8 h de descanso el 2 de septiembre, art. 34.3 ET" is something
  *  to fix. And the article is there so it can be argued with.
  */
-function Findings({ findings, people }) {
+function Findings({ findings }) {
   if (!findings?.length) return null
-
-  const nameOf = (id) => {
-    const person = people.find((p) => p.id === id)
-    return person ? `${person.first_name} ${person.last_name}`.trim() : ''
-  }
 
   return (
     <Alert severity="warning" sx={{ mb: 2 }}>
@@ -187,7 +185,7 @@ function Findings({ findings, people }) {
       <Stack component="ul" sx={{ m: 0, pl: 2.5, gap: 0.5 }}>
         {findings.slice(0, 8).map((finding, i) => (
           <Typography component="li" variant="body2" key={i}>
-            <strong>{nameOf(finding.employee)}</strong>, {dateOf(finding.day)}: {finding.message}{' '}
+            <strong>{finding.employee_name}</strong>, {dateOf(finding.day)}: {finding.message}{' '}
             <Typography component="span" variant="caption" color="text.secondary">
               ({finding.basis})
             </Typography>
@@ -209,6 +207,7 @@ export default function Roster() {
   const [month, setMonth] = useState({ year: today.getFullYear(), month: today.getMonth() })
   const [assigning, setAssigning] = useState(false)
   const [error, setError] = useState(null)
+  const [confirming, setConfirming] = useState(null)
 
   const total = daysIn(month.year, month.month)
   const from = iso(month.year, month.month, 1)
@@ -217,10 +216,6 @@ export default function Roster() {
   const { data: patterns = [] } = useQuery({
     queryKey: ['shift-patterns'],
     queryFn: getShiftPatterns,
-  })
-  const { data: people = [] } = useQuery({
-    queryKey: ['employees', 'for-roster'],
-    queryFn: () => getEmployees({ is_active: true }),
   })
   const { data: shifts, isLoading } = useQuery({
     queryKey: ['roster', from, to],
@@ -315,7 +310,7 @@ export default function Roster() {
         )}
       </Stack>
 
-      <Findings findings={review?.findings} people={people} />
+      <Findings findings={review?.findings} />
 
       {isLoading ? (
         <Loading rows={4} />
@@ -442,12 +437,22 @@ export default function Roster() {
           sx={{ mt: 2 }}
           disabled={wipe.isPending}
           onClick={() =>
-            wipe.mutate({
-              employees: rostered.map((p) => p.id),
-              pattern: patterns[0]?.id,
-              date_from: from,
-              date_to: to,
-              weekdays: [],
+            setConfirming({
+              title: 'Vaciar el mes',
+              body: dateOf(from, { month: 'long', year: 'numeric', day: undefined }),
+              // The one action here that cannot be undone, and it used to
+              // happen on the first click. Saying how much it removes is the
+              // difference between a warning and a formality.
+              detail: `Se borran ${rows.length} ${rows.length === 1 ? 'turno' : 'turnos'} de ${rostered.length} ${rostered.length === 1 ? 'persona' : 'personas'}. Los fichajes ya registrados no se tocan: el cuadrante es lo previsto, no lo trabajado.`,
+              verb: 'Vaciar',
+              run: () =>
+                wipe.mutate({
+                  employees: rostered.map((p) => p.id),
+                  pattern: patterns[0]?.id,
+                  date_from: from,
+                  date_to: to,
+                  weekdays: [],
+                }),
             })
           }
         >
@@ -455,9 +460,14 @@ export default function Roster() {
         </Button>
       )}
 
+      <ConfirmDialog
+        request={confirming}
+        busy={wipe.isPending}
+        onClose={() => setConfirming(null)}
+      />
+
       <AssignDialog
         open={assigning}
-        people={people}
         patterns={patterns}
         month={month}
         saving={assign.isPending}

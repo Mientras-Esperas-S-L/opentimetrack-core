@@ -20,9 +20,19 @@ import {
   downloadJustification,
   getAbsences,
   getLeaveBalance,
+  PAGE_SIZE,
   requestAbsence,
 } from '../../services/api.js'
-import { Empty, ErrorNote, Loading, PageHeader, Panel, StatusChip } from '../../components/common.jsx'
+import {
+  ConfirmDialog,
+  Empty,
+  ErrorNote,
+  Loading,
+  PageHeader,
+  Pager,
+  Panel,
+  StatusChip,
+} from '../../components/common.jsx'
 import { dateOf, dayRange } from '../../components/format.js'
 
 const TYPES = [
@@ -207,11 +217,14 @@ export default function MyLeave() {
   const queryClient = useQueryClient()
   const [asking, setAsking] = useState(false)
   const [error, setError] = useState(null)
+  const [page, setPage] = useState(1)
+  const [confirming, setConfirming] = useState(null)
 
   const { data: balance } = useQuery({ queryKey: ['leave-balance'], queryFn: () => getLeaveBalance() })
   const { data: absences, isLoading } = useQuery({
-    queryKey: ['absences', 'mine'],
-    queryFn: () => getAbsences(),
+    queryKey: ['absences', 'mine', page],
+    queryFn: () => getAbsences({ page }),
+    placeholderData: (previous) => previous,
   })
 
   const refresh = () => {
@@ -235,7 +248,7 @@ export default function MyLeave() {
     onError: setError,
   })
 
-  const rows = absences ?? []
+  const rows = absences?.rows ?? []
 
   return (
     <>
@@ -307,7 +320,16 @@ export default function MyLeave() {
                     <Button
                       size="small"
                       color="inherit"
-                      onClick={() => withdraw.mutate(absence.id)}
+                      onClick={() =>
+                        setConfirming({
+                          title: 'Retirar la solicitud',
+                          body: `${absence.type_display} · ${dayRange(absence.start_date, absence.end_date)}`,
+                          detail:
+                            'Deja de estar pendiente de respuesta. Puedes volver a pedirla, pero esta solicitud queda retirada en el historial.',
+                          verb: 'Retirar',
+                          run: () => withdraw.mutate(absence.id),
+                        })
+                      }
                       disabled={withdraw.isPending}
                     >
                       Retirar
@@ -319,6 +341,20 @@ export default function MyLeave() {
           ))}
         </Stack>
       )}
+
+      <Pager
+        count={absences?.count ?? 0}
+        page={page}
+        pageSize={PAGE_SIZE}
+        onChange={setPage}
+        noun="solicitudes"
+      />
+
+      <ConfirmDialog
+        request={confirming}
+        busy={withdraw.isPending}
+        onClose={() => setConfirming(null)}
+      />
 
       <LeaveDialog
         open={asking}

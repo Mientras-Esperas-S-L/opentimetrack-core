@@ -78,7 +78,26 @@ const post = async (path, body, config) => (await api.post(path, body, config)).
 
 // A list endpoint is paginated; a plain array comes back from the custom
 // actions. Callers should not have to know which, so it is flattened here.
+//
+// Only for endpoints that answer with everything. Using it on a paginated one
+// throws away `count` and `next` --- which is exactly what used to happen, and
+// meant the clock events, the people and the audit trail all showed the first
+// fifty rows and said nothing about the rest. Fifty punches is about a day and
+// a half; "el registro tal y como está guardado" was a slice.
 const rows = (data) => (Array.isArray(data) ? data : (data?.results ?? []))
+
+/** A page of a paginated list, keeping how many there are and whether more
+ *  follow. `count` is what lets a screen say "1-50 de 1.284" instead of
+ *  implying the list is complete. */
+const page = (data) => ({
+  rows: rows(data),
+  count: Array.isArray(data) ? data.length : (data?.count ?? 0),
+  hasMore: Boolean(data?.next),
+})
+
+/** How many rows a page holds. Mirrors DRF's PAGE_SIZE: the client cannot ask
+ *  the server what it is, and guessing wrong would misnumber every page. */
+export const PAGE_SIZE = 50
 
 export const getHealth = () => get('/health/')
 
@@ -123,21 +142,21 @@ export const setPasswordFromLink = async (payload) => {
 
 export const getToday = () => get('/punches/today/')
 export const clock = (deviceId) => post('/punches/', { device_id: deviceId })
-export const getPunches = async (params) => rows(await get('/punches/', params))
+export const getPunches = async (params) => page(await get('/punches/', params))
 // No hay `voidPunch`: anular un fichaje se hace con una corrección de tipo
 // VOID, que exige motivo, deja autor y avisa a la persona. Un atajo sin esas
 // garantías vaciaría el procedimiento.
 
 // ----------------------------------------------------------------- corrections
 
-export const getCorrections = async (params) => rows(await get('/corrections/', params))
+export const getCorrections = async (params) => page(await get('/corrections/', params))
 export const requestCorrection = (payload) => post('/corrections/', payload)
 export const approveCorrection = (id, note = '') => post(`/corrections/${id}/approve/`, { note })
 export const rejectCorrection = (id, note = '') => post(`/corrections/${id}/reject/`, { note })
 
 // --------------------------------------------------------------------- absences
 
-export const getAbsences = async (params) => rows(await get('/absences/', params))
+export const getAbsences = async (params) => page(await get('/absences/', params))
 export const getAbsenceCalendar = async (from, to) =>
   rows(await get('/absences/calendar/', { from, to }))
 export const getPendingAbsences = async () => rows(await get('/absences/pending/'))
@@ -168,7 +187,7 @@ export const downloadJustification = async (id, filename = 'justificante') => {
 
 // ---------------------------------------------------------------------- people
 
-export const getEmployees = async (params) => rows(await get('/employees/', params))
+export const getEmployees = async (params) => page(await get('/employees/', params))
 export const getEmployee = (id) => get(`/employees/${id}/`)
 export const createEmployee = (payload) => post('/employees/', payload)
 export const updateEmployee = async (id, payload) =>
@@ -204,7 +223,7 @@ export const updateWorkingTimeRules = async (payload) =>
 
 // ----------------------------------------------------------------------- audit
 
-export const getAuditTrail = async (params) => rows(await get('/audit/', params))
+export const getAuditTrail = async (params) => page(await get('/audit/', params))
 
 // -------------------------------------------------------------------- company
 

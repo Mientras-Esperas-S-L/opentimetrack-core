@@ -11,6 +11,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.audit.services import record_view_of_others
+from apps.common.filters import LocalDayRangeFilter
 from apps.common.permissions import IsAuthenticatedInTenant
 from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource
 from apps.punches.serializers import PunchSerializer, PunchWriteSerializer
@@ -23,6 +24,14 @@ def client_ip(request) -> str | None:
     if forwarded:
         return forwarded.split(",")[0].strip()
     return request.META.get("REMOTE_ADDR")
+
+
+class PunchFilter(LocalDayRangeFilter):
+    day_field = "timestamp"
+
+    class Meta:
+        model = Punch
+        fields = ["employee", "punch_type", "source", "is_active"]
 
 
 def source_for(request) -> str:
@@ -47,7 +56,7 @@ class PunchViewSet(
     queryset = Punch.objects.none()  # see the note in UserViewSet
     serializer_class = PunchSerializer
     permission_classes = [IsAuthenticatedInTenant]
-    filterset_fields = ["employee", "punch_type", "source", "is_active"]
+    filterset_class = PunchFilter
     ordering_fields = ["timestamp"]
 
     def list(self, request, *args, **kwargs):
@@ -80,12 +89,13 @@ class PunchViewSet(
         if not self.request.user.can_manage:
             qs = qs.filter(employee=self.request.user)
 
-        desde = self.request.query_params.get("date_from")
-        hasta = self.request.query_params.get("date_to")
-        if desde:
-            qs = qs.filter(timestamp__date__gte=desde)
-        if hasta:
-            qs = qs.filter(timestamp__date__lte=hasta)
+        # `date_from` and `date_to` used to be applied here with
+        # `timestamp__date__gte`, which under USE_TZ converts using the
+        # **TIME_ZONE setting** --- UTC --- and not the company's zone. For Madrid
+        # that moved the boundary two hours: every punch between midnight and
+        # 02:00 counted towards the day before, so a night shift's start landed
+        # on the wrong date and a range asking for a month lost its first hours.
+        # PunchFilter does it in the company's own zone.
         return qs
 
     # ------------------------------------------------------------------ clocking

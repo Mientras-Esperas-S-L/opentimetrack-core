@@ -23,8 +23,17 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import EditNoteIcon from '@mui/icons-material/EditNote'
 
-import { getEmployees, getPunches, requestCorrection } from '../../services/api.js'
-import { Empty, ErrorNote, Loading, PageHeader, SourceChip } from '../../components/common.jsx'
+import { getPunches, PAGE_SIZE, requestCorrection } from '../../services/api.js'
+import EmployeePicker from '../../components/EmployeePicker.jsx'
+import {
+  Empty,
+  ErrorNote,
+  Loading,
+  PageHeader,
+  Pager,
+  SourceChip,
+} from '../../components/common.jsx'
+import { firstOfThisMonth, today } from '../../components/format.js'
 import { dateOf, timeOf } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 
@@ -51,7 +60,7 @@ function byDay(punches, zone) {
  *  leaving why --- and the record keeps who it concerns and who filed it as two
  *  separate facts.
  */
-function CorrectionDialog({ open, employee, punch, people, onClose, onSubmit, saving, error }) {
+function CorrectionDialog({ open, employee, employeeName, punch, onClose, onSubmit, saving, error }) {
   const [form, setForm] = useState({ kind: 'ADD', proposed_type: 'OUT', when: '', reason: '' })
   const [loaded, setLoaded] = useState(null)
 
@@ -68,8 +77,10 @@ function CorrectionDialog({ open, employee, punch, people, onClose, onSubmit, sa
   if (!open && loaded !== null) setLoaded(null)
 
   const set = (field) => (event) => setForm({ ...form, [field]: event.target.value })
-  const name = people.find((p) => p.id === employee)
-  const subject = punch?.employee_name ?? (name ? `${name.first_name} ${name.last_name}`.trim() : '')
+  // From the punch when there is one, otherwise from whoever is filtered: the
+  // list of people no longer lives on this page, so the name comes down as a
+  // name rather than being looked up in it.
+  const subject = punch?.employee_name ?? employeeName ?? ''
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -158,18 +169,33 @@ export default function Timesheet() {
   const queryClient = useQueryClient()
 
   const [employee, setEmployee] = useState('')
+  const [employeeName, setEmployeeName] = useState('')
   const [correcting, setCorrecting] = useState(null) // {punch} | {} = new event
   const [error, setError] = useState(null)
 
-  const { data: people = [] } = useQuery({
-    queryKey: ['employees', 'for-filter'],
-    queryFn: () => getEmployees({ is_active: true }),
+  // A month by default rather than everything. The screen used to ask for the
+  // whole history and show whichever fifty rows came back first, with no way to
+  // reach the rest: about a day and a half of a small company's punches, under
+  // a heading claiming to be the record as stored.
+  const [from, setFrom] = useState(firstOfThisMonth)
+  const [to, setTo] = useState(today)
+  const [page, setPage] = useState(1)
+
+  const filters = { employee: employee || undefined, date_from: from, date_to: to }
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['punches', { ...filters, page }],
+    queryFn: () => getPunches({ ...filters, page, ordering: '-timestamp' }),
+    placeholderData: (previous) => previous,
   })
 
-  const { data: punches, isLoading } = useQuery({
-    queryKey: ['punches', { employee }],
-    queryFn: () => getPunches({ employee: employee || undefined, ordering: '-timestamp' }),
-  })
+  // Any change to what is being asked for starts at the first page again:
+  // staying on page 4 of a narrower range shows an empty screen that looks like
+  // "there is nothing here".
+  const rephrase = (set) => (value) => {
+    set(value)
+    setPage(1)
+  }
 
   const correct = useMutation({
     mutationFn: requestCorrection,
@@ -183,7 +209,7 @@ export default function Timesheet() {
     onError: setError,
   })
 
-  const days = byDay(punches ?? [], zone)
+  const days = byDay(data?.rows ?? [], zone)
 
   return (
     <>
@@ -201,26 +227,48 @@ export default function Timesheet() {
 
       <ErrorNote error={error} onClose={() => setError(null)} />
 
-      <TextField
-        select
-        size="small"
-        label="Persona"
-        value={employee}
-        onChange={(event) => setEmployee(event.target.value)}
-        sx={{ minWidth: 260, mb: 2 }}
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        sx={{ gap: 2, mb: 2, alignItems: { sm: 'flex-start' } }}
       >
-        <MenuItem value="">Toda la empresa</MenuItem>
-        {people.map((person) => (
-          <MenuItem key={person.id} value={person.id}>
-            {`${person.first_name} ${person.last_name}`.trim() || person.email}
-          </MenuItem>
-        ))}
-      </TextField>
+        <EmployeePicker
+          size="small"
+          value={employee}
+          onChange={(id, person) => {
+            rephrase(setEmployee)(id)
+            setEmployeeName(
+              person && !person.__everyone
+                ? `${person.first_name} ${person.last_name}`.trim() || person.email
+                : '',
+            )
+          }}
+          everyoneLabel="Toda la empresa"
+          sx={{ minWidth: 260 }}
+        />
+        <TextField
+          size="small"
+          type="date"
+          label="Desde"
+          value={from}
+          onChange={(event) => rephrase(setFrom)(event.target.value)}
+          slotProps={{ inputLabel: { shrink: true } }}
+        />
+        <TextField
+          size="small"
+          type="date"
+          label="Hasta"
+          value={to}
+          onChange={(event) => rephrase(setTo)(event.target.value)}
+          slotProps={{ inputLabel: { shrink: true } }}
+          error={to < from}
+          helperText={to < from ? 'Va antes que la inicial.' : ' '}
+        />
+      </Stack>
 
       {isLoading ? (
         <Loading rows={6} />
       ) : days.length === 0 ? (
-        <Empty>No hay fichajes registrados todavía.</Empty>
+        <Empty>No hay fichajes en ese periodo.</Empty>
       ) : (
         <Stack sx={{ gap: 2 }}>
           {days.map(([day, events]) => (
@@ -313,11 +361,19 @@ export default function Timesheet() {
         </Stack>
       )}
 
+      <Pager
+        count={data?.count ?? 0}
+        page={page}
+        pageSize={PAGE_SIZE}
+        onChange={setPage}
+        noun="fichajes"
+      />
+
       <CorrectionDialog
         open={correcting !== null}
         punch={correcting?.punch}
         employee={employee}
-        people={people}
+        employeeName={employeeName}
         saving={correct.isPending}
         error={error}
         onClose={() => {

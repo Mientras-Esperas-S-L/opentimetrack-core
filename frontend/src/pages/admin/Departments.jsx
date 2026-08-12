@@ -19,7 +19,13 @@ import {
   getDepartments,
   updateDepartment,
 } from '../../services/api.js'
-import { Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
+import {
+  ConfirmDialog,
+  Empty,
+  ErrorNote,
+  Loading,
+  PageHeader,
+} from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
 function DepartmentDialog({ open, department, onClose, onSave, saving, error }) {
@@ -82,6 +88,7 @@ export default function Departments() {
 
   const [editing, setEditing] = useState(undefined)
   const [error, setError] = useState(null)
+  const [confirming, setConfirming] = useState(null)
 
   const { data: departments, isLoading } = useQuery({
     queryKey: ['departments'],
@@ -172,7 +179,16 @@ export default function Departments() {
                       <Button
                         size="small"
                         color="inherit"
-                        onClick={() => remove.mutate(department.id)}
+                        onClick={() =>
+                          setConfirming({
+                            title: 'Eliminar departamento',
+                            body: department.name,
+                            detail:
+                              'No tiene a nadie asignado, así que no afecta a ninguna persona. No se puede deshacer.',
+                            verb: 'Eliminar',
+                            run: () => remove.mutate(department.id),
+                          })
+                        }
                         disabled={remove.isPending}
                       >
                         Eliminar
@@ -196,6 +212,11 @@ export default function Departments() {
           setError(null)
         }}
         onSave={save.mutate}
+      />
+      <ConfirmDialog
+        request={confirming}
+        busy={remove.isPending}
+        onClose={() => setConfirming(null)}
       />
     </>
   )

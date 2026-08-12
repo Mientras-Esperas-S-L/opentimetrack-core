@@ -34,10 +34,18 @@ import {
   getDepartments,
   getEmployees,
   inviteEmployee,
+  PAGE_SIZE,
   reactivateEmployee,
   updateEmployee,
 } from '../../services/api.js'
-import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
+import {
+  ConfirmDialog,
+  Empty,
+  ErrorNote,
+  Loading,
+  PageHeader,
+  Pager,
+} from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
 const ROLES = [
@@ -243,14 +251,17 @@ export default function People() {
   const [error, setError] = useState(null)
   const [sent, setSent] = useState(null) // address the last link went to
   const [confirming, setConfirming] = useState(null)
+  const [page, setPage] = useState(1)
 
-  const { data: people, isLoading } = useQuery({
-    queryKey: ['employees', { search, showInactive }],
+  const { data, isLoading } = useQuery({
+    queryKey: ['employees', { search, showInactive, page }],
     queryFn: () =>
       getEmployees({
         search: search || undefined,
         ...(showInactive ? {} : { is_active: true }),
+        page,
       }),
+    placeholderData: (previous) => previous,
   })
 
   const { data: departments = [] } = useQuery({
@@ -288,7 +299,7 @@ export default function People() {
     onError: setError,
   })
 
-  const rows = people ?? []
+  const rows = data?.rows ?? []
 
   return (
     <>
@@ -324,7 +335,10 @@ export default function People() {
           size="small"
           placeholder="Buscar por nombre, correo o número"
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) => {
+            setSearch(event.target.value)
+            setPage(1)
+          }}
           sx={{ flexGrow: 1, maxWidth: 380 }}
           slotProps={{
             input: {
@@ -340,7 +354,10 @@ export default function People() {
           control={
             <Switch
               checked={showInactive}
-              onChange={(event) => setShowInactive(event.target.checked)}
+              onChange={(event) => {
+                setShowInactive(event.target.checked)
+                setPage(1)
+              }}
             />
           }
           label="Ver también las bajas"
@@ -428,6 +445,14 @@ export default function People() {
           </Table>
         </TableContainer>
       )}
+
+      <Pager
+        count={data?.count ?? 0}
+        page={page}
+        pageSize={PAGE_SIZE}
+        onChange={setPage}
+        noun="personas"
+      />
 
       <PersonDialog
         open={editing !== undefined}

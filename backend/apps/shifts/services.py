@@ -13,7 +13,7 @@ claim they were not told.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta
 from datetime import time as dt_time
 from itertools import pairwise
@@ -47,11 +47,16 @@ class Finding:
     code: str
     message: str
     basis: str
+    #: Carried alongside the id so a warning can name who it is about without
+    #: the caller holding the whole workforce to look it up in --- which is what
+    #: the roster screen was doing, and it only ever held the first page of it.
+    employee_name: str = ""
 
     def as_dict(self) -> dict:
         return {
             "day": self.day.isoformat(),
             "employee": str(self.employee_id),
+            "employee_name": self.employee_name,
             "code": self.code,
             "message": str(self.message),
             "basis": self.basis,
@@ -143,6 +148,12 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
         findings.extend(_check_night_work(roster, rules, first, last))
         findings.extend(_check_under_eighteen(roster, rules, first, last))
     findings.extend(_check_leave_clashes(first, last, employee))
+
+    # Filled in one pass rather than at each of the nine places a Finding is
+    # built: one of them would be forgotten, and a warning about a person whose
+    # name is missing reads like a bug in the warning.
+    names = {shift.employee_id: shift.employee.get_full_name() for shift in shifts}
+    findings = [replace(f, employee_name=names.get(f.employee_id, "")) for f in findings]
 
     return sorted(findings, key=lambda f: (f.day, f.code))
 

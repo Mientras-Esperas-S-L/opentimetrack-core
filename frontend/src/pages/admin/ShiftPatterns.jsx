@@ -21,7 +21,13 @@ import {
   getShiftPatterns,
   updateShiftPattern,
 } from '../../services/api.js'
-import { Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
+import {
+  ConfirmDialog,
+  Empty,
+  ErrorNote,
+  Loading,
+  PageHeader,
+} from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
 const PALETTE = ['#1b5e4a', '#b0533a', '#2e5f8a', '#7a4b8f', '#8a6d2e', '#4a4a4a']
@@ -195,6 +201,7 @@ export default function ShiftPatterns() {
 
   const [editing, setEditing] = useState(undefined)
   const [error, setError] = useState(null)
+  const [confirming, setConfirming] = useState(null)
 
   const { data: patterns, isLoading } = useQuery({
     queryKey: ['shift-patterns'],
@@ -276,7 +283,21 @@ export default function ShiftPatterns() {
                     <Button
                       size="small"
                       color="inherit"
-                      onClick={() => remove.mutate(pattern.id)}
+                      onClick={() =>
+                        setConfirming({
+                          title: 'Eliminar turno',
+                          body: pattern.name,
+                          // SET_NULL, so nothing published disappears: the days
+                          // stay and stop naming a shift. Which is exactly the
+                          // sort of thing somebody should hear before, not find
+                          // out afterwards looking at a blank cuadrante.
+                          detail: pattern.shifts_count
+                            ? `Hay ${pattern.shifts_count} ${pattern.shifts_count === 1 ? 'día' : 'días'} del cuadrante con este turno. No se borran: dejan de llevar nombre de turno, y sus horas siguen contando.`
+                            : 'No está puesto en ningún día del cuadrante. No se puede deshacer.',
+                          verb: 'Eliminar',
+                          run: () => remove.mutate(pattern.id),
+                        })
+                      }
                       disabled={remove.isPending}
                     >
                       Eliminar
@@ -299,6 +320,11 @@ export default function ShiftPatterns() {
           setError(null)
         }}
         onSave={save.mutate}
+      />
+      <ConfirmDialog
+        request={confirming}
+        busy={remove.isPending}
+        onClose={() => setConfirming(null)}
       />
     </>
   )

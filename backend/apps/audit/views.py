@@ -14,7 +14,19 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, serializers, viewsets
 
 from apps.audit.models import AuditAction, AuditLog
+from apps.common.filters import LocalDayRangeFilter
 from apps.common.permissions import IsAuthenticatedInTenant
+
+
+class AuditLogFilter(LocalDayRangeFilter):
+    """A range of days, because an inspection asks for a period and not for
+    "the most recent fifty"."""
+
+    day_field = "at"
+
+    class Meta:
+        model = AuditLog
+        fields = ["action", "actor", "target_id"]
 
 
 class AuditLogSerializer(serializers.ModelSerializer):
@@ -60,7 +72,7 @@ class AuditLogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
     queryset = AuditLog.objects.none()
     serializer_class = AuditLogSerializer
     permission_classes = [IsAuthenticatedInTenant]
-    filterset_fields = ["action", "actor", "target_id"]
+    filterset_class = AuditLogFilter
     ordering = ["-at"]
 
     def get_queryset(self):

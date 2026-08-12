@@ -7,6 +7,7 @@ import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
+import Pagination from '@mui/material/Pagination'
 import Paper from '@mui/material/Paper'
 import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
@@ -96,6 +97,44 @@ export function ErrorNote({ error, onClose }) {
     <Alert severity="error" onClose={onClose} sx={{ mb: 2 }}>
       {error.message ?? String(error)}
     </Alert>
+  )
+}
+
+/** Which slice of a list is on screen, and how big the list actually is.
+ *
+ *  The count is the point, not the arrows. Every one of these screens used to
+ *  render the first fifty rows and stop, with nothing saying more existed ---
+ *  under headings like "el registro tal y como está guardado". Somebody
+ *  checking whether a punch was recorded would have concluded it was not.
+ *
+ *  So the total shows even on a single page: "12 registros" is a statement that
+ *  there are twelve, which is what makes the fuller lists trustworthy.
+ */
+export function Pager({ count, page, pageSize, onChange, noun = 'registros' }) {
+  if (!count) return null
+
+  const pages = Math.ceil(count / pageSize)
+  const first = (page - 1) * pageSize + 1
+  const last = Math.min(page * pageSize, count)
+
+  return (
+    <Stack
+      direction={{ xs: 'column', sm: 'row' }}
+      sx={{ gap: 1, mt: 2, alignItems: 'center', justifyContent: 'space-between' }}
+    >
+      <Typography variant="body2" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+        {pages > 1 ? `${first}–${last} de ${count} ${noun}` : `${count} ${noun}`}
+      </Typography>
+      {pages > 1 && (
+        <Pagination
+          size="small"
+          count={pages}
+          page={page}
+          onChange={(_, next) => onChange(next)}
+          shape="rounded"
+        />
+      )}
+    </Stack>
   )
 }
 

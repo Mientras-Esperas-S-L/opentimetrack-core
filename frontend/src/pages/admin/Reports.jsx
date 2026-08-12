@@ -1,16 +1,16 @@
 import { useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import TableViewIcon from '@mui/icons-material/TableView'
 
-import { downloadReport, getEmployees } from '../../services/api.js'
+import { downloadReport } from '../../services/api.js'
+import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { ErrorNote, PageHeader, Panel } from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
@@ -45,17 +45,10 @@ export default function Reports() {
   const [error, setError] = useState(null)
   const [lastFingerprint, setLastFingerprint] = useState('')
 
-  const { data: people = [] } = useQuery({
-    queryKey: ['employees', 'for-report'],
-    queryFn: () => getEmployees({ is_active: true }),
-  })
-
-  // Once the options exist, default to the person asking: it is the record they
-  // are most likely to want, and an empty select is a dead end.
-  if (!employee && people.length > 0) {
-    const self = people.find((person) => person.id === session?.user?.id)
-    setEmployee(self ? self.id : people[0].id)
-  }
+  // Defaults to whoever is asking: the record they are most likely to want,
+  // and an empty field is a dead end. Taken from the session rather than from a
+  // loaded list, which was only ever the first page of the workforce.
+  if (!employee && session?.user?.id) setEmployee(session.user.id)
 
   const build = useMutation({
     mutationFn: (format) =>
@@ -82,19 +75,11 @@ export default function Reports() {
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: '1.2fr 1fr' } }}>
         <Panel title="Registro de jornada">
           <Stack sx={{ gap: 2 }}>
-            <TextField
-              select
-              fullWidth
-              label="Persona"
+            <EmployeePicker
               value={employee}
-              onChange={(event) => setEmployee(event.target.value)}
-            >
-              {people.map((person) => (
-                <MenuItem key={person.id} value={person.id}>
-                  {`${person.first_name} ${person.last_name}`.trim() || person.email}
-                </MenuItem>
-              ))}
-            </TextField>
+              onChange={setEmployee}
+              helperText="Escribe para buscar."
+            />
 
             <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
               <TextField

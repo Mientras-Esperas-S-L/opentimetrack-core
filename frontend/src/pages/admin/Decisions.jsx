@@ -154,7 +154,7 @@ export default function Decisions() {
   const openReject = (action, id, needsNote) => setRejecting({ action, id, needsNote })
 
   const absenceRows = absences.data ?? []
-  const correctionRows = corrections.data ?? []
+  const correctionRows = corrections.data?.rows ?? []
 
   return (
     <>

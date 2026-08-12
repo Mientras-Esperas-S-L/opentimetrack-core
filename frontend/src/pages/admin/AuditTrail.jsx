@@ -9,9 +9,9 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 
-import { getAuditTrail } from '../../services/api.js'
-import { Empty, Loading, PageHeader } from '../../components/common.jsx'
-import { dateOf } from '../../components/format.js'
+import { getAuditTrail, PAGE_SIZE } from '../../services/api.js'
+import { Empty, Loading, PageHeader, Pager } from '../../components/common.jsx'
+import { dateOf, firstOfThisMonth, today } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 
 /** Entries that are somebody reading, as opposed to somebody changing.
@@ -72,12 +72,25 @@ export default function AuditTrail() {
   const isAdmin = session?.user?.role === 'ADMIN'
   const [action, setAction] = useState('')
 
+  // A month, not "the most recent fifty". An inspection asks for a period, and
+  // before this the screen had no way to express one: it showed one page and
+  // said nothing about the rest of the trail.
+  const [from, setFrom] = useState(firstOfThisMonth)
+  const [to, setTo] = useState(today)
+  const [page, setPage] = useState(1)
+
+  const narrow = (set) => (value) => {
+    set(value)
+    setPage(1)
+  }
+
   const { data, isLoading } = useQuery({
-    queryKey: ['audit', action],
-    queryFn: () => getAuditTrail(action ? { action } : {}),
+    queryKey: ['audit', { action, from, to, page }],
+    queryFn: () => getAuditTrail({ ...(action ? { action } : {}), date_from: from, date_to: to, page }),
+    placeholderData: (previous) => previous,
   })
 
-  const rows = data ?? []
+  const rows = data?.rows ?? []
 
   return (
     <>
@@ -90,25 +103,48 @@ export default function AuditTrail() {
         }
       />
 
-      <TextField
-        select
-        size="small"
-        label="Qué mostrar"
-        value={action}
-        onChange={(event) => setAction(event.target.value)}
-        sx={{ minWidth: 300, mb: 2 }}
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        sx={{ gap: 2, mb: 2, alignItems: { sm: 'flex-start' }, flexWrap: 'wrap' }}
       >
-        {GROUPS.map((group) => (
-          <MenuItem key={group.value} value={group.value}>
-            {group.label}
-          </MenuItem>
-        ))}
-      </TextField>
+        <TextField
+          select
+          size="small"
+          label="Qué mostrar"
+          value={action}
+          onChange={(event) => narrow(setAction)(event.target.value)}
+          sx={{ minWidth: 300 }}
+        >
+          {GROUPS.map((group) => (
+            <MenuItem key={group.value} value={group.value}>
+              {group.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          size="small"
+          type="date"
+          label="Desde"
+          value={from}
+          onChange={(event) => narrow(setFrom)(event.target.value)}
+          slotProps={{ inputLabel: { shrink: true } }}
+        />
+        <TextField
+          size="small"
+          type="date"
+          label="Hasta"
+          value={to}
+          onChange={(event) => narrow(setTo)(event.target.value)}
+          slotProps={{ inputLabel: { shrink: true } }}
+          error={to < from}
+          helperText={to < from ? 'Va antes que la inicial.' : ' '}
+        />
+      </Stack>
 
       {isLoading ? (
         <Loading rows={6} />
       ) : rows.length === 0 ? (
-        <Empty>No hay entradas que mostrar.</Empty>
+        <Empty>No hay entradas en ese periodo.</Empty>
       ) : (
         <Stack sx={{ gap: 1 }}>
           {rows.map((entry) => {
@@ -170,6 +206,14 @@ export default function AuditTrail() {
           })}
         </Stack>
       )}
+
+      <Pager
+        count={data?.count ?? 0}
+        page={page}
+        pageSize={PAGE_SIZE}
+        onChange={setPage}
+        noun="entradas"
+      />
 
       {rows.length > 0 && (
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>

@@ -35,6 +35,7 @@ from apps.users.models import Role, User
 PASSWORD = "a-sufficiently-long-password"
 
 MORNING = [{"start": "08:00", "end": "16:00"}]
+LONG_DAY = [{"start": "08:00", "end": "17:00"}]
 NIGHT = [{"start": "22:00", "end": "06:00"}]
 SPLIT = [{"start": "09:00", "end": "13:00"}, {"start": "15:00", "end": "19:00"}]
 
@@ -289,6 +290,28 @@ def test_being_rostered_on_approved_leave_is_reported(company, worker):
     clashes = [f for f in findings if f.code == "rostered_on_leave"]
     assert len(clashes) == 1
     assert clashes[0].day == date(2026, 9, 9)
+    # This one is built from the absence rather than from the roster loop, so
+    # it is the finding most likely to slip past the pass that fills in names.
+    assert clashes[0].employee_name == worker.get_full_name()
+
+
+@pytest.mark.django_db
+def test_every_finding_says_who_it_is_about(company, worker):
+    """The name is filled in one pass at the end rather than at each of the
+    nine places a Finding is built. That is less fragile but it is also silent:
+    a code that stops matching would produce warnings about nobody. The roster
+    below is written to break several rules at once so the check has something
+    to be right about."""
+    with tenant_context(company.id):
+        # Twelve days straight of nine-hour shifts: over the daily limit, short
+        # of weekly rest, and past the weekly hours.
+        for offset in range(12):
+            shift(company, worker, date(2026, 9, 7) + timedelta(days=offset), LONG_DAY)
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    assert len(findings) > 1, "the roster was meant to break several rules"
+    nameless = [f.code for f in findings if not f.employee_name]
+    assert nameless == []
 
 
 @pytest.mark.django_db

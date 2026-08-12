@@ -148,7 +148,17 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
-    "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
+    # The three of them. Only DjangoFilterBackend was enabled, so every
+    # `search_fields` and `ordering_fields` declared on a viewset was decoration:
+    # the search box on Personas answered `?search=cualquiercosa` with the whole
+    # workforce, and its empty state --- "Nadie coincide con esa búsqueda" --- could
+    # never appear. Neither filter does anything to a viewset that declares no
+    # fields for it, so turning them on affects only the ones already asking.
+    "DEFAULT_FILTER_BACKENDS": (
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,

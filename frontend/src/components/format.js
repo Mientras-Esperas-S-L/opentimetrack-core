@@ -36,3 +36,20 @@ export function dateOf(value, options = {}) {
 export function dayRange(from, to) {
   return from === to ? dateOf(from) : `${dateOf(from)} → ${dateOf(to)}`
 }
+
+/** Today, as the `yyyy-mm-dd` an `<input type="date">` wants.
+ *
+ *  `toISOString()` would be wrong here: it converts to UTC first, so anybody
+ *  west of Greenwich gets yesterday for most of the evening and anybody east
+ *  gets tomorrow in the small hours. `sv-SE` is the shortest way to ask the
+ *  browser for the local date already in ISO order.
+ */
+export const today = () => new Date().toLocaleDateString('sv-SE')
+
+/** The first of the current month, same format. The default window for the
+ *  screens that show history: a period somebody recognises, rather than "the
+ *  most recent fifty rows". */
+export const firstOfThisMonth = () => {
+  const now = new Date()
+  return new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('sv-SE')
+}

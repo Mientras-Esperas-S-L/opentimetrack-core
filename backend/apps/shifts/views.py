@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from datetime import date
 
+from django.db.models import Count
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import serializers, viewsets
@@ -36,11 +37,15 @@ from apps.tenants.rules import WorkingTimeRules
 
 class ShiftPatternSerializer(serializers.ModelSerializer):
     minutes = serializers.IntegerField(read_only=True)
+    #: How many published days use it. Deleting one is SET_NULL, so nothing is
+    #: lost, but the days it was painted on quietly stop naming a shift --- and
+    #: the screen offering the delete had no way to say how many.
+    shifts_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = ShiftPattern
-        fields = ["id", "name", "segments", "colour", "is_active", "minutes"]
-        read_only_fields = ["id", "minutes"]
+        fields = ["id", "name", "segments", "colour", "is_active", "minutes", "shifts_count"]
+        read_only_fields = ["id", "minutes", "shifts_count"]
 
     def validate_segments(self, value):
         validate_segments(value)
@@ -91,7 +96,7 @@ class ShiftPatternViewSet(viewsets.ModelViewSet):
     filterset_fields = ["is_active"]
 
     def get_queryset(self):
-        return ShiftPattern.objects.all()
+        return ShiftPattern.objects.annotate(shifts_count=Count("shifts"))
 
     def perform_create(self, serializer):
         serializer.save(tenant=self.request.user.tenant)
