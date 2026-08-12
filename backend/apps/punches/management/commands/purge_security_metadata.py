@@ -26,6 +26,8 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from apps.audit.models import AuditAction
+from apps.audit.services import record
 from apps.punches.models import Punch
 from apps.tenants.models import Tenant
 
@@ -68,6 +70,16 @@ class Command(BaseCommand):
 
             if not dry_run and count:
                 purgeable.update(ip_address=None, device_id="", user_agent="")
+                # Deleting data leaves a trace too. Otherwise the only evidence
+                # that something was removed is that it is no longer there.
+                record(
+                    action=AuditAction.METADATA_PURGED,
+                    company=company,
+                    target_type="company",
+                    target_label=company.name,
+                    changes={"purged": count, "before": cutoff.date().isoformat()},
+                    note=f"{stuck} conservados por hash v1" if stuck else "",
+                )
 
             total_purged += count
             total_stuck += stuck

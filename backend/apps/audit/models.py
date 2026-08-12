@@ -76,8 +76,10 @@ class AuditAction(models.TextChoices):
     # Housekeeping that removes data.
     METADATA_PURGED = "METADATA_PURGED", _("Purged security metadata")
 
-    # Failed sign-ins. Worth keeping: a burst of them is the shape of an attack.
-    SIGN_IN_FAILED = "SIGN_IN_FAILED", _("Failed sign-in")
+    # Failed sign-ins are deliberately absent. ATOMIC_REQUESTS is on and DRF
+    # rolls the transaction back when it returns an error, so an entry written
+    # during a failing request never lands. They go to the application log
+    # instead --- see SignInView._record_failed_attempt.
 
 
 class AuditLog(models.Model):

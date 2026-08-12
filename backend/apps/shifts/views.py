@@ -15,6 +15,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.audit.models import AuditAction
+from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import (
     IsAuthenticatedInTenant,
@@ -261,7 +263,26 @@ class WorkingTimeRulesView(APIView):
     @extend_schema(request=RulesSerializer, responses={200: RulesSerializer})
     def patch(self, request):
         rules = WorkingTimeRules.for_company(request.user.tenant)
+        before = RulesSerializer(rules).data
         serializer = RulesSerializer(rules, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        # These decide what the roster is measured against, so a change to them
+        # changes what "compliant" means. Only what moved is recorded.
+        changed = {
+            field: [before[field], value]
+            for field, value in serializer.data.items()
+            if before.get(field) != value
+        }
+        if changed:
+            record(
+                action=AuditAction.RULES_CHANGED,
+                actor=request.user,
+                target=request.user.tenant,
+                target_type="company",
+                target_label=request.user.tenant.name,
+                changes=changed,
+                request=request,
+            )
         return Response(serializer.data)

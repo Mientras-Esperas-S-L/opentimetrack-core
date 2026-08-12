@@ -11,7 +11,8 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.audit.services import record_view_of_others
+from apps.audit.models import AuditAction
+from apps.audit.services import record, record_view_of_others
 from apps.common.permissions import IsAdmin, IsAuthenticatedInTenant
 from apps.punches.models import Punch, PunchSource
 from apps.punches.serializers import PunchSerializer, PunchWriteSerializer
@@ -164,4 +165,14 @@ class PunchViewSet(
         punch.voided_at = timezone.now()
         punch.save(update_fields=["is_active", "voided_at"])
 
+        record(
+            action=AuditAction.PUNCH_VOIDED,
+            actor=request.user,
+            target=punch.employee,
+            target_type="user",
+            target_label=punch.employee.get_full_name(),
+            changes={"punch": str(punch.pk), "at": punch.timestamp.isoformat()},
+            note=request.data.get("reason", "")[:300],
+            request=request,
+        )
         return Response(PunchSerializer(punch).data)

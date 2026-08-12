@@ -124,11 +124,22 @@ class AbsenceViewSet(
         return Response(AbsenceSerializer(absence).data, status=status.HTTP_201_CREATED)
 
     def _employee_in_company(self, employee_id):
+        """Somebody in **this** company, or nothing.
+
+        The `tenant=` filter is the whole point and it was missing. People are
+        not a `TenantOwnedModel` --- sign-in has to find them before the company
+        is known --- so `User.objects` spans every company. A comment here
+        claimed the manager was tenant-scoped; it is not, and the result was
+        that an administrator could read the holiday balance of somebody in
+        another company by passing their id.
+
+        Found by the isolation sweep in apps/common/tests. Same mistake as the
+        one fixed in `UserViewSet.perform_destroy`, in a place the fix missed.
+        """
         from apps.users.models import User
 
-        # Tenant-scoped manager: an id from another company simply is not found.
         try:
-            return User.objects.get(pk=employee_id)
+            return User.objects.get(pk=employee_id, tenant=self.request.user.tenant)
         except (User.DoesNotExist, ValueError, TypeError) as exc:
             raise BusinessRuleError(
                 code="unknown_employee",

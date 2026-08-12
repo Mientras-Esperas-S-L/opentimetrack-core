@@ -395,3 +395,72 @@ def test_an_entry_is_not_written_if_the_action_rolls_back(
 
     assert response.status_code == 409
     assert AuditLog.objects.count() == before
+
+
+# ------------------------------------------- the entries added after the sweep
+
+
+@pytest.mark.django_db
+def test_voiding_a_clock_event_is_recorded(company, django_capture_on_commit_callbacks):
+    from apps.punches.services import register_punch
+
+    admin = make(company, "admin@example.com", Role.ADMIN)
+    worker = make(company, "worker@example.com")
+    with tenant_context(company.id):
+        punch = register_punch(employee=worker, company=company)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        client_for(admin).patch(
+            f"/api/punches/{punch.id}/void/", {"reason": "duplicado"}, format="json"
+        )
+
+    entry = AuditLog.objects.filter(action=AuditAction.PUNCH_VOIDED).first()
+    assert entry is not None
+    assert entry.target_id == worker.id
+    assert "duplicado" in entry.note
+
+
+@pytest.mark.django_db
+def test_changing_the_working_time_rules_is_recorded(company, django_capture_on_commit_callbacks):
+    """They decide what the roster is measured against, so changing them
+    changes what "compliant" means."""
+    admin = make(company, "admin@example.com", Role.ADMIN)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        client_for(admin).patch("/api/working-time-rules/", {"daily_rest_hours": 8}, format="json")
+
+    entry = AuditLog.objects.filter(action=AuditAction.RULES_CHANGED).first()
+    assert entry is not None
+    assert entry.changes["daily_rest_hours"] == [12, 8]
+
+
+@pytest.mark.django_db
+def test_purging_metadata_leaves_a_trace(company, django_capture_on_commit_callbacks):
+    """Deleting data is recorded too. Otherwise the only evidence that
+    something was removed is that it is no longer there."""
+    from datetime import timedelta
+    from io import StringIO
+
+    from django.core.management import call_command
+    from django.utils import timezone
+
+    from apps.punches.models import Punch
+
+    worker = make(company, "worker@example.com")
+    with tenant_context(company.id):
+        punch = Punch(
+            tenant=company,
+            employee=worker,
+            punch_type="IN",
+            timestamp=timezone.now() - timedelta(days=400),
+            ip_address="10.0.0.9",
+        )
+        punch.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        call_command("purge_security_metadata", stdout=StringIO())
+
+    entry = AuditLog.objects.filter(action=AuditAction.METADATA_PURGED).first()
+    assert entry is not None
+    assert entry.changes["purged"] == 1
+    assert entry.actor is None  # cron, no person

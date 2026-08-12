@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 09:51+0000\n"
+"POT-Creation-Date: 2026-08-12 10:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -122,15 +122,12 @@ msgstr "Indica 'from' y 'to' con el formato AAAA-MM-DD."
 msgid "Read somebody else's record"
 msgstr "Consultó el registro de otra persona"
 
-#| msgid "Working time record"
 msgid "Exported a working time report"
 msgstr "Exportó un informe de jornada"
 
-#| msgid "supporting document"
 msgid "Downloaded a supporting document"
 msgstr "Descargó un justificante"
 
-#, fuzzy
 #| msgid "record correction"
 msgid "Requested a correction"
 msgstr "Pidió una corrección"
@@ -194,9 +191,6 @@ msgstr "Revocó una credencial de aplicación"
 
 msgid "Purged security metadata"
 msgstr "Purgó metadatos de seguridad"
-
-msgid "Failed sign-in"
-msgstr "Intento de acceso fallido"
 
 msgid "when"
 msgstr "cuándo"
@@ -961,3 +955,6 @@ msgid ""
 "\n"
 "If this does not match what happened, tell whoever manages your working time."
 msgstr "La versión anterior no se ha borrado: las dos quedan en tu\nhistorial, y puedes descargar tu registro completo cuando quieras.\n\nSi esto no coincide con lo que pasó, díselo a quien gestione tu jornada."
+
+#~ msgid "Failed sign-in"
+#~ msgstr "Intento de acceso fallido"

@@ -80,7 +80,13 @@ class SignInView(APIView):
     @extend_schema(request=SignInSerializer, responses={200: None}, auth=[])
     def post(self, request):
         serializer = SignInSerializer(data=request.data, context={"request": request})
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            # A burst of these is the shape of an attack, and without them the
+            # trail says nothing about attempts that never got in. The company
+            # comes from the address given, so a wrong one records nothing --
+            # there is no company to scope the entry to.
+            self._record_failed_attempt(request)
+            serializer.is_valid(raise_exception=True)
 
         user = serializer.validated_data["user"]
         set_current_tenant(user.tenant_id)
@@ -91,6 +97,29 @@ class SignInView(APIView):
                 "user": UserSerializer(user).data,
                 "tenant": TenantSerializer(user.tenant).data,
             }
+        )
+
+    def _record_failed_attempt(self, request):
+        """A failed attempt goes to the application log, not the audit trail.
+
+        It cannot go to the trail, and the reason is worth writing down.
+        `ATOMIC_REQUESTS` is on, and DRF marks the transaction for rollback
+        whenever it turns an exception into an error response. Every audit
+        entry is written on commit, so **nothing recorded during a failing
+        request survives** --- which is right for everything else (an entry
+        describing something that rolled back would be a lie) and useless here,
+        where the failure is the thing worth recording.
+
+        The application log already goes to file and to the log collector, and
+        a burst of these is the shape of an attack, which is an operational
+        question rather than part of the working-time record.
+        """
+        email = (request.data.get("email") or "").strip().lower()
+        logger.warning(
+            "Failed sign-in for %s from %s",
+            email or "(no address)",
+            request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
+            or request.META.get("REMOTE_ADDR"),
         )
 
 
