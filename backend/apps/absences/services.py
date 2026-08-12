@@ -18,7 +18,7 @@ Two decisions worth stating up front:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 
 from django.db.models import Q
 from django.utils import timezone
@@ -69,6 +69,10 @@ class LeaveBalance:
     entitled: int
     taken: int
     pending: int
+    #: Which unit all three figures are in. Served rather than assumed: "quedan
+    #: 9" means something different in working days than in calendar days, and
+    #: the screen showing it has no other way to know which.
+    working_days: bool = True
 
     @property
     def remaining(self) -> int:
@@ -84,6 +88,7 @@ class LeaveBalance:
             "taken": self.taken,
             "pending": self.pending,
             "remaining": self.remaining,
+            "working_days": self.working_days,
         }
 
 
@@ -101,21 +106,61 @@ def vacation_balance(employee, company, day: date | None = None) -> LeaveBalance
         end_date__gte=start,
     )
 
-    taken = sum(_days_within(a, start, end) for a in inside.filter(status=AbsenceStatus.APPROVED))
-    pending = sum(_days_within(a, start, end) for a in inside.filter(status=AbsenceStatus.PENDING))
+    # The unit belongs to the company, alongside the figure. Counting in one
+    # unit against an entitlement expressed in the other is how this went wrong.
+    unit = company.leave_days_are_working_days
+    taken = sum(
+        _days_within(a, start, end, working_days=unit)
+        for a in inside.filter(status=AbsenceStatus.APPROVED)
+    )
+    pending = sum(
+        _days_within(a, start, end, working_days=unit)
+        for a in inside.filter(status=AbsenceStatus.PENDING)
+    )
 
-    return LeaveBalance(start, end, entitled, taken, pending)
+    return LeaveBalance(start, end, entitled, taken, pending, working_days=unit)
 
 
-def _days_within(absence: Absence, start: date, end: date) -> int:
+def _days_within(absence: Absence, start: date, end: date, *, working_days: bool) -> int:
     """Only the part of the absence that falls inside the period.
 
     Leave straddling the period boundary counts on each side for the days it
     actually occupies there.
+
+    **In the same unit the entitlement is expressed in**, which is the part that
+    was wrong: the figure meant working days and this counted calendar days, so
+    a fortnight off cost fourteen of twenty-two and everybody ran out of holiday
+    around October.
+
+    A working day is a day that person was **due to work**, read from the
+    roster. Not Monday to Friday: a rotating team works Saturdays, a part-timer
+    may only work Tuesdays and Thursdays, and deducting the days they were never
+    going to work is the same mistake in a smaller size. Monday to Friday is the
+    fallback for somebody with no roster at all, which is what a flexible
+    arrangement looks like here.
+
+    Public holidays are **not** excluded, because the product does not know them
+    yet. That understates the balance slightly and it is the honest direction to
+    be wrong in --- the alternative invents days off.
     """
     first = max(absence.start_date, start)
     last = min(absence.end_date, end)
-    return (last - first).days + 1 if last >= first else 0
+    if last < first:
+        return 0
+    if not working_days:
+        return (last - first).days + 1
+
+    from apps.shifts.models import Shift
+
+    rostered = set(
+        Shift.objects.filter(
+            employee_id=absence.employee_id, day__gte=first, day__lte=last
+        ).values_list("day", flat=True)
+    )
+    span = [first + timedelta(days=n) for n in range((last - first).days + 1)]
+    if rostered:
+        return sum(1 for day in span if day in rostered)
+    return sum(1 for day in span if day.weekday() < 5)
 
 
 # ------------------------------------------------------------------- requesting

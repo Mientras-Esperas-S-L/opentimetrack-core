@@ -73,9 +73,25 @@ class Tenant(BaseModel):
         _("annual leave days"),
         default=22,
         help_text=_(
-            "Working days of holiday per reference period. Art. 38 ET sets a floor "
-            "of 30 calendar days; the agreement may give more. An individual "
-            "employee can be given a different figure."
+            "Days of holiday per reference period, in the unit chosen below. Art. "
+            "38 ET sets a floor of 30 calendar days, which is 22 working days on a "
+            "five-day week; the agreement may give more. An individual employee can "
+            "be given a different figure."
+        ),
+    )
+    # Two figures that look the same and are not: thirty is the legal minimum in
+    # calendar days and twenty-two is the same minimum in working days. Which
+    # one the number above means used to be settled only by a `help_text`, while
+    # the balance counted the other --- so a fortnight off took fourteen days
+    # from an allowance of twenty-two, and everybody ran out around October.
+    leave_days_are_working_days = models.BooleanField(
+        _("counted in working days"),
+        default=True,
+        help_text=_(
+            "On: only the days the person was due to work are deducted, so a "
+            "fortnight off costs ten. Off: every day between the two dates is "
+            "deducted, weekends included, and the figure above should be the "
+            "calendar-day one from the agreement."
         ),
     )
     leave_year_start_month = models.PositiveSmallIntegerField(

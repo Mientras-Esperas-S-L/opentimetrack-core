@@ -52,6 +52,9 @@ const today = () => new Date().toISOString().slice(0, 10)
 function Balance({ balance }) {
   const { entitled, taken, pending, remaining, period_start, period_end } = balance
   const pct = (value) => (entitled > 0 ? (value / entitled) * 100 : 0)
+  // Which unit the three figures are in. Without it "quedan 9" is ambiguous by
+  // about a third, which is exactly how far the balance used to be wrong.
+  const unit = balance.working_days ? 'laborables' : 'naturales'
 
   return (
     <Panel
@@ -63,7 +66,7 @@ function Balance({ balance }) {
           {remaining}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {remaining === 1 ? 'día disponible' : 'días disponibles'} de {entitled}
+          {remaining === 1 ? 'día' : 'días'} {unit} de {entitled}
         </Typography>
       </Stack>
 

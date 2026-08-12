@@ -319,11 +319,14 @@ def test_a_figure_already_matching_is_reported_as_unchanged(tmp_path, company):
 
 
 @pytest.mark.django_db
-def test_holiday_in_calendar_days_is_refused_not_converted(tmp_path, company):
-    """`Tenant.annual_leave_days` counts working days. Writing thirty calendar
-    days into it would hand out thirty working days --- over a week more than the
-    agreement gives --- and the conversion needs the working week, which is not
-    in the ficha."""
+def test_holiday_in_calendar_days_carries_its_unit_across(tmp_path, company):
+    """Thirty calendar days used to be refused, because the field counted
+    working days and thirty working days is over a week more than the agreement
+    gives. The conversion needed the working week, which is not in the ficha.
+
+    Now the unit is a field too, so both go in together and the figure never
+    sits in the wrong one.
+    """
     ficha = agreements.load(
         write(tmp_path, with_values(annual_leave_days=30, leave_days_are_working_days=False))
     )
@@ -333,8 +336,9 @@ def test_holiday_in_calendar_days_is_refused_not_converted(tmp_path, company):
         applied = agreements.apply_to_rules(ficha, rules)
         company.refresh_from_db()
 
-    assert "annual_leave_days" in applied.refused
-    assert company.annual_leave_days == 22  # untouched
+    assert applied.refused == {}
+    assert company.annual_leave_days == 30
+    assert company.leave_days_are_working_days is False
 
 
 @pytest.mark.django_db

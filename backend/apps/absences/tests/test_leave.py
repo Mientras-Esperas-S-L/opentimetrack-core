@@ -94,13 +94,20 @@ def test_the_period_can_start_in_another_month(company):
 
 @pytest.mark.django_db
 def test_approved_leave_comes_off_the_balance(company, employee, manager):
-    absence = _ask(company, employee, date(2026, 7, 1), date(2026, 7, 5))  # 5 days
+    """1 to 5 July 2026 is Wednesday to Sunday: three working days, not five.
+
+    The entitlement is expressed in working days, so the deduction is too.
+    Counting the weekend was the old behaviour and it is what made everybody run
+    out of holiday in October.
+    """
+    absence = _ask(company, employee, date(2026, 7, 1), date(2026, 7, 5))
     approve_absence(absence, resolved_by=manager)
 
     balance = vacation_balance(employee, company, date(2026, 8, 1))
     assert balance.entitled == 22
-    assert balance.taken == 5
-    assert balance.remaining == 17
+    assert balance.taken == 3
+    assert balance.remaining == 19
+    assert balance.working_days is True
 
 
 @pytest.mark.django_db
@@ -125,12 +132,16 @@ def test_a_rejected_request_does_not_count(company, employee, manager):
 
 @pytest.mark.django_db
 def test_leave_straddling_the_period_boundary_only_counts_its_own_days(company, employee, manager):
-    """30 Dec to 2 Jan is two days in one period and two in the next."""
+    """30 Dec to 2 Jan: two working days in one period, one in the next.
+
+    Wednesday and Thursday on the 2026 side; Friday on the 2027 side, because
+    the 2nd is a Saturday.
+    """
     absence = _ask(company, employee, date(2026, 12, 30), date(2027, 1, 2))
     approve_absence(absence, resolved_by=manager)
 
     assert vacation_balance(employee, company, date(2026, 12, 1)).taken == 2
-    assert vacation_balance(employee, company, date(2027, 2, 1)).taken == 2
+    assert vacation_balance(employee, company, date(2027, 2, 1)).taken == 1
 
 
 @pytest.mark.django_db
@@ -252,3 +263,73 @@ def test_an_approved_request_is_not_withdrawn_by_the_employee(company, employee,
         cancel_absence(absence, cancelled_by=employee)
 
     assert caught.value.code == "already_resolved"
+
+
+# ------------------------------------------------------- working or calendar
+#
+# The bug these pin down: the entitlement was documented in working days and
+# the consumption counted calendar days, so a fortnight off took fourteen of
+# twenty-two. Nothing on any screen said which unit anything was in.
+
+
+@pytest.mark.django_db
+def test_a_fortnight_off_costs_ten_days_not_fourteen(company, employee, manager):
+    """Two full weeks, Monday to Sunday twice over."""
+    absence = _ask(company, employee, date(2026, 7, 6), date(2026, 7, 19))
+    approve_absence(absence, resolved_by=manager)
+
+    balance = vacation_balance(employee, company, date(2026, 8, 1))
+    assert balance.taken == 10
+    assert balance.remaining == 12
+
+
+@pytest.mark.django_db
+def test_the_company_can_count_calendar_days_instead(company, employee, manager):
+    """Plenty of agreements say thirty natural days and mean it. Then the
+    weekend does come off, and the entitlement is the thirty-day figure."""
+    company.leave_days_are_working_days = False
+    company.annual_leave_days = 30
+    company.save(update_fields=["leave_days_are_working_days", "annual_leave_days"])
+
+    absence = _ask(company, employee, date(2026, 7, 6), date(2026, 7, 19))
+    approve_absence(absence, resolved_by=manager)
+
+    balance = vacation_balance(employee, company, date(2026, 8, 1))
+    assert balance.taken == 14
+    assert balance.remaining == 16
+    assert balance.working_days is False
+
+
+@pytest.mark.django_db
+def test_a_working_day_is_a_day_that_person_works(company, employee, manager):
+    """Not Monday to Friday. Somebody on a rotating rota works Saturdays, and
+    charging them for a Sunday they were never going to work is the same
+    mistake in a smaller size."""
+    from apps.shifts.models import Shift
+
+    with tenant_context(company.id):
+        # Rostered Thursday to Sunday, off Monday to Wednesday.
+        for day in (date(2026, 7, 9), date(2026, 7, 10), date(2026, 7, 11), date(2026, 7, 12)):
+            Shift.objects.create(
+                tenant=company,
+                employee=employee,
+                day=day,
+                segments=[{"start": "08:00", "end": "16:00"}],
+            )
+
+    absence = _ask(company, employee, date(2026, 7, 6), date(2026, 7, 12))
+    approve_absence(absence, resolved_by=manager)
+
+    # Four rostered days in that week, two of them at the weekend.
+    assert vacation_balance(employee, company, date(2026, 8, 1)).taken == 4
+
+
+@pytest.mark.django_db
+def test_with_no_roster_at_all_it_falls_back_to_monday_to_friday(company, employee, manager):
+    """Somebody on a flexible arrangement has no roster. Deducting every
+    calendar day would be the old bug back for exactly the people the flexible
+    checks were added for."""
+    absence = _ask(company, employee, date(2026, 7, 6), date(2026, 7, 12))
+    approve_absence(absence, resolved_by=manager)
+
+    assert vacation_balance(employee, company, date(2026, 8, 1)).taken == 5

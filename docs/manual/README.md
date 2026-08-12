@@ -9,6 +9,10 @@ tendrá que poner un `data-tour` en cada uno, y la lista está al final.
 
 ---
 
+> Este manual cuenta lo que el sistema **hace**. Lo que todavía no hace está en
+> [Cobertura legal](../cobertura-legal.md): las situaciones que la legislación
+> reconoce, una a una, con el estado de cada una.
+
 ## Índice
 
 **Para quien trabaja**

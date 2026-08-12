@@ -31,6 +31,7 @@ class CompanySerializer(serializers.ModelSerializer):
             "time_zone",
             "language",
             "annual_leave_days",
+            "leave_days_are_working_days",
             "leave_year_start_month",
             "record_retention_years",
             "security_metadata_retention_days",

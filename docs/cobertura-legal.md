@@ -10,7 +10,12 @@ Tres estados, y el del medio es el importante:
   nada. Es peor que faltar, porque parece que está.
 - **Falta** — no existe.
 
-Fecha del corte: 12 de agosto de 2026. Legislación: España, Estatuto de los
+Se mantiene junto al [manual](manual/README.md): el manual dice cómo se usa lo
+que hay, y esto dice qué hay y qué no. Cada vez que se cubra una situación, hay
+que mover su fila y ajustar el recuento de la cabecera.
+
+Fecha del corte: 12 de agosto de 2026. 91 situaciones: 21 cubiertas, 21 a
+medias, 49 sin cubrir. Legislación: España, Estatuto de los
 Trabajadores tras el RDL 32/2021 y el RDL 5/2023.
 
 ---
@@ -196,6 +201,7 @@ a cosas que el Estatuto ya cuenta en horas y no en días.
 | Regla | Base | Estado |
 |---|---|---|
 | Mínimo de 30 días naturales (22 laborables en semana de 5 días) | 38.1 | **Cubierto** — configurable, con suelo comprobado en la ficha de convenio |
+| Días laborables o naturales, y el consumo en la misma unidad | 38.1 | **Cubierto** — lo era al revés: el derecho estaba en laborables y el consumo se contaba en naturales, así que una quincena costaba 14 de 22. Un día laborable es ahora un día que esa persona tenía que trabajar, según su cuadrante |
 | Periodo de referencia distinto del año natural | 38.1 | **Cubierto** — mes de inicio configurable |
 | Días distintos para una persona concreta | — | **Cubierto** |
 | No sustituibles por dinero | 38.1 | **Cubierto por omisión** — no hay forma de pagarlas |

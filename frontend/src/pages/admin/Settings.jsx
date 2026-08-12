@@ -283,11 +283,32 @@ export default function Settings() {
             <TextField
               fullWidth
               type="number"
-              label="Días al año"
+              label={`Días al año, ${form.leave_days_are_working_days ? 'laborables' : 'naturales'}`}
               value={form.annual_leave_days}
               onChange={set('annual_leave_days')}
-              helperText={cite("annual_leave_days")}
+              helperText={cite('annual_leave_days')}
             />
+            {/* Treinta y veintidós son el mismo mínimo legal en dos unidades
+                distintas. Cuál de las dos era la cifra de arriba lo decía solo
+                un texto de ayuda, mientras el saldo descontaba la otra: una
+                quincena costaba catorce días de veintidós. */}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={Boolean(form.leave_days_are_working_days)}
+                  onChange={(event) =>
+                    setForm({ ...form, leave_days_are_working_days: event.target.checked })
+                  }
+                />
+              }
+              label="Contar en días laborables"
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
+              {form.leave_days_are_working_days
+                ? 'Solo se descuentan los días que la persona tenía que trabajar, según su cuadrante. Una quincena cuesta diez.'
+                : 'Se descuentan todos los días entre las dos fechas, fines de semana incluidos. La cifra de arriba debe ser la de días naturales del convenio.'}
+              {' Los festivos todavía no se descuentan: el sistema aún no los conoce.'}
+            </Typography>
             <TextField
               select
               fullWidth

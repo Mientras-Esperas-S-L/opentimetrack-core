@@ -413,10 +413,16 @@ APPLICABLE = {
     "annual_overtime_hours": ("rules", "annual_overtime_hours"),
     "annual_leave_days": ("tenant", "annual_leave_days"),
     "leave_year_start_month": ("tenant", "leave_year_start_month"),
+    # Applied rather than only read. It used to be a qualifier: the ficha said
+    # which unit its figure was in, the loader refused to write a calendar-day
+    # figure because the field counted working days, and there was nowhere to
+    # record the answer. Now the company holds the unit, so both go in together
+    # and the two never disagree.
+    "leave_days_are_working_days": ("tenant", "leave_days_are_working_days"),
 }
 
 #: Keys that only qualify another key and are never written anywhere.
-QUALIFIERS = {"leave_days_are_working_days"}
+QUALIFIERS: set[str] = set()
 
 
 @dataclass(slots=True)
@@ -477,14 +483,12 @@ def apply_to_rules(ficha: Ficha, rules, *, commit: bool = True) -> Applied:
 
 
 def _refuse(key: str, ficha: Ficha) -> str | None:
-    """Reasons to leave a value alone even though there is a field for it."""
-    if key == "annual_leave_days" and not ficha.values.get("leave_days_are_working_days"):
-        # `Tenant.annual_leave_days` counts working days. Writing thirty calendar
-        # days into it would hand out thirty working days: over a week more than
-        # the agreement gives. The conversion depends on how many days a week the
-        # person works, which is not in the ficha, so this is for a human.
-        return _(
-            "the ficha gives calendar days and the field counts working days; "
-            "convert it by hand, it depends on the working week"
-        )
+    """Reasons to leave a value alone even though there is a field for it.
+
+    Empty for now, and kept rather than deleted. It held one rule --- a ficha in
+    calendar days could not be written into a field that counted working days,
+    so the conversion was left to a human --- which stopped being true once the
+    unit became something the company records. The next figure that only makes
+    sense with a qualifier will want this back.
+    """
     return None
