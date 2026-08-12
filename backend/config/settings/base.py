@@ -199,6 +199,15 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,
 }
 
+# Si /api/schema/ y /api/docs/ responden sin sesión. El producto es AGPL, así
+# que el esquema no es un secreto ---está en el código---, pero es la instancia
+# del cliente la que lo publica y en un despliegue cerrado no hay razón para
+# anunciar la superficie completa de la API a quien pase por delante.
+#
+# Por defecto sí: es lo que hace utilizable una API, y quien autoaloja se
+# beneficia de tenerlo a mano.
+PUBLISH_API_SCHEMA = env.bool("PUBLISH_API_SCHEMA", default=True)
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "OpenTimeTrack Core",
     "DESCRIPTION": (

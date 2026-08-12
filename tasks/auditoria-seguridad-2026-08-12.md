@@ -146,15 +146,15 @@ límite. Están también en el serializer.
 
 ### Pendiente, por orden
 
-- [ ] **Sin CSP en ninguna parte.** El token vive en `localStorage`, así que un
-      XSS es apropiación completa de la sesión. Hoy no hay ningún sumidero de
-      XSS y React escapa por defecto, pero eso es una propiedad del código de
-      hoy y no una defensa. `deploy/` solo tiene SeaweedFS: no hay configuración
-      de servidor web donde ponerla todavía, y ahí es donde va.
-- [ ] **`/api/schema/` y `/api/docs/` responden 200 sin sesión.** Con un
-      producto AGPL el esquema no es secreto —está en el código— pero es la
-      instancia del cliente la que lo publica, y debería poder decidirlo.
-      Configurable, no cerrado.
+- [x] **Sin CSP en ninguna parte.** Escrita en `deploy/cabeceras.md`, con las
+      tres decisiones que hay que entender antes de tocarla (`unsafe-inline`
+      para Emotion, la API en `connect-src`, `blob:` para las descargas).
+      Pendiente de aplicar cuando exista el servidor web: no hay configuración
+      donde ponerla todavía.
+- [x] **`/api/schema/` y `/api/docs/` responden 200 sin sesión.**
+      `PUBLISH_API_SCHEMA`, por defecto sí. Configurable, no cerrado: con un
+      producto AGPL el esquema no es secreto, pero es la instancia del cliente
+      la que lo publica.
 - [ ] **Bloqueo por cuenta** tras N fallos, contra el ataque distribuido que el
       límite por IP no ve.
 - [ ] **Rotación de la clave de firma (JWT)**. Hoy es `SECRET_KEY`: rotarla

@@ -64,9 +64,21 @@ urlpatterns = [
         name="punch-delegated",
     ),
     path("api/", include(router.urls)),
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
 ]
+
+# El esquema y su visor. Configurable porque quien decide no somos nosotros:
+# el producto es AGPL, así que el esquema no es un secreto --- está en el
+# código --- pero es la instancia del cliente la que lo publica, y en un
+# despliegue cerrado no hay razón para anunciar la superficie completa de la
+# API a quien pase por delante.
+#
+# Por defecto se publica: es lo que hace utilizable una API, y quien
+# autoaloja se beneficia de tenerlo a mano.
+if settings.PUBLISH_API_SCHEMA:
+    urlpatterns += [
+        path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+        path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    ]
 
 if settings.DEBUG:
     urlpatterns += [path("admin/", admin.site.urls)]
