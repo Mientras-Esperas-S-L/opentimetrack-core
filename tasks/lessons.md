@@ -12,13 +12,27 @@ paso de la CI es `ruff format --check .` sobre todo el árbol, y bastó con
 olvidar dos ficheros.
 
 **Antes de cada push, correr la secuencia completa tal y como está en
-`.github/workflows/ci.yml`**, no una aproximación:
+`.github/workflows/ci.yml`**, no una aproximación. Y **comprobar que termina**,
+que es la mitad que se me olvidó la segunda vez:
 
 ```
-ruff check . && ruff format --check . &&
-python manage.py makemigrations --check --dry-run &&
-pytest && python manage.py spectacular --fail-on-warn --file /dev/null
+set -e
+ruff check .                                        && echo "1/5 lint OK"
+ruff format --check .                               && echo "2/5 formato OK"
+python manage.py makemigrations --check --dry-run   && echo "3/5 migraciones OK"
+pytest -q                                           && echo "4/5 pruebas OK"
+python manage.py spectacular --fail-on-warn --file /dev/null && echo "5/5 esquema OK"
+echo "=== COMPLETADA ==="
 ```
+
+El `set -e` y el contador no son adorno. La vez que volví a romper la CI fue
+encadenando con `&&` y leyendo «458 passed» como éxito: el paso de migraciones
+venía después, había fallado, y la cadena se cortó ahí sin que la ausencia de
+salida me llamara la atención. **Un paso que no imprime nada no es un paso que
+pasó.**
+
+Y el fallo concreto, por si vuelve: cambiar un `help_text` genera migración.
+Forma parte de la deconstrucción del campo aunque no toque el esquema.
 
 ## Un paso de CI que nunca ha pasado no es un paso de CI
 
