@@ -235,6 +235,14 @@ export const updateWorkingTimeRules = async (payload) =>
 
 export const getAuditTrail = async (params) => page(await get('/audit/', params))
 
+/** El resumen que acompaña a la nómina (art. 6.1). El periodo lo fija el ciclo
+ *  de pago de la empresa, no quien pregunta: el artículo lo ata al «periodo
+ *  fijado para el abono», y dejar elegir fechas produciría resúmenes que no
+ *  cuadran con ninguna nómina. */
+export const getPayrollSummary = (params) => get('/reports/payroll-summary/', params)
+export const generatePayrollSummaries = (day) =>
+  post('/reports/payroll-summary/', day ? { day } : {})
+
 // --------------------------------------------------------------- applications
 
 // Terminales, lectores y sistemas que fichan en nombre de alguien. Los modelos

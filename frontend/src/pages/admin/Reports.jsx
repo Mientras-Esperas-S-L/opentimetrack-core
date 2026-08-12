@@ -9,9 +9,14 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import TableViewIcon from '@mui/icons-material/TableView'
 
-import { downloadReport, getDepartments } from '../../services/api.js'
+import {
+  downloadReport,
+  generatePayrollSummaries,
+  getDepartments,
+} from '../../services/api.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { ErrorNote, PageHeader, Panel } from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -49,6 +54,7 @@ export default function Reports() {
   // not get done.
   const [scope, setScope] = useState('person')
   const [error, setError] = useState(null)
+  const [payrollDay, setPayrollDay] = useState(() => new Date().toLocaleDateString('sv-SE'))
   const [lastFingerprint, setLastFingerprint] = useState('')
 
   const { data: departments = [] } = useQuery({
@@ -60,6 +66,11 @@ export default function Reports() {
   // and an empty field is a dead end. Taken from the session rather than from a
   // loaded list, which was only ever the first page of the workforce.
   if (!employee && session?.user?.id) setEmployee(session.user.id)
+
+  const generate = useMutation({
+    mutationFn: generatePayrollSummaries,
+    onError: setError,
+  })
 
   const build = useMutation({
     mutationFn: (format) =>
@@ -198,6 +209,51 @@ export default function Reports() {
               descargarlo. No acredita por sí sola que el registro nunca se tocara: para eso harían
               falta garantías adicionales.
             </Typography>
+          </Stack>
+        </Panel>
+
+        {/* Art. 6.1: el resumen que acompaña a la nómina. Estaba construido en
+            el backend, con su periodo atado al ciclo de pago de la empresa, y
+            no había ninguna pantalla desde la que generarlo. */}
+        <Panel
+          title="Resumen para la nómina"
+          hint="Art. 6.1: se entrega junto al recibo de salarios. El periodo lo fija el ciclo de pago de la empresa, no esta pantalla."
+        >
+          <Stack sx={{ gap: 2 }}>
+            <TextField
+              fullWidth
+              type="date"
+              label="Un día del periodo"
+              value={payrollDay}
+              onChange={(event) => setPayrollDay(event.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+              helperText="Cualquier día dentro del periodo que se quiere cerrar."
+            />
+
+            <Button
+              variant="outlined"
+              startIcon={<ReceiptLongIcon />}
+              disabled={generate.isPending}
+              onClick={() => generate.mutate(payrollDay)}
+            >
+              Generar los de toda la plantilla
+            </Button>
+
+            {generate.data && (
+              <Alert severity="success" onClose={() => generate.reset()}>
+                {generate.data.generated}{' '}
+                {generate.data.generated === 1 ? 'resumen generado' : 'resúmenes generados'} para{' '}
+                {generate.data.period.from} → {generate.data.period.to}.
+                {generate.data.without_hours.length > 0 && (
+                  <Box component="span" sx={{ display: 'block', mt: 0.5 }}>
+                    {/* Quién queda fuera es la pregunta que se hace quien cierra
+                        la nómina, así que se dice y no se calla. */}
+                    Sin horas en el periodo, y por tanto sin resumen:{' '}
+                    {generate.data.without_hours.join(', ')}.
+                  </Box>
+                )}
+              </Alert>
+            )}
           </Stack>
         </Panel>
       </Box>

@@ -121,8 +121,8 @@ Consecuencias, todas silenciosas:
 - [x] **Actividad**: filtro por fecha y exportación en CSV. Es el
       registro que se enseña en una inspección.
 - [x] **Informes**: una persona, un departamento o toda la empresa. Falta "toda la empresa" y "por
-      departamento"; hacer 200 PDF de uno en uno no es viable. Y
-      `reports/payroll-summary/` (art. 6.1) no tiene pantalla.
+      departamento"; hacer 200 PDF de uno en uno no es viable. Y el resumen del
+      art. 6.1 se genera para toda la plantilla desde la misma pantalla.
 - [x] **Mi jornada**: navegación por meses. Se ven los últimos 50 fichajes,
       unos 25 días, y no hay forma de mirar atrás.
 - [x] **Calendario de equipo**: pinchar una banda abre la ausencia, y si está pendiente se decide ahí. Ni ir a la persona

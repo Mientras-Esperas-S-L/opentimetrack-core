@@ -365,6 +365,20 @@ Exportar el registro de otra persona deja entrada en la auditoría, con su
 nombre. Una sola entrada que dijera «se exportó la empresa» no diría de quién,
 que es justo lo que la traza sirve para responder.
 
+### El resumen para la nómina
+
+El art. 6.1 obliga a entregar un resumen junto al recibo de salarios. **El
+periodo lo fija el ciclo de pago de la empresa**, no esta pantalla: el artículo
+lo ata al «periodo fijado para el abono», y dejar elegir fechas produciría
+resúmenes que no cuadran con ninguna nómina. Se indica un día cualquiera dentro
+del periodo y el sistema deduce cuál es.
+
+**Generar los de toda la plantilla** los produce de una vez, que es como ocurre
+la nómina. Al terminar dice cuántos salieron y **quién se queda fuera por no
+tener horas en el periodo**: es la pregunta que se hace quien cierra la nómina,
+así que se dice en vez de callarla. Un resumen de ceros invitaría a preguntar si
+falló el registro o si la persona no trabajó.
+
 ---
 
 ## 14. Aplicaciones y terminales
@@ -482,7 +496,7 @@ Anclas que hará falta poner en el frontend. La convención es la de Geosian:
 | `ott.cuadrante` | `roster-assign`, `roster-grid`, `roster-findings`, `roster-clear-month` |
 | `ott.fichajes` | `timesheet-filters`, `timesheet-pager`, `timesheet-correct` |
 | `ott.por-decidir` | `decisions-tabs`, `decisions-disagreement-tab`, `decisions-apply-anyway` |
-| `ott.informes` | `reports-scope`, `reports-range`, `reports-download`, `reports-fingerprint` |
+| `ott.informes` | `reports-scope`, `reports-range`, `reports-download`, `reports-fingerprint`, `reports-payroll` |
 | `ott.calendario` | `calendar-month-nav`, `calendar-legend`, `calendar-span`, `calendar-pending-hatch` |
 | `ott.aplicaciones` | `apps-authorise`, `apps-scopes`, `apps-issue`, `apps-token-once`, `apps-revoke` |
 | `ott.ajustes` | `settings-timezone`, `settings-leave`, `settings-rules`, `settings-break-counts` |
