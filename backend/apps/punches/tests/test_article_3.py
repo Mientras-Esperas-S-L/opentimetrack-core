@@ -429,7 +429,8 @@ def test_part_time_work_admits_no_overtime(company, worker):
 
         with pytest.raises(BusinessRuleError) as caught:
             punch(
-                company, worker,
+                company,
+                worker,
                 hours_nature=HoursNature.OVERTIME,
                 overtime_settlement=OvertimeSettlement.PAID,
             )
@@ -446,7 +447,8 @@ def test_part_time_work_does_admit_the_force_majeure_exception(company, worker):
         worker.save(update_fields=["part_time"])
 
         event = punch(
-            company, worker,
+            company,
+            worker,
             hours_nature=HoursNature.OVERTIME,
             overtime_settlement=OvertimeSettlement.PAID,
             force_majeure=True,

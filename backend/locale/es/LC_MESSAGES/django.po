@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 11:04+0000\n"
+"POT-Creation-Date: 2026-08-12 11:13+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -567,6 +567,9 @@ msgstr "Esta persona está dada de baja y no puede fichar."
 msgid "The working day has to be open first."
 msgstr "La jornada tiene que estar abierta antes."
 
+msgid "Art. 6.3 ET: workers under eighteen may not work overtime."
+msgstr "Art. 6.3 ET: los menores de dieciocho años no pueden hacer horas extraordinarias."
+
 msgid ""
 "Art. 12.4.c ET: part-time work admits no overtime, only complementary hours "
 "--- except hours to prevent or repair urgent damage."
@@ -765,6 +768,24 @@ msgid ""
 "%(count)s shifts in the night window. If the person holds the status of "
 "night worker, art. 36.1 ET adds limits the company has to apply."
 msgstr "%(count)s turnos en la franja nocturna. Si la persona tiene la condición de trabajador nocturno, el art. 36.1 ET añade límites que la empresa debe aplicar."
+
+#, python-format
+msgid ""
+"%(hours)s h rostered for somebody under eighteen. The limit is %(limit)s h a "
+"day and no agreement can raise it."
+msgstr "%(hours)s h planificadas a una persona menor de dieciocho años. El límite son %(limit)s h diarias y ningún convenio puede subirlo."
+
+#, fuzzy, python-format
+#| msgid "A continuous day of %(hours)s h needs a break of %(minutes)s min."
+msgid ""
+"A continuous day of %(hours)s h for somebody under eighteen needs a break of "
+"%(minutes)s min, from %(after)s h."
+msgstr "Una jornada continuada de %(hours)s h de una persona menor de dieciocho años necesita un descanso de %(minutes)s min, a partir de %(after)s h."
+
+msgid ""
+"Night shift rostered for somebody under eighteen. Art. 6.2 ET forbids it "
+"outright: there is no permitted amount."
+msgstr "Turno nocturno planificado a una persona menor de dieciocho años. El art. 6.2 ET lo prohíbe sin más: no hay cantidad permitida."
 
 #, python-format
 msgid "Rostered on a day of approved %(kind)s."
@@ -1080,6 +1101,17 @@ msgid ""
 "Art. 3.e. What a clock event assumes when it says nothing; each event can "
 "still record the other."
 msgstr "Art. 3.e. Lo que asume un fichaje cuando no dice nada; cada uno puede registrar la otra modalidad."
+
+msgid "date of birth"
+msgstr "fecha de nacimiento"
+
+msgid ""
+"Only used to apply the protections the law gives workers under eighteen: "
+"eight hours a day, a thirty-minute break from four and a half, two days of "
+"weekly rest, and no night work or overtime. Without it those protections "
+"cannot be applied, and the system says so rather than assuming the person is "
+"an adult."
+msgstr "Solo se usa para aplicar las protecciones que la ley da a los menores de dieciocho años: ocho horas diarias, treinta minutos de descanso a partir de cuatro y media, dos días de descanso semanal, y ni trabajo nocturno ni horas extraordinarias. Sin ella no se pueden aplicar, y el sistema lo dice en vez de dar por hecho que la persona es mayor de edad."
 
 msgid "workers' representative"
 msgstr "representante de las personas trabajadoras"

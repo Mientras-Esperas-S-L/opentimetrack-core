@@ -24,7 +24,13 @@ from django.utils.translation import gettext_lazy as _
 from apps.absences.models import Absence, AbsenceStatus
 from apps.common.exceptions import BusinessRuleError
 from apps.shifts.models import Shift, ShiftPattern, working_days_between
-from apps.tenants.rules import WorkingTimeRules
+from apps.tenants.rules import (
+    MINOR_BREAK_AFTER_HOURS,
+    MINOR_BREAK_MINUTES,
+    MINOR_MAX_DAILY_HOURS,
+    MINOR_WEEKLY_REST_HOURS,
+    WorkingTimeRules,
+)
 
 
 @dataclass(frozen=True)
@@ -135,6 +141,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
         findings.extend(_check_breaks(roster, rules, first, last))
         findings.extend(_check_weekly_rest(employee_id, roster, rules, first, last))
         findings.extend(_check_night_work(roster, rules, first, last))
+        findings.extend(_check_under_eighteen(roster, rules, first, last))
     findings.extend(_check_leave_clashes(first, last, employee))
 
     return sorted(findings, key=lambda f: (f.day, f.code))
@@ -236,7 +243,14 @@ def _check_weekly_rest(employee_id, roster, rules, first, last) -> list[Finding]
     if not roster:
         return []
 
-    minimum = timedelta(hours=rules.weekly_rest_hours)
+    # Two uninterrupted days for a minor (art. 37.1), and the company's figure
+    # for everybody else. Taken from the first day of the window: somebody who
+    # turns eighteen inside it keeps the stronger floor for that fortnight,
+    # which errs on the side of the protection.
+    person = roster[0].employee
+    minimum = timedelta(
+        hours=MINOR_WEEKLY_REST_HOURS if person.is_minor_on(first) else rules.weekly_rest_hours
+    )
     found = []
 
     # Longest gap in each rolling fortnight that sits inside the window.
@@ -316,6 +330,79 @@ def _check_night_work(roster, rules, first, last) -> list[Finding]:
             basis="Art. 36.1 ET",
         )
     ]
+
+
+def _check_under_eighteen(roster, rules, first, last) -> list[Finding]:
+    """The floors that apply to workers under eighteen.
+
+    Age is read **per day**, not once: somebody turns eighteen mid-roster and
+    the protections stop from that date. Evaluating it once for the whole window
+    would either apply them a month too long or drop them a month too early.
+
+    These are the only findings in the module phrased as prohibitions. Elsewhere
+    the wording is careful to say "departs from the rules configured", because
+    sector regimes lawfully modify them. Here nothing does: art. 6.2 and 6.3
+    admit no amount that is allowed, and no agreement can lower art. 34.3 or
+    34.4 for a minor.
+    """
+    found = []
+    for shift in roster:
+        if not (first <= shift.day <= last):
+            continue
+        if not shift.employee.is_minor_on(shift.day):
+            continue
+
+        hours = shift.minutes / 60
+
+        if hours > MINOR_MAX_DAILY_HOURS:
+            found.append(
+                Finding(
+                    day=shift.day,
+                    employee_id=shift.employee_id,
+                    code="minor_over_daily_limit",
+                    message=_(
+                        "%(hours)s h rostered for somebody under eighteen. The limit is "
+                        "%(limit)s h a day and no agreement can raise it."
+                    )
+                    % {"hours": f"{hours:.1f}", "limit": MINOR_MAX_DAILY_HOURS},
+                    basis="Art. 34.3 ET",
+                )
+            )
+
+        if len(shift.segments) == 1 and hours > MINOR_BREAK_AFTER_HOURS:
+            found.append(
+                Finding(
+                    day=shift.day,
+                    employee_id=shift.employee_id,
+                    code="minor_break_owed",
+                    message=_(
+                        "A continuous day of %(hours)s h for somebody under eighteen "
+                        "needs a break of %(minutes)s min, from %(after)s h."
+                    )
+                    % {
+                        "hours": f"{hours:.1f}",
+                        "minutes": MINOR_BREAK_MINUTES,
+                        "after": f"{MINOR_BREAK_AFTER_HOURS:g}",
+                    },
+                    basis="Art. 34.4 ET",
+                )
+            )
+
+        if shift.overlaps_night(rules.night_starts_at, rules.night_ends_at):
+            found.append(
+                Finding(
+                    day=shift.day,
+                    employee_id=shift.employee_id,
+                    code="minor_night_work",
+                    message=_(
+                        "Night shift rostered for somebody under eighteen. Art. 6.2 ET "
+                        "forbids it outright: there is no permitted amount."
+                    ),
+                    basis="Art. 6.2 ET",
+                )
+            )
+
+    return found
 
 
 def _check_leave_clashes(first, last, employee) -> list[Finding]:

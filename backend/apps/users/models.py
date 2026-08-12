@@ -165,6 +165,19 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         ),
     )
 
+    date_of_birth = models.DateField(
+        _("date of birth"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Only used to apply the protections the law gives workers under "
+            "eighteen: eight hours a day, a thirty-minute break from four and a "
+            "half, two days of weekly rest, and no night work or overtime. "
+            "Without it those protections cannot be applied, and the system says "
+            "so rather than assuming the person is an adult."
+        ),
+    )
+
     # Art. 4.b: on disagreement over a change, the workers' legal representation
     # must be informed. Art. 6.2 also grants them access to the record. The
     # system cannot know who they are, so the company marks them.
@@ -238,6 +251,29 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
 
     def get_short_name(self) -> str:
         return self.first_name
+
+    def is_minor_on(self, day) -> bool:
+        """Whether they were under eighteen on a given day.
+
+        On a **given day**, never "now". Somebody turns eighteen and the
+        protections stop applying from that date --- but a roster drawn for last
+        month, or a report of last year, has to be read with the age they had
+        then. Asking "are they a minor" without a date silently rewrites the
+        past every birthday.
+        """
+        if self.date_of_birth is None:
+            return False
+        eighteenth = self.date_of_birth.replace(year=self.date_of_birth.year + 18)
+        return day < eighteenth
+
+    @property
+    def age_is_known(self) -> bool:
+        """So a caller can tell "adult" from "we do not know".
+
+        The difference matters: the second one means the protections are not
+        being applied, which somebody should be told rather than left to assume.
+        """
+        return self.date_of_birth is not None
 
     @property
     def is_federated(self) -> bool:

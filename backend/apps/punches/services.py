@@ -274,11 +274,17 @@ def register_punch(
     # refiere el artículo 35.3» --- las de fuerza mayor. What part-time work has
     # instead is complementary hours (art. 12.5), counted separately, which is
     # why HoursNature keeps them apart.
-    if (
-        hours_nature == HoursNature.OVERTIME
-        and employee.part_time
-        and not force_majeure
-    ):
+    # Art. 6.3 ET: «Se prohíbe realizar horas extraordinarias a los menores de
+    # dieciocho años.» Flat, with none of the force majeure exception that
+    # art. 12.4.c grants part-time work --- so this check comes first and has no
+    # way out.
+    if hours_nature == HoursNature.OVERTIME and employee.is_minor_on(timezone.localdate()):
+        raise BusinessRuleError(
+            code="overtime_forbidden_for_minors",
+            message=_("Art. 6.3 ET: workers under eighteen may not work overtime."),
+        )
+
+    if hours_nature == HoursNature.OVERTIME and employee.part_time and not force_majeure:
         raise BusinessRuleError(
             code="overtime_not_available_part_time",
             message=_(

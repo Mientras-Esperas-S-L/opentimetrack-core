@@ -127,3 +127,41 @@ class WorkingTimeRules(BaseModel):
         """
         rules, _created = cls.objects.get_or_create(tenant=company)
         return rules
+
+
+# ---------------------------------------------------------------- under eighteen
+
+# These are **not** fields on WorkingTimeRules, and that is the point.
+#
+# Everything above is a figure the company sets, because a collective agreement
+# can improve it and sector regimes modify several outright. The ones below are
+# floors for workers under eighteen, and no agreement can lower them: making
+# them configurable would offer a setting whose only use is breaking the law,
+# and a product that offers it has already helped.
+#
+# They are constants with their article attached, and they apply whenever the
+# person's age is known.
+
+#: Art. 34.3 ET: «Los trabajadores menores de dieciocho años no podrán realizar
+#: más de ocho horas diarias de trabajo efectivo, incluyendo, en su caso, el
+#: tiempo dedicado a la formación y, si trabajasen para varios empleadores, las
+#: horas realizadas con cada uno de ellos.» Note the absence of the "unless a
+#: collective agreement says otherwise" that the same article grants for adults.
+MINOR_MAX_DAILY_HOURS = 8
+
+#: Art. 34.4 ET: thirty minutes, and from four and a half hours rather than six.
+MINOR_BREAK_AFTER_HOURS = 4.5
+MINOR_BREAK_MINUTES = 30
+
+#: Art. 37.1 ET: two uninterrupted days, not a day and a half.
+MINOR_WEEKLY_REST_HOURS = 48
+
+#: Art. 6.2 ET: «Los trabajadores menores de dieciocho años no podrán realizar
+#: trabajos nocturnos». A prohibition, not a limit --- there is no amount of it
+#: that is allowed.
+MINOR_NIGHT_WORK_FORBIDDEN = True
+
+#: Art. 6.3 ET: «Se prohíbe realizar horas extraordinarias a los menores de
+#: dieciocho años.» Flat, with none of the force majeure exception art. 12.4.c
+#: grants part-time work.
+MINOR_OVERTIME_FORBIDDEN = True
