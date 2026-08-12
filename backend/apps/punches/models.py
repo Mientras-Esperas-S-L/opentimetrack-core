@@ -26,12 +26,81 @@ from apps.common.models import TenantOwnedModel
 #: Never rewrite a stored hash to match a new payload: that is exactly the
 #: manipulation the hash exists to make visible. Add a version instead, and let
 #: old events keep verifying under the rules they were recorded with.
-CURRENT_HASH_VERSION = 2
+CURRENT_HASH_VERSION = 3
 
 
 class PunchType(models.TextChoices):
     IN = "IN", _("Clock in")
     OUT = "OUT", _("Clock out")
+
+
+class PunchInterval(models.TextChoices):
+    """What the event opens or closes.
+
+    Art. 3 of the pending royal decree asks for the start and end of four
+    different things, not just the working day: the day itself (3.c), each
+    break that is **not** effective working time (3.d), waiting and on-call
+    time when it does not count either (3.g), and interruptions of the right to
+    disconnect (3.h).
+
+    Modelled as a kind of interval rather than as more punch types, because
+    every one of them is a pair. `IN`/`OUT` keeps meaning "opens" and "closes";
+    this says what. Eight punch types would have been the same thing with the
+    combinations multiplied out and a rule nobody remembers about which pair
+    with which.
+    """
+
+    WORK = "WORK", _("Working day")
+    BREAK = "BREAK", _("Break that is not working time")
+    STANDBY = "STANDBY", _("Waiting or on-call time")
+    DISCONNECTION = "DISCONNECTION", _("Interruption of the right to disconnect")
+
+
+class WorkMode(models.TextChoices):
+    """Art. 3.e: on site or remote, for the day **or part of it**.
+
+    Part of it is why this lives on the event and not on the person: somebody
+    who comes in at midday after a morning at home has two spans with different
+    answers, and a single field on the contract could not say so.
+    """
+
+    ONSITE = "ONSITE", _("On site")
+    REMOTE = "REMOTE", _("Remote")
+
+
+class HoursNature(models.TextChoices):
+    """Art. 3.f: ordinary, overtime, or complementary.
+
+    Complementary hours are the part-time equivalent of overtime (art. 12.5
+    ET) and are counted separately by law, so they are not folded in here.
+    """
+
+    ORDINARY = "ORDINARY", _("Ordinary")
+    OVERTIME = "OVERTIME", _("Overtime")
+    COMPLEMENTARY = "COMPLEMENTARY", _("Complementary")
+
+
+class OvertimeSettlement(models.TextChoices):
+    """Art. 3.f again: overtime has to say how it will be settled."""
+
+    REST = "REST", _("Compensated with rest")
+    PAID = "PAID", _("Paid")
+
+
+class FlexibilityMeasure(models.TextChoices):
+    """Art. 3.i: hours worked under an arrangement, saying which one.
+
+    Left as a short closed list rather than free text so it can be counted and
+    reported. `OTHER` exists because the list of arrangements a collective
+    agreement can invent is not closed, and forcing a wrong label would be
+    worse than admitting the gap.
+    """
+
+    NONE = "", _("None")
+    CARE = "CARE", _("Care or family reasons (art. 34.8 ET)")
+    FLEXITIME = "FLEXITIME", _("Flexible hours")
+    IRREGULAR = "IRREGULAR", _("Irregular distribution (art. 34.2 ET)")
+    OTHER = "OTHER", _("Another arrangement")
 
 
 class PunchSource(models.TextChoices):
@@ -61,6 +130,47 @@ class Punch(TenantOwnedModel):
         verbose_name=_("employee"),
     )
     punch_type = models.CharField(_("type"), max_length=3, choices=PunchType)
+
+    # What the event opens or closes. Everything recorded before this field
+    # existed was a working day, which is why that is the default: back-filling
+    # it as anything else would rewrite the meaning of the existing record.
+    interval = models.CharField(
+        _("interval"), max_length=16, choices=PunchInterval, default=PunchInterval.WORK
+    )
+
+    # Art. 3.e, 3.f and 3.i. Carried on the opening event of each span, because
+    # they describe the span: the same day can be remote in the morning and on
+    # site in the afternoon, ordinary until six and overtime after.
+    work_mode = models.CharField(_("mode"), max_length=8, choices=WorkMode, default=WorkMode.ONSITE)
+    hours_nature = models.CharField(
+        _("nature of the hours"),
+        max_length=16,
+        choices=HoursNature,
+        default=HoursNature.ORDINARY,
+    )
+    overtime_settlement = models.CharField(
+        _("how the overtime is settled"),
+        max_length=8,
+        choices=OvertimeSettlement,
+        blank=True,
+        help_text=_("Required for overtime: art. 3.f asks whether it is rested or paid."),
+    )
+    force_majeure = models.BooleanField(
+        _("to prevent or repair urgent damage"),
+        default=False,
+        help_text=_(
+            "Art. 35.3 ET: hours worked to prevent or repair accidents and other "
+            "extraordinary and urgent damage. They do not count towards the "
+            "annual overtime limit, so they have to be distinguishable."
+        ),
+    )
+    flexibility_measure = models.CharField(
+        _("arrangement"),
+        max_length=16,
+        choices=FlexibilityMeasure,
+        blank=True,
+        default="",
+    )
 
     # Server time, in UTC. Never supplied by the client.
     timestamp = models.DateTimeField(_("timestamp"), db_index=True)
@@ -142,7 +252,9 @@ class Punch(TenantOwnedModel):
         """
         if self.hash_version == 1:
             return self._hash_v1()
-        return self._hash_v2()
+        if self.hash_version == 2:
+            return self._hash_v2()
+        return self._hash_v3()
 
     def _hash_v1(self) -> str:
         """Original payload. Included the IP, which turned out to be a mistake.
@@ -176,6 +288,32 @@ class Punch(TenantOwnedModel):
             self.source,
             self.source_application,
             str(self.recorded_by_id or ""),
+        )
+
+    def _hash_v3(self) -> str:
+        """Adds what art. 3 of the pending decree makes part of the entry.
+
+        Whether a span is the working day or an uncounted break, whether it was
+        remote, whether the hours were ordinary or overtime and how that
+        overtime settles: all of it is now the record, not metadata about it. An
+        entry whose nature could be changed afterwards without breaking its seal
+        would let somebody turn overtime into a break with nothing to show for
+        it.
+        """
+        return self._digest(
+            str(self.employee_id),
+            str(self.tenant_id),
+            self.timestamp.isoformat(),
+            self.punch_type,
+            self.source,
+            self.source_application,
+            str(self.recorded_by_id or ""),
+            self.interval,
+            self.work_mode,
+            self.hours_nature,
+            self.overtime_settlement,
+            "1" if self.force_majeure else "0",
+            self.flexibility_measure,
         )
 
     @staticmethod

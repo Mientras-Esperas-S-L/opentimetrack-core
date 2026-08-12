@@ -14,7 +14,8 @@ claim they were not told.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from datetime import time as dt_time
 from itertools import pairwise
 
 from django.db import transaction
@@ -132,6 +133,8 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
         findings.extend(_check_daily_rest(roster, rules, first, last))
         findings.extend(_check_weekly_hours(employee_id, roster, rules, first, last))
         findings.extend(_check_breaks(roster, rules, first, last))
+        findings.extend(_check_weekly_rest(employee_id, roster, rules, first, last))
+        findings.extend(_check_night_work(roster, rules, first, last))
     findings.extend(_check_leave_clashes(first, last, employee))
 
     return sorted(findings, key=lambda f: (f.day, f.code))
@@ -219,6 +222,100 @@ def _check_breaks(roster, rules, first, last) -> list[Finding]:
                 )
             )
     return found
+
+
+def _check_weekly_rest(employee_id, roster, rules, first, last) -> list[Finding]:
+    """Art. 37.1 ET: a day and a half uninterrupted, accumulable over fourteen
+    days.
+
+    The accumulation is why this looks at a fortnight rather than each week.
+    Reporting a week without its full rest would be wrong for anybody on a
+    pattern that concentrates it --- which is most of hospitality and retail ---
+    and a warning that is wrong half the time gets ignored the other half.
+    """
+    if not roster:
+        return []
+
+    minimum = timedelta(hours=rules.weekly_rest_hours)
+    found = []
+
+    # Longest gap in each rolling fortnight that sits inside the window.
+    days = sorted({s.day for s in roster})
+    for anchor in days:
+        window_end = anchor + timedelta(days=13)
+        if anchor < first or window_end > last:
+            continue
+
+        inside = [s for s in roster if anchor <= s.day <= window_end]
+        if len(inside) < 2:
+            continue
+
+        ordered = sorted(inside, key=lambda s: s.day)
+        gaps = [b.starts_at - a.ends_at for a, b in pairwise(ordered)]
+
+        # The edges count too. A fortnight of ten days on followed by four off
+        # has its rest at the end, and looking only between shifts would miss
+        # it and report a pattern that is perfectly lawful.
+        window_opens = datetime.combine(anchor, dt_time.min)
+        window_closes = datetime.combine(window_end + timedelta(days=1), dt_time.min)
+        gaps.append(ordered[0].starts_at - window_opens)
+        gaps.append(window_closes - ordered[-1].ends_at)
+
+        longest = max(gaps, default=timedelta(0))
+        if longest < minimum:
+            found.append(
+                Finding(
+                    day=anchor,
+                    employee_id=employee_id,
+                    code="short_weekly_rest",
+                    message=_(
+                        "The longest break in that fortnight is %(hours)s h, under the "
+                        "%(minimum)s h configured."
+                    )
+                    % {
+                        "hours": f"{longest.total_seconds() / 3600:.0f}",
+                        "minimum": minimum.total_seconds() / 3600,
+                    },
+                    basis="Art. 37.1 ET",
+                )
+            )
+            break  # one per person is enough to say the pattern is wrong
+
+    return found
+
+
+def _check_night_work(roster, rules, first, last) -> list[Finding]:
+    """Art. 36.1 ET, and the correction that cost us a review.
+
+    The eight-hour average over fifteen days applies to somebody who **holds
+    the status of night worker** --- three hours daily as a rule, or a third of
+    the annual working day --- not to anybody who happens to work between 22:00
+    and 06:00. So this does not report a limit. It flags that a person looks
+    like a night worker, which is a status with consequences the company has to
+    decide on, and says so in those words.
+    """
+    nightly = [
+        shift
+        for shift in roster
+        if first <= shift.day <= last
+        and shift.overlaps_night(rules.night_starts_at, rules.night_ends_at)
+    ]
+    if len(nightly) < 3:
+        return []
+
+    return [
+        Finding(
+            day=min(s.day for s in nightly),
+            employee_id=nightly[0].employee_id,
+            code="looks_like_night_work",
+            message=_(
+                "%(count)s shifts in the night window. If the person holds the status "
+                "of night worker, art. 36.1 ET adds limits the company has to apply."
+            )
+            % {"count": len(nightly)},
+            basis="Art. 36.1 ET",
+        )
+    ]
 
 
 def _check_leave_clashes(first, last, employee) -> list[Finding]:

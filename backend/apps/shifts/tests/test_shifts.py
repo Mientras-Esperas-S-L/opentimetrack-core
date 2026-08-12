@@ -12,7 +12,7 @@ it is measured from the previous day's end --- which is itself on another date.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -374,3 +374,101 @@ def test_a_day_with_no_shift_says_so(company, worker):
 
     assert result["has_shift"] is False
     assert result["expected_minutes"] == 0
+
+
+# ------------------------------------- the rules that were configured and unused
+
+
+@pytest.mark.django_db
+def test_a_fortnight_with_no_long_break_is_reported(company, worker):
+    """Art. 37.1 ET: a day and a half uninterrupted, accumulable over fourteen
+    days. Fourteen straight days of work has no such break anywhere."""
+    with tenant_context(company.id):
+        for offset in range(14):
+            shift(company, worker, date(2026, 9, 1) + timedelta(days=offset), MORNING)
+
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    weekly = [f for f in findings if f.code == "short_weekly_rest"]
+    assert len(weekly) == 1
+    assert weekly[0].basis == "Art. 37.1 ET"
+
+
+@pytest.mark.django_db
+def test_rest_concentrated_at_the_end_of_the_fortnight_is_accepted(company, worker):
+    """The accumulation is the point. Ten days on and then a long break is
+    lawful, and a warning that fires here would be wrong for most of hospitality
+    --- and a warning that is wrong half the time gets ignored the other half."""
+    with tenant_context(company.id):
+        for offset in range(10):
+            shift(company, worker, date(2026, 9, 1) + timedelta(days=offset), MORNING)
+        # Then four days off, and back on the 15th.
+        shift(company, worker, date(2026, 9, 15), MORNING)
+
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    assert [f for f in findings if f.code == "short_weekly_rest"] == []
+
+
+@pytest.mark.django_db
+def test_repeated_night_shifts_flag_the_status_not_a_limit(company, worker):
+    """The correction that cost us an external review. Art. 36.1 ET attaches
+    its limits to somebody who **holds the status** of night worker, not to
+    anybody who happens to work between 22:00 and 06:00. So this says what it
+    found and leaves the status to the company."""
+    with tenant_context(company.id):
+        for offset in range(5):
+            shift(company, worker, date(2026, 9, 1) + timedelta(days=offset), NIGHT)
+
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    night = [f for f in findings if f.code == "looks_like_night_work"]
+    assert len(night) == 1
+    assert night[0].basis == "Art. 36.1 ET"
+
+    # The wording is the point, not the count. It has to make the limits
+    # conditional on the status --- "if the person holds it" --- and never
+    # assert that one has been exceeded. Checked in English so the assertion
+    # does not depend on which catalogue is compiled.
+    from django.utils import translation
+
+    with translation.override("en"):
+        again = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+        wording = str(next(f.message for f in again if f.code == "looks_like_night_work"))
+
+    assert wording.startswith("5 shifts in the night window")
+    assert "If the person holds the status" in wording
+    assert "exceeds" not in wording
+
+
+@pytest.mark.django_db
+def test_one_night_shift_is_not_flagged(company, worker):
+    """Working one night does not make somebody a night worker."""
+    with tenant_context(company.id):
+        shift(company, worker, date(2026, 9, 1), NIGHT)
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    assert [f for f in findings if f.code == "looks_like_night_work"] == []
+
+
+@pytest.mark.django_db
+def test_the_night_window_is_the_companys_to_set(company, worker):
+    """Another rule that was stored and never read."""
+    with tenant_context(company.id):
+        rules = WorkingTimeRules.for_company(company)
+        rules.night_starts_at = time(2, 0)
+        rules.night_ends_at = time(4, 0)
+        rules.save(update_fields=["night_starts_at", "night_ends_at"])
+
+        # 06:00-14:00 is nowhere near 02:00-04:00.
+        for offset in range(5):
+            shift(
+                company,
+                worker,
+                date(2026, 9, 1) + timedelta(days=offset),
+                [{"start": "06:00", "end": "14:00"}],
+            )
+
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    assert [f for f in findings if f.code == "looks_like_night_work"] == []

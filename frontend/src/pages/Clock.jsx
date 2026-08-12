@@ -13,7 +13,7 @@ import LoginIcon from '@mui/icons-material/Login'
 import LogoutIcon from '@mui/icons-material/Logout'
 
 import { useAuth } from '../hooks/useAuth.js'
-import { clock, getToday } from '../services/api.js'
+import { clock, getMyShiftToday, getToday } from '../services/api.js'
 import { hhmm, timeOf } from '../components/format.js'
 
 /** Counts up while a segment is open, so the figure is not stale on screen.
@@ -58,6 +58,13 @@ export default function Clock() {
     refetchInterval: 60000,
   })
 
+  // Lo previsto frente a lo hecho. Nunca se mezcla con el registro: el turno
+  // dice cuando se puede trabajar, el fichaje lo que se trabajo.
+  const { data: expected } = useQuery({
+    queryKey: ['my-shift-today'],
+    queryFn: getMyShiftToday,
+  })
+
   const punch = useMutation({
     mutationFn: () => clock(`web-${navigator.userAgentData?.platform ?? navigator.platform ?? 'unknown'}`),
     onSuccess: () => {
@@ -65,6 +72,7 @@ export default function Clock() {
       queryClient.invalidateQueries({ queryKey: ['today'] })
       queryClient.invalidateQueries({ queryKey: ['overview'] })
       queryClient.invalidateQueries({ queryKey: ['punches'] })
+      queryClient.invalidateQueries({ queryKey: ['my-shift-today'] })
     },
     onError: setError,
   })
@@ -85,6 +93,17 @@ export default function Clock() {
           month: 'long',
         })}
       </Typography>
+
+      {expected?.has_shift && (
+        <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
+          Hoy tienes turno de <strong>{hhmm(expected.expected_minutes * 60)}</strong>.
+          {expected.difference_minutes < 0
+            ? ` Llevas ${hhmm(Math.abs(expected.difference_minutes) * 60)} menos.`
+            : expected.difference_minutes > 0
+              ? ` Llevas ${hhmm(expected.difference_minutes * 60)} de más.`
+              : ' Vas al día.'}
+        </Alert>
+      )}
 
       <Paper variant="outlined" sx={{ p: { xs: 3, sm: 4 }, textAlign: 'center' }}>
         {isLoading ? (

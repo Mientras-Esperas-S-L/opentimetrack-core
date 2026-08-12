@@ -178,11 +178,37 @@ class Shift(TenantOwnedModel):
         for span in self.segments:
             start = time.fromisoformat(span["start"])
             end = time.fromisoformat(span["end"])
-            if end <= start:  # wraps midnight, so it always touches the night
-                return True
-            if start < night_to or end > night_from:
+            if _touches(start, end, night_from, night_to):
                 return True
         return False
+
+
+def _touches(start: time, end: time, night_from: time, night_to: time) -> bool:
+    """Whether a span overlaps the night window.
+
+    Written out rather than compared directly because **either** range can wrap
+    midnight: a shift can (22:00-06:00) and so can the window, which is the
+    usual case (22:00-06:00) but not the only one --- a company can configure
+    02:00-04:00, and the first version of this said yes to every morning shift
+    because it assumed the wrap.
+
+    Both are unrolled into minute ranges on a 48-hour line, so a wrap is just a
+    range that runs past 1440 instead of a special case.
+    """
+
+    def unroll(a: time, b: time) -> list[tuple[int, int]]:
+        first_minute = a.hour * 60 + a.minute
+        last_minute = b.hour * 60 + b.minute
+        if last_minute > first_minute:
+            return [(first_minute, last_minute)]
+        # Wraps midnight: the piece before, and the piece after.
+        return [(first_minute, 1440), (0, last_minute)]
+
+    for span_from, span_to in unroll(start, end):
+        for night_start, night_end in unroll(night_from, night_to):
+            if span_from < night_end and night_start < span_to:
+                return True
+    return False
 
 
 def working_days_between(first: date, last: date):

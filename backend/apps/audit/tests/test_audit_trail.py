@@ -401,7 +401,10 @@ def test_an_entry_is_not_written_if_the_action_rolls_back(
 
 
 @pytest.mark.django_db
-def test_voiding_a_clock_event_is_recorded(company, django_capture_on_commit_callbacks):
+def test_there_is_no_way_to_void_an_event_without_a_reason(company):
+    """The direct void endpoint is gone. It struck an event with no reason and
+    no notice, while a correction of the same effect requires both --- and two
+    doors to the same act, one without the guarantees, empties ADR-0014."""
     from apps.punches.services import register_punch
 
     admin = make(company, "admin@example.com", Role.ADMIN)
@@ -409,14 +412,46 @@ def test_voiding_a_clock_event_is_recorded(company, django_capture_on_commit_cal
     with tenant_context(company.id):
         punch = register_punch(employee=worker, company=company)
 
-    with django_capture_on_commit_callbacks(execute=True):
-        client_for(admin).patch(
-            f"/api/punches/{punch.id}/void/", {"reason": "duplicado"}, format="json"
-        )
+    response = client_for(admin).patch(
+        f"/api/punches/{punch.id}/void/", {"reason": "duplicado"}, format="json"
+    )
 
-    entry = AuditLog.objects.filter(action=AuditAction.PUNCH_VOIDED).first()
+    assert response.status_code == 404
+    punch.refresh_from_db()
+    assert punch.is_active
+
+
+@pytest.mark.django_db
+def test_voiding_through_a_correction_is_recorded(company, django_capture_on_commit_callbacks):
+    """The only way in, and it carries the reason."""
+    from apps.punches.services import register_punch
+
+    boss = make(company, "boss@example.com", Role.MANAGER)
+    worker = make(company, "worker@example.com")
+    with tenant_context(company.id):
+        punch = register_punch(employee=worker, company=company)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        created = (
+            client_for(boss)
+            .post(
+                "/api/corrections/",
+                {
+                    "employee": str(worker.id),
+                    "kind": "VOID",
+                    "target": str(punch.id),
+                    "reason": "Fichaje duplicado por doble pulsación.",
+                },
+                format="json",
+            )
+            .json()
+        )
+        client_for(boss).post(f"/api/corrections/{created['id']}/approve/")
+
+    punch.refresh_from_db()
+    assert not punch.is_active
+    entry = AuditLog.objects.filter(action=AuditAction.CORRECTION_APPROVED).first()
     assert entry is not None
-    assert entry.target_id == worker.id
     assert "duplicado" in entry.note
 
 

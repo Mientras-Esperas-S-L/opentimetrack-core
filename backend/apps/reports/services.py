@@ -18,7 +18,7 @@ from datetime import date, datetime, timedelta
 from django.utils.translation import gettext as _
 
 from apps.absences.models import Absence, AbsenceStatus
-from apps.punches.models import Punch, PunchType
+from apps.punches.models import HoursNature, Punch, PunchInterval, PunchType
 
 
 @dataclass
@@ -29,6 +29,21 @@ class DayRow:
     incidents: list[str] = field(default_factory=list)
     absence: str | None = None
     delegated: bool = False
+
+    # Art. 3 of the pending decree. Reported apart from the hours, never folded
+    # into them: the whole reason a break or a stretch of waiting time is
+    # recorded is that it does **not** count as working time.
+    breaks: list[tuple[datetime, datetime | None]] = field(default_factory=list)
+    break_seconds: int = 0
+    standby: list[tuple[datetime, datetime | None]] = field(default_factory=list)
+    standby_seconds: int = 0
+    overtime_seconds: int = 0
+    overtime_settlement: str = ""
+    force_majeure_seconds: int = 0
+    complementary_seconds: int = 0
+    remote: bool = False
+    onsite: bool = False
+    arrangements: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -44,6 +59,60 @@ class ReportData:
     total_seconds: int
     generated_at: datetime
     fingerprint: str = ""
+
+    # Art. 3.b: the agreed regime, which is what the hours are measured against.
+    part_time: bool = False
+    part_time_percentage: str = ""
+    contracted_schedule: str = ""
+
+    # Art. 3.j asks for a daily **and monthly** total. Daily is each row; this
+    # is the month, keyed by YYYY-MM.
+    monthly_seconds: dict = field(default_factory=dict)
+    total_break_seconds: int = 0
+    total_standby_seconds: int = 0
+    total_overtime_seconds: int = 0
+
+
+def _add_span(row: DayRow, opening, start: datetime, end: datetime, seconds: int) -> None:
+    """Files a closed span under what it actually was.
+
+    Art. 3 wants the working day (3.c), breaks that are not working time (3.d)
+    and waiting time (3.g) told apart, plus the nature of the hours (3.f), the
+    mode (3.e) and any arrangement (3.i). Keeping them in separate buckets is
+    what stops an inspector having to take the total on trust.
+    """
+    if opening.interval == PunchInterval.BREAK:
+        row.breaks.append((start, end))
+        row.break_seconds += seconds
+        return
+
+    if opening.interval in {PunchInterval.STANDBY, PunchInterval.DISCONNECTION}:
+        row.standby.append((start, end))
+        row.standby_seconds += seconds
+        return
+
+    row.entries.append((start, end))
+    row.seconds += seconds
+
+    if opening.work_mode == "REMOTE":
+        row.remote = True
+    else:
+        row.onsite = True
+
+    if opening.hours_nature == HoursNature.OVERTIME:
+        row.overtime_seconds += seconds
+        if opening.overtime_settlement:
+            row.overtime_settlement = opening.get_overtime_settlement_display()
+    elif opening.hours_nature == HoursNature.COMPLEMENTARY:
+        row.complementary_seconds += seconds
+
+    if opening.force_majeure:
+        row.force_majeure_seconds += seconds
+
+    if opening.flexibility_measure:
+        label = opening.get_flexibility_measure_display()
+        if label not in row.arrangements:
+            row.arrangements.append(label)
 
 
 def _format_hours(seconds: int) -> str:
@@ -84,6 +153,7 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
 
     rows: list[DayRow] = []
     total = 0
+    monthly: dict[str, int] = {}
 
     current = date_from
     while current <= date_to:
@@ -95,29 +165,51 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
                 break
 
         events = by_day.get(current, [])
-        open_entry: datetime | None = None
+        # One opening per kind of span: a break runs inside the working day, so
+        # a single cursor would close the day when the break starts.
+        open_by_interval: dict = {}
 
         for event in events:
             if event.was_delegated:
                 row.delegated = True
             local = event.timestamp.astimezone(zone)
-            if event.punch_type == PunchType.IN:
-                if open_entry is not None:
-                    row.incidents.append(_("two entries with no exit in between"))
-                open_entry = local
-            else:
-                if open_entry is None:
-                    row.incidents.append(_("exit with no matching entry"))
-                    continue
-                row.entries.append((open_entry, local))
-                row.seconds += int((local - open_entry).total_seconds())
-                open_entry = None
+            kind = event.interval
 
-        if open_entry is not None:
-            row.entries.append((open_entry, None))
-            row.incidents.append(_("entry with no exit"))
+            if event.punch_type == PunchType.IN:
+                if kind in open_by_interval:
+                    if kind == PunchInterval.WORK:
+                        row.incidents.append(_("two entries with no exit in between"))
+                    continue
+                open_by_interval[kind] = (local, event)
+                continue
+
+            if kind not in open_by_interval:
+                if kind == PunchInterval.WORK:
+                    row.incidents.append(_("exit with no matching entry"))
+                continue
+
+            start, opening = open_by_interval.pop(kind)
+            seconds = int((local - start).total_seconds())
+            _add_span(row, opening, start, local, seconds)
+
+        for kind, (start, _opening) in open_by_interval.items():
+            if kind == PunchInterval.WORK:
+                row.entries.append((start, None))
+                row.incidents.append(_("entry with no exit"))
+            elif kind == PunchInterval.BREAK:
+                row.breaks.append((start, None))
+                row.incidents.append(_("break with no end"))
+            else:
+                row.standby.append((start, None))
+
+        # A break happens inside the day, so its time comes off the total. Art.
+        # 34.4 ET makes it working time only when the agreement says so, and
+        # that answer lives in the company's rules, not here.
+        row.seconds = max(row.seconds - row.break_seconds, 0)
 
         total += row.seconds
+        month = current.strftime("%Y-%m")
+        monthly[month] = monthly.get(month, 0) + row.seconds
         rows.append(row)
         current += timedelta(days=1)
 
@@ -132,6 +224,15 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
         rows=rows,
         total_seconds=total,
         generated_at=timezone.now(),
+        part_time=employee.part_time,
+        part_time_percentage=(
+            f"{employee.part_time_percentage:g}" if employee.part_time_percentage else ""
+        ),
+        contracted_schedule=employee.contracted_schedule,
+        monthly_seconds=monthly,
+        total_break_seconds=sum(r.break_seconds for r in rows),
+        total_standby_seconds=sum(r.standby_seconds for r in rows),
+        total_overtime_seconds=sum(r.overtime_seconds for r in rows),
     )
     data.fingerprint = _fingerprint(data)
     return data
@@ -148,7 +249,14 @@ def _fingerprint(data: ReportData) -> str:
     for row in data.rows:
         for entry, exit_ in row.entries:
             parts.append(f"{row.day}|{entry.isoformat()}|{exit_.isoformat() if exit_ else ''}")
-        parts.append(f"{row.day}|{row.seconds}")
+        # Breaks and waiting time are in the document, so they are in the
+        # fingerprint. Leaving them out would let somebody change what a span
+        # was without the seal noticing.
+        for start, end in row.breaks:
+            parts.append(f"{row.day}|B|{start.isoformat()}|{end.isoformat() if end else ''}")
+        for start, end in row.standby:
+            parts.append(f"{row.day}|S|{start.isoformat()}|{end.isoformat() if end else ''}")
+        parts.append(f"{row.day}|{row.seconds}|{row.overtime_seconds}")
     parts.append(str(data.total_seconds))
     return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
 

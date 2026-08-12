@@ -3,12 +3,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 
-import { getCompany, updateCompany } from '../../services/api.js'
+import {
+  getCompany,
+  getWorkingTimeRules,
+  updateCompany,
+  updateWorkingTimeRules,
+} from '../../services/api.js'
 import { ErrorNote, Loading, PageHeader, Panel } from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
@@ -49,10 +56,29 @@ export default function Settings() {
   const [error, setError] = useState(null)
   const [saved, setSaved] = useState(false)
 
-  const { data: company, isLoading } = useQuery({ queryKey: ['company'], queryFn: getCompany })
+  const [rules, setRules] = useState(null)
 
-  // Fill the form once the settings arrive, without an effect.
+  const { data: company, isLoading } = useQuery({ queryKey: ['company'], queryFn: getCompany })
+  const { data: storedRules } = useQuery({
+    queryKey: ['working-time-rules'],
+    queryFn: getWorkingTimeRules,
+  })
+
+  // Fill the forms once the settings arrive, without an effect.
   if (company && form === null) setForm(company)
+  if (storedRules && rules === null) setRules(storedRules)
+
+  const saveRules = useMutation({
+    mutationFn: updateWorkingTimeRules,
+    onSuccess: (data) => {
+      setRules(data)
+      setSaved(true)
+      queryClient.invalidateQueries({ queryKey: ['working-time-rules'] })
+      // The roster is measured against these, so its warnings change with them.
+      queryClient.invalidateQueries({ queryKey: ['roster-review'] })
+    },
+    onError: setError,
+  })
 
   const save = useMutation({
     mutationFn: updateCompany,
@@ -93,6 +119,16 @@ export default function Settings() {
     delete editable.id
     delete editable.tax_id
     save.mutate(editable)
+    if (rules) {
+      const editableRules = { ...rules }
+      delete editableRules.id
+      saveRules.mutate(editableRules)
+    }
+  }
+
+  const setRule = (field) => (event) => {
+    setSaved(false)
+    setRules({ ...rules, [field]: event.target.value })
   }
 
   return (
@@ -191,6 +227,112 @@ export default function Settings() {
               ))}
             </TextField>
           </Stack>
+        </Panel>
+
+        <Panel
+          title="Reglas de jornada"
+          hint="Con qué se compara el cuadrante. Cada valor lleva el artículo del que sale, y ninguno bloquea: se avisa y decide la empresa."
+        >
+          {rules ? (
+            <Stack sx={{ gap: 2 }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Horas semanales"
+                  value={rules.weekly_hours}
+                  onChange={setRule('weekly_hours')}
+                  helperText="Art. 34.1 ET: 40 de promedio. El convenio puede mejorarlo."
+                />
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Descanso entre jornadas (h)"
+                  value={rules.daily_rest_hours}
+                  onChange={setRule('daily_rest_hours')}
+                  helperText="Art. 34.3 ET. El RD 1561/1995 lo modifica en algunos sectores."
+                />
+              </Stack>
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Descanso semanal (h)"
+                  value={rules.weekly_rest_hours}
+                  onChange={setRule('weekly_rest_hours')}
+                  helperText="Art. 37.1 ET. Acumulable en catorce días."
+                />
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Horas extra al año"
+                  value={rules.annual_overtime_hours}
+                  onChange={setRule('annual_overtime_hours')}
+                  helperText="Art. 35.2 ET."
+                />
+              </Stack>
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Descanso a partir de (h)"
+                  value={rules.break_after_hours}
+                  onChange={setRule('break_after_hours')}
+                  helperText="Art. 34.4 ET: cuando la jornada continuada excede de seis."
+                />
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Minutos de descanso"
+                  value={rules.break_minutes}
+                  onChange={setRule('break_minutes')}
+                />
+              </Stack>
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={rules.break_counts_as_work}
+                    onChange={(event) =>
+                      setRules({ ...rules, break_counts_as_work: event.target.checked })
+                    }
+                  />
+                }
+                label="El descanso computa como trabajo efectivo"
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
+                Solo si lo dice el convenio o el contrato. Darlo por hecho inflaría las horas.
+              </Typography>
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+                <TextField
+                  fullWidth
+                  type="time"
+                  label="El trabajo nocturno empieza"
+                  value={String(rules.night_starts_at).slice(0, 5)}
+                  onChange={setRule('night_starts_at')}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                <TextField
+                  fullWidth
+                  type="time"
+                  label="y acaba"
+                  value={String(rules.night_ends_at).slice(0, 5)}
+                  onChange={setRule('night_ends_at')}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </Stack>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
+                Art. 36.1 ET. Trabajar en esa franja no convierte a nadie en trabajador
+                nocturno: esa condición la determina la empresa, y de ella dependen los
+                límites.
+              </Typography>
+            </Stack>
+          ) : (
+            <Loading rows={3} />
+          )}
         </Panel>
 
         <Panel title="Conservación de datos">

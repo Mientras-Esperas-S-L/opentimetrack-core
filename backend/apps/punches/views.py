@@ -5,16 +5,14 @@ The heart of the product: one tap, and the server decides everything else.
 
 from __future__ import annotations
 
-from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.audit.models import AuditAction
-from apps.audit.services import record, record_view_of_others
-from apps.common.permissions import IsAdmin, IsAuthenticatedInTenant
-from apps.punches.models import Punch, PunchSource
+from apps.audit.services import record_view_of_others
+from apps.common.permissions import IsAuthenticatedInTenant
+from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource
 from apps.punches.serializers import PunchSerializer, PunchWriteSerializer
 from apps.punches.services import build_day_status, register_punch
 
@@ -104,13 +102,20 @@ class PunchViewSet(
     def create(self, request):
         serializer = PunchWriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
 
         punch = register_punch(
             employee=request.user,
             company=request.user.tenant,
             source=source_for(request),
+            interval=data.get("interval") or PunchInterval.WORK,
+            work_mode=data.get("work_mode", ""),
+            hours_nature=data.get("hours_nature") or HoursNature.ORDINARY,
+            overtime_settlement=data.get("overtime_settlement", ""),
+            force_majeure=data.get("force_majeure", False),
+            flexibility_measure=data.get("flexibility_measure", ""),
             ip_address=client_ip(request),
-            device_id=serializer.validated_data.get("device_id", ""),
+            device_id=data.get("device_id", ""),
             user_agent=request.META.get("HTTP_USER_AGENT", "")[:255],
         )
 
@@ -136,43 +141,13 @@ class PunchViewSet(
 
     # ---------------------------------------------------------------- correction
 
-    @extend_schema(
-        summary="Void a clock event",
-        description=(
-            "Marks an event as void. It is never deleted: it stays readable, and the "
-            "correction leaves its own trail."
-        ),
-        responses={200: PunchSerializer},
-    )
-    @action(detail=True, methods=["patch"], permission_classes=[IsAdmin])
-    def void(self, request, pk=None):
-        from django.utils import timezone
-
-        punch = self.get_object()
-        if not punch.is_active:
-            return Response(
-                {
-                    "error": {
-                        "code": "already_void",
-                        "message": _("It was already void."),
-                        "details": {},
-                    }
-                },
-                status=status.HTTP_409_CONFLICT,
-            )
-
-        punch.is_active = False
-        punch.voided_at = timezone.now()
-        punch.save(update_fields=["is_active", "voided_at"])
-
-        record(
-            action=AuditAction.PUNCH_VOIDED,
-            actor=request.user,
-            target=punch.employee,
-            target_type="user",
-            target_label=punch.employee.get_full_name(),
-            changes={"punch": str(punch.pk), "at": punch.timestamp.isoformat()},
-            note=request.data.get("reason", "")[:300],
-            request=request,
-        )
-        return Response(PunchSerializer(punch).data)
+    # `void` used to live here, and it is gone on purpose.
+    #
+    # It let an administrator strike a clock event with **no reason and no
+    # notice**, while a correction with exactly the same effect (`kind=VOID`)
+    # requires both. Two doors to the same act, one of them without the
+    # guarantees, empties ADR-0014: "nobody touches a time without leaving why"
+    # is not a rule if there is a second way in.
+    #
+    # To void an event: POST /api/corrections/ with kind=VOID. Reason mandatory,
+    # author recorded, the person told, and the original left readable.

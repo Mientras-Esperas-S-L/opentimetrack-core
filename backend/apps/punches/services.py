@@ -15,15 +15,26 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.common.exceptions import BusinessRuleError
-from apps.punches.models import Punch, PunchSource, PunchType
+from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource, PunchType
 
 
 @dataclass(frozen=True)
 class DaySegment:
-    """A stretch of work: an entry and, if it has happened, its exit."""
+    """A stretch of time: an opening event and, if it has happened, its close.
+
+    Not necessarily work. Art. 3 of the pending decree asks for four kinds of
+    span, and only one of them counts towards the hours: a break or a stretch
+    of waiting time is recorded precisely **because** it does not.
+    """
 
     start: datetime
     end: datetime | None
+    interval: str = PunchInterval.WORK
+    work_mode: str = ""
+    hours_nature: str = HoursNature.ORDINARY
+    overtime_settlement: str = ""
+    force_majeure: bool = False
+    flexibility_measure: str = ""
 
     @property
     def seconds(self) -> int:
@@ -34,25 +45,65 @@ class DaySegment:
     def is_open(self) -> bool:
         return self.end is None
 
+    @property
+    def counts_as_work(self) -> bool:
+        """Only the working day does.
+
+        Whether the fifteen-minute break counts is a matter for the collective
+        agreement (art. 34.4 ET), and `WorkingTimeRules.break_counts_as_work`
+        holds that answer --- but a span recorded as BREAK was recorded as time
+        that is not working time. Deciding otherwise here would overrule what
+        the entry itself says.
+        """
+        return self.interval == PunchInterval.WORK
+
+    def as_dict(self) -> dict:
+        return {
+            "in": self.start.isoformat(),
+            "out": self.end.isoformat() if self.end else None,
+            "seconds": self.seconds,
+            "interval": self.interval,
+            "work_mode": self.work_mode,
+            "hours_nature": self.hours_nature,
+            "overtime_settlement": self.overtime_settlement,
+            "force_majeure": self.force_majeure,
+            "flexibility_measure": self.flexibility_measure,
+            "counts_as_work": self.counts_as_work,
+        }
+
 
 @dataclass(frozen=True)
 class DayStatus:
-    state: str  # WORKING | OFF | NOT_STARTED
+    state: str  # WORKING | ON_BREAK | OFF | NOT_STARTED
     segments: list[DaySegment]
     worked_seconds: int
+
+    @property
+    def break_seconds(self) -> int:
+        return sum(s.seconds for s in self.segments if s.interval == PunchInterval.BREAK)
+
+    @property
+    def standby_seconds(self) -> int:
+        return sum(s.seconds for s in self.segments if s.interval == PunchInterval.STANDBY)
+
+    @property
+    def overtime_seconds(self) -> int:
+        return sum(
+            s.seconds
+            for s in self.segments
+            if s.counts_as_work and s.hours_nature == HoursNature.OVERTIME
+        )
 
     def as_dict(self) -> dict:
         return {
             "state": self.state,
-            "segments": [
-                {
-                    "in": s.start.isoformat(),
-                    "out": s.end.isoformat() if s.end else None,
-                    "seconds": s.seconds,
-                }
-                for s in self.segments
-            ],
+            "segments": [s.as_dict() for s in self.segments],
             "worked_seconds": self.worked_seconds,
+            # Art. 3.d and 3.g: recorded, and reported apart from the hours,
+            # because the point of recording them is that they do not count.
+            "break_seconds": self.break_seconds,
+            "standby_seconds": self.standby_seconds,
+            "overtime_seconds": self.overtime_seconds,
         }
 
 
@@ -83,13 +134,17 @@ def punches_of_the_day(employee, company, day: date | None = None):
     ).order_by("timestamp")
 
 
-def infer_type(employee, company) -> str:
-    """Entry or exit, worked out from the last event of the day.
+def infer_type(employee, company, interval: str = PunchInterval.WORK) -> str:
+    """Opens or closes, worked out from the last event **of that interval**.
 
     The person is not asked which one it is: one tap, no choices, no chance of
     picking the wrong one.
+
+    Per interval, because they nest. Starting a break while the working day is
+    open must not be read as closing the day, and it would be if the last event
+    of any kind decided.
     """
-    last = punches_of_the_day(employee, company).last()
+    last = punches_of_the_day(employee, company).filter(interval=interval).last()
     if last is None or last.punch_type == PunchType.OUT:
         return PunchType.IN
     return PunchType.OUT
@@ -99,31 +154,61 @@ def build_day_status(employee, company, day: date | None = None) -> DayStatus:
     events = list(punches_of_the_day(employee, company, day))
 
     segments: list[DaySegment] = []
-    open_start: datetime | None = None
+    # One open span per kind of interval. A break happens *inside* the working
+    # day, so the day stays open while the break runs; pairing them in a single
+    # stack would close the day at the first break and reopen it after, which
+    # is a different fact.
+    open_events: dict[str, Punch] = {}
 
     for event in events:
+        kind = event.interval
         if event.punch_type == PunchType.IN:
-            # Two entries in a row should not happen, but if they do the first
+            # Two openings in a row should not happen, but if they do the first
             # one wins rather than being silently dropped.
-            if open_start is None:
-                open_start = event.timestamp
-        elif open_start is not None:
-            segments.append(DaySegment(start=open_start, end=event.timestamp))
-            open_start = None
+            open_events.setdefault(kind, event)
+        elif kind in open_events:
+            opening = open_events.pop(kind)
+            segments.append(_span(opening, event.timestamp))
 
-    if open_start is not None:
-        segments.append(DaySegment(start=open_start, end=None))
+    for opening in open_events.values():
+        segments.append(_span(opening, None))
 
-    worked = sum(s.seconds for s in segments)
+    segments.sort(key=lambda s: s.start)
+
+    # Only the working day counts, and a break that happened inside it comes
+    # off: the hours it covers were recorded as not being working time.
+    worked = sum(s.seconds for s in segments if s.counts_as_work)
+    worked -= sum(s.seconds for s in segments if s.interval == PunchInterval.BREAK)
+    worked = max(worked, 0)
 
     if not events:
         state = "NOT_STARTED"
-    elif segments and segments[-1].is_open:
+    elif PunchInterval.BREAK in open_events:
+        state = "ON_BREAK"
+    elif PunchInterval.WORK in open_events:
         state = "WORKING"
     else:
         state = "OFF"
 
     return DayStatus(state=state, segments=segments, worked_seconds=worked)
+
+
+def _span(opening: Punch, end) -> DaySegment:
+    """Builds the span from its opening event.
+
+    Everything descriptive travels on the opening: it is the event that says
+    what this stretch of time is, and the closing one only says when it ended.
+    """
+    return DaySegment(
+        start=opening.timestamp,
+        end=end,
+        interval=opening.interval,
+        work_mode=opening.work_mode,
+        hours_nature=opening.hours_nature,
+        overtime_settlement=opening.overtime_settlement,
+        force_majeure=opening.force_majeure,
+        flexibility_measure=opening.flexibility_measure,
+    )
 
 
 @transaction.atomic
@@ -137,6 +222,12 @@ def register_punch(
     ip_address: str | None = None,
     device_id: str = "",
     user_agent: str = "",
+    interval: str = PunchInterval.WORK,
+    work_mode: str = "",
+    hours_nature: str = HoursNature.ORDINARY,
+    overtime_settlement: str = "",
+    force_majeure: bool = False,
+    flexibility_measure: str = "",
 ) -> Punch:
     """Record a clock event. The only supported way to create one.
 
@@ -149,12 +240,37 @@ def register_punch(
             message=_("This person is deactivated and cannot clock in or out."),
         )
 
-    _check_no_approved_absence(employee, company)
+    punch_type = infer_type(employee, company, interval)
+
+    # Only when starting a working day. Somebody on an approved holiday is not
+    # blocked from closing a day they had already opened, and blocking the end
+    # of a break would strand them mid-shift.
+    if interval == PunchInterval.WORK and punch_type == PunchType.IN:
+        _check_no_approved_absence(employee, company)
+
+    # A break can only start inside a working day. Otherwise the record ends up
+    # with a break floating in the middle of nothing, which no reader can
+    # interpret and no inspector should have to.
+    if interval != PunchInterval.WORK and punch_type == PunchType.IN:
+        status = build_day_status(employee, company)
+        if status.state not in {"WORKING", "ON_BREAK"}:
+            raise BusinessRuleError(
+                code="not_working",
+                message=_("The working day has to be open first."),
+            )
+
+    if hours_nature == HoursNature.OVERTIME and not overtime_settlement:
+        # Art. 3.f asks how it settles. Recording overtime without saying is
+        # recording half the fact.
+        raise BusinessRuleError(
+            code="overtime_settlement_required",
+            message=_("Say whether the overtime is paid or compensated with rest."),
+        )
 
     punch = Punch(
         tenant=company,
         employee=employee,
-        punch_type=infer_type(employee, company),
+        punch_type=punch_type,
         # Server time. Never from the client, ever.
         timestamp=timezone.now(),
         source=source,
@@ -163,6 +279,12 @@ def register_punch(
         ip_address=ip_address,
         device_id=device_id,
         user_agent=user_agent,
+        interval=interval,
+        work_mode=work_mode or employee.default_work_mode,
+        hours_nature=hours_nature,
+        overtime_settlement=overtime_settlement,
+        force_majeure=force_majeure,
+        flexibility_measure=flexibility_measure,
     )
     punch.save()
     return punch

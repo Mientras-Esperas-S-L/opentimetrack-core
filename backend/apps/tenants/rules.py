@@ -20,6 +20,8 @@ belongs.
 
 from __future__ import annotations
 
+from datetime import time
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -85,10 +87,10 @@ class WorkingTimeRules(BaseModel):
     )
     night_starts_at = models.TimeField(
         _("night work starts at"),
-        default="22:00",
+        default=time(22, 0),
         help_text=_("Art. 36.1 ET: between 22:00 and 06:00."),
     )
-    night_ends_at = models.TimeField(_("night work ends at"), default="06:00")
+    night_ends_at = models.TimeField(_("night work ends at"), default=time(6, 0))
     roster_notice_days = models.PositiveSmallIntegerField(
         _("notice for roster changes (days)"),
         default=5,

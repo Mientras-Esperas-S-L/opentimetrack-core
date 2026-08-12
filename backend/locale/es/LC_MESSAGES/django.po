@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 10:05+0000\n"
+"POT-Creation-Date: 2026-08-12 10:34+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -128,21 +128,17 @@ msgstr "Exportó un informe de jornada"
 msgid "Downloaded a supporting document"
 msgstr "Descargó un justificante"
 
-#| msgid "record correction"
 msgid "Requested a correction"
 msgstr "Pidió una corrección"
 
-#, fuzzy
 #| msgid "record correction"
 msgid "Approved a correction"
 msgstr "Aprobó una corrección"
 
-#, fuzzy
 #| msgid "record correction"
 msgid "Rejected a correction"
 msgstr "Rechazó una corrección"
 
-#, fuzzy
 #| msgid "clock event"
 msgid "Voided a clock event"
 msgstr "Anuló un fichaje"
@@ -343,6 +339,62 @@ msgstr "Entrada"
 msgid "Clock out"
 msgstr "Salida"
 
+#, fuzzy
+#| msgid "Working time record"
+msgid "Working day"
+msgstr "Jornada de trabajo"
+
+#, fuzzy
+#| msgid "the break counts as working time"
+msgid "Break that is not working time"
+msgstr "Pausa que no es trabajo efectivo"
+
+msgid "Waiting or on-call time"
+msgstr "Tiempo de espera o a disposición"
+
+msgid "Interruption of the right to disconnect"
+msgstr "Interrupción del derecho a la desconexión"
+
+msgid "On site"
+msgstr "Presencial"
+
+msgid "Remote"
+msgstr "A distancia"
+
+msgid "Ordinary"
+msgstr "Ordinaria"
+
+msgid "Overtime"
+msgstr "Extraordinaria"
+
+#, fuzzy
+#| msgid "Company"
+msgid "Complementary"
+msgstr "Complementaria"
+
+msgid "Compensated with rest"
+msgstr "Compensada con descanso"
+
+msgid "Paid"
+msgstr "Retribuida"
+
+msgid "None"
+msgstr "Ninguna"
+
+msgid "Care or family reasons (art. 34.8 ET)"
+msgstr "Conciliación o motivos familiares (art. 34.8 ET)"
+
+#, fuzzy
+#| msgid "weekly hours"
+msgid "Flexible hours"
+msgstr "Horario flexible"
+
+msgid "Irregular distribution (art. 34.2 ET)"
+msgstr "Distribución irregular (art. 34.2 ET)"
+
+msgid "Another arrangement"
+msgstr "Otra medida"
+
 msgid "Web panel"
 msgstr "Panel web"
 
@@ -363,6 +415,33 @@ msgstr "Corrección manual de un administrador"
 
 msgid "Data import"
 msgstr "Importación de datos"
+
+msgid "interval"
+msgstr "intervalo"
+
+msgid "mode"
+msgstr "modalidad"
+
+msgid "nature of the hours"
+msgstr "naturaleza de las horas"
+
+msgid "how the overtime is settled"
+msgstr "cómo se compensan las horas extraordinarias"
+
+msgid "Required for overtime: art. 3.f asks whether it is rested or paid."
+msgstr "Obligatorio en horas extraordinarias: el art. 3.f pregunta si se compensan con descanso o se retribuyen."
+
+msgid "to prevent or repair urgent damage"
+msgstr "para prevenir o reparar daños urgentes"
+
+msgid ""
+"Art. 35.3 ET: hours worked to prevent or repair accidents and other "
+"extraordinary and urgent damage. They do not count towards the annual "
+"overtime limit, so they have to be distinguishable."
+msgstr "Art. 35.3 ET: horas trabajadas para prevenir o reparar siniestros y otros daños extraordinarios y urgentes. No computan en el límite anual de horas extraordinarias, así que tienen que poder distinguirse."
+
+msgid "arrangement"
+msgstr "medida aplicada"
 
 msgid "timestamp"
 msgstr "momento"
@@ -412,11 +491,14 @@ msgstr "fichajes"
 msgid "This person is deactivated and cannot clock in or out."
 msgstr "Esta persona está dada de baja y no puede fichar."
 
+msgid "The working day has to be open first."
+msgstr "La jornada tiene que estar abierta antes."
+
+msgid "Say whether the overtime is paid or compensated with rest."
+msgstr "Indica si las horas extraordinarias se retribuyen o se compensan con descanso."
+
 msgid "You cannot clock in: you have approved leave for today."
 msgstr "No puedes fichar: tienes una ausencia aprobada para hoy."
-
-msgid "It was already void."
-msgstr "Ya estaba anulado."
 
 msgid "Working time record"
 msgstr "Registro de jornada"
@@ -482,6 +564,11 @@ msgstr "salida sin entrada previa"
 
 msgid "entry with no exit"
 msgstr "entrada sin salida"
+
+#, fuzzy
+#| msgid "entry with no exit"
+msgid "break with no end"
+msgstr "pausa sin fin"
 
 msgid "recorded by an application"
 msgstr "registrado por una aplicación"
@@ -557,6 +644,18 @@ msgstr "%(hours)s h planificadas esa semana, por encima de las %(limit)s h confi
 #, python-format
 msgid "A continuous day of %(hours)s h needs a break of %(minutes)s min."
 msgstr "Una jornada continuada de %(hours)s h necesita un descanso de %(minutes)s min."
+
+#, python-format
+msgid ""
+"The longest break in that fortnight is %(hours)s h, under the %(minimum)s h "
+"configured."
+msgstr "El descanso más largo de esa quincena es de %(hours)s h, por debajo de las %(minimum)s h configuradas."
+
+#, python-format
+msgid ""
+"%(count)s shifts in the night window. If the person holds the status of "
+"night worker, art. 36.1 ET adds limits the company has to apply."
+msgstr "%(count)s turnos en la franja nocturna. Si la persona tiene la condición de trabajador nocturno, el art. 36.1 ET añade límites que la empresa debe aplicar."
 
 #, python-format
 msgid "Rostered on a day of approved %(kind)s."
@@ -826,6 +925,38 @@ msgstr "El identificador de la persona en los sistemas de la propia empresa. Sir
 msgid "Overrides the company language for this person."
 msgstr "Sustituye el idioma de la empresa para esta persona."
 
+#, fuzzy
+#| msgid "proposed time"
+msgid "part time"
+msgstr "tiempo parcial"
+
+msgid "Art. 3.b. Part-time work is counted differently (art. 12 ET)."
+msgstr "Art. 3.b. El trabajo a tiempo parcial se computa de otra forma (art. 12 ET)."
+
+msgid "percentage of a full day"
+msgstr "porcentaje de jornada"
+
+msgid "Only for part time. Art. 3.b asks for it explicitly."
+msgstr "Solo en tiempo parcial. El art. 3.b lo pide expresamente."
+
+#, fuzzy
+#| msgid "weekly hours"
+msgid "agreed hours"
+msgstr "horario pactado"
+
+msgid ""
+"Art. 3.b: the agreed working hours, as text. For example 'L-V 09:00-17:00'. "
+"Free text because a schedule is not a shape a closed field can hold."
+msgstr "Art. 3.b: el horario pactado, como texto. Por ejemplo 'L-V 09:00-17:00'. Texto libre porque un horario no tiene una forma que quepa en un campo cerrado."
+
+msgid "usual mode"
+msgstr "modalidad habitual"
+
+msgid ""
+"Art. 3.e. What a clock event assumes when it says nothing; each event can "
+"still record the other."
+msgstr "Art. 3.e. Lo que asume un fichaje cuando no dice nada; cada uno puede registrar la otra modalidad."
+
 msgid ""
 "Overrides the company figure for this person. Empty means the company's. "
 "Part-time and mid-year joiners are the usual reason."
@@ -955,6 +1086,9 @@ msgid ""
 "\n"
 "If this does not match what happened, tell whoever manages your working time."
 msgstr "La versión anterior no se ha borrado: las dos quedan en tu\nhistorial, y puedes descargar tu registro completo cuando quieras.\n\nSi esto no coincide con lo que pasó, díselo a quien gestione tu jornada."
+
+#~ msgid "It was already void."
+#~ msgstr "Ya estaba anulado."
 
 #~ msgid "Failed sign-in"
 #~ msgstr "Intento de acceso fallido"

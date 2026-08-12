@@ -111,8 +111,9 @@ export const getMe = () => get('/auth/me/')
 export const getToday = () => get('/punches/today/')
 export const clock = (deviceId) => post('/punches/', { device_id: deviceId })
 export const getPunches = async (params) => rows(await get('/punches/', params))
-export const voidPunch = async (id, reason) =>
-  (await api.patch(`/punches/${id}/void/`, { reason })).data
+// No hay `voidPunch`: anular un fichaje se hace con una corrección de tipo
+// VOID, que exige motivo, deja autor y avisa a la persona. Un atajo sin esas
+// garantías vaciaría el procedimiento.
 
 // ----------------------------------------------------------------- corrections
 

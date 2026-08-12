@@ -127,6 +127,44 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         blank=True,
         help_text=_("Overrides the company language for this person."),
     )
+    # Art. 3.b of the pending decree: the record has to state the working-time
+    # regime, full or part time, the contracted hours, and the percentage when
+    # part time. It belongs to the person rather than to each event --- it is
+    # what was agreed, not what happened on a given day.
+    part_time = models.BooleanField(
+        _("part time"),
+        default=False,
+        help_text=_("Art. 3.b. Part-time work is counted differently (art. 12 ET)."),
+    )
+    part_time_percentage = models.DecimalField(
+        _("percentage of a full day"),
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Only for part time. Art. 3.b asks for it explicitly."),
+    )
+    contracted_schedule = models.CharField(
+        _("agreed hours"),
+        max_length=200,
+        blank=True,
+        help_text=_(
+            "Art. 3.b: the agreed working hours, as text. For example "
+            "'L-V 09:00-17:00'. Free text because a schedule is not a shape a "
+            "closed field can hold."
+        ),
+    )
+    default_work_mode = models.CharField(
+        _("usual mode"),
+        max_length=8,
+        default="ONSITE",
+        choices=[("ONSITE", _("On site")), ("REMOTE", _("Remote"))],
+        help_text=_(
+            "Art. 3.e. What a clock event assumes when it says nothing; each "
+            "event can still record the other."
+        ),
+    )
+
     annual_leave_days = models.PositiveSmallIntegerField(
         _("annual leave days"),
         null=True,
