@@ -16,6 +16,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps import legal
 from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
@@ -261,9 +262,48 @@ class WorkingTimeRulesView(APIView):
 
         return [IsAdmin()] if self.request.method == "PATCH" else [IsAuthenticatedInTenant()]
 
-    @extend_schema(responses={200: RulesSerializer})
+    @extend_schema(responses={200: dict})
     def get(self, request):
-        return Response(RulesSerializer(WorkingTimeRules.for_company(request.user.tenant)).data)
+        return Response(self._body(WorkingTimeRules.for_company(request.user.tenant), request))
+
+    @staticmethod
+    def _body(rules, request):
+        """The figures, and where each one comes from.
+
+        The citations used to be written twice: in the model's `help_text`,
+        which nothing read, and by hand into the settings screen, which is the
+        copy people actually saw --- untranslatable, unable to vary by country,
+        and free to drift from the backend.
+
+        Serving them is what removes both problems at once. The screen renders
+        what it is given, and a company in another country is given that
+        country's articles.
+        """
+        framework = legal.for_company(request.user.tenant)
+        data = RulesSerializer(rules).data
+        return {
+            **data,
+            "country": framework.country,
+            "framework": framework.name,
+            "citations": {
+                key: {"basis": c.basis, "note": c.note} for key, c in framework.citations.items()
+            },
+            # Not settings and never will be: no agreement may lower them, so a
+            # field to edit them would be a field whose only use is breaking the
+            # law. Served so the screen can say what they are.
+            "minors": {
+                "max_daily_hours": framework.minors.max_daily_hours,
+                "break_after_hours": framework.minors.break_after_hours,
+                "break_minutes": framework.minors.break_minutes,
+                "weekly_rest_hours": framework.minors.weekly_rest_hours,
+                "night_work_forbidden": framework.minors.night_work_forbidden,
+                "overtime_forbidden": framework.minors.overtime_forbidden,
+                "citations": {
+                    key: {"basis": c.basis, "note": c.note}
+                    for key, c in framework.minors.citations.items()
+                },
+            },
+        }
 
     @extend_schema(request=RulesSerializer, responses={200: RulesSerializer})
     def patch(self, request):
@@ -290,4 +330,4 @@ class WorkingTimeRulesView(APIView):
                 changes=changed,
                 request=request,
             )
-        return Response(serializer.data)
+        return Response(self._body(rules, request))

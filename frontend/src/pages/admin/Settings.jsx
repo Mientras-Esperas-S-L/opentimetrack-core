@@ -146,10 +146,26 @@ export default function Settings() {
     delete editable.tax_id
     save.mutate(editable)
     if (rules) {
-      const editableRules = { ...rules }
-      delete editableRules.id
-      saveRules.mutate(editableRules)
+      // Only the figures. The rest of the payload is what the server tells us
+      // about the applicable law --- the country, its citations, the floors for
+      // minors --- and sending it back would be asking to change the law.
+      const { id, country, framework, citations, minors, ...figures } = rules
+      void id, country, framework, citations, minors
+      saveRules.mutate(figures)
     }
+  }
+
+  /** The article and the note for a field, as the server gave them.
+   *
+   *  These used to be written here by hand --- six of them --- which meant they
+   *  could not be translated, could not vary by country, and were free to drift
+   *  from the backend without anybody noticing. Now the screen renders what it
+   *  is told, and a company elsewhere is told its own law.
+   */
+  const cite = (field) => {
+    const c = rules?.citations?.[field]
+    if (!c) return ' '
+    return [c.basis, c.note].filter(Boolean).join('. ')
   }
 
   const setRule = (field) => (event) => {
@@ -270,7 +286,7 @@ export default function Settings() {
               label="Días al año"
               value={form.annual_leave_days}
               onChange={set('annual_leave_days')}
-              helperText="Días laborables por periodo. El art. 38 ET fija un mínimo de 30 naturales."
+              helperText={cite("annual_leave_days")}
             />
             <TextField
               select
@@ -302,7 +318,7 @@ export default function Settings() {
                   label="Horas semanales"
                   value={rules.weekly_hours}
                   onChange={setRule('weekly_hours')}
-                  helperText="Art. 34.1 ET: 40 de promedio. El convenio puede mejorarlo."
+                  helperText={cite("weekly_hours")}
                 />
                 <TextField
                   fullWidth
@@ -310,7 +326,7 @@ export default function Settings() {
                   label="Descanso entre jornadas (h)"
                   value={rules.daily_rest_hours}
                   onChange={setRule('daily_rest_hours')}
-                  helperText="Art. 34.3 ET. El RD 1561/1995 lo modifica en algunos sectores."
+                  helperText={cite("daily_rest_hours")}
                 />
               </Stack>
 
@@ -321,7 +337,7 @@ export default function Settings() {
                   label="Descanso semanal (h)"
                   value={rules.weekly_rest_hours}
                   onChange={setRule('weekly_rest_hours')}
-                  helperText="Art. 37.1 ET. Acumulable en catorce días."
+                  helperText={cite("weekly_rest_hours")}
                 />
                 <TextField
                   fullWidth
@@ -329,7 +345,7 @@ export default function Settings() {
                   label="Horas extra al año"
                   value={rules.annual_overtime_hours}
                   onChange={setRule('annual_overtime_hours')}
-                  helperText="Art. 35.2 ET."
+                  helperText={cite("annual_overtime_hours")}
                 />
               </Stack>
 
@@ -340,7 +356,7 @@ export default function Settings() {
                   label="Descanso a partir de (h)"
                   value={rules.break_after_hours}
                   onChange={setRule('break_after_hours')}
-                  helperText="Art. 34.4 ET: cuando la jornada continuada excede de seis."
+                  helperText={cite("break_after_hours")}
                 />
                 <TextField
                   fullWidth
@@ -363,7 +379,7 @@ export default function Settings() {
                 label="El descanso computa como trabajo efectivo"
               />
               <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
-                Solo si lo dice el convenio o el contrato. Darlo por hecho inflaría las horas.
+                {cite('break_counts_as_work')}
               </Typography>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
@@ -385,9 +401,7 @@ export default function Settings() {
                 />
               </Stack>
               <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
-                Art. 36.1 ET. Trabajar en esa franja no convierte a nadie en trabajador
-                nocturno: esa condición la determina la empresa, y de ella dependen los
-                límites.
+                {cite('night_starts_at')}
               </Typography>
             </Stack>
           ) : (
@@ -403,7 +417,7 @@ export default function Settings() {
               label="Registro de jornada (años)"
               value={form.record_retention_years}
               onChange={set('record_retention_years')}
-              helperText="Mínimo cuatro, por el art. 34.9 ET. Más tiempo necesita su propia justificación."
+              helperText={cite("record_retention_years")}
             />
             <TextField
               fullWidth

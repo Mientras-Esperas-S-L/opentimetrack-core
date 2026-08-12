@@ -21,16 +21,11 @@ from itertools import pairwise
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
+from apps import legal
 from apps.absences.models import Absence, AbsenceStatus
 from apps.common.exceptions import BusinessRuleError
 from apps.shifts.models import Shift, ShiftPattern, working_days_between
-from apps.tenants.rules import (
-    MINOR_BREAK_AFTER_HOURS,
-    MINOR_BREAK_MINUTES,
-    MINOR_MAX_DAILY_HOURS,
-    MINOR_WEEKLY_REST_HOURS,
-    WorkingTimeRules,
-)
+from apps.tenants.rules import WorkingTimeRules
 
 
 @dataclass(frozen=True)
@@ -46,7 +41,10 @@ class Finding:
     employee_id: str
     code: str
     message: str
-    basis: str
+    #: Filled in one pass at the end, from the company's country. Empty at
+    #: construction because the place a finding is built has no business
+    #: knowing which country's article covers it.
+    basis: str = ""
     #: Carried alongside the id so a warning can name who it is about without
     #: the caller holding the whole workforce to look it up in --- which is what
     #: the roster screen was doing, and it only ever held the first page of it.
@@ -139,15 +137,25 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     for shift in shifts.order_by("employee_id", "day"):
         by_person.setdefault(shift.employee_id, []).append(shift)
 
+    framework = legal.for_company(company)
+
     findings: list[Finding] = []
     for employee_id, roster in by_person.items():
         findings.extend(_check_daily_rest(roster, rules, first, last))
         findings.extend(_check_weekly_hours(employee_id, roster, rules, first, last))
         findings.extend(_check_breaks(roster, rules, first, last))
-        findings.extend(_check_weekly_rest(employee_id, roster, rules, first, last))
+        findings.extend(
+            _check_weekly_rest(employee_id, roster, rules, framework.minors, first, last)
+        )
         findings.extend(_check_night_work(roster, rules, first, last))
-        findings.extend(_check_under_eighteen(roster, rules, first, last))
+        findings.extend(_check_under_eighteen(roster, rules, framework.minors, first, last))
     findings.extend(_check_leave_clashes(first, last, employee))
+
+    # The citation comes from the company's country, not from the place the
+    # finding was built. Nine of them used to be typed in beside each `Finding`,
+    # which made every warning quietly Spanish --- and made adding a country a
+    # search-and-replace through this file.
+    findings = [replace(f, basis=framework.finding_citation(f.code).basis) for f in findings]
 
     # Filled in one pass rather than at each of the nine places a Finding is
     # built: one of them would be forgotten, and a warning about a person whose
@@ -170,7 +178,6 @@ def _check_daily_rest(roster, rules, first, last) -> list[Finding]:
                     code="short_daily_rest",
                     message=_("Only %(hours)s h of rest since the previous shift.")
                     % {"hours": f"{gap:.1f}"},
-                    basis="Art. 34.3 ET",
                 )
             )
     return found
@@ -207,7 +214,6 @@ def _check_weekly_hours(employee_id, roster, rules, first, last) -> list[Finding
                     code="weekly_hours_exceeded",
                     message=_("%(hours)s h rostered that week, over the %(limit)s h configured.")
                     % {"hours": f"{hours:.1f}", "limit": f"{limit:g}"},
-                    basis="Art. 34.1 ET",
                 )
             )
     return found
@@ -236,13 +242,12 @@ def _check_breaks(roster, rules, first, last) -> list[Finding]:
                     code="break_owed",
                     message=_("A continuous day of %(hours)s h needs a break of %(minutes)s min.")
                     % {"hours": f"{shift.minutes / 60:.1f}", "minutes": rules.break_minutes},
-                    basis="Art. 34.4 ET",
                 )
             )
     return found
 
 
-def _check_weekly_rest(employee_id, roster, rules, first, last) -> list[Finding]:
+def _check_weekly_rest(employee_id, roster, rules, minors, first, last) -> list[Finding]:
     """Art. 37.1 ET: a day and a half uninterrupted, accumulable over fourteen
     days.
 
@@ -260,7 +265,7 @@ def _check_weekly_rest(employee_id, roster, rules, first, last) -> list[Finding]
     # which errs on the side of the protection.
     person = roster[0].employee
     minimum = timedelta(
-        hours=MINOR_WEEKLY_REST_HOURS if person.is_minor_on(first) else rules.weekly_rest_hours
+        hours=minors.weekly_rest_hours if person.is_minor_on(first) else rules.weekly_rest_hours
     )
     found = []
 
@@ -301,7 +306,6 @@ def _check_weekly_rest(employee_id, roster, rules, first, last) -> list[Finding]
                         "hours": f"{longest.total_seconds() / 3600:.0f}",
                         "minimum": minimum.total_seconds() / 3600,
                     },
-                    basis="Art. 37.1 ET",
                 )
             )
             break  # one per person is enough to say the pattern is wrong
@@ -338,12 +342,11 @@ def _check_night_work(roster, rules, first, last) -> list[Finding]:
                 "of night worker, art. 36.1 ET adds limits the company has to apply."
             )
             % {"count": len(nightly)},
-            basis="Art. 36.1 ET",
         )
     ]
 
 
-def _check_under_eighteen(roster, rules, first, last) -> list[Finding]:
+def _check_under_eighteen(roster, rules, minors, first, last) -> list[Finding]:
     """The floors that apply to workers under eighteen.
 
     Age is read **per day**, not once: somebody turns eighteen mid-roster and
@@ -365,7 +368,7 @@ def _check_under_eighteen(roster, rules, first, last) -> list[Finding]:
 
         hours = shift.minutes / 60
 
-        if hours > MINOR_MAX_DAILY_HOURS:
+        if hours > minors.max_daily_hours:
             found.append(
                 Finding(
                     day=shift.day,
@@ -375,12 +378,11 @@ def _check_under_eighteen(roster, rules, first, last) -> list[Finding]:
                         "%(hours)s h rostered for somebody under eighteen. The limit is "
                         "%(limit)s h a day and no agreement can raise it."
                     )
-                    % {"hours": f"{hours:.1f}", "limit": MINOR_MAX_DAILY_HOURS},
-                    basis="Art. 34.3 ET",
+                    % {"hours": f"{hours:.1f}", "limit": minors.max_daily_hours},
                 )
             )
 
-        if len(shift.segments) == 1 and hours > MINOR_BREAK_AFTER_HOURS:
+        if len(shift.segments) == 1 and hours > minors.break_after_hours:
             found.append(
                 Finding(
                     day=shift.day,
@@ -392,10 +394,9 @@ def _check_under_eighteen(roster, rules, first, last) -> list[Finding]:
                     )
                     % {
                         "hours": f"{hours:.1f}",
-                        "minutes": MINOR_BREAK_MINUTES,
-                        "after": f"{MINOR_BREAK_AFTER_HOURS:g}",
+                        "minutes": minors.break_minutes,
+                        "after": f"{minors.break_after_hours:g}",
                     },
-                    basis="Art. 34.4 ET",
                 )
             )
 
@@ -409,7 +410,6 @@ def _check_under_eighteen(roster, rules, first, last) -> list[Finding]:
                         "Night shift rostered for somebody under eighteen. Art. 6.2 ET "
                         "forbids it outright: there is no permitted amount."
                     ),
-                    basis="Art. 6.2 ET",
                 )
             )
 
@@ -443,7 +443,6 @@ def _check_leave_clashes(first, last, employee) -> list[Finding]:
                     code="rostered_on_leave",
                     message=_("Rostered on a day of approved %(kind)s.")
                     % {"kind": absence.get_absence_type_display()},
-                    basis="—",
                 )
             )
     return found

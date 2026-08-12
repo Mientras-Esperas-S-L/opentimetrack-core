@@ -43,33 +43,28 @@ class WorkingTimeRules(BaseModel):
         max_digits=4,
         decimal_places=1,
         default=40,
-        help_text=_(
-            "Art. 34.1 ET: 40 hours a week on average over the reference period. "
-            "An ordinary legal maximum; the agreement or the contract may improve it."
-        ),
+        # The article and the explanation live in `apps.legal`, keyed by
+        # country, and reach the screen through the API. Repeating them here
+        # would be a second copy to keep in step --- which is what the frontend
+        # was already doing, wrongly.
+        help_text=_("Hours a week. See the citation served with the rules."),
     )
     daily_rest_hours = models.PositiveSmallIntegerField(
         _("rest between working days (hours)"),
         default=12,
-        help_text=_(
-            "Art. 34.3 ET. RD 1561/1995 modifies it for particular sectors, which "
-            "is why departing from it is reported and not prevented."
-        ),
+        help_text=_("Hours between the end of a working day and the start of the next."),
     )
     weekly_rest_hours = models.PositiveSmallIntegerField(
         _("weekly rest (hours)"),
         default=36,
-        help_text=_(
-            "Art. 37.1 ET: a day and a half uninterrupted. It may be accumulated "
-            "over periods of up to fourteen days."
-        ),
+        help_text=_("Uninterrupted hours of weekly rest."),
     )
     break_after_hours = models.DecimalField(
         _("a continuous day needs a break after (hours)"),
         max_digits=3,
         decimal_places=1,
         default=6,
-        help_text=_("Art. 34.4 ET: fifteen minutes when the continuous day exceeds six hours."),
+        help_text=_("A continuous day longer than this is owed a break."),
     )
     break_minutes = models.PositiveSmallIntegerField(_("break (minutes)"), default=15)
     break_counts_as_work = models.BooleanField(
@@ -83,31 +78,26 @@ class WorkingTimeRules(BaseModel):
     annual_overtime_hours = models.PositiveSmallIntegerField(
         _("overtime hours per year"),
         default=80,
-        help_text=_("Art. 35.2 ET."),
+        help_text=_("Overtime hours allowed per year."),
     )
     night_starts_at = models.TimeField(
         _("night work starts at"),
         default=time(22, 0),
-        help_text=_("Art. 36.1 ET: between 22:00 and 06:00."),
+        help_text=_("Start of the night window."),
     )
     night_ends_at = models.TimeField(_("night work ends at"), default=time(6, 0))
     correction_consent_days = models.PositiveSmallIntegerField(
         _("days to answer a proposed correction"),
         default=7,
         help_text=_(
-            "Art. 4.b needs the person's authorisation to change an entry but sets "
-            "no deadline for answering. Without one a proposal would hang forever, "
-            "so the company sets the window. Past it the change can be applied, "
-            "recorded as made without agreement."
+            "Days to answer a proposed change before the company may apply it "
+            "anyway, recorded as made without agreement."
         ),
     )
     roster_notice_days = models.PositiveSmallIntegerField(
         _("notice for roster changes (days)"),
         default=5,
-        help_text=_(
-            "Art. 34.2 ET requires five days' notice for irregular distribution of "
-            "the working day. Art. 38.3 ET asks for the holiday calendar two months ahead."
-        ),
+        help_text=_("Days of notice before a roster change."),
     )
 
     class Meta:
@@ -119,49 +109,58 @@ class WorkingTimeRules(BaseModel):
 
     @classmethod
     def for_company(cls, company) -> WorkingTimeRules:
-        """The company's rules, creating the defaults the first time.
+        """The company's rules, creating them the first time from its country.
 
         Every company has them, so a missing row is a gap in setup rather than a
         meaningful state. Returning defaults beats making every caller handle
         `None` and quietly skip the checks.
+
+        The figures come from `apps.legal`, keyed on `Tenant.country`. The field
+        defaults below stay as Spain's --- they are what a row created by a
+        migration or a fixture gets --- but a company created through the product
+        starts on its own country's law.
         """
-        rules, _created = cls.objects.get_or_create(tenant=company)
+        from apps.legal import for_company as framework_for
+
+        framework = framework_for(company)
+        rules, _created = cls.objects.get_or_create(tenant=company, defaults=framework.defaults)
         return rules
 
 
 # ---------------------------------------------------------------- under eighteen
-
-# These are **not** fields on WorkingTimeRules, and that is the point.
 #
-# Everything above is a figure the company sets, because a collective agreement
-# can improve it and sector regimes modify several outright. The ones below are
-# floors for workers under eighteen, and no agreement can lower them: making
-# them configurable would offer a setting whose only use is breaking the law,
-# and a product that offers it has already helped.
+# They used to be six constants here, and the reasoning for keeping them out of
+# `WorkingTimeRules` was right and still is: no agreement can lower them, so a
+# setting for them would be a setting whose only use is breaking the law.
 #
-# They are constants with their article attached, and they apply whenever the
-# person's age is known.
+# What was wrong is that they were **Spain's** floors written as the product's.
+# They now live in `apps.legal.es`, next to the articles that impose them, and a
+# company in another country gets that country's --- or, failing that, the
+# directive's.
+#
+# These names are kept as a thin forwarding layer so the existing call sites and
+# their tests read the same. New code should ask the framework directly:
+#
+#     from apps.legal import for_company
+#     for_company(company).minors.max_daily_hours
 
-#: Art. 34.3 ET: «Los trabajadores menores de dieciocho años no podrán realizar
-#: más de ocho horas diarias de trabajo efectivo, incluyendo, en su caso, el
-#: tiempo dedicado a la formación y, si trabajasen para varios empleadores, las
-#: horas realizadas con cada uno de ellos.» Note the absence of the "unless a
-#: collective agreement says otherwise" that the same article grants for adults.
-MINOR_MAX_DAILY_HOURS = 8
+from apps.legal import DIRECTIVE  # noqa: E402
+from apps.legal.es import ESPANA  # noqa: E402
 
-#: Art. 34.4 ET: thirty minutes, and from four and a half hours rather than six.
-MINOR_BREAK_AFTER_HOURS = 4.5
-MINOR_BREAK_MINUTES = 30
+MINOR_MAX_DAILY_HOURS = ESPANA.minors.max_daily_hours
+MINOR_BREAK_AFTER_HOURS = ESPANA.minors.break_after_hours
+MINOR_BREAK_MINUTES = ESPANA.minors.break_minutes
+MINOR_WEEKLY_REST_HOURS = ESPANA.minors.weekly_rest_hours
+MINOR_NIGHT_WORK_FORBIDDEN = ESPANA.minors.night_work_forbidden
+MINOR_OVERTIME_FORBIDDEN = ESPANA.minors.overtime_forbidden
 
-#: Art. 37.1 ET: two uninterrupted days, not a day and a half.
-MINOR_WEEKLY_REST_HOURS = 48
-
-#: Art. 6.2 ET: «Los trabajadores menores de dieciocho años no podrán realizar
-#: trabajos nocturnos». A prohibition, not a limit --- there is no amount of it
-#: that is allowed.
-MINOR_NIGHT_WORK_FORBIDDEN = True
-
-#: Art. 6.3 ET: «Se prohíbe realizar horas extraordinarias a los menores de
-#: dieciocho años.» Flat, with none of the force majeure exception art. 12.4.c
-#: grants part-time work.
-MINOR_OVERTIME_FORBIDDEN = True
+__all__ = [
+    "DIRECTIVE",
+    "MINOR_BREAK_AFTER_HOURS",
+    "MINOR_BREAK_MINUTES",
+    "MINOR_MAX_DAILY_HOURS",
+    "MINOR_NIGHT_WORK_FORBIDDEN",
+    "MINOR_OVERTIME_FORBIDDEN",
+    "MINOR_WEEKLY_REST_HOURS",
+    "WorkingTimeRules",
+]

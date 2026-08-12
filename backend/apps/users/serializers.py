@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps import legal
 from apps.tenants.models import Tenant, validate_time_zone
 from apps.users.models import Department, Role
 
@@ -132,12 +133,14 @@ class UserWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_("It cannot be today or a future date."))
 
         age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
-        # Art. 6.1 ET forbids work below sixteen. Anything under it is a typo or
-        # something nobody should be recording as an employee.
+        # Below the country's minimum working age it is a typo, or somebody who
+        # should not be recorded as an employee at all.
+        framework = legal.for_company(self.context["request"].user.tenant)
+        citation = framework.minors.citations.get("minimum_age")
         if age < 16:
             raise serializers.ValidationError(
-                _("That gives an age of %(age)s. Art. 6.1 ET does not allow work below sixteen.")
-                % {"age": age}
+                _("That gives an age of %(age)s, below the minimum working age. %(basis)s")
+                % {"age": age, "basis": citation.basis if citation else ""}
             )
         if age > 100:
             raise serializers.ValidationError(_("That gives an age of over a hundred years."))

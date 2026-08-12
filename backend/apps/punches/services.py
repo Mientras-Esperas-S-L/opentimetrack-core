@@ -14,6 +14,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from apps import legal
 from apps.common.exceptions import BusinessRuleError
 from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource, PunchType
 
@@ -278,10 +279,17 @@ def register_punch(
     # dieciocho años.» Flat, with none of the force majeure exception that
     # art. 12.4.c grants part-time work --- so this check comes first and has no
     # way out.
-    if hours_nature == HoursNature.OVERTIME and employee.is_minor_on(timezone.localdate()):
+    framework = legal.for_company(company)
+
+    if (
+        hours_nature == HoursNature.OVERTIME
+        and framework.minors.overtime_forbidden
+        and employee.is_minor_on(timezone.localdate())
+    ):
         raise BusinessRuleError(
             code="overtime_forbidden_for_minors",
-            message=_("Art. 6.3 ET: workers under eighteen may not work overtime."),
+            message=_("%(basis)s: workers under eighteen may not work overtime.")
+            % {"basis": framework.minors.citations["overtime"].basis},
         )
 
     if hours_nature == HoursNature.OVERTIME and employee.part_time and not force_majeure:
