@@ -65,7 +65,11 @@ class AuditAction(models.TextChoices):
     PERSON_CREATED = "PERSON_CREATED", _("Added a person")
     PERSON_UPDATED = "PERSON_UPDATED", _("Changed a person")
     PERSON_DEACTIVATED = "PERSON_DEACTIVATED", _("Deactivated a person")
+    PERSON_REACTIVATED = "PERSON_REACTIVATED", _("Reactivated a person")
     ROLE_CHANGED = "ROLE_CHANGED", _("Changed a role")
+    # Sending it hands somebody a way into the company's records, so it is a
+    # change to who can do what and not a piece of housekeeping.
+    INVITATION_SENT = "INVITATION_SENT", _("Sent a link to set a password")
 
     # Somebody changed the rules the record is measured against.
     SETTINGS_CHANGED = "SETTINGS_CHANGED", _("Changed company settings")

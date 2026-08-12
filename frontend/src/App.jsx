@@ -5,6 +5,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import AppShell from './routes/AppShell.jsx'
 import RequireManager from './routes/RequireManager.jsx'
 import SignIn from './pages/SignIn.jsx'
+import SetPassword from './pages/SetPassword.jsx'
 import Clock from './pages/Clock.jsx'
 import MyTime from './pages/me/MyTime.jsx'
 import MyLeave from './pages/me/MyLeave.jsx'
@@ -32,11 +33,18 @@ export default function App() {
     )
   }
 
-  if (!session) return <SignIn />
-
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public, and outside the session check on purpose. Somebody arriving
+            from the invitation email has no session by definition; while this
+            lived behind it the link fell through to the catch-all and landed on
+            the clock, so an invited person could never get a password. */}
+        <Route path="set-password/:uid/:token" element={<SetPassword />} />
+
+        {!session ? (
+          <Route path="*" element={<SignIn />} />
+        ) : (
         <Route element={<AppShell />}>
           <Route index element={<Clock />} />
           <Route path="mi-jornada" element={<MyTime />} />
@@ -60,6 +68,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
+        )}
       </Routes>
     </BrowserRouter>
   )

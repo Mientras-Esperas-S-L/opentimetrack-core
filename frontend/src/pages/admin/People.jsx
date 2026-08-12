@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
@@ -8,7 +9,9 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
+import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
@@ -21,6 +24,7 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import SearchIcon from '@mui/icons-material/Search'
 
@@ -29,9 +33,12 @@ import {
   deactivateEmployee,
   getDepartments,
   getEmployees,
+  inviteEmployee,
+  reactivateEmployee,
   updateEmployee,
 } from '../../services/api.js'
-import { Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
+import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
+import { useAuth } from '../../hooks/useAuth.js'
 
 const ROLES = [
   { value: 'EMPLOYEE', label: 'Persona trabajadora' },
@@ -173,12 +180,69 @@ function PersonDialog({ open, person, departments, onClose, onSave, saving, erro
   )
 }
 
+/** The row's actions: the common one visible, the rest behind the menu.
+ *
+ *  Three text buttons side by side wrapped onto two lines on a laptop and made
+ *  every row taller than the name it was about. Editing is what somebody comes
+ *  here to do; sending an access link and deactivating are occasional, and
+ *  putting them a click away also stops "Dar de baja" sitting under the cursor
+ *  next to "Editar".
+ */
+function RowActions({ person, busy, onEdit, onInvite, onReactivate, onDeactivate }) {
+  const [anchor, setAnchor] = useState(null)
+  const close = () => setAnchor(null)
+  const pick = (run) => () => {
+    close()
+    run()
+  }
+
+  return (
+    <Stack direction="row" sx={{ gap: 0.5, justifyContent: 'flex-end', alignItems: 'center' }}>
+      {person.is_active ? (
+        <Button size="small" onClick={onEdit}>
+          Editar
+        </Button>
+      ) : (
+        <Button size="small" onClick={onReactivate}>
+          Volver a dar de alta
+        </Button>
+      )}
+
+      <IconButton
+        size="small"
+        aria-label={`Más acciones para ${person.first_name} ${person.last_name}`.trim()}
+        onClick={(event) => setAnchor(event.currentTarget)}
+      >
+        <MoreVertIcon fontSize="small" />
+      </IconButton>
+
+      <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={close}>
+        {!person.is_active && <MenuItem onClick={pick(onEdit)}>Editar</MenuItem>}
+        {/* Their account exists but they may never have had a way into it: the
+            link expires, and accounts created before invitations existed never
+            got one. Pointless for a federated account, whose credentials belong
+            to the identity provider. */}
+        {person.is_active && !person.is_federated && (
+          <MenuItem onClick={pick(onInvite)} disabled={busy}>
+            Enviar enlace de acceso
+          </MenuItem>
+        )}
+        {person.is_active && <MenuItem onClick={pick(onDeactivate)}>Dar de baja</MenuItem>}
+      </Menu>
+    </Stack>
+  )
+}
+
 export default function People() {
+  const { session } = useAuth()
+  const isAdmin = session?.user?.role === 'ADMIN'
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [showInactive, setShowInactive] = useState(false)
   const [editing, setEditing] = useState(undefined) // undefined = closed, null = new
   const [error, setError] = useState(null)
+  const [sent, setSent] = useState(null) // address the last link went to
+  const [confirming, setConfirming] = useState(null)
 
   const { data: people, isLoading } = useQuery({
     queryKey: ['employees', { search, showInactive }],
@@ -212,6 +276,18 @@ export default function People() {
     onError: setError,
   })
 
+  const reactivate = useMutation({
+    mutationFn: reactivateEmployee,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
+    onError: setError,
+  })
+
+  const invite = useMutation({
+    mutationFn: inviteEmployee,
+    onSuccess: (data) => setSent(data.sent_to),
+    onError: setError,
+  })
+
   const rows = people ?? []
 
   return (
@@ -220,13 +296,25 @@ export default function People() {
         title="Personas"
         subtitle="Quien está de alta puede fichar. Dar de baja no borra nada: sus registros se conservan."
         action={
-          <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => setEditing(null)}>
-            Dar de alta
-          </Button>
+          isAdmin && (
+            <Button
+              variant="contained"
+              startIcon={<PersonAddIcon />}
+              onClick={() => setEditing(null)}
+            >
+              Dar de alta
+            </Button>
+          )
         }
       />
 
       <ErrorNote error={error} onClose={() => setError(null)} />
+
+      {sent && (
+        <Alert severity="success" onClose={() => setSent(null)} sx={{ mb: 2 }}>
+          Enlace enviado a <strong>{sent}</strong>. Caduca en 24 horas.
+        </Alert>
+      )}
 
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
@@ -274,7 +362,7 @@ export default function People() {
                 <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Correo</TableCell>
                 <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Nº</TableCell>
                 <TableCell>Perfil</TableCell>
-                <TableCell align="right">Acciones</TableCell>
+                {isAdmin && <TableCell align="right">Acciones</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -309,22 +397,31 @@ export default function People() {
                       color={person.role === 'EMPLOYEE' ? 'default' : 'primary'}
                     />
                   </TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" sx={{ gap: 0.5, justifyContent: 'flex-end' }}>
-                      <Button size="small" onClick={() => setEditing(person)}>
-                        Editar
-                      </Button>
-                      {person.is_active && (
-                        <Button
-                          size="small"
-                          color="inherit"
-                          onClick={() => deactivate.mutate(person.id)}
-                        >
-                          Dar de baja
-                        </Button>
-                      )}
-                    </Stack>
-                  </TableCell>
+                  {/* Only administrators may write here. A manager reaches this
+                      page --- the guard lets them --- so without this they would
+                      see buttons that always answer 403. */}
+                  {isAdmin && (
+                    <TableCell align="right">
+                      <RowActions
+                        person={person}
+                        busy={invite.isPending}
+                        onEdit={() => setEditing(person)}
+                        onInvite={() => invite.mutate(person.id)}
+                        onReactivate={() => reactivate.mutate(person.id)}
+                        onDeactivate={() =>
+                          setConfirming({
+                            title: 'Dar de baja',
+                            body:
+                              `${person.first_name} ${person.last_name}`.trim() || person.email,
+                            detail:
+                              'Deja de poder fichar y de entrar. Sus registros se conservan y puede volver a darse de alta cuando haga falta.',
+                            verb: 'Dar de baja',
+                            run: () => deactivate.mutate(person.id),
+                          })
+                        }
+                      />
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -343,6 +440,12 @@ export default function People() {
           setError(null)
         }}
         onSave={save.mutate}
+      />
+
+      <ConfirmDialog
+        request={confirming}
+        busy={deactivate.isPending}
+        onClose={() => setConfirming(null)}
       />
     </>
   )

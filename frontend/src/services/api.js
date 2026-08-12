@@ -106,6 +106,19 @@ export const signOut = async () => {
 
 export const getMe = () => get('/auth/me/')
 
+/** Asks for a link to set a password. Always resolves, whether the address
+ *  exists or not: telling the two apart would turn this into a way of finding
+ *  out who works where, so the screen says the same thing either way. */
+export const requestPasswordReset = (email) => post('/auth/password-reset/', { email })
+
+/** Sets the password from the link and signs in with it, so nobody has to type
+ *  the password they have just chosen. */
+export const setPasswordFromLink = async (payload) => {
+  const data = await post('/auth/set-password/', payload)
+  tokens.save(data)
+  return data
+}
+
 // ---------------------------------------------------------------- clock events
 
 export const getToday = () => get('/punches/today/')
@@ -161,6 +174,9 @@ export const createEmployee = (payload) => post('/employees/', payload)
 export const updateEmployee = async (id, payload) =>
   (await api.patch(`/employees/${id}/`, payload)).data
 export const deactivateEmployee = async (id) => (await api.delete(`/employees/${id}/`)).data
+export const reactivateEmployee = async (id) =>
+  (await api.patch(`/employees/${id}/`, { is_active: true })).data
+export const inviteEmployee = (id) => post(`/employees/${id}/invite/`)
 
 export const getDepartments = async (params) => rows(await get('/departments/', params))
 export const createDepartment = (payload) => post('/departments/', payload)

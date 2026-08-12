@@ -283,6 +283,7 @@ def test_they_cannot_change_or_resolve_anything_of_ours(ours, theirs):
         ("post", f"/api/corrections/{ours['correction'].id}/apply-anyway/", {}),
         ("patch", f"/api/employees/{ours['worker'].id}/", {"role": "ADMIN"}),
         ("delete", f"/api/employees/{ours['worker'].id}/", None),
+        ("post", f"/api/employees/{ours['worker'].id}/invite/", {}),
         ("patch", f"/api/punches/{ours['punch'].id}/void/", {"reason": "porque sí"}),
         ("patch", f"/api/shift-patterns/{ours['pattern'].id}/", {"name": "Secuestrado"}),
         ("delete", f"/api/departments/{ours['department'].id}/", None),
@@ -362,6 +363,7 @@ def test_a_worker_cannot_do_a_managers_job(ours):
         ("post", f"/api/corrections/{ours['correction'].id}/apply-anyway/", {}),
         ("post", "/api/employees/", {"email": "nuevo@nuestra.test", "first_name": "Nuevo"}),
         ("patch", f"/api/employees/{ours['worker'].id}/", {"role": "ADMIN"}),
+        ("post", f"/api/employees/{ours['worker'].id}/invite/", {}),
         ("patch", "/api/company/", {"annual_leave_days": 99}),
         ("patch", "/api/working-time-rules/", {"weekly_hours": 60}),
         (
@@ -470,6 +472,7 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^corrections/(?P<pk>[^/.]+)/reject/$",
         "api/^employees/$",
         "api/^employees/(?P<pk>[^/.]+)/$",
+        "api/^employees/(?P<pk>[^/.]+)/invite/$",
         "api/^departments/$",
         "api/^departments/(?P<pk>[^/.]+)/$",
         "api/^shifts/$",

@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -184,7 +185,9 @@ class UserViewSet(viewsets.ModelViewSet):
         return UserSerializer
 
     def get_permissions(self):
-        if self.action in {"create", "update", "partial_update", "destroy"}:
+        # `invite` belongs here and not with the read actions: sending the link
+        # hands somebody a way into the company's records.
+        if self.action in {"create", "update", "partial_update", "destroy", "invite"}:
             return [IsAdmin()]
         return super().get_permissions()
 
@@ -218,6 +221,26 @@ class UserViewSet(viewsets.ModelViewSet):
                 ),
             )
 
+    def _invite(self, person) -> bool:
+        """Sends the link to set a password, unless it would be useless.
+
+        Federated accounts sign in through the identity provider, so a link from
+        here would set a password nobody can use; and somebody deactivated
+        cannot sign in at all, which would make the message a dead end.
+        """
+        if person.is_federated or not person.is_active:
+            return False
+
+        send_account_email(person, base_url=settings.FRONTEND_URL, invitation=True)
+        record(
+            action=AuditAction.INVITATION_SENT,
+            actor=self.request.user,
+            target=person,
+            target_label=person.get_full_name() or person.email,
+            request=self.request,
+        )
+        return True
+
     def perform_create(self, serializer):
         person = serializer.save()
         record(
@@ -229,12 +252,55 @@ class UserViewSet(viewsets.ModelViewSet):
             request=self.request,
         )
 
+        # Without this the account exists and nobody can get into it: creating a
+        # person and inviting them are the same act from the administrator's
+        # side, so it is not left as a second button they have to remember.
+        # Unless a password came in the payload, in which case somebody is
+        # setting it deliberately and a link would only muddle things.
+        if not serializer.validated_data.get("password"):
+            self._invite(person)
+
+    @extend_schema(request=None, responses={200: dict})
+    @action(detail=True, methods=["post"])
+    def invite(self, request, pk=None):
+        """Sends the link again.
+
+        Needed because the link expires, mail goes astray, and an account
+        created before this existed never got one.
+        """
+        person = self.get_object()
+        if not self._invite(person):
+            raise BusinessRuleError(
+                code="cannot_invite",
+                message=(
+                    _("This account signs in through your identity provider.")
+                    if person.is_federated
+                    else _("Reactivate the account before inviting them.")
+                ),
+            )
+        return Response({"sent_to": person.email})
+
     def perform_update(self, serializer):
         before = serializer.instance.role
+        was_active = serializer.instance.is_active
         new_role = serializer.validated_data.get("role")
         if new_role:
             self._refuse_if_it_leaves_no_admin(serializer.instance, new_role=new_role)
         person = serializer.save()
+
+        # Giving somebody their access back is not an ordinary edit, and the
+        # trail should not make it look like one: it is the reverse of
+        # PERSON_DEACTIVATED and belongs next to it when somebody reads the
+        # history of an account.
+        if person.is_active and not was_active:
+            record(
+                action=AuditAction.PERSON_REACTIVATED,
+                actor=self.request.user,
+                target=person,
+                target_label=person.get_full_name() or person.email,
+                request=self.request,
+            )
+            return
 
         # A role change gets its own action. It is the one that decides who can
         # read other people's records, so it should be findable without

@@ -1,7 +1,12 @@
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
 import Paper from '@mui/material/Paper'
 import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
@@ -91,6 +96,53 @@ export function ErrorNote({ error, onClose }) {
     <Alert severity="error" onClose={onClose} sx={{ mb: 2 }}>
       {error.message ?? String(error)}
     </Alert>
+  )
+}
+
+/** Asks before something that is hard or impossible to undo.
+ *
+ *  Every destructive action in the panel used to happen on the first click.
+ *  Most of them are recoverable, but two are not --- emptying a month of the
+ *  roster and deleting a department --- and a product where a misclick can wipe
+ *  a month has to say so before it does it, not after.
+ *
+ *  `detail` is where the consequence goes, in the caller's own words: what a
+ *  person needs is not "are you sure" but "this leaves three people without a
+ *  department".
+ *
+ *  Driven by an object rather than a boolean so a page with several of these
+ *  needs one piece of state: `{ title, body, detail, verb, run }`, or null.
+ */
+export function ConfirmDialog({ request, onClose, busy }) {
+  const open = Boolean(request)
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle>{request?.title}</DialogTitle>
+      <DialogContent>
+        {request?.body && <Typography sx={{ fontWeight: 600 }}>{request.body}</Typography>}
+        {request?.detail && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            {request.detail}
+          </Typography>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="inherit" autoFocus>
+          Cancelar
+        </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          disabled={busy}
+          onClick={() => {
+            request.run()
+            onClose()
+          }}
+        >
+          {request?.verb ?? 'Continuar'}
+        </Button>
+      </DialogActions>
+    </Dialog>
   )
 }
 
