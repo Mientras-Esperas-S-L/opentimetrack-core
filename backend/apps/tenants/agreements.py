@@ -153,8 +153,11 @@ def load(path: Path) -> Ficha:
     # would need to enumerate every key twice and the error would be unreadable.
     if both := sorted(set(raw.get("working_time", {})) & set(raw.get("defers", {}))):
         raise FichaError(
-            _("%(keys)s: fixed and deferred at the same time; one of the two readings "
-              "of the agreement is wrong") % {"keys": ", ".join(both)}
+            _(
+                "%(keys)s: fixed and deferred at the same time; one of the two readings "
+                "of the agreement is wrong"
+            )
+            % {"keys": ", ".join(both)}
         )
 
     values = {key: entry["value"] for key, entry in raw.get("working_time", {}).items()}

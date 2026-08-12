@@ -10,7 +10,7 @@ Who gets to read it is the interesting part, and there are two answers.
 from __future__ import annotations
 
 from django.db.models import Q
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import mixins, serializers, viewsets
 
 from apps.audit.models import AuditAction, AuditLog
@@ -52,6 +52,13 @@ class AuditLogSerializer(serializers.ModelSerializer):
 
 
 @extend_schema(tags=["audit"])
+# Both GETs came out as `audit_retrieve` and the generator resolved it by
+# numbering them, so a client built from the schema got `audit_retrieve` and
+# `audit_retrieve_2` with no way to tell which one returned the list.
+@extend_schema_view(
+    list=extend_schema(operation_id="audit_list", summary="List the trail"),
+    retrieve=extend_schema(operation_id="audit_read", summary="Read one entry"),
+)
 class AuditLogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """The trail. Nobody writes to it through the API, by construction.
 

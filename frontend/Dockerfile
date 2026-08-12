@@ -3,8 +3,10 @@ FROM docker.io/library/node:24-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+COPY package.json package-lock.json ./
+# `ci` y no `install`: instala exactamente lo del lock, así la imagen de
+# desarrollo trae las mismas versiones que la CI y que producción.
+RUN npm ci
 
 COPY . .
 

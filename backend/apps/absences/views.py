@@ -85,6 +85,10 @@ class AbsenceViewSet(
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet,
 ):
+    # Declared only so the schema generator can infer the model without running
+    # get_queryset, which needs an authenticated caller. Same idiom as the other
+    # viewsets; never used at runtime.
+    queryset = Absence.objects.none()
     serializer_class = AbsenceSerializer
     permission_classes = [IsAuthenticatedInTenant]
     filterset_fields = ["status", "absence_type", "employee"]

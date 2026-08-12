@@ -194,6 +194,11 @@ SPECTACULAR_SETTINGS = {
     # client generated from the schema ends up with duplicate types.
     "ENUM_NAME_OVERRIDES": {
         "PunchTypeEnum": "apps.punches.models.PunchType.choices",
+        # Punch.work_mode and User.default_work_mode hold the same two values.
+        # They cannot share a TextChoices class --- punches depends on users, so
+        # importing the other way would close a cycle --- and without this the
+        # generator names one set of choices twice.
+        "WorkModeEnum": "apps.punches.models.WorkMode.choices",
     },
 }
 

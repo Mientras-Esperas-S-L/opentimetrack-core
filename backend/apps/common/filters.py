@@ -33,9 +33,7 @@ class LocalDayRangeFilter(django_filters.FilterSet):
 
     day_field = "timestamp"
 
-    date_from = django_filters.DateFilter(
-        method="filter_from", label=_("from this day, inclusive")
-    )
+    date_from = django_filters.DateFilter(method="filter_from", label=_("from this day, inclusive"))
     date_to = django_filters.DateFilter(method="filter_to", label=_("to this day, inclusive"))
 
     @property
