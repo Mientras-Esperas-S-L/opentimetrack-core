@@ -155,6 +155,8 @@ def _days_within(absence: Absence, start: date, end: date, *, working_days: bool
     if not working_days:
         return (last - first).days + 1
 
+    from django.db.models import Max
+
     from apps.shifts.models import Shift
     from apps.tenants.holidays import holidays_for
 
@@ -163,11 +165,26 @@ def _days_within(absence: Absence, start: date, end: date, *, working_days: bool
             employee_id=absence.employee_id, day__gte=first, day__lte=last
         ).values_list("day", flat=True)
     )
+    # The roster only speaks for the days it reaches. Holiday is booked months
+    # ahead and rosters are published weeks ahead, so the ordinary case is a
+    # request the roster half-covers --- and "any shift in the range means
+    # count only shift days" was undercounting the uncovered half: a fortnight
+    # off with one week published cost five days instead of ten. Beyond the
+    # last day this person has ever been rostered, the ordinary week answers.
+    horizon = Shift.objects.filter(employee_id=absence.employee_id).aggregate(Max("day"))[
+        "day__max"
+    ]
     off = holidays_for(absence.employee, first, last)
+
+    def counts(day) -> bool:
+        if day in off:
+            return False
+        if horizon is not None and day <= horizon:
+            return day in rostered
+        return day.weekday() < 5
+
     span = [first + timedelta(days=n) for n in range((last - first).days + 1)]
-    if rostered:
-        return sum(1 for day in span if day in rostered and day not in off)
-    return sum(1 for day in span if day.weekday() < 5 and day not in off)
+    return sum(1 for day in span if counts(day))
 
 
 # ------------------------------------------------------------------- requesting
@@ -237,6 +254,20 @@ def request_absence(
     # Reducing a day only means something while the contract is suspended.
     # Anywhere else it would look like a setting and do nothing, which is the
     # worst kind of field.
+    # A suspension has to say WHICH of the fifteen it is. A raw one carries no
+    # article, no name for the report, and --- the audit probe that forced this
+    # --- no `initiated_by`, so anybody could file themselves a nameless
+    # "suspension" with a reduction attached and walk straight around the rule
+    # that an ERTE is the company's act to record.
+    if absence_type == AbsenceType.SUSPENSION and leave_type is None:
+        raise BusinessRuleError(
+            code="suspension_needs_its_kind",
+            message=_(
+                "Say which suspension it is: they carry different articles and "
+                "different consequences, and the record has to name one."
+            ),
+        )
+
     if reduction_share is not None and (start_time or end_time):
         raise BusinessRuleError(
             code="reduction_takes_no_hours",
@@ -252,6 +283,23 @@ def request_absence(
             message=_(
                 "Only a suspension can reduce the working day. For fewer hours by "
                 "agreement, change the contracted figure on the person."
+            ),
+        )
+
+    # And only the suspensions the company records. A voluntary excedencia "at
+    # 40 %" does not exist in law, and if one slipped through and got approved
+    # on a busy afternoon, the roster would quietly start measuring that person
+    # against a reduced contract nobody lawfully reduced.
+    if (
+        reduction_share is not None
+        and leave_type is not None
+        and leave_type.initiated_by != "COMPANY"
+    ):
+        raise BusinessRuleError(
+            code="reduction_is_company_recorded",
+            message=_(
+                "Only a suspension the company records --- an ERTE, the RED "
+                "mechanism --- can reduce the working day."
             ),
         )
 

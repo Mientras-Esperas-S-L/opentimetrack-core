@@ -837,3 +837,19 @@ def test_undoing_a_stroke_puts_back_what_each_cell_held(company, worker):
     assert after[date(2026, 9, 1)].pattern_id is None
     assert after[date(2026, 9, 1)].segments == MORNING
     assert after[date(2026, 9, 2)].segments == [{"start": "20:00", "end": "08:00"}]
+
+
+@pytest.mark.django_db
+def test_fixed_nights_are_not_a_rotation(company, worker):
+    """El art. 36.3 vive dentro del artículo del trabajo a turnos. Un vigilante
+    de noches fijas no rota, y salía como infractor permanente de una regla
+    sobre rotaciones."""
+    with tenant_context(company.id):
+        # Sin rotating_shifts: noches fijas.
+        for offset in range(21):
+            day = date(2026, 9, 7) + timedelta(days=offset)
+            if day.weekday() < 5:
+                shift(company, worker, day, NIGHT)
+        findings = review_roster(company=company, first=date(2026, 9, 7), last=date(2026, 9, 27))
+
+    assert [f for f in findings if f.code == "consecutive_night_weeks"] == []

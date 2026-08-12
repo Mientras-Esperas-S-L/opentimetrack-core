@@ -6,7 +6,7 @@ cosmetic bug: somebody books days they do not have, or loses days they do.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 
@@ -333,3 +333,59 @@ def test_with_no_roster_at_all_it_falls_back_to_monday_to_friday(company, employ
     approve_absence(absence, resolved_by=manager)
 
     assert vacation_balance(employee, company, date(2026, 8, 1)).taken == 5
+
+
+@pytest.mark.django_db
+def test_the_roster_only_speaks_for_the_days_it_reaches(company, employee, manager):
+    """Vacaciones a meses vista, cuadrante a semanas vista: el caso normal es
+    una ausencia que el cuadrante cubre a medias. Antes, un solo turno en el
+    rango hacía contar únicamente los días con turno, y una quincena con una
+    semana publicada costaba cinco días en vez de diez."""
+    from apps.shifts.models import Shift
+
+    with tenant_context(company.id):
+        # Cuadrante publicado solo la primera semana: lunes a viernes.
+        for offset in range(5):
+            Shift.objects.create(
+                tenant=company,
+                employee=employee,
+                day=date(2026, 7, 6) + timedelta(days=offset),
+                segments=[{"start": "08:00", "end": "16:00"}],
+            )
+
+    absence = _ask(company, employee, date(2026, 7, 6), date(2026, 7, 19))
+    approve_absence(absence, resolved_by=manager)
+
+    balance = vacation_balance(employee, company, date(2026, 8, 1))
+    # Primera semana del cuadrante: 5. Segunda, sin publicar: lunes-viernes, 5.
+    assert balance.taken == 10
+
+
+@pytest.mark.django_db
+def test_but_inside_its_reach_a_gap_is_a_real_day_off(company, employee, manager):
+    """Si el cuadrante llega más allá de la ausencia, sus huecos son descansos
+    de verdad y no deben descontarse."""
+    from apps.shifts.models import Shift
+
+    with tenant_context(company.id):
+        # Rota jueves a domingo esa semana, y tiene cuadrante la semana
+        # siguiente también: el horizonte va más allá de la ausencia.
+        for day in (
+            date(2026, 7, 9),
+            date(2026, 7, 10),
+            date(2026, 7, 11),
+            date(2026, 7, 12),
+            date(2026, 7, 16),
+        ):
+            Shift.objects.create(
+                tenant=company,
+                employee=employee,
+                day=day,
+                segments=[{"start": "08:00", "end": "16:00"}],
+            )
+
+    absence = _ask(company, employee, date(2026, 7, 6), date(2026, 7, 12))
+    approve_absence(absence, resolved_by=manager)
+
+    # Solo los cuatro días rotados dentro de la semana pedida.
+    assert vacation_balance(employee, company, date(2026, 8, 1)).taken == 4

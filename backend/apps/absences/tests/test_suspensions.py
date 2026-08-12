@@ -509,3 +509,86 @@ def test_an_excedencia_is_still_the_persons_to_request(company, worker, staff):
 
     assert response.status_code == 201
     assert response.json()["status"] == "PENDING"
+
+
+# --------------------------------------- las dos varas del ERTE, igualadas
+
+
+@pytest.mark.django_db
+def test_hours_worked_are_measured_against_the_reduced_contract_too(company, worker):
+    """Lo planificado ya se medía contra el contrato reducido; lo fichado
+    seguía midiéndose contra el entero. Las horas entre medias, trabajadas
+    durante un ERTE, son justo las que una inspección de un ERTE busca."""
+    from datetime import datetime
+    from datetime import time as dt_time
+
+    from apps.punches.models import Punch, PunchType
+
+    monday = date(2026, 9, 7)
+    with tenant_context(company.id):
+        suspend(company, worker, "es.erte", monday, monday + timedelta(days=90), share=40)
+        # Cinco días de seis horas: 30 h. Por debajo de 40 (contrato entero) y
+        # muy por encima de 24 (el 60 % que queda).
+        zone = company.tzinfo
+        for offset in range(5):
+            day = monday + timedelta(days=offset)
+            Punch.objects.create(
+                tenant=company,
+                employee=worker,
+                punch_type=PunchType.IN,
+                timestamp=datetime.combine(day, dt_time(8, 0), tzinfo=zone),
+            )
+            Punch.objects.create(
+                tenant=company,
+                employee=worker,
+                punch_type=PunchType.OUT,
+                timestamp=datetime.combine(day, dt_time(14, 0), tzinfo=zone),
+            )
+        findings = review_roster(company=company, first=monday, last=monday + timedelta(days=6))
+
+    over = [f for f in findings if f.code == "worked_over_the_contract"]
+    assert len(over) == 1
+    assert "24 h" in str(over[0].message)
+
+
+# ------------------------------------ los dos agujeros de la segunda auditoría
+#
+# Los cazaron sondas ejecutadas contra la API, no lectura de código: una
+# trabajadora creó una «suspensión» sin tipo con reducción del 70 %, y una
+# excedencia al 40 %. El primero rodeaba initiated_by entero; el segundo
+# habría puesto el cuadrante a medir contra un contrato que nadie redujo
+# lícitamente.
+
+
+@pytest.mark.django_db
+def test_a_suspension_must_say_which_one_it_is(company, worker):
+    """Cruda no lleva artículo, no tiene nombre para el informe y ---lo que
+    forzó esto--- no tiene initiated_by que respetar."""
+    with tenant_context(company.id), pytest.raises(BusinessRuleError) as caught:
+        request_absence(
+            employee=worker,
+            company=company,
+            absence_type="SUSPENSION",
+            start_date=date(2026, 12, 1),
+            end_date=date(2026, 12, 20),
+            reduction_share=70,
+        )
+
+    assert caught.value.code == "suspension_needs_its_kind"
+
+
+@pytest.mark.django_db
+def test_an_excedencia_cannot_carry_a_reduction(company, worker):
+    """La excedencia «al 40 %» no existe: la reducción es de las suspensiones
+    que registra la empresa (ERTE, RED)."""
+    with tenant_context(company.id), pytest.raises(BusinessRuleError) as caught:
+        request_absence(
+            employee=worker,
+            company=company,
+            leave_type=LeaveType.objects.get(code="es.unpaid_leave"),
+            start_date=date(2027, 2, 1),
+            end_date=date(2027, 6, 30),
+            reduction_share=40,
+        )
+
+    assert caught.value.code == "reduction_is_company_recorded"

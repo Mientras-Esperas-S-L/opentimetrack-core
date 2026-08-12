@@ -19,6 +19,7 @@ from rest_framework.views import APIView
 from apps import legal
 from apps.audit.models import AuditAction
 from apps.audit.services import record
+from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import (
     IsAuthenticatedInTenant,
@@ -316,7 +317,13 @@ class ShiftViewSet(viewsets.ModelViewSet):
     def today(self, request):
         """Expected against recorded, for the caller, today."""
         return Response(
-            expected_vs_worked(employee=request.user, company=request.user.tenant, day=date.today())
+            expected_vs_worked(
+                employee=request.user,
+                company=request.user.tenant,
+                # Their today: date.today() is the container's UTC date, which
+                # is yesterday for all of Spain between midnight and 01:00.
+                day=local_today(request.user),
+            )
         )
 
 

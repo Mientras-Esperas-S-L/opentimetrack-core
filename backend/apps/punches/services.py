@@ -15,6 +15,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps import legal
+from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError
 from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource, PunchType
 
@@ -350,7 +351,10 @@ def _check_no_approved_absence(employee, company) -> None:
     """
     from apps.absences.models import STOPS_THE_WHOLE_DAY, Absence, AbsenceStatus
 
-    today = timezone.now().astimezone(company.tzinfo).date()
+    # The person's today, not the company's: the Canary delegation is an hour
+    # behind Madrid, and between 23:00 and midnight there the two dates differ
+    # --- which decides whether tomorrow's approved leave already blocks.
+    today = local_today(employee)
 
     # Only what stops the whole day. Two things do not, and both are ordinary:
     # somebody who left at eleven with a fever worked the morning --- blocking

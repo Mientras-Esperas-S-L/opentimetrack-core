@@ -654,7 +654,17 @@ def _check_night_work(roster, rules, night, shifts_law, first, last) -> list[Fin
         declared = person.night_worker == "YES"
         found.extend(_check_night_average(person, inside, night, declared, first, last))
 
-    if shifts_law and shifts_law.max_consecutive_night_weeks and not person.voluntary_night_shift:
+    # Art. 36.3 lives inside the shift-work article: "en la organización del
+    # trabajo de los turnos... ningún trabajador estará en el de noche más de
+    # dos semanas consecutivas, salvo adscripción voluntaria". A watchman on
+    # permanent fixed nights is not on rotation, and reporting him as a
+    # standing breach of a rule about rotations was the audit's finding.
+    if (
+        shifts_law
+        and shifts_law.max_consecutive_night_weeks
+        and person.rotating_shifts
+        and not person.voluntary_night_shift
+    ):
         found.extend(_check_consecutive_night_weeks(person, inside, night, shifts_law))
 
     return found
@@ -885,6 +895,17 @@ def _check_time_actually_worked(company, rules, first, last, employee) -> list[F
             if monday < first or monday + timedelta(days=6) > last:
                 continue
 
+            # The same reduction the roster check applies, or the two disagree:
+            # the roster warned above the reduced contract while this warned
+            # only above the full one --- and the hours in between, worked
+            # during an ERTE, are exactly the ones an inspection of an ERTE
+            # goes looking for. The legal maximum stays put, as everywhere.
+            week_agreed = (
+                agreed * _reduced_share(person, monday, monday + timedelta(days=6))
+                if agreed is not None
+                else None
+            )
+
             if hours > ceiling:
                 found.append(
                     Finding(
@@ -899,7 +920,7 @@ def _check_time_actually_worked(company, rules, first, last, employee) -> list[F
                         % {"hours": f"{hours:.1f}", "limit": f"{ceiling:g}"},
                     )
                 )
-            elif agreed is not None and hours > agreed:
+            elif week_agreed is not None and hours > week_agreed:
                 found.append(
                     Finding(
                         day=monday,
@@ -907,7 +928,7 @@ def _check_time_actually_worked(company, rules, first, last, employee) -> list[F
                         code="worked_over_the_contract",
                         employee_name=person.get_full_name(),
                         message=_("%(hours)s h actually worked against %(agreed)s h contracted.")
-                        % {"hours": f"{hours:.1f}", "agreed": f"{agreed:g}"},
+                        % {"hours": f"{hours:.1f}", "agreed": f"{week_agreed:g}"},
                     )
                 )
     return found

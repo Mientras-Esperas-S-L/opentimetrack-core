@@ -7,6 +7,7 @@ import zipfile
 from datetime import date, timedelta
 
 from django.http import HttpResponse
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
@@ -74,7 +75,7 @@ class ReportView(APIView):
 
     def get(self, request):
         company = request.user.tenant
-        today = date.today()
+        today = timezone.localdate()
 
         date_from = _parse_date(request.query_params.get("date_from"), today - timedelta(days=30))
         date_to = _parse_date(request.query_params.get("date_to"), today)
@@ -233,7 +234,7 @@ class PayrollSummaryView(APIView):
         company = request.user.tenant
         employee = _employee_for(request)
 
-        anchor = _parse_date(request.query_params.get("day"), date.today())
+        anchor = _parse_date(request.query_params.get("day"), timezone.localdate())
         period = period_containing(anchor, company.payroll_period)
 
         data = build_report(
@@ -284,7 +285,7 @@ class PayrollSummaryView(APIView):
             )
 
         company = request.user.tenant
-        anchor = _parse_date(request.data.get("day"), date.today())
+        anchor = _parse_date(request.data.get("day"), timezone.localdate())
         period = period_containing(anchor, company.payroll_period)
 
         made, skipped = [], []

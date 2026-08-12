@@ -472,18 +472,23 @@ export default function Roster() {
         // Move = the destination becomes what was held and the origin is
         // rubbed out, in ONE stroke, so undo restores both cells at once ---
         // including whatever the destination held before being covered.
-        setUndo([
+        const before = [
           asCell(target, toDay, target.days[toDay]),
           asCell(source, fromDay, source.days[fromDay]),
-        ])
-        paint.mutate([
-          {
-            employee: target.id,
-            day: toDay,
-            ...(shift.pattern ? { pattern: shift.pattern } : { segments: shift.segments }),
-          },
-          { employee: source.id, day: fromDay },
-        ])
+        ]
+        paint.mutate(
+          [
+            {
+              employee: target.id,
+              day: toDay,
+              ...(shift.pattern ? { pattern: shift.pattern } : { segments: shift.segments }),
+            },
+            { employee: source.id, day: fromDay },
+          ],
+          // Only once it actually saved: offering to undo a stroke that never
+          // landed would "restore" cells that never changed.
+          { onSuccess: () => setUndo(before) }
+        )
         return
       }
 
@@ -513,8 +518,7 @@ export default function Roster() {
       const changed = stroke.some(
         (cell, i) => (cell.pattern ?? null) !== (before[i].pattern ?? null) || before[i].segments
       )
-      paint.mutate(stroke)
-      setUndo(changed ? before : null)
+      paint.mutate(stroke, { onSuccess: () => setUndo(changed ? before : null) })
     }
 
     const escape = (event) => {

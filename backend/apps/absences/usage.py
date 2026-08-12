@@ -33,6 +33,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 from apps.absences.models import Absence, AbsenceStatus, LeavePeriod, LeaveUnit
+from apps.common.clock import local_today
 
 
 @dataclass(frozen=True)
@@ -109,7 +110,7 @@ def leave_usage(employee, leave_type, company, on: date | None = None) -> LeaveU
     """What this person has used of this leave, in its own unit and period."""
     from apps.absences.services import _days_within
 
-    on = on or date.today()
+    on = on or local_today(employee)
     first, last = period_for(leave_type, on)
 
     rows = Absence.objects.filter(

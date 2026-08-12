@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 21:24+0000\n"
+"POT-Creation-Date: 2026-08-12 21:52+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -268,8 +268,8 @@ msgstr "ausencia"
 msgid "absences"
 msgstr "ausencias"
 
-#: apps/absences/models.py:362 apps/absences/services.py:205
-#: apps/reports/views.py:82 apps/shifts/views.py:221
+#: apps/absences/models.py:362 apps/absences/services.py:222
+#: apps/reports/views.py:83 apps/shifts/views.py:222
 msgid "The end date cannot precede the start date."
 msgstr "La fecha final no puede ir antes que la inicial."
 
@@ -300,11 +300,11 @@ msgstr ""
 "la ausencia, sus fechas y su estado, y desde el RD 1060/2022 el trabajador "
 "no entrega el parte a la empresa: se lo remite el INSS."
 
-#: apps/absences/services.py:200
+#: apps/absences/services.py:217
 msgid "Say what kind of leave it is."
 msgstr "Di de qué tipo de ausencia se trata."
 
-#: apps/absences/services.py:212
+#: apps/absences/services.py:229
 msgid ""
 "The medical certificate is not stored. Recording the absence, its dates and "
 "its status is enough, and since RD 1060/2022 the worker does not hand the "
@@ -314,28 +314,44 @@ msgstr ""
 "y su estado, y desde el RD 1060/2022 el trabajador no entrega el parte a la "
 "empresa."
 
-#: apps/absences/services.py:229
+#: apps/absences/services.py:246
 #, python-format
 msgid "There is already leave recorded between %(from)s and %(to)s."
 msgstr "Ya hay una ausencia registrada entre el %(from)s y el %(to)s."
 
-#: apps/absences/services.py:244
+#: apps/absences/services.py:266
+msgid ""
+"Say which suspension it is: they carry different articles and different "
+"consequences, and the record has to name one."
+msgstr ""
+"Di qué suspensión es: llevan artículos y consecuencias distintas, y el "
+"registro tiene que nombrar una."
+
+#: apps/absences/services.py:275
 msgid ""
 "A reduction covers whole days at a smaller share. For hours away on one day, "
 "leave the reduction empty."
 msgstr ""
-"Una reducción cubre días enteros a una jornada menor. Para horas sueltas "
-"de un día, deja la reducción vacía."
+"Una reducción cubre días enteros a una jornada menor. Para horas sueltas de "
+"un día, deja la reducción vacía."
 
-#: apps/absences/services.py:253
+#: apps/absences/services.py:284
 msgid ""
 "Only a suspension can reduce the working day. For fewer hours by agreement, "
 "change the contracted figure on the person."
 msgstr ""
-"Solo una suspensión puede reducir la jornada. Para menos horas por "
-"acuerdo, cambia las horas contratadas de la persona."
+"Solo una suspensión puede reducir la jornada. Para menos horas por acuerdo, "
+"cambia las horas contratadas de la persona."
 
-#: apps/absences/services.py:262
+#: apps/absences/services.py:301
+msgid ""
+"Only a suspension the company records --- an ERTE, the RED mechanism --- can "
+"reduce the working day."
+msgstr ""
+"Solo una suspensión de las que registra la empresa —un ERTE, el "
+"mecanismo RED— puede reducir la jornada."
+
+#: apps/absences/services.py:310
 msgid ""
 "Holiday is taken in whole days. For part of a day, use the leave type that "
 "fits: a medical appointment, family emergency, an exam."
@@ -343,19 +359,19 @@ msgstr ""
 "Las vacaciones se cogen por días completos. Para parte de un día usa el "
 "permiso que corresponda: visita médica, fuerza mayor familiar, un examen."
 
-#: apps/absences/services.py:404 apps/absences/services.py:433
+#: apps/absences/services.py:452 apps/absences/services.py:481
 msgid "leave"
 msgstr "una ausencia"
 
-#: apps/absences/services.py:413
+#: apps/absences/services.py:461
 msgid "Leave has since been approved for those dates."
 msgstr "Mientras tanto se ha aprobado otra ausencia para esas fechas."
 
-#: apps/absences/services.py:454
+#: apps/absences/services.py:502
 msgid "That request belongs to somebody else."
 msgstr "Esa solicitud es de otra persona."
 
-#: apps/absences/services.py:463 apps/punches/corrections.py:466
+#: apps/absences/services.py:511 apps/punches/corrections.py:466
 #: apps/punches/corrections.py:514
 msgid "This request has already been resolved."
 msgstr "Esta solicitud ya está resuelta."
@@ -384,7 +400,7 @@ msgstr ""
 "quitaría el motivo a registros que tienen que durar cuatro años."
 
 #: apps/absences/views.py:199 apps/absences/views.py:382
-#: apps/punches/correction_views.py:200 apps/reports/views.py:341
+#: apps/punches/correction_views.py:200 apps/reports/views.py:342
 msgid "That person is not in this company."
 msgstr "Esa persona no pertenece a esta empresa."
 
@@ -408,7 +424,7 @@ msgstr ""
 msgid "You can only see your own balance."
 msgstr "Solo puedes consultar tu propio saldo."
 
-#: apps/absences/views.py:515 apps/shifts/views.py:193
+#: apps/absences/views.py:515 apps/shifts/views.py:194
 msgid "Give 'from' and 'to' as YYYY-MM-DD."
 msgstr "Indica 'from' y 'to' con el formato AAAA-MM-DD."
 
@@ -1079,22 +1095,22 @@ msgstr "fichaje"
 msgid "clock events"
 msgstr "fichajes"
 
-#: apps/punches/services.py:260
+#: apps/punches/services.py:261
 msgid "This person is deactivated and cannot clock in or out."
 msgstr "Esta persona está dada de baja y no puede fichar."
 
-#: apps/punches/services.py:279
+#: apps/punches/services.py:280
 msgid "The working day has to be open first."
 msgstr "La jornada tiene que estar abierta antes."
 
-#: apps/punches/services.py:300
+#: apps/punches/services.py:301
 #, python-format
 msgid "%(basis)s: workers under eighteen may not work overtime."
 msgstr ""
 "%(basis)s: los menores de dieciocho años no pueden hacer horas "
 "extraordinarias."
 
-#: apps/punches/services.py:308
+#: apps/punches/services.py:309
 msgid ""
 "Art. 12.4.c ET: part-time work admits no overtime, only complementary hours "
 "--- except hours to prevent or repair urgent damage."
@@ -1103,13 +1119,13 @@ msgstr ""
 "complementarias, salvo las de fuerza mayor para prevenir o reparar daños "
 "urgentes."
 
-#: apps/punches/services.py:318
+#: apps/punches/services.py:319
 msgid "Say whether the overtime is paid or compensated with rest."
 msgstr ""
 "Indica si las horas extraordinarias se retribuyen o se compensan con "
 "descanso."
 
-#: apps/punches/services.py:374
+#: apps/punches/services.py:378
 msgid "You cannot clock in: you have approved leave for today."
 msgstr "No puedes fichar: tienes una ausencia aprobada para hoy."
 
@@ -1251,23 +1267,23 @@ msgstr "registrado por una aplicación"
 msgid "Total"
 msgstr "Total"
 
-#: apps/reports/views.py:36
+#: apps/reports/views.py:37
 msgid "Dates must be written as YYYY-MM-DD."
 msgstr "Las fechas se escriben como AAAA-MM-DD."
 
-#: apps/reports/views.py:96 apps/reports/views.py:149
+#: apps/reports/views.py:97 apps/reports/views.py:150
 msgid "You may only request your own record."
 msgstr "Solo puedes pedir tu propio registro."
 
-#: apps/reports/views.py:101
+#: apps/reports/views.py:102
 msgid "That person does not exist."
 msgstr "Esa persona no existe."
 
-#: apps/reports/views.py:158
+#: apps/reports/views.py:159
 msgid "Nobody active matches that."
 msgstr "Ninguna persona activa coincide."
 
-#: apps/reports/views.py:163
+#: apps/reports/views.py:164
 #, python-format
 msgid ""
 "%(count)s people is over the %(limit)s this can produce in one request. "
@@ -1276,11 +1292,11 @@ msgstr ""
 "%(count)s personas pasan de las %(limit)s que se pueden generar de una vez. "
 "Acota por departamento."
 
-#: apps/reports/views.py:283
+#: apps/reports/views.py:284
 msgid "Only a manager or an administrator generates the summaries."
 msgstr "Solo un responsable o la administración genera los resúmenes."
 
-#: apps/reports/views.py:336
+#: apps/reports/views.py:337
 msgid "You may only ask for your own summary."
 msgstr "Solo puedes pedir tu propio resumen."
 
@@ -1341,12 +1357,12 @@ msgstr "turnos asignados"
 msgid "Choose at least one day."
 msgstr "Elige al menos un día."
 
-#: apps/shifts/services.py:147 apps/shifts/views.py:239
+#: apps/shifts/services.py:147 apps/shifts/views.py:240
 #: apps/users/serializers.py:118
 msgid "Somebody in that list is not in this company."
 msgstr "Alguien de esa lista no pertenece a esta empresa."
 
-#: apps/shifts/services.py:151 apps/shifts/views.py:227
+#: apps/shifts/services.py:151 apps/shifts/views.py:228
 msgid "That shift pattern does not exist."
 msgstr "Ese turno no existe."
 
@@ -1427,7 +1443,7 @@ msgstr ""
 "h en %(days)s días, la prohibición de horas extraordinarias y una evaluación "
 "de salud. Nadie ha dejado constancia de si la tiene."
 
-#: apps/shifts/services.py:697
+#: apps/shifts/services.py:707
 #, python-format
 msgid ""
 "A night worker averaging %(average)s h a day over %(days)s days, above the "
@@ -1436,7 +1452,7 @@ msgstr ""
 "Un trabajador nocturno con un promedio de %(average)s h diarias en %(days)s "
 "días, por encima de las %(limit)s h permitidas."
 
-#: apps/shifts/services.py:702
+#: apps/shifts/services.py:712
 #, python-format
 msgid ""
 "Averaging %(average)s h a day over %(days)s days. The roster reads like "
@@ -1447,7 +1463,7 @@ msgstr ""
 "trabajo nocturno, y si le corresponde esa condición eso pasa de las "
 "%(limit)s h del art. 36.1 ET."
 
-#: apps/shifts/services.py:749
+#: apps/shifts/services.py:759
 #, python-format
 msgid ""
 "%(weeks)s consecutive weeks on the night shift, over the %(limit)s allowed. "
@@ -1457,7 +1473,7 @@ msgstr ""
 "%(limit)s permitidas. Para más hace falta que la persona se haya adscrito "
 "voluntariamente, y eso es un campo de su ficha."
 
-#: apps/shifts/services.py:790
+#: apps/shifts/services.py:800
 #, python-format
 msgid ""
 "%(hours)s h rostered for somebody under eighteen. The limit is %(limit)s h a "
@@ -1466,7 +1482,7 @@ msgstr ""
 "%(hours)s h planificadas a una persona menor de dieciocho años. El límite "
 "son %(limit)s h diarias y ningún convenio puede subirlo."
 
-#: apps/shifts/services.py:804
+#: apps/shifts/services.py:814
 #, python-format
 msgid ""
 "A continuous day of %(hours)s h for somebody under eighteen needs a break of "
@@ -1475,7 +1491,7 @@ msgstr ""
 "Una jornada continuada de %(hours)s h de una persona menor de dieciocho años "
 "necesita un descanso de %(minutes)s min, a partir de %(after)s h."
 
-#: apps/shifts/services.py:822
+#: apps/shifts/services.py:832
 msgid ""
 "Night shift rostered for somebody under eighteen. Art. 6.2 ET forbids it "
 "outright: there is no permitted amount."
@@ -1483,7 +1499,7 @@ msgstr ""
 "Turno nocturno planificado a una persona menor de dieciocho años. El art. "
 "6.2 ET lo prohíbe sin más: no hay cantidad permitida."
 
-#: apps/shifts/services.py:896
+#: apps/shifts/services.py:917
 #, python-format
 msgid ""
 "%(hours)s h actually worked that week, over the %(limit)s h maximum. This is "
@@ -1492,16 +1508,16 @@ msgstr ""
 "%(hours)s h realmente trabajadas esa semana, por encima del máximo de "
 "%(limit)s h. Esto es el registro, no el cuadrante."
 
-#: apps/shifts/services.py:909
+#: apps/shifts/services.py:930
 #, python-format
 msgid "%(hours)s h actually worked against %(agreed)s h contracted."
 msgstr "%(hours)s h trabajadas de verdad frente a %(agreed)s h contratadas."
 
-#: apps/shifts/services.py:938
+#: apps/shifts/services.py:959
 msgid "Rostered on a day outside the dates of their contract."
 msgstr "En el cuadrante un día fuera de las fechas de su contrato."
 
-#: apps/shifts/services.py:978
+#: apps/shifts/services.py:999
 msgid ""
 "Rostered on a public holiday. It is allowed, and it earns compensation in "
 "rest or in pay under the agreement."
@@ -1509,12 +1525,12 @@ msgstr ""
 "Planificado en un festivo. Está permitido, y genera compensación en descanso "
 "o en dinero según el convenio."
 
-#: apps/shifts/services.py:1017
+#: apps/shifts/services.py:1038
 #, python-format
 msgid "Rostered on a day of approved %(kind)s."
 msgstr "Con turno asignado en un día de %(kind)s aprobada."
 
-#: apps/shifts/views.py:106
+#: apps/shifts/views.py:107
 msgid "Give a shift or its hours, not both: they would disagree."
 msgstr "Indica un turno o sus horas, no las dos cosas: se contradirían."
 

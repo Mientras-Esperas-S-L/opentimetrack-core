@@ -149,7 +149,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
   // Un ERTE puede suspender el contrato o reducir la jornada. Solo se pregunta
   // en una suspensión: en cualquier otro sitio parecería un ajuste y no haría
   // nada, que es la peor clase de campo.
-  const canReduce = kind?.family === 'SUSPENSION'
+  const canReduce = kind?.family === 'SUSPENSION' && kind?.initiated_by === 'COMPANY'
   // Lo que queda de este permiso, si tiene tope y se acumula. Aquí y no en
   // otra pantalla: es justo antes de pedir cuando sirve de algo.
   const left = usage?.find((row) => row.leave_type === kind?.id) ?? null
