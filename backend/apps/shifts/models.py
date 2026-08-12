@@ -166,6 +166,16 @@ class Shift(TenantOwnedModel):
         finish = datetime.combine(self.day, end)
         return finish + timedelta(days=1) if end <= start else finish
 
+    def night_minutes(self, night_from: time, night_to: time) -> int:
+        """How much of the day falls inside the night window.
+
+        The figure `overlaps_night` deliberately does not give. Art. 36.1 counts
+        hours, not shifts: somebody finishing at 22:30 touches the window every
+        day and is not a night worker, and a check built on "touches" would put
+        the whole of hospitality under limits that do not apply to them.
+        """
+        return sum(_overlap(span, night_from, night_to) for span in self.segments)
+
     def overlaps_night(self, night_from: time, night_to: time) -> bool:
         """Whether any span touches the night window.
 
@@ -183,32 +193,45 @@ class Shift(TenantOwnedModel):
         return False
 
 
-def _touches(start: time, end: time, night_from: time, night_to: time) -> bool:
-    """Whether a span overlaps the night window.
+def _unroll(a: time, b: time) -> list[tuple[int, int]]:
+    """A clock range as minute ranges, splitting one that wraps midnight.
 
-    Written out rather than compared directly because **either** range can wrap
-    midnight: a shift can (22:00-06:00) and so can the window, which is the
-    usual case (22:00-06:00) but not the only one --- a company can configure
+    Written out rather than comparing the times directly because **either**
+    range can wrap: a shift can (22:00-06:00) and so can the night window, which
+    is the usual case but not the only one --- a company can configure
     02:00-04:00, and the first version of this said yes to every morning shift
     because it assumed the wrap.
-
-    Both are unrolled into minute ranges on a 48-hour line, so a wrap is just a
-    range that runs past 1440 instead of a special case.
     """
+    first_minute = a.hour * 60 + a.minute
+    last_minute = b.hour * 60 + b.minute
+    if last_minute > first_minute:
+        return [(first_minute, last_minute)]
+    return [(first_minute, 1440), (0, last_minute)]
 
-    def unroll(a: time, b: time) -> list[tuple[int, int]]:
-        first_minute = a.hour * 60 + a.minute
-        last_minute = b.hour * 60 + b.minute
-        if last_minute > first_minute:
-            return [(first_minute, last_minute)]
-        # Wraps midnight: the piece before, and the piece after.
-        return [(first_minute, 1440), (0, last_minute)]
 
-    for span_from, span_to in unroll(start, end):
-        for night_start, night_end in unroll(night_from, night_to):
+def _touches(start: time, end: time, night_from: time, night_to: time) -> bool:
+    """Whether a span overlaps the night window at all."""
+    for span_from, span_to in _unroll(start, end):
+        for night_start, night_end in _unroll(night_from, night_to):
             if span_from < night_end and night_start < span_to:
                 return True
     return False
+
+
+def _overlap(span: dict, night_from: time, night_to: time) -> int:
+    """Minutes of one span that fall inside the night window.
+
+    Every piece of the span is measured against every piece of the window, so a
+    shift wrapping midnight against a window that also wraps --- the ordinary
+    22:00-06:00 night --- adds up correctly instead of counting one side twice.
+    """
+    start = time.fromisoformat(span["start"])
+    end = time.fromisoformat(span["end"])
+    total = 0
+    for span_from, span_to in _unroll(start, end):
+        for night_start, night_end in _unroll(night_from, night_to):
+            total += max(0, min(span_to, night_end) - max(span_from, night_start))
+    return total
 
 
 def working_days_between(first: date, last: date):

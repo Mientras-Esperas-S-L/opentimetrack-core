@@ -24,7 +24,7 @@ from datetime import date, timedelta
 
 import pytest
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, translation
 from rest_framework.test import APIClient
 
 from apps.common.exceptions import BusinessRuleError
@@ -334,7 +334,10 @@ def test_the_agreed_hours_reach_the_report(as_admin, company):
     patch(as_admin, person, contracted_schedule="L-V 09:00-17:00", regime="FULL_TIME")
     person.refresh_from_db()  # build_report reads the object, not the row
 
-    with tenant_context(company.id):
+    # In English so the assertion tests that the field reaches the report, not
+    # which catalogue happens to be compiled. The report does render the label
+    # translated, which is what an inspection in Spain should see.
+    with tenant_context(company.id), translation.override("en"):
         data = build_report(
             employee=person,
             company=company,

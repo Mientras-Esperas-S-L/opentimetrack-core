@@ -134,7 +134,9 @@ def test_an_unquoted_regcon_is_refused_with_the_reason(tmp_path):
     ficha = yaml.safe_load(yaml.safe_dump(MINIMAL))
     ficha["agreement"]["regcon"] = 99000000000001  # an int, as YAML would read it
 
-    with pytest.raises(agreements.FichaError, match="quotes"):
+    # In English so the assertion documents the wording the loader is meant to
+    # produce, rather than tracking whichever catalogue happens to be compiled.
+    with translation.override("en"), pytest.raises(agreements.FichaError, match="quotes"):
         agreements.load(write(tmp_path, ficha))
 
 
@@ -465,7 +467,10 @@ def test_a_figure_cannot_be_fixed_and_deferred_at_once(tmp_path):
     ficha = with_values(weekly_hours=38)
     ficha["defers"] = {"weekly_hours": {"basis": "Art. 2"}}
 
-    with pytest.raises(agreements.FichaError, match="fixed and deferred"):
+    with (
+        translation.override("en"),
+        pytest.raises(agreements.FichaError, match="fixed and deferred"),
+    ):
         agreements.load(write(tmp_path, ficha))
 
 

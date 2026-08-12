@@ -58,6 +58,51 @@ const ROLES = [
 
 const roleLabel = (value) => ROLES.find((r) => r.value === value)?.label ?? value
 
+/** How the working day is agreed. Three axes, and they are not the same axis.
+ *
+ *  The form used to have one switch called "jornada parcial", which could not
+ *  say twenty-five hours, could not tell a reduced day under art. 37.6 from
+ *  part-time work --- the first keeps the right to overtime and the second does
+ *  not --- and had no way at all to record somebody with no agreed figure. It
+ *  also sent two fields the server stopped accepting, so the regime silently
+ *  never got saved.
+ */
+const REGIMES = [
+  { value: 'FULL_TIME', label: 'Jornada completa', hint: 'La de la empresa.' },
+  {
+    value: 'PART_TIME',
+    label: 'Jornada parcial',
+    hint: 'Sin horas extraordinarias (art. 12.4.c ET). Las de más son complementarias.',
+  },
+  {
+    value: 'REDUCED',
+    label: 'Jornada reducida',
+    hint: 'Art. 37.6 ET: guarda legal o cuidados. No es parcial, conserva las horas extra.',
+  },
+  { value: 'TRAINING', label: 'Contrato formativo', hint: 'Art. 11 ET.' },
+  {
+    value: 'VARIABLE',
+    label: 'Sin cifra pactada',
+    hint: 'Horas sueltas, llamamiento. Solo se le aplica el máximo legal.',
+  },
+]
+
+const PERIODS = [
+  { value: 'WEEK', label: 'a la semana' },
+  { value: 'MONTH', label: 'al mes' },
+  { value: 'YEAR', label: 'al año' },
+]
+
+const NIGHT_STATUS = [
+  { value: 'AUTO', label: 'Según el cuadrante' },
+  { value: 'YES', label: 'Sí' },
+  { value: 'NO', label: 'No' },
+]
+
+/** Whether the regime has a figure to go with it, which decides three fields. */
+const takesHours = (regime) => regime !== 'VARIABLE'
+const needsHours = (regime) => regime === 'PART_TIME' || regime === 'TRAINING'
+
 const EMPTY_FORM = {
   first_name: '',
   last_name: '',
@@ -71,9 +116,16 @@ const EMPTY_FORM = {
   // under-eighteen protection is ever applied, and with nobody marked as a
   // representative the art. 4.b notice can never reach anyone.
   date_of_birth: '',
-  part_time: false,
-  part_time_percentage: '',
+  regime: 'FULL_TIME',
+  contracted_hours: '',
+  contracted_period: 'WEEK',
+  contract_start: '',
+  contract_end: '',
+  seasonal: false,
   contracted_schedule: '',
+  night_worker: 'AUTO',
+  rotating_shifts: false,
+  voluntary_night_shift: false,
   default_work_mode: 'ONSITE',
   is_worker_representative: false,
 }
@@ -87,9 +139,16 @@ const fromPerson = (person) => ({
   department: person.department ?? '',
   annual_leave_days: person.annual_leave_days ?? '',
   date_of_birth: person.date_of_birth ?? '',
-  part_time: Boolean(person.part_time),
-  part_time_percentage: person.part_time_percentage ?? '',
+  regime: person.regime || 'FULL_TIME',
+  contracted_hours: person.contracted_hours ?? '',
+  contracted_period: person.contracted_period || 'WEEK',
+  contract_start: person.contract_start ?? '',
+  contract_end: person.contract_end ?? '',
+  seasonal: Boolean(person.seasonal),
   contracted_schedule: person.contracted_schedule ?? '',
+  night_worker: person.night_worker || 'AUTO',
+  rotating_shifts: Boolean(person.rotating_shifts),
+  voluntary_night_shift: Boolean(person.voluntary_night_shift),
   default_work_mode: person.default_work_mode || 'ONSITE',
   is_worker_representative: Boolean(person.is_worker_representative),
 })
@@ -114,13 +173,15 @@ function PersonDialog({ open, person, departments, onClose, onSave, saving, erro
       department: form.department || null,
       annual_leave_days: form.annual_leave_days === '' ? null : Number(form.annual_leave_days),
       date_of_birth: form.date_of_birth || null,
+      contract_start: form.contract_start || null,
+      contract_end: form.contract_end || null,
       contracted_schedule: form.contracted_schedule.trim(),
-      // Null rather than empty when the contract is not part time: the server
-      // refuses a percentage without the flag, and sending '' would fail a
-      // validation about a field the person never filled in.
-      part_time_percentage:
-        form.part_time && form.part_time_percentage !== ''
-          ? Number(form.part_time_percentage)
+      // Null rather than empty, and always null on a regime that has no agreed
+      // figure: the server refuses hours on that one, and sending '' would fail
+      // a validation about a field the form never showed.
+      contracted_hours:
+        takesHours(form.regime) && form.contracted_hours !== ''
+          ? Number(form.contracted_hours)
           : null,
     })
   }
@@ -231,6 +292,64 @@ function PersonDialog({ open, person, departments, onClose, onSave, saving, erro
               </TextField>
             </Stack>
 
+            <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+              <TextField
+                select
+                fullWidth
+                label="Régimen de jornada"
+                value={form.regime}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    regime: event.target.value,
+                    // Cleared here rather than refused later: the server does
+                    // not accept a figure on a regime that has none.
+                    contracted_hours: takesHours(event.target.value)
+                      ? form.contracted_hours
+                      : '',
+                  })
+                }
+                helperText={REGIMES.find((r) => r.value === form.regime)?.hint}
+              >
+                {REGIMES.map((regime) => (
+                  <MenuItem key={regime.value} value={regime.value}>
+                    {regime.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              {takesHours(form.regime) && (
+                <Stack direction="row" sx={{ gap: 1, width: '100%' }}>
+                  <TextField
+                    required={needsHours(form.regime)}
+                    fullWidth
+                    type="number"
+                    label="Horas contratadas"
+                    value={form.contracted_hours}
+                    onChange={set('contracted_hours')}
+                    slotProps={{ htmlInput: { min: 0.5, step: 0.5 } }}
+                    helperText={
+                      needsHours(form.regime)
+                        ? 'Art. 3.b: obligatorias en este régimen.'
+                        : 'Vacío = la jornada de la empresa.'
+                    }
+                  />
+                  <TextField
+                    select
+                    label="Período"
+                    value={form.contracted_period}
+                    onChange={set('contracted_period')}
+                    sx={{ minWidth: 130 }}
+                  >
+                    {PERIODS.map((period) => (
+                      <MenuItem key={period.value} value={period.value}>
+                        {period.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Stack>
+              )}
+            </Stack>
+
             <TextField
               fullWidth
               label="Horario contratado"
@@ -240,40 +359,105 @@ function PersonDialog({ open, person, departments, onClose, onSave, saving, erro
               helperText="Va en el informe de Inspección: es contenido obligatorio del registro."
             />
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2, alignItems: 'center' }}>
-              <FormControlLabel
-                sx={{ flexShrink: 0 }}
-                control={
-                  <Switch
-                    checked={form.part_time}
-                    onChange={(event) =>
-                      setForm({
-                        ...form,
-                        part_time: event.target.checked,
-                        // Clearing it here saves a validation error later: the
-                        // server refuses a percentage on a full-time contract.
-                        part_time_percentage: event.target.checked
-                          ? form.part_time_percentage
-                          : '',
-                      })
-                    }
-                  />
-                }
-                label="Jornada parcial"
+            <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+              <TextField
+                fullWidth
+                type="date"
+                label="Inicio del contrato"
+                value={form.contract_start}
+                onChange={set('contract_start')}
+                slotProps={{ inputLabel: { shrink: true } }}
+                helperText="Vacío = ya estaba en marcha."
               />
-              {form.part_time && (
-                <TextField
-                  required
-                  fullWidth
-                  type="number"
-                  label="Porcentaje de jornada"
-                  value={form.part_time_percentage}
-                  onChange={set('part_time_percentage')}
-                  slotProps={{ htmlInput: { min: 1, max: 99, step: 0.5 } }}
-                  helperText="Sobre la jornada completa. No se pueden hacer horas extra (art. 12.4.c ET)."
-                />
-              )}
+              <TextField
+                fullWidth
+                type="date"
+                label="Fin del contrato"
+                value={form.contract_end}
+                onChange={set('contract_end')}
+                slotProps={{ inputLabel: { shrink: true } }}
+                helperText="Vacío = indefinido."
+              />
             </Stack>
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={form.seasonal}
+                  onChange={(event) => setForm({ ...form, seasonal: event.target.checked })}
+                />
+              }
+              label="Fijo discontinuo"
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ mt: -1.5 }}>
+              Art. 16 ET: el trabajo viene por temporadas. Fuera de ellas no se espera jornada.
+            </Typography>
+
+            <Divider textAlign="left" sx={{ mt: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                Nocturnidad y turnos
+              </Typography>
+            </Divider>
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+              <TextField
+                select
+                fullWidth
+                label="Trabajador nocturno"
+                value={form.night_worker}
+                onChange={set('night_worker')}
+                helperText="Art. 36.1 ET. Es una condición de la persona, no del turno."
+              >
+                {NIGHT_STATUS.map((status) => (
+                  <MenuItem key={status.value} value={status.value}>
+                    {status.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Stack sx={{ width: '100%', justifyContent: 'center' }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={form.rotating_shifts}
+                      onChange={(event) =>
+                        setForm({
+                          ...form,
+                          rotating_shifts: event.target.checked,
+                          // Volunteering is about the night shift on a rotation.
+                          // Off the rotation it means nothing, and leaving it on
+                          // would quietly lift the two-week cap.
+                          voluntary_night_shift: event.target.checked
+                            ? form.voluntary_night_shift
+                            : false,
+                        })
+                      }
+                    />
+                  }
+                  label="Turnos rotativos"
+                />
+                {form.rotating_shifts && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={form.voluntary_night_shift}
+                        onChange={(event) =>
+                          setForm({ ...form, voluntary_night_shift: event.target.checked })
+                        }
+                      />
+                    }
+                    label="Se ofreció para las noches"
+                  />
+                )}
+              </Stack>
+            </Stack>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: -1.5 }}>
+              Con turnos rotativos, el relevo puede bajar de doce horas de descanso hasta siete
+              (art. 19.a RD 1561/1995) y la diferencia se devuelve en cuatro semanas. Sin
+              adscripción voluntaria, nadie está más de dos semanas seguidas de noche (art. 36.3
+              ET).
+            </Typography>
+
+            <Divider sx={{ mt: 1 }} />
 
             <FormControlLabel
               control={

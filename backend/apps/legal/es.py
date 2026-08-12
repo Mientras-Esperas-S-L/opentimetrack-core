@@ -23,6 +23,8 @@ from apps.legal.base import (
     ComplementaryHours,
     LegalFramework,
     MinorProtections,
+    NightWork,
+    ShiftWork,
 )
 
 ESPANA = LegalFramework(
@@ -130,6 +132,12 @@ ESPANA = LegalFramework(
         "break_owed": Citation("Art. 34.4 ET"),
         "short_weekly_rest": Citation("Art. 37.1 ET"),
         "looks_like_night_work": Citation("Art. 36.1 ET"),
+        "night_worker_average": Citation("Art. 36.1 ET"),
+        "consecutive_night_weeks": Citation("Art. 36.3 ET"),
+        # No incumple: es la reducción que el propio RD permite al cambiar de
+        # turno. Se avisa de la diferencia porque hay que devolverla, no porque
+        # esté mal hecha.
+        "changeover_rest_owed": Citation("Art. 19.a RD 1561/1995"),
         "minor_over_daily_limit": Citation("Art. 34.3 ET"),
         "minor_break_owed": Citation("Art. 34.4 ET"),
         "minor_night_work": Citation("Art. 6.2 ET"),
@@ -158,6 +166,99 @@ ESPANA = LegalFramework(
             "Hasta el 30 % de las horas ordinarias, ampliable al 60 % por convenio. "
             "Se totalizan mensualmente (art. 12.5.h).",
         ),
+    ),
+    # ------------------------------------------------------------ nocturnidad
+    #
+    # El art. 36.1 define dos cosas distintas y la diferencia lo es todo:
+    #
+    # «Se considera trabajo nocturno el realizado entre las diez de la noche y
+    # las seis de la mañana.» Eso es una ventana del reloj, y la toca cualquiera
+    # que cierre un bar.
+    #
+    # «Se considerará trabajador nocturno a aquel que realice normalmente en
+    # período nocturno una parte no inferior a tres horas de su jornada diaria
+    # de trabajo, así como a aquel que se prevea que puede realizar en tal
+    # período una parte no inferior a un tercio de su jornada de trabajo anual.»
+    # Eso es un estado de la persona, y es al estado al que se le pegan los
+    # límites: las ocho horas de promedio y la prohibición de horas extras.
+    #
+    # Confundirlos fue uno de los cuatro errores que corrigió la revisión
+    # jurídica del 11/08. Quien cubre una noche suelta no es trabajador nocturno
+    # y no le aplica nada de esto.
+    night=NightWork(
+        window_starts_at=time(22, 0),
+        window_ends_at=time(6, 0),
+        qualifying_daily_hours=3,
+        qualifying_annual_share=1 / 3,
+        # «La jornada de trabajo de los trabajadores nocturnos no podrá exceder
+        # de ocho horas diarias de promedio, en un período de referencia de
+        # quince días.» Promedio, no techo: nueve horas un día no incumplen nada
+        # si la quincena sale a ocho.
+        average_daily_hours=8,
+        average_over_days=15,
+        # «Los trabajadores nocturnos no podrán realizar horas extraordinarias.»
+        overtime_forbidden=True,
+        # Art. 36.2: el trabajo nocturno tiene una retribución específica que
+        # fija la negociación colectiva, «salvo que el salario se haya
+        # establecido atendiendo a que el trabajo sea nocturno por su propia
+        # naturaleza o se haya acordado la compensación de este trabajo por
+        # descansos». De ahí salen los días libres de más de un turno de noche:
+        # de esa compensación o del convenio, no del Estatuto directamente.
+        rest_may_compensate=True,
+        citations={
+            "definition": Citation(
+                "Art. 36.1 ET",
+                "Tres horas de la jornada diaria en período nocturno, o un tercio de "
+                "la jornada anual. Es un estado de la persona, no una propiedad del "
+                "turno.",
+            ),
+            "average": Citation(
+                "Art. 36.1 ET",
+                "Ocho horas de promedio en quince días. Promedio, no máximo diario.",
+            ),
+            "overtime": Citation("Art. 36.1 ET"),
+            "pay": Citation(
+                "Art. 36.2 ET",
+                "Retribución específica por convenio, salvo que el salario ya lo "
+                "contemple o se compense con descansos.",
+            ),
+            "health": Citation(
+                "Art. 36.4 ET",
+                "Evaluación de salud gratuita antes de la asignación y periódicamente "
+                "después. Fuera del registro de jornada, pero va con el estado.",
+            ),
+        },
+    ),
+    # --------------------------------------------------------- trabajo a turnos
+    #
+    # Estas cifras no añaden límites: quitan los que no tocan. Un equipo que rota
+    # de noches a mañanas no puede descansar doce horas en el relevo, y el
+    # cuadrante lo estaba avisando como incumplimiento. No lo es.
+    shifts=ShiftWork(
+        # Art. 36.3: «ningún trabajador estará en el de noche más de dos semanas
+        # consecutivas, salvo adscripción voluntaria».
+        max_consecutive_night_weeks=2,
+        # Art. 19.a RD 1561/1995: en trabajo a turnos, cuando el trabajador
+        # cambie de equipo, el descanso entre jornadas podrá reducirse hasta un
+        # mínimo de siete horas, compensando la diferencia en períodos de hasta
+        # cuatro semanas.
+        changeover_rest_hours=7,
+        # Art. 19.b: el descanso semanal puede acumularse por períodos de hasta
+        # cuatro semanas, frente a los catorce días del art. 37.1 general.
+        accumulation_weeks=4,
+        citations={
+            "night_weeks": Citation(
+                "Art. 36.3 ET",
+                "Dos semanas consecutivas como máximo en el turno de noche, salvo que "
+                "la persona se haya adscrito voluntariamente.",
+            ),
+            "changeover_rest": Citation(
+                "Art. 19.a RD 1561/1995",
+                "Hasta siete horas en el relevo de turno, compensando la diferencia en "
+                "cuatro semanas.",
+            ),
+            "rest_accumulation": Citation("Art. 19.b RD 1561/1995"),
+        },
     ),
     # ------------------------------------------------------ menores de 18 años
     #

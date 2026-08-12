@@ -493,19 +493,190 @@ def test_repeated_night_shifts_flag_the_status_not_a_limit(company, worker):
         again = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
         wording = str(next(f.message for f in again if f.code == "looks_like_night_work"))
 
-    assert wording.startswith("5 shifts in the night window")
+    assert wording.startswith("5 of 5 days with 3 h or more at night")
     assert "If the person holds the status" in wording
     assert "exceeds" not in wording
 
 
 @pytest.mark.django_db
 def test_one_night_shift_is_not_flagged(company, worker):
-    """Working one night does not make somebody a night worker."""
+    """Working one night does not make somebody a night worker.
+
+    A majority of one day is still a majority, which is how the first version of
+    the reading turned a colleague's covered shift into a status with an
+    eight-hour average attached to it.
+    """
     with tenant_context(company.id):
         shift(company, worker, date(2026, 9, 1), NIGHT)
         findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
 
     assert [f for f in findings if f.code == "looks_like_night_work"] == []
+
+
+@pytest.mark.django_db
+def test_a_late_finish_is_not_night_work(company, worker):
+    """Art. 36.1 counts hours inside the window, not shifts that touch it.
+
+    A bar closing at 22:30 touches the night window every single day. Reading
+    the status from "touches" instead of "three hours" would put the whole of
+    hospitality under limits that do not apply to them.
+    """
+    with tenant_context(company.id):
+        for offset in range(20):
+            shift(
+                company,
+                worker,
+                date(2026, 9, 1) + timedelta(days=offset),
+                [{"start": "15:00", "end": "22:30"}],
+            )
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    assert [f for f in findings if f.code == "looks_like_night_work"] == []
+
+
+@pytest.mark.django_db
+def test_the_company_can_declare_the_status_the_roster_cannot_see(company, worker):
+    """Somebody hired for nights is a night worker before any roster exists.
+
+    The roster is a worse witness to "normally" than the contract, so an answer
+    from the company wins --- and once it is there, the average stops being
+    reported conditionally and becomes the limit it is.
+    """
+    with tenant_context(company.id):
+        worker.night_worker = "YES"
+        worker.save(update_fields=["night_worker"])
+        # Nine-hour nights, every day: nine over fifteen days averages more than
+        # the eight art. 36.1 allows.
+        for offset in range(20):
+            shift(
+                company,
+                worker,
+                date(2026, 9, 1) + timedelta(days=offset),
+                [{"start": "22:00", "end": "07:00"}],
+            )
+        from django.utils import translation
+
+        with translation.override("en"):
+            findings = review_roster(
+                company=company, first=date(2026, 9, 1), last=date(2026, 9, 30)
+            )
+
+    average = [f for f in findings if f.code == "night_worker_average"]
+    assert len(average) == 1
+    assert average[0].basis == "Art. 36.1 ET"
+    assert str(average[0].message).startswith("A night worker averaging")
+
+
+@pytest.mark.django_db
+def test_the_company_can_say_no_and_the_limits_stop(company, worker):
+    """The override goes both ways, or it is not an override."""
+    with tenant_context(company.id):
+        worker.night_worker = "NO"
+        worker.save(update_fields=["night_worker"])
+        for offset in range(20):
+            shift(
+                company,
+                worker,
+                date(2026, 9, 1) + timedelta(days=offset),
+                [{"start": "22:00", "end": "07:00"}],
+            )
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    assert [f for f in findings if f.code == "night_worker_average"] == []
+    assert [f for f in findings if f.code == "looks_like_night_work"] == []
+
+
+@pytest.mark.django_db
+def test_more_than_two_weeks_on_nights(company, worker):
+    """Art. 36.3 ET: three consecutive weeks on the night shift, unasked for."""
+    with tenant_context(company.id):
+        worker.rotating_shifts = True
+        worker.save(update_fields=["rotating_shifts"])
+        for offset in range(21):
+            day = date(2026, 9, 7) + timedelta(days=offset)
+            if day.weekday() < 5:
+                shift(company, worker, day, NIGHT)
+        findings = review_roster(company=company, first=date(2026, 9, 7), last=date(2026, 9, 27))
+
+    weeks = [f for f in findings if f.code == "consecutive_night_weeks"]
+    assert len(weeks) == 1
+    assert weeks[0].basis == "Art. 36.3 ET"
+
+
+@pytest.mark.django_db
+def test_volunteering_lifts_the_two_week_cap(company, worker):
+    """The article's own exception: more than two weeks needs the person to
+    have asked, which is why it is a field and not an assumption."""
+    with tenant_context(company.id):
+        worker.rotating_shifts = True
+        worker.voluntary_night_shift = True
+        worker.save(update_fields=["rotating_shifts", "voluntary_night_shift"])
+        for offset in range(21):
+            day = date(2026, 9, 7) + timedelta(days=offset)
+            if day.weekday() < 5:
+                shift(company, worker, day, NIGHT)
+        findings = review_roster(company=company, first=date(2026, 9, 7), last=date(2026, 9, 27))
+
+    assert [f for f in findings if f.code == "consecutive_night_weeks"] == []
+
+
+@pytest.mark.django_db
+def test_a_shift_changeover_is_not_a_breach_of_the_daily_rest(company, worker):
+    """The false positive this whole layer exists for.
+
+    A rotating team coming off nights onto mornings cannot take twelve hours in
+    between. Art. 19.a RD 1561/1995 lets the rest drop to seven on that day
+    precisely so the rotation is possible, and the roster used to report every
+    changeover in the country as a breach.
+    """
+    with tenant_context(company.id):
+        worker.rotating_shifts = True
+        worker.save(update_fields=["rotating_shifts"])
+        # Off nights (ends 06:00 on the 2nd), onto afternoons (starts 14:00):
+        # eight hours between them, under twelve and over seven.
+        shift(company, worker, date(2026, 9, 1), [{"start": "22:00", "end": "06:00"}])
+        shift(company, worker, date(2026, 9, 2), [{"start": "14:00", "end": "22:00"}])
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    assert [f for f in findings if f.code == "short_daily_rest"] == []
+    owed = [f for f in findings if f.code == "changeover_rest_owed"]
+    assert len(owed) == 1
+    assert owed[0].basis == "Art. 19.a RD 1561/1995"
+
+
+@pytest.mark.django_db
+def test_the_changeover_allowance_has_a_floor_of_its_own(company, worker):
+    """Seven hours is a floor, not a licence. Below it, it is short again."""
+    with tenant_context(company.id):
+        worker.rotating_shifts = True
+        worker.save(update_fields=["rotating_shifts"])
+        shift(company, worker, date(2026, 9, 1), [{"start": "22:00", "end": "06:00"}])
+        shift(company, worker, date(2026, 9, 2), [{"start": "11:00", "end": "19:00"}])
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    assert [f for f in findings if f.code == "changeover_rest_owed"] == []
+    assert [f for f in findings if f.code == "short_daily_rest"] != []
+
+
+@pytest.mark.django_db
+def test_the_allowance_needs_the_shift_to_have_actually_moved(company, worker):
+    """Same hours two days running is not a rotation.
+
+    Otherwise "rotating shifts" would become a blanket permission to roster
+    eight hours of rest every night of the week, which is the opposite of what
+    the article allows it for.
+    """
+    with tenant_context(company.id):
+        worker.rotating_shifts = True
+        worker.save(update_fields=["rotating_shifts"])
+        # Two identical thirteen-hour days: the second starts eleven hours after
+        # the first ended, which is short, and nothing rotated.
+        shift(company, worker, date(2026, 9, 1), [{"start": "20:00", "end": "09:00"}])
+        shift(company, worker, date(2026, 9, 2), [{"start": "20:00", "end": "09:00"}])
+        findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
+
+    short = [f for f in findings if f.code == "short_daily_rest" and f.day == date(2026, 9, 2)]
+    assert short != []
 
 
 @pytest.mark.django_db

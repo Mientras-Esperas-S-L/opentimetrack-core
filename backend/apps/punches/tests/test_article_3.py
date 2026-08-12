@@ -15,7 +15,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 import pytest
-from django.utils import timezone
+from django.utils import timezone, translation
 from freezegun import freeze_time
 
 from apps.common.exceptions import BusinessRuleError
@@ -288,12 +288,16 @@ def test_the_agreed_regime_reaches_the_report(company, worker):
         worker.contracted_schedule = "L-V 09:00-13:00"
         worker.save(update_fields=["regime", "contracted_hours", "contracted_schedule"])
 
-        report = build_report(
-            employee=worker,
-            company=company,
-            date_from=timezone.datetime(2026, 9, 1).date(),
-            date_to=timezone.datetime(2026, 9, 1).date(),
-        )
+        # In English so the assertion is about the content reaching the report
+        # rather than about which catalogue is compiled. The report itself does
+        # render the label translated, which is what an inspection should read.
+        with translation.override("en"):
+            report = build_report(
+                employee=worker,
+                company=company,
+                date_from=timezone.datetime(2026, 9, 1).date(),
+                date_to=timezone.datetime(2026, 9, 1).date(),
+            )
 
     # Art. 3.b: the regime and the agreed hours, with the share of a full day
     # worked out rather than typed --- 20 of the company's 40 is half.

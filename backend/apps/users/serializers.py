@@ -65,6 +65,12 @@ class UserSerializer(serializers.ModelSerializer):
             "seasonal",
             "contracted_schedule",
             "default_work_mode",
+            # Art. 36 ET. Neither is a property of the shift: a night worker
+            # carries the eight-hour average on every day they work, and
+            # rotating shifts change which rest applies at a changeover.
+            "night_worker",
+            "rotating_shifts",
+            "voluntary_night_shift",
             # Only for the under-eighteen protections. Without it none of them
             # apply, and `age_is_known` stays false, which is the system saying
             # it does not know rather than assuming an adult.
@@ -101,6 +107,9 @@ class UserWriteSerializer(serializers.ModelSerializer):
             "seasonal",
             "contracted_schedule",
             "default_work_mode",
+            "night_worker",
+            "rotating_shifts",
+            "voluntary_night_shift",
             "date_of_birth",
             "is_worker_representative",
             "is_active",
@@ -194,6 +203,31 @@ class UserWriteSerializer(serializers.ModelSerializer):
 
         if hours is not None and hours <= 0:
             raise serializers.ValidationError({"contracted_hours": _("It has to be above zero.")})
+
+        # Art. 6.2 ET is a prohibition, not a limit, so there is no amount of
+        # night work to allow and nothing to warn about: the answer is no. The
+        # roster already refuses to plan it; refusing it here as well stops the
+        # status being recorded for somebody it cannot lawfully apply to, which
+        # would then switch on the eight-hour average and hide the real problem
+        # behind a lesser one.
+        night = attrs.get("night_worker", getattr(current, "night_worker", "AUTO"))
+        born = attrs.get("date_of_birth", getattr(current, "date_of_birth", None))
+        if night == "YES" and born:
+            from apps.users.models import User as Person
+
+            probe = Person(date_of_birth=born)
+            if probe.is_minor_on(timezone.localdate()):
+                framework = legal.for_company(self.context["request"].user.tenant)
+                citation = framework.minors.citations.get("night_work")
+                raise serializers.ValidationError(
+                    {
+                        "night_worker": _(
+                            "%(basis)s: workers under eighteen may not work at night, so "
+                            "the status cannot apply to them."
+                        )
+                        % {"basis": citation.basis if citation else ""}
+                    }
+                )
 
         # A weekly figure above the company's ordinary week is either a typo or
         # a contract that does not hold: art. 34.1 ET is a ceiling and no

@@ -276,6 +276,25 @@ def _grouped(findings):
     return sorted(out, key=lambda r: (r["day"], r["code"]))
 
 
+def _describe(part, as_time: tuple[str, ...] = ()) -> dict | None:
+    """A frozen dataclass from the legal layer, as JSON.
+
+    Written once here rather than a serializer per dataclass: these carry no
+    behaviour and no validation --- they are the country's numbers, read-only,
+    and a country that has none returns null so the screen can leave the section
+    out instead of rendering an empty one.
+    """
+    if part is None:
+        return None
+    body = {name: getattr(part, name) for name in part.__dataclass_fields__ if name != "citations"}
+    for name in as_time:
+        body[name] = body[name].isoformat(timespec="minutes")
+    body["citations"] = {
+        key: {"basis": c.basis, "note": c.note} for key, c in part.citations.items()
+    }
+    return body
+
+
 class RulesSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkingTimeRules
@@ -337,6 +356,13 @@ class WorkingTimeRulesView(APIView):
                     for key, c in framework.minors.citations.items()
                 },
             },
+            # Also not settings, and for a different reason: the night window is
+            # one --- a company can move it --- but what the status *means* is
+            # not. The figures are served so the screen can explain why somebody
+            # on nights is checked differently, without writing the article into
+            # the frontend again.
+            "night": _describe(framework.night, ("window_starts_at", "window_ends_at")),
+            "shifts": _describe(framework.shifts),
         }
 
     @extend_schema(request=RulesSerializer, responses={200: RulesSerializer})

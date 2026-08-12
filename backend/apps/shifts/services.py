@@ -141,13 +141,17 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
 
     findings: list[Finding] = []
     for employee_id, roster in by_person.items():
-        findings.extend(_check_daily_rest(roster, rules, first, last))
+        findings.extend(_check_daily_rest(roster, rules, framework.shifts, first, last))
         findings.extend(_check_weekly_hours(employee_id, roster, rules, first, last))
         findings.extend(_check_breaks(roster, rules, first, last))
         findings.extend(
-            _check_weekly_rest(employee_id, roster, rules, framework.minors, first, last)
+            _check_weekly_rest(
+                employee_id, roster, rules, framework.minors, framework.shifts, first, last
+            )
         )
-        findings.extend(_check_night_work(roster, rules, first, last))
+        findings.extend(
+            _check_night_work(roster, rules, framework.night, framework.shifts, first, last)
+        )
         findings.extend(_check_under_eighteen(roster, rules, framework.minors, first, last))
     findings.extend(_check_leave_clashes(first, last, employee))
     findings.extend(_check_outside_the_contract(by_person))
@@ -175,21 +179,77 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     return sorted(findings, key=lambda f: (f.day, f.code))
 
 
-def _check_daily_rest(roster, rules, first, last) -> list[Finding]:
+def _check_daily_rest(roster, rules, shifts_law, first, last) -> list[Finding]:
+    """Rest between one day and the next, against the floor that applies.
+
+    Two floors, not one. The ordinary twelve hours, and --- for somebody on
+    rotating shifts, on the day the rotation moves them --- the shorter one the
+    law allows precisely so that the rotation is possible. Applying the ordinary
+    floor to a changeover reported every rotating team in the country as being
+    in breach, which is how this check came to be rewritten.
+
+    The shorter rest is still reported. It is not a breach and the wording says
+    so, but the difference has to be given back within four weeks and nobody
+    gives back what nobody wrote down.
+    """
     found = []
+    person = roster[0].employee if roster else None
+    rotating = bool(person and person.rotating_shifts and shifts_law)
+
     for previous, current in pairwise(roster):
         gap = (current.starts_at - previous.ends_at).total_seconds() / 3600
-        if gap < rules.daily_rest_hours and first <= current.day <= last:
+        if gap >= rules.daily_rest_hours or not (first <= current.day <= last):
+            continue
+
+        # A changeover is a day the shift moved. Same hours two days running is
+        # not a rotation, and a short rest there is short for the ordinary
+        # reason --- the roster asked for it.
+        moved = rotating and _start_of(current) != _start_of(previous)
+
+        if moved and gap >= float(shifts_law.changeover_rest_hours):
             found.append(
                 Finding(
                     day=current.day,
                     employee_id=current.employee_id,
-                    code="short_daily_rest",
-                    message=_("Only %(hours)s h of rest since the previous shift.")
-                    % {"hours": f"{gap:.1f}"},
+                    code="changeover_rest_owed",
+                    message=_(
+                        "%(hours)s h of rest at a shift changeover, which is allowed. "
+                        "The %(owed)s h missing from the usual %(usual)s h are owed back "
+                        "within %(weeks)s weeks."
+                    )
+                    % {
+                        "hours": f"{gap:.1f}",
+                        "owed": f"{float(rules.daily_rest_hours) - gap:.1f}",
+                        "usual": f"{float(rules.daily_rest_hours):g}",
+                        "weeks": shifts_law.accumulation_weeks,
+                    },
                 )
             )
+            continue
+
+        floor = float(shifts_law.changeover_rest_hours) if moved else float(rules.daily_rest_hours)
+        found.append(
+            Finding(
+                day=current.day,
+                employee_id=current.employee_id,
+                code="short_daily_rest",
+                message=(
+                    _(
+                        "Only %(hours)s h of rest since the previous shift, under the "
+                        "%(floor)s h a changeover may go down to."
+                    )
+                    if moved
+                    else _("Only %(hours)s h of rest since the previous shift.")
+                )
+                % {"hours": f"{gap:.1f}", "floor": f"{floor:g}"},
+            )
+        )
     return found
+
+
+def _start_of(shift) -> str:
+    """The shift's starting time as text, for telling one shift team from another."""
+    return min(span["start"] for span in shift.segments)
 
 
 def _check_weekly_hours(employee_id, roster, rules, first, last) -> list[Finding]:
@@ -319,14 +379,21 @@ def _check_breaks(roster, rules, first, last) -> list[Finding]:
     return found
 
 
-def _check_weekly_rest(employee_id, roster, rules, minors, first, last) -> list[Finding]:
-    """Art. 37.1 ET: a day and a half uninterrupted, accumulable over fourteen
-    days.
+def _check_weekly_rest(
+    employee_id, roster, rules, minors, shifts_law, first, last
+) -> list[Finding]:
+    """Art. 37.1 ET: a day and a half uninterrupted, accumulable.
 
-    The accumulation is why this looks at a fortnight rather than each week.
+    The accumulation is why this looks at a period rather than at each week.
     Reporting a week without its full rest would be wrong for anybody on a
     pattern that concentrates it --- which is most of hospitality and retail ---
     and a warning that is wrong half the time gets ignored the other half.
+
+    Fourteen days as a rule; four weeks for somebody on rotating shifts, which
+    is the longer window art. 19.b RD 1561/1995 gives them. Reading a rotating
+    rota against the shorter one produces the same false positive the daily rest
+    used to: lawful patterns reported as breaches, on the days the law wrote the
+    exception for.
     """
     if not roster:
         return []
@@ -341,10 +408,12 @@ def _check_weekly_rest(employee_id, roster, rules, minors, first, last) -> list[
     )
     found = []
 
-    # Longest gap in each rolling fortnight that sits inside the window.
+    span_days = shifts_law.accumulation_weeks * 7 if shifts_law and person.rotating_shifts else 14
+
+    # Longest gap in each rolling period that sits inside the window.
     days = sorted({s.day for s in roster})
     for anchor in days:
-        window_end = anchor + timedelta(days=13)
+        window_end = anchor + timedelta(days=span_days - 1)
         if anchor < first or window_end > last:
             continue
 
@@ -371,10 +440,11 @@ def _check_weekly_rest(employee_id, roster, rules, minors, first, last) -> list[
                     employee_id=employee_id,
                     code="short_weekly_rest",
                     message=_(
-                        "The longest break in that fortnight is %(hours)s h, under the "
-                        "%(minimum)s h configured."
+                        "The longest break in those %(days)s days is %(hours)s h, under "
+                        "the %(minimum)s h configured."
                     )
                     % {
+                        "days": span_days,
                         "hours": f"{longest.total_seconds() / 3600:.0f}",
                         "minimum": minimum.total_seconds() / 3600,
                     },
@@ -385,37 +455,173 @@ def _check_weekly_rest(employee_id, roster, rules, minors, first, last) -> list[
     return found
 
 
-def _check_night_work(roster, rules, first, last) -> list[Finding]:
-    """Art. 36.1 ET, and the correction that cost us a review.
+def _check_night_work(roster, rules, night, shifts_law, first, last) -> list[Finding]:
+    """Art. 36.1 and 36.3 ET: the status, then the limits it brings.
 
-    The eight-hour average over fifteen days applies to somebody who **holds
-    the status of night worker** --- three hours daily as a rule, or a third of
-    the annual working day --- not to anybody who happens to work between 22:00
-    and 06:00. So this does not report a limit. It flags that a person looks
-    like a night worker, which is a status with consequences the company has to
-    decide on, and says so in those words.
+    The order matters and getting it backwards was one of the four errors the
+    legal review corrected. The eight-hour average attaches to somebody who
+    **holds the status of night worker**, not to anybody who happens to work
+    between 22:00 and 06:00, so the status is settled first and the limits are
+    only applied to whoever holds it.
+
+    Three things come out of here:
+
+    **The status is unrecorded but the roster shows it.** Reported, because it
+    is a decision the company owes the person --- the status carries a health
+    assessment and a pay supplement, neither of which this product handles.
+
+    **The average over the reference period.** An average, not a ceiling: nine
+    hours on Tuesday breaches nothing if the fortnight comes out at eight.
+
+    **Too long on the night shift.** Art. 36.3 caps the run at two consecutive
+    weeks on a rotation, unless the person asked to stay.
     """
-    nightly = [
-        shift
-        for shift in roster
-        if first <= shift.day <= last
-        and shift.overlaps_night(rules.night_starts_at, rules.night_ends_at)
-    ]
-    if len(nightly) < 3:
+    if not night or not roster:
         return []
 
-    return [
-        Finding(
-            day=min(s.day for s in nightly),
-            employee_id=nightly[0].employee_id,
-            code="looks_like_night_work",
-            message=_(
-                "%(count)s shifts in the night window. If the person holds the status "
-                "of night worker, art. 36.1 ET adds limits the company has to apply."
-            )
-            % {"count": len(nightly)},
+    person = roster[0].employee
+    window = (night.window_starts_at, night.window_ends_at)
+    inside = [s for s in roster if first <= s.day <= last]
+    if not inside:
+        return []
+
+    holds = person.holds_night_worker_status(night, roster)
+    found = []
+
+    # The roster's own reading, said out loud when the company has not answered.
+    # An override to "no" is left alone: the company answered, and repeating the
+    # reading underneath its answer would read as the product arguing.
+    if person.night_worker == "AUTO" and holds:
+        nightly = sum(
+            1 for s in inside if s.night_minutes(*window) >= night.qualifying_daily_hours * 60
         )
-    ]
+        found.append(
+            Finding(
+                day=min(s.day for s in inside),
+                employee_id=person.pk,
+                code="looks_like_night_work",
+                message=_(
+                    "%(count)s of %(total)s days with %(hours)s h or more at night. If "
+                    "the person holds the status of night worker, that brings a "
+                    "%(limit)s h average over %(days)s days, a ban on overtime and a "
+                    "health assessment. Nobody has recorded whether they do."
+                )
+                % {
+                    "count": nightly,
+                    "total": len(inside),
+                    "hours": f"{night.qualifying_daily_hours:g}",
+                    "limit": f"{night.average_daily_hours:g}",
+                    "days": night.average_over_days,
+                },
+            )
+        )
+
+    if holds:
+        declared = person.night_worker == "YES"
+        found.extend(_check_night_average(person, inside, night, declared, first, last))
+
+    if shifts_law and shifts_law.max_consecutive_night_weeks and not person.voluntary_night_shift:
+        found.extend(_check_consecutive_night_weeks(person, inside, night, shifts_law))
+
+    return found
+
+
+def _check_night_average(person, roster, night, declared, first, last) -> list[Finding]:
+    """Eight hours a day on average across the reference period.
+
+    Averaged over every day in the period, not over the days worked: art. 36.1
+    says "de promedio, en un período de referencia de quince días", and the rest
+    days are part of what the average is taken over. Dividing by days worked
+    instead would make a four-on-four-off rota --- the commonest night pattern
+    there is --- look like a breach on every single window.
+
+    Two wordings, depending on who decided the status. When the company recorded
+    it, this is a limit that was exceeded and says so. When the roster inferred
+    it, the excess is stated conditionally --- the status carries obligations
+    outside this product, the annual limb of art. 36.1 is invisible from a
+    month of calendar, and telling a company it breached a limit its people may
+    not even be subject to is the error the legal review already caught once.
+    """
+    by_day = {s.day: s.minutes for s in roster}
+    span = night.average_over_days
+    found = []
+
+    for anchor in sorted(by_day):
+        window_end = anchor + timedelta(days=span - 1)
+        if anchor < first or window_end > last:
+            continue
+        worked = sum(minutes for day, minutes in by_day.items() if anchor <= day <= window_end)
+        average = worked / 60 / span
+        if average > night.average_daily_hours:
+            found.append(
+                Finding(
+                    day=anchor,
+                    employee_id=person.pk,
+                    code="night_worker_average",
+                    message=(
+                        _(
+                            "A night worker averaging %(average)s h a day over %(days)s "
+                            "days, above the %(limit)s h allowed."
+                        )
+                        if declared
+                        else _(
+                            "Averaging %(average)s h a day over %(days)s days. The roster "
+                            "reads like night work, and if the status applies that is "
+                            "above the %(limit)s h of art. 36.1 ET."
+                        )
+                    )
+                    % {
+                        "average": f"{average:.1f}",
+                        "days": span,
+                        "limit": f"{night.average_daily_hours:g}",
+                    },
+                )
+            )
+            break  # one is enough to say the period is over; the rest overlap
+
+    return found
+
+
+def _check_consecutive_night_weeks(person, roster, night, shifts_law) -> list[Finding]:
+    """Art. 36.3 ET: no more than two weeks running on the night shift.
+
+    Only for somebody who did not volunteer --- the article's own exception, and
+    the reason `voluntary_night_shift` is a field. A rota is read week by week:
+    a week counts as a night week when most of its rostered days are nights,
+    which is how a team is actually assigned to a shift.
+    """
+    window = (night.window_starts_at, night.window_ends_at)
+    weeks: dict = {}
+    for shift in roster:
+        year, week, _weekday = shift.day.isocalendar()
+        weeks.setdefault((year, week), []).append(shift)
+
+    run, started = 0, None
+    for key in sorted(weeks):
+        days = weeks[key]
+        nights = sum(
+            1 for s in days if s.night_minutes(*window) >= night.qualifying_daily_hours * 60
+        )
+        if nights * 2 > len(days):
+            run += 1
+            started = started or min(s.day for s in days)
+            if run > shifts_law.max_consecutive_night_weeks:
+                return [
+                    Finding(
+                        day=started,
+                        employee_id=person.pk,
+                        code="consecutive_night_weeks",
+                        message=_(
+                            "%(weeks)s consecutive weeks on the night shift, over the "
+                            "%(limit)s allowed. More needs the person to have asked for "
+                            "it, which is a field on their record."
+                        )
+                        % {"weeks": run, "limit": shifts_law.max_consecutive_night_weeks},
+                    )
+                ]
+        else:
+            run, started = 0, None
+    return []
 
 
 def _check_under_eighteen(roster, rules, minors, first, last) -> list[Finding]:

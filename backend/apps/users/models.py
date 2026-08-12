@@ -88,6 +88,33 @@ class HoursPeriod(models.TextChoices):
     YEAR = "YEAR", _("a year")
 
 
+#: How many qualifying days it takes before the roster will claim to have read
+#: a habit. Not a legal figure --- art. 36.1 says "normally" and leaves it there
+#: --- but a reading has to rest on something, and a majority of one day is not
+#: a habit. Kept low on purpose: this only decides when the product *asks* the
+#: company about the status, and asking too rarely is the worse mistake.
+NIGHT_EVIDENCE_DAYS = 3
+
+
+class NightWorkerStatus(models.TextChoices):
+    """Whether art. 36.1's status applies, and who decided.
+
+    Three values rather than a boolean because there are three real answers and
+    the third is the commonest. The law defines the status by *what the person
+    normally does*, which the roster can see; but the company holds the contract
+    and sometimes knows before any roster exists --- somebody hired expressly
+    for nights is a night worker from day one, with a blank calendar.
+
+    So: `AUTO` reads it from the roster and is the default; `YES` and `NO` are
+    the company saying it knows better, which it is entitled to do and which
+    gets recorded as a decision rather than silently overriding the reading.
+    """
+
+    AUTO = "AUTO", _("Read from the roster")
+    YES = "YES", _("Yes")
+    NO = "NO", _("No")
+
+
 class Role(models.TextChoices):
     EMPLOYEE = "EMPLOYEE", _("Employee")
     MANAGER = "MANAGER", _("Manager")
@@ -240,6 +267,41 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
             "closed field can hold."
         ),
     )
+    # A third axis, and for the same reason as the other two: it is a fact that
+    # is true alongside the regime and the contract, not instead of either. A
+    # night worker can be full time or part time, permanent or seasonal, and
+    # rotating shifts say nothing about how many hours were agreed.
+    night_worker = models.CharField(
+        _("night worker"),
+        max_length=6,
+        choices=NightWorkerStatus,
+        default=NightWorkerStatus.AUTO,
+        help_text=_(
+            "Art. 36.1 ET. A status, not a shift: three hours of the daily working "
+            "day at night as a rule, or a third of the year. It brings an eight-hour "
+            "average over fifteen days and a ban on overtime. Leave it on automatic "
+            "to read it from the roster."
+        ),
+    )
+    rotating_shifts = models.BooleanField(
+        _("rotating shifts"),
+        default=False,
+        help_text=_(
+            "Art. 36.3 ET. The person rotates between shift teams. This does not add "
+            "limits: it stops the ordinary ones being applied to a changeover, where "
+            "a shorter rest is lawful and owed back rather than a breach."
+        ),
+    )
+    voluntary_night_shift = models.BooleanField(
+        _("volunteered for nights"),
+        default=False,
+        help_text=_(
+            "Art. 36.3 ET allows more than two consecutive weeks on the night shift "
+            "only when the person asked for it. Recorded here because the roster "
+            "cannot tell a volunteer from somebody left there."
+        ),
+    )
+
     default_work_mode = models.CharField(
         _("usual mode"),
         max_length=8,
@@ -377,6 +439,38 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         than by regime would deny overtime to people entitled to it.
         """
         return self.regime == WorkingTimeRegime.PART_TIME
+
+    def holds_night_worker_status(self, night, roster) -> bool:
+        """Whether art. 36.1's status applies, from the contract or the roster.
+
+        The company's answer wins when it gave one. That is not a loophole: the
+        status is defined by what somebody *normally* does, and a month of
+        roster is a worse witness to "normally" than the contract that hired
+        them for nights. A company that answers `NO` about somebody plainly on
+        nights still gets the roster's own reading reported separately, so the
+        override is visible rather than silent.
+
+        With no answer, the test is the article's: three hours of the daily
+        working day inside the window, habitually. Habitually is read here as
+        the majority of the days rostered, and never from fewer than
+        `NIGHT_EVIDENCE_DAYS` of them --- one night covered for a colleague is a
+        majority of one, and the first version of this said that made somebody a
+        night worker. The annual third of art. 36.1 is not something a month of
+        calendar can see at all, which is exactly why the company can declare it.
+        """
+        if self.night_worker == NightWorkerStatus.YES:
+            return True
+        if self.night_worker == NightWorkerStatus.NO:
+            return False
+        if not night or not roster:
+            return False
+        threshold = night.qualifying_daily_hours * 60
+        qualifying = sum(
+            1
+            for shift in roster
+            if shift.night_minutes(night.window_starts_at, night.window_ends_at) >= threshold
+        )
+        return qualifying >= NIGHT_EVIDENCE_DAYS and qualifying * 2 > len(roster)
 
     def is_engaged_on(self, day) -> bool:
         """Whether the relationship covers that day.

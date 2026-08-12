@@ -323,6 +323,61 @@ class Command(BaseCommand):
                 HoursPeriod.WEEK,
                 {"seasonal": True, "contract_start": today - timedelta(days=400)},
             ),
+            # A rotating three-shift team. Two people so the rotation has
+            # somebody on each side of it, which is what makes the changeover
+            # visible in the roster --- and the changeover is the case that used
+            # to be reported as a breach on every single rotation.
+            (
+                "rotating",
+                "turnos@demo.local",
+                "Nerea",
+                "Colomer",
+                Role.EMPLOYEE,
+                works,
+                "EMP-0015",
+                WorkingTimeRegime.FULL_TIME,
+                None,
+                HoursPeriod.WEEK,
+                {"rotating_shifts": True, "contracted_schedule": "Turno rotatorio M/T/N"},
+            ),
+            # The one the company has answered about. Hired for nights, so the
+            # status is a fact of the contract and not something the roster has
+            # to guess at --- and having answered, the eight-hour average is a
+            # limit rather than a question.
+            (
+                "night",
+                "noches@demo.local",
+                "Óscar",
+                "Vidal",
+                Role.EMPLOYEE,
+                works,
+                "EMP-0016",
+                WorkingTimeRegime.FULL_TIME,
+                None,
+                HoursPeriod.WEEK,
+                {
+                    "night_worker": "YES",
+                    "rotating_shifts": True,
+                    "contracted_schedule": "Noches 22:00-06:00",
+                },
+            ),
+            # Permanent nights and nobody ever answered the question. The
+            # commonest way this goes wrong: the status is never recorded, so
+            # the eight-hour average is never applied and the health assessment
+            # art. 36.4 requires is never booked.
+            (
+                "guard",
+                "vigilante@demo.local",
+                "Álvaro",
+                "Pina",
+                Role.EMPLOYEE,
+                works,
+                "EMP-0017",
+                WorkingTimeRegime.FULL_TIME,
+                None,
+                HoursPeriod.WEEK,
+                {"contracted_schedule": "Noches 22:00-06:00"},
+            ),
             # Signs in through an identity provider: no password link for them.
             (
                 "federated",
@@ -377,6 +432,10 @@ class Command(BaseCommand):
                 ),
                 ("short", "Reducida", [{"start": "08:00", "end": "13:00"}], "#4a6f8a"),
                 ("long", "Refuerzo", [{"start": "07:00", "end": "17:00"}], "#8a3b3b"),
+                # The three a rotating team turns through.
+                ("t_morning", "Turno de mañana", [{"start": "06:00", "end": "14:00"}], "#2d6a4f"),
+                ("t_evening", "Turno de tarde", [{"start": "14:00", "end": "22:00"}], "#7a5c2e"),
+                ("t_night", "Turno de noche", [{"start": "22:00", "end": "06:00"}], "#2f4a7a"),
             ]
         }
 
@@ -437,6 +496,99 @@ class Command(BaseCommand):
             pattern=patterns["morning"],
             segments=patterns["morning"].segments,
         )
+
+        self._rotation(company, people, patterns, start=start, weeks=weeks + 2)
+
+    def _rotation(self, company, people, patterns, *, start, weeks):
+        """Three shifts around the clock, so the night rules have a team.
+
+        Nerea turns on the quick forward rotation --- two mornings, two evenings,
+        two nights, two off --- which is the one occupational medicine actually
+        recommends, and which produces **no findings at all**. That is the point
+        of putting it in: a lawful rotation has to come out clean, or the
+        exception for changeovers is just a way of hiding real short rests.
+
+        Turning forward is what makes it clean. Each move gives twenty-four
+        hours because the shift starts later than the one before it ended.
+        Rotating backwards --- nights onto evenings --- is where the eight-hour
+        changeover comes from, and there is one of those below, on purpose.
+
+        Óscar does not rotate. He is the declared night worker, and a permanent
+        night is what art. 36.3 caps at two consecutive weeks.
+        Álvaro does not rotate either and nobody ever recorded his status, which
+        is the commonest way this goes wrong in real companies.
+        """
+        cycle = [
+            patterns["t_morning"],
+            patterns["t_morning"],
+            patterns["t_evening"],
+            patterns["t_evening"],
+            patterns["t_night"],
+            patterns["t_night"],
+            None,
+            None,
+        ]
+        night = patterns["t_night"]
+
+        for offset in range(weeks * 7):
+            day = start + timedelta(days=offset)
+
+            turn = cycle[offset % len(cycle)]
+            if turn is not None:
+                Shift.objects.update_or_create(
+                    tenant=company,
+                    employee=people["rotating"],
+                    day=day,
+                    defaults={"pattern": turn, "segments": turn.segments},
+                )
+
+            # Two off every eight for the two on permanent nights, so the weekly
+            # rest lands somewhere and the run of night weeks is still a run.
+            if offset % 8 < 6:
+                for key in ("night", "guard"):
+                    Shift.objects.update_or_create(
+                        tenant=company,
+                        employee=people[key],
+                        day=day,
+                        defaults={"pattern": night, "segments": night.segments},
+                    )
+
+        monday = timezone.localdate() - timedelta(days=timezone.localdate().weekday())
+
+        # The backward rotation, in the current week: off a night at 06:00 and
+        # onto an evening at 14:00 the same day. Eight hours, which is under the
+        # twelve and over the seven --- lawful, and owed back within four weeks.
+        Shift.objects.update_or_create(
+            tenant=company,
+            employee=people["rotating"],
+            day=monday,
+            defaults={"pattern": night, "segments": night.segments},
+        )
+        Shift.objects.update_or_create(
+            tenant=company,
+            employee=people["rotating"],
+            day=monday + timedelta(days=1),
+            defaults={
+                "pattern": patterns["t_evening"],
+                "segments": patterns["t_evening"].segments,
+            },
+        )
+
+        # Twelve-hour nights for a fortnight. Each one is lawful on its own; the
+        # average over fifteen days is not, and an average is the only way to
+        # see it. Centred on this week so the whole reference period falls
+        # inside the month the roster screen opens on --- a window that runs off
+        # the edge is skipped, and the finding would come and go with the date.
+        for offset in range(-7, 8):
+            day = monday + timedelta(days=offset)
+            if (day - start).days % 8 >= 6:
+                continue
+            Shift.objects.update_or_create(
+                tenant=company,
+                employee=people["night"],
+                day=day,
+                defaults={"pattern": None, "segments": [{"start": "20:00", "end": "08:00"}]},
+            )
 
     # ----------------------------------------------------------------- history
 

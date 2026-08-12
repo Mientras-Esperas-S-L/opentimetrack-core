@@ -95,7 +95,7 @@ class WorkingTimeRules(BaseModel):
         ),
     )
     complementary_hours_share = models.PositiveSmallIntegerField(
-        _("complementary hours, max % of the contract"),
+        _("complementary hours, share of the contract (%)"),
         default=30,
         help_text=_(
             "Cap on hours a part-time contract may work beyond what was agreed, "
