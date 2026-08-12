@@ -165,6 +165,18 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         ),
     )
 
+    # Art. 4.b: on disagreement over a change, the workers' legal representation
+    # must be informed. Art. 6.2 also grants them access to the record. The
+    # system cannot know who they are, so the company marks them.
+    is_worker_representative = models.BooleanField(
+        _("workers' representative"),
+        default=False,
+        help_text=_(
+            "Informed when somebody disagrees with a change to their record "
+            "(art. 4.b), and entitled to consult the register (art. 6.2)."
+        ),
+    )
+
     annual_leave_days = models.PositiveSmallIntegerField(
         _("annual leave days"),
         null=True,

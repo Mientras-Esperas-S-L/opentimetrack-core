@@ -422,8 +422,12 @@ def test_there_is_no_way_to_void_an_event_without_a_reason(company):
 
 
 @pytest.mark.django_db
-def test_voiding_through_a_correction_is_recorded(company, django_capture_on_commit_callbacks):
-    """The only way in, and it carries the reason."""
+def test_voiding_through_a_correction_needs_both_sides(company, django_capture_on_commit_callbacks):
+    """The only way in, and art. 4.b decides how far it gets on its own.
+
+    Proposed by the company, so one authorisation is missing: nothing is
+    applied until the person answers.
+    """
     from apps.punches.services import register_punch
 
     boss = make(company, "boss@example.com", Role.MANAGER)
@@ -446,13 +450,18 @@ def test_voiding_through_a_correction_is_recorded(company, django_capture_on_com
             )
             .json()
         )
-        client_for(boss).post(f"/api/corrections/{created['id']}/approve/")
 
+    assert created["status"] == "AWAITING_EMPLOYEE"
+    punch.refresh_from_db()
+    assert punch.is_active, "nothing may be applied before the person answers"
+
+    with django_capture_on_commit_callbacks(execute=True):
+        accepted = client_for(worker).post(f"/api/corrections/{created['id']}/accept/")
+
+    assert accepted.status_code == 200
     punch.refresh_from_db()
     assert not punch.is_active
-    entry = AuditLog.objects.filter(action=AuditAction.CORRECTION_APPROVED).first()
-    assert entry is not None
-    assert "duplicado" in entry.note
+    assert AuditLog.objects.filter(action=AuditAction.CORRECTION_APPROVED).exists()
 
 
 @pytest.mark.django_db

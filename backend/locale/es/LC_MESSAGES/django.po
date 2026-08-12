@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 10:34+0000\n"
+"POT-Creation-Date: 2026-08-12 10:58+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,7 +17,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? "
 "1 : 2;\n"
-
 msgid "Holiday"
 msgstr "Vacaciones"
 
@@ -131,30 +130,27 @@ msgstr "Descargó un justificante"
 msgid "Requested a correction"
 msgstr "Pidió una corrección"
 
-#| msgid "record correction"
 msgid "Approved a correction"
 msgstr "Aprobó una corrección"
 
-#| msgid "record correction"
 msgid "Rejected a correction"
 msgstr "Rechazó una corrección"
 
-#| msgid "clock event"
 msgid "Voided a clock event"
 msgstr "Anuló un fichaje"
 
-#, fuzzy
-#| msgid "Approved"
+msgid "Disagreed with a proposed change"
+msgstr "Discrepó de un cambio propuesto"
+
+msgid "Applied a change without agreement"
+msgstr "Aplicó un cambio sin acuerdo"
+
 msgid "Approved leave"
 msgstr "Aprobó una ausencia"
 
-#, fuzzy
-#| msgid "Rejected"
 msgid "Rejected leave"
 msgstr "Rechazó una ausencia"
 
-#, fuzzy
-#| msgid "person"
 msgid "Added a person"
 msgstr "Dio de alta a una persona"
 
@@ -170,18 +166,12 @@ msgstr "Cambió un perfil"
 msgid "Changed company settings"
 msgstr "Cambió los ajustes de la empresa"
 
-#, fuzzy
-#| msgid "working time rules"
 msgid "Changed working time rules"
 msgstr "Cambió las reglas de jornada"
 
-#, fuzzy
-#| msgid "recorded by an application"
 msgid "Registered an application"
 msgstr "Registró una aplicación"
 
-#, fuzzy
-#| msgid "application credential"
 msgid "Revoked an application credential"
 msgstr "Revocó una credencial de aplicación"
 
@@ -200,13 +190,9 @@ msgstr "quién"
 msgid "who (as recorded)"
 msgstr "quién (tal y como se registró)"
 
-#, fuzzy
-#| msgid "application"
 msgid "action"
 msgstr "acción"
 
-#, fuzzy
-#| msgid "tax identifier"
 msgid "identifier"
 msgstr "identificador"
 
@@ -267,6 +253,18 @@ msgstr "Cambiar la hora de un fichaje"
 msgid "Void an event that should not exist"
 msgstr "Anular un fichaje que no debió existir"
 
+msgid "Waiting for the company"
+msgstr "Esperando a la empresa"
+
+msgid "Waiting for the person concerned"
+msgstr "Esperando a la persona afectada"
+
+msgid "Applied with agreement"
+msgstr "Aplicada con acuerdo"
+
+msgid "Applied without agreement, with the disagreement recorded"
+msgstr "Aplicada sin acuerdo, con la discrepancia registrada"
+
 msgid "kind"
 msgstr "tipo"
 
@@ -287,6 +285,47 @@ msgstr "nota de la resolución"
 
 msgid "resulting event"
 msgstr "fichaje resultante"
+
+msgid "the person agrees"
+msgstr "la persona está conforme"
+
+msgid ""
+"Art. 4.b: a change needs the authorisation of the company and of the person "
+"concerned. Empty means they have not answered."
+msgstr "Art. 4.b: modificar un asiento necesita la autorización de la empresa y de la persona afectada. Vacío significa que aún no ha respondido."
+
+msgid "answered at"
+msgstr "respondió el"
+
+msgid "the person's account"
+msgstr "versión de la persona"
+
+msgid ""
+"Their version, kept beside the change and never instead of it. Art. 4.b lets "
+"the company record the modification and the person their disagreement, so "
+"the record holds both."
+msgstr "Su versión, guardada junto al cambio y nunca en su lugar. El art. 4.b permite que la empresa refleje la modificación y la persona su discrepancia, de modo que el registro conserva las dos."
+
+msgid "workers' representatives informed at"
+msgstr "representación legal informada el"
+
+msgid "how they were informed"
+msgstr "cómo se les informó"
+
+msgid ""
+"Art. 4.b requires informing the workers' legal representation when there is "
+"disagreement. If the company has not said who they are, that is recorded "
+"here rather than passed over in silence."
+msgstr "El art. 4.b exige informar a la representación legal de las personas trabajadoras cuando hay discrepancia. Si la empresa no ha dicho quiénes son, queda anotado aquí en vez de pasarlo por alto."
+
+msgid "applied without agreement"
+msgstr "aplicada sin acuerdo"
+
+msgid ""
+"The change went in anyway, which art. 4.b allows. It travels to the "
+"inspection report: a reader has to be able to tell a correction both parties "
+"accepted from one imposed over an objection."
+msgstr "El cambio se aplicó igualmente, cosa que el art. 4.b permite. Viaja al informe de Inspección: quien lo lea tiene que poder distinguir una corrección aceptada por las dos partes de una impuesta sobre una objeción."
 
 msgid "record correction"
 msgstr "corrección del registro"
@@ -311,6 +350,47 @@ msgstr "Ese fichaje es de otra persona."
 
 msgid "Say whether the missing event is an entry or an exit."
 msgstr "Indica si el fichaje que falta es una entrada o una salida."
+
+msgid "Only the person concerned can accept a change to their record."
+msgstr "Solo la persona afectada puede aceptar un cambio en su registro."
+
+msgid "Only the person concerned can disagree with a change to their record."
+msgstr "Solo la persona afectada puede discrepar de un cambio en su registro."
+
+msgid "Say what you think happened. It is recorded beside the change."
+msgstr "Di qué crees que pasó. Queda registrado junto al cambio."
+
+msgid "The person still has time to answer."
+msgstr "La persona todavía está en plazo para responder."
+
+msgid "No answer within the period given. Applied without their agreement."
+msgstr "Sin respuesta en el plazo dado. Aplicado sin su conformidad."
+
+msgid "This change is not waiting for the person concerned."
+msgstr "Este cambio no está esperando a la persona afectada."
+
+#, python-format
+msgid "Informed: %(names)s"
+msgstr "Informados: %(names)s"
+
+msgid ""
+"No workers' representatives are on record. Art. 4.b requires informing them."
+msgstr "No consta ninguna representación legal de las personas trabajadoras. El art. 4.b exige informarla."
+
+msgid "Your employer proposes a change to your working time record"
+msgstr "Tu empresa propone un cambio en tu registro de jornada"
+
+#, python-format
+msgid "Add an entry: %(kind)s at %(when)s."
+msgstr "Añadir un fichaje: %(kind)s a las %(when)s."
+
+#, python-format
+msgid "Change the time of an entry to %(when)s."
+msgstr "Cambiar la hora de un fichaje a las %(when)s."
+
+#, python-format
+msgid "Void the entry recorded at %(when)s."
+msgstr "Anular el fichaje registrado a las %(when)s."
 
 #, python-format
 msgid "An entry was added: %(kind)s at %(when)s."
@@ -339,13 +419,9 @@ msgstr "Entrada"
 msgid "Clock out"
 msgstr "Salida"
 
-#, fuzzy
-#| msgid "Working time record"
 msgid "Working day"
 msgstr "Jornada de trabajo"
 
-#, fuzzy
-#| msgid "the break counts as working time"
 msgid "Break that is not working time"
 msgstr "Pausa que no es trabajo efectivo"
 
@@ -367,8 +443,6 @@ msgstr "Ordinaria"
 msgid "Overtime"
 msgstr "Extraordinaria"
 
-#, fuzzy
-#| msgid "Company"
 msgid "Complementary"
 msgstr "Complementaria"
 
@@ -384,8 +458,6 @@ msgstr "Ninguna"
 msgid "Care or family reasons (art. 34.8 ET)"
 msgstr "Conciliación o motivos familiares (art. 34.8 ET)"
 
-#, fuzzy
-#| msgid "weekly hours"
 msgid "Flexible hours"
 msgstr "Horario flexible"
 
@@ -500,6 +572,33 @@ msgstr "Indica si las horas extraordinarias se retribuyen o se compensan con des
 msgid "You cannot clock in: you have approved leave for today."
 msgstr "No puedes fichar: tienes una ausencia aprobada para hoy."
 
+msgid "Monthly"
+msgstr "Mensual"
+
+msgid "Every two weeks"
+msgstr "Quincenal"
+
+msgid "Weekly"
+msgstr "Semanal"
+
+msgid "hours in the period"
+msgstr "horas del periodo"
+
+msgid "overtime in the period"
+msgstr "horas extraordinarias del periodo"
+
+msgid "document fingerprint"
+msgstr "huella del documento"
+
+msgid "generated by"
+msgstr "generado por"
+
+msgid "payroll summary"
+msgstr "resumen de nómina"
+
+msgid "payroll summaries"
+msgstr "resúmenes de nómina"
+
 msgid "Working time record"
 msgstr "Registro de jornada"
 
@@ -565,8 +664,6 @@ msgstr "salida sin entrada previa"
 msgid "entry with no exit"
 msgstr "entrada sin salida"
 
-#, fuzzy
-#| msgid "entry with no exit"
 msgid "break with no end"
 msgstr "pausa sin fin"
 
@@ -584,6 +681,12 @@ msgstr "Solo puedes pedir tu propio registro."
 
 msgid "That person does not exist."
 msgstr "Esa persona no existe."
+
+msgid "Only a manager or an administrator generates the summaries."
+msgstr "Solo un responsable o la administración genera los resúmenes."
+
+msgid "You may only ask for your own summary."
+msgstr "Solo puedes pedir tu propio resumen."
 
 msgid "A shift needs at least one time span."
 msgstr "Un turno necesita al menos un tramo horario."
@@ -780,6 +883,15 @@ msgid ""
 "not necessarily the calendar year: the agreement decides."
 msgstr "Mes en que empieza el periodo de cómputo de las vacaciones. 1 = año natural. El periodo no es necesariamente el año natural: lo decide el convenio."
 
+msgid "pay period"
+msgstr "periodo de abono"
+
+msgid ""
+"Art. 6.1: a copy of the summary for this period goes out with the payslip. "
+"Not necessarily a calendar month --- art. 29.1 ET only caps the interval at "
+"one."
+msgstr "Art. 6.1: con la nómina se entrega copia del resumen de este periodo. No es necesariamente un mes natural: el art. 29.1 ET solo fija el mes como intervalo máximo."
+
 msgid "record retention (years)"
 msgstr "conservación del registro (años)"
 
@@ -876,6 +988,16 @@ msgstr "Art. 36.1 ET: entre las 22:00 y las 06:00."
 msgid "night work ends at"
 msgstr "el trabajo nocturno acaba a las"
 
+msgid "days to answer a proposed correction"
+msgstr "días para responder a una corrección propuesta"
+
+msgid ""
+"Art. 4.b needs the person's authorisation to change an entry but sets no "
+"deadline for answering. Without one a proposal would hang forever, so the "
+"company sets the window. Past it the change can be applied, recorded as made "
+"without agreement."
+msgstr "El art. 4.b exige la autorización de la persona para modificar un asiento pero no fija plazo para responder. Sin uno, una propuesta quedaría colgada para siempre, así que lo fija la empresa. Pasado el plazo el cambio puede aplicarse, y queda anotado que se hizo sin conformidad."
+
 msgid "notice for roster changes (days)"
 msgstr "preaviso de cambios de cuadrante (días)"
 
@@ -925,8 +1047,6 @@ msgstr "El identificador de la persona en los sistemas de la propia empresa. Sir
 msgid "Overrides the company language for this person."
 msgstr "Sustituye el idioma de la empresa para esta persona."
 
-#, fuzzy
-#| msgid "proposed time"
 msgid "part time"
 msgstr "tiempo parcial"
 
@@ -939,8 +1059,6 @@ msgstr "porcentaje de jornada"
 msgid "Only for part time. Art. 3.b asks for it explicitly."
 msgstr "Solo en tiempo parcial. El art. 3.b lo pide expresamente."
 
-#, fuzzy
-#| msgid "weekly hours"
 msgid "agreed hours"
 msgstr "horario pactado"
 
@@ -956,6 +1074,14 @@ msgid ""
 "Art. 3.e. What a clock event assumes when it says nothing; each event can "
 "still record the other."
 msgstr "Art. 3.e. Lo que asume un fichaje cuando no dice nada; cada uno puede registrar la otra modalidad."
+
+msgid "workers' representative"
+msgstr "representante de las personas trabajadoras"
+
+msgid ""
+"Informed when somebody disagrees with a change to their record (art. 4.b), "
+"and entitled to consult the register (art. 6.2)."
+msgstr "Se le informa cuando alguien discrepa de un cambio en su registro (art. 4.b), y tiene derecho a consultar el registro (art. 6.2)."
 
 msgid ""
 "Overrides the company figure for this person. Empty means the company's. "
@@ -1071,6 +1197,31 @@ msgstr "El enlace sirve una sola vez y caduca en %(hours)s horas.\n\nSi no has s
 msgid ""
 "Hello %(first_name)s,\n"
 "\n"
+"Your employer, %(company)s, proposes a change to your working time record."
+msgstr "Hola %(first_name)s:\n\nTu empresa, %(company)s, propone un cambio en tu registro de jornada."
+
+#, python-format
+msgid ""
+"Reason given: %(reason)s\n"
+"Proposed by: %(proposed_by)s"
+msgstr "Motivo indicado: %(reason)s\nLo propone: %(proposed_by)s"
+
+#, python-format
+msgid ""
+"Nothing has changed yet. You can accept it, or say you do not agree ---\n"
+"in which case your account is recorded beside the change and the workers' "
+"legal\n"
+"representation is informed.\n"
+"\n"
+"You have %(days)s days to answer. After that the company may apply the "
+"change,\n"
+"and it will be recorded as made without your agreement."
+msgstr "Todavía no se ha cambiado nada. Puedes aceptarlo o decir que no estás de\nacuerdo, y en ese caso tu versión queda registrada junto al cambio y se informa\na la representación legal de las personas trabajadoras.\n\nTienes %(days)s días para responder. Pasado ese plazo la empresa puede aplicar\nel cambio, y quedará anotado que se hizo sin tu conformidad."
+
+#, python-format
+msgid ""
+"Hello %(first_name)s,\n"
+"\n"
 "Your working time record has been changed at %(company)s."
 msgstr "Hola %(first_name)s:\n\nTu registro de jornada en %(company)s ha cambiado."
 
@@ -1086,9 +1237,3 @@ msgid ""
 "\n"
 "If this does not match what happened, tell whoever manages your working time."
 msgstr "La versión anterior no se ha borrado: las dos quedan en tu\nhistorial, y puedes descargar tu registro completo cuando quieras.\n\nSi esto no coincide con lo que pasó, díselo a quien gestione tu jornada."
-
-#~ msgid "It was already void."
-#~ msgstr "Ya estaba anulado."
-
-#~ msgid "Failed sign-in"
-#~ msgstr "Intento de acceso fallido"

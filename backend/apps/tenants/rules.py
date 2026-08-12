@@ -91,6 +91,16 @@ class WorkingTimeRules(BaseModel):
         help_text=_("Art. 36.1 ET: between 22:00 and 06:00."),
     )
     night_ends_at = models.TimeField(_("night work ends at"), default=time(6, 0))
+    correction_consent_days = models.PositiveSmallIntegerField(
+        _("days to answer a proposed correction"),
+        default=7,
+        help_text=_(
+            "Art. 4.b needs the person's authorisation to change an entry but sets "
+            "no deadline for answering. Without one a proposal would hang forever, "
+            "so the company sets the window. Past it the change can be applied, "
+            "recorded as made without agreement."
+        ),
+    )
     roster_notice_days = models.PositiveSmallIntegerField(
         _("notice for roster changes (days)"),
         default=5,

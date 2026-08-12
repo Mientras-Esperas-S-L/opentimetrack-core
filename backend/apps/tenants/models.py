@@ -88,6 +88,22 @@ class Tenant(BaseModel):
         ),
     )
 
+    payroll_period = models.CharField(
+        _("pay period"),
+        max_length=16,
+        default="MONTHLY",
+        choices=[
+            ("MONTHLY", _("Monthly")),
+            ("FORTNIGHTLY", _("Every two weeks")),
+            ("WEEKLY", _("Weekly")),
+        ],
+        help_text=_(
+            "Art. 6.1: a copy of the summary for this period goes out with the "
+            "payslip. Not necessarily a calendar month --- art. 29.1 ET only caps "
+            "the interval at one."
+        ),
+    )
+
     record_retention_years = models.PositiveSmallIntegerField(
         _("record retention (years)"),
         default=4,

@@ -1,0 +1,15 @@
+{% load i18n %}{% blocktranslate %}Hello {{ first_name }},
+
+Your employer, {{ company }}, proposes a change to your working time record.{% endblocktranslate %}
+
+{{ summary }}
+
+{% blocktranslate %}Reason given: {{ reason }}
+Proposed by: {{ proposed_by }}{% endblocktranslate %}
+
+{% blocktranslate %}Nothing has changed yet. You can accept it, or say you do not agree ---
+in which case your account is recorded beside the change and the workers' legal
+representation is informed.
+
+You have {{ days }} days to answer. After that the company may apply the change,
+and it will be recorded as made without your agreement.{% endblocktranslate %}

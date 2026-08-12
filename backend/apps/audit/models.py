@@ -54,6 +54,8 @@ class AuditAction(models.TextChoices):
     CORRECTION_APPROVED = "CORRECTION_APPROVED", _("Approved a correction")
     CORRECTION_REJECTED = "CORRECTION_REJECTED", _("Rejected a correction")
     PUNCH_VOIDED = "PUNCH_VOIDED", _("Voided a clock event")
+    CORRECTION_DISPUTED = "CORRECTION_DISPUTED", _("Disagreed with a proposed change")
+    CORRECTION_IMPOSED = "CORRECTION_IMPOSED", _("Applied a change without agreement")
 
     # Somebody decided about time off.
     ABSENCE_APPROVED = "ABSENCE_APPROVED", _("Approved leave")

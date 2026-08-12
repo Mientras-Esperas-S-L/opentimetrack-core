@@ -17,7 +17,7 @@ from apps.punches.correction_views import CorrectionViewSet
 from apps.punches.delegated import DelegatedPunchView
 from apps.punches.views import PunchViewSet
 from apps.reports.overview import OverviewView
-from apps.reports.views import ReportView
+from apps.reports.views import PayrollSummaryView, ReportView
 from apps.shifts.views import ShiftPatternViewSet, ShiftViewSet, WorkingTimeRulesView
 from apps.tenants.views import CompanyView
 from apps.users.views import (
@@ -54,6 +54,7 @@ urlpatterns = [
     path("api/health/", HealthView.as_view(), name="health"),
     path("api/auth/", include((auth_patterns, "auth"))),
     path("api/reports/working-time/", ReportView.as_view(), name="working-time-report"),
+    path("api/reports/payroll-summary/", PayrollSummaryView.as_view(), name="payroll-summary"),
     path("api/overview/", OverviewView.as_view(), name="overview"),
     path("api/company/", CompanyView.as_view(), name="company"),
     path("api/working-time-rules/", WorkingTimeRulesView.as_view(), name="working-time-rules"),

@@ -16,6 +16,8 @@ indistinguishable from tampering.
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 from django.db import models, transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -32,8 +34,24 @@ class CorrectionKind(models.TextChoices):
 
 
 class CorrectionStatus(models.TextChoices):
-    PENDING = "PENDING", _("Pending")
-    APPROVED = "APPROVED", _("Approved")
+    """Where a correction is, and it is not a simple yes or no.
+
+    Art. 4.b of the pending royal decree requires **both** the company and the
+    person concerned to authorise a change to an entry. Read carelessly that
+    sounds like a veto for the worker, and the last sentence of the paragraph
+    says it is not: «en ausencia de acuerdo, la empresa reflejará en el registro
+    la modificación y la persona trabajadora su discrepancia».
+
+    So the change goes in even without agreement. What the norm guarantees is
+    **contradiction, not blocking**: the record must be able to hold two
+    accounts of the same day and say which is whose. That is the difference
+    between a register that hides a disagreement and one that carries it.
+    """
+
+    PENDING = "PENDING", _("Waiting for the company")
+    AWAITING_EMPLOYEE = "AWAITING_EMPLOYEE", _("Waiting for the person concerned")
+    APPROVED = "APPROVED", _("Applied with agreement")
+    DISPUTED = "DISPUTED", _("Applied without agreement, with the disagreement recorded")
     REJECTED = "REJECTED", _("Rejected")
 
 
@@ -73,7 +91,7 @@ class PunchCorrection(TenantOwnedModel):
     )
 
     status = models.CharField(
-        _("status"), max_length=8, choices=CorrectionStatus, default=CorrectionStatus.PENDING
+        _("status"), max_length=20, choices=CorrectionStatus, default=CorrectionStatus.PENDING
     )
     requested_by = models.ForeignKey(
         "users.User",
@@ -99,6 +117,55 @@ class PunchCorrection(TenantOwnedModel):
         blank=True,
         related_name="created_by_correction",
         verbose_name=_("resulting event"),
+    )
+
+    # ------------------------------------------------------------- art. 4.b
+
+    # Three states, not two. `None` means the person has not spoken yet, which
+    # is different from having said no, and the difference decides whether the
+    # company may go ahead.
+    employee_agreed = models.BooleanField(
+        _("the person agrees"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Art. 4.b: a change needs the authorisation of the company and of the "
+            "person concerned. Empty means they have not answered."
+        ),
+    )
+    employee_responded_at = models.DateTimeField(_("answered at"), null=True, blank=True)
+    employee_dissent = models.TextField(
+        _("the person's account"),
+        blank=True,
+        help_text=_(
+            "Their version, kept beside the change and never instead of it. Art. 4.b "
+            "lets the company record the modification and the person their "
+            "disagreement, so the record holds both."
+        ),
+    )
+
+    representatives_notified_at = models.DateTimeField(
+        _("workers' representatives informed at"), null=True, blank=True
+    )
+    representatives_notice = models.CharField(
+        _("how they were informed"),
+        max_length=200,
+        blank=True,
+        help_text=_(
+            "Art. 4.b requires informing the workers' legal representation when "
+            "there is disagreement. If the company has not said who they are, that "
+            "is recorded here rather than passed over in silence."
+        ),
+    )
+
+    applied_without_agreement = models.BooleanField(
+        _("applied without agreement"),
+        default=False,
+        help_text=_(
+            "The change went in anyway, which art. 4.b allows. It travels to the "
+            "inspection report: a reader has to be able to tell a correction both "
+            "parties accepted from one imposed over an objection."
+        ),
     )
 
     class Meta:
@@ -180,6 +247,192 @@ def request_correction(
         proposed_timestamp=proposed_timestamp,
         reason=reason.strip(),
         requested_by=requested_by,
+    )
+
+
+# ------------------------------------------------------- art. 4.b, the two sides
+
+
+def propose_correction(
+    *,
+    employee,
+    company,
+    proposed_by,
+    kind: str,
+    reason: str,
+    target: Punch | None = None,
+    proposed_type: str = "",
+    proposed_timestamp=None,
+) -> PunchCorrection:
+    """The company proposing a change to somebody's record.
+
+    Distinct from `request_correction`, and the distinction is the whole point
+    of art. 4.b. When the person asks and the company approves, both have
+    authorised it and the change goes straight in. When the company proposes,
+    one authorisation is missing --- so the change waits, and the person is
+    asked.
+
+    It does not wait forever. `apply_without_agreement` exists because the
+    article says so: silence or refusal does not stop the company, it obliges
+    the record to carry both accounts.
+    """
+    correction = request_correction(
+        employee=employee,
+        company=company,
+        requested_by=proposed_by,
+        kind=kind,
+        reason=reason,
+        target=target,
+        proposed_type=proposed_type,
+        proposed_timestamp=proposed_timestamp,
+    )
+    correction.status = CorrectionStatus.AWAITING_EMPLOYEE
+    correction.save(update_fields=["status", "updated_at"])
+
+    transaction.on_commit(lambda: notify_employee_of_proposal(correction))
+    return correction
+
+
+@transaction.atomic
+def accept_correction(correction: PunchCorrection, *, employee) -> Punch | None:
+    """The person agrees. Both authorisations are in, so it applies."""
+    _must_be_awaiting(correction)
+    if correction.employee_id != employee.id:
+        raise BusinessRuleError(
+            code="not_your_record",
+            message=_("Only the person concerned can accept a change to their record."),
+        )
+
+    correction.employee_agreed = True
+    correction.employee_responded_at = timezone.now()
+    correction.status = CorrectionStatus.PENDING
+    correction.save(
+        update_fields=["employee_agreed", "employee_responded_at", "status", "updated_at"]
+    )
+    # Back to the ordinary path: the company that proposed it now applies it.
+    return approve_correction(correction, resolved_by=correction.requested_by)
+
+
+@transaction.atomic
+def dispute_correction(correction: PunchCorrection, *, employee, account: str) -> PunchCorrection:
+    """The person disagrees, and says why.
+
+    Nothing is applied here. The disagreement is recorded, the workers'
+    representatives are informed --- art. 4.b requires it --- and the company
+    decides whether to go ahead. Their account is mandatory: a disagreement with
+    no content is not something a reader can weigh against the change.
+    """
+    _must_be_awaiting(correction)
+    if correction.employee_id != employee.id:
+        raise BusinessRuleError(
+            code="not_your_record",
+            message=_("Only the person concerned can disagree with a change to their record."),
+        )
+    if not account or not account.strip():
+        raise BusinessRuleError(
+            code="account_required",
+            message=_("Say what you think happened. It is recorded beside the change."),
+        )
+
+    correction.employee_agreed = False
+    correction.employee_responded_at = timezone.now()
+    correction.employee_dissent = account.strip()
+    correction.save(
+        update_fields=[
+            "employee_agreed",
+            "employee_responded_at",
+            "employee_dissent",
+            "updated_at",
+        ]
+    )
+
+    _inform_representatives(correction)
+    return correction
+
+
+@transaction.atomic
+def apply_without_agreement(correction: PunchCorrection, *, resolved_by) -> Punch | None:
+    """The company goes ahead anyway, which art. 4.b permits.
+
+    Permitted, and never silent. The entry is marked, the person's account
+    travels with it, and both reach the inspection report. A reader has to be
+    able to tell a correction both parties accepted from one imposed over an
+    objection --- otherwise the record would be hiding the very disagreement the
+    article exists to preserve.
+
+    Two ways to get here: the person disagreed, or they did not answer within
+    the window the company configured.
+    """
+    _must_be_awaiting(correction)
+
+    silent = correction.employee_agreed is None
+    if silent and not _consent_window_has_passed(correction):
+        raise BusinessRuleError(
+            code="still_within_the_window",
+            message=_("The person still has time to answer."),
+        )
+
+    if silent:
+        # Said out loud in the record: not answering is not agreeing, and an
+        # entry that failed to distinguish them would overstate the consent.
+        correction.employee_dissent = str(
+            _("No answer within the period given. Applied without their agreement.")
+        )
+        _inform_representatives(correction)
+
+    correction.applied_without_agreement = True
+    correction.save(update_fields=["applied_without_agreement", "employee_dissent", "updated_at"])
+
+    correction.status = CorrectionStatus.PENDING  # so approve_correction accepts it
+    result = approve_correction(correction, resolved_by=resolved_by)
+
+    correction.status = CorrectionStatus.DISPUTED
+    correction.save(update_fields=["status", "updated_at"])
+    return result
+
+
+def _must_be_awaiting(correction: PunchCorrection) -> None:
+    if correction.status != CorrectionStatus.AWAITING_EMPLOYEE:
+        raise BusinessRuleError(
+            code="not_awaiting_the_employee",
+            message=_("This change is not waiting for the person concerned."),
+        )
+
+
+def _consent_window_has_passed(correction: PunchCorrection) -> bool:
+    from apps.tenants.rules import WorkingTimeRules
+
+    rules = WorkingTimeRules.for_company(correction.tenant)
+    deadline = correction.created_at + timedelta(days=rules.correction_consent_days)
+    return timezone.now() >= deadline
+
+
+def _inform_representatives(correction: PunchCorrection) -> None:
+    """Art. 4.b: on disagreement, the workers' representatives are informed.
+
+    The company has to have said who they are. If it has not, that is written
+    down instead of being passed over --- claiming to have informed nobody would
+    be worse than admitting the gap, and the company needs to know the
+    obligation is unmet.
+    """
+    from apps.users.models import User
+
+    representatives = User.objects.filter(
+        tenant=correction.tenant, is_worker_representative=True, is_active=True
+    )
+
+    correction.representatives_notified_at = timezone.now()
+    if representatives.exists():
+        correction.representatives_notice = str(
+            _("Informed: %(names)s")
+            % {"names": ", ".join(r.get_full_name() or r.email for r in representatives)[:150]}
+        )
+    else:
+        correction.representatives_notice = str(
+            _("No workers' representatives are on record. Art. 4.b requires informing them.")
+        )
+    correction.save(
+        update_fields=["representatives_notified_at", "representatives_notice", "updated_at"]
     )
 
 
@@ -266,6 +519,69 @@ def _void(punch: Punch, replaced_by: Punch | None = None) -> None:
     if replaced_by is not None:
         punch.replaced_by = replaced_by
     punch.save(update_fields=["is_active", "voided_at", "replaced_by"])
+
+
+def notify_employee_of_proposal(correction: PunchCorrection) -> None:
+    """Tells the person their employer wants to change their record.
+
+    The message asks rather than announces, because at this point nothing has
+    changed and their answer decides what happens next. It says what the window
+    is: a proposal that could sit unanswered forever would be a change made by
+    exhaustion.
+    """
+    import logging
+
+    from django.conf import settings
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+
+    from apps.tenants.rules import WorkingTimeRules
+
+    log = logging.getLogger(__name__)
+    if not correction.employee.email:
+        return
+
+    try:
+        rules = WorkingTimeRules.for_company(correction.tenant)
+        body = render_to_string(
+            "emails/record_change_proposed.txt",
+            {
+                "first_name": correction.employee.first_name,
+                "company": correction.tenant.name,
+                "summary": _summarise(correction),
+                "reason": correction.reason,
+                "proposed_by": correction.requested_by.get_full_name(),
+                "days": rules.correction_consent_days,
+            },
+        )
+        send_mail(
+            subject=_("Your employer proposes a change to your working time record"),
+            message=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[correction.employee.email],
+            fail_silently=True,
+        )
+    except Exception:
+        log.exception(
+            "Could not tell %s about correction %s", correction.employee_id, correction.pk
+        )
+
+
+def _summarise(correction: PunchCorrection) -> str:
+    zone = correction.tenant.tzinfo
+    when = correction.proposed_timestamp or (
+        correction.target.timestamp if correction.target else None
+    )
+    local = when.astimezone(zone).strftime("%d/%m/%Y %H:%M") if when else ""
+    summaries = {
+        CorrectionKind.ADD: _("Add an entry: %(kind)s at %(when)s."),
+        CorrectionKind.MODIFY: _("Change the time of an entry to %(when)s."),
+        CorrectionKind.VOID: _("Void the entry recorded at %(when)s."),
+    }
+    return summaries[correction.kind] % {
+        "when": local,
+        "kind": correction.get_proposed_type_display() if correction.proposed_type else "",
+    }
 
 
 def notify_employee(correction: PunchCorrection) -> None:

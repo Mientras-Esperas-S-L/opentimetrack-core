@@ -45,6 +45,13 @@ class DayRow:
     onsite: bool = False
     arrangements: list[str] = field(default_factory=list)
 
+    # Art. 4.b. A day whose entries were changed over the person's objection,
+    # and what they said. Both, or neither: a report that showed the change
+    # without the objection would be hiding the disagreement the article
+    # exists to preserve.
+    disputed: bool = False
+    dissent: list[str] = field(default_factory=list)
+
 
 @dataclass
 class ReportData:
@@ -155,6 +162,24 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
     total = 0
     monthly: dict[str, int] = {}
 
+    # Corrections applied without the person's agreement, by the day they
+    # concern. Art. 4.b: the modification and the disagreement travel together.
+    from apps.punches.corrections import CorrectionStatus, PunchCorrection
+
+    disputes: dict = {}
+    imposed_on = PunchCorrection.objects.filter(
+        employee=employee, status=CorrectionStatus.DISPUTED
+    ).select_related("target", "result")
+    for imposed in imposed_on:
+        moment = imposed.proposed_timestamp or (
+            imposed.target.timestamp if imposed.target else None
+        )
+        if moment is None:
+            continue
+        day_of = moment.astimezone(zone).date()
+        if date_from <= day_of <= date_to:
+            disputes.setdefault(day_of, []).append(imposed)
+
     current = date_from
     while current <= date_to:
         row = DayRow(day=current)
@@ -163,6 +188,11 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
             if absence.start_date <= current <= absence.end_date:
                 row.absence = absence.get_absence_type_display()
                 break
+
+        for imposed in disputes.get(current, []):
+            row.disputed = True
+            if imposed.employee_dissent:
+                row.dissent.append(imposed.employee_dissent)
 
         events = by_day.get(current, [])
         # One opening per kind of span: a break runs inside the working day, so

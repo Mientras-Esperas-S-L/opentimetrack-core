@@ -163,6 +163,7 @@ COLLECTIONS = [
     "/api/shifts/today/",
     "/api/absences/balance/",
     "/api/absences/pending/",
+    "/api/reports/payroll-summary/",
 ]
 
 
@@ -277,6 +278,9 @@ def test_they_cannot_change_or_resolve_anything_of_ours(ours, theirs):
         ("post", f"/api/absences/{ours['absence'].id}/approve/", {}),
         ("post", f"/api/absences/{ours['absence'].id}/reject/", {}),
         ("post", f"/api/corrections/{ours['correction'].id}/approve/", {}),
+        ("post", f"/api/corrections/{ours['correction'].id}/accept/", {}),
+        ("post", f"/api/corrections/{ours['correction'].id}/dispute/", {"account": "no fue así"}),
+        ("post", f"/api/corrections/{ours['correction'].id}/apply-anyway/", {}),
         ("patch", f"/api/employees/{ours['worker'].id}/", {"role": "ADMIN"}),
         ("delete", f"/api/employees/{ours['worker'].id}/", None),
         ("patch", f"/api/punches/{ours['punch'].id}/void/", {"reason": "porque sí"}),
@@ -354,6 +358,8 @@ def test_a_worker_cannot_do_a_managers_job(ours):
     attempts = [
         ("post", f"/api/absences/{ours['absence'].id}/approve/", {}),
         ("post", f"/api/corrections/{ours['correction'].id}/approve/", {}),
+        # A worker may accept or dispute their *own*, never impose one.
+        ("post", f"/api/corrections/{ours['correction'].id}/apply-anyway/", {}),
         ("post", "/api/employees/", {"email": "nuevo@nuestra.test", "first_name": "Nuevo"}),
         ("patch", f"/api/employees/{ours['worker'].id}/", {"role": "ADMIN"}),
         ("patch", "/api/company/", {"annual_leave_days": 99}),
@@ -458,6 +464,9 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^corrections/$",
         "api/^corrections/(?P<pk>[^/.]+)/$",
         "api/^corrections/(?P<pk>[^/.]+)/approve/$",
+        "api/^corrections/(?P<pk>[^/.]+)/accept/$",
+        "api/^corrections/(?P<pk>[^/.]+)/dispute/$",
+        "api/^corrections/(?P<pk>[^/.]+)/apply-anyway/$",
         "api/^corrections/(?P<pk>[^/.]+)/reject/$",
         "api/^employees/$",
         "api/^employees/(?P<pk>[^/.]+)/$",
@@ -478,6 +487,7 @@ def test_every_route_is_covered_by_this_sweep():
         "api/company/",
         "api/working-time-rules/",
         "api/reports/working-time/",
+        "api/reports/payroll-summary/",
     }
 
     uncovered = routes - covered - swept
