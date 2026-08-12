@@ -11,6 +11,7 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.audit.services import record_view_of_others
 from apps.common.permissions import IsAdmin, IsAuthenticatedInTenant
 from apps.punches.models import Punch, PunchSource
 from apps.punches.serializers import PunchSerializer, PunchWriteSerializer
@@ -49,6 +50,28 @@ class PunchViewSet(
     permission_classes = [IsAuthenticatedInTenant]
     filterset_fields = ["employee", "punch_type", "source", "is_active"]
     ordering_fields = ["timestamp"]
+
+    def list(self, request, *args, **kwargs):
+        """Leaves a trace when the list is somebody else's.
+
+        This was the gap the audit trail existed to close and did not: a
+        manager could read any worker's history and nothing recorded it. Only
+        a filtered request is logged --- asking for one named person --- because
+        that is the one that answers "who has been looking at me".
+
+        The company-wide list is not logged. It is the ordinary act of running
+        a payroll, it happens dozens of times a day, and an entry per page view
+        would bury the pointed ones.
+        """
+        wanted = request.query_params.get("employee")
+        if wanted and wanted != str(request.user.id):
+            from apps.users.models import User
+
+            person = User.objects.filter(tenant=request.user.tenant, pk=wanted).first()
+            record_view_of_others(
+                request=request, target_employee=person, note="listado de fichajes"
+            )
+        return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
         qs = Punch.objects.select_related("employee").all()

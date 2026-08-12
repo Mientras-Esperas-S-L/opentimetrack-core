@@ -185,6 +185,10 @@ export const getWorkingTimeRules = () => get('/working-time-rules/')
 export const updateWorkingTimeRules = async (payload) =>
   (await api.patch('/working-time-rules/', payload)).data
 
+// ----------------------------------------------------------------------- audit
+
+export const getAuditTrail = async (params) => rows(await get('/audit/', params))
+
 // -------------------------------------------------------------------- company
 
 export const getCompany = () => get('/company/')

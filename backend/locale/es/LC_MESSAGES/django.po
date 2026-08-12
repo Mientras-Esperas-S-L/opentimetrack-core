@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-11 20:17+0000\n"
+"POT-Creation-Date: 2026-08-12 09:51+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? "
 "1 : 2;\n"
+
 msgid "Holiday"
 msgstr "Vacaciones"
 
@@ -118,6 +119,125 @@ msgstr "Solo puedes consultar tu propio saldo."
 msgid "Give 'from' and 'to' as YYYY-MM-DD."
 msgstr "Indica 'from' y 'to' con el formato AAAA-MM-DD."
 
+msgid "Read somebody else's record"
+msgstr "Consultó el registro de otra persona"
+
+#| msgid "Working time record"
+msgid "Exported a working time report"
+msgstr "Exportó un informe de jornada"
+
+#| msgid "supporting document"
+msgid "Downloaded a supporting document"
+msgstr "Descargó un justificante"
+
+#, fuzzy
+#| msgid "record correction"
+msgid "Requested a correction"
+msgstr "Pidió una corrección"
+
+#, fuzzy
+#| msgid "record correction"
+msgid "Approved a correction"
+msgstr "Aprobó una corrección"
+
+#, fuzzy
+#| msgid "record correction"
+msgid "Rejected a correction"
+msgstr "Rechazó una corrección"
+
+#, fuzzy
+#| msgid "clock event"
+msgid "Voided a clock event"
+msgstr "Anuló un fichaje"
+
+#, fuzzy
+#| msgid "Approved"
+msgid "Approved leave"
+msgstr "Aprobó una ausencia"
+
+#, fuzzy
+#| msgid "Rejected"
+msgid "Rejected leave"
+msgstr "Rechazó una ausencia"
+
+#, fuzzy
+#| msgid "person"
+msgid "Added a person"
+msgstr "Dio de alta a una persona"
+
+msgid "Changed a person"
+msgstr "Modificó a una persona"
+
+msgid "Deactivated a person"
+msgstr "Dio de baja a una persona"
+
+msgid "Changed a role"
+msgstr "Cambió un perfil"
+
+msgid "Changed company settings"
+msgstr "Cambió los ajustes de la empresa"
+
+#, fuzzy
+#| msgid "working time rules"
+msgid "Changed working time rules"
+msgstr "Cambió las reglas de jornada"
+
+#, fuzzy
+#| msgid "recorded by an application"
+msgid "Registered an application"
+msgstr "Registró una aplicación"
+
+#, fuzzy
+#| msgid "application credential"
+msgid "Revoked an application credential"
+msgstr "Revocó una credencial de aplicación"
+
+msgid "Purged security metadata"
+msgstr "Purgó metadatos de seguridad"
+
+msgid "Failed sign-in"
+msgstr "Intento de acceso fallido"
+
+msgid "when"
+msgstr "cuándo"
+
+msgid "company"
+msgstr "empresa"
+
+msgid "who"
+msgstr "quién"
+
+msgid "who (as recorded)"
+msgstr "quién (tal y como se registró)"
+
+#, fuzzy
+#| msgid "application"
+msgid "action"
+msgstr "acción"
+
+#, fuzzy
+#| msgid "tax identifier"
+msgid "identifier"
+msgstr "identificador"
+
+msgid "what (as recorded)"
+msgstr "sobre qué (tal y como se registró)"
+
+msgid "changes"
+msgstr "cambios"
+
+msgid "note"
+msgstr "nota"
+
+msgid "IP address"
+msgstr "dirección IP"
+
+msgid "audit entry"
+msgstr "entrada de auditoría"
+
+msgid "audit trail"
+msgstr "registro de actividad"
+
 msgid "Invalid credential."
 msgstr "Credencial no válida."
 
@@ -126,9 +246,6 @@ msgstr "creado el"
 
 msgid "updated at"
 msgstr "actualizado el"
-
-msgid "company"
-msgstr "empresa"
 
 msgid "A valid session is required."
 msgstr "Hace falta una sesión válida."
@@ -270,9 +387,6 @@ msgstr "registrado por"
 
 msgid "Set when somebody other than the employee created the record."
 msgstr "Se rellena cuando el registro lo creó alguien que no es la propia persona."
-
-msgid "IP address"
-msgstr "dirección IP"
 
 msgid "device"
 msgstr "dispositivo"
@@ -428,9 +542,6 @@ msgstr "día"
 
 msgid "pattern"
 msgstr "turno"
-
-msgid "note"
-msgstr "nota"
 
 msgid "shift"
 msgstr "turno asignado"

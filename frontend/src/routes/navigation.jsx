@@ -7,6 +7,7 @@ import ScheduleIcon from '@mui/icons-material/Schedule'
 import DescriptionIcon from '@mui/icons-material/Description'
 import GroupsIcon from '@mui/icons-material/Groups'
 import HistoryIcon from '@mui/icons-material/History'
+import PolicyIcon from '@mui/icons-material/Policy'
 import RuleIcon from '@mui/icons-material/Rule'
 import SettingsIcon from '@mui/icons-material/Settings'
 import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard'
@@ -24,6 +25,9 @@ export const NAV_ME = [
   { to: '/', label: 'Fichar', icon: <AccessTimeIcon />, end: true },
   { to: '/mi-jornada', label: 'Mi jornada', icon: <HistoryIcon /> },
   { to: '/mis-ausencias', label: 'Mis ausencias', icon: <BeachAccessIcon /> },
+  // Aqui y no en Gestion: si el registro sirve para saber quien ha leido tu
+  // ficha, la persona cuya ficha es tiene que poder mirarlo.
+  { to: '/actividad', label: 'Actividad', icon: <PolicyIcon /> },
 ]
 
 export const NAV_ADMIN = [

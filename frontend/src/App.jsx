@@ -8,6 +8,7 @@ import SignIn from './pages/SignIn.jsx'
 import Clock from './pages/Clock.jsx'
 import MyTime from './pages/me/MyTime.jsx'
 import MyLeave from './pages/me/MyLeave.jsx'
+import AuditTrail from './pages/admin/AuditTrail.jsx'
 import Overview from './pages/admin/Overview.jsx'
 import People from './pages/admin/People.jsx'
 import Departments from './pages/admin/Departments.jsx'
@@ -40,6 +41,7 @@ export default function App() {
           <Route index element={<Clock />} />
           <Route path="mi-jornada" element={<MyTime />} />
           <Route path="mis-ausencias" element={<MyLeave />} />
+          <Route path="actividad" element={<AuditTrail />} />
 
           {/* Guarded again here, not only hidden from the menu: a hidden link
               is not a permission, and these routes read other people's data. */}

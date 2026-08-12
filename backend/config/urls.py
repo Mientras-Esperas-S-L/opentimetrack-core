@@ -11,6 +11,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.routers import DefaultRouter
 
 from apps.absences.views import AbsenceViewSet
+from apps.audit.views import AuditLogViewSet
 from apps.common.views import HealthView
 from apps.punches.correction_views import CorrectionViewSet
 from apps.punches.delegated import DelegatedPunchView
@@ -38,6 +39,7 @@ router.register("corrections", CorrectionViewSet, basename="correction")
 router.register("absences", AbsenceViewSet, basename="absence")
 router.register("shift-patterns", ShiftPatternViewSet, basename="shift-pattern")
 router.register("shifts", ShiftViewSet, basename="shift")
+router.register("audit", AuditLogViewSet, basename="audit")
 
 auth_patterns = [
     path("register/", SignUpView.as_view(), name="register"),

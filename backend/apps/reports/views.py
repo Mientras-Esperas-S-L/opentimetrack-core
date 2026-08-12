@@ -10,6 +10,8 @@ from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 
+from apps.audit.models import AuditAction
+from apps.audit.services import record
 from apps.common.permissions import IsAuthenticatedInTenant
 from apps.reports.pdf import render_pdf
 from apps.reports.renderers import CSVRenderer, PDFRenderer
@@ -84,4 +86,18 @@ class ReportView(APIView):
         # Also as a header, so an automated consumer can check it without
         # opening the document.
         response["X-Report-Hash"] = data.fingerprint
+
+        # Exporting somebody else's record is exactly the kind of thing an
+        # inspection --- or the person concerned --- may later ask about.
+        if employee.id != request.user.id:
+            record(
+                action=AuditAction.REPORT_EXPORTED,
+                actor=request.user,
+                target=employee,
+                target_type="user",
+                target_label=employee.get_full_name(),
+                changes={"from": str(date_from), "to": str(date_to)},
+                note=f"hash {data.fingerprint[:16]}",
+                request=request,
+            )
         return response

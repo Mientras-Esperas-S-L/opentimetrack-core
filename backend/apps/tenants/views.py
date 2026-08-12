@@ -14,6 +14,8 @@ from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.audit.models import AuditAction
+from apps.audit.services import record
 from apps.common.permissions import IsAdmin, IsAuthenticatedInTenant
 from apps.tenants.models import Tenant, validate_time_zone
 
@@ -65,7 +67,28 @@ class CompanyView(APIView):
 
     @extend_schema(request=CompanySerializer, responses={200: CompanySerializer})
     def patch(self, request):
-        serializer = CompanySerializer(request.user.tenant, data=request.data, partial=True)
+        company = request.user.tenant
+        before = CompanySerializer(company).data
+        serializer = CompanySerializer(company, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        # Only what actually moved. A diff of everything would bury the one
+        # field that changed --- and several of these decide how the record is
+        # measured, so they are worth finding later.
+        changed = {
+            field: [before[field], value]
+            for field, value in serializer.data.items()
+            if before.get(field) != value
+        }
+        if changed:
+            record(
+                action=AuditAction.SETTINGS_CHANGED,
+                actor=request.user,
+                target=company,
+                target_type="company",
+                target_label=company.name,
+                changes=changed,
+                request=request,
+            )
         return Response(serializer.data)

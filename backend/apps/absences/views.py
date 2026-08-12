@@ -25,6 +25,8 @@ from apps.absences.services import (
     request_absence,
     vacation_balance,
 )
+from apps.audit.models import AuditAction
+from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import IsAuthenticatedInTenant, IsManagerOrAdmin
 
@@ -137,12 +139,38 @@ class AbsenceViewSet(
     @action(detail=True, methods=["post"], permission_classes=[IsManagerOrAdmin])
     def approve(self, request, pk=None):
         absence = approve_absence(self.get_object(), resolved_by=request.user)
+        record(
+            action=AuditAction.ABSENCE_APPROVED,
+            actor=request.user,
+            target=absence.employee,
+            target_type="user",
+            target_label=absence.employee.get_full_name(),
+            changes={
+                "type": absence.absence_type,
+                "from": absence.start_date.isoformat(),
+                "to": absence.end_date.isoformat(),
+            },
+            request=request,
+        )
         return Response(AbsenceSerializer(absence).data)
 
     @extend_schema(request=None, responses={200: AbsenceSerializer})
     @action(detail=True, methods=["post"], permission_classes=[IsManagerOrAdmin])
     def reject(self, request, pk=None):
         absence = reject_absence(self.get_object(), resolved_by=request.user)
+        record(
+            action=AuditAction.ABSENCE_REJECTED,
+            actor=request.user,
+            target=absence.employee,
+            target_type="user",
+            target_label=absence.employee.get_full_name(),
+            changes={
+                "type": absence.absence_type,
+                "from": absence.start_date.isoformat(),
+                "to": absence.end_date.isoformat(),
+            },
+            request=request,
+        )
         return Response(AbsenceSerializer(absence).data)
 
     @extend_schema(responses={200: None, 302: None, 404: None})
@@ -168,6 +196,19 @@ class AbsenceViewSet(
         absence = self.get_object()
         if not absence.justification:
             raise Http404
+
+        # A supporting document is the most sensitive thing here. Somebody
+        # else reading yours leaves a trace; reading your own does not.
+        if absence.employee_id != request.user.id:
+            record(
+                action=AuditAction.DOCUMENT_DOWNLOADED,
+                actor=request.user,
+                target=absence.employee,
+                target_type="user",
+                target_label=absence.employee.get_full_name(),
+                changes={"absence": str(absence.pk), "type": absence.absence_type},
+                request=request,
+            )
 
         if getattr(settings, "STORAGE_BACKEND", "filesystem") == "s3":
             return HttpResponseRedirect(absence.justification.url)

@@ -8,6 +8,8 @@ from rest_framework import mixins, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.audit.models import AuditAction
+from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import IsAuthenticatedInTenant, IsManagerOrAdmin
 from apps.punches.corrections import (
@@ -127,6 +129,16 @@ class CorrectionViewSet(
             proposed_type=data.get("proposed_type", ""),
             proposed_timestamp=data.get("proposed_timestamp"),
         )
+        record(
+            action=AuditAction.CORRECTION_REQUESTED,
+            actor=request.user,
+            target=employee,
+            target_type="user",
+            target_label=employee.get_full_name(),
+            changes={"kind": correction.kind},
+            note=correction.reason[:300],
+            request=request,
+        )
         return Response(CorrectionSerializer(correction).data, status=status.HTTP_201_CREATED)
 
     def _subject(self, request, employee_id):
@@ -173,6 +185,16 @@ class CorrectionViewSet(
             correction, resolved_by=request.user, note=form.validated_data.get("note", "")
         )
         correction.refresh_from_db()
+        record(
+            action=AuditAction.CORRECTION_APPROVED,
+            actor=request.user,
+            target=correction.employee,
+            target_type="user",
+            target_label=correction.employee.get_full_name(),
+            changes={"kind": correction.kind, "correction": str(correction.pk)},
+            note=correction.reason[:300],
+            request=request,
+        )
         return Response(CorrectionSerializer(correction).data)
 
     @extend_schema(
@@ -191,4 +213,14 @@ class CorrectionViewSet(
             correction, resolved_by=request.user, note=form.validated_data.get("note", "")
         )
         correction.refresh_from_db()
+        record(
+            action=AuditAction.CORRECTION_REJECTED,
+            actor=request.user,
+            target=correction.employee,
+            target_type="user",
+            target_label=correction.employee.get_full_name(),
+            changes={"correction": str(correction.pk)},
+            note=form.validated_data.get("note", "")[:300],
+            request=request,
+        )
         return Response(CorrectionSerializer(correction).data)

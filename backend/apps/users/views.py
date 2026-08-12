@@ -16,6 +16,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.audit.models import AuditAction
+from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
 from apps.common.models import set_current_tenant
 from apps.common.permissions import (
@@ -187,11 +189,44 @@ class UserViewSet(viewsets.ModelViewSet):
                 ),
             )
 
+    def perform_create(self, serializer):
+        person = serializer.save()
+        record(
+            action=AuditAction.PERSON_CREATED,
+            actor=self.request.user,
+            target=person,
+            target_label=person.get_full_name() or person.email,
+            changes={"role": person.role},
+            request=self.request,
+        )
+
     def perform_update(self, serializer):
+        before = serializer.instance.role
         new_role = serializer.validated_data.get("role")
         if new_role:
             self._refuse_if_it_leaves_no_admin(serializer.instance, new_role=new_role)
-        serializer.save()
+        person = serializer.save()
+
+        # A role change gets its own action. It is the one that decides who can
+        # read other people's records, so it should be findable without
+        # trawling through every ordinary edit.
+        if new_role and new_role != before:
+            record(
+                action=AuditAction.ROLE_CHANGED,
+                actor=self.request.user,
+                target=person,
+                target_label=person.get_full_name() or person.email,
+                changes={"role": [before, new_role]},
+                request=self.request,
+            )
+        else:
+            record(
+                action=AuditAction.PERSON_UPDATED,
+                actor=self.request.user,
+                target=person,
+                target_label=person.get_full_name() or person.email,
+                request=self.request,
+            )
 
     def perform_destroy(self, instance):
         """Deactivate rather than delete: their clock events must survive."""
@@ -208,6 +243,13 @@ class UserViewSet(viewsets.ModelViewSet):
 
         instance.is_active = False
         instance.save(update_fields=["is_active"])
+        record(
+            action=AuditAction.PERSON_DEACTIVATED,
+            actor=self.request.user,
+            target=instance,
+            target_label=instance.get_full_name() or instance.email,
+            request=self.request,
+        )
 
 
 @extend_schema(tags=["organisation"])
