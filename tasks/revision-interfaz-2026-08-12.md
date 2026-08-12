@@ -181,3 +181,16 @@ Para comprobar el punto 2 se crearon 80 fichajes en la empresa demo de
 desarrollo (`Jardines Demo S.L.`, `manager@demo.local`). Se dejan puestos: sin
 ellos el corte a 50 no se reproduce, y hará falta para verificar el arreglo.
 `python manage.py seed_demo --reset` los quita.
+
+---
+
+## Fuera de España
+
+Lo que haría falta para que el producto sirva en otro país está en
+[`internacionalizacion.md`](internacionalizacion.md), con las cifras medidas
+sobre el código de hoy y los comandos para reproducirlas.
+
+Lo corto: el núcleo ya es neutro, hay 19 citas legales españolas llegando a la
+pantalla, siete de los ocho idiomas del desplegable devuelven inglés, y
+`Tenant.country` existe desde el principio diciendo que sirve para seleccionar
+las reglas aplicables sin que lo lea nadie. Ese campo es el gancho.
