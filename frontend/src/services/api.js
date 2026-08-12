@@ -133,6 +133,25 @@ export const approveAbsence = (id) => post(`/absences/${id}/approve/`)
 export const rejectAbsence = (id) => post(`/absences/${id}/reject/`)
 export const cancelAbsence = (id) => post(`/absences/${id}/cancel/`)
 
+/** Downloads a supporting document.
+ *
+ *  There is no URL to link to on purpose: the server checks who is asking
+ *  before handing anything over, and with object storage it redirects to a
+ *  signed URL that expires. A path in the JSON would be a bearer secret sitting
+ *  in every list response.
+ */
+export const downloadJustification = async (id, filename = 'justificante') => {
+  const response = await api.get(`/absences/${id}/justification/`, { responseType: 'blob' })
+  const url = URL.createObjectURL(response.data)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
 // ---------------------------------------------------------------------- people
 
 export const getEmployees = async (params) => rows(await get('/employees/', params))

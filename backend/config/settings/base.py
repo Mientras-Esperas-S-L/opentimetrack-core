@@ -189,6 +189,21 @@ SPECTACULAR_SETTINGS = {
 
 # --------------------------------------------------------------- almacenamiento
 
+# Donde van los justificantes. Dos opciones, y la eleccion es del despliegue:
+#
+#   STORAGE_BACKEND=filesystem  un volumen en disco. Suficiente para una empresa
+#                               en un solo servidor, que es la mayoria de quien
+#                               autoaloja. No hace falta levantar nada mas.
+#   STORAGE_BACKEND=s3          cualquier almacen compatible con S3. Necesario
+#                               en cuanto haya mas de un proceso sirviendo la
+#                               API: con disco, cada uno veria sus propios
+#                               ficheros y la mitad de las descargas fallaria.
+#
+# En los dos casos los ficheros se descargan por /api/absences/<id>/justification/,
+# que comprueba permisos. MEDIA_URL no se sirve nunca: publicarlo dejaria los
+# justificantes al alcance de cualquiera con el enlace.
+STORAGE_BACKEND = env("STORAGE_BACKEND", default="filesystem")
+
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},

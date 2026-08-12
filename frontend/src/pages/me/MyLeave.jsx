@@ -13,8 +13,15 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import AddIcon from '@mui/icons-material/Add'
+import AttachFileIcon from '@mui/icons-material/AttachFile'
 
-import { cancelAbsence, getAbsences, getLeaveBalance, requestAbsence } from '../../services/api.js'
+import {
+  cancelAbsence,
+  downloadJustification,
+  getAbsences,
+  getLeaveBalance,
+  requestAbsence,
+} from '../../services/api.js'
 import { Empty, ErrorNote, Loading, PageHeader, Panel, StatusChip } from '../../components/common.jsx'
 import { dateOf, dayRange } from '../../components/format.js'
 
@@ -286,6 +293,15 @@ export default function MyLeave() {
                 </Box>
 
                 <Stack direction="row" sx={{ gap: 1, alignItems: 'center', flexShrink: 0 }}>
+                  {absence.has_justification && (
+                    <Button
+                      size="small"
+                      startIcon={<AttachFileIcon />}
+                      onClick={() => downloadJustification(absence.id)}
+                    >
+                      Justificante
+                    </Button>
+                  )}
                   <StatusChip status={absence.status} label={absence.status_display} />
                   {absence.status === 'PENDING' && (
                     <Button

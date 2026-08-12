@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from datetime import date
 
+from django.conf import settings
+from django.http import FileResponse, Http404, HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, serializers, status, viewsets
@@ -35,6 +37,13 @@ class AbsenceSerializer(serializers.ModelSerializer):
         source="approved_by.get_full_name", read_only=True, default=""
     )
     days = serializers.IntegerField(read_only=True)
+    # Whether there is one, not where it lives. The raw URL would be a bearer
+    # secret sitting in every list response; the file comes from the
+    # `justification` action, which checks who is asking.
+    has_justification = serializers.SerializerMethodField()
+
+    def get_has_justification(self, obj) -> bool:
+        return bool(obj.justification)
 
     class Meta:
         model = Absence
@@ -53,7 +62,7 @@ class AbsenceSerializer(serializers.ModelSerializer):
             "approved_by",
             "resolved_by_name",
             "resolved_at",
-            "justification",
+            "has_justification",
             "created_at",
         ]
         read_only_fields = fields
@@ -135,6 +144,35 @@ class AbsenceViewSet(
     def reject(self, request, pk=None):
         absence = reject_absence(self.get_object(), resolved_by=request.user)
         return Response(AbsenceSerializer(absence).data)
+
+    @extend_schema(responses={200: None, 302: None, 404: None})
+    @action(detail=True, methods=["get"])
+    def justification(self, request, pk=None):
+        """The supporting document, for whoever is entitled to it.
+
+        The only way to reach one. `MEDIA_URL` is never served, and the file
+        URL is not in the serialiser: an absence reveals things --- who was off
+        and for how long --- that a colleague has no business reading, and a
+        path under /media/ that a web server happens to expose would hand the
+        document to anybody who guessed it.
+
+        `get_object` does the checking. It runs against `get_queryset`, which
+        already narrows to the caller's own records unless they manage, so a
+        worker asking for a colleague's gets a 404 rather than a 403 --- there
+        is no reason to confirm the absence even exists.
+
+        With object storage it redirects to a signed URL that expires in five
+        minutes; with a filesystem it serves the bytes. Either way the
+        permission check happened first, which is the part that matters.
+        """
+        absence = self.get_object()
+        if not absence.justification:
+            raise Http404
+
+        if getattr(settings, "STORAGE_BACKEND", "filesystem") == "s3":
+            return HttpResponseRedirect(absence.justification.url)
+
+        return FileResponse(absence.justification.open("rb"), as_attachment=True)
 
     @extend_schema(request=None, responses={204: None})
     @action(detail=True, methods=["post"])

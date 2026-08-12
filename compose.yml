@@ -85,7 +85,14 @@ services:
       timeout: 3s
       retries: 10
 
-  # Almacen de objetos compatible con S3, donde van los justificantes.
+  # Almacen de objetos compatible con S3.
+  #
+  # Opcional. Por defecto los justificantes van a disco (STORAGE_BACKEND=
+  # filesystem), que es de sobra para un servidor y no obliga a levantar esto.
+  # Para trabajar contra S3:
+  #
+  #   podman compose --profile s3 up -d
+  #   # y en .env: STORAGE_BACKEND=s3
   #
   # Era MinIO hasta el 12/08/2026. Sus duenos archivaron el repositorio el
   # 25/04/2026 y lo dejaron en solo lectura: sin mantenimiento, sin parches y
@@ -96,6 +103,7 @@ services:
   # SeaweedFS es Apache 2.0 y esta vivo. El codigo no nota el cambio: sigue
   # hablando S3 por django-storages.
   storage:
+    profiles: ["s3"]
     image: docker.io/chrislusf/seaweedfs:latest
     command: server -dir=/data -s3 -s3.config=/etc/seaweedfs/s3.json -master.volumeSizeLimitMB=64
     volumes:

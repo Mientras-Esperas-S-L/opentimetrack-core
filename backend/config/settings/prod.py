@@ -1,5 +1,7 @@
 """Entorno de producción: cabeceras, TLS obligatorio y nada de DEBUG."""
 
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *
 from .base import env
 
@@ -22,7 +24,15 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
 
-# Supporting documents go to object storage, never to the container's disk.
+# Supporting documents. Which store is a deployment choice, not a code one:
+# STORAGE_BACKEND=filesystem for a single server with a volume, =s3 for object
+# storage. Either way they never go to the container's own disk unmounted, and
+# either way they are downloaded through an endpoint that checks permissions.
+#
+# The default here is s3, and the opposite of the default in base.py: a managed
+# deployment runs more than one process, and with a plain filesystem each one
+# would see its own files. Half the downloads would 404 and nobody would know
+# why.
 #
 # Encryption at rest is OFF unless asked for. It is not a default because
 # SSE-S3 needs a key manager on the storage side, and turning it on without one
@@ -56,9 +66,26 @@ STORAGE_ENCRYPTION = env("STORAGE_ENCRYPTION", default="")
 if STORAGE_ENCRYPTION:
     _storage_options["object_parameters"] = {"ServerSideEncryption": STORAGE_ENCRYPTION}
 
-STORAGES["default"] = {
-    "BACKEND": "storages.backends.s3.S3Storage",
-    "OPTIONS": _storage_options,
-}
+STORAGE_BACKEND = env("STORAGE_BACKEND", default="s3")
+
+if STORAGE_BACKEND == "s3":
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": _storage_options,
+    }
+elif STORAGE_BACKEND == "filesystem":
+    # Deliberately not MEDIA_ROOT's default inside the project tree: on a
+    # container that is a directory that disappears on the next deployment.
+    # It has to be a mounted volume, and saying so here beats discovering it
+    # when four years of supporting documents are gone.
+    MEDIA_ROOT = env("STORAGE_PATH", default="/var/lib/opentimetrack/media")
+    STORAGES["default"] = {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {"location": MEDIA_ROOT},
+    }
+else:
+    raise ImproperlyConfigured(
+        f"STORAGE_BACKEND must be 's3' or 'filesystem', not {STORAGE_BACKEND!r}."
+    )
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
