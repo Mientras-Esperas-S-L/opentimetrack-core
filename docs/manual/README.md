@@ -212,6 +212,27 @@ de la empresa), número de empleado y perfil.
 
 **Contrato** es la sección que más se olvida y la que más consecuencias tiene:
 
+- **Régimen de jornada.** No es el tipo de contrato: es qué límites se aplican.
+  *Completa*, *parcial*, *reducida*, *formación* o *sin cifra pactada*. La
+  diferencia que cuesta dinero es **parcial frente a reducida**: al parcial el
+  art. 12.4.c le prohíbe las horas extraordinarias, y una reducción de jornada
+  del art. 37.6 es una jornada completa trabajada menos, así que esa
+  prohibición no le alcanza. Marcar una como la otra le niega horas extra a
+  quien tiene derecho.
+- **Horas contratadas, y sobre qué periodo.** Semana, mes o año. Muchos
+  convenios españoles fijan el año: el estatal de jardinería dice 1700 horas
+  anuales y ninguna cifra semanal. Una anual **no se divide entre 52**; se
+  cumple o no a lo largo del año.
+- **Fechas de inicio y fin.** Vacío al final significa indefinido. Con fecha, el
+  cuadrante avisa si alguien aparece planificado después de que acabe.
+- **Por temporadas** para el fijo discontinuo. El llamamiento y los periodos de
+  actividad (art. 16 ET) todavía no se modelan; para el cuadrante entra como
+  contrato sin jornada fija.
+
+El porcentaje de jornada que pide el art. 3.b **no se teclea**: sale de las
+horas pactadas. Dos campos que dicen lo mismo acaban discrepando, y el que va al
+informe debe salir del dato real.
+
 - **Fecha de nacimiento.** Es lo único que enciende las protecciones de menores
   de 18: ocho horas al día, descanso de treinta minutos a partir de cuatro y
   media, dos días de descanso semanal, y prohibición de nocturnidad y horas
@@ -276,7 +297,19 @@ personas, el rango de fechas y los días de la semana.
 y es lo que vale como prueba.
 
 Debajo aparecen los avisos: dónde el cuadrante se aparta de las reglas
-configuradas, con el artículo del que sale cada una. **Ninguno bloquea.** El RD
+configuradas, con el artículo del que sale cada una. **Ninguno bloquea.**
+
+Van **agrupados por persona y tipo**, con el número de días. A quien tenga
+jornada continuada de nueve horas se le debe descanso todos los días del mes, y
+veintiuna líneas idénticas taparían las tres que hablan de otra cosa.
+
+Tres avisos que conviene no confundir:
+
+| Aviso | Qué significa |
+|---|---|
+| Pasa del máximo legal | Incumplimiento. Art. 34.1 ET, y ningún contrato puede pactar por encima |
+| Pasa de lo contratado | **No** es incumplimiento. Esas horas son complementarias (art. 12.5 ET), tienen su propio tope y hay que registrarlas como tales |
+| Sin cifra pactada | No se comprueba el total semanal, porque no hay contra qué. Se dice en vez de callarlo | El RD
 1561/1995 modifica varias reglas en sectores concretos, y un sistema que se
 negara a guardar sería inservible en transporte o en guardias; avisa y decide
 la empresa.
