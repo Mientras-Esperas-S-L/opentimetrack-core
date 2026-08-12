@@ -189,10 +189,20 @@ const STATUS_LOOKS = {
   PENDING: { label: 'Pendiente', color: 'warning', variant: 'filled' },
   APPROVED: { label: 'Aprobada', color: 'success', variant: 'outlined' },
   REJECTED: { label: 'Rechazada', color: 'default', variant: 'outlined' },
+  // Art. 4.b. AWAITING_EMPLOYEE is the only one of the two still open: it
+  // covers both "has not answered" and "answered saying no", because either
+  // way the change has not been applied and somebody has to move.
+  //
+  // DISPUTED is not a pending state despite the name --- it means the company
+  // went ahead without agreement and the person's version is recorded beside
+  // it. Outlined, because it is over; secondary, because a reader of the
+  // record has to be able to tell it from one both parties accepted.
+  AWAITING_EMPLOYEE: { label: 'Esperando tu respuesta', color: 'warning', variant: 'filled' },
+  DISPUTED: { label: 'Aplicada sin acuerdo', color: 'secondary', variant: 'outlined' },
 }
 
-/** State reads at a glance: pending is the only one filled, because it is the
- *  only one that asks somebody to do something. */
+/** State reads at a glance: the ones that ask somebody to do something are
+ *  filled, the ones that are over are outlined. */
 export function StatusChip({ status, label }) {
   const look = STATUS_LOOKS[status] ?? { label: status, color: 'default', variant: 'outlined' }
   return <Chip size="small" label={label ?? look.label} color={look.color} variant={look.variant} />

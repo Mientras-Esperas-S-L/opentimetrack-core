@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import Alert from '@mui/material/Alert'
 import Badge from '@mui/material/Badge'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -15,6 +16,7 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 
 import {
+  applyCorrectionAnyway,
   approveAbsence,
   approveCorrection,
   getCorrections,
@@ -22,7 +24,15 @@ import {
   rejectAbsence,
   rejectCorrection,
 } from '../../services/api.js'
-import { Empty, ErrorNote, Loading, PageHeader, SourceChip } from '../../components/common.jsx'
+import {
+  ConfirmDialog,
+  Empty,
+  ErrorNote,
+  Loading,
+  PageHeader,
+  SourceChip,
+  StatusChip,
+} from '../../components/common.jsx'
 import { dateOf, dayRange, timeOf } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 
@@ -128,6 +138,7 @@ export default function Decisions() {
   const [tab, setTab] = useState(0)
   const [error, setError] = useState(null)
   const [rejecting, setRejecting] = useState(null)
+  const [confirming, setConfirming] = useState(null)
 
   const absences = useQuery({ queryKey: ['absences', 'pending'], queryFn: getPendingAbsences })
   const corrections = useQuery({
@@ -135,8 +146,23 @@ export default function Decisions() {
     queryFn: () => getCorrections({ status: 'PENDING' }),
   })
 
+  // Art. 4.b. A change the company proposed on somebody else's record waits for
+  // their authorisation, and if they disagree it waits for the company to
+  // decide whether to go ahead. Neither state appeared anywhere: the proposal
+  // left this screen the moment it was made and never came back.
+  //
+  // Only AWAITING_EMPLOYEE. Despite the name, DISPUTED does not mean "arguing
+  // about it": the backend sets it when the company has already applied the
+  // change without agreement, so those are finished and belong in the record,
+  // not in a list of things to decide.
+  const waiting = useQuery({
+    queryKey: ['corrections', 'awaiting'],
+    queryFn: () => getCorrections({ status: 'AWAITING_EMPLOYEE' }),
+  })
+
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ['absences'] })
+    queryClient.invalidateQueries({ queryKey: ['punches'] })
     queryClient.invalidateQueries({ queryKey: ['corrections'] })
     queryClient.invalidateQueries({ queryKey: ['overview'] })
   }
@@ -155,6 +181,11 @@ export default function Decisions() {
 
   const absenceRows = absences.data ?? []
   const correctionRows = corrections.data?.rows ?? []
+  // Those who have answered first: the company can act on them now, whereas
+  // the silent ones are still inside their window to reply.
+  const openRows = [...(waiting.data?.rows ?? [])].sort(
+    (a, b) => Boolean(b.employee_responded_at) - Boolean(a.employee_responded_at),
+  )
 
   return (
     <>
@@ -177,6 +208,13 @@ export default function Decisions() {
           label={
             <Badge badgeContent={correctionRows.length} color="secondary" sx={{ pr: 1.5 }}>
               Fichajes
+            </Badge>
+          }
+        />
+        <Tab
+          label={
+            <Badge badgeContent={openRows.length} color="secondary" sx={{ pr: 1.5 }}>
+              Sin acuerdo
             </Badge>
           }
         />
@@ -240,6 +278,121 @@ export default function Decisions() {
             ))}
           </Stack>
         ))}
+
+      {tab === 2 &&
+        (waiting.isLoading ? (
+          <Loading />
+        ) : openRows.length === 0 ? (
+          <Empty>Ningún cambio propuesto por la empresa espera respuesta.</Empty>
+        ) : (
+          <Stack sx={{ gap: 1.5 }}>
+            <Alert severity="info" variant="outlined">
+              Un cambio que propone la empresa sobre el registro de otra persona necesita su
+              autorización (art. 4.b). Si discrepa o no contesta en el plazo, la empresa puede
+              aplicarlo igualmente: queda marcado como hecho sin acuerdo y su versión viaja al
+              informe de Inspección.
+            </Alert>
+
+            {openRows.map((correction) => (
+              <Paper key={correction.id} variant="outlined" sx={{ p: 2 }}>
+                <Stack
+                  direction={{ xs: 'column', md: 'row' }}
+                  sx={{ gap: 2, justifyContent: 'space-between' }}
+                >
+                  <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                    <Stack direction="row" sx={{ gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <Typography sx={{ fontWeight: 600 }}>{correction.employee_name}</Typography>
+                      <StatusChip
+                        status={correction.status}
+                        label={
+                          correction.employee_responded_at
+                            ? 'No está de acuerdo'
+                            : 'Sin contestar todavía'
+                        }
+                      />
+                    </Stack>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                      {KIND_LABELS[correction.kind] ?? correction.kind_display}
+                      {correction.proposed_timestamp && (
+                        <>
+                          {' · '}
+                          {timeOf(correction.proposed_timestamp, zone)} del{' '}
+                          {dateOf(correction.proposed_timestamp)}
+                        </>
+                      )}
+                    </Typography>
+
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mt: 1.5,
+                        pl: 1.5,
+                        borderLeft: 2,
+                        borderColor: 'divider',
+                        fontStyle: 'italic',
+                        maxWidth: '68ch',
+                      }}
+                    >
+                      {correction.reason}
+                    </Typography>
+
+                    {correction.employee_dissent && (
+                      <Typography variant="body2" sx={{ mt: 1.5, maxWidth: '68ch' }}>
+                        <strong>Su versión:</strong> {correction.employee_dissent}
+                      </Typography>
+                    )}
+
+                    {/* Whether the representatives were told, and --- when there
+                        are none on record --- that nobody was. Claiming an
+                        obligation was met would be worse than admitting the gap. */}
+                    {correction.representatives_notice && (
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                        {correction.representatives_notice}
+                      </Typography>
+                    )}
+                  </Box>
+
+                  <Stack sx={{ gap: 1, flexShrink: 0, alignItems: 'flex-start' }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="secondary"
+                      disabled={decide.isPending}
+                      onClick={() =>
+                        setConfirming({
+                          title: 'Aplicar sin acuerdo',
+                          body: correction.employee_name,
+                          detail: correction.employee_dissent
+                            ? 'Su versión queda registrada junto al cambio y las dos cosas van al informe de Inspección. Se le avisa.'
+                            : 'Todavía no ha contestado. El registro dirá que se aplicó sin su conformidad, no que estuviera de acuerdo.',
+                          verb: 'Aplicar',
+                          run: () =>
+                            decide.mutate({ action: applyCorrectionAnyway, id: correction.id }),
+                        })
+                      }
+                    >
+                      Aplicar sin acuerdo
+                    </Button>
+                    <Button
+                      size="small"
+                      color="inherit"
+                      disabled={decide.isPending}
+                      onClick={() => openReject(rejectCorrection, correction.id, true)}
+                    >
+                      Retirar la propuesta
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Paper>
+            ))}
+          </Stack>
+        ))}
+
+      <ConfirmDialog
+        request={confirming}
+        busy={decide.isPending}
+        onClose={() => setConfirming(null)}
+      />
 
       <RejectDialog
         open={Boolean(rejecting)}

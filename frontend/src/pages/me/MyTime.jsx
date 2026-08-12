@@ -15,8 +15,22 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import EditNoteIcon from '@mui/icons-material/EditNote'
 
-import { getCorrections, getPunches, requestCorrection } from '../../services/api.js'
-import { Empty, ErrorNote, Loading, PageHeader, Panel, SourceChip, StatusChip } from '../../components/common.jsx'
+import {
+  acceptCorrection,
+  disputeCorrection,
+  getCorrections,
+  getPunches,
+  requestCorrection,
+} from '../../services/api.js'
+import {
+  Empty,
+  ErrorNote,
+  Loading,
+  PageHeader,
+  Panel,
+  SourceChip,
+  StatusChip,
+} from '../../components/common.jsx'
 import { dateOf, hhmm, timeOf } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 
@@ -145,6 +159,172 @@ function CorrectionDialog({ open, onClose, onSubmit, saving, error }) {
   )
 }
 
+/** Where somebody says they do not agree, and what they think happened.
+ *
+ *  Art. 4.b needs their authorisation to change an entry, and when it is not
+ *  given it needs their version recorded next to the company's. So the account
+ *  is required: a bare "no" leaves the record with a disagreement and nothing
+ *  to weigh against it, which helps nobody --- least of all the person, whose
+ *  side is the one that would be missing.
+ */
+function DisputeDialog({ open, correction, onClose, onConfirm, busy }) {
+  const [account, setAccount] = useState('')
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          onConfirm(account)
+          setAccount('')
+        }}
+      >
+        <DialogTitle>No estoy de acuerdo</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Tu versión queda guardada junto a la de la empresa y se informa a la representación
+            legal. La empresa puede seguir adelante, y si lo hace el registro dirá que se aplicó
+            sin tu conformidad y llevará esto al lado.
+          </Typography>
+          {correction?.reason && (
+            <Typography
+              variant="body2"
+              sx={{ mb: 2, pl: 1.5, borderLeft: 2, borderColor: 'divider', fontStyle: 'italic' }}
+            >
+              {correction.reason}
+            </Typography>
+          )}
+          <TextField
+            autoFocus
+            required
+            fullWidth
+            multiline
+            minRows={3}
+            label="Qué pasó según tú"
+            placeholder="Por ejemplo: salí a las 18:15, no a las 17:00. Estuve cerrando el riego del parque."
+            value={account}
+            onChange={(event) => setAccount(event.target.value)}
+            helperText="Obligatorio. Es tu versión de ese día."
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose} color="inherit">
+            Volver
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            color="secondary"
+            disabled={busy || account.trim().length < 5}
+          >
+            Enviar mi versión
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
+  )
+}
+
+/** One correction in the worker's list.
+ *
+ *  Only those waiting on them carry buttons. The rest are history and read as
+ *  history --- but they are still shown, because a change that was imposed is
+ *  something the person is entitled to see afterwards, not only at the moment
+ *  they were asked.
+ */
+function CorrectionRow({ correction, zone, onAccept, onDispute, busy }) {
+  const waiting = correction.status === 'AWAITING_EMPLOYEE'
+  // Having said no keeps it waiting --- the company still has to decide --- but it
+  // is not the same as not having answered, and offering "no estoy de acuerdo"
+  // again would suggest the first one did not register. Accepting stays
+  // available: somebody may talk it over and change their mind.
+  const saidNo = waiting && correction.employee_responded_at && !correction.employee_agreed
+
+  return (
+    <Paper variant="outlined" sx={{ p: 1.5 }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        sx={{ gap: 1.5, justifyContent: 'space-between', alignItems: { sm: 'flex-start' } }}
+      >
+        <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {correction.kind_display}
+            {correction.proposed_timestamp && (
+              <>
+                {' · '}
+                <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {timeOf(correction.proposed_timestamp, zone)}
+                </Box>{' '}
+                del {dateOf(correction.proposed_timestamp)}
+              </>
+            )}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+            Pedida el {dateOf(correction.created_at)}
+          </Typography>
+          {correction.reason && (
+            <Typography
+              variant="body2"
+              sx={{ mt: 1, pl: 1.5, borderLeft: 2, borderColor: 'divider', fontStyle: 'italic' }}
+            >
+              {correction.reason}
+            </Typography>
+          )}
+          {correction.employee_dissent && (
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              <strong>Tu versión:</strong> {correction.employee_dissent}
+            </Typography>
+          )}
+          {saidNo && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+              Se ha informado a la representación legal. La empresa decide ahora si aplica el
+              cambio; si lo hace, constará que fue sin tu conformidad.
+            </Typography>
+          )}
+          {correction.applied_without_agreement && (
+            <Typography variant="caption" color="secondary.main" sx={{ display: 'block', mt: 1 }}>
+              Aplicada sin tu conformidad. Tu versión consta en el registro y va al informe de
+              Inspección.
+            </Typography>
+          )}
+        </Box>
+
+        <Stack sx={{ gap: 1, alignItems: { xs: 'flex-start', sm: 'flex-end' }, flexShrink: 0 }}>
+          {/* Without a label the chip uses our own wording, which is written
+              from this person's side: the server says "esperando a la persona
+              afectada", true for the company and odd to read about yourself. */}
+          <StatusChip
+            status={correction.status}
+            label={
+              // Ours for the two art. 4.b states: the server's wording is
+              // written for the record ("aplicada sin acuerdo, con la
+              // discrepancia registrada") and the line underneath already says
+              // that in full. The rest keep the server's.
+              saidNo
+                ? 'Has dicho que no'
+                : ['AWAITING_EMPLOYEE', 'DISPUTED'].includes(correction.status)
+                  ? undefined
+                  : correction.status_display
+            }
+          />
+          {waiting && (
+            <Stack direction="row" sx={{ gap: 1 }}>
+              {!saidNo && (
+                <Button size="small" color="inherit" disabled={busy} onClick={onDispute}>
+                  No estoy de acuerdo
+                </Button>
+              )}
+              <Button size="small" variant="contained" disabled={busy} onClick={onAccept}>
+                Aceptar
+              </Button>
+            </Stack>
+          )}
+        </Stack>
+      </Stack>
+    </Paper>
+  )
+}
+
 export default function MyTime() {
   const { session } = useAuth()
   const zone = session?.tenant?.time_zone
@@ -152,6 +332,7 @@ export default function MyTime() {
   const queryClient = useQueryClient()
 
   const [asking, setAsking] = useState(false)
+  const [disputing, setDisputing] = useState(null)
   const [error, setError] = useState(null)
 
   const { data: punches, isLoading } = useQuery({
@@ -166,6 +347,17 @@ export default function MyTime() {
     enabled: Boolean(me),
   })
 
+  const answer = useMutation({
+    mutationFn: ({ action, id, account }) => action(id, account),
+    onSuccess: () => {
+      setDisputing(null)
+      setError(null)
+      queryClient.invalidateQueries({ queryKey: ['corrections'] })
+      queryClient.invalidateQueries({ queryKey: ['punches'] })
+    },
+    onError: setError,
+  })
+
   const ask = useMutation({
     mutationFn: requestCorrection,
     onSuccess: () => {
@@ -177,6 +369,11 @@ export default function MyTime() {
   })
 
   const correctionRows = corrections?.rows ?? []
+  // Two lists, because they ask different things. One is waiting on this
+  // person; the other is what has already happened, including changes applied
+  // over their objection, which they are entitled to keep seeing.
+  const waiting = correctionRows.filter((c) => c.status === 'AWAITING_EMPLOYEE')
+  const history = correctionRows.filter((c) => c.status !== 'AWAITING_EMPLOYEE')
   const days = byDay(punches?.rows ?? [], zone)
 
   return (
@@ -193,25 +390,36 @@ export default function MyTime() {
 
       <ErrorNote error={error} onClose={() => setError(null)} />
 
-      {correctionRows.length > 0 && (
+      {/* Anything the company has proposed on this person's record, first and
+          apart. Art. 4.b needs their authorisation, and until this existed the
+          screen showed a chip saying their answer was awaited with no way to
+          give one --- the proposal simply hung. */}
+      {waiting.length > 0 && (
+        <Panel
+          title={waiting.length === 1 ? 'Un cambio en tu registro' : 'Cambios en tu registro'}
+          hint="La empresa propone cambiar lo que quedó registrado. Sin tu conformidad no se aplica todavía, y si finalmente se aplica constará que fue sin acuerdo."
+          sx={{ mb: 3 }}
+        >
+          <Stack sx={{ gap: 1 }}>
+            {waiting.map((correction) => (
+              <CorrectionRow
+                key={correction.id}
+                correction={correction}
+                zone={zone}
+                busy={answer.isPending}
+                onAccept={() => answer.mutate({ action: acceptCorrection, id: correction.id })}
+                onDispute={() => setDisputing(correction)}
+              />
+            ))}
+          </Stack>
+        </Panel>
+      )}
+
+      {history.length > 0 && (
         <Panel title="Mis solicitudes de corrección" sx={{ mb: 3 }}>
           <Stack sx={{ gap: 1 }}>
-            {correctionRows.slice(0, 5).map((correction) => (
-              <Stack
-                key={correction.id}
-                direction="row"
-                sx={{ gap: 2, alignItems: 'center', justifyContent: 'space-between' }}
-              >
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography variant="body2" noWrap>
-                    {correction.kind_display} · {dateOf(correction.created_at)}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" noWrap>
-                    {correction.reason}
-                  </Typography>
-                </Box>
-                <StatusChip status={correction.status} label={correction.status_display} />
-              </Stack>
+            {history.slice(0, 5).map((correction) => (
+              <CorrectionRow key={correction.id} correction={correction} zone={zone} />
             ))}
           </Stack>
         </Panel>
@@ -235,6 +443,9 @@ export default function MyTime() {
                     {dateOf(day, { weekday: 'long', year: undefined })}
                   </Typography>
                   <Typography
+                    // A span: the Chip below renders a div, and a div inside a
+                    // p is invalid HTML. React was logging it on every render.
+                    component="span"
                     sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 650, fontSize: '1.1rem' }}
                   >
                     {hhmm(summary.seconds)}
@@ -294,6 +505,16 @@ export default function MyTime() {
           setError(null)
         }}
         onSubmit={ask.mutate}
+      />
+
+      <DisputeDialog
+        open={Boolean(disputing)}
+        correction={disputing}
+        busy={answer.isPending}
+        onClose={() => setDisputing(null)}
+        onConfirm={(account) =>
+          answer.mutate({ action: disputeCorrection, id: disputing.id, account })
+        }
       />
     </>
   )

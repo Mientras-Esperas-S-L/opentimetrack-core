@@ -154,6 +154,16 @@ export const requestCorrection = (payload) => post('/corrections/', payload)
 export const approveCorrection = (id, note = '') => post(`/corrections/${id}/approve/`, { note })
 export const rejectCorrection = (id, note = '') => post(`/corrections/${id}/reject/`, { note })
 
+// Art. 4.b: cambiar un asiento necesita la autorización de las dos partes, y
+// sin acuerdo la empresa lo aplica dejando constancia de la discrepancia. Las
+// tres llamadas existían en el backend desde el ADR-0014 y no había pantalla
+// que las usara: una corrección propuesta por la empresa pasaba a esperar
+// respuesta y se quedaba ahí para siempre.
+export const acceptCorrection = (id) => post(`/corrections/${id}/accept/`)
+export const disputeCorrection = (id, account) =>
+  post(`/corrections/${id}/dispute/`, { account })
+export const applyCorrectionAnyway = (id) => post(`/corrections/${id}/apply-anyway/`)
+
 // --------------------------------------------------------------------- absences
 
 export const getAbsences = async (params) => page(await get('/absences/', params))
