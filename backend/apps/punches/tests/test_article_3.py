@@ -380,3 +380,88 @@ def test_events_recorded_before_all_this_still_verify(company, worker):
         old.work_mode = WorkMode.REMOTE
 
     assert old.verify_hash()
+
+
+# ------------------------------------------- found in the legal re-read of 12/08
+
+
+@pytest.mark.django_db
+def test_the_break_counts_when_the_agreement_says_so(company, worker):
+    """Art. 34.4 ET makes the fifteen-minute break working time **only when the
+    agreement or the contract says so** --- and a good many agreements do.
+
+    Until this was fixed the deduction was unconditional, which in those
+    companies took roughly fifty-five hours a year off every worker, quietly and
+    in the direction that favours the employer.
+    """
+    from apps.tenants.rules import WorkingTimeRules
+
+    with tenant_context(company.id):
+        rules = WorkingTimeRules.for_company(company)
+        rules.break_counts_as_work = True
+        rules.save(update_fields=["break_counts_as_work"])
+
+        with freeze_time("2026-09-01 06:00:00"):
+            punch(company, worker)
+        with freeze_time("2026-09-01 10:00:00"):
+            punch(company, worker, interval=PunchInterval.BREAK)
+        with freeze_time("2026-09-01 10:15:00"):
+            punch(company, worker, interval=PunchInterval.BREAK)
+        with freeze_time("2026-09-01 14:00:00"):
+            punch(company, worker)
+        with freeze_time("2026-09-01 15:00:00"):
+            status = build_day_status(worker, company)
+
+    # Eight hours, break included, because that is what this company agreed.
+    assert status.worked_seconds == 8 * 3600
+    # And it is still recorded as a break: art. 3.d wants it visible either way.
+    assert status.break_seconds == 15 * 60
+
+
+@pytest.mark.django_db
+def test_part_time_work_admits_no_overtime(company, worker):
+    """Art. 12.4.c ET, literal: «Los trabajadores a tiempo parcial no podrán
+    realizar horas extraordinarias, salvo en los supuestos a los que se refiere
+    el artículo 35.3». What they have instead is complementary hours."""
+    with tenant_context(company.id):
+        worker.part_time = True
+        worker.save(update_fields=["part_time"])
+
+        with pytest.raises(BusinessRuleError) as caught:
+            punch(
+                company, worker,
+                hours_nature=HoursNature.OVERTIME,
+                overtime_settlement=OvertimeSettlement.PAID,
+            )
+
+    assert caught.value.code == "overtime_not_available_part_time"
+
+
+@pytest.mark.django_db
+def test_part_time_work_does_admit_the_force_majeure_exception(company, worker):
+    """The «salvo» of art. 12.4.c: hours worked to prevent or repair urgent
+    damage (art. 35.3) are open to everybody."""
+    with tenant_context(company.id):
+        worker.part_time = True
+        worker.save(update_fields=["part_time"])
+
+        event = punch(
+            company, worker,
+            hours_nature=HoursNature.OVERTIME,
+            overtime_settlement=OvertimeSettlement.PAID,
+            force_majeure=True,
+        )
+
+    assert event.hours_nature == HoursNature.OVERTIME
+    assert event.force_majeure
+
+
+@pytest.mark.django_db
+def test_part_time_work_admits_complementary_hours(company, worker):
+    """Which is the mechanism art. 12.5 gives them instead."""
+    with tenant_context(company.id):
+        worker.part_time = True
+        worker.save(update_fields=["part_time"])
+        event = punch(company, worker, hours_nature=HoursNature.COMPLEMENTARY)
+
+    assert event.hours_nature == HoursNature.COMPLEMENTARY

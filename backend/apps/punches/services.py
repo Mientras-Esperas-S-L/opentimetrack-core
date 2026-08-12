@@ -151,7 +151,18 @@ def infer_type(employee, company, interval: str = PunchInterval.WORK) -> str:
 
 
 def build_day_status(employee, company, day: date | None = None) -> DayStatus:
+    """The day, as the record holds it.
+
+    Whether a break comes off the hours is **the company's rule, not ours**.
+    Art. 34.4 ET makes the fifteen-minute break working time only when the
+    agreement or the contract says so --- and a good many agreements do. Always
+    deducting it would take roughly fifty-five hours a year off every worker in
+    those companies, quietly and in the direction that favours the employer.
+    """
+    from apps.tenants.rules import WorkingTimeRules
+
     events = list(punches_of_the_day(employee, company, day))
+    rules = WorkingTimeRules.for_company(company)
 
     segments: list[DaySegment] = []
     # One open span per kind of interval. A break happens *inside* the working
@@ -175,10 +186,9 @@ def build_day_status(employee, company, day: date | None = None) -> DayStatus:
 
     segments.sort(key=lambda s: s.start)
 
-    # Only the working day counts, and a break that happened inside it comes
-    # off: the hours it covers were recorded as not being working time.
     worked = sum(s.seconds for s in segments if s.counts_as_work)
-    worked -= sum(s.seconds for s in segments if s.interval == PunchInterval.BREAK)
+    if not rules.break_counts_as_work:
+        worked -= sum(s.seconds for s in segments if s.interval == PunchInterval.BREAK)
     worked = max(worked, 0)
 
     if not events:
@@ -258,6 +268,24 @@ def register_punch(
                 code="not_working",
                 message=_("The working day has to be open first."),
             )
+
+    # Art. 12.4.c ET, literal: «Los trabajadores a tiempo parcial no podrán
+    # realizar horas extraordinarias, salvo en los supuestos a los que se
+    # refiere el artículo 35.3» --- las de fuerza mayor. What part-time work has
+    # instead is complementary hours (art. 12.5), counted separately, which is
+    # why HoursNature keeps them apart.
+    if (
+        hours_nature == HoursNature.OVERTIME
+        and employee.part_time
+        and not force_majeure
+    ):
+        raise BusinessRuleError(
+            code="overtime_not_available_part_time",
+            message=_(
+                "Art. 12.4.c ET: part-time work admits no overtime, only complementary "
+                "hours --- except hours to prevent or repair urgent damage."
+            ),
+        )
 
     if hours_nature == HoursNature.OVERTIME and not overtime_settlement:
         # Art. 3.f asks how it settles. Recording overtime without saying is

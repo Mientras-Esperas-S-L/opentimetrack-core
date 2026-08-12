@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 10:58+0000\n"
+"POT-Creation-Date: 2026-08-12 11:04+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? "
 "1 : 2;\n"
+
 msgid "Holiday"
 msgstr "Vacaciones"
 
@@ -565,6 +566,11 @@ msgstr "Esta persona está dada de baja y no puede fichar."
 
 msgid "The working day has to be open first."
 msgstr "La jornada tiene que estar abierta antes."
+
+msgid ""
+"Art. 12.4.c ET: part-time work admits no overtime, only complementary hours "
+"--- except hours to prevent or repair urgent damage."
+msgstr "Art. 12.4.c ET: a tiempo parcial no caben horas extraordinarias, solo complementarias, salvo las de fuerza mayor para prevenir o reparar daños urgentes."
 
 msgid "Say whether the overtime is paid or compensated with rest."
 msgstr "Indica si las horas extraordinarias se retribuyen o se compensan con descanso."
