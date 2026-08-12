@@ -101,7 +101,7 @@ Consecuencias, todas silenciosas:
 
 - [x] Añadirlos al serializer de lectura y al de escritura
 - [x] Sección "Contrato" en la ficha de persona
-- [ ] Casilla de representante legal, con aviso en Ajustes si no hay ninguno
+- [x] Casilla de representante legal, con aviso en Ajustes si no hay ninguno
 
 ---
 
@@ -136,13 +136,18 @@ Consecuencias, todas silenciosas:
 Ni un `Autocomplete` en todo el proyecto. Todos los selectores son `Select`
 planos con `MenuItem`.
 
-| Dónde | Ahora | Debería |
-|---|---|---|
-| Cuadrante, "A quién" (`Roster.jsx:96`) | Multi-select de toda la plantilla, sin buscador | `Autocomplete multiple` con chips. **El peor**: elegir 30 personas de 200 en un desplegable sin búsqueda no se puede hacer |
-| Fichajes, "Persona" (`Timesheet.jsx:204`) | Select con todas | `Autocomplete` con búsqueda en servidor |
-| Informes, "Persona" (`Reports.jsx:87`) | Select con todas | Igual, más "toda la empresa" y "por departamento" |
-| Ajustes, "Zona horaria" (`Settings.jsx:172`) | 9 zonas fijas de las ~350 que existen | `Autocomplete` con `Intl.supportedValuesOf('timeZone')` |
-| Personas, "Departamento" | Select | Vale mientras sean pocos. Pasados 20, buscador |
+| Dónde | Estado |
+|---|---|
+| Cuadrante, "A quién" | **Hecho.** `EmployeePicker` con chips y búsqueda en servidor |
+| Fichajes, "Persona" | **Hecho.** Mismo componente, más "toda la empresa" |
+| Informes, "Persona" | **Hecho.** Falta añadirle "toda la empresa" y "por departamento" |
+| Ajustes, "Zona horaria" | Pendiente. 9 zonas fijas de las ~350 que existen |
+| Personas, "Departamento" | Pendiente y no urgente. Vale mientras sean pocos; pasados 20, buscador |
+
+Los tres primeros salían de la lista paginada, así que además de incómodos
+estaban truncados: en una empresa de doscientas, tres cuartas partes de la
+plantilla no se podían elegir y nada lo decía. `EmployeePicker` avisa cuando lo
+que muestra no es todo.
 
 La zona horaria tiene además un fallo propio: el campo del backend acepta
 cualquier zona IANA y el desplegable solo ofrece nueve. Una empresa configurada
