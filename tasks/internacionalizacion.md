@@ -146,7 +146,7 @@ Vale aquí el mismo razonamiento que en el catálogo de convenios: publicar el
 formato y que la asesoría de cada cliente ponga sus cifras traslada la
 afirmación a quien tiene el criterio.
 
-### Fase 1 · Sacar la ley a un módulo por país
+### Fase 1 · Sacar la ley a un módulo por país — **HECHA (12/08/2026)**
 
 El trabajo de fondo. `Tenant.country` ya existe y ya dice que sirve para esto.
 
@@ -171,9 +171,27 @@ tiene que venir del módulo del país, no del catálogo de idiomas. Un mismo tex
 en alemán con la cita española sería peor que dejarlo en español, porque
 parecería correcto.
 
-Trabajo estimado: **dos a tres semanas** para el refactor y dejar España
-funcionando exactamente igual que ahora. Se mide fácil: las 448 pruebas actuales
-tienen que seguir en verde sin tocarlas.
+Se estimaron dos o tres semanas y salió en una tarde, porque las reglas ya
+estaban bien escritas: solo había que reunirlas. La medida se cumplió —las 448
+pruebas anteriores siguen verdes sin tocar ninguna— y hay diez nuevas que
+registran un país inventado con cifras distintas de las españolas y lo siguen
+hasta el final.
+
+Lo que quedó, además de lo previsto:
+
+- Un país desconocido cae en la **Directiva 2003/88/CE**, no en España. Era la
+  decisión importante: las cifras españolas bajo otra bandera parecerían
+  configuradas y nadie las cuestionaría.
+- **`/api/working-time-rules/` sirve las citas**, y la pantalla de ajustes pinta
+  lo que le den. Eso resolvió de paso la duplicación: las seis citas escritas a
+  mano en el frontend ya no existen.
+- Las constantes `MINOR_*` siguen exportadas desde `tenants/rules.py` como capa
+  de reenvío, para no romper las llamadas existentes. Código nuevo debe pedirle
+  los suelos al marco.
+
+Una prueba destapó algo en el momento: el cuadrante seguía leyendo esas
+constantes de compatibilidad, que son las de España, así que los suelos de
+menores no cambiaban de país. Para eso estaban.
 
 ### Fase 2 · Que la interfaz siga al idioma
 
@@ -214,10 +232,10 @@ no bloquea nada: sin ficha, rigen los mínimos del módulo de país.
 
 | | |
 |---|---|
-| Fase 1, el refactor, con España igual que hoy | 2–3 semanas |
+| ~~Fase 1, el refactor~~ | **hecha** |
 | Fase 2, formatos e idiomas | 3–5 días |
 | Fase 3, informe del primer país | ~1 semana |
-| **Primer país nuevo, total** | **4–5 semanas** |
+| **Primer país nuevo, total** | **~2 semanas**, ya sin la fase 1 |
 | Cada país siguiente | 1–2 semanas, más quien conozca su normativa |
 
 La parte que no se puede acelerar programando es la última columna. Un módulo de
