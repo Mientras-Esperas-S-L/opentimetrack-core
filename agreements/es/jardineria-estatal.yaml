@@ -1,0 +1,102 @@
+# Convenio colectivo estatal de jardinería 2025-2030.
+#
+# Transcrito del texto publicado en el BOE el 30/01/2026. Cada cifra lleva el
+# artículo del que sale para que se pueda ir al original y discutirla.
+#
+# Dos cosas que el convenio NO fija y por eso no aparecen abajo: el descanso
+# semanal y el tope anual de horas extraordinarias. Su ausencia no es un olvido
+# de la transcripción: significa que rige el mínimo del Estatuto.
+
+format: 1
+
+agreement:
+  name: Convenio colectivo estatal de jardinería 2025-2030
+  scope: state
+  activities:
+    - Jardinería
+    - Conservación y mantenimiento de zonas verdes
+    - Plantación y siembra
+  regcon: "99002995011981"
+  valid_from: 2025-01-01
+  valid_until: 2030-12-31
+  source:
+    publication: BOE-A-2026-2227
+    published_on: 2026-01-30
+    url: https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-2227
+
+working_time:
+  annual_hours:
+    value: 1700
+    basis: "Art. 16"
+    note: >-
+      «La jornada máxima anual será de 1700 horas anuales para cada uno de los
+      años de vigencia.» El convenio fija la jornada en cómputo anual y no da
+      cifra semanal. OpenTimeTrack compara semanas, así que este valor todavía
+      no se aplica: se transcribe para no perderlo y porque la conversión a
+      semanal exige suponer cuántas semanas se trabajan, que es una decisión de
+      la empresa y no un dato del texto.
+
+  max_daily_hours:
+    value: 8
+    basis: "Art. 16"
+    note: >-
+      «La jornada máxima diaria no podrá superar las ocho horas de trabajo
+      efectivo, si bien se podrá pactar la distribución irregular de la jornada
+      a lo largo del año, no pudiéndose superar en ningún caso las nueve horas.»
+      Se transcribe el ordinario, 8. El techo de 9 exige pacto de distribución
+      irregular, que es un hecho de cada empresa y no una propiedad del
+      convenio.
+
+  daily_rest_hours:
+    value: 12
+    basis: "Art. 16"
+    note: "«Entre el final de una jornada y el comienzo de la siguiente, mediarán, como mínimo doce horas.» Coincide con el art. 34.3 ET."
+
+  break_minutes:
+    value: 15
+    basis: "Art. 16"
+
+  break_counts_as_work:
+    value: true
+    basis: "Art. 16"
+    note: >-
+      «Las personas trabajadoras disfrutarán dentro de su jornada, de un
+      descanso de 15 minutos por jornada completa trabajada, que se considerará
+      como tiempo efectivamente trabajado.» El art. 34.4 ET solo lo hace tiempo
+      de trabajo cuando lo dice el convenio, y este lo dice. Con el valor por
+      defecto del sistema (no computa) una empresa de este sector registraría
+      unos quince minutos de menos al día por persona.
+
+  annual_leave_days:
+    value: 23
+    basis: "Art. 18"
+    note: >-
+      El convenio fija «un mes natural». Permite pactar el disfrute en días
+      laborables, y entonces son 23 para quien trabaja cinco días a la semana y
+      27 para quien trabaja seis. Se transcribe el supuesto de cinco días, que
+      es el ordinario; una plantilla a seis días necesita 27.
+      Fuera del periodo de julio a septiembre y a petición de la empresa, el
+      convenio eleva a 34 días naturales: eso es un caso, no un parámetro.
+
+  leave_days_are_working_days:
+    value: true
+    basis: "Art. 18"
+
+provenance:
+  transcribed_by: Green City Control
+  verified_on: 2026-08-12
+  notes: >-
+    Comprobado contra el PDF oficial del BOE, no contra un resumen. Los
+    artículos 16, 17, 18 y 4 se leyeron completos.
+
+    Sin transcribir por no constar en el convenio: descanso semanal (rige el
+    art. 37.1 ET) y tope anual de horas extraordinarias (rige el art. 35.2 ET;
+    el art. 17 solo dice que se reduce proporcionalmente en jornadas
+    reducidas). El art. 17 sí fija la compensación en descanso a razón de dos
+    horas por cada extra de lunes a sábado y tres en domingos y festivos, que
+    este formato todavía no sabe representar.
+
+    El art. 16 tiene además una regla de cómputo poco común: en parques y
+    grandes extensiones, la jornada empieza a contar cuando la persona sale del
+    vestuario ya equipada, no al llegar al puesto. Es un criterio de dónde se
+    ficha, no un parámetro.

@@ -235,6 +235,18 @@ LANGUAGES = [
 
 LOCALE_PATHS = [BASE_DIR / "locale"]
 
+# ---------------------------------------------------------- convenios colectivos
+
+# Donde estan las fichas de convenio. Configurable porque el caso mas probable
+# no es usar las nuestras: una empresa tiene asesoria laboral, y su asesoria
+# sabe que convenio le aplica mejor que nosotros. Apuntar aqui a un directorio
+# propio permite que escriban su ficha, la revisen y la mantengan ellos, sin
+# depender de que publiquemos la suya.
+#
+# Las que vienen en el repositorio son las que hemos podido comprobar contra el
+# boletin oficial. Ver agreements/README.md.
+AGREEMENTS_DIR = Path(env("AGREEMENTS_DIR", default=str(BASE_DIR.parent / "agreements")))
+
 # Storage is always UTC. Each tenant renders in its own zone, which is a field of
 # the tenant, not a global setting: a single deployment can serve a company in
 # Madrid and another one in the Canary Islands -- two zones inside Spain alone --

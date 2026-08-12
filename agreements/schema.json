@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opentimetrack.org/schemas/agreement/1.json",
+  "title": "Ficha de convenio colectivo",
+  "description": "Parámetros de tiempo de trabajo de un convenio, con la procedencia de cada cifra. No sustituye al texto publicado: ayuda a configurar un sistema y puede estar desactualizado.",
+  "type": "object",
+  "required": ["format", "agreement", "working_time", "provenance"],
+  "additionalProperties": false,
+
+  "properties": {
+    "format": {
+      "description": "Versión del formato, no del convenio.",
+      "const": 1
+    },
+
+    "agreement": {
+      "type": "object",
+      "required": ["name", "scope", "regcon", "valid_from", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 3 },
+        "scope": {
+          "description": "Ámbito. 'state' no significa que se aplique en todas partes: un convenio provincial puede desplazarlo.",
+          "enum": ["state", "autonomous", "provincial", "company"]
+        },
+        "territory": {
+          "description": "Provincia o comunidad, cuando el ámbito no es estatal.",
+          "type": "string"
+        },
+        "activities": {
+          "description": "Actividades que cubre, en palabras del propio convenio. Sirven para proponer candidatos, nunca para decidir.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "regcon": {
+          "description": "Código de registro. Es lo único que identifica un convenio sin ambigüedad.",
+          "type": "string",
+          "pattern": "^[0-9]{14}$"
+        },
+        "valid_from": { "type": "string", "format": "date" },
+        "valid_until": {
+          "description": "Omitido si se prorroga tácitamente. Un convenio caducado que parece vigente es peor que no tener ficha.",
+          "type": "string",
+          "format": "date"
+        },
+        "source": {
+          "type": "object",
+          "required": ["publication", "published_on", "url"],
+          "additionalProperties": false,
+          "properties": {
+            "publication": {
+              "description": "Identificador del boletín. Por ejemplo BOE-A-2026-2227.",
+              "type": "string"
+            },
+            "published_on": { "type": "string", "format": "date" },
+            "url": { "type": "string", "format": "uri" }
+          }
+        }
+      }
+    },
+
+    "working_time": {
+      "description": "Los parámetros. Todos opcionales: lo que no consta en el convenio se omite, y entonces rige el mínimo legal. Un valor inventado se aplicaría como si fuera cierto.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "annual_hours": { "$ref": "#/$defs/number_value" },
+        "weekly_hours": { "$ref": "#/$defs/number_value" },
+        "max_daily_hours": { "$ref": "#/$defs/number_value" },
+        "daily_rest_hours": { "$ref": "#/$defs/number_value" },
+        "weekly_rest_hours": { "$ref": "#/$defs/number_value" },
+        "break_after_hours": { "$ref": "#/$defs/number_value" },
+        "break_minutes": { "$ref": "#/$defs/number_value" },
+        "break_counts_as_work": { "$ref": "#/$defs/boolean_value" },
+        "annual_overtime_hours": { "$ref": "#/$defs/number_value" },
+        "annual_leave_days": { "$ref": "#/$defs/number_value" },
+        "leave_days_are_working_days": { "$ref": "#/$defs/boolean_value" },
+        "leave_year_start_month": { "$ref": "#/$defs/number_value" }
+      }
+    },
+
+    "provenance": {
+      "type": "object",
+      "required": ["transcribed_by", "verified_on"],
+      "additionalProperties": false,
+      "properties": {
+        "transcribed_by": { "type": "string" },
+        "verified_by": { "type": "string" },
+        "verified_on": {
+          "description": "El día en que alguien abrió el boletín y comparó. No el día en que se escribió el fichero.",
+          "type": "string",
+          "format": "date"
+        },
+        "notes": { "type": "string" }
+      }
+    }
+  },
+
+  "$defs": {
+    "number_value": {
+      "type": "object",
+      "required": ["value", "basis"],
+      "additionalProperties": false,
+      "properties": {
+        "value": { "type": "number" },
+        "basis": {
+          "description": "El artículo del que sale. Obligatorio: una cifra sin artículo no se puede contrastar, y una que no se puede contrastar no debería aplicarse.",
+          "type": "string",
+          "minLength": 3
+        },
+        "note": {
+          "description": "Cómo se llegó a esta cifra si el convenio no la da tal cual. Una conversión es una operación con supuestos, y quien lea la ficha tiene derecho a discutirlos.",
+          "type": "string"
+        }
+      }
+    },
+    "boolean_value": {
+      "type": "object",
+      "required": ["value", "basis"],
+      "additionalProperties": false,
+      "properties": {
+        "value": { "type": "boolean" },
+        "basis": { "type": "string", "minLength": 3 },
+        "note": { "type": "string" }
+      }
+    }
+  }
+}

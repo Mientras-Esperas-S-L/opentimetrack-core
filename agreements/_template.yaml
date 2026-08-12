@@ -1,0 +1,54 @@
+# Plantilla para una ficha de convenio. Cópiala, no la edites.
+#
+# Regla única: cada cifra sale de un artículo que puedes citar. Si no lo
+# encuentras en el texto oficial, borra el bloque entero. Un valor omitido hace
+# que rija el mínimo legal, que es lo correcto cuando el convenio calla. Un
+# valor inventado se aplica como si fuera cierto.
+
+format: 1
+
+agreement:
+  name: # Como aparece en el boletín, sin abreviar
+  scope: # state | autonomous | provincial | company
+  # territory:  # Provincia o comunidad, si no es estatal
+  activities:
+    - # En palabras del propio convenio, no las tuyas
+  regcon: # 14 dígitos, ENTRE COMILLAS: sin ellas se lee como número y un
+  #        # código provincial que empiece por cero lo pierde. Sin este código,
+  #        # dos convenios parecidos son indistinguibles.
+  valid_from: # AAAA-MM-DD
+  # valid_until:  # Fuera si se prorroga tácitamente
+  source:
+    publication: # BOE-A-AAAA-NNNN, o el identificador del boletín autonómico
+    published_on: # AAAA-MM-DD
+    url: # Enlace al texto, no a un resumen
+
+working_time:
+  # Todos opcionales. Borra los que el convenio no fije.
+  #
+  # annual_hours          horas al año
+  # weekly_hours          horas a la semana
+  # max_daily_hours       máximo de horas ordinarias en un día
+  # daily_rest_hours      descanso entre jornadas
+  # weekly_rest_hours     descanso semanal ininterrumpido
+  # break_after_hours     a partir de cuántas horas se debe el descanso
+  # break_minutes         cuánto dura
+  # break_counts_as_work  si es tiempo de trabajo efectivo (art. 34.4 ET:
+  #                       solo si lo dice el convenio)
+  # annual_overtime_hours tope de horas extraordinarias al año
+  # annual_leave_days     días de vacaciones
+  # leave_days_are_working_days  si son laborables o naturales
+  # leave_year_start_month       mes en que empieza el año de vacaciones
+
+  weekly_hours:
+    value:
+    basis: # "Art. NN". Obligatorio: sin artículo no se puede contrastar
+    # note:  # Si has hecho una conversión o has elegido entre supuestos,
+    #        # dilo aquí. Quien lea la ficha tiene derecho a discutirlo.
+
+provenance:
+  transcribed_by: # Quién responde de esta transcripción
+  # verified_by:  # Quién la comprobó, si es otra persona
+  verified_on: # El día que abriste el boletín. No el día que escribiste esto.
+  # notes:  # Qué artículos leíste. Y sobre todo: qué no está aquí porque el
+  #         # convenio no lo fija, para que su ausencia no parezca un olvido.

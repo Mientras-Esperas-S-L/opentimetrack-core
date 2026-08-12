@@ -15,9 +15,14 @@ redis==8.1.0
 django-redis==7.0.0
 celery==5.6.3
 
-# Almacenamiento S3 / MinIO
+# Almacenamiento: disco o S3 compatible (SeaweedFS en desarrollo)
 django-storages==1.14.6
 boto3==1.43.68
+
+# Fichas de convenio: se leen en YAML y se validan contra agreements/schema.json
+# antes de aplicarse. Una ficha mal escrita configuraría mal una jornada.
+PyYAML==6.0.3
+jsonschema==4.26.0
 
 # Contraseñas (RF-01.6: hashing fuerte)
 argon2-cffi==25.1.0
