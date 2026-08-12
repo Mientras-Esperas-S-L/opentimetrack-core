@@ -364,6 +364,9 @@ def test_a_worker_cannot_do_a_managers_job(ours):
         ("post", "/api/employees/", {"email": "nuevo@nuestra.test", "first_name": "Nuevo"}),
         ("patch", f"/api/employees/{ours['worker'].id}/", {"role": "ADMIN"}),
         ("post", f"/api/employees/{ours['worker'].id}/invite/", {}),
+        # A credential is a key to the company's records. Minting one is the
+        # single most valuable thing on this list.
+        ("post", "/api/applications/", {"name": "Mía", "scopes": ["punch:delegated"]}),
         ("patch", "/api/company/", {"annual_leave_days": 99}),
         ("patch", "/api/working-time-rules/", {"weekly_hours": 60}),
         (
@@ -484,6 +487,11 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^shifts/roster/$",
         "api/^shift-patterns/$",
         "api/^shift-patterns/(?P<pk>[^/.]+)/$",
+        "api/^applications/$",
+        "api/^applications/scopes/$",
+        "api/^applications/(?P<pk>[^/.]+)/$",
+        "api/^applications/(?P<pk>[^/.]+)/credentials/$",
+        "api/^applications/(?P<pk>[^/.]+)/credentials/(?P<credential>[^/.]+)/revoke/$",
         "api/^audit/$",
         "api/^audit/export/$",
         "api/^audit/(?P<pk>[^/.]+)/$",

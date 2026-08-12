@@ -235,6 +235,22 @@ export const updateWorkingTimeRules = async (payload) =>
 
 export const getAuditTrail = async (params) => page(await get('/audit/', params))
 
+// --------------------------------------------------------------- applications
+
+// Terminales, lectores y sistemas que fichan en nombre de alguien. Los modelos
+// y el endpoint de fichaje delegado existían desde el principio y no había
+// ninguna ruta para crear una aplicación: solo por shell de Django.
+export const getApplications = async (params) => page(await get('/applications/', params))
+export const getApplicationScopes = () => get('/applications/scopes/')
+export const authoriseApplication = (payload) => post('/applications/', payload)
+export const revokeApplication = async (id) => (await api.delete(`/applications/${id}/`)).data
+/** Devuelve el token en claro. Es la única vez que existe fuera de quien lo
+ *  guarde: se almacena cifrado y no se puede recuperar. */
+export const issueCredential = (id, payload = {}) =>
+  post(`/applications/${id}/credentials/`, payload)
+export const revokeCredential = async (id, credential) =>
+  (await api.post(`/applications/${id}/credentials/${credential}/revoke/`)).data
+
 /** The trail as a file, with whatever filters are on screen. Not paginated on
  *  purpose: a page of fifty handed over as "the history" is the failure this
  *  screen already had once. */

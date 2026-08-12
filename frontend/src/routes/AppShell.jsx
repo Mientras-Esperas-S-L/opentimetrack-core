@@ -87,6 +87,10 @@ export default function AppShell() {
   const user = session?.user
   const company = session?.tenant
   const canManage = user?.role === 'MANAGER' || user?.role === 'ADMIN'
+  // Alguna entrada de gestión es solo de administración. Ocultar un enlace no
+  // es un permiso ---el API decide--- pero enseñar uno que va a contestar 403 sí
+  // es un error de interfaz.
+  const management = NAV_ADMIN.filter((item) => !item.adminOnly || user?.role === 'ADMIN')
 
   const navigation = (
     <Box sx={{ overflowY: 'auto', pb: 2 }}>
@@ -94,7 +98,7 @@ export default function AppShell() {
       {canManage && (
         <>
           <Divider sx={{ my: 1, mx: 2 }} />
-          <NavSection title="Gestión" items={NAV_ADMIN} />
+          <NavSection title="Gestión" items={management} />
         </>
       )}
     </Box>

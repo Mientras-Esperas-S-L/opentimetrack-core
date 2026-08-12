@@ -9,6 +9,7 @@ import GroupsIcon from '@mui/icons-material/Groups'
 import HistoryIcon from '@mui/icons-material/History'
 import PolicyIcon from '@mui/icons-material/Policy'
 import RuleIcon from '@mui/icons-material/Rule'
+import KeyIcon from '@mui/icons-material/Key'
 import SettingsIcon from '@mui/icons-material/Settings'
 import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard'
 
@@ -40,5 +41,9 @@ export const NAV_ADMIN = [
   { to: '/panel/fichajes', label: 'Fichajes', icon: <AccessTimeIcon /> },
   { to: '/panel/decisiones', label: 'Por decidir', icon: <RuleIcon /> },
   { to: '/panel/informes', label: 'Informes', icon: <DescriptionIcon /> },
+  // Solo administración: autorizar una aplicación es repartir una llave a los
+  // registros de la empresa, y el API lo rechaza a un responsable con un 403.
+  // Un menú que lo ofrece y una API que lo niega es peor que no ofrecerlo.
+  { to: '/panel/aplicaciones', label: 'Aplicaciones', icon: <KeyIcon />, adminOnly: true },
   { to: '/panel/ajustes', label: 'Ajustes', icon: <SettingsIcon /> },
 ]

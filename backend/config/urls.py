@@ -19,6 +19,7 @@ from apps.punches.views import PunchViewSet
 from apps.reports.overview import OverviewView
 from apps.reports.views import PayrollSummaryView, ReportView
 from apps.shifts.views import ShiftPatternViewSet, ShiftViewSet, WorkingTimeRulesView
+from apps.tenants.application_views import ApplicationViewSet
 from apps.tenants.views import CompanyView
 from apps.users.views import (
     DepartmentViewSet,
@@ -40,6 +41,7 @@ router.register("absences", AbsenceViewSet, basename="absence")
 router.register("shift-patterns", ShiftPatternViewSet, basename="shift-pattern")
 router.register("shifts", ShiftViewSet, basename="shift")
 router.register("audit", AuditLogViewSet, basename="audit")
+router.register("applications", ApplicationViewSet, basename="application")
 
 auth_patterns = [
     path("register/", SignUpView.as_view(), name="register"),
