@@ -17,12 +17,16 @@ import AddIcon from '@mui/icons-material/Add'
 import PlaceIcon from '@mui/icons-material/Place'
 
 import {
+  createHoliday,
   createWorkplace,
+  deleteHoliday,
   deleteWorkplace,
+  getHolidays,
   getWorkingTimeRules,
   getWorkplaces,
   updateWorkplace,
 } from '../../services/api.js'
+import { dateOf } from '../../components/format.js'
 import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
@@ -135,6 +139,164 @@ function WorkplaceDialog({ open, workplace, regions, companyZone, onClose, onSav
         </DialogActions>
       </form>
     </Dialog>
+  )
+}
+
+/** El calendario del año, y los dos días que nadie puede publicarnos.
+ *
+ *  Los doce nacionales y autonómicos entran con `import_holidays` desde un
+ *  fichero transcrito del BOE. Los dos locales los propone cada ayuntamiento y
+ *  los aprueba su comunidad, así que acaban en medio centenar de boletines y
+ *  ocho mil municipios: no hay registro que leer. Se teclean, y la pantalla lo
+ *  dice en vez de disimularlo.
+ */
+function Holidays({ workplaces }) {
+  const queryClient = useQueryClient()
+  const { session } = useAuth()
+  const isAdmin = session?.user?.role === 'ADMIN'
+
+  const thisYear = new Date().getFullYear()
+  const [year, setYear] = useState(thisYear)
+  const [adding, setAdding] = useState({ day: '', name: '', workplace: '' })
+  const [error, setError] = useState(null)
+
+  const { data: holidays = [] } = useQuery({
+    queryKey: ['holidays', year],
+    queryFn: () => getHolidays({ year }),
+  })
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['holidays'] })
+
+  const add = useMutation({
+    mutationFn: createHoliday,
+    onSuccess: () => {
+      setAdding({ day: '', name: '', workplace: '' })
+      setError(null)
+      refresh()
+    },
+    onError: setError,
+  })
+  const drop = useMutation({ mutationFn: deleteHoliday, onSuccess: refresh, onError: setError })
+
+  const imported = holidays.filter((h) => h.scope === 'NATIONAL' || h.scope === 'REGIONAL')
+  const typed = holidays.filter((h) => h.scope === 'LOCAL' || h.scope === 'COMPANY')
+
+  return (
+    <Box sx={{ mt: 4 }}>
+      <Stack direction="row" sx={{ gap: 2, alignItems: 'baseline', mb: 1 }}>
+        <Typography variant="h6">Festivos</Typography>
+        <TextField
+          select
+          size="small"
+          value={year}
+          onChange={(event) => setYear(Number(event.target.value))}
+          sx={{ minWidth: 110 }}
+        >
+          {[thisYear - 1, thisYear, thisYear + 1].map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
+        <Typography variant="body2" color="text.secondary">
+          {holidays.length} de los 14 del art. 37.2
+        </Typography>
+      </Stack>
+
+      <ErrorNote error={error} onClose={() => setError(null)} />
+
+      {imported.length === 0 && (
+        <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
+          No hay festivos nacionales ni autonómicos de {year}. Los trae{' '}
+          <code>python manage.py import_holidays --year {year}</code> desde el calendario
+          transcrito del BOE.
+        </Alert>
+      )}
+
+      <Stack sx={{ gap: 0.5 }}>
+        {holidays.map((day) => (
+          <Stack
+            key={day.id}
+            direction="row"
+            sx={{ gap: 1.5, alignItems: 'center', py: 0.5, borderBottom: 1, borderColor: 'divider' }}
+          >
+            <Typography
+              variant="body2"
+              sx={{ minWidth: 110, fontVariantNumeric: 'tabular-nums' }}
+            >
+              {dateOf(day.day, { weekday: 'short' })}
+            </Typography>
+            <Typography variant="body2" sx={{ flexGrow: 1 }}>
+              {day.name}
+            </Typography>
+            <Chip
+              size="small"
+              variant="outlined"
+              label={day.workplace_name ?? day.scope_display}
+            />
+            {isAdmin && (day.scope === 'LOCAL' || day.scope === 'COMPANY') && (
+              <Button size="small" color="inherit" onClick={() => drop.mutate(day.id)}>
+                Quitar
+              </Button>
+            )}
+          </Stack>
+        ))}
+      </Stack>
+
+      {isAdmin && (
+        <Box
+          component="form"
+          onSubmit={(event) => {
+            event.preventDefault()
+            add.mutate({ ...adding, workplace: adding.workplace || null })
+          }}
+          sx={{ mt: 2 }}
+        >
+          <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 1.5, alignItems: 'flex-start' }}>
+            <TextField
+              required
+              size="small"
+              type="date"
+              label="Día"
+              value={adding.day}
+              onChange={(event) => setAdding({ ...adding, day: event.target.value })}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+            <TextField
+              required
+              size="small"
+              label="Nombre"
+              placeholder="Feria de Jerez"
+              value={adding.name}
+              onChange={(event) => setAdding({ ...adding, name: event.target.value })}
+              sx={{ flexGrow: 1 }}
+            />
+            <TextField
+              select
+              size="small"
+              label="Dónde"
+              value={adding.workplace}
+              onChange={(event) => setAdding({ ...adding, workplace: event.target.value })}
+              sx={{ minWidth: 190 }}
+            >
+              <MenuItem value="">Toda la empresa</MenuItem>
+              {workplaces.map((place) => (
+                <MenuItem key={place.id} value={place.id}>
+                  {place.name}
+                </MenuItem>
+              ))}
+            </TextField>
+            <Button type="submit" variant="outlined" disabled={add.isPending}>
+              Añadir
+            </Button>
+          </Stack>
+          <Typography variant="caption" color="text.secondary">
+            Los dos festivos locales de cada municipio se meten aquí: los aprueba cada
+            ayuntamiento y no hay ningún registro nacional del que traerlos.
+            {typed.length > 0 && ` Hay ${typed.length} puestos a mano en ${year}.`}
+          </Typography>
+        </Box>
+      )}
+    </Box>
   )
 }
 
@@ -289,6 +451,8 @@ export default function Workplaces() {
         busy={remove.isPending}
         onClose={() => setConfirming(null)}
       />
+
+      <Holidays workplaces={workplaces} />
 
       <WorkplaceDialog
         open={editing !== undefined}

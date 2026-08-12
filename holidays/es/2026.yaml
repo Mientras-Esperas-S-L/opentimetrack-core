@@ -1,0 +1,68 @@
+# Calendario laboral de España, 2026.
+#
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │  PENDIENTE DE VERIFICAR CONTRA LA RESOLUCIÓN DEL BOE.                    │
+# │                                                                          │
+# │  Los ocho días nacionales de abajo son los que rigen en todo el Estado   │
+# │  todos los años, y sus fechas de 2026 están comprobadas. Lo que NO está  │
+# │  transcrito es la resolución: faltan las diecinueve comunidades, y falta │
+# │  saber cuáles de los cuatro sustituibles ha movido cada una.             │
+# │                                                                          │
+# │  Por eso `verified: false`. El comando de importación lo avisa y la      │
+# │  pantalla lo enseña. Quitar esa marca sin haber transcrito la resolución │
+# │  es peor que no tener el fichero: un calendario incompleto que se        │
+# │  presenta como completo hace que nadie vuelva a mirarlo.                 │
+# └──────────────────────────────────────────────────────────────────────────┘
+
+format: 1
+country: ES
+year: 2026
+
+verified: false
+
+source:
+  # Rellenar con la resolución del año. Se publica hacia octubre del anterior y
+  # se titula «Resolución de ... por la que se publica la relación de fiestas
+  # laborales para el año ...».
+  publication: ""
+  published_on:
+  url: https://www.boe.es/
+
+# Los que rigen en todo el Estado.
+#
+# Cuatro son irrenunciables por el art. 37.2 ET y ninguna comunidad puede
+# tocarlos: Año Nuevo, 1 de mayo, 12 de octubre y Navidad. Van marcados.
+#
+# Los otros cuatro son nacionales en la práctica todos los años, pero una
+# comunidad **puede sustituirlos**. Cuando lo haga, hay que quitarlo de aquí y
+# ponerlo en la suya, no dejarlo en los dos sitios.
+national:
+  - day: 2026-01-01
+    name: Año Nuevo
+    irrenunciable: true
+  - day: 2026-01-06
+    name: Epifanía del Señor
+  - day: 2026-04-03
+    name: Viernes Santo
+    # Móvil: depende de la Pascua, que en 2026 cae el 5 de abril.
+  - day: 2026-05-01
+    name: Fiesta del Trabajo
+    irrenunciable: true
+  - day: 2026-08-15
+    name: Asunción de la Virgen
+  - day: 2026-10-12
+    name: Fiesta Nacional de España
+    irrenunciable: true
+  - day: 2026-12-08
+    name: Inmaculada Concepción
+  - day: 2026-12-25
+    name: Natividad del Señor
+    irrenunciable: true
+
+# Dos que no están arriba a propósito: Todos los Santos (1 de noviembre) y el
+# Día de la Constitución (6 de diciembre). En 2026 los dos caen en domingo, y lo
+# que hace cada comunidad con un festivo en domingo --- trasladarlo, sustituirlo
+# o dejarlo perder --- es justo lo que hay que leer en la resolución.
+
+# Por código ISO 3166-2:ES, y solo los propios: los nacionales no se repiten.
+regions: {}

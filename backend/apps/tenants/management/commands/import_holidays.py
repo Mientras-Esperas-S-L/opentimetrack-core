@@ -1,0 +1,160 @@
+"""Brings a year's national and regional holidays into a company.
+
+Same shape as applying a collective agreement ficha: the file ships with the
+product, the company decides to take it, and what it writes is the company's own
+data from then on.
+
+Two things it deliberately does not do.
+
+**It does not touch the local days.** Those are the two per municipality that
+nobody can publish for us, so they are the two nobody can reimport either.
+Wiping them on a re-run would destroy the only rows in the table that took
+somebody's time.
+
+**It does not guess a region.** A workplace with no region gets the national
+days and a warning, because the alternative --- assuming the company's first
+region, or the biggest one --- produces a calendar that looks right and gives
+people the wrong days off.
+"""
+
+from __future__ import annotations
+
+import datetime
+import pathlib
+
+import yaml
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
+
+from apps.common.models import tenant_context
+from apps.tenants.holidays import HolidayScope, PublicHoliday
+from apps.tenants.models import Tenant
+from apps.users.models import Workplace
+
+#: Configurable for the same reason `AGREEMENTS_DIR` is: a deployment may keep
+#: its own calendars --- already checked against the bulletin, or maintained by
+#: its adviser --- instead of waiting for us to publish next year.
+ROOT = pathlib.Path(settings.HOLIDAYS_DIR)
+
+
+class Command(BaseCommand):
+    help = "Imports the national and regional public holidays of a year into a company."
+
+    def add_arguments(self, parser):
+        parser.add_argument("--year", type=int, required=True)
+        parser.add_argument(
+            "--company",
+            help="Tax id. Without it, every company in the country the file is for.",
+        )
+        parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Say what would change and write nothing.",
+        )
+
+    def handle(self, *args, **options):
+        year = options["year"]
+        data = self._read(year)
+
+        if not data.get("verified", False):
+            self.stdout.write(
+                self.style.WARNING(
+                    f"  El calendario de {year} está marcado como no verificado contra el "
+                    f"BOE. Revísalo antes de darlo por bueno."
+                )
+            )
+
+        companies = Tenant.objects.filter(is_active=True, country=data["country"])
+        if options["company"]:
+            companies = companies.filter(tax_id=options["company"])
+        if not companies.exists():
+            raise CommandError("No matching company.")
+
+        for company in companies:
+            self._apply(company, year, data, dry_run=options["dry_run"])
+
+    def _read(self, year: int) -> dict:
+        # Only ES ships today; the path is built from the file's own country so
+        # adding another is a file and not a code change.
+        for country_dir in sorted(ROOT.glob("*")):
+            if not country_dir.is_dir():
+                continue
+            path = country_dir / f"{year}.yaml"
+            if path.exists():
+                data = yaml.safe_load(path.read_text(encoding="utf-8"))
+                if data.get("year") != year:
+                    raise CommandError(f"{path} says year {data.get('year')}, not {year}.")
+                return data
+        raise CommandError(f"No calendar shipped for {year}. Look in {ROOT}.")
+
+    @transaction.atomic
+    def _apply(self, company, year, data, *, dry_run: bool) -> None:
+        self.stdout.write(f"\n{company.name}")
+
+        with tenant_context(company.id):
+            first = datetime.date(year, 1, 1)
+            last = datetime.date(year, 12, 31)
+
+            # Only what this command wrote last time. The local days and
+            # anything the company added stay: they are the ones nobody else
+            # can put back.
+            replacing = PublicHoliday.objects.filter(
+                day__gte=first,
+                day__lte=last,
+                scope__in=[HolidayScope.NATIONAL, HolidayScope.REGIONAL],
+            )
+            self.stdout.write(f"  se reemplazan {replacing.count()} días importados antes")
+
+            rows = [
+                PublicHoliday(
+                    tenant=company,
+                    day=entry["day"],
+                    name=entry["name"],
+                    scope=HolidayScope.NATIONAL,
+                    note="Irrenunciable (art. 37.2 ET)" if entry.get("irrenunciable") else "",
+                )
+                for entry in data.get("national") or []
+            ]
+
+            sites = list(Workplace.objects.filter(is_active=True))
+            regional = data.get("regions") or {}
+            for site in sites:
+                for entry in regional.get(site.region, []):
+                    rows.append(
+                        PublicHoliday(
+                            tenant=company,
+                            day=entry["day"],
+                            name=entry["name"],
+                            scope=HolidayScope.REGIONAL,
+                            workplace=site,
+                        )
+                    )
+
+            blind = [site.name for site in sites if not site.region]
+            if blind:
+                self.stdout.write(
+                    self.style.WARNING(
+                        "  sin comunidad, solo reciben los nacionales: " + ", ".join(blind)
+                    )
+                )
+            if not sites:
+                self.stdout.write(
+                    self.style.WARNING(
+                        "  la empresa no tiene centros de trabajo: sin ellos no hay a qué "
+                        "asignar los festivos autonómicos ni los locales"
+                    )
+                )
+
+            local = PublicHoliday.objects.filter(
+                day__gte=first, day__lte=last, scope=HolidayScope.LOCAL
+            ).count()
+            self.stdout.write(f"  {len(rows)} días a escribir · {local} locales que no se tocan")
+
+            if dry_run:
+                self.stdout.write(self.style.WARNING("  --dry-run: no se ha escrito nada"))
+                return
+
+            replacing.delete()
+            PublicHoliday.objects.bulk_create(rows, ignore_conflicts=True)
+            self.stdout.write(self.style.SUCCESS("  hecho"))

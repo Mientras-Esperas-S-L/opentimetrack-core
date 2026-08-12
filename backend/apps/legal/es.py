@@ -145,6 +145,10 @@ ESPANA = LegalFramework(
         # ningún artículo: es el error de planificación más corriente que hay, y
         # el que antes le llega a la persona. Sin cita a propósito.
         "rostered_on_leave": Citation(""),
+        # Trabajar un festivo es lícito: el art. 37.2 los hace retribuidos y no
+        # recuperables, no prohibidos. Lleva cita porque de ahí sale la
+        # compensación, no porque se incumpla.
+        "rostered_on_a_holiday": Citation("Art. 37.2 ET"),
     },
     # -------------------------------------------------- horas complementarias
     #

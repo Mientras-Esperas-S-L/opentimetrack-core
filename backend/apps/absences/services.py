@@ -139,9 +139,14 @@ def _days_within(absence: Absence, start: date, end: date, *, working_days: bool
     fallback for somebody with no roster at all, which is what a flexible
     arrangement looks like here.
 
-    Public holidays are **not** excluded, because the product does not know them
-    yet. That understates the balance slightly and it is the honest direction to
-    be wrong in --- the alternative invents days off.
+    Public holidays come off too, for the same reason the weekend does: a day
+    the person was never going to work is not a day of holiday spent. Which ones
+    are holidays depends on their **workplace** --- two of the fourteen are the
+    town hall's --- so it is asked of the person, not of the company.
+
+    A holiday that lands on a rostered day still comes off. Being rostered on a
+    public holiday is lawful and the roster reports it separately; what it is
+    not is a reason to charge somebody a day of their own leave.
     """
     first = max(absence.start_date, start)
     last = min(absence.end_date, end)
@@ -151,16 +156,18 @@ def _days_within(absence: Absence, start: date, end: date, *, working_days: bool
         return (last - first).days + 1
 
     from apps.shifts.models import Shift
+    from apps.tenants.holidays import holidays_for
 
     rostered = set(
         Shift.objects.filter(
             employee_id=absence.employee_id, day__gte=first, day__lte=last
         ).values_list("day", flat=True)
     )
+    off = holidays_for(absence.employee, first, last)
     span = [first + timedelta(days=n) for n in range((last - first).days + 1)]
     if rostered:
-        return sum(1 for day in span if day in rostered)
-    return sum(1 for day in span if day.weekday() < 5)
+        return sum(1 for day in span if day in rostered and day not in off)
+    return sum(1 for day in span if day.weekday() < 5 and day not in off)
 
 
 # ------------------------------------------------------------------- requesting

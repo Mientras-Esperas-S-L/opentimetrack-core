@@ -249,6 +249,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
         )
         findings.extend(_check_under_eighteen(roster, rules, framework.minors, first, last))
     findings.extend(_check_leave_clashes(first, last, employee))
+    findings.extend(_check_rostered_on_a_holiday(by_person, first, last))
     findings.extend(_check_outside_the_contract(by_person))
     findings.extend(_check_time_actually_worked(company, rules, first, last, employee))
 
@@ -899,6 +900,48 @@ def _check_outside_the_contract(by_person) -> list[Finding]:
                     message=_("Rostered on a day outside the dates of their contract."),
                 )
             )
+    return found
+
+
+def _check_rostered_on_a_holiday(by_person, first, last) -> list[Finding]:
+    """Somebody rostered on a public holiday.
+
+    Not a breach, and the wording says so. Art. 37.2 makes the fourteen days
+    non-recoverable and paid, and working one is lawful --- what it generates is
+    compensation, in rest or in pay, and which one is the collective agreement's
+    business rather than ours.
+
+    It is reported because it is a decision somebody has to have made, and
+    because the compensation is owed from the moment the day is worked. The
+    roster is where it first becomes visible.
+
+    Which days are holidays depends on the **workplace**: two of the fourteen
+    are the town hall's, so a company with sites in two provinces has two
+    calendars and one of them is not the other's.
+    """
+    from apps.tenants.holidays import holidays_for
+
+    found = []
+    for roster in by_person.values():
+        if not roster:
+            continue
+        person = roster[0].employee
+        off = holidays_for(person, first, last)
+        if not off:
+            continue
+        for shift in roster:
+            if first <= shift.day <= last and shift.day in off:
+                found.append(
+                    Finding(
+                        day=shift.day,
+                        employee_id=person.pk,
+                        code="rostered_on_a_holiday",
+                        message=_(
+                            "Rostered on a public holiday. It is allowed, and it earns "
+                            "compensation in rest or in pay under the agreement."
+                        ),
+                    )
+                )
     return found
 
 

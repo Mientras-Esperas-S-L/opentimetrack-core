@@ -222,3 +222,9 @@ __all__ = [
     "TenantLimits",
     "WorkingTimeRules",
 ]
+
+
+# Imported here so Django discovers the model: `holidays.py` is a separate
+# module because public holidays are their own subject, not because they are a
+# separate app.
+from apps.tenants.holidays import HolidayScope, PublicHoliday  # noqa: E402,F401

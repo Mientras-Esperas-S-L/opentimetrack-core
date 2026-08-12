@@ -9,15 +9,17 @@ superuser tool.
 
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
-from rest_framework import serializers
+from rest_framework import serializers, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.audit.models import AuditAction
 from apps.audit.services import record
-from apps.common.permissions import IsAdmin, IsAuthenticatedInTenant
+from apps.common.permissions import IsAdmin, IsAuthenticatedInTenant, ReadForAllWriteForAdmin
 from apps.common.scope import unassigned_managers
+from apps.tenants.holidays import HolidayScope, PublicHoliday
 from apps.tenants.models import Tenant, validate_time_zone
 
 
@@ -57,7 +59,65 @@ class CompanySerializer(serializers.ModelSerializer):
         return value
 
 
+class PublicHolidaySerializer(serializers.ModelSerializer):
+    workplace_name = serializers.CharField(source="workplace.name", read_only=True, default=None)
+    scope_display = serializers.CharField(source="get_scope_display", read_only=True)
+
+    class Meta:
+        model = PublicHoliday
+        fields = [
+            "id",
+            "day",
+            "name",
+            "scope",
+            "scope_display",
+            "workplace",
+            "workplace_name",
+            "note",
+        ]
+        read_only_fields = ["id", "scope_display", "workplace_name"]
+
+    def validate_workplace(self, value):
+        if value is not None and value.tenant_id != self.context["request"].user.tenant_id:
+            raise serializers.ValidationError(_("That workplace belongs to another company."))
+        return value
+
+
 @extend_schema(tags=["organisation"])
+class PublicHolidayViewSet(viewsets.ModelViewSet):
+    """The calendar. Anyone reads; an administrator writes.
+
+    Read for everybody because a person is entitled to know which days they are
+    not expected to work --- and because their holiday balance depends on it.
+    """
+
+    queryset = PublicHoliday.objects.none()
+    serializer_class = PublicHolidaySerializer
+    permission_classes = [ReadForAllWriteForAdmin]
+    filterset_fields = ["scope", "workplace"]
+    ordering = ["day"]
+
+    def get_queryset(self):
+        qs = PublicHoliday.objects.select_related("workplace")
+        year = self.request.query_params.get("year")
+        if year and year.isdigit():
+            qs = qs.filter(day__year=int(year))
+        return qs
+
+    def perform_create(self, serializer):
+        # Anything typed in here is the company's own. The two national and
+        # regional scopes belong to the import, which replaces them wholesale;
+        # letting the form claim one would put a row in the way of the next
+        # import and then lose it without saying so.
+        scope = (
+            HolidayScope.LOCAL
+            if serializer.validated_data.get("workplace")
+            else HolidayScope.COMPANY
+        )
+        serializer.save(tenant=self.request.user.tenant, scope=scope)
+
+
+@extend_schema(tags=["tenants"])
 class CompanyView(APIView):
     """Read for anyone in the company, write for an administrator."""
 

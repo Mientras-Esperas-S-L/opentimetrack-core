@@ -227,10 +227,19 @@ entero de una empresa en ERTE parcial se lee como incumplimiento.
 
 ## 7. Festivos
 
-**No existen en el sistema.** Ni el calendario laboral, ni el efecto sobre el
-cuadrante, ni la compensación por trabajarlos. Hoy un festivo aparece como un
-día laborable cualquiera, y quien trabaja el 1 de mayo no se distingue de quien
-trabaja un martes.
+| Regla | Base | Estado |
+|---|---|---|
+| Calendario de festivos, por centro de trabajo | 37.2 | **Cubierto** |
+| Nacionales y autonómicos | 37.2 | **Cubierto** — se transcriben del BOE a `holidays/<país>/<año>.yaml` y los trae `import_holidays` |
+| Los dos locales | 37.2 | **Cubierto** — a mano por centro, que es la única forma: no hay registro nacional legible |
+| Un festivo no consume vacaciones | 38.1 | **Cubierto** — una semana con un festivo dentro cuesta cuatro días |
+| Trabajar un festivo se avisa | 37.2 | **Cubierto** — no se impide: es lícito y genera compensación |
+| Compensación por festivo trabajado | 37.2 | **Falta** — se avisa de la deuda, no se lleva el saldo. Ver §8 |
+
+El calendario de 2026 que viene en el repositorio lleva los ocho nacionales con
+las fechas comprobadas y **está marcado como no verificado**: falta transcribir
+la resolución del BOE, que es la que dice qué ha hecho cada comunidad con los
+festivos que caen en domingo. El comando lo avisa al importar.
 
 - Catorce al año como máximo, de las cuales **dos son locales**.
 - Cuatro son irrenunciables de ámbito nacional: Año Nuevo, 1 de mayo, 12 de
@@ -295,7 +304,7 @@ trabaja**. Un modelo de organización completo es otra herramienta.
 | Departamentos | **Cubierto.** Con quién los lleva, que es lo que decide el alcance de lectura |
 | Un responsable lee solo lo suyo | **Cubierto.** Los departamentos que lleva, más él mismo. Con un ajuste de empresa para volver al alcance total |
 | Representación legal de las personas trabajadoras | **Cubierto.** Es a quien se avisa en el art. 4.b |
-| Centro de trabajo | **Falta.** El registro se lleva y se inspecciona por centro, y sin él no se pueden aplicar los dos festivos locales |
+| Centro de trabajo | **Cubierto.** Con municipio, comunidad y zona horaria propia: una delegación en Canarias mide su jornada una hora antes que la central |
 | Historia de la adscripción | **Falta.** Si alguien cambia de departamento en septiembre, el informe de julio dirá el de ahora |
 | Jerarquía de departamentos | **Falta**, y probablemente deba seguir faltando: acotar la lectura no la necesita |
 
@@ -310,18 +319,17 @@ Ordenado por lo que más se nota en un cliente real, no por dificultad.
 2. **Catálogo de permisos retribuidos**, con duración, base legal, si consume
    vacaciones y si exige justificante. Sin esto no se puede decir cuántos días
    de permiso lleva alguien, que es la primera pregunta de una gestoría.
-3. **Centro de trabajo**, que además desbloquea lo siguiente.
-4. **Festivos**: nacionales y autonómicos como datos del repositorio, locales
-   por centro.
-5. **Suspensiones del contrato**, empezando por la IT con su contingencia, el
+3. **Transcribir la resolución del BOE de 2026**, que es lo único que le falta
+   al calendario para estar completo.
+4. **Suspensiones del contrato**, empezando por la IT con su contingencia, el
    nacimiento y cuidado del menor, y el ERTE de reducción de jornada.
-6. **Saldos de devolución**: horas extra compensadas, relevo de turno,
+5. **Saldos de devolución**: horas extra compensadas, relevo de turno,
    distribución irregular. Convertir los avisos en una cuenta.
 7. **Vacaciones**: devengo proporcional y traslado por IT.
-8. **Llamamiento del fijo discontinuo** (art. 16), ya señalado en el código.
-9. **Topes que se guardan y no se comprueban**: 80 horas extra al año, 30 % de
+7. **Llamamiento del fijo discontinuo** (art. 16), ya señalado en el código.
+8. **Topes que se guardan y no se comprueban**: 80 horas extra al año, 30 % de
    complementarias al mes, 65/85 % del contrato formativo.
-10. **Historia de la adscripción a departamento**, cuando el informe empiece a
+9. **Historia de la adscripción a departamento**, cuando el informe empiece a
     mentir.
 
 ---

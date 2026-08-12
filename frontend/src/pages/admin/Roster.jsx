@@ -30,6 +30,7 @@ import {
   assignShifts,
   clearShifts,
   getRoster,
+  getHolidays,
   getShiftPatterns,
   paintShifts,
   reviewRoster,
@@ -309,6 +310,18 @@ export default function Roster() {
     queryKey: ['roster-review', from, to],
     queryFn: () => reviewRoster(from, to),
   })
+  // Los festivos del mes. Se marcan en la cabecera igual que el fin de semana:
+  // un día en el que casi nadie trabaja tiene que parecerlo antes de que
+  // alguien pinte un turno encima.
+  const { data: holidays = [] } = useQuery({
+    queryKey: ['holidays', month.year],
+    queryFn: () => getHolidays({ year: month.year }),
+  })
+  // Solo los de toda la empresa: los locales son de un centro, y sombrear la
+  // columna entera diría que ese día libra gente que no libra.
+  const holidayByDay = new Map(
+    holidays.filter((h) => !h.workplace).map((h) => [h.day, h.name])
+  )
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ['roster'] })
@@ -561,13 +574,19 @@ export default function Roster() {
               <Box sx={{ p: 1 }} />
               {dayNumbers.map((day) => {
                 const weekday = weekdayOf(month.year, month.month, day)
+                const feast = holidayByDay.get(iso(month.year, month.month, day))
                 return (
+                  <Tooltip key={day} title={feast ?? ''}>
                   <Box
-                    key={day}
                     sx={{
                       py: 0.75,
                       textAlign: 'center',
-                      bgcolor: weekday >= 5 ? 'action.hover' : 'transparent',
+                      bgcolor: feast
+                        ? 'warning.main'
+                        : weekday >= 5
+                          ? 'action.hover'
+                          : 'transparent',
+                      opacity: feast ? 0.28 : 1,
                     }}
                   >
                     <Typography
@@ -583,6 +602,7 @@ export default function Roster() {
                       {day}
                     </Typography>
                   </Box>
+                  </Tooltip>
                 )
               })}
             </Box>

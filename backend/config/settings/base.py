@@ -291,6 +291,16 @@ LOCALE_PATHS = [BASE_DIR / "locale"]
 # boletin oficial. Ver agreements/README.md.
 AGREEMENTS_DIR = Path(env("AGREEMENTS_DIR", default=str(BASE_DIR.parent / "agreements")))
 
+# Los calendarios laborales, por el mismo motivo y con la misma disciplina: se
+# transcriben de la resolucion anual del BOE y se publican por ano. Un
+# despliegue puede apuntar a los suyos --- los que mantenga su asesoria, o unos
+# ya verificados --- sin esperar a que publiquemos el ano siguiente.
+#
+# Lo que NUNCA va a estar aqui son los dos festivos locales de cada municipio:
+# no existe registro nacional legible por maquina, y se meten a mano en cada
+# centro de trabajo. Ver holidays/README.md.
+HOLIDAYS_DIR = Path(env("HOLIDAYS_DIR", default=str(BASE_DIR.parent / "holidays")))
+
 # Storage is always UTC. Each tenant renders in its own zone, which is a field of
 # the tenant, not a global setting: a single deployment can serve a company in
 # Madrid and another one in the Canary Islands -- two zones inside Spain alone --
