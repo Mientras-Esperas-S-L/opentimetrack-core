@@ -27,7 +27,8 @@ tendrá que poner un `data-tour` en cada uno, y la lista está al final.
 11. [Fichajes de la plantilla](#11-fichajes-de-la-plantilla) · `ott.fichajes`
 12. [Por decidir](#12-por-decidir) · `ott.por-decidir`
 13. [Informes para la Inspección](#13-informes-para-la-inspección) · `ott.informes`
-14. [Ajustes de la empresa](#14-ajustes-de-la-empresa) · `ott.ajustes`
+14. [Aplicaciones y terminales](#14-aplicaciones-y-terminales) · `ott.aplicaciones`
+15. [Ajustes de la empresa](#15-ajustes-de-la-empresa) · `ott.ajustes`
 
 **Conceptos**
 - [Qué no se puede hacer, y por qué](#qué-no-se-puede-hacer-y-por-qué) · `ott.limites`
@@ -236,6 +237,22 @@ En el menú de cada fila (⋮):
 
 ---
 
+## 8 bis. Calendario del equipo
+
+`slug: ott.calendario`
+
+Quién está fuera y cuándo, un mes por pantalla. El color es por tipo de
+ausencia, no por persona: la pregunta que responde esta pantalla es «¿puedo
+aprobar agosto?», y para eso importa cuánta gente falta y por qué.
+
+Las solicitudes **sin resolver aparecen rayadas**: cuentan para decidir, pero
+todavía no son un hecho.
+
+**Pinchando en una banda** se abre la ausencia, y si está pendiente se puede
+aprobar o rechazar ahí mismo.
+
+---
+
 ## 9. Departamentos
 
 `slug: ott.departamentos`
@@ -350,7 +367,36 @@ que es justo lo que la traza sirve para responder.
 
 ---
 
-## 14. Ajustes de la empresa
+## 14. Aplicaciones y terminales
+
+`slug: ott.aplicaciones`
+
+Solo administración. Para cuando quien ficha no puede hacerlo con su propia
+sesión: un terminal en la entrada, un lector NFC, una tableta compartida en
+obra.
+
+1. **Autorizar**, nombre y para qué es.
+2. **Qué puede hacer**: los permisos se conceden uno a uno. Una aplicación con
+   todos es una llave a la empresa entera.
+3. **Emitir token.** Sale una vez y no se puede recuperar: se guarda cifrado.
+   Si se pierde, se emite otro.
+
+El token va en la cabecera `Authorization: Bearer …` de cada petición.
+
+**Se pueden tener varios tokens a la vez**, y es lo que permite cambiarlos sin
+cortar el servicio: emites el nuevo, lo pones en el terminal, revocas el viejo.
+
+Lo que registre una aplicación va marcado como **En su nombre** o **Terminal**,
+nunca como si lo hubiera hecho la persona. Son pruebas distintas y quien lea el
+registro tiene derecho a distinguirlas.
+
+**Revocar no borra.** La aplicación deja de funcionar con todos sus tokens,
+pero sigue en la lista: lo que grabó es suyo, y quitarla dejaría esos fichajes
+sin autor.
+
+---
+
+## 15. Ajustes de la empresa
 
 `slug: ott.ajustes`
 
@@ -437,6 +483,8 @@ Anclas que hará falta poner en el frontend. La convención es la de Geosian:
 | `ott.fichajes` | `timesheet-filters`, `timesheet-pager`, `timesheet-correct` |
 | `ott.por-decidir` | `decisions-tabs`, `decisions-disagreement-tab`, `decisions-apply-anyway` |
 | `ott.informes` | `reports-scope`, `reports-range`, `reports-download`, `reports-fingerprint` |
+| `ott.calendario` | `calendar-month-nav`, `calendar-legend`, `calendar-span`, `calendar-pending-hatch` |
+| `ott.aplicaciones` | `apps-authorise`, `apps-scopes`, `apps-issue`, `apps-token-once`, `apps-revoke` |
 | `ott.ajustes` | `settings-timezone`, `settings-leave`, `settings-rules`, `settings-break-counts` |
 
 Dos notas para quien lo monte:

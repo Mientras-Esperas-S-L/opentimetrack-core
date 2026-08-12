@@ -1,7 +1,12 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
 import IconButton from '@mui/material/IconButton'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
@@ -11,8 +16,62 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import TodayIcon from '@mui/icons-material/Today'
 
-import { getAbsenceCalendar } from '../../services/api.js'
-import { Empty, Loading, PageHeader } from '../../components/common.jsx'
+import { approveAbsence, getAbsenceCalendar, rejectAbsence } from '../../services/api.js'
+import { Empty, Loading, PageHeader, StatusChip } from '../../components/common.jsx'
+import { dayRange } from '../../components/format.js'
+import { useAuth } from '../../hooks/useAuth.js'
+
+/** What is behind a coloured band, and what can be done about it.
+ *
+ *  The calendar was read-only: you could see that somebody had asked for August
+ *  and had to go to another screen to answer. Deciding is exactly what this
+ *  view is for --- "can I approve August?" is the question it exists to answer
+ *  --- so the answer belongs here.
+ */
+function AbsenceDialog({ absence, canDecide, busy, onClose, onApprove, onReject }) {
+  const pending = absence?.status === 'PENDING'
+
+  return (
+    <Dialog open={Boolean(absence)} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle>{absence?.employee_name}</DialogTitle>
+      <DialogContent>
+        <Stack sx={{ gap: 1 }}>
+          <Stack direction="row" sx={{ gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Typography sx={{ fontWeight: 600 }}>{absence?.type_display}</Typography>
+            <StatusChip status={absence?.status} label={absence?.status_display} />
+          </Stack>
+          <Typography variant="body2" color="text.secondary">
+            {absence && dayRange(absence.start_date, absence.end_date)} ·{' '}
+            {absence?.days} {absence?.days === 1 ? 'día' : 'días'}
+          </Typography>
+          {absence?.reason && (
+            <Typography
+              variant="body2"
+              sx={{ mt: 1, pl: 1.5, borderLeft: 2, borderColor: 'divider', fontStyle: 'italic' }}
+            >
+              {absence.reason}
+            </Typography>
+          )}
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="inherit">
+          Cerrar
+        </Button>
+        {canDecide && pending && (
+          <>
+            <Button onClick={onReject} disabled={busy} color="inherit">
+              Rechazar
+            </Button>
+            <Button onClick={onApprove} disabled={busy} variant="contained">
+              Aprobar
+            </Button>
+          </>
+        )}
+      </DialogActions>
+    </Dialog>
+  )
+}
 
 /** Colour by kind, not by person.
  *
@@ -48,9 +107,24 @@ export default function TeamCalendar() {
   const from = iso(cursor.year, cursor.month, 1)
   const to = iso(cursor.year, cursor.month, total)
 
+  const [open, setOpen] = useState(null)
+  const queryClient = useQueryClient()
+  const { session } = useAuth()
+  const canManage = ['MANAGER', 'ADMIN'].includes(session?.user?.role)
+
   const { data: absences, isLoading } = useQuery({
     queryKey: ['absence-calendar', from, to],
     queryFn: () => getAbsenceCalendar(from, to),
+  })
+
+  const decide = useMutation({
+    mutationFn: ({ action, id }) => action(id),
+    onSuccess: () => {
+      setOpen(null)
+      queryClient.invalidateQueries({ queryKey: ['absence-calendar'] })
+      queryClient.invalidateQueries({ queryKey: ['absences'] })
+      queryClient.invalidateQueries({ queryKey: ['overview'] })
+    },
   })
 
   const move = (delta) => {
@@ -122,6 +196,15 @@ export default function TeamCalendar() {
         </Stack>
       </Stack>
 
+      <AbsenceDialog
+        absence={open}
+        canDecide={canManage}
+        busy={decide.isPending}
+        onClose={() => setOpen(null)}
+        onApprove={() => decide.mutate({ action: approveAbsence, id: open.id })}
+        onReject={() => decide.mutate({ action: rejectAbsence, id: open.id })}
+      />
+
       {isLoading ? (
         <Loading rows={4} />
       ) : people.length === 0 ? (
@@ -190,8 +273,20 @@ export default function TeamCalendar() {
 
                   const cell = (
                     <Box
+                      // A span is clickable; an empty cell is not. Before this
+                      // the calendar was the only screen in the panel where
+                      // nothing could be done: you could see that somebody had
+                      // asked for August and had to go elsewhere to answer.
+                      {...(span && {
+                        role: 'button',
+                        tabIndex: 0,
+                        onClick: () => setOpen(span),
+                        onKeyDown: (event) =>
+                          ['Enter', ' '].includes(event.key) && setOpen(span),
+                      })}
                       sx={{
                         m: 0.4,
+                        ...(span && { cursor: 'pointer' }),
                         borderRadius: 0.5,
                         bgcolor: weekday >= 5 && !span ? 'action.hover' : 'transparent',
                         ...(span &&

@@ -118,16 +118,16 @@ Consecuencias, todas silenciosas:
       `SET_NULL`: no se pierde nada, pero borrar un departamento deja sin
       asignar a su gente y borrar un turno lo despega de días ya publicados.
       Debería decir "3 personas quedarán sin departamento".
-- [ ] **Actividad**: sin filtro por fecha ni por persona y sin exportar. Es el
+- [x] **Actividad**: filtro por fecha y exportación en CSV. Es el
       registro que se enseña en una inspección.
-- [ ] **Informes**: solo de una persona. Falta "toda la empresa" y "por
+- [x] **Informes**: una persona, un departamento o toda la empresa. Falta "toda la empresa" y "por
       departamento"; hacer 200 PDF de uno en uno no es viable. Y
       `reports/payroll-summary/` (art. 6.1) no tiene pantalla.
-- [ ] **Mi jornada**: sin navegación por meses. Se ven los últimos 50 fichajes,
+- [x] **Mi jornada**: navegación por meses. Se ven los últimos 50 fichajes,
       unos 25 días, y no hay forma de mirar atrás.
-- [ ] **Calendario de equipo**: no se puede pinchar en nada. Ni ir a la persona
+- [x] **Calendario de equipo**: pinchar una banda abre la ausencia, y si está pendiente se decide ahí. Ni ir a la persona
       ni abrir la ausencia ni asignar desde ahí.
-- [ ] **`punches/delegated/`** (fichar por otra persona) no tiene pantalla.
+- [x] **`punches/delegated/`**: pantalla de Aplicaciones. No tenía ni pantalla ni API: solo shell.
 
 ---
 
@@ -141,7 +141,7 @@ planos con `MenuItem`.
 | Cuadrante, "A quién" | **Hecho.** `EmployeePicker` con chips y búsqueda en servidor |
 | Fichajes, "Persona" | **Hecho.** Mismo componente, más "toda la empresa" |
 | Informes, "Persona" | **Hecho.** Falta añadirle "toda la empresa" y "por departamento" |
-| Ajustes, "Zona horaria" | Pendiente. 9 zonas fijas de las ~350 que existen |
+| Ajustes, "Zona horaria" | **Hecho.** Autocomplete con todas y el desfase horario a la derecha |
 | Personas, "Departamento" | Pendiente y no urgente. Vale mientras sean pocos; pasados 20, buscador |
 
 Los tres primeros salían de la lista paginada, así que además de incómodos
@@ -162,7 +162,7 @@ persona" es más rápido que teclear.
 
 ## Menor
 
-- [ ] La búsqueda de Personas lanza una consulta **por tecla**: no hay debounce
+- [x] La búsqueda de Personas lanzaba una consulta **por tecla**: no hay debounce
       ni `useDeferredValue` en ningún sitio del proyecto.
 - [ ] Sin ordenación por columnas en ninguna tabla.
 - [ ] Sin acciones en bloque (asignar departamento a varias personas, por
