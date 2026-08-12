@@ -9,11 +9,19 @@ Who gets to read it is the interesting part, and there are two answers.
 
 from __future__ import annotations
 
+import csv
+import io
+import json
+
 from django.db.models import Q
+from django.http import HttpResponse
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import mixins, serializers, viewsets
+from rest_framework.decorators import action
 
 from apps.audit.models import AuditAction, AuditLog
+from apps.audit.services import record
 from apps.common.filters import LocalDayRangeFilter
 from apps.common.permissions import IsAuthenticatedInTenant
 
@@ -81,6 +89,63 @@ class AuditLogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
     permission_classes = [IsAuthenticatedInTenant]
     filterset_class = AuditLogFilter
     ordering = ["-at"]
+
+    @extend_schema(
+        summary="The trail as a CSV",
+        description=(
+            "The same entries the list returns, with the same filters, as a file. "
+            "What gets handed over when somebody asks for the history of a period."
+        ),
+        responses={200: None},
+    )
+    @action(detail=False, methods=["get"])
+    def export(self, request):
+        """The trail as a file.
+
+        Exporting it is itself a read of other people's activity, so it goes
+        into the trail --- the alternative being a register whose most complete
+        disclosure is the one thing it does not record.
+
+        Deliberately not paginated: a page of fifty would be a truncated
+        history handed over as if it were the whole thing, which is the failure
+        this screen already had once.
+        """
+        rows = self.filter_queryset(self.get_queryset())
+
+        buffer = io.StringIO()
+        writer = csv.writer(buffer, delimiter=";")
+        writer.writerow(
+            [_("When"), _("Who"), _("What"), _("About"), _("Detail"), _("Note"), _("Address")]
+        )
+        for entry in rows.iterator(chunk_size=500):
+            writer.writerow(
+                [
+                    entry.at.isoformat(),
+                    entry.actor.get_full_name() if entry.actor else _("system"),
+                    entry.get_action_display(),
+                    entry.target_label,
+                    json.dumps(entry.changes, ensure_ascii=False) if entry.changes else "",
+                    entry.note,
+                    entry.ip_address or "",
+                ]
+            )
+
+        record(
+            action=AuditAction.REPORT_EXPORTED,
+            actor=request.user,
+            target_type="audit",
+            target_label=str(_("Activity trail")),
+            changes={
+                "from": request.query_params.get("date_from", ""),
+                "to": request.query_params.get("date_to", ""),
+                "rows": rows.count(),
+            },
+            request=request,
+        )
+
+        response = HttpResponse(buffer.getvalue(), content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="actividad.csv"'
+        return response
 
     def get_queryset(self):
         user = self.request.user

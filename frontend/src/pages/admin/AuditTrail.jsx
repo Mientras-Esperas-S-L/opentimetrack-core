@@ -2,14 +2,16 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
+import Button from '@mui/material/Button'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import DownloadIcon from '@mui/icons-material/Download'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 
-import { getAuditTrail, PAGE_SIZE } from '../../services/api.js'
+import { downloadAuditTrail, getAuditTrail, PAGE_SIZE } from '../../services/api.js'
 import { Empty, Loading, PageHeader, Pager } from '../../components/common.jsx'
 import { dateOf, firstOfThisMonth, today } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -78,6 +80,7 @@ export default function AuditTrail() {
   const [from, setFrom] = useState(firstOfThisMonth)
   const [to, setTo] = useState(today)
   const [page, setPage] = useState(1)
+  const [exporting, setExporting] = useState(false)
 
   const narrow = (set) => (value) => {
     set(value)
@@ -95,6 +98,29 @@ export default function AuditTrail() {
   return (
     <>
       <PageHeader
+        action={
+          isAdmin && (
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              disabled={exporting}
+              onClick={async () => {
+                setExporting(true)
+                try {
+                  await downloadAuditTrail({
+                    ...(action ? { action } : {}),
+                    date_from: from,
+                    date_to: to,
+                  })
+                } finally {
+                  setExporting(false)
+                }
+              }}
+            >
+              Descargar
+            </Button>
+          )
+        }
         title="Registro de actividad"
         subtitle={
           isAdmin

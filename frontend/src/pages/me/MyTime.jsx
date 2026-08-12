@@ -8,11 +8,14 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import Divider from '@mui/material/Divider'
+import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import EditNoteIcon from '@mui/icons-material/EditNote'
 
 import {
@@ -31,7 +34,7 @@ import {
   SourceChip,
   StatusChip,
 } from '../../components/common.jsx'
-import { dateOf, hhmm, timeOf } from '../../components/format.js'
+import { dateOf, hhmm, monthBounds, monthName, timeOf } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 
 /** Pairs the day's events into segments and adds them up.
@@ -325,6 +328,11 @@ function CorrectionRow({ correction, zone, onAccept, onDispute, busy }) {
   )
 }
 
+const thisMonth = () => {
+  const now = new Date()
+  return { year: now.getFullYear(), month: now.getMonth() }
+}
+
 export default function MyTime() {
   const { session } = useAuth()
   const zone = session?.tenant?.time_zone
@@ -333,11 +341,19 @@ export default function MyTime() {
 
   const [asking, setAsking] = useState(false)
   const [disputing, setDisputing] = useState(null)
+  // The screen showed the fifty most recent events --- about twenty-five days ---
+  // with no way to look further back. This is somebody's own record, which the
+  // law says they may consult and which is kept for four years, so "as far back
+  // as the page happened to reach" is not an answer.
+  const [month, setMonth] = useState(thisMonth)
   const [error, setError] = useState(null)
 
+  const range = monthBounds(month)
   const { data: punches, isLoading } = useQuery({
-    queryKey: ['punches', 'mine'],
-    queryFn: () => getPunches({ employee: me, ordering: '-timestamp' }),
+    queryKey: ['punches', 'mine', range],
+    queryFn: () =>
+      getPunches({ employee: me, date_from: range.from, date_to: range.to, ordering: '-timestamp' }),
+    placeholderData: (previous) => previous,
     enabled: Boolean(me),
   })
 
@@ -367,6 +383,13 @@ export default function MyTime() {
     },
     onError: setError,
   })
+
+  const moveMonth = (delta) => {
+    const next = new Date(month.year, month.month + delta, 1)
+    setMonth({ year: next.getFullYear(), month: next.getMonth() })
+  }
+  const now = new Date()
+  const isThisMonth = month.year === now.getFullYear() && month.month === now.getMonth()
 
   const correctionRows = corrections?.rows ?? []
   // Two lists, because they ask different things. One is waiting on this
@@ -425,10 +448,39 @@ export default function MyTime() {
         </Panel>
       )}
 
+      <Stack
+        direction="row"
+        sx={{ alignItems: 'center', gap: 1, mb: 2, justifyContent: 'space-between' }}
+      >
+        <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
+          <IconButton size="small" onClick={() => moveMonth(-1)} aria-label="Mes anterior">
+            <ChevronLeftIcon />
+          </IconButton>
+          <Typography sx={{ fontWeight: 600, minWidth: 170, textAlign: 'center' }}>
+            {monthName(month)}
+          </Typography>
+          <IconButton
+            size="small"
+            onClick={() => moveMonth(1)}
+            aria-label="Mes siguiente"
+            // Nothing to see ahead: a future month is always empty, and an
+            // arrow that leads to an empty screen reads like a fault.
+            disabled={isThisMonth}
+          >
+            <ChevronRightIcon />
+          </IconButton>
+        </Stack>
+        {!isThisMonth && (
+          <Button size="small" onClick={() => setMonth(thisMonth())}>
+            Volver a este mes
+          </Button>
+        )}
+      </Stack>
+
       {isLoading ? (
         <Loading rows={5} />
       ) : days.length === 0 ? (
-        <Empty>Todavía no tienes fichajes registrados.</Empty>
+        <Empty>No hay fichajes en {monthName(month)}.</Empty>
       ) : (
         <Stack sx={{ gap: 1.5 }}>
           {days.map(([day, events]) => {

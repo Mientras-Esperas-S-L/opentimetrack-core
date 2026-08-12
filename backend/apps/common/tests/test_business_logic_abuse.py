@@ -770,3 +770,37 @@ def test_a_manager_cannot_route_around_it_by_proposing_on_themselves(people, com
     mine.refresh_from_db()
     assert mine.status == "AWAITING_EMPLOYEE"
     assert mine.result is None
+
+
+@pytest.mark.django_db
+def test_a_worker_cannot_export_the_companys_trail(people, company):
+    """The list is already scoped to what each person may see. The export runs
+    the same queryset through a CSV, and the whole point of a download is that
+    it leaves with somebody --- so it is the one place where getting the scope
+    wrong hands over everything at once."""
+    from apps.punches.services import register_punch
+
+    with tenant_context(company.id):
+        register_punch(employee=people["other"], company=company)
+    client_for(people["manager"]).get("/api/punches/", {"employee": str(people["other"].id)})
+
+    body = client_for(people["worker"]).get("/api/audit/export/").content.decode()
+
+    assert people["other"].get_full_name() not in body
+
+
+@pytest.mark.django_db
+def test_exporting_the_trail_goes_into_the_trail(
+    people, company, django_capture_on_commit_callbacks
+):
+    """A register whose most complete disclosure is the one thing it does not
+    record would be missing the entry that matters most."""
+    from apps.audit.models import AuditAction, AuditLog
+
+    with django_capture_on_commit_callbacks(execute=True):
+        client_for(people["admin"]).get("/api/audit/export/")
+
+    with tenant_context(company.id):
+        assert AuditLog.objects.filter(
+            action=AuditAction.REPORT_EXPORTED, target_type="audit"
+        ).exists()

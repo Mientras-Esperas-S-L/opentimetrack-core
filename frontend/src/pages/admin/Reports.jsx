@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Divider from '@mui/material/Divider'
+import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import TableViewIcon from '@mui/icons-material/TableView'
 
-import { downloadReport } from '../../services/api.js'
+import { downloadReport, getDepartments } from '../../services/api.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { ErrorNote, PageHeader, Panel } from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -42,8 +44,17 @@ export default function Reports() {
   const [employee, setEmployee] = useState('')
   const [dateFrom, setDateFrom] = useState(isoDaysAgo(30))
   const [dateTo, setDateTo] = useState(new Date().toISOString().slice(0, 10))
+  // 'person' | 'company' | a department id. An inspection asks for the
+  // workforce, and producing two hundred documents one at a time means it does
+  // not get done.
+  const [scope, setScope] = useState('person')
   const [error, setError] = useState(null)
   const [lastFingerprint, setLastFingerprint] = useState('')
+
+  const { data: departments = [] } = useQuery({
+    queryKey: ['departments'],
+    queryFn: getDepartments,
+  })
 
   // Defaults to whoever is asking: the record they are most likely to want,
   // and an empty field is a dead end. Taken from the session rather than from a
@@ -52,7 +63,19 @@ export default function Reports() {
 
   const build = useMutation({
     mutationFn: (format) =>
-      downloadReport({ employee, date_from: dateFrom, date_to: dateTo, format }),
+      downloadReport({
+        // One of the three, never a mixture: `scope` and `department` are what
+        // the server reads to know it is producing many, and sending an
+        // employee alongside would look like a contradiction.
+        ...(scope === 'person'
+          ? { employee }
+          : scope === 'company'
+            ? { scope: 'company' }
+            : { department: scope }),
+        date_from: dateFrom,
+        date_to: dateTo,
+        format,
+      }),
     onSuccess: (result) => {
       setError(null)
       setLastFingerprint(result.fingerprint)
@@ -75,11 +98,35 @@ export default function Reports() {
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: '1.2fr 1fr' } }}>
         <Panel title="Registro de jornada">
           <Stack sx={{ gap: 2 }}>
-            <EmployeePicker
-              value={employee}
-              onChange={setEmployee}
-              helperText="Escribe para buscar."
-            />
+            <TextField
+              select
+              fullWidth
+              label="De quién"
+              value={scope}
+              onChange={(event) => setScope(event.target.value)}
+              helperText={
+                scope === 'person'
+                  ? 'Un documento.'
+                  : 'Un PDF por persona dentro de un zip, o un CSV con todo el mundo.'
+              }
+            >
+              <MenuItem value="person">Una persona</MenuItem>
+              <MenuItem value="company">Toda la empresa</MenuItem>
+              {departments.length > 0 && <Divider />}
+              {departments.map((department) => (
+                <MenuItem key={department.id} value={department.id}>
+                  {department.name}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            {scope === 'person' && (
+              <EmployeePicker
+                value={employee}
+                onChange={setEmployee}
+                helperText="Escribe para buscar."
+              />
+            )}
 
             <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
               <TextField
@@ -106,7 +153,7 @@ export default function Reports() {
               <Button
                 variant="contained"
                 startIcon={<PictureAsPdfIcon />}
-                disabled={!employee || invalidRange || build.isPending}
+                disabled={(scope === 'person' && !employee) || invalidRange || build.isPending}
                 onClick={() => build.mutate('pdf')}
               >
                 Descargar PDF
@@ -114,7 +161,7 @@ export default function Reports() {
               <Button
                 variant="outlined"
                 startIcon={<TableViewIcon />}
-                disabled={!employee || invalidRange || build.isPending}
+                disabled={(scope === 'person' && !employee) || invalidRange || build.isPending}
                 onClick={() => build.mutate('csv')}
               >
                 Descargar CSV

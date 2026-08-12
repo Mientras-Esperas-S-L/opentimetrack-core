@@ -235,6 +235,28 @@ export const updateWorkingTimeRules = async (payload) =>
 
 export const getAuditTrail = async (params) => page(await get('/audit/', params))
 
+/** The trail as a file, with whatever filters are on screen. Not paginated on
+ *  purpose: a page of fifty handed over as "the history" is the failure this
+ *  screen already had once. */
+export const downloadAuditTrail = async (params) => {
+  const response = await api.get('/audit/export/', { params, responseType: 'blob' })
+  saveBlob(response, 'actividad.csv')
+}
+
+/** Saves a downloaded blob under the name the server gave it. */
+const saveBlob = (response, fallback) => {
+  const disposition = response.headers['content-disposition'] ?? ''
+  const named = /filename="?([^"]+)"?/.exec(disposition)
+  const url = URL.createObjectURL(response.data)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = named ? named[1] : fallback
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
 // -------------------------------------------------------------------- company
 
 export const getCompany = () => get('/company/')

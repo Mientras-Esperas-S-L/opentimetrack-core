@@ -485,6 +485,7 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^shift-patterns/$",
         "api/^shift-patterns/(?P<pk>[^/.]+)/$",
         "api/^audit/$",
+        "api/^audit/export/$",
         "api/^audit/(?P<pk>[^/.]+)/$",
         "api/overview/",
         "api/company/",

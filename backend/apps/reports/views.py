@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import io
+import zipfile
 from datetime import date, timedelta
 
 from django.http import HttpResponse
@@ -33,6 +35,13 @@ def _parse_date(value: str | None, fallback: date) -> date:
         raise ValidationError({"detail": _("Dates must be written as YYYY-MM-DD.")}) from exc
 
 
+#: How many people one request will produce documents for. Not a technical
+#: limit --- it is generated synchronously, and past a few hundred the request
+#: takes longer than any reverse proxy will wait. Refusing with a number beats
+#: a gateway timeout that looks like the feature is broken.
+MAX_PEOPLE_PER_EXPORT = 200
+
+
 @extend_schema(
     tags=["reports"],
     summary="Working time report",
@@ -46,6 +55,13 @@ def _parse_date(value: str | None, fallback: date) -> date:
         OpenApiParameter("date_from", str, description="YYYY-MM-DD. Defaults to 30 days ago."),
         OpenApiParameter("date_to", str, description="YYYY-MM-DD. Defaults to today."),
         OpenApiParameter("format", str, enum=["pdf", "csv"], description="Defaults to pdf."),
+        OpenApiParameter(
+            "scope",
+            str,
+            enum=["company"],
+            description="Everybody active in the company, instead of one person.",
+        ),
+        OpenApiParameter("department", str, description="Everybody active in that department."),
     ],
     responses={200: None},
 )
@@ -63,6 +79,12 @@ class ReportView(APIView):
         date_to = _parse_date(request.query_params.get("date_to"), today)
         if date_to < date_from:
             raise ValidationError({"detail": _("The end date cannot precede the start date.")})
+
+        # An inspection asks for the workforce, not for one person at a time.
+        # Producing two hundred documents one by one was the only way, which in
+        # practice means it does not get done.
+        if request.query_params.get("scope") == "company" or request.query_params.get("department"):
+            return self._many(request, company, date_from, date_to)
 
         employee = request.user
         requested = request.query_params.get("employee")
@@ -105,6 +127,76 @@ class ReportView(APIView):
                 note=f"hash {data.fingerprint[:16]}",
                 request=request,
             )
+        return response
+
+    def _many(self, request, company, date_from, date_to):
+        """The whole company, or one department, in a single download.
+
+        CSV comes back as one file with everybody in it, which is what somebody
+        actually works with. PDF comes back as a zip of one document per person,
+        because the PDF *is* the artefact that gets handed over and merging them
+        into one would lose the per-person hash that makes each verifiable.
+
+        Every document is recorded in the trail separately. A single entry
+        saying "exported the company" would tell whoever asks later that
+        somebody's record was read, without saying whose --- which is the
+        question the trail exists to answer.
+        """
+        if not request.user.can_manage:
+            raise ValidationError({"detail": _("You may only request your own record.")})
+
+        people = User.objects.filter(tenant=company, is_active=True)
+        department = request.query_params.get("department")
+        if department:
+            people = people.filter(department_id=department)
+        people = list(people.order_by("last_name", "first_name"))
+
+        if not people:
+            raise ValidationError({"detail": _("Nobody active matches that.")})
+        if len(people) > MAX_PEOPLE_PER_EXPORT:
+            raise ValidationError(
+                {
+                    "detail": _(
+                        "%(count)s people is over the %(limit)s this can produce in one "
+                        "request. Narrow it down by department."
+                    )
+                    % {"count": len(people), "limit": MAX_PEOPLE_PER_EXPORT}
+                }
+            )
+
+        reports = [
+            build_report(employee=person, company=company, date_from=date_from, date_to=date_to)
+            for person in people
+        ]
+        for person, data in zip(people, reports, strict=True):
+            if person.id != request.user.id:
+                record(
+                    action=AuditAction.REPORT_EXPORTED,
+                    actor=request.user,
+                    target=person,
+                    target_type="user",
+                    target_label=person.get_full_name(),
+                    changes={"from": str(date_from), "to": str(date_to)},
+                    note=f"hash {data.fingerprint[:16]}",
+                    request=request,
+                )
+
+        stem = f"working-time_{company.tax_id}_{date_from}_{date_to}"
+
+        if request.query_params.get("format", "pdf").lower() == "csv":
+            body = "\n".join(to_csv(data) for data in reports)
+            response = HttpResponse(body, content_type="text/csv; charset=utf-8")
+            response["Content-Disposition"] = f'attachment; filename="{stem}.csv"'
+            return response
+
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as bundle:
+            for person, data in zip(people, reports, strict=True):
+                name = f"{person.last_name}_{person.first_name}".replace(" ", "-") or str(person.id)
+                bundle.writestr(f"{name}.pdf", render_pdf(data))
+
+        response = HttpResponse(buffer.getvalue(), content_type="application/zip")
+        response["Content-Disposition"] = f'attachment; filename="{stem}.zip"'
         return response
 
 

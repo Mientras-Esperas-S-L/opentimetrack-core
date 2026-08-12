@@ -53,3 +53,18 @@ export const firstOfThisMonth = () => {
   const now = new Date()
   return new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('sv-SE')
 }
+
+/** First and last day of a month, as the strings a date filter wants.
+ *
+ *  Built from the local calendar rather than from UTC: `new Date(y, m, 0)`
+ *  gives the last day of month `m`, and using `toISOString` on it would shift
+ *  the boundary for anybody not on Greenwich.
+ */
+export const monthBounds = ({ year, month }) => ({
+  from: new Date(year, month, 1).toLocaleDateString('sv-SE'),
+  to: new Date(year, month + 1, 0).toLocaleDateString('sv-SE'),
+})
+
+/** "agosto de 2026", for a month header. */
+export const monthName = ({ year, month }) =>
+  new Date(year, month, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
