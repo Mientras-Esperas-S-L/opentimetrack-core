@@ -1,0 +1,162 @@
+# Revisión de la interfaz web · 12/08/2026
+
+Repaso de las 15 pantallas buscando controles que falten, acciones sin
+confirmación y desplegables que no aguanten el número de entradas reales.
+
+Lo que sigue está comprobado contra el código y, donde se podía, contra la API
+en marcha. Los cuatro primeros no son cuestión de comodidad: impiden usar el
+producto o dejan sin efecto algo que ya está construido.
+
+---
+
+## Bloqueantes
+
+### 1. Nadie puede entrar salvo quien se sembró en la base de datos
+
+Tres cosas encadenadas:
+
+- `send_account_email` manda a `{FRONTEND_URL}/set-password/{uid}/{token}/`
+  (`apps/users/passwords.py:74`). Esa ruta **no existe** en `App.jsx`: cae en el
+  comodín `path="*"` y redirige al reloj de fichar, sin explicar nada.
+- El alta de una persona **no envía invitación**. `send_account_email` solo se
+  llama desde el endpoint de recuperación (`apps/users/views.py:325`).
+- La pantalla de acceso **no tiene enlace de "he olvidado mi contraseña"**.
+
+Resultado: un administrador da de alta a alguien y esa persona no tiene ninguna
+forma de conseguir una contraseña.
+
+- [ ] Ruta `/set-password/:uid/:token` con su pantalla
+- [ ] Enlace de recuperación en `SignIn`
+- [ ] Botón "Enviar invitación" en Personas, y envío automático al crear
+
+### 2. Las listas se cortan en 50 y la pantalla no lo dice
+
+`PAGE_SIZE = 50` en DRF. El helper `rows()` de `api.js:81` se queda con
+`results` y **descarta `count` y `next`**.
+
+Comprobado con datos reales: con 90 fichajes en la empresa demo, la API responde
+`count: 90`, devuelve 50 y ofrece `next`. La pantalla Fichajes muestra 50 y no
+avisa de nada, bajo el subtítulo "El registro tal y como está guardado".
+
+Afecta a Fichajes, Personas, Mis ausencias y **Actividad**, que es el registro de
+auditoría. Un inspector pidiendo el histórico vería una lista truncada sin
+ninguna señal de que lo está.
+
+- [ ] Que `rows()` devuelva también `count` y `next`, o paginar de verdad
+- [ ] Paginador o scroll infinito en las cuatro pantallas
+- [ ] Filtro de fechas en Fichajes y en Actividad, que es lo que evita el
+      problema de raíz
+
+### 3. El flujo del artículo 4.b no tiene interfaz
+
+Está construido en el backend (ADR-0014) y no se puede usar.
+
+- `accept`, `dispute` y `apply-anyway` no existen en `api.js`.
+- "Por decidir" solo consulta `status: 'PENDING'`. Una corrección que la empresa
+  propone sobre el registro de otra persona pasa a `AWAITING_EMPLOYEE` y
+  **desaparece de la pantalla**.
+- En "Mi jornada", la persona ve sus correcciones en una lista de solo lectura
+  con un chip de estado (`MyTime.jsx:196-213`). No hay botón de aceptar ni de
+  discrepar.
+
+Una propuesta de la empresa queda colgada para siempre y la persona ve un chip
+que dice que se espera su respuesta, sin manera de darla.
+
+- [ ] Bandeja de correcciones en "Mi jornada" con Aceptar y Discrepar
+- [ ] Pestaña de "Esperando respuesta" y "En desacuerdo" en Por decidir, con
+      aplicar sin acuerdo pasado el plazo
+- [ ] Marcar en el listado lo aplicado sin acuerdo
+
+### 4. Seis campos de `User` no salen en ningún serializer
+
+`date_of_birth`, `part_time`, `part_time_percentage`, `contracted_schedule`,
+`default_work_mode` y `is_worker_representative` están en el modelo, los lee la
+lógica de dominio, y no aparecen en `apps/users/serializers.py`. No hay forma de
+rellenarlos ni por API ni por pantalla.
+
+Consecuencias, todas silenciosas:
+
+| Campo | Qué deja sin efecto |
+|---|---|
+| `date_of_birth` | Todas las protecciones de menores. `age_is_known` es siempre falso, así que no salta ninguna |
+| `part_time` | La negativa a horas extra del art. 12.4.c |
+| `contracted_schedule`, `part_time_percentage` | Contenido obligatorio del art. 3 del proyecto de RD; el informe sale vacío |
+| `is_worker_representative` | El aviso a la representación legal del art. 4.b: nunca encuentra a nadie |
+
+- [ ] Añadirlos al serializer de lectura y al de escritura
+- [ ] Sección "Contrato" en la ficha de persona
+- [ ] Casilla de representante legal, con aviso en Ajustes si no hay ninguno
+
+---
+
+## Controles que faltan
+
+- [ ] **Reactivar a quien está de baja.** El botón solo aparece si
+      `is_active` (`People.jsx:317`). El API ya lo permite: `is_active` es
+      escribible. Ahora dar de baja es un viaje de ida.
+- [ ] **Confirmar antes de destruir.** Cinco acciones y ninguna pregunta: dar de
+      baja, borrar departamento, borrar turno, cancelar ausencia y **vaciar el
+      mes** del cuadrante (`Roster.jsx:438`), que borra el mes entero de todo el
+      mundo con un clic.
+- [ ] **Decir a cuántos afecta un borrado.** Departamento y turno son
+      `SET_NULL`: no se pierde nada, pero borrar un departamento deja sin
+      asignar a su gente y borrar un turno lo despega de días ya publicados.
+      Debería decir "3 personas quedarán sin departamento".
+- [ ] **Actividad**: sin filtro por fecha ni por persona y sin exportar. Es el
+      registro que se enseña en una inspección.
+- [ ] **Informes**: solo de una persona. Falta "toda la empresa" y "por
+      departamento"; hacer 200 PDF de uno en uno no es viable. Y
+      `reports/payroll-summary/` (art. 6.1) no tiene pantalla.
+- [ ] **Mi jornada**: sin navegación por meses. Se ven los últimos 50 fichajes,
+      unos 25 días, y no hay forma de mirar atrás.
+- [ ] **Calendario de equipo**: no se puede pinchar en nada. Ni ir a la persona
+      ni abrir la ausencia ni asignar desde ahí.
+- [ ] **`punches/delegated/`** (fichar por otra persona) no tiene pantalla.
+
+---
+
+## Desplegables
+
+Ni un `Autocomplete` en todo el proyecto. Todos los selectores son `Select`
+planos con `MenuItem`.
+
+| Dónde | Ahora | Debería |
+|---|---|---|
+| Cuadrante, "A quién" (`Roster.jsx:96`) | Multi-select de toda la plantilla, sin buscador | `Autocomplete multiple` con chips. **El peor**: elegir 30 personas de 200 en un desplegable sin búsqueda no se puede hacer |
+| Fichajes, "Persona" (`Timesheet.jsx:204`) | Select con todas | `Autocomplete` con búsqueda en servidor |
+| Informes, "Persona" (`Reports.jsx:87`) | Select con todas | Igual, más "toda la empresa" y "por departamento" |
+| Ajustes, "Zona horaria" (`Settings.jsx:172`) | 9 zonas fijas de las ~350 que existen | `Autocomplete` con `Intl.supportedValuesOf('timeZone')` |
+| Personas, "Departamento" | Select | Vale mientras sean pocos. Pasados 20, buscador |
+
+La zona horaria tiene además un fallo propio: el campo del backend acepta
+cualquier zona IANA y el desplegable solo ofrece nueve. Una empresa configurada
+por API con `Europe/Berlin` ve el desplegable **en blanco**, y guardar cualquier
+otro campo de esa pantalla le cambia la zona sin que se entere.
+
+También conviene añadir a los selectores de persona el filtro por departamento
+como paso previo: en una empresa de 200, "primero el departamento, luego la
+persona" es más rápido que teclear.
+
+---
+
+## Menor
+
+- [ ] La búsqueda de Personas lanza una consulta **por tecla**: no hay debounce
+      ni `useDeferredValue` en ningún sitio del proyecto.
+- [ ] Sin ordenación por columnas en ninguna tabla.
+- [ ] Sin acciones en bloque (asignar departamento a varias personas, por
+      ejemplo).
+- [ ] Sin aviso de confirmación tras guardar. Los formularios cierran el diálogo
+      y ya está; en una tabla larga no se ve qué cambió.
+- [ ] Los botones deshabilitados no dicen por qué. "Asignar turno" está apagado
+      si no hay turnos y eso sí se explica con un `Alert`, pero "Descargar PDF"
+      apagado por rango inválido no.
+
+---
+
+## Nota sobre datos de prueba
+
+Para comprobar el punto 2 se crearon 80 fichajes en la empresa demo de
+desarrollo (`Jardines Demo S.L.`, `manager@demo.local`). Se dejan puestos: sin
+ellos el corte a 50 no se reproduce, y hará falta para verificar el arreglo.
+`python manage.py seed_demo --reset` los quita.
