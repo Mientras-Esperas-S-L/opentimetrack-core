@@ -1,5 +1,21 @@
 # Revisión de la interfaz web · 12/08/2026
 
+> **Estado al cierre del 12/08.** Los cuatro bloqueantes están arreglados y
+> comprobados en el navegador: commits `49ca2ae`, `26614d4`, `d974c5a` y
+> `9ce560f`. Marcado con `[x]` lo hecho. Lo que sigue sin marcar es lo que
+> queda, y está en el orden en que lo haría.
+>
+> Tres cosas aparecieron al arreglarlos y no estaban en esta lista:
+>
+> - **La búsqueda de Personas nunca ha filtrado.** `DEFAULT_FILTER_BACKENDS`
+>   solo tenía `DjangoFilterBackend`, así que todos los `search_fields` y
+>   `ordering_fields` de todos los viewsets eran decoración.
+> - **El filtro de fechas de fichajes sí existía y estaba mal.** Cortaba el día
+>   en UTC, no en la zona de la empresa: en Madrid, todo lo fichado entre
+>   medianoche y las 02:00 contaba en el día anterior.
+> - **Personas era la única pantalla del panel sin comprobación de perfil.** Un
+>   responsable veía tres botones que el API le rechazaba con 403.
+
 Repaso de las 15 pantallas buscando controles que falten, acciones sin
 confirmación y desplegables que no aguanten el número de entradas reales.
 
@@ -25,9 +41,9 @@ Tres cosas encadenadas:
 Resultado: un administrador da de alta a alguien y esa persona no tiene ninguna
 forma de conseguir una contraseña.
 
-- [ ] Ruta `/set-password/:uid/:token` con su pantalla
-- [ ] Enlace de recuperación en `SignIn`
-- [ ] Botón "Enviar invitación" en Personas, y envío automático al crear
+- [x] Ruta `/set-password/:uid/:token` con su pantalla
+- [x] Enlace de recuperación en `SignIn`
+- [x] Botón "Enviar invitación" en Personas, y envío automático al crear
 
 ### 2. Las listas se cortan en 50 y la pantalla no lo dice
 
@@ -42,9 +58,9 @@ Afecta a Fichajes, Personas, Mis ausencias y **Actividad**, que es el registro d
 auditoría. Un inspector pidiendo el histórico vería una lista truncada sin
 ninguna señal de que lo está.
 
-- [ ] Que `rows()` devuelva también `count` y `next`, o paginar de verdad
-- [ ] Paginador o scroll infinito en las cuatro pantallas
-- [ ] Filtro de fechas en Fichajes y en Actividad, que es lo que evita el
+- [x] Que `rows()` devuelva también `count` y `next`, o paginar de verdad
+- [x] Paginador o scroll infinito en las cuatro pantallas
+- [x] Filtro de fechas en Fichajes y en Actividad, que es lo que evita el
       problema de raíz
 
 ### 3. El flujo del artículo 4.b no tiene interfaz
@@ -62,10 +78,10 @@ Está construido en el backend (ADR-0014) y no se puede usar.
 Una propuesta de la empresa queda colgada para siempre y la persona ve un chip
 que dice que se espera su respuesta, sin manera de darla.
 
-- [ ] Bandeja de correcciones en "Mi jornada" con Aceptar y Discrepar
-- [ ] Pestaña de "Esperando respuesta" y "En desacuerdo" en Por decidir, con
+- [x] Bandeja de correcciones en "Mi jornada" con Aceptar y Discrepar
+- [x] Pestaña de "Esperando respuesta" y "En desacuerdo" en Por decidir, con
       aplicar sin acuerdo pasado el plazo
-- [ ] Marcar en el listado lo aplicado sin acuerdo
+- [x] Marcar en el listado lo aplicado sin acuerdo
 
 ### 4. Seis campos de `User` no salen en ningún serializer
 
@@ -83,22 +99,22 @@ Consecuencias, todas silenciosas:
 | `contracted_schedule`, `part_time_percentage` | Contenido obligatorio del art. 3 del proyecto de RD; el informe sale vacío |
 | `is_worker_representative` | El aviso a la representación legal del art. 4.b: nunca encuentra a nadie |
 
-- [ ] Añadirlos al serializer de lectura y al de escritura
-- [ ] Sección "Contrato" en la ficha de persona
+- [x] Añadirlos al serializer de lectura y al de escritura
+- [x] Sección "Contrato" en la ficha de persona
 - [ ] Casilla de representante legal, con aviso en Ajustes si no hay ninguno
 
 ---
 
 ## Controles que faltan
 
-- [ ] **Reactivar a quien está de baja.** El botón solo aparece si
+- [x] **Reactivar a quien está de baja.** El botón solo aparece si
       `is_active` (`People.jsx:317`). El API ya lo permite: `is_active` es
       escribible. Ahora dar de baja es un viaje de ida.
-- [ ] **Confirmar antes de destruir.** Cinco acciones y ninguna pregunta: dar de
+- [x] **Confirmar antes de destruir.** Cinco acciones y ninguna pregunta: dar de
       baja, borrar departamento, borrar turno, cancelar ausencia y **vaciar el
       mes** del cuadrante (`Roster.jsx:438`), que borra el mes entero de todo el
       mundo con un clic.
-- [ ] **Decir a cuántos afecta un borrado.** Departamento y turno son
+- [x] **Decir a cuántos afecta un borrado.** Departamento y turno son
       `SET_NULL`: no se pierde nada, pero borrar un departamento deja sin
       asignar a su gente y borrar un turno lo despega de días ya publicados.
       Debería decir "3 personas quedarán sin departamento".
