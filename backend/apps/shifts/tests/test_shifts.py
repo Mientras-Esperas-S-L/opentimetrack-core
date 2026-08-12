@@ -25,6 +25,7 @@ from apps.shifts.models import Shift, ShiftPattern, span_minutes
 from apps.shifts.services import (
     assign_pattern,
     expected_vs_worked,
+    paint_cells,
     review_roster,
     weekdays_in,
 )
@@ -700,3 +701,139 @@ def test_the_night_window_is_the_companys_to_set(company, worker):
         findings = review_roster(company=company, first=date(2026, 9, 1), last=date(2026, 9, 30))
 
     assert [f for f in findings if f.code == "looks_like_night_work"] == []
+
+
+# ------------------------------------------------------------------- painting
+#
+# Dragging on the grid needs a different primitive from assigning. Assign takes
+# a pattern and a rectangle; a stroke takes a list of squares, each with its own
+# answer --- which is also what lets undo put back a stroke that crossed four
+# shifts and two blanks.
+
+
+@pytest.mark.django_db
+def test_a_stroke_sets_each_cell_to_its_own_shift(company, worker):
+    morning = pattern(company, "Mañana", MORNING)
+    night = pattern(company, "Noche", NIGHT)
+
+    with tenant_context(company.id):
+        result = paint_cells(
+            company=company,
+            cells=[
+                {"employee": worker.pk, "day": date(2026, 9, 1), "pattern": morning.pk},
+                {"employee": worker.pk, "day": date(2026, 9, 2), "pattern": night.pk},
+                # Bare spans: a one-off that never came from a pattern.
+                {
+                    "employee": worker.pk,
+                    "day": date(2026, 9, 3),
+                    "segments": [{"start": "20:00", "end": "08:00"}],
+                },
+            ],
+        )
+        drawn = {s.day: s for s in Shift.objects.filter(employee=worker).order_by("day")}
+
+    assert result == {"painted": 3, "cleared": 0}
+    assert drawn[date(2026, 9, 1)].pattern_id == morning.pk
+    assert drawn[date(2026, 9, 2)].pattern_id == night.pk
+    assert drawn[date(2026, 9, 3)].pattern_id is None
+    assert drawn[date(2026, 9, 3)].minutes == 12 * 60
+
+
+@pytest.mark.django_db
+def test_a_cell_with_nothing_in_it_rubs_the_day_out(company, worker):
+    shift(company, worker, date(2026, 9, 1), MORNING)
+
+    with tenant_context(company.id):
+        result = paint_cells(
+            company=company, cells=[{"employee": worker.pk, "day": date(2026, 9, 1)}]
+        )
+        assert Shift.objects.filter(employee=worker).count() == 0
+
+    assert result == {"painted": 0, "cleared": 1}
+
+
+@pytest.mark.django_db
+def test_a_stroke_replaces_what_was_underneath(company, worker):
+    """It does not merge: one shift per person per day, and a stroke is the
+    answer for the days it names."""
+    morning = pattern(company, "Mañana", MORNING)
+    shift(company, worker, date(2026, 9, 1), NIGHT)
+
+    with tenant_context(company.id):
+        paint_cells(
+            company=company,
+            cells=[{"employee": worker.pk, "day": date(2026, 9, 1), "pattern": morning.pk}],
+        )
+        assert Shift.objects.filter(employee=worker).count() == 1
+        assert Shift.objects.get(employee=worker).pattern_id == morning.pk
+
+
+@pytest.mark.django_db
+def test_a_stroke_leaves_the_days_it_did_not_name(company, worker):
+    """The delete is per person and per day, not the two crossed. Crossing them
+    would take out a colleague's Tuesday because somebody else was painted on
+    Tuesday and they were painted on Monday."""
+    other = User.objects.create_user(
+        email="otro@example.com", password=PASSWORD, tenant=company, first_name="Otro"
+    )
+    shift(company, worker, date(2026, 9, 1), MORNING)
+    shift(company, other, date(2026, 9, 2), MORNING)
+
+    with tenant_context(company.id):
+        paint_cells(
+            company=company,
+            cells=[
+                {"employee": worker.pk, "day": date(2026, 9, 2)},
+                {"employee": other.pk, "day": date(2026, 9, 1)},
+            ],
+        )
+        assert Shift.objects.filter(employee=worker, day=date(2026, 9, 1)).exists()
+        assert Shift.objects.filter(employee=other, day=date(2026, 9, 2)).exists()
+
+
+@pytest.mark.django_db
+def test_a_stroke_cannot_reach_another_company(company, worker):
+    """The cells name people by id, which is the shape an IDOR takes."""
+    other_company = Tenant.objects.create(name="Otra", tax_id="B22222222")
+    stranger = User.objects.create_user(
+        email="ajeno@example.com", password=PASSWORD, tenant=other_company, first_name="Ajeno"
+    )
+
+    with tenant_context(company.id), pytest.raises(BusinessRuleError):
+        paint_cells(company=company, cells=[{"employee": stranger.pk, "day": date(2026, 9, 1)}])
+
+
+@pytest.mark.django_db
+def test_undoing_a_stroke_puts_back_what_each_cell_held(company, worker):
+    """The reason a cell carries spans as well as a pattern. Approximating the
+    twelve-hour night with the nearest pattern would make undo lossy, and an
+    undo that changes the roster is worse than none."""
+    morning = pattern(company, "Mañana", MORNING)
+    shift(company, worker, date(2026, 9, 1), MORNING)
+    shift(company, worker, date(2026, 9, 2), [{"start": "20:00", "end": "08:00"}])
+    # 9/3 starts empty.
+
+    with tenant_context(company.id):
+        before = [
+            {
+                "employee": worker.pk,
+                "day": s.day,
+                **({"pattern": s.pattern_id} if s.pattern_id else {"segments": s.segments}),
+            }
+            for s in Shift.objects.filter(employee=worker).order_by("day")
+        ] + [{"employee": worker.pk, "day": date(2026, 9, 3)}]
+
+        days = [date(2026, 9, 1), date(2026, 9, 2), date(2026, 9, 3)]
+        paint_cells(
+            company=company,
+            cells=[{"employee": worker.pk, "day": day, "pattern": morning.pk} for day in days],
+        )
+        assert Shift.objects.filter(employee=worker).count() == 3
+
+        paint_cells(company=company, cells=before)
+        after = {s.day: s for s in Shift.objects.filter(employee=worker).order_by("day")}
+
+    assert set(after) == {date(2026, 9, 1), date(2026, 9, 2)}
+    assert after[date(2026, 9, 1)].pattern_id is None
+    assert after[date(2026, 9, 1)].segments == MORNING
+    assert after[date(2026, 9, 2)].segments == [{"start": "20:00", "end": "08:00"}]

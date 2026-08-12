@@ -19,6 +19,7 @@ from datetime import time as dt_time
 from itertools import pairwise
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from apps import legal
@@ -97,6 +98,100 @@ def assign_pattern(*, employee, company, pattern: ShiftPattern, days) -> list[Sh
             for day in wanted
         ]
     )
+
+
+@transaction.atomic
+def paint_cells(*, company, cells) -> dict:
+    """Sets a scattered handful of days at once, each to its own shift.
+
+    `assign_pattern` paints one pattern over a rectangle of the calendar, which
+    is how a roster gets built and not how it gets corrected. Dragging on the
+    grid needs the other shape: *these* people on *these* days, each becoming
+    whatever the stroke says --- and, for undo, each going back to whatever it
+    was, which is a different pattern per cell and sometimes no pattern at all.
+
+    A cell carries a pattern, or bare spans, or neither:
+
+    **A pattern** copies its spans, exactly as assigning does. Editing "morning"
+    next month must not rewrite a day already published.
+
+    **Bare spans** are a day that never came from a pattern --- a one-off, a
+    twelve-hour night somebody typed in. Undo has to be able to put those back
+    as they were rather than approximating them with the nearest pattern.
+
+    **Neither** rubs the day out.
+    """
+    wanted = list(cells)
+    if not wanted:
+        return {"painted": 0, "cleared": 0}
+
+    # Resolved through the tenant manager, so a cell naming somebody else's
+    # person or pattern finds nothing and is refused rather than written.
+    people = {
+        str(person.pk): person
+        for person in _users().objects.filter(
+            tenant=company, pk__in={c["employee"] for c in wanted}
+        )
+    }
+    patterns = {
+        str(pattern.pk): pattern
+        for pattern in ShiftPattern.objects.filter(
+            pk__in={c["pattern"] for c in wanted if c.get("pattern")}
+        )
+    }
+
+    for cell in wanted:
+        if str(cell["employee"]) not in people:
+            raise BusinessRuleError(
+                code="unknown_employee",
+                message=_("Somebody in that list is not in this company."),
+            )
+        if cell.get("pattern") and str(cell["pattern"]) not in patterns:
+            raise BusinessRuleError(
+                code="unknown_pattern", message=_("That shift pattern does not exist.")
+            )
+
+    # Every named day goes first, whatever it held. A stroke replaces; it does
+    # not merge with what was underneath, and the unique constraint would refuse
+    # the write anyway.
+    #
+    # One clause per person rather than one per cell --- for a dragged rectangle
+    # that is the number of rows instead of rows times days --- and days crossed
+    # with people, which would take out somebody else's Tuesday.
+    days_of: dict = {}
+    for cell in wanted:
+        days_of.setdefault(str(cell["employee"]), set()).add(cell["day"])
+
+    matcher = Q()
+    for employee, days in days_of.items():
+        matcher |= Q(employee_id=employee, day__in=days)
+    Shift.objects.filter(matcher).delete()
+
+    drawn = []
+    for cell in wanted:
+        pattern = patterns.get(str(cell["pattern"])) if cell.get("pattern") else None
+        segments = pattern.segments if pattern else cell.get("segments")
+        if not segments:
+            continue
+        drawn.append(
+            Shift(
+                tenant=company,
+                employee=people[str(cell["employee"])],
+                day=cell["day"],
+                pattern=pattern,
+                segments=segments,
+            )
+        )
+
+    Shift.objects.bulk_create(drawn)
+    return {"painted": len(drawn), "cleared": len(wanted) - len(drawn)}
+
+
+def _users():
+    """Imported late: `users` imports this module's app for the roster."""
+    from apps.users import models
+
+    return models.User
 
 
 @transaction.atomic

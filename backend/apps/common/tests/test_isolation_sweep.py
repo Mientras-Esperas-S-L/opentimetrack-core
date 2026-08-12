@@ -211,6 +211,7 @@ def test_writing_without_a_session_is_refused(ours):
         ("PATCH", "/api/company/", {"name": "Secuestrada"}),
         ("PATCH", "/api/working-time-rules/", {"weekly_hours": 60}),
         ("POST", "/api/shifts/assign/", {}),
+        ("POST", "/api/shifts/paint/", {}),
     ]
     leaked = []
 
@@ -379,6 +380,14 @@ def test_a_worker_cannot_do_a_managers_job(ours):
                 "date_to": "2026-09-02",
             },
         ),
+        # Same reach as assigning, by the other door. The door that was left
+        # unlocked once already: `paint` was added to the viewset and not to
+        # its list of write actions.
+        (
+            "post",
+            "/api/shifts/paint/",
+            {"cells": [{"employee": str(ours["worker"].id), "day": "2026-09-01"}]},
+        ),
         ("patch", f"/api/punches/{ours['punch'].id}/void/", {"reason": "porque sí"}),
     ]
     landed = []
@@ -483,6 +492,7 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^shifts/today/$",
         "api/^shifts/assign/$",
         "api/^shifts/clear/$",
+        "api/^shifts/paint/$",
         "api/^shifts/review/$",
         "api/^shifts/roster/$",
         "api/^shift-patterns/$",

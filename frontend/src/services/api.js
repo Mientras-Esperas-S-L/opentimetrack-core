@@ -224,6 +224,14 @@ export const deleteShiftPattern = async (id) => (await api.delete(`/shift-patter
 export const getRoster = async (from, to) => rows(await get('/shifts/roster/', { from, to }))
 export const assignShifts = (payload) => post('/shifts/assign/', payload)
 export const clearShifts = (payload) => post('/shifts/clear/', payload)
+/** A stroke drawn on the roster grid: cells, each with its own answer.
+ *
+ *  Separate from `assignShifts`, which takes a pattern and a rectangle. This
+ *  takes a list of squares, which is what a drag produces and --- more to the
+ *  point --- what undo needs, since a stroke can cross four different shifts
+ *  and two blanks and has to put every one of them back.
+ */
+export const paintShifts = (cells) => post('/shifts/paint/', { cells })
 export const reviewRoster = (from, to) => get('/shifts/review/', { from, to })
 export const getMyShiftToday = () => get('/shifts/today/')
 

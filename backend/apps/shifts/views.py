@@ -30,6 +30,7 @@ from apps.shifts.services import (
     assign_pattern,
     clear_shifts,
     expected_vs_worked,
+    paint_cells,
     review_roster,
     weekdays_in,
 )
@@ -87,6 +88,51 @@ class AssignSerializer(serializers.Serializer):
     )
 
 
+class PaintCellSerializer(serializers.Serializer):
+    """One square of the grid, and what it becomes."""
+
+    employee = serializers.UUIDField()
+    day = serializers.DateField()
+    #: A pattern, or bare spans, or neither --- in which case the day is rubbed
+    #: out. Both together is a contradiction rather than a preference, so it is
+    #: refused instead of one quietly winning.
+    pattern = serializers.UUIDField(required=False, allow_null=True)
+    segments = serializers.ListField(child=serializers.DictField(), required=False)
+
+    def validate(self, attrs):
+        if attrs.get("pattern") and attrs.get("segments"):
+            raise serializers.ValidationError(
+                _("Give a shift or its hours, not both: they would disagree.")
+            )
+        if attrs.get("segments"):
+            validate_segments(attrs["segments"])
+        return attrs
+
+
+class PaintSerializer(serializers.Serializer):
+    """A stroke on the roster: some cells, each set to something of its own.
+
+    Capped, and the cap is not a formality --- a whole workforce across a year
+    would be six figures of rows behind one click. A month of a hundred people
+    is three thousand, so the ceiling sits above any stroke a hand can draw and
+    well below anything that would hold the database open.
+    """
+
+    cells = serializers.ListField(child=PaintCellSerializer(), allow_empty=False, max_length=4000)
+
+
+class ClearSerializer(AssignSerializer):
+    """Rubbing days out takes everything assigning does, minus the pattern.
+
+    It was sharing `AssignSerializer`, which made the pattern required and then
+    ignored it --- so a caller had to invent one, and a company with no patterns
+    defined could not clear a roster at all. A required field nobody reads is a
+    trap for whoever writes the next client.
+    """
+
+    pattern = serializers.UUIDField(required=False, allow_null=True)
+
+
 @extend_schema(tags=["shifts"])
 class ShiftPatternViewSet(viewsets.ModelViewSet):
     """The shapes of a working day. Anyone reads; an administrator draws."""
@@ -116,8 +162,14 @@ class ShiftViewSet(viewsets.ModelViewSet):
             qs = qs.filter(employee=self.request.user)
         return qs
 
+    #: Everything that writes a roster. Kept as a constant next to the actions
+    #: it names: adding one and forgetting to list it here hands the whole
+    #: company's calendar to anybody with a login, and the omission looks like
+    #: nothing on the screen.
+    WRITES = {"create", "update", "partial_update", "destroy", "assign", "clear", "paint"}
+
     def get_permissions(self):
-        if self.action in {"create", "update", "partial_update", "destroy", "assign", "clear"}:
+        if self.action in self.WRITES:
             return [IsManagerOrAdmin()]
         return super().get_permissions()
 
@@ -199,10 +251,31 @@ class ShiftViewSet(viewsets.ModelViewSet):
             {"created": created, "findings": [f.as_dict() for f in findings]}, status=201
         )
 
-    @extend_schema(request=AssignSerializer, responses={200: dict})
+    @extend_schema(request=PaintSerializer, responses={200: dict})
+    @action(detail=False, methods=["post"])
+    def paint(self, request):
+        """A stroke drawn straight onto the grid.
+
+        Separate from `assign` because it answers a different question. Assign
+        takes a pattern and a rectangle of the calendar, which is how a roster
+        gets built. This takes a list of squares, each with its own answer,
+        which is how one gets corrected --- and it is what lets undo put back a
+        stroke that crossed four different shifts and two blanks.
+        """
+        form = PaintSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+        cells = form.validated_data["cells"]
+
+        result = paint_cells(company=request.user.tenant, cells=cells)
+
+        days = [cell["day"] for cell in cells]
+        findings = review_roster(company=request.user.tenant, first=min(days), last=max(days))
+        return Response({**result, "findings": [f.as_dict() for f in findings]})
+
+    @extend_schema(request=ClearSerializer, responses={200: dict})
     @action(detail=False, methods=["post"])
     def clear(self, request):
-        form = AssignSerializer(data=request.data)
+        form = ClearSerializer(data=request.data)
         form.is_valid(raise_exception=True)
         data = form.validated_data
 

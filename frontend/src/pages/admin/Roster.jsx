@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import AlertTitle from '@mui/material/AlertTitle'
@@ -14,6 +14,7 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
+import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import ToggleButton from '@mui/material/ToggleButton'
@@ -23,12 +24,14 @@ import Typography from '@mui/material/Typography'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import EditCalendarIcon from '@mui/icons-material/EditCalendar'
+import BackspaceOutlinedIcon from '@mui/icons-material/BackspaceOutlined'
 
 import {
   assignShifts,
   clearShifts,
   getRoster,
   getShiftPatterns,
+  paintShifts,
   reviewRoster,
 } from '../../services/api.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
@@ -163,6 +166,60 @@ function AssignDialog({ open, patterns, month, onClose, onSubmit, saving, error 
   )
 }
 
+/** The shift being painted, or the rubber.
+ *
+ *  A palette rather than a dropdown because the choice stays made across many
+ *  strokes: you pick "mañana" once and then draw a fortnight of it. A select
+ *  would close after each use and put the same two clicks in front of every
+ *  block.
+ *
+ *  Nothing is selected to begin with, so the first drag on the grid cannot
+ *  change a roster by accident. Picking a tool is the consent.
+ */
+function Palette({ patterns, tool, onPick }) {
+  if (!patterns.length) return null
+
+  return (
+    <Stack direction="row" sx={{ gap: 1, flexWrap: 'wrap', alignItems: 'center', mb: 2 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>
+        Pinta arrastrando:
+      </Typography>
+      {patterns.map((pattern) => {
+        const picked = tool?.kind === 'paint' && tool.pattern.id === pattern.id
+        return (
+          <Chip
+            key={pattern.id}
+            label={`${pattern.name} · ${hhmm(pattern.minutes)}`}
+            onClick={() => onPick(picked ? null : { kind: 'paint', pattern })}
+            variant={picked ? 'filled' : 'outlined'}
+            sx={{
+              cursor: 'pointer',
+              borderColor: pattern.colour,
+              bgcolor: picked ? pattern.colour : 'transparent',
+              color: picked ? '#fff' : 'text.primary',
+              fontWeight: picked ? 700 : 400,
+              '&:hover': { bgcolor: picked ? pattern.colour : 'action.hover' },
+            }}
+          />
+        )
+      })}
+      <Chip
+        icon={<BackspaceOutlinedIcon />}
+        label="Borrar"
+        onClick={() => onPick(tool?.kind === 'erase' ? null : { kind: 'erase' })}
+        variant={tool?.kind === 'erase' ? 'filled' : 'outlined'}
+        color={tool?.kind === 'erase' ? 'error' : 'default'}
+        sx={{ cursor: 'pointer' }}
+      />
+      {tool && (
+        <Typography variant="caption" color="text.secondary">
+          Arrastra sobre el cuadrante. Esc para soltar la herramienta.
+        </Typography>
+      )}
+    </Stack>
+  )
+}
+
 /** What the roster departs from, and on what basis.
  *
  *  Shown as a list rather than a count: "3 avisos" is something to dismiss,
@@ -219,6 +276,23 @@ export default function Roster() {
   const [error, setError] = useState(null)
   const [confirming, setConfirming] = useState(null)
 
+  // What gets painted, and the rectangle being dragged right now.
+  const [tool, setTool] = useState(null)
+  const [drag, setDrag] = useState(null)
+  // What the last stroke covered up. One level, deliberately: a stack invites
+  // people to trust it, and the roster is not the record --- if the undo runs
+  // out, the answer is to redraw, not to hunt through history.
+  const [undo, setUndo] = useState(null)
+  // Held in a ref as well: the window-level pointerup handler is registered
+  // once and would otherwise close over the drag as it was when it mounted.
+  const dragRef = useRef(null)
+
+  // People brought into the grid who have no shifts yet. Without this the only
+  // rows are the ones already rostered, so a new hire can never be drawn in ---
+  // and the workforce endpoint pages at fifty, so listing everybody would
+  // silently show three quarters of a large company and no sign of the rest.
+  const [invited, setInvited] = useState([])
+
   const total = daysIn(month.year, month.month)
   const from = iso(month.year, month.month, 1)
   const to = iso(month.year, month.month, total)
@@ -251,6 +325,18 @@ export default function Roster() {
     onError: setError,
   })
 
+  // A stroke, and what the cells it touched held before it. Kept together so
+  // undo is one call with the same shape --- restoring a drag that crossed four
+  // different shifts and two blanks is not something a range endpoint can say.
+  const paint = useMutation({
+    mutationFn: paintShifts,
+    onSuccess: () => {
+      setError(null)
+      refresh()
+    },
+    onError: setError,
+  })
+
   const wipe = useMutation({
     mutationFn: clearShifts,
     onSuccess: refresh,
@@ -264,6 +350,9 @@ export default function Roster() {
 
   const rows = shifts ?? []
   const byPerson = new Map()
+  for (const person of invited) {
+    byPerson.set(person.id, { id: person.id, name: person.name, days: {} })
+  }
   for (const shift of rows) {
     if (!byPerson.has(shift.employee)) {
       byPerson.set(shift.employee, { id: shift.employee, name: shift.employee_name, days: {} })
@@ -274,6 +363,116 @@ export default function Roster() {
 
   const dayNumbers = Array.from({ length: total }, (_, i) => i + 1)
   const totalHours = rows.reduce((sum, s) => sum + s.minutes, 0) / 60
+
+  // ---------------------------------------------------------------- painting
+  //
+  // A drag selects a rectangle: some people, some consecutive days. That is not
+  // a limitation dressed up --- it is the shape the assign endpoint already
+  // takes, and it is how a roster is actually built, a block of the team across
+  // a block of the calendar.
+
+  const painting = assign.isPending || wipe.isPending || paint.isPending
+
+  /** A cell as the paint endpoint wants it: its pattern, or its bare spans.
+   *
+   *  Both, because a day can exist without a pattern --- a one-off, a
+   *  twelve-hour night somebody typed in --- and undo has to put those back as
+   *  they were rather than approximating them with the nearest pattern.
+   */
+  const asCell = (person, day, shift) => ({
+    employee: person.id,
+    day,
+    ...(shift?.pattern ? { pattern: shift.pattern } : {}),
+    ...(shift && !shift.pattern ? { segments: shift.segments } : {}),
+  })
+
+  const box = drag && {
+    top: Math.min(drag.anchor.row, drag.focus.row),
+    bottom: Math.max(drag.anchor.row, drag.focus.row),
+    left: Math.min(drag.anchor.day, drag.focus.day),
+    right: Math.max(drag.anchor.day, drag.focus.day),
+  }
+  const inBox = (row, day) =>
+    box && row >= box.top && row <= box.bottom && day >= box.left && day <= box.right
+
+  const startDrag = (row, day) => (event) => {
+    if (!tool || painting) return
+    // Without this the first cell captures the pointer and no other cell ever
+    // sees `pointerenter`, so the drag paints one square. It is the default on
+    // touch, and it is why this used mouse events and did not work on a tablet.
+    event.currentTarget.releasePointerCapture?.(event.pointerId)
+    event.preventDefault()
+    const next = { anchor: { row, day }, focus: { row, day } }
+    dragRef.current = next
+    setDrag(next)
+  }
+
+  // On move rather than on enter. `pointerenter` does not bubble, so React
+  // synthesises it from `pointerover`, and on touch the browser retargets every
+  // event of a gesture to the element the finger went down on --- between the
+  // two, a dragged selection would stay one cell wide. `pointermove` fires
+  // straight at whatever is under the pointer, on both.
+  const extendDrag = (row, day) => () => {
+    const current = dragRef.current
+    if (!current) return
+    if (current.focus.row === row && current.focus.day === day) return
+    const next = { ...current, focus: { row, day } }
+    dragRef.current = next
+    setDrag(next)
+  }
+
+  // Registered once on the window, not on the grid: a drag that ends outside
+  // the table --- which is most of the ones that end near its edge --- has to
+  // commit rather than leave a selection stuck to the cursor.
+  useEffect(() => {
+    const finish = () => {
+      const current = dragRef.current
+      dragRef.current = null
+      setDrag(null)
+      if (!current || !tool) return
+
+      const top = Math.min(current.anchor.row, current.focus.row)
+      const bottom = Math.max(current.anchor.row, current.focus.row)
+      const left = Math.min(current.anchor.day, current.focus.day)
+      const right = Math.max(current.anchor.day, current.focus.day)
+
+      const stroke = []
+      const before = []
+      for (const person of rostered.slice(top, bottom + 1)) {
+        for (let day = left; day <= right; day += 1) {
+          const on = iso(month.year, month.month, day)
+          before.push(asCell(person, on, person.days[on]))
+          stroke.push({
+            employee: person.id,
+            day: on,
+            ...(tool.kind === 'paint' ? { pattern: tool.pattern.id } : {}),
+          })
+        }
+      }
+
+      // Only worth offering if something actually changes. Painting mornings
+      // over mornings is a no-op, and an undo button for a no-op is noise.
+      const changed = stroke.some(
+        (cell, i) => (cell.pattern ?? null) !== (before[i].pattern ?? null) || before[i].segments
+      )
+      paint.mutate(stroke)
+      setUndo(changed ? before : null)
+    }
+
+    const escape = (event) => {
+      if (event.key !== 'Escape') return
+      dragRef.current = null
+      setDrag(null)
+      setTool(null)
+    }
+
+    window.addEventListener('pointerup', finish)
+    window.addEventListener('keydown', escape)
+    return () => {
+      window.removeEventListener('pointerup', finish)
+      window.removeEventListener('keydown', escape)
+    }
+  })
 
   return (
     <>
@@ -315,10 +514,32 @@ export default function Roster() {
           <ChevronRightIcon />
         </IconButton>
         <Box sx={{ flexGrow: 1 }} />
+        {painting && (
+          <Chip size="small" variant="outlined" color="primary" label="Guardando…" />
+        )}
         {rows.length > 0 && (
           <Chip size="small" variant="outlined" label={`${totalHours.toFixed(0)} h planificadas`} />
         )}
+        {/* Somebody with no shifts has no row, so there is nothing to draw on.
+            Adding them here rather than listing the whole company keeps the
+            grid to the size of a team and sidesteps a workforce endpoint that
+            pages at fifty. */}
+        <EmployeePicker
+          size="small"
+          label="Añadir al cuadrante"
+          value=""
+          sx={{ minWidth: 240 }}
+          onChange={(id, person) => {
+            if (!id || byPerson.has(id)) return
+            const name =
+              `${person?.first_name ?? ''} ${person?.last_name ?? ''}`.trim() ||
+              (person?.email ?? '')
+            setInvited([...invited, { id, name }])
+          }}
+        />
       </Stack>
+
+      <Palette patterns={patterns} tool={tool} onPick={setTool} />
 
       <Findings findings={review?.findings} />
 
@@ -391,43 +612,74 @@ export default function Roster() {
                   {dayNumbers.map((day) => {
                     const shift = person.days[iso(month.year, month.month, day)]
                     const weekday = weekdayOf(month.year, month.month, day)
+                    const selected = inBox(index, day)
 
-                    if (!shift) {
+                    // While a rectangle is being dragged, the cells inside it
+                    // show what they are about to become. Painting a fortnight
+                    // and finding out afterwards is not a preview.
+                    const preview =
+                      selected && tool?.kind === 'paint'
+                        ? { colour: tool.pattern.colour, letter: tool.pattern.name.slice(0, 1) }
+                        : null
+                    const erasing = selected && tool?.kind === 'erase'
+
+                    const cell = {
+                      m: 0.3,
+                      borderRadius: 0.5,
+                      display: 'grid',
+                      placeItems: 'center',
+                      cursor: tool ? 'crosshair' : 'default',
+                      touchAction: tool ? 'none' : 'auto',
+                      outline: selected ? '2px solid' : 'none',
+                      outlineColor: erasing ? 'error.main' : 'primary.main',
+                      outlineOffset: '-1px',
+                      opacity: erasing ? 0.35 : 1,
+                    }
+                    const handlers = {
+                      onPointerDown: startDrag(index, day),
+                      onPointerMove: extendDrag(index, day),
+                    }
+
+                    if (!shift && !preview) {
                       return (
                         <Box
                           key={day}
+                          {...handlers}
                           sx={{
-                            m: 0.3,
-                            borderRadius: 0.5,
+                            ...cell,
                             bgcolor: weekday >= 5 ? 'action.hover' : 'transparent',
                           }}
                         />
                       )
                     }
 
+                    const colour = preview?.colour ?? shift.colour
+                    const letter = (preview?.letter ?? shift.pattern_name ?? '·')
+                      .slice(0, 1)
+                      .toUpperCase()
+
                     return (
                       <Tooltip
                         key={day}
-                        title={`${shift.pattern_name || 'Turno'} · ${shift.segments
-                          .map((s) => `${s.start}–${s.end}`)
-                          .join(' y ')}`}
+                        // Suppressed mid-drag: a tooltip following the cursor
+                        // across thirty cells covers the very selection you are
+                        // trying to see.
+                        title={
+                          drag || !shift
+                            ? ''
+                            : `${shift.pattern_name || 'Turno'} · ${shift.segments
+                                .map((s) => `${s.start}–${s.end}`)
+                                .join(' y ')}`
+                        }
                       >
-                        <Box
-                          sx={{
-                            m: 0.3,
-                            borderRadius: 0.5,
-                            bgcolor: shift.colour,
-                            display: 'grid',
-                            placeItems: 'center',
-                          }}
-                        >
+                        <Box {...handlers} sx={{ ...cell, bgcolor: colour }}>
                           {/* The initial, not only the colour: a roster read on
                               a phone in sunlight, or by somebody who does not
                               distinguish two of them, still has to be legible. */}
                           <Typography
                             sx={{ fontSize: '0.6rem', color: '#fff', fontWeight: 700 }}
                           >
-                            {(shift.pattern_name || '·').slice(0, 1).toUpperCase()}
+                            {letter}
                           </Typography>
                         </Box>
                       </Tooltip>
@@ -469,6 +721,37 @@ export default function Roster() {
           Vaciar el mes
         </Button>
       )}
+
+      {/* Not a toast that fades. A stroke can cover a fortnight of somebody's
+          life, and three seconds is not long enough to notice, look, and
+          decide. It stays until the next stroke or until it is dismissed. */}
+      <Snackbar
+        open={Boolean(undo)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        onClose={(_, reason) => reason !== 'clickaway' && setUndo(null)}
+      >
+        <Alert
+          severity="success"
+          variant="filled"
+          onClose={() => setUndo(null)}
+          action={
+            <Button
+              size="small"
+              color="inherit"
+              disabled={paint.isPending}
+              onClick={() => {
+                paint.mutate(undo)
+                setUndo(null)
+              }}
+            >
+              Deshacer
+            </Button>
+          }
+        >
+          Cuadrante actualizado en {undo?.length}{' '}
+          {undo?.length === 1 ? 'día' : 'días'}.
+        </Alert>
+      </Snackbar>
 
       <ConfirmDialog
         request={confirming}
