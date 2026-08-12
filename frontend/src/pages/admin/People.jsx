@@ -34,6 +34,7 @@ import {
   deactivateEmployee,
   getDepartments,
   getEmployees,
+  getWorkplaces,
   inviteEmployee,
   PAGE_SIZE,
   reactivateEmployee,
@@ -110,6 +111,7 @@ const EMPTY_FORM = {
   employee_id: '',
   role: 'EMPLOYEE',
   department: '',
+  workplace: '',
   annual_leave_days: '',
   // Art. 3.b and 3.e of the pending decree, plus the two fields the domain
   // logic reads and nothing could fill: without a date of birth no
@@ -137,6 +139,7 @@ const fromPerson = (person) => ({
   employee_id: person.employee_id ?? '',
   role: person.role ?? 'EMPLOYEE',
   department: person.department ?? '',
+  workplace: person.workplace ?? '',
   annual_leave_days: person.annual_leave_days ?? '',
   date_of_birth: person.date_of_birth ?? '',
   regime: person.regime || 'FULL_TIME',
@@ -153,7 +156,7 @@ const fromPerson = (person) => ({
   is_worker_representative: Boolean(person.is_worker_representative),
 })
 
-function PersonDialog({ open, person, departments, onClose, onSave, saving, error }) {
+function PersonDialog({ open, person, departments, workplaces, onClose, onSave, saving, error }) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [loaded, setLoaded] = useState(null)
 
@@ -171,6 +174,7 @@ function PersonDialog({ open, person, departments, onClose, onSave, saving, erro
     onSave({
       ...form,
       department: form.department || null,
+      workplace: form.workplace || null,
       annual_leave_days: form.annual_leave_days === '' ? null : Number(form.annual_leave_days),
       date_of_birth: form.date_of_birth || null,
       contract_start: form.contract_start || null,
@@ -259,6 +263,32 @@ function PersonDialog({ open, person, departments, onClose, onSave, saving, erro
                 helperText="Vacío = los de la empresa."
               />
             </Stack>
+
+            {/* El centro no es el departamento: uno dice con quién trabaja y el
+                otro dónde. Del centro salen los festivos locales, la zona
+                horaria de su jornada y el sitio donde una inspección pediría su
+                registro. */}
+            <TextField
+              select
+              fullWidth
+              label="Centro de trabajo"
+              value={form.workplace}
+              onChange={set('workplace')}
+              helperText={
+                workplaces.length === 0
+                  ? 'Todavía no hay centros. Se crean en Centros.'
+                  : 'Decide sus festivos locales y la zona horaria de su jornada.'
+              }
+            >
+              <MenuItem value="">Sin asignar</MenuItem>
+              {workplaces.map((place) => (
+                <MenuItem key={place.id} value={place.id}>
+                  {place.name}
+                  {place.municipality ? ` · ${place.municipality}` : ''}
+                  {place.time_zone ? ` · ${place.time_zone}` : ''}
+                </MenuItem>
+              ))}
+            </TextField>
 
             <Divider textAlign="left" sx={{ mt: 1 }}>
               <Typography variant="caption" color="text.secondary">
@@ -573,6 +603,10 @@ export default function People() {
     queryKey: ['departments'],
     queryFn: getDepartments,
   })
+  const { data: workplaces = [] } = useQuery({
+    queryKey: ['workplaces'],
+    queryFn: () => getWorkplaces(),
+  })
 
   const save = useMutation({
     mutationFn: (payload) =>
@@ -763,6 +797,7 @@ export default function People() {
         open={editing !== undefined}
         person={editing}
         departments={departments}
+        workplaces={workplaces}
         saving={save.isPending}
         error={error}
         onClose={() => {

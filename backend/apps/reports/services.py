@@ -155,7 +155,10 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
     from apps.tenants.rules import WorkingTimeRules
 
     rules = WorkingTimeRules.for_company(company)
-    zone = company.tzinfo
+    # Theirs, which is their workplace's or the company's. A record for somebody
+    # in Las Palmas rendered in Madrid time would show every day shifted by an
+    # hour, and the ones that start before 01:00 on the wrong date entirely.
+    zone = employee.tzinfo
 
     punches = list(
         Punch.objects.filter(

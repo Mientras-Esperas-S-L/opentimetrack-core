@@ -1,5 +1,6 @@
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import BeachAccessIcon from '@mui/icons-material/BeachAccess'
+import PlaceIcon from '@mui/icons-material/Place'
 import ApartmentIcon from '@mui/icons-material/Apartment'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import EditCalendarIcon from '@mui/icons-material/EditCalendar'
@@ -35,6 +36,7 @@ export const NAV_ADMIN = [
   { to: '/panel', label: 'Resumen', icon: <SpaceDashboardIcon /> },
   { to: '/panel/personas', label: 'Personas', icon: <GroupsIcon /> },
   { to: '/panel/departamentos', label: 'Departamentos', icon: <ApartmentIcon /> },
+  { to: '/panel/centros', label: 'Centros', icon: <PlaceIcon /> },
   { to: '/panel/calendario', label: 'Calendario', icon: <CalendarMonthIcon /> },
   { to: '/panel/cuadrante', label: 'Cuadrante', icon: <EditCalendarIcon /> },
   { to: '/panel/turnos', label: 'Turnos', icon: <ScheduleIcon /> },

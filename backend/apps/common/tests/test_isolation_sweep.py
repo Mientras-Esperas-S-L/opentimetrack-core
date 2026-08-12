@@ -32,7 +32,7 @@ from apps.punches.corrections import CorrectionKind, request_correction
 from apps.punches.services import register_punch
 from apps.shifts.models import Shift, ShiftPattern
 from apps.tenants.models import Tenant
-from apps.users.models import Department, Role, User
+from apps.users.models import Department, Role, User, Workplace
 
 PASSWORD = "a-sufficiently-long-password"
 
@@ -64,6 +64,9 @@ def build_company(name, tax_id, email_domain):
             last_name=name,
         )
         department = Department.objects.create(tenant=company, name=f"Dept {name}")
+        workplace = Workplace.objects.create(
+            tenant=company, name=f"Centro {name}", municipality="Cádiz", region="ES-AN"
+        )
         punch = register_punch(employee=worker, company=company)
         absence = request_absence(
             employee=worker,
@@ -106,6 +109,7 @@ def build_company(name, tax_id, email_domain):
         "worker": worker,
         "other": other_worker,
         "department": department,
+        "workplace": workplace,
         "punch": punch,
         "absence": absence,
         "correction": correction,
@@ -141,6 +145,7 @@ def detail_urls(world):
         "correction": f"/api/corrections/{world['correction'].id}/",
         "employee": f"/api/employees/{world['worker'].id}/",
         "department": f"/api/departments/{world['department'].id}/",
+        "workplace": f"/api/workplaces/{world['workplace'].id}/",
         "shift": f"/api/shifts/{world['shift'].id}/",
         "shift pattern": f"/api/shift-patterns/{world['pattern'].id}/",
         "audit entry": f"/api/audit/{world['audit'].id}/",
@@ -153,6 +158,7 @@ COLLECTIONS = [
     "/api/corrections/",
     "/api/employees/",
     "/api/departments/",
+    "/api/workplaces/",
     "/api/shifts/",
     "/api/shift-patterns/",
     "/api/audit/",
@@ -242,6 +248,7 @@ def test_no_collection_shows_another_companys_rows(ours, theirs):
         "/api/corrections/",
         "/api/employees/",
         "/api/departments/",
+        "/api/workplaces/",
         "/api/shifts/",
         "/api/shift-patterns/",
         "/api/audit/",
@@ -288,6 +295,13 @@ def test_they_cannot_change_or_resolve_anything_of_ours(ours, theirs):
         ("patch", f"/api/punches/{ours['punch'].id}/void/", {"reason": "porque sí"}),
         ("patch", f"/api/shift-patterns/{ours['pattern'].id}/", {"name": "Secuestrado"}),
         ("delete", f"/api/departments/{ours['department'].id}/", None),
+        # The workplace decides which local holidays apply and which zone the
+        # day is measured in, so taking one over is not a cosmetic change.
+        (
+            "patch",
+            f"/api/workplaces/{ours['workplace'].id}/",
+            {"name": "Secuestrado", "time_zone": "Pacific/Auckland"},
+        ),
     ]
     landed = []
 
@@ -345,7 +359,10 @@ def test_a_worker_cannot_read_a_colleagues_things(ours):
 
     for label, url in detail_urls(ours).items():
         # Their own company's shared configuration is legitimately readable.
-        if label in {"department", "shift pattern"}:
+        # The workplace is on that list on purpose rather than by omission: a
+        # person is entitled to know where their record is kept and which
+        # holiday calendar is being applied to them.
+        if label in {"department", "shift pattern", "workplace"}:
             continue
         response = colleague.get(url)
         if response.status_code not in (403, 404):
@@ -487,6 +504,8 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^employees/(?P<pk>[^/.]+)/invite/$",
         "api/^departments/$",
         "api/^departments/(?P<pk>[^/.]+)/$",
+        "api/^workplaces/$",
+        "api/^workplaces/(?P<pk>[^/.]+)/$",
         "api/^shifts/$",
         "api/^shifts/(?P<pk>[^/.]+)/$",
         "api/^shifts/today/$",

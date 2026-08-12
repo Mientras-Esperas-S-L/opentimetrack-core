@@ -13,6 +13,7 @@ import AuditTrail from './pages/admin/AuditTrail.jsx'
 import Overview from './pages/admin/Overview.jsx'
 import People from './pages/admin/People.jsx'
 import Departments from './pages/admin/Departments.jsx'
+import Workplaces from './pages/admin/Workplaces.jsx'
 import TeamCalendar from './pages/admin/TeamCalendar.jsx'
 import Roster from './pages/admin/Roster.jsx'
 import ShiftPatterns from './pages/admin/ShiftPatterns.jsx'
@@ -58,6 +59,7 @@ export default function App() {
             <Route index element={<Overview />} />
             <Route path="personas" element={<People />} />
             <Route path="departamentos" element={<Departments />} />
+            <Route path="centros" element={<Workplaces />} />
             <Route path="calendario" element={<TeamCalendar />} />
             <Route path="cuadrante" element={<Roster />} />
             <Route path="turnos" element={<ShiftPatterns />} />

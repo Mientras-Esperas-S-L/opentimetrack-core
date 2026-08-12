@@ -108,25 +108,34 @@ class DayStatus:
         }
 
 
-def local_day_bounds(company, moment: datetime | None = None) -> tuple[datetime, datetime]:
-    """Start and end of the working day **in the company's zone**.
+def local_day_bounds(where, moment: datetime | None = None) -> tuple[datetime, datetime]:
+    """Start and end of the working day **in the right local zone**.
 
     Not a trivial detail: the boundary of a day is a local matter. Slicing by UTC
-    would split the day wrongly for anyone east or west of Greenwich, and would
-    already be wrong within Spain for a company in the Canary Islands.
+    would split the day wrongly for anyone east or west of Greenwich, and it was
+    already wrong within Spain --- this docstring said so about the Canary
+    Islands for months before there was anywhere to record the answer.
+
+    `where` is anything that knows its zone: a company, a workplace, or a
+    person. A person answers with their workplace's, falling back to the
+    company's, which is the whole point --- an office in Madrid and another in
+    Las Palmas are one hour apart, and one hour is the difference between a
+    punch landing on Monday and on Sunday.
     """
     moment = moment or timezone.now()
-    local = moment.astimezone(company.tzinfo)
+    local = moment.astimezone(where.tzinfo)
     start_local = local.replace(hour=0, minute=0, second=0, microsecond=0)
     return start_local, start_local + timedelta(days=1)
 
 
 def punches_of_the_day(employee, company, day: date | None = None):
+    # The person's zone, not the company's: `employee.tzinfo` is their
+    # workplace's and falls back to the company's when they have none.
     reference = timezone.now()
     if day is not None:
-        reference = datetime.combine(day, datetime.min.time(), tzinfo=company.tzinfo)
+        reference = datetime.combine(day, datetime.min.time(), tzinfo=employee.tzinfo)
 
-    start, end = local_day_bounds(company, reference)
+    start, end = local_day_bounds(employee, reference)
     return Punch.objects.filter(
         employee=employee,
         is_active=True,

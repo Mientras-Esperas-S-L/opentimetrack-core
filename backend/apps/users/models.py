@@ -16,12 +16,15 @@ Two decisions worth understanding before touching anything:
 
 from __future__ import annotations
 
+import zoneinfo
+
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.common.models import BaseModel, TenantOwnedModel
+from apps.tenants.models import validate_time_zone
 
 
 class Department(TenantOwnedModel):
@@ -62,6 +65,87 @@ class Department(TenantOwnedModel):
 
     def __str__(self) -> str:
         return self.name
+
+
+class Workplace(TenantOwnedModel):
+    """A centro de trabajo: where the work is done, not who it is done with.
+
+    A different axis from the department and a legally heavier one. A department
+    is how a company organises itself; a workplace is a place, and three things
+    hang off the place rather than off the company:
+
+    **The record is kept and inspected per workplace.** An inspector turns up at
+    a site and asks for the record of that site.
+
+    **Two of the fourteen public holidays are local**, decided by the town hall
+    and approved by the region. Without knowing the municipality there is no way
+    to apply them --- and the other twelve come from the region, which is the
+    other field here.
+
+    **The time zone is a property of the place.** Spain has two, and a company
+    with an office in Madrid and another in Las Palmas cannot have one. The code
+    that slices a day already said so in a comment before there was anywhere to
+    put the answer.
+    """
+
+    name = models.CharField(_("name"), max_length=120)
+    address = models.CharField(_("address"), max_length=255, blank=True)
+
+    municipality = models.CharField(
+        _("municipality"),
+        max_length=120,
+        blank=True,
+        help_text=_("Decides the two local public holidays."),
+    )
+    #: The official code, because names are not unique --- Spain has several
+    #: municipalities called the same thing in different provinces, and a
+    #: holiday calendar keyed by name would give one of them the other's days.
+    municipality_code = models.CharField(
+        _("municipality code"),
+        max_length=10,
+        blank=True,
+        help_text=_("INE code in Spain. Names repeat between provinces; codes do not."),
+    )
+    region = models.CharField(
+        _("region"),
+        max_length=8,
+        blank=True,
+        help_text=_(
+            "Decides the public holidays the region sets. Empty uses only the national ones."
+        ),
+    )
+
+    time_zone = models.CharField(
+        _("time zone"),
+        max_length=64,
+        blank=True,
+        validators=[validate_time_zone],
+        help_text=_(
+            "Empty uses the company's. Only needed where a workplace is in "
+            "another zone: in Spain, the Canary Islands."
+        ),
+    )
+
+    is_active = models.BooleanField(_("active"), default=True)
+
+    class Meta:
+        verbose_name = _("workplace")
+        verbose_name_plural = _("workplaces")
+        ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "name"],
+                name="unique_workplace_per_company",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return self.name
+
+    @property
+    def tzinfo(self):
+        """Its own zone, or the company's."""
+        return zoneinfo.ZoneInfo(self.time_zone) if self.time_zone else self.tenant.tzinfo
 
 
 class WorkingTimeRegime(models.TextChoices):
@@ -185,6 +269,19 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         blank=True,
         verbose_name=_("company"),
         help_text=_("Null only for platform superusers on self-hosted installs."),
+    )
+    # Where they work, as opposed to who they work with. Separate from the
+    # department because they answer different questions: the department says
+    # who reads their record, the workplace says which local holidays apply,
+    # which zone their day is sliced in, and where an inspection would ask for
+    # the record.
+    workplace = models.ForeignKey(
+        Workplace,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="people",
+        verbose_name=_("workplace"),
     )
     department = models.ForeignKey(
         Department,
@@ -489,6 +586,17 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
             if shift.night_minutes(night.window_starts_at, night.window_ends_at) >= threshold
         )
         return qualifying >= NIGHT_EVIDENCE_DAYS and qualifying * 2 > len(roster)
+
+    @property
+    def tzinfo(self):
+        """The zone their working day is measured in.
+
+        Their workplace's, or the company's. Asked of the person rather than of
+        the company because the answer differs between two people on the same
+        payroll --- Madrid and Las Palmas is one hour, and one hour is the
+        difference between a punch landing on Monday and on Sunday.
+        """
+        return self.workplace.tzinfo if self.workplace_id else self.tenant.tzinfo
 
     def is_engaged_on(self, day) -> bool:
         """Whether the relationship covers that day.

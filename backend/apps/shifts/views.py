@@ -441,6 +441,11 @@ class WorkingTimeRulesView(APIView):
             # the frontend again.
             "night": _describe(framework.night, ("window_starts_at", "window_ends_at")),
             "shifts": _describe(framework.shifts),
+            # The subdivisions that set their own public holidays. Served here
+            # so the workplace form offers the country's own list instead of
+            # carrying a copy of Spain's --- which is the mistake the citations
+            # made before this endpoint existed.
+            "regions": framework.regions,
         }
 
     @extend_schema(request=RulesSerializer, responses={200: RulesSerializer})

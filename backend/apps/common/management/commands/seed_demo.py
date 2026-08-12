@@ -51,7 +51,7 @@ from apps.punches.models import HoursNature, Punch, PunchSource, PunchType
 from apps.shifts.models import Shift, ShiftPattern
 from apps.tenants.models import Tenant
 from apps.tenants.rules import WorkingTimeRules
-from apps.users.models import Department, HoursPeriod, Role, User, WorkingTimeRegime
+from apps.users.models import Department, HoursPeriod, Role, User, WorkingTimeRegime, Workplace
 
 # Sample data, DEBUG only. `random` is fine here and bandit is told so once:
 # these are demo timings, not anything anybody has to be unable to predict ---
@@ -104,8 +104,9 @@ class Command(BaseCommand):
 
         with tenant_context(company.id):
             rules = WorkingTimeRules.for_company(company)
+            sites = self._workplaces(company)
             departments = self._departments(company)
-            people = self._people(company, departments)
+            people = self._people(company, departments, sites)
             patterns = self._patterns(company)
             self._roster(company, people, patterns, weeks=options["weeks"])
             self._history(company, people, weeks=options["weeks"])
@@ -115,6 +116,46 @@ class Command(BaseCommand):
         self._report(company, people, rules)
 
     # ------------------------------------------------------------------ people
+
+    def _workplaces(self, company):
+        """Two, and the second one is the point.
+
+        A company with an office in Cádiz and another in Las Palmas is one hour
+        apart inside the same payroll, and one hour is the difference between a
+        punch landing on Monday and on Sunday. Without a second site the zone
+        field would be a form nobody could see the use of.
+        """
+        return {
+            key: Workplace.objects.create(
+                tenant=company,
+                name=name,
+                address=address,
+                municipality=municipality,
+                municipality_code=code,
+                region=region,
+                time_zone=zone,
+            )
+            for key, name, address, municipality, code, region, zone in [
+                (
+                    "main",
+                    "Nave de Jerez",
+                    "Polígono El Portal, nave 14",
+                    "Jerez de la Frontera",
+                    "11020",
+                    "ES-AN",
+                    "",
+                ),
+                (
+                    "canarias",
+                    "Delegación de Las Palmas",
+                    "C/ León y Castillo 22",
+                    "Las Palmas de Gran Canaria",
+                    "35016",
+                    "ES-CN",
+                    "Atlantic/Canary",
+                ),
+            ]
+        }
 
     def _departments(self, company):
         return {
@@ -127,7 +168,7 @@ class Command(BaseCommand):
             ]
         }
 
-    def _people(self, company, departments):
+    def _people(self, company, departments, sites):
         """Fourteen, chosen so that every rule in the product has somebody it
         applies to and somebody it does not."""
         today = timezone.localdate()
@@ -405,6 +446,7 @@ class Command(BaseCommand):
                 role=role,
                 department=dept,
                 employee_id=staff,
+                workplace=sites["canarias"] if key == "federated" else sites["main"],
                 regime=regime,
                 contracted_hours=hours,
                 contracted_period=period,

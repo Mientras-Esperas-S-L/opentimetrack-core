@@ -1,0 +1,308 @@
+import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
+import Chip from '@mui/material/Chip'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogTitle from '@mui/material/DialogTitle'
+import MenuItem from '@mui/material/MenuItem'
+import Paper from '@mui/material/Paper'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
+import AddIcon from '@mui/icons-material/Add'
+import PlaceIcon from '@mui/icons-material/Place'
+
+import {
+  createWorkplace,
+  deleteWorkplace,
+  getWorkingTimeRules,
+  getWorkplaces,
+  updateWorkplace,
+} from '../../services/api.js'
+import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
+import { useAuth } from '../../hooks/useAuth.js'
+
+/** Where the work is done, as opposed to who it is done with.
+ *
+ *  Three things hang off the place rather than off the company, and the screen
+ *  says so rather than asking for fields whose purpose is invisible: the record
+ *  is inspected per workplace, two of the fourteen public holidays are decided
+ *  by the town hall, and Spain has two time zones.
+ */
+function WorkplaceDialog({ open, workplace, regions, companyZone, onClose, onSave, saving, error }) {
+  const empty = {
+    name: '',
+    address: '',
+    municipality: '',
+    municipality_code: '',
+    region: '',
+    time_zone: '',
+  }
+  const [form, setForm] = useState(empty)
+  const [loaded, setLoaded] = useState(null)
+
+  if (open && loaded !== (workplace?.id ?? 'new')) {
+    setLoaded(workplace?.id ?? 'new')
+    setForm(workplace ? { ...empty, ...workplace } : empty)
+  }
+  if (!open && loaded !== null) setLoaded(null)
+
+  const set = (field) => (event) => setForm({ ...form, [field]: event.target.value })
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          onSave(form)
+        }}
+      >
+        <DialogTitle>{workplace ? 'Editar centro' : 'Nuevo centro de trabajo'}</DialogTitle>
+        <DialogContent>
+          <ErrorNote error={error} />
+          <Stack sx={{ gap: 2, pt: 1 }}>
+            <TextField
+              autoFocus
+              required
+              fullWidth
+              label="Nombre"
+              placeholder="Oficina central, Nave de Getafe…"
+              value={form.name}
+              onChange={set('name')}
+            />
+            <TextField
+              fullWidth
+              label="Dirección"
+              value={form.address}
+              onChange={set('address')}
+              helperText="Es donde una inspección pediría el registro de esta gente."
+            />
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Municipio"
+                value={form.municipality}
+                onChange={set('municipality')}
+                helperText="Decide los dos festivos locales."
+              />
+              <TextField
+                label="Código INE"
+                value={form.municipality_code}
+                onChange={set('municipality_code')}
+                sx={{ minWidth: 150 }}
+                helperText="Opcional"
+              />
+            </Stack>
+
+            <TextField
+              select
+              fullWidth
+              label="Comunidad autónoma"
+              value={form.region}
+              onChange={set('region')}
+              helperText="Decide los festivos autonómicos. Sin ella solo se aplican los nacionales."
+            >
+              <MenuItem value="">Sin especificar</MenuItem>
+              {Object.entries(regions).map(([code, name]) => (
+                <MenuItem key={code} value={code}>
+                  {name}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              fullWidth
+              label="Zona horaria"
+              placeholder={companyZone}
+              value={form.time_zone}
+              onChange={set('time_zone')}
+              helperText={`Vacío usa la de la empresa (${companyZone}). Solo hace falta si el centro está en otra: en España, Canarias.`}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose} color="inherit">
+            Cancelar
+          </Button>
+          <Button type="submit" variant="contained" disabled={saving || !form.name.trim()}>
+            Guardar
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
+  )
+}
+
+export default function Workplaces() {
+  const queryClient = useQueryClient()
+  const { session } = useAuth()
+  const isAdmin = session?.user?.role === 'ADMIN'
+
+  const [editing, setEditing] = useState(undefined)
+  const [error, setError] = useState(null)
+  const [confirming, setConfirming] = useState(null)
+
+  const { data: workplaces = [], isLoading } = useQuery({
+    queryKey: ['workplaces'],
+    queryFn: () => getWorkplaces(),
+  })
+  // The regions come from the applicable legal framework, not from a list in
+  // the frontend: a company in another country gets its own subdivisions, and
+  // one whose country has none simply never sees the field offer anything.
+  const { data: rules } = useQuery({
+    queryKey: ['working-time-rules'],
+    queryFn: getWorkingTimeRules,
+  })
+  const regions = rules?.regions ?? {}
+  const companyZone = session?.tenant?.time_zone ?? 'Europe/Madrid'
+
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['workplaces'] })
+
+  const save = useMutation({
+    mutationFn: (form) =>
+      editing ? updateWorkplace(editing.id, form) : createWorkplace(form),
+    onSuccess: () => {
+      setEditing(undefined)
+      setError(null)
+      refresh()
+    },
+    onError: setError,
+  })
+
+  const remove = useMutation({
+    mutationFn: deleteWorkplace,
+    onSuccess: () => {
+      setConfirming(null)
+      refresh()
+    },
+    onError: (failure) => {
+      setConfirming(null)
+      setError(failure)
+    },
+  })
+
+  return (
+    <>
+      <PageHeader
+        title="Centros de trabajo"
+        subtitle="Dónde se trabaja. Decide los festivos locales, la zona horaria de la jornada y dónde se pide el registro en una inspección."
+        action={
+          isAdmin && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setEditing(null)}>
+              Nuevo centro
+            </Button>
+          )
+        }
+      />
+
+      <ErrorNote error={error} onClose={() => setError(null)} />
+
+      {isLoading ? (
+        <Loading rows={3} />
+      ) : workplaces.length === 0 ? (
+        <Empty>
+          Todavía no hay centros. Sin ellos no se pueden aplicar los festivos locales, y toda la
+          plantilla se mide en la zona horaria de la empresa.
+        </Empty>
+      ) : (
+        <Stack sx={{ gap: 1.5 }}>
+          {workplaces.map((place) => (
+            <Paper key={place.id} variant="outlined" sx={{ p: 2 }}>
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                sx={{ gap: 1.5, alignItems: { sm: 'center' } }}
+              >
+                <PlaceIcon color="disabled" />
+                <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                  <Stack direction="row" sx={{ gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <Typography sx={{ fontWeight: 600 }}>{place.name}</Typography>
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      label={
+                        place.people_count === 1 ? '1 persona' : `${place.people_count} personas`
+                      }
+                    />
+                    {/* Solo cuando difiere de la de la empresa: repetirla en
+                        cada fila sería ruido, y callarla donde cambia sería
+                        esconder justo el dato por el que existe el campo. */}
+                    {place.time_zone && (
+                      <Chip size="small" color="primary" variant="outlined" label={place.time_zone} />
+                    )}
+                  </Stack>
+                  <Typography variant="body2" color="text.secondary">
+                    {[place.address, place.municipality, place.region_name]
+                      .filter(Boolean)
+                      .join(' · ') || 'Sin dirección'}
+                  </Typography>
+                  {!place.region && (
+                    <Typography variant="caption" color="warning.main">
+                      Sin comunidad autónoma: solo se le aplicarán los festivos nacionales.
+                    </Typography>
+                  )}
+                </Box>
+
+                {isAdmin && (
+                  <Stack direction="row" sx={{ gap: 0.5, flexShrink: 0 }}>
+                    <Button size="small" onClick={() => setEditing(place)}>
+                      Editar
+                    </Button>
+                    {place.people_count === 0 && (
+                      <Button
+                        size="small"
+                        color="inherit"
+                        onClick={() =>
+                          setConfirming({
+                            title: 'Eliminar el centro',
+                            body: place.name,
+                            detail: 'No trabaja nadie ahí, así que no se pierde nada.',
+                            verb: 'Eliminar',
+                            run: () => remove.mutate(place.id),
+                          })
+                        }
+                      >
+                        Eliminar
+                      </Button>
+                    )}
+                  </Stack>
+                )}
+              </Stack>
+            </Paper>
+          ))}
+        </Stack>
+      )}
+
+      {workplaces.some((place) => place.people_count === 0) && (
+        <Alert severity="info" variant="outlined" sx={{ mt: 2 }}>
+          Un centro con gente dentro no se puede eliminar: se quedarían sin festivos locales y
+          pasarían a medirse en la zona de la empresa. Muévelos primero.
+        </Alert>
+      )}
+
+      <ConfirmDialog
+        request={confirming}
+        busy={remove.isPending}
+        onClose={() => setConfirming(null)}
+      />
+
+      <WorkplaceDialog
+        open={editing !== undefined}
+        workplace={editing}
+        regions={regions}
+        companyZone={companyZone}
+        saving={save.isPending}
+        error={error}
+        onClose={() => {
+          setEditing(undefined)
+          setError(null)
+        }}
+        onSave={save.mutate}
+      />
+    </>
+  )
+}

@@ -167,6 +167,39 @@ ESPANA = LegalFramework(
             "Se totalizan mensualmente (art. 12.5.h).",
         ),
     ),
+    # ------------------------------------------------- comunidades autónomas
+    #
+    # Art. 37.2: catorce fiestas al año como máximo, dos de ellas locales. De
+    # las doce restantes, las comunidades fijan las suyas y pueden sustituir
+    # algunas de las nacionales, así que el calendario laboral no se puede
+    # resolver sin saber la comunidad.
+    #
+    # Los códigos son los de la ISO 3166-2:ES. Las dos ciudades autónomas van en
+    # la misma lista porque a estos efectos hacen lo mismo: fijan sus fiestas.
+    #
+    # Canarias además está en otra zona horaria, que es la otra razón por la que
+    # el centro de trabajo existe.
+    regions={
+        "ES-AN": "Andalucía",
+        "ES-AR": "Aragón",
+        "ES-AS": "Principado de Asturias",
+        "ES-CB": "Cantabria",
+        "ES-CE": "Ceuta",
+        "ES-CL": "Castilla y León",
+        "ES-CM": "Castilla-La Mancha",
+        "ES-CN": "Canarias",
+        "ES-CT": "Cataluña",
+        "ES-EX": "Extremadura",
+        "ES-GA": "Galicia",
+        "ES-IB": "Illes Balears",
+        "ES-MC": "Región de Murcia",
+        "ES-MD": "Comunidad de Madrid",
+        "ES-ML": "Melilla",
+        "ES-NC": "Comunidad Foral de Navarra",
+        "ES-PV": "País Vasco",
+        "ES-RI": "La Rioja",
+        "ES-VC": "Comunitat Valenciana",
+    },
     # ------------------------------------------------------------ nocturnidad
     #
     # El art. 36.1 define dos cosas distintas y la diferencia lo es todo:

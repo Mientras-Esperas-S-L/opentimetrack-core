@@ -28,7 +28,7 @@ from apps.common.permissions import (
     ReadForAllWriteForAdmin,
 )
 from apps.common.scope import people_queryset
-from apps.users.models import Department, Role
+from apps.users.models import Department, Role, Workplace
 from apps.users.passwords import resolve_token, send_account_email
 from apps.users.serializers import (
     DepartmentSerializer,
@@ -39,6 +39,7 @@ from apps.users.serializers import (
     TenantSerializer,
     UserSerializer,
     UserWriteSerializer,
+    WorkplaceSerializer,
     issue_tokens,
 )
 
@@ -362,6 +363,49 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(tenant=self.request.user.tenant)
+
+
+@extend_schema(tags=["organisation"])
+class WorkplaceViewSet(viewsets.ModelViewSet):
+    """Centros de trabajo. Anyone reads; an administrator writes.
+
+    Read for anyone on purpose: a person is entitled to know which workplace
+    their record is kept at, and which holiday calendar is being applied to
+    them.
+    """
+
+    queryset = Workplace.objects.none()
+    serializer_class = WorkplaceSerializer
+    permission_classes = [ReadForAllWriteForAdmin]
+    filterset_fields = ["is_active", "region"]
+    search_fields = ["name", "municipality"]
+
+    def get_queryset(self):
+        return Workplace.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(tenant=self.request.user.tenant)
+
+    def perform_destroy(self, instance):
+        """Refused while anybody works there.
+
+        `SET_NULL` would keep the people and lose the place, which for a
+        department is a tidy answer and here is not: the workplace decides which
+        local holidays apply and which zone the day is measured in, so people
+        left without one would silently start being measured against the
+        company's defaults.
+        """
+        working = instance.people.filter(is_active=True).count()
+        if working:
+            raise BusinessRuleError(
+                code="workplace_in_use",
+                message=_(
+                    "%(count)s people work there. Move them first: without a workplace "
+                    "they lose their local holidays and their time zone."
+                )
+                % {"count": working},
+            )
+        instance.delete()
 
 
 @extend_schema(tags=["auth"])

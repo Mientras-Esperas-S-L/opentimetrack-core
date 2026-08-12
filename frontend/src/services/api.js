@@ -213,6 +213,14 @@ export const updateDepartment = async (id, payload) =>
   (await api.patch(`/departments/${id}/`, payload)).data
 export const deleteDepartment = async (id) => (await api.delete(`/departments/${id}/`)).data
 
+/** Centros de trabajo. Cualquiera los lee: una persona tiene derecho a saber
+ *  dónde se lleva su registro y qué calendario de festivos se le aplica. */
+export const getWorkplaces = async (params) => rows(await get('/workplaces/', params))
+export const createWorkplace = (payload) => post('/workplaces/', payload)
+export const updateWorkplace = async (id, payload) =>
+  (await api.patch(`/workplaces/${id}/`, payload)).data
+export const deleteWorkplace = async (id) => (await api.delete(`/workplaces/${id}/`)).data
+
 // ---------------------------------------------------------------------- shifts
 
 export const getShiftPatterns = async () => rows(await get('/shift-patterns/'))

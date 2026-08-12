@@ -186,6 +186,14 @@ class LegalFramework:
 
     minors: MinorProtections
     complementary: ComplementaryHours | None = None
+    #: The subdivisions that set their own public holidays, as code -> name.
+    #: Empty for a country where holidays are national and nothing else, which
+    #: is most of them --- so the workplace form simply does not ask.
+    #:
+    #: Codes rather than names because a name is not an identifier: it gets
+    #: renamed, translated and abbreviated, and a calendar keyed by one starts
+    #: giving a region somebody else's days.
+    regions: dict[str, str] = field(default_factory=dict)
     night: NightWork | None = None
     shifts: ShiftWork | None = None
 

@@ -11,7 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps import legal
 from apps.tenants.models import Tenant, validate_time_zone
-from apps.users.models import Department, Role
+from apps.users.models import Department, Role, Workplace
 
 User = get_user_model()
 
@@ -21,6 +21,63 @@ class TenantSerializer(serializers.ModelSerializer):
         model = Tenant
         fields = ["id", "name", "tax_id", "country", "time_zone", "language"]
         read_only_fields = ["id"]
+
+
+class WorkplaceSerializer(serializers.ModelSerializer):
+    people_count = serializers.SerializerMethodField()
+    region_name = serializers.SerializerMethodField()
+    #: What the workplace's day is actually sliced in, resolved. The field can
+    #: be empty and mean "the company's", and a screen that showed the blank
+    #: would be hiding the answer rather than saying there is a default.
+    effective_time_zone = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Workplace
+        fields = [
+            "id",
+            "name",
+            "address",
+            "municipality",
+            "municipality_code",
+            "region",
+            "region_name",
+            "time_zone",
+            "effective_time_zone",
+            "is_active",
+            "people_count",
+        ]
+        read_only_fields = ["id", "people_count", "region_name", "effective_time_zone"]
+
+    def get_people_count(self, obj) -> int:
+        return obj.people.filter(is_active=True).count()
+
+    def get_region_name(self, obj) -> str:
+        framework = legal.for_company(self.context["request"].user.tenant)
+        return framework.regions.get(obj.region, "")
+
+    def get_effective_time_zone(self, obj) -> str:
+        return str(obj.tzinfo)
+
+    def validate_region(self, value):
+        """A code the country actually has.
+
+        Free text here would be the same mistake as a calendar keyed by name:
+        it looks stored and quietly matches nothing when the holidays arrive.
+        """
+        if not value:
+            return value
+        framework = legal.for_company(self.context["request"].user.tenant)
+        if framework.regions and value not in framework.regions:
+            raise serializers.ValidationError(
+                _("%(code)s is not a region of %(country)s.")
+                % {"code": value, "country": framework.name}
+            )
+        return value
+
+    def validate_time_zone(self, value):
+        if value:
+            validate_time_zone(value)
+        return value
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -74,6 +131,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source="get_full_name", read_only=True)
     department_name = serializers.CharField(source="department.name", read_only=True, default=None)
+    workplace_name = serializers.CharField(source="workplace.name", read_only=True, default=None)
 
     class Meta:
         model = User
@@ -87,6 +145,8 @@ class UserSerializer(serializers.ModelSerializer):
             "employee_id",
             "department",
             "department_name",
+            "workplace",
+            "workplace_name",
             "locale",
             "annual_leave_days",
             # Art. 3.b and 3.e of the pending decree: the regime the person
@@ -118,7 +178,14 @@ class UserSerializer(serializers.ModelSerializer):
             "is_federated",
             "date_joined",
         ]
-        read_only_fields = ["id", "full_name", "department_name", "is_federated", "date_joined"]
+        read_only_fields = [
+            "id",
+            "full_name",
+            "department_name",
+            "workplace_name",
+            "is_federated",
+            "date_joined",
+        ]
 
 
 class UserWriteSerializer(serializers.ModelSerializer):
@@ -134,6 +201,7 @@ class UserWriteSerializer(serializers.ModelSerializer):
             "role",
             "employee_id",
             "department",
+            "workplace",
             "locale",
             "regime",
             "contracted_hours",
@@ -161,6 +229,13 @@ class UserWriteSerializer(serializers.ModelSerializer):
             existing = existing.exclude(pk=self.instance.pk)
         if existing.exists():
             raise serializers.ValidationError(_("Somebody in this company already uses it."))
+        return value
+
+    def validate_workplace(self, value):
+        # Same belt and braces as the department, and it matters more here: a
+        # workplace from another company would decide this person's time zone.
+        if value is not None and value.tenant_id != self.context["request"].user.tenant_id:
+            raise serializers.ValidationError(_("That workplace belongs to another company."))
         return value
 
     def validate_department(self, value):

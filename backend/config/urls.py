@@ -30,6 +30,7 @@ from apps.users.views import (
     SignOutView,
     SignUpView,
     UserViewSet,
+    WorkplaceViewSet,
 )
 
 router = DefaultRouter()
@@ -40,6 +41,7 @@ router.register("corrections", CorrectionViewSet, basename="correction")
 router.register("absences", AbsenceViewSet, basename="absence")
 router.register("shift-patterns", ShiftPatternViewSet, basename="shift-pattern")
 router.register("shifts", ShiftViewSet, basename="shift")
+router.register("workplaces", WorkplaceViewSet, basename="workplace")
 router.register("audit", AuditLogViewSet, basename="audit")
 router.register("applications", ApplicationViewSet, basename="application")
 
