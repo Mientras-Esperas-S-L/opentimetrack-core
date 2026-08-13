@@ -931,17 +931,40 @@ class Command(BaseCommand):
     # ------------------------------------------------------------------ tidy up
 
     def _wipe(self):
-        # La vecina primero: no tiene fichajes, así que se va de un tirón.
-        Tenant.objects.filter(tax_id=NEIGHBOUR_TAX_ID).delete()
+        """Tira los datos de muestra. Solo con DEBUG, y solo estos.
 
-        company = Tenant.objects.filter(tax_id=TAX_ID).first()
-        if company is None:
-            return
+        El rastro es inmutable **en la base**: tres triggers rechazan UPDATE,
+        DELETE y TRUNCATE, y hacen bien --- «un rastro que puede editar aquel a
+        quien incrimina no es prueba». Además `AuditLog.tenant` es PROTECT, que
+        lo comprueba Django antes de llegar a la base, así que sin quitar esas
+        filas tampoco se puede borrar la empresa.
 
-        # Order matters, and the reason is a feature: Punch.employee is PROTECT,
-        # so a person with recorded working time cannot be deleted. Clearing
-        # sample data means dismantling it deliberately, which is exactly the
-        # friction the model is meant to create.
+        O sea que un reseteo tiene que apartar los triggers a propósito. Es
+        defendible aquí y en ningún otro sitio: este comando se niega a correr
+        sin DEBUG y su cometido es tirar datos de mentira. Con `finally` para que
+        un fallo a mitad no los deje caídos, que sería dejar el rastro
+        desprotegido sin decirlo.
+        """
+        from django.db import connection
+
+        with connection.cursor() as cursor:
+            cursor.execute("ALTER TABLE audit_auditlog DISABLE TRIGGER USER")
+        try:
+            for tax_id in (NEIGHBOUR_TAX_ID, TAX_ID):
+                company = Tenant.objects.filter(tax_id=tax_id).first()
+                if company is not None:
+                    self._delete_everything(company)
+        finally:
+            with connection.cursor() as cursor:
+                cursor.execute("ALTER TABLE audit_auditlog ENABLE TRIGGER USER")
+
+    def _delete_everything(self, company):
+        """El orden importa, y eso es una virtud.
+
+        `Punch.employee` es PROTECT, así que una persona con jornada registrada
+        no se puede borrar. Tirar los datos de muestra obliga a desmontarlos a
+        mano, que es justo la fricción que el modelo busca.
+        """
         from apps.audit.models import AuditLog
         from apps.punches.corrections import PunchCorrection
 
