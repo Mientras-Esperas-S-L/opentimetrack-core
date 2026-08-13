@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 13 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 14 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -55,9 +55,23 @@ vuelve a una limpia.
 | Art. 4.b — consentimiento de las dos partes | limpia | 13/08 | — |
 | Constancia de la consulta a la RLT | limpia | 14/08 v13 | **no había dónde declararlo**; ahora consta la vía, cuál, desde cuándo y la consulta |
 | Calendario con dos meses de antelación (38.3) | limpia | 13/08 v9 | **estaba solo citado**; ahora se avisa, y solo cuando las pone la empresa |
-| RGPD / art. 88 LOPDGDD | a medias | 13/08 | IP ajena cerrada; falta repasar la purga de metadatos |
+| RGPD / art. 88 LOPDGDD | limpia | 14/08 v14 | **una empresa de baja guardaba las IP para siempre**; y el rastro había dejado de ser inmutable |
 
 ## Hallazgos abiertos
+
+- **La IP del rastro de auditoría no caduca, y por diseño no puede caducar.**
+  El fichaje suelta la suya al año; la entrada del rastro que describe ese mismo
+  hecho la conserva indefinidamente, y el razonamiento de la purga ---«pasada
+  esa ventana no hay base para tenerla»--- no distingue entre las dos.
+
+  Intenté purgarla y **no se puede**: la tabla es *append-only* por tres
+  triggers, que rechazan UPDATE, DELETE y TRUNCATE. Esa restricción es una
+  decisión más fuerte que mi mejora y no la voy a saltar por mi cuenta.
+
+  Es una tensión real entre dos principios correctos, y la salida limpia no es
+  borrar después sino **no guardarla**: minimizar al recoger, que además es lo
+  que el RGPD prefiere. Si se decide, la pregunta es qué se pierde para
+  investigar un incidente. **Por decidir, no por arreglar.**
 
 - **`app/attendance` hace tres consultas por persona.** Medido: 604 consultas y
   215 ms con doscientas personas, 68 y 142 ms con veinte. Con mil serán tres mil
@@ -94,6 +108,35 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 14 — La purga de metadatos, y una garantía que se había evaporado.**
+
+El área estaba bien cuidada de partida: doce pruebas, cron documentado, tarea de
+Celery, y el purgado de `evidence` razonado por escrito ---no entra en el hash
+justo para que se pueda borrar, que es el error que `_hash_v1` cometió con la
+IP---. Aun así salieron dos cosas.
+
+**Una empresa de baja conservaba las IP para siempre.** El bucle recorría solo
+las activas, y el comando terminaba diciendo «Purged 0 events»: todo iba bien.
+El plazo no deja de correr porque una empresa deje de usar el producto, y esos
+son justo los datos que ya no mira nadie.
+
+Y lo gordo, que salió de intentar arreglar otra cosa: **el rastro había dejado
+de ser inmutable**. La migración que crea los tres triggers figuraba aplicada y
+su función existía, pero los triggers no estaban en la base de desarrollo. Se
+podía editar y borrar el rastro sin que nada chistara --- lo contrario de lo que
+esa misma migración declara: «un rastro que puede editar aquel a quien incrimina
+no es prueba».
+
+Lo descubrí porque la **prueba** rechazaba el UPDATE y la base no. Ahí está lo
+que hay que quedarse: las pruebas corren sus migraciones enteras y siempre ven
+los triggers, o sea que son el único sitio donde este fallo **no podía** salir.
+Por eso la comprobación vive ahora en `/api/health/`, que le pregunta a la base
+que está sirviendo, con `ensure_append_only` para reponerlos --- una sonda que
+avisa sin dar salida deja al operador leyendo migraciones.
+
+De rebote, `seed_demo --reset` estaba roto y nadie lo sabía: borraba entradas
+del rastro, y solo funcionaba porque los triggers faltaban.
 
 **Vuelta 13 — La constancia de cómo se organizó el registro. Última área.**
 

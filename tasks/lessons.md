@@ -429,3 +429,20 @@ agreement» salió como «Aplicada con acuerdo».
 **Regla:** después de `makemessages`, `grep -c '^#, fuzzy'` y revisar **todas**.
 Hay una prueba que lo hace en `apps/common/tests/test_exceptions.py`; si se toca
 un texto ya traducido, es la que avisa.
+
+## Una garantía que solo vive en una migración se puede evaporar (14/08/2026)
+
+El rastro de auditoría es *append-only* por tres triggers de PostgreSQL. La
+migración figuraba aplicada, su función existía, y **los triggers no estaban en
+la base**: se podía editar y borrar el rastro sin que nada chistara.
+
+Lo que más enseña es cómo apareció: la **prueba** rechazaba el UPDATE y la base
+de desarrollo lo aceptaba. Las pruebas corren sus migraciones desde cero y ven
+siempre los triggers, así que eran el único sitio donde este fallo no podía
+salir. Una prueba verde era, aquí, la prueba de nada.
+
+**Regla:** lo que vive en el esquema y no en el código —triggers, restricciones,
+extensiones, índices parciales— hay que **preguntárselo a la base que está
+sirviendo**, no a la de las pruebas. En OTT eso es `/api/health/`, que responde
+503 si faltan. Y toda garantía de ese tipo necesita su comando de reparación: sin
+él, avisar solo sirve para asustar.
