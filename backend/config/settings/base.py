@@ -257,6 +257,9 @@ SPECTACULAR_SETTINGS = {
         # importing the other way would close a cycle --- and without this the
         # generator names one set of choices twice.
         "WorkModeEnum": "apps.punches.models.WorkMode.choices",
+        # Igual: cómo se salda una hora extra sale en la propuesta y en el
+        # intervalo ya saldado, y son el mismo juego de valores.
+        "OvertimeSettlementEnum": "apps.punches.models.OvertimeSettlement.choices",
     },
 }
 

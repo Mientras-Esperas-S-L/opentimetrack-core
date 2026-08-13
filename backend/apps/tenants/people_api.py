@@ -150,7 +150,15 @@ class ApplicationPeopleView(APIView):
     permission_classes = [HasApplicationScope]
     required_scope = ApplicationScope.READ_PEOPLE
 
+    # El nombre de la operación se pone a mano porque el generador lo saca de
+    # la ruta y aquí las dos lecturas dan el mismo: `/app/people/` y
+    # `/app/people/{reference}/` se quedan las dos en «app_people_retrieve», y
+    # la colisión la resuelve él poniendo un número al final. Un cliente
+    # generado del esquema acaba con `app_people_retrieve` y
+    # `app_people_retrieve_2`, y cuál es cuál depende del orden en que se
+    # recorrieron las rutas: cambia solo el día que se añada otra.
     @extend_schema(
+        operation_id="app_people_list",
         summary="List people",
         parameters=[
             OpenApiParameter("active", bool, description="Solo quien está de alta"),
@@ -241,7 +249,11 @@ class ApplicationPersonView(APIView):
             else ApplicationScope.READ_PEOPLE
         )
 
-    @extend_schema(summary="Read one person by external reference", responses={200: dict})
+    @extend_schema(
+        operation_id="app_people_retrieve",
+        summary="Read one person by external reference",
+        responses={200: dict},
+    )
     def get(self, request, reference: str):
         company = request.user.application.tenant
         person = _resolve(reference, company)
