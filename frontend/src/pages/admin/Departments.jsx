@@ -24,7 +24,7 @@ import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
 function DepartmentDialog({ open, department, onClose, onSave, saving, error }) {
-  const [form, setForm] = useState({ name: '', description: '', managers: [] })
+  const [form, setForm] = useState({ name: '', description: '', managers: [], members: [] })
   const [loaded, setLoaded] = useState(null)
 
   if (open && loaded !== (department?.id ?? 'new')) {
@@ -33,6 +33,7 @@ function DepartmentDialog({ open, department, onClose, onSave, saving, error }) 
       name: department?.name ?? '',
       description: department?.description ?? '',
       managers: department?.managers ?? [],
+      members: department?.members ?? [],
     })
   }
   if (!open && loaded !== null) setLoaded(null)
@@ -87,6 +88,30 @@ function DepartmentDialog({ open, department, onClose, onSave, saving, error }) 
                 ]),
               )}
               helperText="Responsables que pueden leer y resolver por su gente. Sin nadie aquí, todos los responsables de la empresa ven a todo el mundo."
+            />
+
+            {/* Quién está dentro. Antes esto no se podía hacer aquí: los
+                miembros se asignaban desde la ficha de cada persona, así que
+                componer un departamento de quince eran quince diálogos --- en
+                la pantalla que se llama «Departamentos».
+
+                Es una lista completa, no un «añadir»: quien se quite de aquí
+                se queda sin departamento, que es un estado normal. Y cada
+                cambio se apunta persona a persona en el registro, porque
+                cambiar de departamento decide quién puede leer el registro de
+                quién. */}
+            <EmployeePicker
+              multiple
+              label="Quién está dentro"
+              value={form.members}
+              onChange={(ids) => setForm({ ...form, members: ids })}
+              knownNames={Object.fromEntries(
+                (department?.members ?? []).map((id, index) => [
+                  id,
+                  department?.member_names?.[index] ?? '',
+                ]),
+              )}
+              helperText="Las personas del departamento. Quitar a alguien de aquí lo deja sin departamento, no lo da de baja."
             />
           </Stack>
         </DialogContent>
@@ -165,9 +190,19 @@ export default function Departments() {
           {isAdmin ? 'Crea el primero.' : 'Puede crearlos la administración.'}
         </Empty>
       ) : (
-        <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
+        <Box
+          component="ul"
+          sx={{
+            display: 'grid',
+            gap: 1.5,
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            listStyle: 'none',
+            m: 0,
+            p: 0,
+          }}
+        >
           {rows.map((department) => (
-            <Paper key={department.id} variant="outlined" sx={{ p: 2 }}>
+            <Paper component="li" key={department.id} variant="outlined" sx={{ p: 2 }}>
               <Stack
                 direction="row"
                 sx={{ justifyContent: 'space-between', alignItems: 'flex-start', gap: 2 }}

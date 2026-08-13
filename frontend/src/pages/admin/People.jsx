@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Checkbox from '@mui/material/Checkbox'
 import Chip from '@mui/material/Chip'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
@@ -48,8 +49,10 @@ import {
   PageHeader,
   Pager,
 } from '../../components/common.jsx'
+import { SelectionBar } from '../../components/selection.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useDebounced } from '../../hooks/useDebounced.js'
+import { useSelection } from '../../hooks/useSelection.js'
 
 const ROLES = [
   { value: 'EMPLOYEE', label: 'Persona trabajadora' },
@@ -336,9 +339,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                     regime: event.target.value,
                     // Cleared here rather than refused later: the server does
                     // not accept a figure on a regime that has none.
-                    contracted_hours: takesHours(event.target.value)
-                      ? form.contracted_hours
-                      : '',
+                    contracted_hours: takesHours(event.target.value) ? form.contracted_hours : '',
                   })
                 }
                 helperText={REGIMES.find((r) => r.value === form.regime)?.hint}
@@ -601,17 +602,31 @@ export default function People() {
   const [sent, setSent] = useState(null) // address the last link went to
   const [confirming, setConfirming] = useState(null)
   const [page, setPage] = useState(1)
+  const [dept, setDept] = useState('')
+  const [place, setPlace] = useState('')
+  const [role, setRole] = useState('')
+  const [enCurso, setEnCurso] = useState(null)
+  //: A dónde se está moviendo lo marcado: `{ que: 'department' | 'workplace',
+  //: ancla }`. Un menú y no un desplegable dentro de la barra, porque la barra
+  //: flota abajo y un desplegable ahí abre su lista fuera de la pantalla.
+  const [moviendo, setMoviendo] = useState(null)
 
   // The box updates on every keystroke --- it has to, or typing feels broken ---
   // but the request waits for a pause.
   const asked = useDebounced(search)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['employees', { asked, showInactive, page }],
+    queryKey: ['employees', { asked, showInactive, page, dept, place, role }],
     queryFn: () =>
       getEmployees({
         search: asked || undefined,
         ...(showInactive ? {} : { is_active: true }),
+        // «ninguno» no es un identificador: es la pregunta «¿quién está sin
+        // departamento?», que con `?department=` vacío no se puede formular
+        // porque un parámetro vacío es igual que no mandarlo.
+        ...(dept === 'ninguno' ? { no_department: true } : dept ? { department: dept } : {}),
+        ...(place ? { workplace: place } : {}),
+        ...(role ? { role } : {}),
         page,
       }),
     placeholderData: (previous) => previous,
@@ -619,7 +634,15 @@ export default function People() {
 
   const { data: departments = [] } = useQuery({
     queryKey: ['departments'],
-    queryFn: getDepartments,
+    // Envuelta, no pasada pelada: React Query llama a `queryFn` con su propio
+    // contexto ---`{ client, queryKey, signal }`--- y `getDepartments` toma ese
+    // objeto como parámetros de consulta. La petición salía siendo
+    // `/departments/?client=[object Object]&queryKey[]=departments&signal=...`.
+    //
+    // Hoy no rompe nada porque DRF ignora lo que no conoce, y por eso llevaba
+    // ahí sin que nadie lo viera. Rompería el día que exista un filtro que se
+    // llame como una de esas tres claves.
+    queryFn: () => getDepartments(),
   })
   const { data: workplaces = [] } = useQuery({
     queryKey: ['workplaces'],
@@ -657,6 +680,54 @@ export default function People() {
   })
 
   const rows = data?.rows ?? []
+  // Solo quien está de alta: las tres acciones de la barra no le aplican a
+  // quien ya está de baja, y una casilla que no hace nada es peor que ninguna.
+  const visibles = rows.filter((person) => person.is_active)
+  // El mismo mecanismo que «Por decidir». Empecé escribiendo uno a medida aquí
+  // y era el mismo: poda lo que desaparece de la lista al leer, y «todo» es lo
+  // que se está viendo, no lo que hay en la empresa.
+  const pick = useSelection(visibles)
+  const marcadasAqui = visibles.filter((person) => pick.isSelected(person))
+
+  /** Aplica el mismo cambio a cada persona marcada, una petición por persona.
+   *
+   *  Una a una y no un endpoint de lote, a propósito. El camino individual ya
+   *  comprueba permisos y **deja su apunte en el registro con nombre y
+   *  apellidos**, y cambiar de departamento decide quién puede leer el
+   *  registro de quién: una reorganización de veinte personas no puede
+   *  aparecer como un solo apunte sin nombres. Un endpoint de lote tendría que
+   *  reproducir las dos cosas, y sería otro sitio donde equivocarse.
+   *
+   *  El precio es que puede fallar a medias, así que se cuenta y se dice: «12
+   *  de 15», y las tres que no, con su motivo.
+   */
+  const enLote = async (etiqueta, cambio) => {
+    const gente = marcadasAqui
+    setEnCurso({ etiqueta, hechas: 0, total: gente.length })
+    const fallos = []
+
+    for (const [indice, person] of gente.entries()) {
+      try {
+        await updateEmployee(person.id, cambio)
+      } catch (fallo) {
+        fallos.push(`${person.first_name} ${person.last_name}`.trim() || person.email)
+        void fallo
+      }
+      setEnCurso({ etiqueta, hechas: indice + 1, total: gente.length })
+    }
+
+    setEnCurso(null)
+    pick.clear()
+    queryClient.invalidateQueries({ queryKey: ['employees'] })
+    queryClient.invalidateQueries({ queryKey: ['departments'] })
+    queryClient.invalidateQueries({ queryKey: ['overview'] })
+
+    if (fallos.length) {
+      setError({
+        message: `${gente.length - fallos.length} de ${gente.length}. No se pudo con: ${fallos.join(', ')}.`,
+      })
+    }
+  }
 
   return (
     <>
@@ -707,6 +778,66 @@ export default function People() {
             },
           }}
         />
+        {/* Los tres que separan de verdad a la plantilla. «Sin departamento»
+            es su propia opción y no un hueco en blanco: es la primera pregunta
+            de cualquier reorganización ---quién se ha quedado suelto--- y sin
+            ella hay que mirarlo a ojo fila por fila. */}
+        <TextField
+          select
+          size="small"
+          label="Departamento"
+          value={dept}
+          onChange={(event) => {
+            setDept(event.target.value)
+            setPage(1)
+          }}
+          sx={{ minWidth: 190 }}
+        >
+          <MenuItem value="">Todos</MenuItem>
+          <MenuItem value="ninguno">Sin departamento</MenuItem>
+          {departments.map((department) => (
+            <MenuItem key={department.id} value={department.id}>
+              {department.name}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <TextField
+          select
+          size="small"
+          label="Centro"
+          value={place}
+          onChange={(event) => {
+            setPlace(event.target.value)
+            setPage(1)
+          }}
+          sx={{ minWidth: 170 }}
+        >
+          <MenuItem value="">Todos</MenuItem>
+          {workplaces.map((workplace) => (
+            <MenuItem key={workplace.id} value={workplace.id}>
+              {workplace.name}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <TextField
+          select
+          size="small"
+          label="Perfil"
+          value={role}
+          onChange={(event) => {
+            setRole(event.target.value)
+            setPage(1)
+          }}
+          sx={{ minWidth: 150 }}
+        >
+          <MenuItem value="">Todos</MenuItem>
+          <MenuItem value="EMPLOYEE">Operario</MenuItem>
+          <MenuItem value="MANAGER">Responsable</MenuItem>
+          <MenuItem value="ADMIN">Administración</MenuItem>
+        </TextField>
+
         <FormControlLabel
           control={
             <Switch
@@ -721,6 +852,47 @@ export default function People() {
         />
       </Stack>
 
+      {isAdmin && (
+        <SelectionBar
+          selection={pick}
+          noun="personas"
+          busy={Boolean(enCurso)}
+          actions={[
+            {
+              label: 'Mover a departamento…',
+              onClick: (event) => setMoviendo({ que: 'department', ancla: event.currentTarget }),
+            },
+            {
+              label: 'Cambiar de centro…',
+              variant: 'outlined',
+              onClick: (event) => setMoviendo({ que: 'workplace', ancla: event.currentTarget }),
+            },
+            {
+              // Lo irreversible pregunta, y la pregunta dice el número.
+              // «¿Estás seguro?» no es una pregunta: no dice a cuánta gente
+              // afecta.
+              label: 'Dar de baja',
+              variant: 'text',
+              color: 'inherit',
+              onClick: () =>
+                setConfirming({
+                  title:
+                    marcadasAqui.length === 1
+                      ? 'Dar de baja'
+                      : `Dar de baja a ${marcadasAqui.length} personas`,
+                  body: marcadasAqui
+                    .map((p) => `${p.first_name} ${p.last_name}`.trim() || p.email)
+                    .join(', '),
+                  detail:
+                    'Dejan de poder fichar. No se borra nada: sus registros se conservan los años que diga la empresa, y volver a darles de alta es inmediato.',
+                  verb: 'Dar de baja',
+                  run: () => enLote('Dando de baja', { is_active: false }),
+                }),
+            },
+          ]}
+        />
+      )}
+
       {isLoading ? (
         <Loading rows={5} />
       ) : rows.length === 0 ? (
@@ -732,6 +904,22 @@ export default function People() {
           <Table size="small">
             <TableHead>
               <TableRow>
+                {isAdmin && (
+                  <TableCell padding="checkbox">
+                    {/* «Todas» son las de esta página, no las de la empresa.
+                        Un seleccionar-todo que abarcara páginas sin enseñarlas
+                        actuaría sobre gente que nadie ha visto. */}
+                    <Checkbox
+                      size="small"
+                      slotProps={{
+                        input: { 'aria-label': 'Seleccionar todas las de esta página' },
+                      }}
+                      checked={pick.allSelected}
+                      indeterminate={pick.someSelected}
+                      onChange={pick.toggleAll}
+                    />
+                  </TableCell>
+                )}
                 <TableCell>Nombre</TableCell>
                 <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Correo</TableCell>
                 <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Nº</TableCell>
@@ -742,6 +930,25 @@ export default function People() {
             <TableBody>
               {rows.map((person) => (
                 <TableRow key={person.id} hover sx={{ opacity: person.is_active ? 1 : 0.55 }}>
+                  {isAdmin && (
+                    <TableCell padding="checkbox">
+                      {/* Quien ya está de baja no se marca: las tres acciones
+                          de la barra no le aplican, y una casilla que no hace
+                          nada es peor que ninguna. */}
+                      {person.is_active && (
+                        <Checkbox
+                          size="small"
+                          slotProps={{
+                            input: {
+                              'aria-label': `Seleccionar a ${`${person.first_name} ${person.last_name}`.trim() || person.email}`,
+                            },
+                          }}
+                          checked={pick.isSelected(person)}
+                          onChange={() => pick.toggle(person)}
+                        />
+                      )}
+                    </TableCell>
+                  )}
                   <TableCell>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
                       {`${person.first_name} ${person.last_name}`.trim() || person.email}
@@ -785,8 +992,7 @@ export default function People() {
                         onDeactivate={() =>
                           setConfirming({
                             title: 'Dar de baja',
-                            body:
-                              `${person.first_name} ${person.last_name}`.trim() || person.email,
+                            body: `${person.first_name} ${person.last_name}`.trim() || person.email,
                             detail:
                               'Deja de poder fichar y de entrar. Sus registros se conservan y puede volver a darse de alta cuando haga falta.',
                             verb: 'Dar de baja',
@@ -824,6 +1030,34 @@ export default function People() {
         }}
         onSave={save.mutate}
       />
+
+      {/* Adónde van los marcados. El mismo menú sirve para departamento y
+          para centro: lo único que cambia es la lista y qué campo se manda. */}
+      <Menu
+        anchorEl={moviendo?.ancla ?? null}
+        open={Boolean(moviendo)}
+        onClose={() => setMoviendo(null)}
+      >
+        <MenuItem
+          onClick={() => {
+            enLote('Moviendo', { [moviendo.que]: null })
+            setMoviendo(null)
+          }}
+        >
+          {moviendo?.que === 'workplace' ? 'Sin centro' : 'Sin departamento'}
+        </MenuItem>
+        {(moviendo?.que === 'workplace' ? workplaces : departments).map((destino) => (
+          <MenuItem
+            key={destino.id}
+            onClick={() => {
+              enLote('Moviendo', { [moviendo.que]: destino.id })
+              setMoviendo(null)
+            }}
+          >
+            {destino.name}
+          </MenuItem>
+        ))}
+      </Menu>
 
       <ConfirmDialog
         request={confirming}

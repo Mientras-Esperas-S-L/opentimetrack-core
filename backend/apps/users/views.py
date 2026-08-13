@@ -243,9 +243,40 @@ class PeopleFilter(django_filters.FilterSet):
 
     can_manage = django_filters.BooleanFilter(method="filter_can_manage")
 
+    #: «Sin departamento», que no se puede pedir con `?department=`: un
+    #: parámetro vacío es indistinguible de no mandarlo. Y es la primera
+    #: pregunta de cualquier reorganización --- quién se ha quedado suelto ---
+    #: así que necesita su propio filtro en vez de mirarse a ojo.
+    no_department = django_filters.BooleanFilter(field_name="department", lookup_expr="isnull")
+
+    #: Declarados a mano, y no por `Meta.fields`, porque generados solos **no
+    #: funcionaban**: `django-filter` construye la lista de opciones válidas al
+    #: importar el módulo, y en ese momento no hay empresa en el contexto. Los
+    #: gestores de un `TenantOwnedModel` devuelven vacío sin empresa, así que la
+    #: lista quedaba vacía para siempre y **cualquier** identificador daba
+    #: «Escoja una opción válida».
+    #:
+    #: `?department=` llevaba así desde que existe: la API lo anunciaba y no
+    #: filtraba nada. Salió el 13/08/2026 al estrenar el filtro en la pantalla
+    #: de Personas --- por eso ahora hay una prueba que lo pide con un
+    #: identificador de verdad.
+    #:
+    #: Con `queryset` como función, se resuelve dentro de la petición y ve lo
+    #: que tiene que ver.
+    department = django_filters.ModelChoiceFilter(queryset=lambda request: Department.objects.all())
+    workplace = django_filters.ModelChoiceFilter(queryset=lambda request: Workplace.objects.all())
+
     class Meta:
         model = User
-        fields = ["role", "department", "is_active", "is_worker_representative"]
+        fields = [
+            "role",
+            "department",
+            # El centro decide los festivos locales y la zona horaria en la que
+            # se mide la jornada, así que separar por él no es cosmético.
+            "workplace",
+            "is_active",
+            "is_worker_representative",
+        ]
 
     def filter_can_manage(self, queryset, name, value):
         managing = {Role.MANAGER, Role.ADMIN}

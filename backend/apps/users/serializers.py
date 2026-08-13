@@ -15,6 +15,11 @@ from apps.users.models import Department, Role, Workplace
 
 User = get_user_model()
 
+#: Para distinguir «no mandaron el campo» de «lo mandaron vacío». `None` no
+#: sirve de centinela porque una lista vacía es un valor legítimo con
+#: significado propio, y confundir los dos vacía lo que nadie pidió vaciar.
+_SIN_TOCAR = object()
+
 
 class TenantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -84,6 +89,15 @@ class DepartmentSerializer(serializers.ModelSerializer):
     people_count = serializers.SerializerMethodField()
     manager_names = serializers.SerializerMethodField()
 
+    #: Quién está dentro. El vínculo vive en la persona ---`User.department`---
+    #: así que este campo es el lado inverso y hay que escribirlo a mano.
+    #:
+    #: Existe porque sin él la pantalla que se llama «Departamentos» era justo
+    #: donde no se podía componer uno: los miembros se asignaban desde la ficha
+    #: de cada persona, de una en una. Quince personas, quince diálogos.
+    members = serializers.ListField(child=serializers.UUIDField(), required=False)
+    member_names = serializers.SerializerMethodField()
+
     class Meta:
         model = Department
         fields = [
@@ -95,14 +109,91 @@ class DepartmentSerializer(serializers.ModelSerializer):
             # Who answers for it, which is what decides who reads whose record.
             "managers",
             "manager_names",
+            # Y quién está dentro, que es cosa distinta: alguien de oficina
+            # puede llevar la brigada sin pertenecer a ella.
+            "members",
+            "member_names",
         ]
-        read_only_fields = ["id", "people_count", "manager_names"]
+        read_only_fields = ["id", "people_count", "manager_names", "member_names"]
 
     def get_people_count(self, obj) -> int:
         return obj.users.filter(is_active=True).count()
 
     def get_manager_names(self, obj) -> list[str]:
         return [person.get_full_name() for person in obj.managers.all()]
+
+    def get_member_names(self, obj) -> list[str]:
+        return [person.get_full_name() for person in obj.users.filter(is_active=True)]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data["members"] = [str(person.id) for person in instance.users.filter(is_active=True)]
+        return data
+
+    def create(self, validated_data):
+        members = validated_data.pop("members", None)
+        department = super().create(validated_data)
+        self._set_members(department, members)
+        return department
+
+    def update(self, instance, validated_data):
+        # `pop` con centinela y no `.get(...) or []`: **omitir** el campo en un
+        # PATCH significa «no lo toques», y una lista vacía significa «vacíalo».
+        # Confundirlos aquí dejaría sin departamento a toda la plantilla cada
+        # vez que alguien renombra uno.
+        members = validated_data.pop("members", _SIN_TOCAR)
+        department = super().update(instance, validated_data)
+        if members is not _SIN_TOCAR:
+            self._set_members(department, members)
+        return department
+
+    def _set_members(self, department, members) -> None:
+        """Deja dentro exactamente a quien diga la lista, y a nadie más.
+
+        Quien sale se queda **sin departamento**, no se borra ni se desactiva:
+        estar fuera de un departamento es un estado normal, y el modelo lo
+        permite a propósito.
+
+        Cada cambio se apunta persona a persona en el registro de actividad. Es
+        lo mismo que hace la ficha individual, y tiene que seguir siendo así:
+        cambiar de departamento decide quién puede leer el registro de quién, y
+        una reorganización de veinte personas no puede aparecer como un solo
+        apunte sin nombres.
+        """
+        if members is None:
+            return
+
+        from apps.audit.models import AuditAction
+        from apps.audit.services import record
+
+        company = department.tenant
+        request = self.context.get("request")
+        actor = getattr(request, "user", None)
+
+        quiere = set(members)
+        dentro = {person.id for person in department.users.all()}
+
+        entran = User.objects.filter(tenant=company, pk__in=quiere - dentro)
+        # Una persona que no es de esta empresa sencillamente no aparece en la
+        # consulta, así que un identificador ajeno no hace nada. Silencioso a
+        # propósito: decir «esa persona no existe aquí» confirmaría que existe
+        # en algún sitio.
+        salen = User.objects.filter(tenant=company, pk__in=dentro - quiere)
+
+        for person in [*entran, *salen]:
+            antes = person.department.name if person.department_id else ""
+            person.department = department if person.id in quiere else None
+            person.save(update_fields=["department", "updated_at"])
+            record(
+                action=AuditAction.PERSON_UPDATED,
+                actor=actor,
+                target=person,
+                target_label=person.get_full_name() or person.email,
+                changes={
+                    "department": [antes, person.department.name if person.department else ""]
+                },
+                request=request,
+            )
 
     def validate_managers(self, value):
         """Somebody in this company, and somebody who can actually manage.

@@ -67,6 +67,13 @@ export function SelectionBar({ selection, noun = 'elementos', actions = [], busy
     >
       <Paper
         elevation={8}
+        // Es una barra de acciones, y decirlo tiene dos efectos: un lector de
+        // pantalla la anuncia como tal en vez de leer botones sueltos, y deja
+        // de confundirse con el resto de la página --- su contador dice «19
+        // personas» y el del paginador también, así que sin un nombre no había
+        // forma de referirse a uno de los dos.
+        role="toolbar"
+        aria-label="Acciones sobre lo seleccionado"
         sx={{
           pointerEvents: 'auto',
           px: 2,
