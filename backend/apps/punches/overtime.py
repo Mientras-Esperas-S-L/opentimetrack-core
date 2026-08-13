@@ -19,6 +19,7 @@ from datetime import date, timedelta
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from apps import legal
 from apps.common.exceptions import BusinessRuleError
 from apps.common.four_eyes import refuse_self_decision
 from apps.punches.models import OvertimeDecision, OvertimeSettlement
@@ -44,6 +45,27 @@ def pending_overtime(*, company, first: date, last: date, scope=None) -> list[di
         for d in OvertimeDecision.objects.filter(day__gte=first, day__lte=last)
     }
 
+    # Quién tiene la condición de trabajador nocturno, que es lo que el art.
+    # 36.1 usa para prohibirle las horas extra: «los trabajadores nocturnos no
+    # podrán realizar horas extraordinarias».
+    #
+    # El producto ya sabía decirlo ---`holds_night_worker_status`, y el cuadrante
+    # lo avisa--- pero esta cola no se lo preguntaba nunca. O sea que el aviso
+    # del cuadrante mencionaba «una prohibición de horas extra» y luego se
+    # autorizaban aquí sin que nada la nombrara. Se dice donde se decide.
+    #
+    # Con los turnos que ya están cargados arriba, así que no cuesta consultas:
+    # la respuesta declarada por la empresa se lee del campo, y solo el
+    # «automático» necesita mirar el cuadrante.
+    night = legal.for_company(company).night
+    por_persona: dict = {}
+    for shift in shifts:
+        por_persona.setdefault(shift.employee_id, []).append(shift)
+    nocturnos = {
+        employee_id: roster[0].employee.holds_night_worker_status(night, roster)
+        for employee_id, roster in por_persona.items()
+    }
+
     rows = []
     for shift in shifts.order_by("employee_id", "day"):
         recon = day_reconciliation(employee=shift.employee, company=company, day=shift.day)
@@ -63,6 +85,9 @@ def pending_overtime(*, company, first: date, last: date, scope=None) -> list[di
                 # A stale decision travels with the row so the screen can say
                 # "you authorised 30, it is now 120" instead of looking new.
                 "previous": decision.as_summary() if decision else None,
+                # Viaja con la fila por lo mismo: quien decide lo necesita **al
+                # decidir**, y una segunda consulta significa que nadie lo mira.
+                "night_worker": nocturnos.get(shift.employee_id, False),
             }
         )
     return rows

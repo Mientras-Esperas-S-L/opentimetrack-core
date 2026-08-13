@@ -82,6 +82,10 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
   const total = rows.reduce((sum, row) => sum + row.minutes, 0)
   const reopened = rows.filter((row) => row.previous).length
   const used = rows[0]?.used_this_year
+  // Art. 36.1: «Los trabajadores nocturnos no podrán realizar horas
+  // extraordinarias.» El aviso del cuadrante ya mencionaba esta prohibición y
+  // aquí, que es donde se autorizan, no la nombraba nadie.
+  const nocturno = rows.some((row) => row.night_worker)
 
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
@@ -106,6 +110,13 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
               </>
             )}
           </Typography>
+          {nocturno && (
+            <Typography variant="caption" color="error.main" sx={{ display: 'block', mt: 0.5 }}>
+              Tiene la condición de trabajadora o trabajador nocturno, y el art. 36.1 ET prohíbe las
+              horas extraordinarias a quien la tenga. Las horas ya se trabajaron y hay que
+              clasificarlas; lo que no puede es repetirse.
+            </Typography>
+          )}
           {/* El tope del art. 35.2. Autorizar sin saber que esta persona va
               por 78 de 80 es decidir a ciegas sobre un límite legal --- y el
               ajuste existía desde el principio sin que nadie lo leyera. */}
