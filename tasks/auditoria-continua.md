@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 10 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 11 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -50,7 +50,7 @@ vuelve a una limpia.
 | Art. 35 — horas extra y su tope | limpia | 13/08 | — |
 | Art. 36 — nocturno y turnos | a medias | 13/08 | falta la fecha de la evaluación de salud |
 | Art. 37.1/37.2 — descanso semanal y festivos | limpia | 13/08 | — |
-| Art. 37.3 — permisos retribuidos | sin tocar | — | — |
+| Art. 37.3 — permisos retribuidos | limpia | 13/08 v11 | **una empresa nueva se quedaba sin un solo permiso**; el catálogo cuadra con el articulado |
 | Art. 38 — vacaciones y recuperación | limpia | 13/08 | — |
 | Art. 4.b — consentimiento de las dos partes | limpia | 13/08 | — |
 | Constancia de la consulta a la RLT | sin tocar | — | «ausente» en la revisión del 13/08 |
@@ -76,6 +76,12 @@ vuelve a una limpia.
   las hay sin decir cuántas. Con cien personas serán dos segundos y medio y la
   pantalla de decisiones se notará. Hace falta una consulta agregada, no un
   bucle por persona y día.
+- **El catálogo de permisos no se puede editar desde ninguna pantalla.** Se
+  siembra con la empresa y se puede recargar desde Ajustes, pero cada permiso
+  tiene su cifra, su unidad y su periodo, y el convenio mejora cualquiera de
+  ellos --- que es la razón entera de que el catálogo se copie en vez de leerse
+  del marco. Hoy esa mejora solo se puede aplicar por API. El `LeaveTypeViewSet`
+  ya es un ModelViewSet completo: falta la pantalla.
 - **Fichar no ofrece pausa ni modo de trabajo.** El modelo los soporta
   ---`PunchInterval.BREAK`, `work_mode`--- y la pantalla solo tiene un botón.
   Puede ser deliberado (un toque, sin decisiones) pero entonces el descanso del
@@ -88,6 +94,29 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 11 — El art. 37.3, y un fallo que solo se veía fuera de desarrollo.**
+
+Lo que cuadraba, y merece decirse porque es donde más fácil habría sido
+equivocarse: **el catálogo está bien contra el articulado**. El RDL 5/2023
+partió la antigua letra b en dos, subió la hospitalización de dos días a cinco y
+sacó el fallecimiento a una letra nueva, «b bis», sin correr las demás --- y el
+catálogo cita b, b bis, c, d, e, f exactamente así. Los quince días del
+matrimonio son naturales, el fallecimiento guarda dos más dos de desplazamiento
+en vez de un cuatro que no distinguiría los casos, y los del «tiempo
+indispensable» no llevan tope inventado.
+
+Y el fallo: **una empresa recién dada de alta se quedaba con cero permisos**. Se
+creaba la empresa, se creaba su administradora, y el catálogo no se sembraba. El
+desplegable de «Qué pides» salía vacío y nadie podía pedir un matrimonio, un
+fallecimiento ni una hospitalización.
+
+Lo interesante es por qué no se había visto: el endpoint que siembra el catálogo
+existía, `seedLeaveTypes` estaba exportado en el frontend, y **no lo llamaba
+ninguna pantalla**. Lo único que lo usaba era el comando de datos de
+demostración --- o sea que funcionaba en desarrollo y en ningún sitio más, que es
+la forma más cara de que algo esté roto, porque parece que está bien. Todas las
+pruebas, las de backend y las de navegador, corren sobre la base sembrada.
 
 **Vuelta 10 — El art. 34.9, que es el producto entero.**
 

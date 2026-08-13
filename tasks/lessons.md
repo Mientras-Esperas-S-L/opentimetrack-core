@@ -349,3 +349,20 @@ verdad— habría quedado en verde para siempre.
 `e2e/apoyo.js`, que apunta al servidor de la API con URL absoluta. Y cuando una
 respuesta sorprenda, mirar el **cuerpo** antes que el código: un HTML donde
 debería haber JSON dice a quién se le preguntó de verdad.
+
+## Lo que solo pasa en el alta no lo prueba nadie (13/08/2026)
+
+Una empresa recién dada de alta se quedaba con **cero** permisos: nadie podía
+pedir un matrimonio ni un fallecimiento. Llevaba así desde siempre y ninguna
+prueba lo veía, porque **todas parten de la base sembrada** por el comando de
+demostración —que sí llama a la siembra—. En desarrollo funcionaba; en una
+empresa real, no.
+
+Es la forma más cara de estar roto, porque parece que está bien. Y tenía la
+pista delante: `seedLeaveTypes` estaba exportado en el frontend y **no lo
+llamaba nadie**.
+
+**Regla:** para cualquier cosa que solo ocurra una vez —el alta de una empresa,
+la primera persona, el primer fichaje— escribir la prueba que **arranca desde
+cero**, no desde el estado sembrado. Y cuando aparezca una función exportada
+que no llama nadie, no darla por muerta: preguntar quién debería llamarla.
