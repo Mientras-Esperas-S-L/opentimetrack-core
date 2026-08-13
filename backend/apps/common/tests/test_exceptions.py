@@ -126,3 +126,32 @@ def test_ninguna_forma_plural_del_catalogo_se_queda_sin_traducir():
     # original era una forma vacía y sola al final del bloque.
     roto = 'msgid "x"\nmsgid_plural "xs"\nmsgstr[0] "uno"\nmsgstr[1] "unos"\nmsgstr[2] ""'
     assert sin_rellenar(roto), "la comprobación ya no vería el fallo que la trajo"
+
+
+def test_el_catalogo_no_lleva_entradas_marcadas_fuzzy():
+    """Una traducción `fuzzy` **no se usa**: gettext cae al inglés y se calla.
+
+    Y las escribe `makemessages` solo, adivinando a partir de una cadena
+    parecida. Las adivinanzas son malas por construcción: «collective agreement»
+    salió como «Aplicada con acuerdo», y cambiar el texto de un error existente
+    ---«Nobody worked in that period.»--- dejó el mensaje en inglés en
+    producción durante dos vueltas de auditoría, con el `.po` diciendo que
+    estaba traducido.
+
+    O sea que es un vacío que se comprueba limpio por dos vías a la vez: el
+    fichero parece completo y `msgfmt --statistics` cuenta la entrada como
+    traducida. Solo la marca lo delata.
+    """
+    catalogo = Path(settings.BASE_DIR) / "locale" / "es" / "LC_MESSAGES" / "django.po"
+    bloques = catalogo.read_text(encoding="utf-8").split("\n\n")
+
+    dudosas = [b for b in bloques if re.search(r"^#,.*\bfuzzy\b", b, flags=re.MULTILINE)]
+    assert not dudosas, (
+        "hay traducciones marcadas fuzzy, que en ejecución salen en inglés:\n\n"
+        + "\n\n".join(dudosas)
+    )
+
+    # El contraste, porque esto acaba de dar cero y cero no prueba nada por sí
+    # solo: la marca se busca donde de verdad la escribe gettext.
+    ejemplo = '#: apps/x.py:1\n#, fuzzy\nmsgid "a"\nmsgstr "b"'
+    assert re.search(r"^#,.*\bfuzzy\b", ejemplo, flags=re.MULTILINE)

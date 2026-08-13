@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-13 21:46+0000\n"
+"POT-Creation-Date: 2026-08-13 22:15+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -184,6 +184,7 @@ msgstr "necesita justificante"
 #: apps/absences/models.py:168 apps/absences/models.py:517
 #: apps/audit/models.py:145 apps/punches/models.py:449
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
+#: apps/tenants/rules.py:276
 msgid "note"
 msgstr "nota"
 
@@ -636,7 +637,8 @@ msgid "when"
 msgstr "cuándo"
 
 #: apps/audit/models.py:117 apps/common/models.py:97 apps/tenants/models.py:159
-#: apps/tenants/models.py:187 apps/tenants/rules.py:38 apps/users/models.py:270
+#: apps/tenants/models.py:187 apps/tenants/rules.py:38
+#: apps/tenants/rules.py:253 apps/users/models.py:270
 msgid "company"
 msgstr "empresa"
 
@@ -1558,10 +1560,8 @@ msgid "That person does not exist."
 msgstr "Esa persona no existe."
 
 #: apps/reports/views.py:184
-#, fuzzy
-#| msgid "No records in this period"
 msgid "Nobody worked in that period."
-msgstr "Sin registros en este periodo"
+msgstr "Nadie trabajó en ese periodo."
 
 #: apps/reports/views.py:189
 #, python-format
@@ -2411,7 +2411,59 @@ msgstr "Días de preaviso antes de un cambio de cuadrante."
 msgid "working time rules"
 msgstr "reglas de jornada"
 
-#: apps/tenants/views.py:82 apps/users/serializers.py:356
+#: apps/tenants/rules.py:227
+msgid "collective agreement"
+msgstr "convenio colectivo"
+
+#: apps/tenants/rules.py:228
+msgid "company-level agreement"
+msgstr "acuerdo de empresa"
+
+#: apps/tenants/rules.py:229
+msgid "employer decision after consulting the representatives"
+msgstr "decisión de la empresa, previa consulta a la representación"
+
+#: apps/tenants/rules.py:257
+msgid "how it was organised"
+msgstr "con qué amparo se organizó"
+
+#: apps/tenants/rules.py:261
+msgid "Art. 34.9 ET. Empty means it has not been declared yet."
+msgstr "Art. 34.9 ET. Vacío significa que todavía no se ha declarado."
+
+#: apps/tenants/rules.py:266
+msgid "which one"
+msgstr "cuál"
+
+#: apps/tenants/rules.py:271
+msgid "in force since"
+msgstr "en vigor desde"
+
+#: apps/tenants/rules.py:274
+msgid "representatives consulted on"
+msgstr "consulta a la representación"
+
+#: apps/tenants/rules.py:282
+msgid "record arrangement"
+msgstr "organización del registro"
+
+#: apps/tenants/rules.py:283
+msgid "record arrangements"
+msgstr "organización del registro"
+
+#: apps/tenants/views.py:89
+msgid ""
+"Say which one: the agreement, or the decision and its date. A route with "
+"nothing to check it against documents nothing."
+msgstr ""
+
+#: apps/tenants/views.py:103
+msgid ""
+"A prior consultation belongs to the employer-decision route. An agreement is "
+"the negotiation."
+msgstr ""
+
+#: apps/tenants/views.py:141 apps/users/serializers.py:356
 msgid "That workplace belongs to another company."
 msgstr "Ese centro de trabajo es de otra empresa."
 
