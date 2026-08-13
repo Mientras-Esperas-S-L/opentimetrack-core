@@ -513,6 +513,21 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
                 condition=models.Q(tenant__isnull=True),
                 name="unique_email_without_company",
             ),
+            # El número de empleado, único dentro de la empresa. Es el puente
+            # con las aplicaciones que fichan en nombre de alguien: el conector
+            # manda «EMP-0042» y el servidor tiene que saber a quién se refiere.
+            # Repetido, la resolución devuelve a quien salga primero y los
+            # fichajes acaban en la ficha de otra persona --- un fallo que no
+            # avisa y que solo se nota cuando alguien mira su registro y ve
+            # jornadas que no hizo.
+            #
+            # Solo cuando lo hay: en blanco es lo normal en una empresa que no
+            # usa números, y no puede chocar consigo mismo.
+            models.UniqueConstraint(
+                fields=["tenant", "employee_id"],
+                condition=~models.Q(employee_id=""),
+                name="unique_staff_number_per_company",
+            ),
         ]
         indexes = [
             models.Index(fields=["tenant", "is_active"]),

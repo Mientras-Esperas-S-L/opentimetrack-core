@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-13 09:16+0000\n"
+"POT-Creation-Date: 2026-08-13 12:45+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -272,7 +272,7 @@ msgstr "ausencia"
 msgid "absences"
 msgstr "ausencias"
 
-#: apps/absences/models.py:362 apps/absences/services.py:222
+#: apps/absences/models.py:362 apps/absences/services.py:298
 #: apps/reports/views.py:83 apps/shifts/views.py:222
 msgid "The end date cannot precede the start date."
 msgstr "La fecha final no puede ir antes que la inicial."
@@ -281,7 +281,7 @@ msgstr "La fecha final no puede ir antes que la inicial."
 msgid "Give both times, or neither: half of a range is not one."
 msgstr "Pon las dos horas o ninguna: media franja no es una franja."
 
-#: apps/absences/models.py:371 apps/users/serializers.py:315
+#: apps/absences/models.py:371 apps/users/serializers.py:340
 msgid "It ends before it starts."
 msgstr "Acaba antes de empezar."
 
@@ -304,11 +304,11 @@ msgstr ""
 "la ausencia, sus fechas y su estado, y desde el RD 1060/2022 el trabajador "
 "no entrega el parte a la empresa: se lo remite el INSS."
 
-#: apps/absences/services.py:217
+#: apps/absences/services.py:293
 msgid "Say what kind of leave it is."
 msgstr "Di de qué tipo de ausencia se trata."
 
-#: apps/absences/services.py:229
+#: apps/absences/services.py:305
 msgid ""
 "The medical certificate is not stored. Recording the absence, its dates and "
 "its status is enough, and since RD 1060/2022 the worker does not hand the "
@@ -318,12 +318,12 @@ msgstr ""
 "y su estado, y desde el RD 1060/2022 el trabajador no entrega el parte a la "
 "empresa."
 
-#: apps/absences/services.py:246
+#: apps/absences/services.py:322
 #, python-format
 msgid "There is already leave recorded between %(from)s and %(to)s."
 msgstr "Ya hay una ausencia registrada entre el %(from)s y el %(to)s."
 
-#: apps/absences/services.py:266
+#: apps/absences/services.py:342
 msgid ""
 "Say which suspension it is: they carry different articles and different "
 "consequences, and the record has to name one."
@@ -331,7 +331,7 @@ msgstr ""
 "Di qué suspensión es: llevan artículos y consecuencias distintas, y el "
 "registro tiene que nombrar una."
 
-#: apps/absences/services.py:275
+#: apps/absences/services.py:351
 msgid ""
 "A reduction covers whole days at a smaller share. For hours away on one day, "
 "leave the reduction empty."
@@ -339,7 +339,7 @@ msgstr ""
 "Una reducción cubre días enteros a una jornada menor. Para horas sueltas de "
 "un día, deja la reducción vacía."
 
-#: apps/absences/services.py:284
+#: apps/absences/services.py:360
 msgid ""
 "Only a suspension can reduce the working day. For fewer hours by agreement, "
 "change the contracted figure on the person."
@@ -347,7 +347,7 @@ msgstr ""
 "Solo una suspensión puede reducir la jornada. Para menos horas por acuerdo, "
 "cambia las horas contratadas de la persona."
 
-#: apps/absences/services.py:301
+#: apps/absences/services.py:377
 msgid ""
 "Only a suspension the company records --- an ERTE, the RED mechanism --- can "
 "reduce the working day."
@@ -355,7 +355,7 @@ msgstr ""
 "Solo una suspensión de las que registra la empresa —un ERTE, el mecanismo RED"
 "— puede reducir la jornada."
 
-#: apps/absences/services.py:310
+#: apps/absences/services.py:386
 msgid ""
 "Holiday is taken in whole days. For part of a day, use the leave type that "
 "fits: a medical appointment, family emergency, an exam."
@@ -363,19 +363,19 @@ msgstr ""
 "Las vacaciones se cogen por días completos. Para parte de un día usa el "
 "permiso que corresponda: visita médica, fuerza mayor familiar, un examen."
 
-#: apps/absences/services.py:452 apps/absences/services.py:481
+#: apps/absences/services.py:528 apps/absences/services.py:557
 msgid "leave"
 msgstr "una ausencia"
 
-#: apps/absences/services.py:461
+#: apps/absences/services.py:537
 msgid "Leave has since been approved for those dates."
 msgstr "Mientras tanto se ha aprobado otra ausencia para esas fechas."
 
-#: apps/absences/services.py:502
+#: apps/absences/services.py:578
 msgid "That request belongs to somebody else."
 msgstr "Esa solicitud es de otra persona."
 
-#: apps/absences/services.py:511 apps/punches/corrections.py:466
+#: apps/absences/services.py:587 apps/punches/corrections.py:466
 #: apps/punches/corrections.py:514
 msgid "This request has already been resolved."
 msgstr "Esta solicitud ya está resuelta."
@@ -404,7 +404,7 @@ msgstr ""
 "quitaría el motivo a registros que tienen que durar cuatro años."
 
 #: apps/absences/views.py:199 apps/absences/views.py:382
-#: apps/punches/correction_views.py:200 apps/reports/views.py:342
+#: apps/punches/correction_views.py:211 apps/reports/views.py:342
 msgid "That person is not in this company."
 msgstr "Esa persona no pertenece a esta empresa."
 
@@ -686,11 +686,11 @@ msgstr "suscripción de avisos"
 msgid "push subscriptions"
 msgstr "suscripciones de avisos"
 
-#: apps/punches/correction_views.py:140
+#: apps/punches/correction_views.py:151
 msgid "That event does not exist."
 msgstr "Ese fichaje no existe."
 
-#: apps/punches/correction_views.py:190
+#: apps/punches/correction_views.py:201
 msgid "You can only ask for corrections to your own record."
 msgstr "Solo puedes pedir correcciones de tu propio registro."
 
@@ -1223,11 +1223,11 @@ msgstr "decisión sobre horas extraordinarias"
 msgid "overtime decisions"
 msgstr "decisiones sobre horas extraordinarias"
 
-#: apps/punches/overtime.py:93
+#: apps/punches/overtime.py:135
 msgid "That day has no overtime to rule on."
 msgstr "Ese día no tiene horas extraordinarias que resolver."
 
-#: apps/punches/overtime.py:101 apps/punches/services.py:328
+#: apps/punches/overtime.py:143 apps/punches/services.py:328
 msgid "Say whether the overtime is paid or compensated with rest."
 msgstr ""
 "Indica si las horas extraordinarias se pagan o se compensan con descanso."
@@ -2224,7 +2224,7 @@ msgstr "Días de preaviso antes de un cambio de cuadrante."
 msgid "working time rules"
 msgstr "reglas de jornada"
 
-#: apps/tenants/views.py:82 apps/users/serializers.py:240
+#: apps/tenants/views.py:82 apps/users/serializers.py:265
 msgid "That workplace belongs to another company."
 msgstr "Ese centro de trabajo es de otra empresa."
 
@@ -2603,41 +2603,46 @@ msgstr ""
 msgid "Somebody in this company already uses it."
 msgstr "Ya lo usa alguien de esta empresa."
 
-#: apps/users/serializers.py:247
+#: apps/users/serializers.py:256
+#, python-format
+msgid "%(name)s already uses that staff number."
+msgstr "%(name)s ya usa ese número de empleado."
+
+#: apps/users/serializers.py:272
 msgid "That department belongs to another company."
 msgstr "Ese departamento es de otra empresa."
 
-#: apps/users/serializers.py:263
+#: apps/users/serializers.py:288
 msgid "It cannot be today or a future date."
 msgstr "No puede ser hoy ni una fecha futura."
 
-#: apps/users/serializers.py:272
+#: apps/users/serializers.py:297
 #, python-format
 msgid "That gives an age of %(age)s, below the minimum working age. %(basis)s"
 msgstr ""
 "Eso da una edad de %(age)s años, por debajo de la edad mínima para trabajar. "
 "%(basis)s"
 
-#: apps/users/serializers.py:276
+#: apps/users/serializers.py:301
 msgid "That gives an age of over a hundred years."
 msgstr "Eso da una edad de más de cien años."
 
-#: apps/users/serializers.py:301
+#: apps/users/serializers.py:326
 msgid ""
 "There is no agreed figure on this regime. Clear it, or choose one that has "
 "hours."
 msgstr ""
 "En este régimen no hay cifra pactada. Bórrala, o elige uno que tenga horas."
 
-#: apps/users/serializers.py:309
+#: apps/users/serializers.py:334
 msgid "Art. 3.b asks for the agreed hours on this regime."
 msgstr "El art. 3.b pide las horas pactadas en este régimen."
 
-#: apps/users/serializers.py:318
+#: apps/users/serializers.py:343
 msgid "It has to be above zero."
 msgstr "Tiene que ser mayor que cero."
 
-#: apps/users/serializers.py:338
+#: apps/users/serializers.py:363
 #, python-format
 msgid ""
 "%(basis)s: workers under eighteen may not work at night, so the status "
@@ -2646,7 +2651,7 @@ msgstr ""
 "%(basis)s: los menores de dieciocho años no pueden trabajar de noche, así "
 "que esa condición no les puede corresponder."
 
-#: apps/users/serializers.py:357
+#: apps/users/serializers.py:382
 #, python-format
 msgid ""
 "%(hours)s h a week is above the company's %(ceiling)s h. A contract cannot "
@@ -2655,19 +2660,27 @@ msgstr ""
 "%(hours)s h semanales pasan de las %(ceiling)s h de la empresa. Un contrato "
 "no puede pactar por encima del máximo legal."
 
-#: apps/users/serializers.py:375
+#: apps/users/serializers.py:400
 msgid "The employee limit for this company is reached."
 msgstr "Se ha alcanzado el límite de personas de esta empresa."
 
-#: apps/users/serializers.py:414
+#: apps/users/serializers.py:439
 msgid "A company with this tax number already exists."
 msgstr "Ya existe una empresa con este identificador fiscal."
 
-#: apps/users/serializers.py:450 apps/users/serializers.py:463
+#: apps/users/serializers.py:475 apps/users/serializers.py:488
 msgid "Wrong credentials."
 msgstr "Credenciales incorrectas."
 
-#: apps/users/views.py:245
+#: apps/users/views.py:157
+msgid "No session to renew."
+msgstr "No hay sesión que renovar."
+
+#: apps/users/views.py:171
+msgid "The session has expired. Sign in again."
+msgstr "La sesión ha caducado. Vuelve a entrar."
+
+#: apps/users/views.py:314
 msgid ""
 "This is the only active administrator. Appoint another one first, or the "
 "company is left with nobody able to manage it."
@@ -2675,19 +2688,19 @@ msgstr ""
 "Es el único administrador activo. Nombra antes a otro, o la empresa se queda "
 "sin nadie que pueda gestionarla."
 
-#: apps/users/views.py:302
+#: apps/users/views.py:371
 msgid "This account signs in through your identity provider."
 msgstr "Esta cuenta entra a través de vuestro proveedor de identidad."
 
-#: apps/users/views.py:304
+#: apps/users/views.py:373
 msgid "Reactivate the account before inviting them."
 msgstr "Vuelve a dar de alta la cuenta antes de invitarla."
 
-#: apps/users/views.py:360
+#: apps/users/views.py:429
 msgid "You cannot deactivate your own account."
 msgstr "No puedes dar de baja tu propia cuenta."
 
-#: apps/users/views.py:426
+#: apps/users/views.py:495
 #, python-format
 msgid ""
 "%(count)s people work there. Move them first: without a workplace they lose "
@@ -2696,39 +2709,39 @@ msgstr ""
 "Ahí trabajan %(count)s personas. Muévelas primero: sin centro pierden sus "
 "festivos locales y su zona horaria."
 
-#: apps/users/views.py:481
+#: apps/users/views.py:550
 msgid "The link is not valid or has already been used."
 msgstr "El enlace no es válido o ya se ha usado."
 
-#: config/settings/base.py:274
+#: config/settings/base.py:285
 msgid "Spanish"
 msgstr "Español"
 
-#: config/settings/base.py:275
+#: config/settings/base.py:286
 msgid "English"
 msgstr "Inglés"
 
-#: config/settings/base.py:276
+#: config/settings/base.py:287
 msgid "Catalan"
 msgstr "Catalán"
 
-#: config/settings/base.py:277
+#: config/settings/base.py:288
 msgid "Galician"
 msgstr "Gallego"
 
-#: config/settings/base.py:278
+#: config/settings/base.py:289
 msgid "Basque"
 msgstr "Euskera"
 
-#: config/settings/base.py:279
+#: config/settings/base.py:290
 msgid "French"
 msgstr "Francés"
 
-#: config/settings/base.py:280
+#: config/settings/base.py:291
 msgid "Portuguese"
 msgstr "Portugués"
 
-#: config/settings/base.py:281
+#: config/settings/base.py:292
 msgid "German"
 msgstr "Alemán"
 

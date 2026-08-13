@@ -80,6 +80,12 @@ for (const { perfil, correo } of SESIONES) {
     const fichero = `${CARPETA}/${perfil}.json`
 
     if (!(await siguenValiendo(page, fichero))) {
+      // Se limpia lo que dejó el intento anterior: `siguenValiendo` inyecta los
+      // testigos viejos para probarlos, y si no valían la aplicación arranca
+      // con ellos, tarda en darse cuenta y enseña el panel un instante --- con
+      // lo que el formulario de entrada no está donde se le espera.
+      await page.goto('/')
+      await page.evaluate(() => localStorage.clear())
       await page.goto('/')
       const email = page.getByLabel('Correo electrónico')
       await email.fill('')

@@ -233,6 +233,31 @@ class UserWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_("Somebody in this company already uses it."))
         return value
 
+    def validate_employee_id(self, value: str) -> str:
+        """Único dentro de la empresa, cuando lo hay.
+
+        La base ya lo impide, pero un choque contra la restricción sale como un
+        500 y quien lo ve no sabe qué corregir. Aquí sale como lo que es: un
+        número que ya usa otra persona.
+
+        En blanco es lo normal en una empresa que no numera a su gente, y no
+        puede chocar consigo mismo.
+        """
+        value = (value or "").strip()
+        if not value:
+            return value
+
+        company = self.context["request"].user.tenant
+        existing = User.objects.filter(tenant=company, employee_id=value)
+        if self.instance:
+            existing = existing.exclude(pk=self.instance.pk)
+        if (otra := existing.first()) is not None:
+            raise serializers.ValidationError(
+                _("%(name)s already uses that staff number.")
+                % {"name": otra.get_full_name() or otra.email}
+            )
+        return value
+
     def validate_workplace(self, value):
         # Same belt and braces as the department, and it matters more here: a
         # workplace from another company would decide this person's time zone.
