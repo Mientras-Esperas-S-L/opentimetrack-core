@@ -74,7 +74,7 @@ const KIND_LABELS = {
  *  nada que saldar: el registro sigue mostrando el tiempo real y la decisión
  *  solo dice que esa parte no se autoriza.
  */
-function OvertimePersonCard({ group, busy, onDecide }) {
+function OvertimePersonCard({ group, busy, onDecide, select }) {
   const [settlement, setSettlement] = useState('PAID')
   const [showDays, setShowDays] = useState(false)
   const { rows } = group
@@ -89,6 +89,7 @@ function OvertimePersonCard({ group, busy, onDecide }) {
         direction={{ xs: 'column', md: 'row' }}
         sx={{ gap: 2, justifyContent: 'space-between', alignItems: { md: 'center' } }}
       >
+        {select}
         <Box sx={{ minWidth: 0 }}>
           <Typography sx={{ fontWeight: 600 }}>{group.name}</Typography>
           <Typography variant="body2" color="text.secondary">
@@ -271,6 +272,28 @@ function RequestCard({ title, meta, reason, children, onApprove, onReject, busy,
   )
 }
 
+/** Dice que la lista viene recortada, cuando lo viene.
+ *
+ *  Las colas de correcciones llegan de cincuenta en cincuenta y no hay
+ *  paginador: sin este aviso, cincuenta y cinco pendientes se ven como
+ *  cincuenta y las otras cinco no existen para nadie. Un recorte callado es
+ *  peor que una lista larga, porque se lee como «ya está todo».
+ *
+ *  Con los filtros de arriba se llega a las que faltan; decirlo es lo que
+ *  convierte el filtro en la salida y no en un adorno.
+ */
+function ListaRecortada({ total, mostradas }) {
+  if (!total || total <= mostradas) return null
+  return (
+    <Alert severity="info" variant="outlined">
+      Se muestran {mostradas} de {total}. Usa los filtros de arriba para llegar al resto.
+    </Alert>
+  )
+}
+
+/** Lo que hay marcado de una lista. Se repetía en cada barra. */
+const seleccionadas = (filas, seleccion) => filas.filter((fila) => seleccion.isSelected(fila))
+
 /** El «no», de una en una o de varias a la vez.
  *
  *  Rechazar en bloque pasa por el mismo cuadro que rechazar una, y con el mismo
@@ -425,6 +448,44 @@ export default function Decisions() {
     }
   }
 
+  /** Resuelve las horas extra de varias personas con el mismo criterio.
+   *
+   *  Una llamada por persona, no una con todo el mundo dentro: cada decisión
+   *  es de una persona y tiene que quedar así en el registro. Y `days` va
+   *  entero por persona, que es lo que ya hace la tarjeta individual.
+   */
+  const decidirHorasExtra = async (grupos, authorise, settlement) => {
+    setBulking(true)
+    try {
+      const outcome = await runBulk(grupos, (group) =>
+        decideOvertime({
+          employee: group.employee,
+          days: group.rows.map((row) => row.day),
+          authorise,
+          ...(authorise ? { settlement } : {}),
+        }),
+      )
+      setError(bulkSummary(outcome, { done: authorise ? 'autorizadas' : 'denegadas' }))
+      refresh()
+    } finally {
+      setBulking(false)
+    }
+  }
+
+  /** Devuelve al saldo las vacaciones que varias personas tenían que recuperar. */
+  const decidirRecuperaciones = async (filas, accept) => {
+    setBulking(true)
+    try {
+      const outcome = await runBulk(filas, (row) =>
+        confirmHolidayRecovery({ recovery: row.id, accept }),
+      )
+      setError(bulkSummary(outcome, { done: accept ? 'devueltas' : 'descartadas' }))
+      refresh()
+    } finally {
+      setBulking(false)
+    }
+  }
+
   // El filtro es de cada pestaña: lo que se busca en ausencias no se parece a
   // lo que se busca en correcciones, y arrastrar el texto de una a otra deja
   // la siguiente vacía sin que se entienda por qué.
@@ -434,6 +495,19 @@ export default function Decisions() {
     setSearch('')
     setWho('')
   }
+
+  /** Cuántas hay de verdad en cada cola.
+   *
+   *  De `count` y no de las filas que llegaron: las dos colas de correcciones
+   *  vienen paginadas de cincuenta en cincuenta, así que contar lo recibido
+   *  decía «50» habiendo 55 --- y las cinco que faltaban no se podían alcanzar
+   *  desde ninguna parte. Es el fallo que el propio `Pager` documenta como ya
+   *  ocurrido una vez en todas las pantallas.
+   *
+   *  El número de la pestaña es lo que decide si alguien entra a mirar, así que
+   *  redondear a la baja es peor que no ponerlo.
+   */
+  const cuantasHay = (consulta, filas) => consulta.data?.count ?? filas.length
 
   const absenceRows = absences.data ?? []
   const correctionRows = corrections.data?.rows ?? []
@@ -489,6 +563,27 @@ export default function Decisions() {
 
   const absencePick = useSelection(shownAbsences)
   const correctionPick = useSelection(shownCorrections)
+  // «Sin acuerdo» solo se selecciona para **retirar**, nunca para aplicar en
+  // bloque. Ver la barra de esa pestaña.
+  const openPick = useSelection(shownOpen)
+  const overtimePick = useSelection(shownOvertime, (group) => group.employee)
+  const recoveryPick = useSelection(recoveryRows)
+
+  /** La selección y las filas de la pestaña que se está viendo.
+   *
+   *  En un sitio y no repartido por cinco condicionales: la casilla de
+   *  «seleccionar todo» vive en la barra de filtros, que es común, así que
+   *  necesita saber de qué cola habla. Antes solo cubría las dos primeras
+   *  colas ---las únicas que tenían selección--- con un `tab < 2` que había
+   *  que acordarse de ampliar.
+   */
+  const colaActual = [
+    { pick: absencePick, filas: shownAbsences },
+    { pick: correctionPick, filas: shownCorrections },
+    { pick: openPick, filas: shownOpen },
+    { pick: overtimePick, filas: shownOvertime },
+    { pick: recoveryPick, filas: recoveryRows },
+  ][tab]
 
   const filtering = Boolean(search || forWhom)
 
@@ -513,35 +608,51 @@ export default function Decisions() {
       >
         <Tab
           label={
-            <Badge badgeContent={absenceRows.length} color="secondary" sx={{ pr: 1.5 }}>
+            <Badge
+              badgeContent={cuantasHay(absences, absenceRows)}
+              color="secondary"
+              sx={{ pr: 1.5 }}
+            >
               Ausencias
             </Badge>
           }
         />
         <Tab
           label={
-            <Badge badgeContent={correctionRows.length} color="secondary" sx={{ pr: 1.5 }}>
+            <Badge
+              badgeContent={cuantasHay(corrections, correctionRows)}
+              color="secondary"
+              sx={{ pr: 1.5 }}
+            >
               Fichajes
             </Badge>
           }
         />
         <Tab
           label={
-            <Badge badgeContent={openRows.length} color="secondary" sx={{ pr: 1.5 }}>
+            <Badge badgeContent={cuantasHay(waiting, openRows)} color="secondary" sx={{ pr: 1.5 }}>
               Sin acuerdo
             </Badge>
           }
         />
         <Tab
           label={
-            <Badge badgeContent={overtimeRows.length} color="secondary" sx={{ pr: 1.5 }}>
+            <Badge
+              badgeContent={cuantasHay(overtime, overtimeRows)}
+              color="secondary"
+              sx={{ pr: 1.5 }}
+            >
               Horas extra
             </Badge>
           }
         />
         <Tab
           label={
-            <Badge badgeContent={recoveryRows.length} color="secondary" sx={{ pr: 1.5 }}>
+            <Badge
+              badgeContent={cuantasHay(recoveries, recoveryRows)}
+              color="secondary"
+              sx={{ pr: 1.5 }}
+            >
               Vacaciones por recuperar
             </Badge>
           }
@@ -552,12 +663,7 @@ export default function Decisions() {
           mezcladas da miedo con razón; sobre las cuatro de una persona es
           justo lo que alguien quiere hacer. */}
       <FilterBar>
-        {tab < 2 && (
-          <SelectAllBox
-            selection={tab === 0 ? absencePick : correctionPick}
-            count={tab === 0 ? shownAbsences.length : shownCorrections.length}
-          />
-        )}
+        <SelectAllBox selection={colaActual.pick} count={colaActual.filas.length} />
         <SearchField
           value={search}
           onChange={setSearch}
@@ -628,6 +734,7 @@ export default function Decisions() {
                 )}
               </RequestCard>
             ))}
+            <ListaRecortada total={absences.data?.count} mostradas={absenceRows.length} />
             <SelectionBar
               selection={absencePick}
               noun="ausencias"
@@ -701,6 +808,7 @@ export default function Decisions() {
                 </Typography>
               </RequestCard>
             ))}
+            <ListaRecortada total={corrections.data?.count} mostradas={correctionRows.length} />
             <SelectionBar
               selection={correctionPick}
               noun="correcciones"
@@ -756,6 +864,11 @@ export default function Decisions() {
                   direction={{ xs: 'column', md: 'row' }}
                   sx={{ gap: 2, justifyContent: 'space-between' }}
                 >
+                  <SelectBox
+                    selection={openPick}
+                    item={correction}
+                    label={`Seleccionar la propuesta de ${correction.employee_name}`}
+                  />
                   <Box sx={{ minWidth: 0, flexGrow: 1 }}>
                     <Stack direction="row" sx={{ gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
                       <Typography sx={{ fontWeight: 600 }}>{correction.employee_name}</Typography>
@@ -846,6 +959,40 @@ export default function Decisions() {
                 </Stack>
               </Paper>
             ))}
+
+            {/* Solo «Retirar», y la ausencia de «Aplicar sin acuerdo» aquí es
+                deliberada, no un olvido.
+
+                Retirar una propuesta no toca el registro de nadie: lo deja
+                como estaba. Aplicar sin acuerdo sí, y es la excepción del
+                art. 4.b --- un cambio unilateral sobre el registro de otra
+                persona. Veinticinco de esas con un clic convertiría lo
+                excepcional en lo cómodo, que es justo lo que la norma quiere
+                evitar. Se siguen aplicando de una en una, con su cuadro que
+                dice a quién y qué queda registrado.
+
+                Retirar en bloque sí hace falta: una cola de propuestas viejas
+                que ya no vienen a cuento se limpia entera. */}
+            <ListaRecortada total={waiting.data?.count} mostradas={openRows.length} />
+            <SelectionBar
+              selection={openPick}
+              noun="propuestas"
+              busy={bulking}
+              actions={[
+                {
+                  label: 'Retirar la propuesta',
+                  variant: 'outlined',
+                  color: 'inherit',
+                  onClick: () =>
+                    setRejecting({
+                      action: rejectCorrection,
+                      rows: shownOpen.filter((row) => openPick.isSelected(row)),
+                      needsNote: true,
+                      onDone: openPick.clear,
+                    }),
+                },
+              ]}
+            />
           </Stack>
         ))}
 
@@ -871,11 +1018,64 @@ export default function Decisions() {
                 key={group.employee}
                 group={group}
                 busy={ruleOvertime.isPending}
+                select={
+                  <SelectBox
+                    selection={overtimePick}
+                    item={group}
+                    label={`Seleccionar las horas de ${group.name}`}
+                  />
+                }
                 onDecide={(payload) =>
                   ruleOvertime.mutate({ employee: group.employee, ...payload })
                 }
               />
             ))}
+
+            {/* Cómo se salda es lo que se decide aquí, y en bloque tiene
+                sentido porque suele ser una política de la empresa para todo
+                el mes, no un caso a caso.
+
+                Con descanso y pagada por separado, sin un «autorizar y ya»:
+                son dos consecuencias distintas del art. 35.1, y las
+                compensadas con descanso además **no cuentan** para el tope de
+                ochenta horas al año. Un botón único obligaría a elegir un
+                valor por defecto, y el que se eligiera sería el que se
+                aplicara sin pensar. */}
+            <SelectionBar
+              selection={overtimePick}
+              noun="personas"
+              busy={bulking}
+              actions={[
+                {
+                  label: 'Autorizar con descanso',
+                  onClick: () =>
+                    decidirHorasExtra(
+                      seleccionadas(shownOvertime, overtimePick),
+                      true,
+                      'REST',
+                    ).then(overtimePick.clear),
+                },
+                {
+                  label: 'Autorizar pagadas',
+                  variant: 'outlined',
+                  onClick: () =>
+                    decidirHorasExtra(
+                      seleccionadas(shownOvertime, overtimePick),
+                      true,
+                      'PAID',
+                    ).then(overtimePick.clear),
+                },
+                {
+                  label: 'No autorizar',
+                  variant: 'text',
+                  color: 'inherit',
+                  onClick: () =>
+                    decidirHorasExtra(seleccionadas(shownOvertime, overtimePick), false).then(
+                      overtimePick.clear,
+                    ),
+                },
+              ]}
+            />
           </Stack>
         ))}
 
@@ -898,6 +1098,11 @@ export default function Decisions() {
                   direction={{ xs: 'column', md: 'row' }}
                   sx={{ gap: 2, justifyContent: 'space-between', alignItems: { md: 'center' } }}
                 >
+                  <SelectBox
+                    selection={recoveryPick}
+                    item={row}
+                    label={`Seleccionar los días de ${row.employee_name}`}
+                  />
                   <Box sx={{ minWidth: 0 }}>
                     <Typography sx={{ fontWeight: 600 }}>{row.employee_name}</Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -931,6 +1136,35 @@ export default function Decisions() {
                 </Stack>
               </Paper>
             ))}
+
+            {/* Aquí no hay línea roja que cuidar: confirmar una recuperación
+                devuelve días al saldo de quien estuvo de baja durante sus
+                vacaciones. Es a favor de la persona y no toca ni la baja ni
+                las vacaciones, así que hacerlo de veinte en veinte no cambia
+                nada salvo el tiempo que se tarda. */}
+            <SelectionBar
+              selection={recoveryPick}
+              noun="recuperaciones"
+              busy={bulking}
+              actions={[
+                {
+                  label: 'Devolver al saldo',
+                  onClick: () =>
+                    decidirRecuperaciones(seleccionadas(recoveryRows, recoveryPick), true).then(
+                      recoveryPick.clear,
+                    ),
+                },
+                {
+                  label: 'No procede',
+                  variant: 'text',
+                  color: 'inherit',
+                  onClick: () =>
+                    decidirRecuperaciones(seleccionadas(recoveryRows, recoveryPick), false).then(
+                      recoveryPick.clear,
+                    ),
+                },
+              ]}
+            />
           </Stack>
         ))}
 
