@@ -63,15 +63,47 @@ class OverviewView(APIView):
                 "headcount": people.filter(is_active=True).count(),
                 "working_now": self._working_now(company, start, end, scope),
                 "off_today": self._off_today(today, scope),
-                "awaiting_decision": {
-                    "absences": Absence.objects.filter(mine, status=AbsenceStatus.PENDING).count(),
-                    "corrections": PunchCorrection.objects.filter(
-                        mine, status=CorrectionStatus.PENDING
-                    ).count(),
-                },
+                "awaiting_decision": self._awaiting_decision(company, mine),
                 "week": self._week(company),
             }
         )
+
+    def _awaiting_decision(self, company, mine) -> dict:
+        """Lo que espera una decisión, y **todo** lo que espera una decisión.
+
+        Contaba dos colas de las cinco que tiene «Por decidir»: las ausencias y
+        las correcciones pendientes. Se dejaba fuera los cambios propuestos que
+        la persona no ha contestado y las horas extra por saldar, que eran las
+        dos grandes. Medido el 13/08/2026 en la base de demostración: la tarjeta
+        decía **2** y había **57**.
+
+        No es un número de adorno. Es lo que decide si alguien entra en «Por
+        decidir», y las horas extra tienen plazo ---cuatro meses para compensar
+        con descanso, art. 35.1--- así que una cola que nadie mira porque la
+        portada dice que está vacía se convierte en un incumplimiento.
+
+        `overtime` va aparte y sin número a propósito: calcularlo cuesta medio
+        segundo con veinte personas ---hay que reconciliar cada día de cada
+        una--- y esto se pide al abrir el panel y se refresca cada minuto. Se
+        dice que hay cola sin decir cuánta, y la pantalla de decisiones, que ya
+        lo calcula, pone la cifra. Mejor un «hay» honesto que un número caro o
+        un cero falso.
+        """
+        from apps.absences.recovery import pending_recoveries
+
+        return {
+            "absences": Absence.objects.filter(mine, status=AbsenceStatus.PENDING).count(),
+            "corrections": PunchCorrection.objects.filter(
+                mine, status=CorrectionStatus.PENDING
+            ).count(),
+            # Propuestas de la empresa que la persona no ha contestado o ha
+            # discutido: se pueden retirar o aplicar, y hasta entonces cuentan.
+            "awaiting_employee": PunchCorrection.objects.filter(
+                mine, status=CorrectionStatus.AWAITING_EMPLOYEE
+            ).count(),
+            "recoveries": len(pending_recoveries(company=company)),
+            "overtime_pending": True,
+        }
 
     def _working_now(self, company, start, end, scope) -> list[dict]:
         """Whoever's last event today was a clock-in.

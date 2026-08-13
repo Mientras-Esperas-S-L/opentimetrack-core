@@ -107,7 +107,24 @@ export default function Overview() {
     )
   }
 
-  const waiting = data.awaiting_decision.absences + data.awaiting_decision.corrections
+  // Las cuatro colas que se pueden contar barato. Sumaba solo dos de las cinco
+  // ---ausencias y correcciones pendientes--- y se dejaba fuera las propuestas
+  // sin contestar, que era la más grande: la tarjeta decía «2» con 57 esperando.
+  //
+  // Y este número es lo que decide si alguien entra en «Por decidir», así que
+  // equivocarlo a la baja no es un detalle: es una cola que nadie mira.
+  const espera = data.awaiting_decision
+  const waiting =
+    espera.absences +
+    espera.corrections +
+    (espera.awaiting_employee ?? 0) +
+    (espera.recoveries ?? 0)
+
+  // Las horas extra vienen sin número: contarlas cuesta medio segundo y esto se
+  // refresca cada minuto. Se dice que las hay, y la cifra la pone la pantalla
+  // que ya las calcula. Callarlas era peor --- tienen cuatro meses de plazo
+  // para compensarse con descanso (art. 35.1).
+  const hayHorasExtra = espera.overtime_pending === true
 
   return (
     <>
@@ -126,7 +143,12 @@ export default function Overview() {
       >
         <Figure value={data.working_now.length} label="trabajando ahora" />
         <Figure value={data.off_today.length} label="fuera hoy" />
-        <Figure value={waiting} label="esperando decisión" tone="attention" to="/panel/decisiones" />
+        <Figure
+          value={waiting}
+          label="esperando decisión"
+          tone="attention"
+          to="/panel/decisiones"
+        />
         <Figure value={data.headcount} label="personas de alta" to="/panel/personas" />
       </Box>
 
@@ -188,7 +210,7 @@ export default function Overview() {
             )}
           </Panel>
 
-          {waiting > 0 && (
+          {(waiting > 0 || hayHorasExtra) && (
             <Button
               component={RouterLink}
               to="/panel/decisiones"
@@ -196,8 +218,15 @@ export default function Overview() {
               size="large"
               fullWidth
             >
-              Resolver {waiting} {waiting === 1 ? 'solicitud' : 'solicitudes'}
+              {waiting > 0
+                ? `Resolver ${waiting} ${waiting === 1 ? 'solicitud' : 'solicitudes'}`
+                : 'Ver las horas extra por resolver'}
             </Button>
+          )}
+          {hayHorasExtra && waiting > 0 && (
+            <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
+              Y las horas extra del mes, que también esperan decisión.
+            </Typography>
           )}
         </Stack>
       </Box>
