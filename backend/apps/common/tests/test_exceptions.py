@@ -99,5 +99,30 @@ def test_ninguna_forma_plural_del_catalogo_se_queda_sin_traducir():
     # Contraste: si un día no hay plurales, esta prueba no está comprobando nada.
     assert plurales, "no se encontró ninguna entrada plural; ¿cambió el formato?"
 
-    sin_traducir = [b for b in plurales if re.search(r'^msgstr\[\d\] ""$', b, flags=re.MULTILINE)]
+    def sin_rellenar(bloque: str) -> bool:
+        """`msgstr[N] ""` **y nada detrás**.
+
+        La primera versión de esto miraba solo la línea, y daba falso positivo
+        en cuanto una traducción era larga: gettext parte las cadenas en varias
+        líneas y la primera es siempre `msgstr[N] ""` con el texto debajo entre
+        comillas. O sea que la comprobación se ponía roja por una traducción
+        correcta --- que es el mismo daño que dejarla pasar vacía, porque a la
+        segunda vez que ladra sin motivo se desactiva.
+        """
+        lineas = bloque.splitlines()
+        for i, linea in enumerate(lineas):
+            if not re.match(r'^msgstr\[\d\] ""$', linea):
+                continue
+            sigue = lineas[i + 1] if i + 1 < len(lineas) else ""
+            if not sigue.startswith('"'):
+                return True
+        return False
+
+    sin_traducir = [b for b in plurales if sin_rellenar(b)]
     assert not sin_traducir, "hay formas plurales vacías:\n\n" + "\n\n".join(sin_traducir)
+
+    # Y el contraste, porque una comprobación que acaba de dar un falso positivo
+    # merece que se demuestre que **sigue** cazando el caso de verdad: el fallo
+    # original era una forma vacía y sola al final del bloque.
+    roto = 'msgid "x"\nmsgid_plural "xs"\nmsgstr[0] "uno"\nmsgstr[1] "unos"\nmsgstr[2] ""'
+    assert sin_rellenar(roto), "la comprobación ya no vería el fallo que la trajo"

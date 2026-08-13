@@ -21,9 +21,11 @@ from itertools import pairwise
 from django.db import transaction
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ngettext
 
 from apps import legal
 from apps.absences.models import STOPS_THE_WHOLE_DAY, Absence, AbsenceStatus
+from apps.common.clock import local_date_of
 from apps.common.exceptions import BusinessRuleError
 from apps.shifts.models import Shift, ShiftPattern, working_days_between
 from apps.tenants.rules import WorkingTimeRules
@@ -252,6 +254,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     findings.extend(_check_rostered_on_a_holiday(by_person, first, last))
     findings.extend(_check_outside_the_contract(by_person))
     findings.extend(_check_time_actually_worked(company, rules, first, last, employee))
+    findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
     # finding was built. Nine of them used to be typed in beside each `Finding`,
@@ -273,6 +276,73 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     ]
 
     return sorted(findings, key=lambda f: (f.day, f.code))
+
+
+def _check_notice(company, by_person, rules, first, last) -> list[Finding]:
+    """Turnos puestos con menos preaviso del que la empresa tiene configurado.
+
+    «El trabajador deberá conocer con un preaviso mínimo de cinco días el día y
+    la hora de la prestación de trabajo resultante» (art. 34.2 ET). El plazo
+    estaba en el modelo, en el marco legal y en la pantalla de ajustes con su
+    cita --- y no lo leía ni una línea de código. Un ajuste que no lee nadie es
+    peor que no tenerlo: quien lo configura se queda convencido de que el
+    producto lo vigila.
+
+    Se avisa, no se impide, como con el resto de los mínimos. Un cambio urgente
+    ---alguien se pone malo y hay que cubrir el turno--- es legítimo y frecuente,
+    y negarse a registrarlo dejaría el cuadrante real fuera del cuadrante.
+
+    El plazo se cuenta desde que el turno **se puso o se cambió**, no desde hoy.
+    Contra hoy, un turno planificado en enero para julio se volvería «con poco
+    preaviso» solo por acercarse la fecha. Y se mira `updated_at` y no
+    `created_at` porque mover un turno de las siete a las quince es un dato
+    nuevo que la persona tiene que conocer: el artículo pide el día **y la
+    hora**.
+    """
+    minimo = int(rules.roster_notice_days or 0)
+    if minimo <= 0:
+        return []
+
+    found = []
+    for roster in by_person.values():
+        for shift in roster:
+            if not (first <= shift.day <= last):
+                continue
+            # Sin marca de tiempo no se puede afirmar nada, y afirmar sin poder
+            # es lo que convierte un aviso en ruido.
+            if shift.updated_at is None:
+                continue
+            sabido = local_date_of(shift.updated_at, company)
+            dias = (shift.day - sabido).days
+            if dias >= minimo:
+                continue
+            # Anotado **después** del día: eso no es poco preaviso, es registrar
+            # lo que ya pasó, y avisar ahí sería llamar incumplimiento a rellenar
+            # el cuadrante de la semana pasada. Si de eso hay que decir algo, lo
+            # dice el registro de actividad, que es donde consta quién lo tocó y
+            # cuándo.
+            if dias < 0:
+                continue
+            found.append(
+                Finding(
+                    day=shift.day,
+                    employee_id=shift.employee_id,
+                    code="short_roster_notice",
+                    message=(
+                        _("Rostered the same day.")
+                        if dias <= 0
+                        else ngettext(
+                            "Rostered %(days)s day ahead, under the %(floor)s "
+                            "the company asks for.",
+                            "Rostered %(days)s days ahead, under the %(floor)s "
+                            "the company asks for.",
+                            dias,
+                        )
+                        % {"days": dias, "floor": minimo}
+                    ),
+                )
+            )
+    return found
 
 
 def _check_daily_rest(roster, rules, shifts_law, first, last) -> list[Finding]:

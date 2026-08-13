@@ -122,6 +122,10 @@ ESPANA = LegalFramework(
     # --------------------------------------------------- avisos del cuadrante
     finding_citations={
         "short_daily_rest": Citation("Art. 34.3 ET"),
+        # El preaviso de la distribución irregular. No es un incumplimiento
+        # por sí solo ---un cambio urgente es legítimo--- pero es el dato que
+        # nadie apunta y el que se pide cuando alguien reclama.
+        "short_roster_notice": Citation("Art. 34.2 ET"),
         "weekly_hours_exceeded": Citation("Art. 34.1 ET"),
         # No es un incumplimiento: las horas por encima de lo pactado en jornada
         # parcial son complementarias, lícitas y con su propio tope.
