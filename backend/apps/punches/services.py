@@ -152,6 +152,56 @@ def punches_of_the_day(employee, company, day: date | None = None):
     ).order_by("timestamp")
 
 
+#: Cuánto puede seguir abierto un intervalo y que el siguiente fichaje lo cierre.
+#:
+#: Existe por el turno de noche. Mirando solo «hoy», quien entra a las 22:00 y
+#: sale a las 06:00 recibía **dos entradas y ninguna salida**: al salir, su día
+#: local no tenía ningún fichaje y la deducción decía «entrada». La jornada no
+#: se cerraba nunca, el día quedaba en cero horas y la persona figuraba
+#: trabajando indefinidamente. En una empresa de vigilancia, de limpieza o de
+#: residencias, eso es el registro entero mal.
+#:
+#: Y un tope hace falta: sin él, quien se olvidó de fichar la salida el lunes
+#: vería su entrada del martes leída como el cierre del lunes, que es otro error
+#: distinto y peor de deshacer. Para eso está el mecanismo de correcciones.
+#:
+#: Dieciséis horas: más largo que cualquier jornada de un tirón ---el descanso
+#: diario del art. 34.3 son doce horas, y ni con las reducciones del RD
+#: 1561/1995 se llega a dieciséis--- y bastante más corto que las veinticuatro
+#: de un olvido. **El número conviene confirmarlo con la asesoría**: es la
+#: frontera entre «cerró tarde» y «se olvidó», y no la fija ningún artículo.
+MAX_OPEN_HOURS = 16
+
+
+def _last_open(employee, interval: str):
+    """El último evento de ese intervalo que aún puede pertenecer a la jornada
+    en curso, sea de hoy o de anoche. Devuelve `None` si no hay ninguno."""
+    frontera = timezone.now() - timedelta(hours=MAX_OPEN_HOURS)
+    return (
+        Punch.objects.filter(
+            employee=employee,
+            is_active=True,
+            interval=interval,
+            timestamp__gte=frontera,
+        )
+        .order_by("timestamp")
+        .last()
+    )
+
+
+def work_is_open(employee) -> bool:
+    """Si la jornada está abierta ahora mismo, cruce o no la medianoche.
+
+    `build_day_status` responde por **días locales**, y para un turno de noche
+    eso no vale: pasada la medianoche el día nuevo no tiene ningún fichaje y la
+    jornada abierta parece cerrada. Con esa lectura, quien entró a las diez no
+    podía empezar una pausa a las tres --- el producto le respondía que su
+    jornada tenía que estar abierta primero.
+    """
+    ultimo = _last_open(employee, PunchInterval.WORK)
+    return ultimo is not None and ultimo.punch_type == PunchType.IN
+
+
 def infer_type(employee, company, interval: str = PunchInterval.WORK) -> str:
     """Opens or closes, worked out from the last event **of that interval**.
 
@@ -161,8 +211,14 @@ def infer_type(employee, company, interval: str = PunchInterval.WORK) -> str:
     Per interval, because they nest. Starting a break while the working day is
     open must not be read as closing the day, and it would be if the last event
     of any kind decided.
+
+    Y **no por días**, que es lo que estaba mal: un turno de noche cruza la
+    medianoche y su salida cae en otro día local que el de su entrada. Lo que
+    decide es el último evento de ese intervalo, esté en el día que esté,
+    siempre que siga abierto y no haya pasado tanto tiempo que ya no pueda ser
+    la misma jornada (`MAX_OPEN_HOURS`).
     """
-    last = punches_of_the_day(employee, company).filter(interval=interval).last()
+    last = _last_open(employee, interval)
     if last is None or last.punch_type == PunchType.OUT:
         return PunchType.IN
     return PunchType.OUT
@@ -326,8 +382,11 @@ def register_punch(
     # with a break floating in the middle of nothing, which no reader can
     # interpret and no inspector should have to.
     if interval != PunchInterval.WORK and punch_type == PunchType.IN:
-        status = build_day_status(employee, company)
-        if status.state not in {"WORKING", "ON_BREAK"}:
+        # Por el intervalo abierto y no por el día local: un turno de noche cruza
+        # la medianoche y su jornada sigue abierta aunque el día nuevo esté
+        # vacío. Con la lectura por días, quien entró a las diez no podía
+        # empezar una pausa a las tres.
+        if not work_is_open(employee):
             raise BusinessRuleError(
                 code="not_working",
                 message=_("The working day has to be open first."),
