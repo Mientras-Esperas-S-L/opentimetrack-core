@@ -120,6 +120,24 @@ class WorkingTimeRules(BaseModel):
         help_text=_("Leaving within this many minutes of the rostered end is not early."),
     )
 
+    # Art. 88 LOPDGDD: derecho a la desconexión digital. Un recordatorio de
+    # «tienes la jornada abierta» se dispara al pasar el fin del turno, así que
+    # un turno que acaba a las 22:00 podía sonar a las 23:30 --- y el aviso de
+    # las 23:30 ya no recuerda nada, solo molesta.
+    #
+    # Fuera de esta ventana no se manda nada. No se acumula para el día
+    # siguiente: un recordatorio de ayer no es un recordatorio.
+    quiet_from = models.TimeField(
+        _("no notifications from"),
+        default=time(21, 0),
+        help_text=_("Art. 88 LOPDGDD: the right to disconnect. Nothing is sent after this."),
+    )
+    quiet_until = models.TimeField(
+        _("no notifications until"),
+        default=time(7, 0),
+        help_text=_("Nothing is sent before this either."),
+    )
+
     roster_notice_days = models.PositiveSmallIntegerField(
         _("notice for roster changes (days)"),
         default=5,

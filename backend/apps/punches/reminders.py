@@ -61,6 +61,12 @@ def reminders_due(company, now=None) -> list[DueReminder]:
         local_now = now.astimezone(person.tzinfo)
         today = local_now.date()
 
+        # Art. 88 LOPDGDD, y en la hora de esa persona: alguien en Canarias
+        # tiene su noche una hora después. Fuera de la ventana no se manda nada
+        # y no se acumula --- un recordatorio de ayer no recuerda nada.
+        if _asleep(local_now.time(), rules):
+            continue
+
         # Yesterday too: a day opened last night and never closed is the
         # commonest "forgot to clock out", and at 00:30 the shift's end is on the
         # previous date. Looking only at `today` would miss it every night.
@@ -93,6 +99,21 @@ def reminders_due(company, now=None) -> list[DueReminder]:
                 due.append(DueReminder(person, day, PunchReminder.Kind.CLOCK_OUT))
 
     return due
+
+
+def _asleep(when, rules) -> bool:
+    """Si a esa hora no se molesta a nadie.
+
+    La ventana normal cruza la medianoche (de 21:00 a 07:00), así que la
+    comparación va al revés que en un rango de un mismo día. Una ventana que no
+    la cruce ---de 14:00 a 16:00, por ejemplo--- también funciona.
+    """
+    desde, hasta = rules.quiet_from, rules.quiet_until
+    if desde == hasta:
+        return False  # sin ventana: se avisa a cualquier hora
+    if desde < hasta:
+        return desde <= when < hasta
+    return when >= desde or when < hasta
 
 
 def _already_sent(person, day, kind) -> bool:

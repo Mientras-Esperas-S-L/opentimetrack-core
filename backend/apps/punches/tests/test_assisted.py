@@ -297,3 +297,79 @@ def test_the_preferences_door_ignores_everything_else(company, worker):
         worker.refresh_from_db()
     assert worker.role == "EMPLOYEE"
     assert worker.is_active is True
+
+
+# --------------------------------------------- desconexión digital (art. 88)
+
+
+@pytest.mark.django_db
+def test_nothing_is_sent_at_night(company, worker):
+    """Art. 88 LOPDGDD. Un turno que acaba a las 22:00 no puede convertirse en
+    un aviso a las 23:30: a esa hora ya no recuerda nada, solo molesta."""
+    with tenant_context(company.id):
+        Shift.objects.create(
+            tenant=company,
+            employee=worker,
+            day=date(2026, 9, 1),
+            segments=[{"start": "14:00", "end": "22:00"}],
+        )
+        Punch.objects.create(
+            tenant=company,
+            employee=worker,
+            punch_type=PunchType.IN,
+            timestamp=datetime(2026, 9, 1, 12, 0, tzinfo=UTC),  # 14:00 Madrid
+        )
+        # 23:30 en Madrid: la jornada sigue abierta y tocaría avisar.
+        de_noche = reminders_due(company, now=datetime(2026, 9, 1, 21, 30, tzinfo=UTC))
+
+    assert de_noche == []
+
+
+@pytest.mark.django_db
+def test_the_same_case_inside_the_window_does_send(company, worker):
+    """Y la comprobación contra un caso conocido: sin la ventana, ese mismo
+    día sí avisa. Un vacío sin este contraste no prueba nada."""
+    with tenant_context(company.id):
+        Shift.objects.create(
+            tenant=company,
+            employee=worker,
+            day=date(2026, 9, 1),
+            segments=[{"start": "08:00", "end": "16:00"}],
+        )
+        Punch.objects.create(
+            tenant=company,
+            employee=worker,
+            punch_type=PunchType.IN,
+            timestamp=datetime(2026, 9, 1, 6, 0, tzinfo=UTC),  # 08:00 Madrid
+        )
+        # 17:30 en Madrid: dentro de la ventana de aviso.
+        de_tarde = reminders_due(company, now=datetime(2026, 9, 1, 15, 30, tzinfo=UTC))
+
+    assert len(de_tarde) == 1
+    assert de_tarde[0].kind == PunchReminder.Kind.CLOCK_OUT
+
+
+@pytest.mark.django_db
+def test_a_company_may_switch_the_window_off(company, worker):
+    """Con las dos horas iguales no hay ventana: hay sectores que trabajan de
+    noche y para ellos la noche es su jornada."""
+    with tenant_context(company.id):
+        rules = WorkingTimeRules.for_company(company)
+        rules.quiet_from = rules.quiet_until
+        rules.save()
+
+        Shift.objects.create(
+            tenant=company,
+            employee=worker,
+            day=date(2026, 9, 1),
+            segments=[{"start": "14:00", "end": "22:00"}],
+        )
+        Punch.objects.create(
+            tenant=company,
+            employee=worker,
+            punch_type=PunchType.IN,
+            timestamp=datetime(2026, 9, 1, 12, 0, tzinfo=UTC),
+        )
+        de_noche = reminders_due(company, now=datetime(2026, 9, 1, 21, 30, tzinfo=UTC))
+
+    assert len(de_noche) == 1
