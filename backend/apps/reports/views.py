@@ -6,6 +6,7 @@ import io
 import zipfile
 from datetime import date, timedelta
 
+from django.db.models import Q
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -21,6 +22,7 @@ from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import IsAuthenticatedInTenant
 from apps.common.scope import people_queryset, person_in_scope
+from apps.punches.models import Punch
 from apps.reports.payroll import PayrollSummary, period_containing
 from apps.reports.pdf import render_pdf
 from apps.reports.renderers import CSVRenderer, PDFRenderer
@@ -61,9 +63,12 @@ MAX_PEOPLE_PER_EXPORT = 200
             "scope",
             str,
             enum=["company"],
-            description="Everybody active in the company, instead of one person.",
+            description=(
+                "Everybody in the company for that period, instead of one person. "
+                "Includes people who have since left but worked during it."
+            ),
         ),
-        OpenApiParameter("department", str, description="Everybody active in that department."),
+        OpenApiParameter("department", str, description="Everybody in that department."),
     ],
     responses={200: None},
 )
@@ -149,14 +154,34 @@ class ReportView(APIView):
         if not request.user.can_manage:
             raise ValidationError({"detail": _("You may only request your own record.")})
 
-        people = people_queryset(request.user).filter(is_active=True)
+        # Quien está de alta, **más quien ya no está y trabajó en el periodo**.
+        #
+        # Filtrar solo por `is_active` borraba del informe a quien se fue: el de
+        # marzo salía sin la persona que se marchó en abril, con doscientos
+        # documentos y uno menos, sin decirlo. Un dato incompleto con esa forma
+        # no lo detecta nadie, ni quien lo descarga ni quien lo recibe --- y lo
+        # que el art. 34.9 pone a disposición de la Inspección es el registro
+        # del periodo, no el de quien siga en plantilla el día que se pide. En
+        # una empresa con rotación es todos los meses.
+        #
+        # Por fichajes en el rango y no «todos los de baja»: quien se fue hace
+        # tres años no tiene nada que ver con un informe de marzo, y su
+        # documento vacío ensucia justo lo que hay que revisar.
+        people = people_queryset(request.user)
+        trabajaron = Punch.objects.filter(
+            employee__in=people.filter(is_active=False),
+            timestamp__date__gte=date_from,
+            timestamp__date__lte=date_to,
+        ).values("employee_id")
+        people = people.filter(Q(is_active=True) | Q(id__in=trabajaron))
+
         department = request.query_params.get("department")
         if department:
             people = people.filter(department_id=department)
         people = list(people.order_by("last_name", "first_name"))
 
         if not people:
-            raise ValidationError({"detail": _("Nobody active matches that.")})
+            raise ValidationError({"detail": _("Nobody worked in that period.")})
         if len(people) > MAX_PEOPLE_PER_EXPORT:
             raise ValidationError(
                 {
