@@ -21,13 +21,7 @@ import {
   getShiftPatterns,
   updateShiftPattern,
 } from '../../services/api.js'
-import {
-  ConfirmDialog,
-  Empty,
-  ErrorNote,
-  Loading,
-  PageHeader,
-} from '../../components/common.jsx'
+import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
 const PALETTE = ['#1b5e4a', '#b0533a', '#2e5f8a', '#7a4b8f', '#8a6d2e', '#4a4a4a']
@@ -250,9 +244,22 @@ export default function ShiftPatterns() {
       ) : rows.length === 0 ? (
         <Empty>Todavía no hay turnos definidos.</Empty>
       ) : (
-        <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
+        // Lista de verdad, no cajas sueltas: un lector de pantalla anuncia
+        // «lista de 8 turnos» y avisa al salir de ella, en vez de leer del
+        // tirón. De paso cada turno pasa a ser direccionable por su rol.
+        <Box
+          component="ul"
+          sx={{
+            display: 'grid',
+            gap: 1.5,
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            listStyle: 'none',
+            m: 0,
+            p: 0,
+          }}
+        >
           {rows.map((pattern) => (
-            <Paper key={pattern.id} variant="outlined" sx={{ p: 2 }}>
+            <Paper component="li" key={pattern.id} variant="outlined" sx={{ p: 2 }}>
               <Stack direction="row" sx={{ gap: 2, alignItems: 'flex-start' }}>
                 <Box
                   sx={{

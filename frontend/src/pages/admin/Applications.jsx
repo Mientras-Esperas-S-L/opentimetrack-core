@@ -27,13 +27,7 @@ import {
   revokeApplication,
   revokeCredential,
 } from '../../services/api.js'
-import {
-  ConfirmDialog,
-  Empty,
-  ErrorNote,
-  Loading,
-  PageHeader,
-} from '../../components/common.jsx'
+import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
 import { dateOf } from '../../components/format.js'
 
 /** Shown once, right after issuing. There is no second chance and the box says
@@ -46,15 +40,20 @@ function TokenDialog({ token, onClose }) {
       <DialogTitle>Copia el token ahora</DialogTitle>
       <DialogContent>
         <Alert severity="warning" variant="outlined" sx={{ mb: 2 }}>
-          Es la única vez que se muestra. Se guarda cifrado, así que no se puede
-          recuperar: si lo pierdes, hay que emitir otro.
+          Es la única vez que se muestra. Se guarda cifrado, así que no se puede recuperar: si lo
+          pierdes, hay que emitir otro.
         </Alert>
         <Paper
           variant="outlined"
           sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1, overflow: 'hidden' }}
         >
           <Typography
-            sx={{ fontFamily: 'monospace', fontSize: '0.85rem', wordBreak: 'break-all', flexGrow: 1 }}
+            sx={{
+              fontFamily: 'monospace',
+              fontSize: '0.85rem',
+              wordBreak: 'break-all',
+              flexGrow: 1,
+            }}
           >
             {token}
           </Typography>
@@ -110,10 +109,9 @@ function ApplicationDialog({ open, scopes, onClose, onSave, saving, error }) {
         <DialogContent>
           <ErrorNote error={error} />
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Un terminal en la entrada, un lector NFC, una tableta en obra. Lo que
-            registre irá marcado como hecho en nombre de la persona, no por ella:
-            son pruebas distintas y quien lea el registro tiene derecho a
-            distinguirlas.
+            Un terminal en la entrada, un lector NFC, una tableta en obra. Lo que registre irá
+            marcado como hecho en nombre de la persona, no por ella: son pruebas distintas y quien
+            lea el registro tiene derecho a distinguirlas.
           </Typography>
           <Stack sx={{ gap: 2, pt: 0.5 }}>
             <TextField
@@ -248,9 +246,10 @@ export default function Applications() {
           por la gente que no puede hacerlo con su propia sesión.
         </Empty>
       ) : (
-        <Stack sx={{ gap: 2 }}>
+        <Stack component="ul" sx={{ gap: 2, listStyle: 'none', m: 0, p: 0 }}>
           {rows.map((application) => (
             <Paper
+              component="li"
               key={application.id}
               variant="outlined"
               sx={{ p: 2, opacity: application.is_active ? 1 : 0.55 }}
