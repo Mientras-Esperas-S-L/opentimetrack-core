@@ -26,6 +26,11 @@ def record(
     *,
     action: str,
     actor=None,
+    #: Cuando quien actúa no es una persona. Una aplicación integrada empuja un
+    #: alta y no tiene fila en `users`, así que sin esto el rastro diría
+    #: «sistema» y no se sabría **qué** integración lo hizo --- que es
+    #: precisamente lo que hay que poder mirar cuando una ficha cambia sola.
+    actor_label: str = "",
     company=None,
     target=None,
     target_type: str = "",
@@ -51,7 +56,7 @@ def record(
         entry = AuditLog(
             tenant=tenant,
             actor=actor if getattr(actor, "pk", None) else None,
-            actor_label=_label_of(actor),
+            actor_label=actor_label or _label_of(actor),
             action=action,
             target_type=target_type or (type(target).__name__.lower() if target else ""),
             target_id=getattr(target, "pk", None),

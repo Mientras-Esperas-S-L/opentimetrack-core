@@ -23,6 +23,8 @@ from apps.reports.overview import OverviewView
 from apps.reports.views import PayrollSummaryView, ReportView
 from apps.shifts.views import ShiftPatternViewSet, ShiftViewSet, WorkingTimeRulesView
 from apps.tenants.application_views import ApplicationViewSet
+from apps.tenants.attendance_api import ApplicationAttendanceView
+from apps.tenants.people_api import ApplicationPeopleView, ApplicationPersonView
 from apps.tenants.views import CompanyView, PublicHolidayViewSet
 from apps.users.views import (
     DepartmentViewSet,
@@ -74,6 +76,17 @@ urlpatterns = [
         DelegatedPunchView.as_view(),
         name="punch-delegated",
     ),
+    # Para aplicaciones que se integran, con credencial propia y su permiso.
+    # Aparte del resto a propósito: quien llama aquí no es una persona, y la
+    # forma de las respuestas la marca lo que un conector necesita, no lo que
+    # una pantalla pinta.
+    path("api/app/people/", ApplicationPeopleView.as_view(), name="app-people"),
+    path(
+        "api/app/people/<str:reference>/",
+        ApplicationPersonView.as_view(),
+        name="app-person",
+    ),
+    path("api/app/attendance/", ApplicationAttendanceView.as_view(), name="app-attendance"),
     path("api/overtime/", OvertimeView.as_view(), name="overtime"),
     path(
         "api/holiday-recoveries/",

@@ -538,6 +538,13 @@ def test_every_route_is_covered_by_this_sweep():
         "api/auth/logout/",
         # Application credential, covered in apps/punches/tests/test_delegated.py.
         "api/punches/delegated/",
+        # Ídem: credencial de aplicación, con su propio barrido en
+        # apps/tenants/tests/test_integration_api.py --- incluido que una
+        # credencial no alcanza a la empresa de al lado y que leer no da
+        # permiso para escribir.
+        "api/app/people/",
+        "api/app/people/<str:reference>/",
+        "api/app/attendance/",
     }
     swept = {
         "api/^punches/$",

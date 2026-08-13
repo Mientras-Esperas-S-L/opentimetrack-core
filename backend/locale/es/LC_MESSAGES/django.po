@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-13 13:15+0000\n"
+"POT-Creation-Date: 2026-08-13 13:25+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -749,7 +749,7 @@ msgstr "Hace falta perfil de responsable o de administración."
 msgid "Only an administrator may modify this resource."
 msgstr "Solo un administrador puede modificar este recurso."
 
-#: apps/common/permissions.py:95
+#: apps/common/permissions.py:101
 msgid "The application does not carry the required permission."
 msgstr "La aplicación no tiene el permiso necesario."
 
@@ -1025,7 +1025,7 @@ msgstr "Tu registro de jornada ha cambiado"
 msgid "The reference matches more than one person."
 msgstr "La referencia coincide con más de una persona."
 
-#: apps/punches/delegated.py:127
+#: apps/punches/delegated.py:127 apps/tenants/attendance_api.py:55
 msgid "No active person matches that reference."
 msgstr "Ninguna persona activa coincide con esa referencia."
 
@@ -2191,6 +2191,22 @@ msgstr "funciones activadas"
 msgid "company limits"
 msgstr "límites de la empresa"
 
+#: apps/tenants/people_api.py:134
+msgid "`since` must be an ISO 8601 timestamp."
+msgstr "`since` tiene que ser una marca de tiempo ISO 8601."
+
+#: apps/tenants/people_api.py:165 apps/tenants/people_api.py:243
+msgid "No person matches that reference."
+msgstr "Ninguna persona coincide con esa referencia."
+
+#: apps/tenants/people_api.py:273
+msgid "Somebody else in this company already uses that address."
+msgstr "Otra persona de esta empresa ya usa esa dirección."
+
+#: apps/tenants/people_api.py:279
+msgid "Somebody else in this company already uses that staff number."
+msgstr "Otra persona de esta empresa ya usa ese número de empleado."
+
 #: apps/tenants/rules.py:42
 msgid "weekly hours"
 msgstr "horas semanales"
@@ -2309,7 +2325,9 @@ msgstr "sin avisos desde las"
 
 #: apps/tenants/rules.py:133
 msgid "Art. 88 LOPDGDD: the right to disconnect. Nothing is sent after this."
-msgstr "Art. 88 LOPDGDD: derecho a la desconexión. Después de esta hora no se manda nada."
+msgstr ""
+"Art. 88 LOPDGDD: derecho a la desconexión. Después de esta hora no se manda "
+"nada."
 
 #: apps/tenants/rules.py:136
 msgid "no notifications until"

@@ -94,7 +94,11 @@ export default function EmployeePicker({
   const byId = useMemo(() => new Map(people.map((person) => [person.id, person])), [people])
 
   const labelFor = (id) => {
-    if (id === '') return everyoneLabel
+    // Nunca `undefined`: MUI usa lo que devuelva esta función como texto del
+    // campo, y con `undefined` pinta literalmente «undefined» y avisa por
+    // consola en cada render. Pasó justo al empezar a pasar identificadores en
+    // vez de objetos, porque entonces la cadena vacía llega hasta aquí.
+    if (!id) return everyoneLabel ?? ''
     const person = byId.get(id)
     return person ? nameOf(person) : (picked[id] ?? knownNames?.[id] ?? '…')
   }
@@ -107,7 +111,11 @@ export default function EmployeePicker({
     [everyoneLabel, people],
   )
 
-  const chosen = multiple ? (value ?? NOBODY) : (value ?? null)
+  // Sin `everyoneLabel`, la cadena vacía significa «nada elegido» y tiene que
+  // llegar a MUI como `null`: si llega como cadena, la trata como un valor y
+  // pide su etiqueta. Con `everyoneLabel`, la cadena vacía **sí** es un valor
+  // --- «toda la empresa» --- y se conserva.
+  const chosen = multiple ? (value ?? NOBODY) : everyoneLabel ? (value ?? '') : value || null
 
   const remember = (list) =>
     setPicked((before) => ({

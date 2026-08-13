@@ -90,6 +90,12 @@ class HasApplicationScope(BasePermission):
     The scope is declared on the view as `required_scope`. A view without it
     denies access rather than allowing it: forgetting to declare a permission
     must not open a door.
+
+    Una vista puede declarar `required_scope_for(request)` cuando leer y
+    escribir no son el mismo permiso: una integración que solo pinta la
+    asistencia de su gente no tiene por qué poder dar de alta a nadie, y
+    obligarla a pedir el permiso de escritura para poder leer sería repartir
+    más llave de la que hace falta.
     """
 
     message = _("The application does not carry the required permission.")
@@ -101,7 +107,10 @@ class HasApplicationScope(BasePermission):
         if not hasattr(caller, "allows"):
             return False  # a person, not an application
 
-        scope = getattr(view, "required_scope", None)
+        por_metodo = getattr(view, "required_scope_for", None)
+        scope = (
+            por_metodo(request) if callable(por_metodo) else getattr(view, "required_scope", None)
+        )
         if scope is None:
             return False
 
