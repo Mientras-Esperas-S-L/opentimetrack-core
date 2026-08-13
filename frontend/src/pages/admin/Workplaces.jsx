@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
+import Autocomplete from '@mui/material/Autocomplete'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
@@ -30,6 +31,16 @@ import { dateOf } from '../../components/format.js'
 import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
+/** Todas las zonas horarias que conoce el navegador.
+ *
+ *  `Intl.supportedValuesOf` viene de fábrica y trae la lista IANA al día, que
+ *  es la misma contra la que valida el servidor. Mantener una copia aquí sería
+ *  garantizar que las dos se separen: las zonas cambian ---países que dejan el
+ *  horario de verano, territorios que se pasan de huso--- y una lista escrita a
+ *  mano envejece sin avisar.
+ */
+const TODAS_LAS_ZONAS = Intl.supportedValuesOf?.('timeZone') ?? []
+
 /** Where the work is done, as opposed to who it is done with.
  *
  *  Three things hang off the place rather than off the company, and the screen
@@ -37,7 +48,23 @@ import { useAuth } from '../../hooks/useAuth.js'
  *  is inspected per workplace, two of the fourteen public holidays are decided
  *  by the town hall, and Spain has two time zones.
  */
-function WorkplaceDialog({ open, workplace, regions, companyZone, onClose, onSave, saving, error }) {
+function WorkplaceDialog({
+  open,
+  workplace,
+  regions,
+  zonasDelPais,
+  companyZone,
+  onClose,
+  onSave,
+  saving,
+  error,
+}) {
+  // Las del país primero, y sin repetirlas abajo.
+  const zonasHorarias = [
+    ...Object.keys(zonasDelPais),
+    ...TODAS_LAS_ZONAS.filter((zona) => !zonasDelPais[zona]),
+  ]
+
   const empty = {
     name: '',
     address: '',
@@ -119,13 +146,32 @@ function WorkplaceDialog({ open, workplace, regions, companyZone, onClose, onSav
               ))}
             </TextField>
 
-            <TextField
-              fullWidth
-              label="Zona horaria"
-              placeholder={companyZone}
-              value={form.time_zone}
-              onChange={set('time_zone')}
-              helperText={`Vacío usa la de la empresa (${companyZone}). Solo hace falta si el centro está en otra: en España, Canarias.`}
+            {/* Se elige de una lista, no se teclea. Una zona horaria es un
+                identificador IANA exacto ---«Europe/Madrid»--- y escribirlo a
+                mano solo puede salir mal: «Madrid», «Canarias» o «España» son
+                todo lo que a nadie se le ocurre poner, y las tres las rechaza
+                el servidor sin decir cuál era la buena.
+
+                Delante van las del país, que vienen del marco legal; detrás,
+                el resto de las que conoce el navegador, para una empresa
+                española con una delegación en Lisboa. */}
+            <Autocomplete
+              options={zonasHorarias}
+              groupBy={(zona) => (zonasDelPais[zona] ? 'En este país' : 'Las demás')}
+              getOptionLabel={(zona) =>
+                zonasDelPais[zona] ? `${zona} · ${zonasDelPais[zona]}` : zona
+              }
+              value={form.time_zone || null}
+              onChange={(_, zona) => setForm({ ...form, time_zone: zona ?? '' })}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  label="Zona horaria"
+                  placeholder={companyZone}
+                  helperText={`Vacío usa la de la empresa (${companyZone}). Solo hace falta si el centro está en otra: en España, Canarias.`}
+                />
+              )}
             />
           </Stack>
         </DialogContent>
@@ -207,8 +253,8 @@ function Holidays({ workplaces }) {
       {imported.length === 0 && (
         <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
           No hay festivos nacionales ni autonómicos de {year}. Los trae{' '}
-          <code>python manage.py import_holidays --year {year}</code> desde el calendario
-          transcrito del BOE.
+          <code>python manage.py import_holidays --year {year}</code> desde el calendario transcrito
+          del BOE.
         </Alert>
       )}
 
@@ -217,22 +263,21 @@ function Holidays({ workplaces }) {
           <Stack
             key={day.id}
             direction="row"
-            sx={{ gap: 1.5, alignItems: 'center', py: 0.5, borderBottom: 1, borderColor: 'divider' }}
+            sx={{
+              gap: 1.5,
+              alignItems: 'center',
+              py: 0.5,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
           >
-            <Typography
-              variant="body2"
-              sx={{ minWidth: 110, fontVariantNumeric: 'tabular-nums' }}
-            >
+            <Typography variant="body2" sx={{ minWidth: 110, fontVariantNumeric: 'tabular-nums' }}>
               {dateOf(day.day, { weekday: 'short' })}
             </Typography>
             <Typography variant="body2" sx={{ flexGrow: 1 }}>
               {day.name}
             </Typography>
-            <Chip
-              size="small"
-              variant="outlined"
-              label={day.workplace_name ?? day.scope_display}
-            />
+            <Chip size="small" variant="outlined" label={day.workplace_name ?? day.scope_display} />
             {isAdmin && (day.scope === 'LOCAL' || day.scope === 'COMPANY') && (
               <Button size="small" color="inherit" onClick={() => drop.mutate(day.id)}>
                 Quitar
@@ -251,7 +296,10 @@ function Holidays({ workplaces }) {
           }}
           sx={{ mt: 2 }}
         >
-          <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 1.5, alignItems: 'flex-start' }}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            sx={{ gap: 1.5, alignItems: 'flex-start' }}
+          >
             <TextField
               required
               size="small"
@@ -290,8 +338,8 @@ function Holidays({ workplaces }) {
             </Button>
           </Stack>
           <Typography variant="caption" color="text.secondary">
-            Los dos festivos locales de cada municipio se meten aquí: los aprueba cada
-            ayuntamiento y no hay ningún registro nacional del que traerlos.
+            Los dos festivos locales de cada municipio se meten aquí: los aprueba cada ayuntamiento
+            y no hay ningún registro nacional del que traerlos.
             {typed.length > 0 && ` Hay ${typed.length} puestos a mano en ${year}.`}
           </Typography>
         </Box>
@@ -321,13 +369,16 @@ export default function Workplaces() {
     queryFn: getWorkingTimeRules,
   })
   const regions = rules?.regions ?? {}
+  // Las del país, del marco legal. En España son dos; en casi todo lo demás,
+  // una --- y donde no haya ninguna declarada, la lista completa del navegador
+  // sigue estando ahí.
+  const zonasDelPais = rules?.time_zones ?? {}
   const companyZone = session?.tenant?.time_zone ?? 'Europe/Madrid'
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['workplaces'] })
 
   const save = useMutation({
-    mutationFn: (form) =>
-      editing ? updateWorkplace(editing.id, form) : createWorkplace(form),
+    mutationFn: (form) => (editing ? updateWorkplace(editing.id, form) : createWorkplace(form)),
     onSuccess: () => {
       setEditing(undefined)
       setError(null)
@@ -372,9 +423,9 @@ export default function Workplaces() {
           plantilla se mide en la zona horaria de la empresa.
         </Empty>
       ) : (
-        <Stack sx={{ gap: 1.5 }}>
+        <Stack component="ul" sx={{ gap: 1.5, listStyle: 'none', m: 0, p: 0 }}>
           {workplaces.map((place) => (
-            <Paper key={place.id} variant="outlined" sx={{ p: 2 }}>
+            <Paper component="li" key={place.id} variant="outlined" sx={{ p: 2 }}>
               <Stack
                 direction={{ xs: 'column', sm: 'row' }}
                 sx={{ gap: 1.5, alignItems: { sm: 'center' } }}
@@ -394,7 +445,12 @@ export default function Workplaces() {
                         cada fila sería ruido, y callarla donde cambia sería
                         esconder justo el dato por el que existe el campo. */}
                     {place.time_zone && (
-                      <Chip size="small" color="primary" variant="outlined" label={place.time_zone} />
+                      <Chip
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        label={place.time_zone}
+                      />
                     )}
                   </Stack>
                   <Typography variant="body2" color="text.secondary">
@@ -458,6 +514,7 @@ export default function Workplaces() {
         open={editing !== undefined}
         workplace={editing}
         regions={regions}
+        zonasDelPais={zonasDelPais}
         companyZone={companyZone}
         saving={save.isPending}
         error={error}
