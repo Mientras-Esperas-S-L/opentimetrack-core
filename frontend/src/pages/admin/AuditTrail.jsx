@@ -44,6 +44,22 @@ function when(iso) {
   })
 }
 
+/** Un valor del rastro, escrito para que lo lea una persona.
+ *
+ *  `String(null)` es «null», y eso es lo que salía en pantalla cuando un campo
+ *  estaba vacío: «consulted_on: null → 2024-01-10». Lo destapó la prueba que
+ *  vigila `undefined`, `NaN` y `null` en todas las pantallas, a raíz de una
+ *  entrada nueva con una fecha opcional --- pero le pasaba a cualquiera, porque
+ *  la mitad de los campos del producto se pueden dejar en blanco.
+ *
+ *  Vacío se escribe con una raya, que es como se escribe vacío en una tabla.
+ */
+const legible = (valor) => {
+  if (valor === null || valor === undefined || valor === '') return '—'
+  if (typeof valor === 'boolean') return valor ? 'sí' : 'no'
+  return String(valor)
+}
+
 /** {campo: [antes, después]} en una línea legible. */
 function Changes({ changes }) {
   const entries = Object.entries(changes ?? {})
@@ -57,12 +73,12 @@ function Changes({ changes }) {
           {Array.isArray(value) && value.length === 2 ? (
             <>
               <Box component="span" sx={{ textDecoration: 'line-through' }}>
-                {String(value[0])}
+                {legible(value[0])}
               </Box>{' '}
-              → <strong>{String(value[1])}</strong>
+              → <strong>{legible(value[1])}</strong>
             </>
           ) : (
-            String(value)
+            legible(value)
           )}
         </Typography>
       ))}
