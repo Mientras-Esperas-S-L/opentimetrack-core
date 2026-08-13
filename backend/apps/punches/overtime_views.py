@@ -21,7 +21,12 @@ from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import IsManagerOrAdmin
 from apps.common.scope import person_in_scope, visible_people
 from apps.punches.models import OvertimeDecision, OvertimeSettlement
-from apps.punches.overtime import decide_overtime, overtime_window, pending_overtime
+from apps.punches.overtime import (
+    decide_overtime,
+    overtime_used,
+    overtime_window,
+    pending_overtime,
+)
 
 
 class OvertimeDecisionSerializer(serializers.Serializer):
@@ -71,6 +76,22 @@ class OvertimeView(APIView):
         first, last = self._window(request)
         scope = visible_people(request.user)
         rows = pending_overtime(company=request.user.tenant, first=first, last=last, scope=scope)
+
+        # Lo que cada persona lleva consumido del tope anual, junto a lo que hay
+        # que decidir. Autorizar sin saber que esa persona va por 78 de 80 es
+        # decidir a ciegas sobre un tope legal --- y hasta hoy el ajuste existía
+        # y no lo leía nadie.
+        from apps.common.scope import people_queryset
+
+        who = {row["employee"] for row in rows}
+        people = {str(p.id): p for p in people_queryset(request.user).filter(id__in=who)}
+        used = {
+            key: overtime_used(employee=person, company=request.user.tenant)
+            for key, person in people.items()
+        }
+        for row in rows:
+            row["used_this_year"] = used.get(row["employee"])
+
         return Response({"pending": rows})
 
     @extend_schema(request=OvertimeDecisionSerializer, responses={200: dict})

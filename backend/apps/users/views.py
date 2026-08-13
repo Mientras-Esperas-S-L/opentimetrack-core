@@ -127,6 +127,50 @@ class SignInView(APIView):
 
 
 @extend_schema(tags=["auth"])
+class RefreshView(APIView):
+    """Trades a refresh token for a fresh access token.
+
+    Missing until 13/08/2026, and its absence was invisible in the tests and
+    brutal in use: sign-in handed out a refresh token good for seven days,
+    the browser stored it, and there was nowhere to spend it. So every session
+    died fifteen minutes in --- mid form, mid roster, mid anything --- and
+    dumped the person back at the sign-in screen having lost what they were
+    doing.
+
+    Rotation is on (`ROTATE_REFRESH_TOKENS`), so the answer carries a new
+    refresh token and blacklists the one just used: a token that leaks is worth
+    one use, and using it twice is what gives the theft away.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    throttle_scope = "login"
+
+    @extend_schema(request=None, responses={200: dict})
+    def post(self, request):
+        token = request.data.get("refresh")
+        if not token:
+            raise BusinessRuleError(code="no_refresh_token", message=_("No session to renew."))
+        try:
+            refresh = RefreshToken(token)
+            access = str(refresh.access_token)
+            if settings.SIMPLE_JWT.get("ROTATE_REFRESH_TOKENS"):
+                if settings.SIMPLE_JWT.get("BLACKLIST_AFTER_ROTATION"):
+                    refresh.blacklist()
+                refresh.set_jti()
+                refresh.set_exp()
+                refresh.set_iat()
+        except TokenError as exc:
+            # Expired, blacklisted or forged: all the same answer. Telling them
+            # apart would say whether a token ever existed.
+            raise BusinessRuleError(
+                code="session_expired", message=_("The session has expired. Sign in again.")
+            ) from exc
+
+        return Response({"access": access, "refresh": str(refresh)})
+
+
+@extend_schema(tags=["auth"])
 class SignOutView(APIView):
     """Invalidates the refresh token, so signing out actually signs out."""
 

@@ -21,7 +21,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.common.exceptions import BusinessRuleError
 from apps.common.four_eyes import refuse_self_decision
-from apps.punches.models import OvertimeDecision
+from apps.punches.models import OvertimeDecision, OvertimeSettlement
 
 
 def pending_overtime(*, company, first: date, last: date, scope=None) -> list[dict]:
@@ -66,6 +66,48 @@ def pending_overtime(*, company, first: date, last: date, scope=None) -> list[di
             }
         )
     return rows
+
+
+def overtime_used(*, employee, company, day: date | None = None) -> dict:
+    """Cuántas horas extra lleva esa persona en el año, contra el tope legal.
+
+    El tope del art. 35.2 —ochenta al año salvo mejora del convenio— estaba en
+    los ajustes desde el principio y **no lo leía nadie**: ni el cuadrante, ni la
+    cola, ni el informe. Una empresa podía pasarse con este producto delante sin
+    que nada la avisara, que es justo lo que la herramienta existe para evitar.
+
+    Cuenta lo que la ley manda contar, que no es todo:
+
+    - Solo lo **autorizado**. Un día pendiente de resolver todavía no es hora
+      extra: puede acabar no autorizado.
+    - **Las compensadas con descanso no computan** (art. 35.2). Es la razón de
+      que la decisión guarde cómo se salda, y lo que permite contarlo bien aquí.
+    - La **fuerza mayor** tampoco (art. 35.3), y por eso no entra en el
+      cómputo del día quien la marcó en el fichaje.
+    """
+    from apps.tenants.rules import WorkingTimeRules
+
+    day = day or timezone.localdate()
+    # El tope es anual y va por año natural. El periodo de cómputo de las
+    # vacaciones puede ser otro y no se mezcla con este.
+    first, last = date(day.year, 1, 1), date(day.year, 12, 31)
+
+    decisions = OvertimeDecision.objects.filter(
+        employee=employee,
+        day__gte=first,
+        day__lte=last,
+        status=OvertimeDecision.Status.AUTHORISED,
+    ).exclude(settlement=OvertimeSettlement.REST)
+
+    minutes = sum(d.minutes for d in decisions)
+    cap = WorkingTimeRules.for_company(company).annual_overtime_hours
+    return {
+        "year": day.year,
+        "minutes": minutes,
+        "hours": round(minutes / 60, 1),
+        "cap_hours": cap,
+        "over_the_cap": cap > 0 and minutes > cap * 60,
+    }
 
 
 def decide_overtime(

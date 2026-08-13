@@ -389,3 +389,98 @@ def test_but_inside_its_reach_a_gap_is_a_real_day_off(company, employee, manager
 
     # Solo los cuatro días rotados dentro de la semana pedida.
     assert vacation_balance(employee, company, date(2026, 8, 1)).taken == 4
+
+
+# ------------------------------------------------- vacaciones que se devengan
+
+
+@pytest.mark.django_db
+def test_somebody_hired_in_march_has_not_earned_the_whole_year(company, employee):
+    """Las vacaciones se ganan trabajando. Quien entra el 9 de marzo no ha
+    ganado el año entero en marzo.
+
+    Hasta el 13/08/2026 esto daba los 22 días a todo el mundo desde el primer
+    día. En una empresa con temporeros no es un redondeo: son semanas regaladas
+    que luego se liquidan en la nómina.
+    """
+    with tenant_context(company.id):
+        employee.contract_start = date(2026, 3, 9)
+        employee.save()
+        balance = vacation_balance(employee, company, date(2026, 8, 1))
+
+    # Del 9 de marzo al 31 de diciembre son 298 días de 365.
+    # 22 x 298/365 = 17,96 -> 18, redondeando al alza.
+    assert balance.entitled == 18
+    assert balance.full_year == 22
+    assert balance.prorated is True
+    assert balance.accrued_from == date(2026, 3, 9)
+
+
+@pytest.mark.django_db
+def test_a_three_month_contract_earns_three_months_of_holiday(company, employee):
+    with tenant_context(company.id):
+        employee.contract_start = date(2026, 6, 1)
+        employee.contract_end = date(2026, 8, 31)
+        employee.save()
+        balance = vacation_balance(employee, company, date(2026, 8, 1))
+
+    # 92 días de 365: 22 x 92/365 = 5,54 -> 6.
+    assert balance.entitled == 6
+    assert balance.accrued_from == date(2026, 6, 1)
+    assert balance.accrued_to == date(2026, 8, 31)
+
+
+@pytest.mark.django_db
+def test_a_full_year_is_not_prorated(company, employee):
+    """Alguien con contrato desde antes y sin fin: el año entero, y sin ruido
+    en la respuesta."""
+    with tenant_context(company.id):
+        employee.contract_start = date(2019, 1, 7)
+        employee.save()
+        balance = vacation_balance(employee, company, date(2026, 8, 1))
+
+    assert balance.entitled == 22
+    assert balance.prorated is False
+    assert balance.accrued_from is None
+
+
+@pytest.mark.django_db
+def test_rounding_goes_up_because_the_figure_is_a_legal_floor(company, employee):
+    """Redondear a la baja quitaría días sobre un mínimo del art. 38.1. Al alza
+    el peor caso es dar medio día de más."""
+    with tenant_context(company.id):
+        employee.contract_start = date(2026, 12, 31)  # un solo día
+        employee.save()
+        balance = vacation_balance(employee, company, date(2026, 12, 31))
+
+    assert balance.entitled == 1  # 22 x 1/365 = 0,06 -> 1, no 0
+
+
+@pytest.mark.django_db
+def test_a_contract_that_does_not_reach_this_period_earns_nothing(company, employee):
+    with tenant_context(company.id):
+        employee.contract_start = date(2027, 2, 1)
+        employee.save()
+        balance = vacation_balance(employee, company, date(2026, 8, 1))
+
+    assert balance.entitled == 0
+
+
+@pytest.mark.django_db
+def test_the_balance_reaches_the_api_saying_why(company, employee):
+    """La cifra prorrateada sin explicación acaba en una discusión. Va con lo
+    que daría el año completo y con el tramo que se ha devengado."""
+    from rest_framework.test import APIClient
+
+    with tenant_context(company.id):
+        employee.contract_start = date(2026, 3, 9)
+        employee.save()
+
+    client = APIClient()
+    client.force_authenticate(user=employee)
+    body = client.get("/api/absences/balance/").json()
+
+    assert body["entitled"] == 18
+    assert body["full_year"] == 22
+    assert body["prorated"] is True
+    assert body["accrued_from"] == "2026-03-09"

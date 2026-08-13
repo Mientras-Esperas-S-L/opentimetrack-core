@@ -1,5 +1,7 @@
 import axios from 'axios'
 
+import { noteServerTime } from './serverClock.js'
+
 const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
 
 const ACCESS = 'ott.access'
@@ -54,13 +56,65 @@ export const setPreferredLanguage = (session) => {
     session?.user?.locale || session?.tenant?.language || navigator.language || 'es'
 }
 
+/** Renovar la sesión sin que se note, y una sola vez por petición.
+ *
+ *  El acceso dura quince minutos y el refresco siete días. Hasta el 13/08/2026
+ *  el segundo se guardaba y no se usaba nunca --- no había ni endpoint --- así
+ *  que la sesión se moría a media jornada, a media pantalla, y devolvía a la
+ *  gente al login habiendo perdido lo que estaba haciendo.
+ *
+ *  Una promesa compartida: si cinco peticiones caducan a la vez, se refresca
+ *  una vez y las cinco esperan a la misma. Refrescar cinco veces con rotación
+ *  activada invalidaría los tokens de las otras cuatro.
+ */
+let renewing = null
+
+const renew = () => {
+  if (!renewing) {
+    renewing = api
+      .post('/auth/refresh/', { refresh: tokens.refresh })
+      .then(({ data }) => {
+        tokens.save(data)
+        return data.access
+      })
+      .finally(() => {
+        renewing = null
+      })
+  }
+  return renewing
+}
+
 // Every API error has the same shape: { error: { code, message, details } }.
 // It is normalised here so no component has to dig through the response.
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  (response) => {
+    // Toda respuesta trae su hora. De ahí sale el reloj de pared de la pantalla
+    // de fichar, para que no sea el del dispositivo.
+    noteServerTime(response.headers?.date)
+    return response
+  },
+  async (error) => {
+    noteServerTime(error.response?.headers?.date)
     const payload = error.response?.data?.error
     const status = error.response?.status ?? 0
+    const failed = error.config
+
+    // Un 401 con refresco a mano es una sesión que se renueva, no una que se
+    // acabó. `_retried` evita el bucle: si la repetición también da 401, se
+    // cierra de verdad.
+    if (status === 401 && tokens.refresh && failed && !failed._retried) {
+      const renewingThis = failed.url?.includes('/auth/refresh/')
+      if (!renewingThis) {
+        failed._retried = true
+        try {
+          const access = await renew()
+          failed.headers.Authorization = `Bearer ${access}`
+          return api(failed)
+        } catch {
+          tokens.clear()
+        }
+      }
+    }
 
     if (status === 401) tokens.clear()
 
@@ -256,7 +310,14 @@ export const seedLeaveTypes = () => post('/leave-types/seed/', {})
 
 /** Lo que queda de cada permiso con tope. El catálogo dice que el art. 37.9 da
  *  cuatro días al año; esto dice que van dos. */
-export const getLeaveUsage = async (params) => (await get('/leave-types/usage/', params)).data
+/** Lo que cada permiso lleva consumido. Es lo que pinta el aviso de «llevas X
+ *  de Y» al pedir una ausencia.
+ *
+ *  `rows()` y no `.data`: el ayudante `get` ya devuelve el cuerpo, así que
+ *  `.data` era `undefined` y la consulta reventaba en silencio --- el aviso de
+ *  tope consumido no se ha enseñado nunca. Mismo fallo que tenía la cola de
+ *  horas extra; si vuelve a aparecer, es que este ayudante engaña. */
+export const getLeaveUsage = async (params) => rows(await get('/leave-types/usage/', params))
 
 // ---------------------------------------------------------------------- shifts
 

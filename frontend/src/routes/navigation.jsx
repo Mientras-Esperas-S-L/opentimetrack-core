@@ -33,7 +33,10 @@ export const NAV_ME = [
 ]
 
 export const NAV_ADMIN = [
-  { to: '/panel', label: 'Resumen', icon: <SpaceDashboardIcon /> },
+  // `end` como en «Fichar»: sin él, `/panel` casa como prefijo de
+  // `/panel/personas` y de todas las demás, y «Resumen» se quedaba encendido a
+  // la vez que la pantalla en la que estabas.
+  { to: '/panel', label: 'Resumen', icon: <SpaceDashboardIcon />, end: true },
   { to: '/panel/personas', label: 'Personas', icon: <GroupsIcon /> },
   { to: '/panel/departamentos', label: 'Departamentos', icon: <ApartmentIcon /> },
   { to: '/panel/centros', label: 'Centros', icon: <PlaceIcon /> },

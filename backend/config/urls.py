@@ -28,6 +28,7 @@ from apps.users.views import (
     MeView,
     PasswordResetRequestView,
     PasswordSetView,
+    RefreshView,
     SignInView,
     SignOutView,
     SignUpView,
@@ -52,6 +53,7 @@ router.register("applications", ApplicationViewSet, basename="application")
 auth_patterns = [
     path("register/", SignUpView.as_view(), name="register"),
     path("token/", SignInView.as_view(), name="token"),
+    path("refresh/", RefreshView.as_view(), name="refresh"),
     path("logout/", SignOutView.as_view(), name="logout"),
     path("me/", MeView.as_view(), name="me"),
     path("password-reset/", PasswordResetRequestView.as_view(), name="password-reset"),

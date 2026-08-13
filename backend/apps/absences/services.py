@@ -69,6 +69,13 @@ class LeaveBalance:
     entitled: int
     taken: int
     pending: int
+    #: Lo que daría el periodo completo, cuando la persona no lo ha trabajado
+    #: entero. `None` cuando sí. La pantalla lo necesita para poder explicar de
+    #: dónde sale la cifra: «19 de 23, por haber entrado el 9 de marzo».
+    full_year: int | None = None
+    #: El tramo del periodo que la persona tiene contrato, cuando no es todo.
+    accrued_from: date | None = None
+    accrued_to: date | None = None
     #: Which unit all three figures are in. Served rather than assumed: "quedan
     #: 9" means something different in working days than in calendar days, and
     #: the screen showing it has no other way to know which.
@@ -80,6 +87,10 @@ class LeaveBalance:
         two people end up booking the same last day."""
         return self.entitled - self.taken - self.pending
 
+    @property
+    def prorated(self) -> bool:
+        return self.full_year is not None and self.full_year != self.entitled
+
     def as_dict(self) -> dict:
         return {
             "period_start": self.period_start.isoformat(),
@@ -89,15 +100,23 @@ class LeaveBalance:
             "pending": self.pending,
             "remaining": self.remaining,
             "working_days": self.working_days,
+            # Enseñar solo «19» sin decir por qué son diecinueve y no
+            # veintitrés es la clase de cifra que acaba en una discusión.
+            "prorated": self.prorated,
+            "full_year": self.full_year,
+            "accrued_from": self.accrued_from.isoformat() if self.accrued_from else None,
+            "accrued_to": self.accrued_to.isoformat() if self.accrued_to else None,
         }
 
 
 def vacation_balance(employee, company, day: date | None = None) -> LeaveBalance:
     start, end = leave_period_for(company, day)
 
-    entitled = employee.annual_leave_days
-    if entitled is None:
-        entitled = company.annual_leave_days
+    full_year = employee.annual_leave_days
+    if full_year is None:
+        full_year = company.annual_leave_days
+
+    entitled, accrued_from, accrued_to = _accrued(employee, full_year, start, end)
 
     inside = Absence.objects.filter(
         employee=employee,
@@ -118,7 +137,64 @@ def vacation_balance(employee, company, day: date | None = None) -> LeaveBalance
         for a in inside.filter(status=AbsenceStatus.PENDING)
     )
 
-    return LeaveBalance(start, end, entitled, taken, pending, working_days=unit)
+    return LeaveBalance(
+        start,
+        end,
+        entitled,
+        taken,
+        pending,
+        working_days=unit,
+        full_year=full_year,
+        accrued_from=accrued_from,
+        accrued_to=accrued_to,
+    )
+
+
+def _accrued(
+    employee, full_year: int, start: date, end: date
+) -> tuple[int, date | None, date | None]:
+    """Lo que le corresponde de vacaciones si no ha trabajado el periodo entero.
+
+    Las vacaciones se **devengan**: se ganan según se trabaja. Quien entra el 9
+    de marzo no ha ganado el año entero en marzo, y quien tiene contrato de tres
+    meses no gana doce. El art. 38.1 ET fija el suelo de treinta días naturales
+    *al año*; para un periodo incompleto ese suelo va en proporción, y es
+    doctrina pacífica --- no una interpretación de este producto.
+
+    Esto lo hacía mal hasta el 13/08/2026: daba el año completo a todo el mundo
+    desde el primer día. En una empresa con temporeros eso no es un redondeo,
+    es regalar semanas que luego se liquidan en la nómina.
+
+    La proporción va por días naturales de contrato dentro del periodo, que es
+    como se calcula en la práctica y como lo hace cualquier finiquito.
+
+    **Se redondea hacia arriba.** El resultado casi nunca es entero, y redondear
+    hacia abajo quita días sobre un mínimo legal. Al alza el peor caso es dar
+    medio día de más; a la baja el peor caso es incumplir. El convenio puede
+    mejorarlo, y entonces se pone el número a mano en la ficha.
+    """
+    import math
+
+    begins = employee.contract_start
+    finishes = employee.contract_end
+
+    # Sin fechas de contrato no hay nada que prorratear: es alguien de siempre.
+    if not begins and not finishes:
+        return full_year, None, None
+
+    first = max(begins, start) if begins else start
+    last = min(finishes, end) if finishes else end
+
+    if first > last:
+        # El contrato no toca este periodo: ni un día devengado.
+        return 0, first, last
+
+    covered = (last - first).days + 1
+    whole = (end - start).days + 1
+    if covered >= whole:
+        return full_year, None, None
+
+    return math.ceil(full_year * covered / whole), first, last
 
 
 def _days_within(absence: Absence, start: date, end: date, *, working_days: bool) -> int:

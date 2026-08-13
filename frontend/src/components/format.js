@@ -31,6 +31,20 @@ export function durationOf(totalMinutes) {
   return minutes ? `${hours} h ${minutes} min` : `${hours} h`
 }
 
+/** `HH:MM:SS`. Para el contador de la pantalla de fichar y nada más.
+ *
+ *  Los segundos no aportan información —una jornada no se mide al segundo— pero
+ *  sí aportan una cosa que importa: que se vea que el contador está vivo. Sin
+ *  ellos parecía congelado, y un contador congelado hace dudar de si el fichaje
+ *  llegó a registrarse.
+ */
+export function hhmmss(totalSeconds) {
+  const safe = Math.max(0, Math.floor(totalSeconds))
+  const hours = Math.floor(safe / 3600)
+  const minutes = Math.floor((safe % 3600) / 60)
+  return `${pad(hours)}:${pad(minutes)}:${pad(safe % 60)}`
+}
+
 export function timeOf(iso, timeZone) {
   if (!iso) return '—'
   return new Date(iso).toLocaleTimeString('es-ES', {

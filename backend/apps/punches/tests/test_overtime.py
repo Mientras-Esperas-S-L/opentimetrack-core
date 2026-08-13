@@ -391,3 +391,104 @@ def test_the_same_day_twice_is_decided_once(company, people):
         format="json",
     )
     assert len(answer.json()["decided"]) == 1
+
+
+# ------------------------------------------------ el tope anual del art. 35.2
+
+
+@pytest.mark.django_db
+def test_the_annual_cap_counts_only_what_the_law_counts(company, people):
+    """Ochenta horas al año, y no todo cuenta: las compensadas con descanso
+    quedan fuera (art. 35.2), y lo pendiente de resolver todavía no es hora
+    extra.
+
+    El ajuste `annual_overtime_hours` existía desde el principio y no lo leía
+    nadie: una empresa podía pasarse del tope con el producto delante.
+    """
+    from apps.punches.overtime import overtime_used
+
+    for day, extra in ((date(2026, 9, 1), 2), (date(2026, 9, 2), 3), (date(2026, 9, 3), 4)):
+        worked_overtime(company, people["worker"], day, extra_hours=extra)
+
+    with tenant_context(company.id):
+        decide_overtime(
+            employee=people["worker"],
+            company=company,
+            day=date(2026, 9, 1),
+            decided_by=people["boss"],
+            authorise=True,
+            settlement="PAID",
+        )
+        decide_overtime(
+            employee=people["worker"],
+            company=company,
+            day=date(2026, 9, 2),
+            decided_by=people["boss"],
+            authorise=True,
+            settlement="REST",  # compensada: no computa
+        )
+        # El día 3 se queda sin resolver: todavía no es hora extra.
+        used = overtime_used(
+            employee=people["worker"], company=company, day=date(2026, 9, 30)
+        )
+
+    assert used["hours"] == 2.0
+    assert used["cap_hours"] == 80
+    assert used["over_the_cap"] is False
+
+
+@pytest.mark.django_db
+def test_going_over_the_cap_is_flagged(company, people):
+    from apps.punches.overtime import overtime_used
+    from apps.tenants.rules import WorkingTimeRules
+
+    with tenant_context(company.id):
+        rules = WorkingTimeRules.for_company(company)
+        rules.annual_overtime_hours = 4
+        rules.save()
+
+    for offset, extra in enumerate((3, 3)):
+        worked_overtime(company, people["worker"], date(2026, 9, 1 + offset), extra_hours=extra)
+
+    with tenant_context(company.id):
+        for offset in (0, 1):
+            decide_overtime(
+                employee=people["worker"],
+                company=company,
+                day=date(2026, 9, 1 + offset),
+                decided_by=people["boss"],
+                authorise=True,
+                settlement="PAID",
+            )
+        used = overtime_used(
+            employee=people["worker"], company=company, day=date(2026, 9, 30)
+        )
+
+    assert used["hours"] == 6.0
+    assert used["over_the_cap"] is True
+
+
+@pytest.mark.django_db
+def test_the_queue_says_how_much_of_the_cap_is_gone(company, people):
+    """Autorizar sin saber que esa persona va por setenta y ocho de ochenta es
+    decidir a ciegas sobre un tope legal."""
+    worked_overtime(company, people["worker"], date(2026, 9, 1))
+    worked_overtime(company, people["worker"], date(2026, 9, 2))
+
+    with tenant_context(company.id):
+        decide_overtime(
+            employee=people["worker"],
+            company=company,
+            day=date(2026, 9, 1),
+            decided_by=people["boss"],
+            authorise=True,
+            settlement="PAID",
+        )
+
+    listed = (
+        client_for(people["admin"])
+        .get("/api/overtime/", {"from": "2026-09-01", "to": "2026-09-30"})
+        .json()
+    )
+    assert listed["pending"][0]["used_this_year"]["hours"] == 2.0
+    assert listed["pending"][0]["used_this_year"]["cap_hours"] == 80

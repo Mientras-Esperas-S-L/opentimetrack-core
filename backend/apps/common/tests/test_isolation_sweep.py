@@ -516,6 +516,10 @@ def test_every_route_is_covered_by_this_sweep():
         # Public on purpose.
         "api/health/",
         "api/auth/token/",
+        # Sin sesión a propósito: el acceso ya caducó, ese es el motivo de la
+        # llamada. Lo que la autoriza es el propio token de refresco, y lo que
+        # puede hacerse con él está en apps/users/tests/test_refresh.py.
+        "api/auth/refresh/",
         "api/auth/register/",
         "api/auth/password-reset/",
         "api/auth/set-password/",

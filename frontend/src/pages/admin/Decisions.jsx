@@ -78,6 +78,7 @@ function OvertimePersonCard({ group, busy, onDecide }) {
   const single = rows.length === 1
   const total = rows.reduce((sum, row) => sum + row.minutes, 0)
   const reopened = rows.filter((row) => row.previous).length
+  const used = rows[0]?.used_this_year
 
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
@@ -101,6 +102,20 @@ function OvertimePersonCard({ group, busy, onDecide }) {
               </>
             )}
           </Typography>
+          {/* El tope del art. 35.2. Autorizar sin saber que esta persona va
+              por 78 de 80 es decidir a ciegas sobre un límite legal --- y el
+              ajuste existía desde el principio sin que nadie lo leyera. */}
+          {used && used.cap_hours > 0 && (
+            <Typography
+              variant="caption"
+              color={used.over_the_cap ? 'error.main' : 'text.secondary'}
+              sx={{ display: 'block' }}
+            >
+              {used.over_the_cap
+                ? `Ya lleva ${fmt(used.hours)} h autorizadas este año, por encima del tope de ${used.cap_hours} h (art. 35.2 ET).`
+                : `Lleva ${fmt(used.hours)} h de ${used.cap_hours} este año. Las compensadas con descanso no cuentan.`}
+            </Typography>
+          )}
           {reopened > 0 && (
             <Typography variant="caption" color="warning.main">
               {reopened === 1

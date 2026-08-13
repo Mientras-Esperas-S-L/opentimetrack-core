@@ -328,6 +328,17 @@ FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 # How long an account link lasts, in seconds.
 PASSWORD_RESET_TIMEOUT = env.int("PASSWORD_RESET_TIMEOUT", default=60 * 60 * 24)
 
+# La cabecera `Date` de cada respuesta, visible para el navegador.
+#
+# No está en la lista blanca de CORS —solo lo están Cache-Control,
+# Content-Language, Content-Length, Content-Type, Expires, Last-Modified y
+# Pragma— así que sin esto el navegador la recibe y la esconde del JavaScript.
+#
+# La necesita el reloj de la pantalla de fichar: enseña la hora del servidor,
+# que es la que se va a guardar, en vez de la del dispositivo, que puede ir
+# cinco minutos adelantada y sembrar justo la duda que el diseño quiere cerrar.
+CORS_EXPOSE_HEADERS = ["Date"]
+
 # ---------------------------------------------------------- trabajos periódicos
 
 # Quién repite los trabajos que se repiten: `cron` o `celery`.
