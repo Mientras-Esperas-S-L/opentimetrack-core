@@ -1045,6 +1045,134 @@ def _check_leave_clashes(first, last, employee) -> list[Finding]:
 # ------------------------------------------------------- roster against reality
 
 
+@dataclass(frozen=True)
+class DayReconciliation:
+    """Expected against real for one day, classified, hiding nothing.
+
+    The headline `status` is a best effort at the single most useful label, but
+    the three figures below it are the truth and are always filled: a day can be
+    late AND run into overtime, and collapsing that to one word would lose one
+    of them. Overtime especially is never folded away --- surfacing it is the
+    whole point of the exercise, and the reason assisted clock-in must never
+    become the "fichaje de horario" that buries it.
+    """
+
+    day: date
+    has_shift: bool
+    state: str  # NOT_STARTED | WORKING | ON_BREAK | OFF
+    expected_minutes: int
+    worked_minutes: int
+    late_minutes: int = 0
+    early_minutes: int = 0
+    overtime_minutes: int = 0
+    status: str = "NO_SHIFT"
+
+    def as_dict(self) -> dict:
+        return {
+            "day": self.day.isoformat(),
+            "has_shift": self.has_shift,
+            "state": self.state,
+            "expected_minutes": self.expected_minutes,
+            "worked_minutes": self.worked_minutes,
+            "late_minutes": self.late_minutes,
+            "early_minutes": self.early_minutes,
+            "overtime_minutes": self.overtime_minutes,
+            "status": self.status,
+        }
+
+
+def day_reconciliation(*, employee, company, day: date) -> DayReconciliation:
+    """The day as the record holds it, against the day as the roster planned it.
+
+    Never invents time --- it reads what was punched and what was rostered and
+    says how they differ. The margins turn a small slip into a variation rather
+    than an incident, which is how a company stops fighting every five minutes;
+    they do not hide overtime, because overtime is time worked *beyond* the
+    expected day plus its margin.
+    """
+    from apps.punches.services import build_day_status
+    from apps.tenants.rules import WorkingTimeRules
+
+    shift = Shift.objects.filter(employee=employee, day=day).first()
+    status = build_day_status(employee, company, day)
+    worked = status.worked_seconds // 60
+
+    if shift is None:
+        return DayReconciliation(
+            day=day,
+            has_shift=False,
+            state=status.state,
+            expected_minutes=0,
+            worked_minutes=worked,
+            overtime_minutes=worked,  # unplanned time is all "extra" to the plan
+            status="NO_SHIFT",
+        )
+
+    rules = WorkingTimeRules.for_company(company)
+    zone = employee.tzinfo
+    entry_tol = timedelta(minutes=rules.entry_tolerance_minutes)
+    exit_tol = timedelta(minutes=rules.exit_tolerance_minutes)
+
+    # The rostered edges, made aware in the person's own zone so they compare
+    # against the punches, which are stored in UTC.
+    planned_start = shift.starts_at.replace(tzinfo=zone)
+    planned_end = shift.ends_at.replace(tzinfo=zone)
+
+    work_spans = [s for s in status.segments if s.interval == "WORK"]
+    first_in = min((s.start for s in work_spans), default=None)
+    last_out = max((s.end for s in work_spans if s.end is not None), default=None)
+
+    if not status.segments:
+        return DayReconciliation(
+            day=day,
+            has_shift=True,
+            state=status.state,
+            expected_minutes=shift.minutes,
+            worked_minutes=0,
+            status="MISSING",
+        )
+
+    late = early = overtime = 0
+    if first_in is not None:
+        lateness = first_in.astimezone(zone) - planned_start
+        if lateness > entry_tol:
+            late = int(lateness.total_seconds() // 60)
+
+    if status.state in {"WORKING", "ON_BREAK"}:
+        status_label = "OPEN"
+    else:
+        if last_out is not None:
+            earliness = planned_end - last_out.astimezone(zone)
+            if earliness > exit_tol:
+                early = int(earliness.total_seconds() // 60)
+        overtime = max(0, worked - shift.minutes)
+        # A margin's worth of overtime is the rounding of a normal day, not an
+        # extra hour; only what exceeds the tolerance is surfaced as overtime.
+        if overtime <= rules.exit_tolerance_minutes:
+            overtime = 0
+
+        if overtime:
+            status_label = "OVERTIME"
+        elif late:
+            status_label = "LATE"
+        elif early:
+            status_label = "LEFT_EARLY"
+        else:
+            status_label = "OK"
+
+    return DayReconciliation(
+        day=day,
+        has_shift=True,
+        state=status.state,
+        expected_minutes=shift.minutes,
+        worked_minutes=worked,
+        late_minutes=late,
+        early_minutes=early,
+        overtime_minutes=overtime,
+        status=status_label,
+    )
+
+
 def expected_vs_worked(*, employee, company, day: date) -> dict:
     """What was expected against what was recorded, for one day.
 

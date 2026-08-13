@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-12 21:52+0000\n"
+"POT-Creation-Date: 2026-08-13 07:53+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -96,6 +96,7 @@ msgid "name"
 msgstr "nombre"
 
 #: apps/absences/models.py:90 apps/punches/corrections.py:74
+#: apps/punches/models.py:399
 msgid "kind"
 msgstr "clase"
 
@@ -167,7 +168,7 @@ msgstr "nota"
 
 #: apps/absences/models.py:156 apps/shifts/models.py:84
 #: apps/tenants/applications.py:53 apps/tenants/models.py:156
-#: apps/users/models.py:35 apps/users/models.py:129 apps/users/models.py:477
+#: apps/users/models.py:35 apps/users/models.py:129 apps/users/models.py:490
 msgid "active"
 msgstr "activo"
 
@@ -192,13 +193,13 @@ msgid "Rejected"
 msgstr "Rechazada"
 
 #: apps/absences/models.py:214 apps/punches/corrections.py:72
-#: apps/punches/models.py:130 apps/reports/payroll.py:97
-#: apps/shifts/models.py:111
+#: apps/punches/models.py:149 apps/punches/models.py:396
+#: apps/reports/payroll.py:97 apps/shifts/models.py:111
 msgid "employee"
 msgstr "persona trabajadora"
 
 #: apps/absences/models.py:231 apps/audit/models.py:128
-#: apps/punches/corrections.py:86 apps/punches/models.py:132
+#: apps/punches/corrections.py:86 apps/punches/models.py:151
 msgid "type"
 msgstr "tipo"
 
@@ -277,7 +278,7 @@ msgstr "La fecha final no puede ir antes que la inicial."
 msgid "Give both times, or neither: half of a range is not one."
 msgstr "Pon las dos horas o ninguna: media franja no es una franja."
 
-#: apps/absences/models.py:371 apps/users/serializers.py:313
+#: apps/absences/models.py:371 apps/users/serializers.py:315
 msgid "It ends before it starts."
 msgstr "Acaba antes de empezar."
 
@@ -348,8 +349,8 @@ msgid ""
 "Only a suspension the company records --- an ERTE, the RED mechanism --- can "
 "reduce the working day."
 msgstr ""
-"Solo una suspensión de las que registra la empresa —un ERTE, el "
-"mecanismo RED— puede reducir la jornada."
+"Solo una suspensión de las que registra la empresa —un ERTE, el mecanismo RED"
+"— puede reducir la jornada."
 
 #: apps/absences/services.py:310
 msgid ""
@@ -549,7 +550,7 @@ msgstr "sobre qué (tal y como se registró)"
 msgid "changes"
 msgstr "cambios"
 
-#: apps/audit/models.py:137 apps/punches/models.py:201
+#: apps/audit/models.py:137 apps/punches/models.py:220
 msgid "IP address"
 msgstr "dirección IP"
 
@@ -886,11 +887,11 @@ msgstr "Se ha anulado el fichaje registrado a las %(when)s."
 msgid "Your working time record has changed"
 msgstr "Tu registro de jornada ha cambiado"
 
-#: apps/punches/delegated.py:84
+#: apps/punches/delegated.py:91
 msgid "The reference matches more than one person."
 msgstr "La referencia coincide con más de una persona."
 
-#: apps/punches/delegated.py:120
+#: apps/punches/delegated.py:127
 msgid "No active person matches that reference."
 msgstr "Ninguna persona activa coincide con esa referencia."
 
@@ -994,33 +995,49 @@ msgstr "Corrección manual de un administrador"
 msgid "Data import"
 msgstr "Importación de datos"
 
+#: apps/punches/models.py:136
+msgid "A person pressed the button"
+msgstr "Una persona pulsó el botón"
+
+#: apps/punches/models.py:137
+msgid "Entering or leaving a worksite"
+msgstr "Entrar o salir de un centro de trabajo"
+
 #: apps/punches/models.py:138
+msgid "Joining or leaving a work network"
+msgstr "Conectarse o salir de una red de trabajo"
+
+#: apps/punches/models.py:139
+msgid "Another system's presence event"
+msgstr "Evento de presencia de otro sistema"
+
+#: apps/punches/models.py:157
 msgid "interval"
 msgstr "intervalo"
 
-#: apps/punches/models.py:144
+#: apps/punches/models.py:163
 msgid "mode"
 msgstr "modalidad"
 
-#: apps/punches/models.py:146
+#: apps/punches/models.py:165
 msgid "nature of the hours"
 msgstr "naturaleza de las horas"
 
-#: apps/punches/models.py:152
+#: apps/punches/models.py:171
 msgid "how the overtime is settled"
 msgstr "cómo se compensan las horas extraordinarias"
 
-#: apps/punches/models.py:156
+#: apps/punches/models.py:175
 msgid "Required for overtime: art. 3.f asks whether it is rested or paid."
 msgstr ""
 "Obligatorio en horas extraordinarias: el art. 3.f pregunta si se compensan "
 "con descanso o se retribuyen."
 
-#: apps/punches/models.py:159
+#: apps/punches/models.py:178
 msgid "to prevent or repair urgent damage"
 msgstr "para prevenir o reparar daños urgentes"
 
-#: apps/punches/models.py:162
+#: apps/punches/models.py:181
 msgid ""
 "Art. 35.3 ET: hours worked to prevent or repair accidents and other "
 "extraordinary and urgent damage. They do not count towards the annual "
@@ -1030,87 +1047,135 @@ msgstr ""
 "daños extraordinarios y urgentes. No computan en el límite anual de horas "
 "extraordinarias, así que tienen que poder distinguirse."
 
-#: apps/punches/models.py:168
+#: apps/punches/models.py:187
 msgid "arrangement"
 msgstr "medida aplicada"
 
-#: apps/punches/models.py:176
+#: apps/punches/models.py:195
 msgid "timestamp"
 msgstr "momento"
 
-#: apps/punches/models.py:180
+#: apps/punches/models.py:199
 msgid "source"
 msgstr "origen"
 
-#: apps/punches/models.py:183
+#: apps/punches/models.py:202
 msgid "source application"
 msgstr "aplicación de origen"
 
-#: apps/punches/models.py:186
+#: apps/punches/models.py:205
 msgid "Which application recorded it, when it was not this one."
 msgstr "Qué aplicación lo registró, cuando no fue esta."
 
-#: apps/punches/models.py:194
+#: apps/punches/models.py:213
 msgid "recorded by"
 msgstr "registrado por"
 
-#: apps/punches/models.py:195
+#: apps/punches/models.py:214
 msgid "Set when somebody other than the employee created the record."
 msgstr ""
 "Se rellena cuando el registro lo creó alguien que no es la propia persona."
 
-#: apps/punches/models.py:202
+#: apps/punches/models.py:221
 msgid "device"
 msgstr "dispositivo"
 
-#: apps/punches/models.py:203
+#: apps/punches/models.py:222
 msgid "user agent"
 msgstr "agente de usuario"
 
-#: apps/punches/models.py:205
+#: apps/punches/models.py:235
+msgid "trigger"
+msgstr "disparador"
+
+#: apps/punches/models.py:238
+msgid "trigger evidence"
+msgstr "prueba del disparador"
+
+#: apps/punches/models.py:241
+msgid ""
+"What proves the trigger: coordinates, a network name, an external event id."
+msgstr ""
+"Lo que prueba el disparador: coordenadas, el nombre de una red, el id de "
+"un evento externo."
+
+#: apps/punches/models.py:244
 msgid "integrity hash"
 msgstr "huella de integridad"
 
-#: apps/punches/models.py:207
+#: apps/punches/models.py:246
 msgid "hash version"
 msgstr "versión de la huella"
 
-#: apps/punches/models.py:211
+#: apps/punches/models.py:250
 msgid "valid"
 msgstr "válido"
 
-#: apps/punches/models.py:212
+#: apps/punches/models.py:251
 msgid "voided at"
 msgstr "anulado el"
 
-#: apps/punches/models.py:219
+#: apps/punches/models.py:258
 msgid "replaced by"
 msgstr "sustituido por"
 
-#: apps/punches/models.py:223
+#: apps/punches/models.py:262
 msgid "clock event"
 msgstr "fichaje"
 
-#: apps/punches/models.py:224
+#: apps/punches/models.py:263
 msgid "clock events"
 msgstr "fichajes"
 
-#: apps/punches/services.py:261
+#: apps/punches/models.py:389
+msgid "Missing entry"
+msgstr "Falta la entrada"
+
+#: apps/punches/models.py:390
+msgid "Day left open"
+msgstr "Jornada abierta"
+
+#: apps/punches/models.py:398 apps/shifts/models.py:113
+#: apps/tenants/holidays.py:63
+msgid "day"
+msgstr "día"
+
+#: apps/punches/models.py:400
+msgid "sent at"
+msgstr "enviado el"
+
+#: apps/punches/models.py:403
+msgid "clock reminder"
+msgstr "recordatorio de fichaje"
+
+#: apps/punches/models.py:404
+msgid "clock reminders"
+msgstr "recordatorios de fichaje"
+
+#: apps/punches/reminders.py:155
+msgid "Remember to clock in"
+msgstr "Recuerda fichar la entrada"
+
+#: apps/punches/reminders.py:155
+msgid "You have not clocked out yet"
+msgstr "Todavía no has fichado la salida"
+
+#: apps/punches/services.py:270
 msgid "This person is deactivated and cannot clock in or out."
 msgstr "Esta persona está dada de baja y no puede fichar."
 
-#: apps/punches/services.py:280
+#: apps/punches/services.py:289
 msgid "The working day has to be open first."
 msgstr "La jornada tiene que estar abierta antes."
 
-#: apps/punches/services.py:301
+#: apps/punches/services.py:310
 #, python-format
 msgid "%(basis)s: workers under eighteen may not work overtime."
 msgstr ""
 "%(basis)s: los menores de dieciocho años no pueden hacer horas "
 "extraordinarias."
 
-#: apps/punches/services.py:309
+#: apps/punches/services.py:318
 msgid ""
 "Art. 12.4.c ET: part-time work admits no overtime, only complementary hours "
 "--- except hours to prevent or repair urgent damage."
@@ -1119,13 +1184,13 @@ msgstr ""
 "complementarias, salvo las de fuerza mayor para prevenir o reparar daños "
 "urgentes."
 
-#: apps/punches/services.py:319
+#: apps/punches/services.py:328
 msgid "Say whether the overtime is paid or compensated with rest."
 msgstr ""
 "Indica si las horas extraordinarias se retribuyen o se compensan con "
 "descanso."
 
-#: apps/punches/services.py:378
+#: apps/punches/services.py:389
 msgid "You cannot clock in: you have approved leave for today."
 msgstr "No puedes fichar: tienes una ausencia aprobada para hoy."
 
@@ -1336,10 +1401,6 @@ msgstr "turno"
 #: apps/shifts/models.py:88
 msgid "shift patterns"
 msgstr "turnos"
-
-#: apps/shifts/models.py:113 apps/tenants/holidays.py:63
-msgid "day"
-msgstr "día"
 
 #: apps/shifts/models.py:123
 msgid "pattern"
@@ -1833,7 +1894,7 @@ msgstr ""
 "Idioma en el que trabaja la empresa. Una persona puede cambiarlo para sí "
 "misma; el ajuste del navegador solo se usa cuando no hay ninguno de los dos."
 
-#: apps/tenants/models.py:73 apps/users/models.py:457
+#: apps/tenants/models.py:73 apps/users/models.py:470
 msgid "annual leave days"
 msgstr "días de vacaciones al año"
 
@@ -2050,22 +2111,42 @@ msgid ""
 "Cap on hours a part-time contract may work beyond what was agreed, as a "
 "percentage of it."
 msgstr ""
-"Tope de horas que una jornada parcial puede hacer por encima de lo pactado, "
-"en porcentaje sobre ello."
+"Tope de horas que una jornada parcial puede hacer por encima de lo "
+"pactado, en porcentaje."
 
-#: apps/tenants/rules.py:106
+#: apps/tenants/rules.py:111
+msgid "entry tolerance (minutes)"
+msgstr "margen de entrada (minutos)"
+
+#: apps/tenants/rules.py:114
+msgid ""
+"A punch within this many minutes of the rostered start counts as on time. 0 "
+"is strict."
+msgstr ""
+"Fichar dentro de estos minutos del inicio del turno cuenta como puntual. "
+"0 es estricto."
+
+#: apps/tenants/rules.py:118
+msgid "exit tolerance (minutes)"
+msgstr "margen de salida (minutos)"
+
+#: apps/tenants/rules.py:120
+msgid "Leaving within this many minutes of the rostered end is not early."
+msgstr "Irse dentro de estos minutos del fin del turno no es salir antes."
+
+#: apps/tenants/rules.py:124
 msgid "notice for roster changes (days)"
 msgstr "preaviso de cambios de cuadrante (días)"
 
-#: apps/tenants/rules.py:108
+#: apps/tenants/rules.py:126
 msgid "Days of notice before a roster change."
 msgstr "Días de preaviso antes de un cambio de cuadrante."
 
-#: apps/tenants/rules.py:112 apps/tenants/rules.py:113
+#: apps/tenants/rules.py:130 apps/tenants/rules.py:131
 msgid "working time rules"
 msgstr "reglas de jornada"
 
-#: apps/tenants/views.py:82 apps/users/serializers.py:238
+#: apps/tenants/views.py:82 apps/users/serializers.py:240
 msgid "That workplace belongs to another company."
 msgstr "Ese centro de trabajo es de otra empresa."
 
@@ -2369,6 +2450,18 @@ msgstr ""
 "4.b), y tiene derecho a consultar el registro (art. 6.2)."
 
 #: apps/users/models.py:461
+msgid "wants clock reminders"
+msgstr "quiere recordatorios de fichaje"
+
+#: apps/users/models.py:464
+msgid ""
+"Send a reminder when a shift starts and there is no entry, or when a day is "
+"left open. It prompts the real punch; it never records one."
+msgstr ""
+"Envía un recordatorio si empieza el turno y no hay entrada, o si queda "
+"una jornada abierta. Empuja al fichaje real, nunca registra uno."
+
+#: apps/users/models.py:474
 msgid ""
 "Overrides the company figure for this person. Empty means the company's. "
 "Part-time and mid-year joiners are the usual reason."
@@ -2376,27 +2469,27 @@ msgstr ""
 "Sustituye la cifra de la empresa para esta persona. Vacío significa la de la "
 "empresa. Lo habitual es la jornada parcial y las altas a mitad de periodo."
 
-#: apps/users/models.py:469
+#: apps/users/models.py:482
 msgid "identity provider subject"
 msgstr "identificador en el proveedor de identidad"
 
-#: apps/users/models.py:475
+#: apps/users/models.py:488
 msgid "issuer"
 msgstr "emisor"
 
-#: apps/users/models.py:478
+#: apps/users/models.py:491
 msgid "admin site access"
 msgstr "acceso al sitio de administración"
 
-#: apps/users/models.py:479
+#: apps/users/models.py:492
 msgid "date joined"
 msgstr "fecha de alta"
 
-#: apps/users/models.py:487
+#: apps/users/models.py:500
 msgid "person"
 msgstr "persona"
 
-#: apps/users/models.py:488
+#: apps/users/models.py:501
 msgid "people"
 msgstr "personas"
 
@@ -2428,45 +2521,45 @@ msgstr ""
 "%(name)s no tiene perfil de responsable, así que ponerle al frente no le "
 "daría nada."
 
-#: apps/users/serializers.py:231
+#: apps/users/serializers.py:233
 msgid "Somebody in this company already uses it."
 msgstr "Ya lo usa alguien de esta empresa."
 
-#: apps/users/serializers.py:245
+#: apps/users/serializers.py:247
 msgid "That department belongs to another company."
 msgstr "Ese departamento es de otra empresa."
 
-#: apps/users/serializers.py:261
+#: apps/users/serializers.py:263
 msgid "It cannot be today or a future date."
 msgstr "No puede ser hoy ni una fecha futura."
 
-#: apps/users/serializers.py:270
+#: apps/users/serializers.py:272
 #, python-format
 msgid "That gives an age of %(age)s, below the minimum working age. %(basis)s"
 msgstr ""
 "Eso da una edad de %(age)s años, por debajo de la edad mínima para trabajar. "
 "%(basis)s"
 
-#: apps/users/serializers.py:274
+#: apps/users/serializers.py:276
 msgid "That gives an age of over a hundred years."
 msgstr "Eso da una edad de más de cien años."
 
-#: apps/users/serializers.py:299
+#: apps/users/serializers.py:301
 msgid ""
 "There is no agreed figure on this regime. Clear it, or choose one that has "
 "hours."
 msgstr ""
 "En este régimen no hay cifra pactada. Bórrala, o elige uno que tenga horas."
 
-#: apps/users/serializers.py:307
+#: apps/users/serializers.py:309
 msgid "Art. 3.b asks for the agreed hours on this regime."
 msgstr "El art. 3.b pide las horas pactadas en este régimen."
 
-#: apps/users/serializers.py:316
+#: apps/users/serializers.py:318
 msgid "It has to be above zero."
 msgstr "Tiene que ser mayor que cero."
 
-#: apps/users/serializers.py:336
+#: apps/users/serializers.py:338
 #, python-format
 msgid ""
 "%(basis)s: workers under eighteen may not work at night, so the status "
@@ -2475,7 +2568,7 @@ msgstr ""
 "%(basis)s: los menores de dieciocho años no pueden trabajar de noche, así "
 "que esa condición no les puede corresponder."
 
-#: apps/users/serializers.py:355
+#: apps/users/serializers.py:357
 #, python-format
 msgid ""
 "%(hours)s h a week is above the company's %(ceiling)s h. A contract cannot "
@@ -2484,19 +2577,19 @@ msgstr ""
 "%(hours)s h semanales pasan de las %(ceiling)s h de la empresa. Un contrato "
 "no puede pactar por encima del máximo legal."
 
-#: apps/users/serializers.py:373
+#: apps/users/serializers.py:375
 msgid "The employee limit for this company is reached."
 msgstr "Se ha alcanzado el límite de personas de esta empresa."
 
-#: apps/users/serializers.py:412
+#: apps/users/serializers.py:414
 msgid "A company with this tax number already exists."
 msgstr "Ya existe una empresa con este identificador fiscal."
 
-#: apps/users/serializers.py:448 apps/users/serializers.py:461
+#: apps/users/serializers.py:450 apps/users/serializers.py:463
 msgid "Wrong credentials."
 msgstr "Credenciales incorrectas."
 
-#: apps/users/views.py:222
+#: apps/users/views.py:245
 msgid ""
 "This is the only active administrator. Appoint another one first, or the "
 "company is left with nobody able to manage it."
@@ -2504,19 +2597,19 @@ msgstr ""
 "Es el único administrador activo. Nombra antes a otro, o la empresa se queda "
 "sin nadie que pueda gestionarla."
 
-#: apps/users/views.py:279
+#: apps/users/views.py:302
 msgid "This account signs in through your identity provider."
 msgstr "Esta cuenta entra a través de vuestro proveedor de identidad."
 
-#: apps/users/views.py:281
+#: apps/users/views.py:304
 msgid "Reactivate the account before inviting them."
 msgstr "Vuelve a dar de alta la cuenta antes de invitarla."
 
-#: apps/users/views.py:337
+#: apps/users/views.py:360
 msgid "You cannot deactivate your own account."
 msgstr "No puedes dar de baja tu propia cuenta."
 
-#: apps/users/views.py:403
+#: apps/users/views.py:426
 #, python-format
 msgid ""
 "%(count)s people work there. Move them first: without a workplace they lose "
@@ -2525,7 +2618,7 @@ msgstr ""
 "Ahí trabajan %(count)s personas. Muévelas primero: sin centro pierden sus "
 "festivos locales y su zona horaria."
 
-#: apps/users/views.py:458
+#: apps/users/views.py:481
 msgid "The link is not valid or has already been used."
 msgstr "El enlace no es válido o ya se ha usado."
 
@@ -2600,6 +2693,51 @@ msgstr ""
 "\n"
 "Si no has sido tú, ignora este mensaje: no cambia nada hasta que se use el "
 "enlace."
+
+#: templates/emails/punch_reminder.txt:1
+#, python-format
+msgid ""
+"Hello %(first_name)s,\n"
+"\n"
+"You have a shift at %(company)s today and have not clocked in yet.\n"
+"\n"
+"Clock in when you can, so your working day is recorded at the real time."
+msgstr ""
+"Hola %(first_name)s:\n"
+"\n"
+"Hoy tienes turno en %(company)s y todavía no has fichado la entrada.\n"
+"\n"
+"Ficha cuando puedas, para que tu jornada quede registrada a la hora "
+"real."
+
+#: templates/emails/punch_reminder.txt:5
+#, python-format
+msgid ""
+"Hello %(first_name)s,\n"
+"\n"
+"Your working day of %(day)s at %(company)s is still open: you clocked in and "
+"not out.\n"
+"\n"
+"Clock out when you finish. The server sets the time from your punch, so it "
+"is\n"
+"recorded exactly as it happens, overtime included if you stay longer today."
+msgstr ""
+"Hola %(first_name)s:\n"
+"\n"
+"Tu jornada del %(day)s en %(company)s sigue abierta: fichaste la entrada "
+"y no la salida.\n"
+"\n"
+"Ficha la salida cuando termines. El servidor pone la hora con tu "
+"fichaje, así que queda registrada tal cual, incluidas las horas de más "
+"si hoy te quedas más tiempo."
+
+#: templates/emails/punch_reminder.txt:12
+msgid ""
+"This is only a reminder: nothing has been recorded for you. You can turn "
+"these off in your profile."
+msgstr ""
+"Esto es solo un recordatorio: no se ha registrado nada por ti. Puedes "
+"desactivarlos en tu perfil."
 
 #: templates/emails/record_change_proposed.txt:1
 #, python-format

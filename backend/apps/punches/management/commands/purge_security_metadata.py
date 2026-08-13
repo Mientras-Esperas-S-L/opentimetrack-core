@@ -62,14 +62,14 @@ class Command(BaseCommand):
             # keeps it inside the boundary.
             expired = Punch.objects_all_tenants.filter(
                 tenant=company, timestamp__lt=cutoff
-            ).exclude(ip_address__isnull=True, device_id="", user_agent="")
+            ).exclude(ip_address__isnull=True, device_id="", user_agent="", evidence={})
 
             stuck = expired.filter(hash_version=1).count()
             purgeable = expired.exclude(hash_version=1)
             count = purgeable.count()
 
             if not dry_run and count:
-                purgeable.update(ip_address=None, device_id="", user_agent="")
+                purgeable.update(ip_address=None, device_id="", user_agent="", evidence={})
                 # Deleting data leaves a trace too. Otherwise the only evidence
                 # that something was removed is that it is no longer there.
                 record(

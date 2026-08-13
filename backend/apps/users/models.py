@@ -453,6 +453,19 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         ),
     )
 
+    # Opt-in and on by default: forgetting to clock in or out is the ordinary
+    # failure, and a nudge is help, not surveillance. The reminder prompts the
+    # real punch --- it never records one --- so it cannot hide a late arrival
+    # or an early leave, only make them get recorded.
+    wants_punch_reminders = models.BooleanField(
+        _("wants clock reminders"),
+        default=True,
+        help_text=_(
+            "Send a reminder when a shift starts and there is no entry, or when a "
+            "day is left open. It prompts the real punch; it never records one."
+        ),
+    )
+
     annual_leave_days = models.PositiveSmallIntegerField(
         _("annual leave days"),
         null=True,

@@ -120,6 +120,25 @@ class PunchSource(models.TextChoices):
     IMPORT = "IMPORT", _("Data import")
 
 
+class PunchTrigger(models.TextChoices):
+    """What caused a punch to be recorded, as opposed to who produced it.
+
+    Orthogonal to `source`: a punch can come from the mobile app (`source`)
+    because a geofence fired (`trigger`), or from an external application
+    (`source`) because a sensor did (`trigger`). The two answer different
+    questions, and both belong in the evidence.
+
+    `MANUAL` is the ordinary case --- a person pressed the button. The rest are
+    the assisted ones: a real signal of presence made the punch instead of the
+    person remembering. Which signal, and its proof, lives in `evidence`.
+    """
+
+    MANUAL = "MANUAL", _("A person pressed the button")
+    GEOFENCE = "GEOFENCE", _("Entering or leaving a worksite")
+    NETWORK = "NETWORK", _("Joining or leaving a work network")
+    SENSOR = "SENSOR", _("Another system's presence event")
+
+
 class Punch(TenantOwnedModel):
     """A single clock event."""
 
@@ -201,6 +220,26 @@ class Punch(TenantOwnedModel):
     ip_address = models.GenericIPAddressField(_("IP address"), null=True, blank=True)
     device_id = models.CharField(_("device"), max_length=100, blank=True)
     user_agent = models.CharField(_("user agent"), max_length=255, blank=True)
+
+    # How the punch was triggered, and the proof. Assisted clock-in --- a
+    # geofence, a network, another system's sensor --- records a real presence
+    # event instead of relying on somebody remembering to press the button.
+    #
+    # These sit with the IP and the device on purpose, NOT in the integrity
+    # hash: geolocation is sensitive, minimisable, and metadata about *how* the
+    # event was captured rather than the working-time fact itself. Binding it
+    # into the hash would make it impossible to purge, which is exactly the
+    # mistake `_hash_v1` made with the IP. `purge_security_metadata` clears it
+    # with the rest.
+    trigger = models.CharField(
+        _("trigger"), max_length=8, choices=PunchTrigger, default=PunchTrigger.MANUAL
+    )
+    evidence = models.JSONField(
+        _("trigger evidence"),
+        default=dict,
+        blank=True,
+        help_text=_("What proves the trigger: coordinates, a network name, an external event id."),
+    )
 
     hash_integrity = models.CharField(_("integrity hash"), max_length=64, editable=False)
     hash_version = models.PositiveSmallIntegerField(
@@ -337,6 +376,42 @@ class Punch(TenantOwnedModel):
         return self.source in {PunchSource.DELEGATED, PunchSource.ADMIN, PunchSource.IMPORT}
 
 
+class PunchReminder(TenantOwnedModel):
+    """Proof a reminder already went out, so it goes out once.
+
+    Not the reminder's content, its *having happened*: the scheduled job runs
+    every few minutes, and without this it would send the same nudge on every
+    tick until the person finally clocked. One row per person, day and kind is
+    the whole model.
+    """
+
+    class Kind(models.TextChoices):
+        CLOCK_IN = "CLOCK_IN", _("Missing entry")
+        CLOCK_OUT = "CLOCK_OUT", _("Day left open")
+
+    employee = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="punch_reminders",
+        verbose_name=_("employee"),
+    )
+    day = models.DateField(_("day"))
+    kind = models.CharField(_("kind"), max_length=10, choices=Kind)
+    sent_at = models.DateTimeField(_("sent at"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("clock reminder")
+        verbose_name_plural = _("clock reminders")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["employee", "day", "kind"], name="one_reminder_per_person_day_kind"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_kind_display()} {self.employee_id} {self.day}"
+
+
 # Corrections live in their own module for readability; Django needs them
 # imported here to discover the model.
 from apps.punches.corrections import (  # noqa: E402
@@ -350,6 +425,8 @@ __all__ = [
     "CorrectionStatus",
     "Punch",
     "PunchCorrection",
+    "PunchReminder",
     "PunchSource",
+    "PunchTrigger",
     "PunchType",
 ]

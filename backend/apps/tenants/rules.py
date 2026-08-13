@@ -102,6 +102,24 @@ class WorkingTimeRules(BaseModel):
             "as a percentage of it."
         ),
     )
+    # Flexibility, not leniency. A window round the rostered start turns a 9:20
+    # into a variation rather than an incident, which is how a company stops
+    # fighting every five-minute slip. It does NOT hide overtime: overtime is
+    # time worked BEYOND the expected day plus this margin, and it still
+    # surfaces --- the difference between a lawful margin and a rigged rounding.
+    entry_tolerance_minutes = models.PositiveSmallIntegerField(
+        _("entry tolerance (minutes)"),
+        default=0,
+        help_text=_(
+            "A punch within this many minutes of the rostered start counts as on time. 0 is strict."
+        ),
+    )
+    exit_tolerance_minutes = models.PositiveSmallIntegerField(
+        _("exit tolerance (minutes)"),
+        default=0,
+        help_text=_("Leaving within this many minutes of the rostered end is not early."),
+    )
+
     roster_notice_days = models.PositiveSmallIntegerField(
         _("notice for roster changes (days)"),
         default=5,

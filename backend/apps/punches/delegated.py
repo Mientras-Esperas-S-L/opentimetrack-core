@@ -22,7 +22,7 @@ from rest_framework.views import APIView
 
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import HasApplicationScope
-from apps.punches.models import PunchSource
+from apps.punches.models import PunchSource, PunchTrigger
 from apps.punches.serializers import PunchSerializer
 from apps.punches.services import build_day_status, register_punch
 from apps.tenants.applications import ApplicationScope
@@ -47,6 +47,13 @@ class DelegatedPunchSerializer(serializers.Serializer):
         default=False,
         help_text="True when a shared terminal was used rather than the application itself.",
     )
+    # The whole point of the integration seam: a sensor (a geofence in Geosian,
+    # a badge reader) says what it detected and attaches the proof. OTT records
+    # it with the origin marked, visible in the inspection report.
+    trigger = serializers.ChoiceField(
+        choices=PunchTrigger.choices, required=False, default=PunchTrigger.MANUAL
+    )
+    evidence = serializers.JSONField(required=False, default=dict)
 
 
 def resolve_employee(reference: str, company):
@@ -132,6 +139,8 @@ class DelegatedPunchView(APIView):
             source_application=application.name,
             device_id=serializer.validated_data.get("device_id", ""),
             user_agent=request.META.get("HTTP_USER_AGENT", "")[:255],
+            trigger=serializer.validated_data.get("trigger") or "MANUAL",
+            evidence=serializer.validated_data.get("evidence") or {},
         )
 
         data = PunchSerializer(punch).data

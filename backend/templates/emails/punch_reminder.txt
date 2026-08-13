@@ -1,0 +1,15 @@
+{% load i18n %}{% if clock_in %}{% blocktranslate %}Hello {{ first_name }},
+
+You have a shift at {{ company }} today and have not clocked in yet.
+
+Clock in when you can, so your working day is recorded at the real time.{% endblocktranslate %}{% else %}{% blocktranslate %}Hello {{ first_name }},
+
+Your working day of {{ day }} at {{ company }} is still open: you clocked in and not out.
+
+Clock out when you finish. The server sets the time from your punch, so it is
+recorded exactly as it happens, overtime included if you stay longer today.{% endblocktranslate %}{% endif %}
+
+{% blocktranslate %}This is only a reminder: nothing has been recorded for you. You can turn these off in your profile.{% endblocktranslate %}
+
+-------------------------------------------------------------------------------
+OpenTimeTrack

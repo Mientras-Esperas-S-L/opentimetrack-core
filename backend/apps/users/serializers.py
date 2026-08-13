@@ -174,6 +174,7 @@ class UserSerializer(serializers.ModelSerializer):
             # Art. 4.b: informed when somebody disagrees with a change to their
             # record. With nobody marked, that obligation can never be met.
             "is_worker_representative",
+            "wants_punch_reminders",
             "is_active",
             "is_federated",
             "date_joined",
@@ -216,6 +217,7 @@ class UserWriteSerializer(serializers.ModelSerializer):
             "voluntary_night_shift",
             "date_of_birth",
             "is_worker_representative",
+            "wants_punch_reminders",
             "is_active",
             "password",
         ]

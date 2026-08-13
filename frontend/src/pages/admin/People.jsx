@@ -130,6 +130,7 @@ const EMPTY_FORM = {
   voluntary_night_shift: false,
   default_work_mode: 'ONSITE',
   is_worker_representative: false,
+  wants_punch_reminders: true,
 }
 
 const fromPerson = (person) => ({
@@ -154,6 +155,7 @@ const fromPerson = (person) => ({
   voluntary_night_shift: Boolean(person.voluntary_night_shift),
   default_work_mode: person.default_work_mode || 'ONSITE',
   is_worker_representative: Boolean(person.is_worker_representative),
+  wants_punch_reminders: person.wants_punch_reminders !== false,
 })
 
 function PersonDialog({ open, person, departments, workplaces, onClose, onSave, saving, error }) {
@@ -500,6 +502,22 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
               }
               label="Representante legal de las personas trabajadoras"
             />
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={form.wants_punch_reminders}
+                  onChange={(event) =>
+                    setForm({ ...form, wants_punch_reminders: event.target.checked })
+                  }
+                />
+              }
+              label="Recordatorios de fichaje"
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ mt: -1.5 }}>
+              Aviso si empieza el turno y no ha fichado, o si deja la jornada abierta. Empuja al
+              fichaje real, nunca lo registra. Cada persona puede desactivarlo en su perfil.
+            </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mt: -1.5 }}>
               Se le informa cuando alguien discrepa de un cambio en su registro (art. 4.b) y puede
               consultar el registro de la empresa (art. 6.2).

@@ -132,6 +132,8 @@ class PunchViewSet(
             ip_address=client_ip(request),
             device_id=data.get("device_id", ""),
             user_agent=request.META.get("HTTP_USER_AGENT", "")[:255],
+            trigger=data.get("trigger") or "MANUAL",
+            evidence=data.get("evidence") or {},
         )
 
         data = PunchSerializer(punch).data

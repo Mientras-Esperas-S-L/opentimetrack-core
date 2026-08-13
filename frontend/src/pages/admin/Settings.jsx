@@ -407,6 +407,31 @@ export default function Settings() {
                 />
               </Stack>
 
+              {/* Márgenes de flexibilidad. Convierten un retraso pequeño en
+                  variación, no en incidencia. No ocultan horas extra: la extra
+                  es tiempo por encima de lo previsto MÁS el margen, y sigue
+                  saliendo. Es la diferencia con el redondeo tramposo. */}
+              <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Margen de entrada (min)"
+                  value={rules.entry_tolerance_minutes}
+                  onChange={setRule('entry_tolerance_minutes')}
+                  slotProps={{ htmlInput: { min: 0, step: 5 } }}
+                  helperText="Fichar dentro de este margen del inicio cuenta como puntual. 0 = estricto."
+                />
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Margen de salida (min)"
+                  value={rules.exit_tolerance_minutes}
+                  onChange={setRule('exit_tolerance_minutes')}
+                  slotProps={{ htmlInput: { min: 0, step: 5 } }}
+                  helperText="Irse dentro de este margen del fin no es salir antes."
+                />
+              </Stack>
+
               <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
                 <TextField
                   fullWidth

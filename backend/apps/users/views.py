@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
-from rest_framework import status, viewsets
+from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny
@@ -146,6 +146,19 @@ class SignOutView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class MePreferencesSerializer(serializers.Serializer):
+    """The handful of things a person may change about themselves.
+
+    Deliberately tiny: everything that touches the record or the org --- role,
+    department, contract, active --- is somebody else's to set. What is left is
+    genuinely personal: the language they read in, and whether they want the
+    reminders. Anything not here cannot be changed through this door.
+    """
+
+    locale = serializers.CharField(max_length=10, required=False, allow_blank=True)
+    wants_punch_reminders = serializers.BooleanField(required=False)
+
+
 @extend_schema(tags=["auth"])
 class MeView(APIView):
     permission_classes = [IsAuthenticatedInTenant]
@@ -158,6 +171,16 @@ class MeView(APIView):
                 "tenant": TenantSerializer(request.user.tenant).data,
             }
         )
+
+    @extend_schema(request=MePreferencesSerializer, responses={200: UserSerializer})
+    def patch(self, request):
+        """A person changing their own preferences, and only those."""
+        form = MePreferencesSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+        for field, value in form.validated_data.items():
+            setattr(request.user, field, value)
+        request.user.save(update_fields=list(form.validated_data))
+        return Response(UserSerializer(request.user).data)
 
 
 @extend_schema(tags=["people"])

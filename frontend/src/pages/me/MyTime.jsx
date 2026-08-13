@@ -13,6 +13,9 @@ import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
+import Switch from '@mui/material/Switch'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
@@ -24,6 +27,7 @@ import {
   getCorrections,
   getPunches,
   requestCorrection,
+  updateMe,
 } from '../../services/api.js'
 import {
   Empty,
@@ -334,7 +338,15 @@ const thisMonth = () => {
 }
 
 export default function MyTime() {
-  const { session } = useAuth()
+  const { session, setSession } = useAuth()
+  // El interruptor de recordatorios: autoservicio, como promete el correo. El
+  // servidor solo deja tocar las preferencias propias.
+  const remind = useMutation({
+    mutationFn: (on) => updateMe({ wants_punch_reminders: on }),
+    onSuccess: (user) => {
+      if (session) setSession({ ...session, user: { ...session.user, ...user } })
+    },
+  })
   const zone = session?.tenant?.time_zone
   const me = session?.user?.id
   const queryClient = useQueryClient()
@@ -405,9 +417,25 @@ export default function MyTime() {
         title="Mi jornada"
         subtitle="Tu registro completo. Tienes derecho a consultarlo, y se conserva cuatro años."
         action={
-          <Button variant="outlined" startIcon={<EditNoteIcon />} onClick={() => setAsking(true)}>
-            Pedir una corrección
-          </Button>
+          <Stack direction="row" sx={{ gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Tooltip title="Aviso si empieza tu turno y no has fichado, o si dejas la jornada abierta. Empuja al fichaje real, nunca lo hace por ti.">
+              <FormControlLabel
+                sx={{ mr: 0 }}
+                control={
+                  <Switch
+                    size="small"
+                    checked={session?.user?.wants_punch_reminders !== false}
+                    disabled={remind.isPending}
+                    onChange={(event) => remind.mutate(event.target.checked)}
+                  />
+                }
+                label={<Typography variant="body2">Recordatorios</Typography>}
+              />
+            </Tooltip>
+            <Button variant="outlined" startIcon={<EditNoteIcon />} onClick={() => setAsking(true)}>
+              Pedir una corrección
+            </Button>
+          </Stack>
         }
       />
 

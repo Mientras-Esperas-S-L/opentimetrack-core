@@ -10,6 +10,7 @@ from apps.punches.models import (
     OvertimeSettlement,
     Punch,
     PunchInterval,
+    PunchTrigger,
     WorkMode,
 )
 
@@ -35,6 +36,7 @@ class PunchSerializer(serializers.ModelSerializer):
             "source",
             "source_display",
             "source_application",
+            "trigger",
             "recorded_by",
             "device_id",
             "hash_integrity",
@@ -53,6 +55,14 @@ class PunchWriteSerializer(serializers.Serializer):
 
     device_id = serializers.CharField(max_length=100, required=False, allow_blank=True)
     source = serializers.CharField(max_length=16, required=False, allow_blank=True)
+
+    # How the punch was triggered, and its proof. The default is a person
+    # pressing the button; a geofence or a network sends the real signal and its
+    # evidence instead. Never the time --- that is still the server's.
+    trigger = serializers.ChoiceField(
+        choices=PunchTrigger.choices, required=False, default=PunchTrigger.MANUAL
+    )
+    evidence = serializers.JSONField(required=False, default=dict)
 
     # Art. 3 of the pending decree. The client says *what kind* of span this is
     # and under what arrangement --- facts only the person can supply --- but

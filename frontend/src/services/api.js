@@ -125,6 +125,10 @@ export const signOut = async () => {
 
 export const getMe = () => get('/auth/me/')
 
+/** Cambiar las preferencias propias (idioma, recordatorios). Solo eso: el
+ *  servidor ignora todo lo demás. */
+export const updateMe = async (payload) => (await api.patch('/auth/me/', payload)).data
+
 /** Asks for a link to set a password. Always resolves, whether the address
  *  exists or not: telling the two apart would turn this into a way of finding
  *  out who works where, so the screen says the same thing either way. */

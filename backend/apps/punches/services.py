@@ -17,7 +17,14 @@ from django.utils.translation import gettext_lazy as _
 from apps import legal
 from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError
-from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource, PunchType
+from apps.punches.models import (
+    HoursNature,
+    Punch,
+    PunchInterval,
+    PunchSource,
+    PunchTrigger,
+    PunchType,
+)
 
 
 @dataclass(frozen=True)
@@ -249,6 +256,8 @@ def register_punch(
     overtime_settlement: str = "",
     force_majeure: bool = False,
     flexibility_measure: str = "",
+    trigger: str = PunchTrigger.MANUAL,
+    evidence: dict | None = None,
 ) -> Punch:
     """Record a clock event. The only supported way to create one.
 
@@ -337,6 +346,8 @@ def register_punch(
         overtime_settlement=overtime_settlement,
         force_majeure=force_majeure,
         flexibility_measure=flexibility_measure,
+        trigger=trigger,
+        evidence=evidence or {},
     )
     punch.save()
     return punch
