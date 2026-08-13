@@ -17,7 +17,10 @@ async function rellenarMinimo(page, sufijo) {
   const correo = `prueba.${sufijo}@demo.local`
   await page.getByLabel(/^Nombre/).fill('Prueba')
   await page.getByLabel(/^Apellidos/).fill(`De Playwright ${sufijo}`)
-  await page.getByLabel(/^Correo/).first().fill(correo)
+  await page
+    .getByLabel(/^Correo/)
+    .first()
+    .fill(correo)
   return correo
 }
 
