@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
+from freezegun import freeze_time
 from rest_framework.test import APIClient
 
 from apps.absences.models import AbsenceType
@@ -177,8 +178,12 @@ def test_somebody_who_clocked_out_is_not_working_now(company, people):
     from apps.punches.services import register_punch
 
     with tenant_context(company.id):
-        register_punch(employee=people["beto"], company=company)
-        register_punch(employee=people["beto"], company=company)  # out
+        # Con horas entre entrada y salida, que es lo que pasa de verdad:
+        # pegadas las rechaza la protección del doble toque.
+        with freeze_time("2026-08-13 08:00:00"):
+            register_punch(employee=people["beto"], company=company)
+        with freeze_time("2026-08-13 17:00:00"):
+            register_punch(employee=people["beto"], company=company)  # out
 
     body = client_for(people["jefa"]).get("/api/overview/").json()
 

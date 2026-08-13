@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import pytest
 from django.urls import reverse
+from freezegun import freeze_time
 from rest_framework.test import APIClient
 
 from apps.common.models import tenant_context
-from apps.punches.models import Punch, PunchSource
+from apps.punches.models import Punch, PunchSource, PunchTrigger, PunchType
+from apps.punches.services import build_day_status
 from apps.reports.services import build_report, day_notes, to_csv
 from apps.tenants.models import Application, ApplicationCredential, ApplicationScope, Tenant
 from apps.users.models import User
@@ -81,8 +83,15 @@ def test_the_employee_can_be_named_by_staff_number_email_or_id(client, company, 
     _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
     caller = as_application(client, token)
 
-    for reference in ("EMP-0003", "marta@example.com", str(employee.id)):
-        response = caller.post(reverse("punch-delegated"), {"employee_ref": reference})
+    # Con una hora entre cada uno: tres formas de nombrar a la misma persona,
+    # pero son tres fichajes de la misma jornada y pegados los rechaza la
+    # protección del doble toque, que es lo que tiene que hacer.
+    momentos = ("2026-08-13 08:00:00", "2026-08-13 13:00:00", "2026-08-13 14:00:00")
+    for reference, cuando in zip(
+        ("EMP-0003", "marta@example.com", str(employee.id)), momentos, strict=True
+    ):
+        with freeze_time(cuando):
+            response = caller.post(reverse("punch-delegated"), {"employee_ref": reference})
         assert response.status_code == 201, reference
 
 
@@ -278,3 +287,195 @@ def test_credentials_are_not_stored_in_the_clear(company):
         assert len(credential.token_hash) == 64
         # Only the tail is kept, to tell one credential from another.
         assert credential.token_hint == raw[-6:]
+
+
+# ------------------------------------------------------- lo que pasa en la puerta
+
+
+@pytest.mark.django_db
+def test_pasar_la_tarjeta_dos_veces_no_cierra_la_jornada(client, company, employee):
+    """El caso más común de un lector: se pasa la tarjeta dos veces por si acaso.
+
+    Y era el peor. El tipo se deduce del estado, así que dos lecturas seguidas
+    daban entrada y salida: la persona entraba a trabajar y el registro decía
+    que había hecho cero segundos y se había ido. Con guantes, delante de un
+    lector que no siempre pita, pasar dos veces es lo normal.
+
+    Se rechaza la segunda con un código que el terminal puede leer y enseñar, y
+    la entrada sigue en pie.
+    """
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+    caller = as_application(client, token)
+
+    with freeze_time("2026-08-13 07:00:00"):
+        primera = caller.post(
+            reverse("punch-delegated"), {"employee_ref": "EMP-0003", "terminal": True}
+        )
+        segunda = caller.post(
+            reverse("punch-delegated"), {"employee_ref": "EMP-0003", "terminal": True}
+        )
+
+    assert primera.status_code == 201
+    assert primera.data["punch_type"] == PunchType.IN
+    assert segunda.status_code == 409
+    assert segunda.data["error"]["code"] == "punch_too_soon"
+
+    with tenant_context(company.id):
+        assert Punch.objects.filter(employee=employee).count() == 1
+        assert build_day_status(employee, company).state == "WORKING"
+
+
+@pytest.mark.django_db
+def test_el_turno_entero_ficha_en_el_mismo_minuto(client, company, employee):
+    """Y la protección no puede estorbar a la plantilla.
+
+    Un terminal en la puerta de la nave recibe a todo el mundo a las siete. La
+    ventana del doble toque es de cada persona; si fuera del terminal, el
+    segundo en llegar no podría fichar --- que es peor que el fallo que evita.
+    """
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+    caller = as_application(client, token)
+
+    with tenant_context(company.id):
+        for numero in range(4):
+            User.objects.create_user(
+                email=f"companero{numero}@example.com",
+                password="a-sufficiently-long-password",
+                tenant=company,
+                first_name=f"Compa{numero}",
+                employee_id=f"EMP-100{numero}",
+            )
+
+    with freeze_time("2026-08-13 07:00:00"):
+        respuestas = [
+            caller.post(
+                reverse("punch-delegated"), {"employee_ref": f"EMP-100{n}", "terminal": True}
+            )
+            for n in range(4)
+        ]
+
+    assert [r.status_code for r in respuestas] == [201, 201, 201, 201]
+
+
+@pytest.mark.django_db
+def test_una_referencia_que_señala_a_dos_personas_se_rechaza(client, company, employee):
+    """Registrar la jornada de quien no es, es peor que no registrar nada.
+
+    Pasa cuando el número de empleado de alguien coincide con el correo de otro
+    --- raro, pero el catálogo lo permite y la búsqueda mira los dos campos.
+    """
+    with tenant_context(company.id):
+        User.objects.create_user(
+            email="otro@example.com",
+            password="a-sufficiently-long-password",
+            tenant=company,
+            first_name="Otro",
+            employee_id="marta@example.com",
+        )
+
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+    respuesta = as_application(client, token).post(
+        reverse("punch-delegated"), {"employee_ref": "marta@example.com"}
+    )
+
+    assert respuesta.status_code == 409
+    assert respuesta.data["error"]["code"] == "ambiguous_employee_reference"
+    with tenant_context(company.id):
+        assert Punch.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_quien_esta_de_baja_no_ficha_por_el_terminal(client, company, employee):
+    """La tarjeta de quien ya no está sigue existiendo.
+
+    Y un terminal no sabe quién sigue en plantilla: lo sabe el servidor. Si la
+    aceptara, el registro tendría jornadas de alguien que se fue.
+    """
+    with tenant_context(company.id):
+        employee.is_active = False
+        employee.save(update_fields=["is_active"])
+
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+    respuesta = as_application(client, token).post(
+        reverse("punch-delegated"), {"employee_ref": "EMP-0003"}
+    )
+
+    assert respuesta.status_code == 409
+    assert respuesta.data["error"]["code"] == "employee_not_found"
+
+
+@pytest.mark.django_db
+def test_lo_que_detecto_el_sensor_llega_al_registro(client, company, employee):
+    """El motivo de que exista `trigger` y `evidence`.
+
+    Una valla virtual de Geosian o un lector dicen **qué** detectaron y adjuntan
+    la prueba. Sin eso, un fichaje automático es indistinguible de uno que hizo
+    una persona, y quien lea el registro tiene derecho a saberlo.
+    """
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+
+    respuesta = as_application(client, token).post(
+        reverse("punch-delegated"),
+        {
+            "employee_ref": "EMP-0003",
+            "trigger": PunchTrigger.GEOFENCE,
+            "evidence": {"zona": "Nave 3", "precision_m": 12},
+        },
+        format="json",
+    )
+
+    assert respuesta.status_code == 201
+    with tenant_context(company.id):
+        guardado = Punch.objects.get(employee=employee)
+        assert guardado.trigger == PunchTrigger.GEOFENCE
+        assert guardado.evidence == {"zona": "Nave 3", "precision_m": 12}
+        assert guardado.source_application == "GreenCity"
+
+
+@pytest.mark.django_db
+def test_una_evidencia_desproporcionada_se_rechaza(client, company, employee):
+    """El campo lo escribe alguien de fuera y no tenía tope.
+
+    Con seis mil peticiones por hora de cupo, un conector con una fuga ---o uno
+    honesto que vuelca la traza GPS entera en cada fichaje--- llena la base sin
+    hacer nada prohibido. Y esos fichajes viven cuatro años y salen en cada
+    informe que se entrega.
+
+    Lo que cabe es lo que el campo existe para guardar: unas coordenadas, una
+    red, el identificador de un evento.
+    """
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+    caller = as_application(client, token)
+
+    respuesta = caller.post(
+        reverse("punch-delegated"),
+        {"employee_ref": "EMP-0003", "evidence": {"traza": ["x" * 100] * 100}},
+        format="json",
+    )
+
+    assert respuesta.status_code == 400
+    assert "evidence" in respuesta.data["error"]["details"]
+    with tenant_context(company.id):
+        assert Punch.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_una_evidencia_normal_pasa(client, company, employee):
+    """El tope no puede estorbar a lo que el campo existe para guardar.
+
+    Validar el rechazo sin validar la aceptación deja pasar un tope de cero: la
+    prueba de arriba seguiría en verde y nadie podría adjuntar nada.
+    """
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+
+    respuesta = as_application(client, token).post(
+        reverse("punch-delegated"),
+        {
+            "employee_ref": "EMP-0003",
+            "trigger": PunchTrigger.GEOFENCE,
+            "evidence": {"lat": 36.6866, "lon": -6.1367, "precision_m": 8, "zona": "Nave 3"},
+        },
+        format="json",
+    )
+
+    assert respuesta.status_code == 201

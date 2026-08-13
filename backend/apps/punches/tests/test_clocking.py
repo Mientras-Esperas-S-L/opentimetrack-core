@@ -54,10 +54,18 @@ def test_the_timestamp_comes_from_the_server(company, employee):
 
 @pytest.mark.django_db
 def test_the_type_is_inferred_and_alternates(company, employee):
-    """One tap. Nobody is asked whether they are arriving or leaving."""
-    first = register_punch(employee=employee, company=company)
-    second = register_punch(employee=employee, company=company)
-    third = register_punch(employee=employee, company=company)
+    """One tap. Nobody is asked whether they are arriving or leaving.
+
+    Con el reloj movido entre uno y otro, que es lo que pasa de verdad: tres
+    eventos de una jornada están separados por horas, no por microsegundos.
+    Pegados los rechaza `_refuse_a_double_tap`, y con razón.
+    """
+    with freeze_time("2026-08-13 08:00:00"):
+        first = register_punch(employee=employee, company=company)
+    with freeze_time("2026-08-13 13:00:00"):
+        second = register_punch(employee=employee, company=company)
+    with freeze_time("2026-08-13 14:00:00"):
+        third = register_punch(employee=employee, company=company)
 
     assert [first.punch_type, second.punch_type, third.punch_type] == [
         PunchType.IN,
@@ -117,14 +125,16 @@ def test_the_source_is_recorded_and_delegation_is_distinguishable(company, emplo
         last_name="Person",
     )
 
-    own = register_punch(employee=employee, company=company, source=PunchSource.MOBILE)
-    delegated = register_punch(
-        employee=employee,
-        company=company,
-        source=PunchSource.DELEGATED,
-        source_application="GreenCity",
-        recorded_by=admin,
-    )
+    with freeze_time("2026-08-13 08:00:00"):
+        own = register_punch(employee=employee, company=company, source=PunchSource.MOBILE)
+    with freeze_time("2026-08-13 13:00:00"):
+        delegated = register_punch(
+            employee=employee,
+            company=company,
+            source=PunchSource.DELEGATED,
+            source_application="GreenCity",
+            recorded_by=admin,
+        )
 
     assert not own.was_delegated
     assert delegated.was_delegated

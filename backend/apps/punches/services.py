@@ -239,6 +239,48 @@ def _span(opening: Punch, end) -> DaySegment:
     )
 
 
+#: Cuánto tiene que pasar entre dos eventos de la misma persona para que el
+#: segundo se crea. Ver `_refuse_a_double_tap`.
+DOUBLE_TAP_SECONDS = 5
+
+
+def _refuse_a_double_tap(employee, company, interval: str) -> None:
+    """Dos eventos seguidos de la misma persona son un dedo, no dos hechos.
+
+    El tipo se deduce del estado, así que dos peticiones seguidas no crean dos
+    entradas: crean **una entrada y una salida**. Medido el 13/08/2026 con
+    milisegundo y medio entre ellas, el día quedaba en cero segundos trabajados
+    y en estado «fuera». Quien había pulsado se iba convencido de haber fichado.
+
+    Y no hace falta mala suerte: un doble toque en un móvil, una pantalla que
+    tarda en responder y se vuelve a pulsar, o un reintento del cliente cuando
+    la petición ya había llegado. En una obra, con guantes, es un martes.
+
+    El sitio es este y no la pantalla. El botón ya se desactiva mientras la
+    petición viaja, pero eso no cubre el toque más rápido que el repintado, ni
+    dos pestañas, ni un terminal, ni un conector --- y todos escriben aquí.
+
+    **Se rechaza, no se ignora.** Tragarse el segundo dejaría el registro bien y
+    a la persona sin saber qué pasó; el error dice que ya se fichó hace un
+    momento, que es la verdad y lo que evita el tercer intento.
+
+    Cinco segundos: de sobra para el dedo y el reintento, poco para estorbar a
+    quien sale y vuelve a entrar porque se lo ha pensado mejor.
+    """
+    from django.utils import timezone
+
+    last = punches_of_the_day(employee, company).filter(interval=interval).last()
+    if last is None:
+        return
+
+    elapsed = (timezone.now() - last.timestamp).total_seconds()
+    if 0 <= elapsed < DOUBLE_TAP_SECONDS:
+        raise BusinessRuleError(
+            code="punch_too_soon",
+            message=_("You clocked a moment ago. Check the screen before clocking again."),
+        )
+
+
 @transaction.atomic
 def register_punch(
     *,
@@ -269,6 +311,8 @@ def register_punch(
             code="employee_inactive",
             message=_("This person is deactivated and cannot clock in or out."),
         )
+
+    _refuse_a_double_tap(employee, company, interval)
 
     punch_type = infer_type(employee, company, interval)
 
