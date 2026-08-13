@@ -4,7 +4,11 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
-  { ignores: ['dist', 'node_modules'] },
+  // `e2e-report` y `test-results` los escribe Playwright, y dentro va su propia
+  // interfaz empaquetada y minificada: 739 errores que no son de nadie. En la CI
+  // no se notaba ---checkout limpio, no existen--- así que `npm run lint` solo
+  // se rompía en local, y justo para quien acababa de correr las pruebas.
+  { ignores: ['dist', 'node_modules', 'e2e-report', 'test-results'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
