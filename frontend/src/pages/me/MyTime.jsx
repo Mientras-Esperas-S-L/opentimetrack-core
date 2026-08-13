@@ -13,9 +13,6 @@ import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
-import Switch from '@mui/material/Switch'
-import FormControlLabel from '@mui/material/FormControlLabel'
-import Tooltip from '@mui/material/Tooltip'
 import Typography from '@mui/material/Typography'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
@@ -27,7 +24,6 @@ import {
   getCorrections,
   getPunches,
   requestCorrection,
-  updateMe,
 } from '../../services/api.js'
 import {
   Empty,
@@ -39,6 +35,7 @@ import {
   StatusChip,
 } from '../../components/common.jsx'
 import { dateOf, hhmm, monthBounds, monthName, timeOf } from '../../components/format.js'
+import RemindersControl from '../../components/RemindersControl.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
 /** Pairs the day's events into segments and adds them up.
@@ -190,8 +187,8 @@ function DisputeDialog({ open, correction, onClose, onConfirm, busy }) {
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Tu versión queda guardada junto a la de la empresa y se informa a la representación
-            legal. La empresa puede seguir adelante, y si lo hace el registro dirá que se aplicó
-            sin tu conformidad y llevará esto al lado.
+            legal. La empresa puede seguir adelante, y si lo hace el registro dirá que se aplicó sin
+            tu conformidad y llevará esto al lado.
           </Typography>
           {correction?.reason && (
             <Typography
@@ -338,15 +335,7 @@ const thisMonth = () => {
 }
 
 export default function MyTime() {
-  const { session, setSession } = useAuth()
-  // El interruptor de recordatorios: autoservicio, como promete el correo. El
-  // servidor solo deja tocar las preferencias propias.
-  const remind = useMutation({
-    mutationFn: (on) => updateMe({ wants_punch_reminders: on }),
-    onSuccess: (user) => {
-      if (session) setSession({ ...session, user: { ...session.user, ...user } })
-    },
-  })
+  const { session } = useAuth()
   const zone = session?.tenant?.time_zone
   const me = session?.user?.id
   const queryClient = useQueryClient()
@@ -364,7 +353,12 @@ export default function MyTime() {
   const { data: punches, isLoading } = useQuery({
     queryKey: ['punches', 'mine', range],
     queryFn: () =>
-      getPunches({ employee: me, date_from: range.from, date_to: range.to, ordering: '-timestamp' }),
+      getPunches({
+        employee: me,
+        date_from: range.from,
+        date_to: range.to,
+        ordering: '-timestamp',
+      }),
     placeholderData: (previous) => previous,
     enabled: Boolean(me),
   })
@@ -418,20 +412,7 @@ export default function MyTime() {
         subtitle="Tu registro completo. Tienes derecho a consultarlo, y se conserva cuatro años."
         action={
           <Stack direction="row" sx={{ gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Tooltip title="Aviso si empieza tu turno y no has fichado, o si dejas la jornada abierta. Empuja al fichaje real, nunca lo hace por ti.">
-              <FormControlLabel
-                sx={{ mr: 0 }}
-                control={
-                  <Switch
-                    size="small"
-                    checked={session?.user?.wants_punch_reminders !== false}
-                    disabled={remind.isPending}
-                    onChange={(event) => remind.mutate(event.target.checked)}
-                  />
-                }
-                label={<Typography variant="body2">Recordatorios</Typography>}
-              />
-            </Tooltip>
+            <RemindersControl />
             <Button variant="outlined" startIcon={<EditNoteIcon />} onClick={() => setAsking(true)}>
               Pedir una corrección
             </Button>

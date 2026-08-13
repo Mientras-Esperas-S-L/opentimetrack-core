@@ -177,6 +177,16 @@ export const getPendingAbsences = async () => rows(await get('/absences/pending/
 /** Horas extra pendientes de que un responsable las autorice o rechace. */
 export const getPendingOvertime = async () => (await get('/overtime/')).pending ?? []
 export const decideOvertime = (payload) => post('/overtime/', payload)
+
+// ------------------------------------------------- avisos en el navegador
+
+/** La clave pública del despliegue, y si el push está configurado siquiera.
+ *  Sin claves no se ofrece: proponer un aviso que no va a llegar es peor que
+ *  no proponerlo. */
+export const getPushKey = () => get('/push/key/')
+export const subscribePush = (payload) => post('/push/subscriptions/', payload)
+export const unsubscribePush = (endpoint) =>
+  api.delete('/push/subscriptions/', { data: { endpoint } })
 export const getLeaveBalance = (employee) => get('/absences/balance/', employee ? { employee } : {})
 export const requestAbsence = (payload) => post('/absences/', payload)
 export const approveAbsence = (id) => post(`/absences/${id}/approve/`)

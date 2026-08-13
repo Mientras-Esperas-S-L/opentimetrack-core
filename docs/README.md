@@ -4,6 +4,8 @@
 |---|---|
 | [Manual de uso](manual/README.md) | Cómo se usa cada pantalla, con la base legal de lo que hace. Es también la fuente del sistema de ayuda y de los tours |
 | [Alcance y cobertura](cobertura-legal.md) | Dónde está la línea de lo que hace OpenTimeTrack, y qué situaciones de la legislación laboral cubre hoy |
+| [Trabajos periódicos](trabajos-periodicos.md) | Recordatorios y purga: ejecutarlos por cron o por Celery, y cómo se elige |
+| [Avisos en el navegador](avisos-navegador.md) | Web Push: generar las claves del despliegue, y qué pasa si no las generas |
 
 La documentación de diseño y las decisiones de arquitectura no están aquí: viven
 en el repositorio privado `opentimetrack-cloud`.

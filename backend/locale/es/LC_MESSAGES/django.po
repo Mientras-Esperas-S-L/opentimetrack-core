@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-13 08:58+0000\n"
+"POT-Creation-Date: 2026-08-13 09:16+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -193,10 +193,10 @@ msgstr "Aprobada"
 msgid "Rejected"
 msgstr "Rechazada"
 
-#: apps/absences/models.py:214 apps/punches/corrections.py:72
-#: apps/punches/models.py:149 apps/punches/models.py:396
-#: apps/punches/models.py:438 apps/reports/payroll.py:97
-#: apps/shifts/models.py:111
+#: apps/absences/models.py:214 apps/notifications/models.py:34
+#: apps/punches/corrections.py:72 apps/punches/models.py:149
+#: apps/punches/models.py:396 apps/punches/models.py:438
+#: apps/reports/payroll.py:97 apps/shifts/models.py:111
 msgid "employee"
 msgstr "persona trabajadora"
 
@@ -658,6 +658,34 @@ msgstr "Solo un administrador puede modificar este recurso."
 msgid "The application does not carry the required permission."
 msgstr "La aplicación no tiene el permiso necesario."
 
+#: apps/notifications/models.py:38
+msgid "endpoint"
+msgstr "dirección de entrega"
+
+#: apps/notifications/models.py:39
+msgid "public key"
+msgstr "clave pública"
+
+#: apps/notifications/models.py:40
+msgid "authentication secret"
+msgstr "secreto de autenticación"
+
+#: apps/notifications/models.py:43 apps/punches/models.py:221
+msgid "device"
+msgstr "dispositivo"
+
+#: apps/notifications/models.py:44 apps/tenants/applications.py:104
+msgid "last used"
+msgstr "último envío"
+
+#: apps/notifications/models.py:47
+msgid "push subscription"
+msgstr "suscripción de avisos"
+
+#: apps/notifications/models.py:48
+msgid "push subscriptions"
+msgstr "suscripciones de avisos"
+
 #: apps/punches/correction_views.py:140
 msgid "That event does not exist."
 msgstr "Ese fichaje no existe."
@@ -1087,10 +1115,6 @@ msgid "Set when somebody other than the employee created the record."
 msgstr ""
 "Se rellena cuando el registro lo creó alguien que no es la propia persona."
 
-#: apps/punches/models.py:221
-msgid "device"
-msgstr "dispositivo"
-
 #: apps/punches/models.py:222
 msgid "user agent"
 msgstr "agente de usuario"
@@ -1205,15 +1229,24 @@ msgstr "Ese día no tiene horas extraordinarias que resolver."
 
 #: apps/punches/overtime.py:101 apps/punches/services.py:328
 msgid "Say whether the overtime is paid or compensated with rest."
-msgstr "Indica si las horas extraordinarias se pagan o se compensan con descanso."
+msgstr ""
+"Indica si las horas extraordinarias se pagan o se compensan con descanso."
 
-#: apps/punches/reminders.py:155
+#: apps/punches/reminders.py:161
 msgid "Remember to clock in"
 msgstr "Recuerda fichar la entrada"
 
-#: apps/punches/reminders.py:155
+#: apps/punches/reminders.py:161
 msgid "You have not clocked out yet"
 msgstr "Todavía no has fichado la salida"
+
+#: apps/punches/reminders.py:165
+msgid "Your shift has started and you have not clocked in."
+msgstr "Ha empezado tu turno y no has fichado la entrada."
+
+#: apps/punches/reminders.py:167
+msgid "Your day is still open. Clock out when you finish."
+msgstr "Tienes la jornada abierta. Ficha la salida cuando acabes."
 
 #: apps/punches/services.py:270
 msgid "This person is deactivated and cannot clock in or out."
@@ -1850,10 +1883,6 @@ msgstr "caduca el"
 #: apps/tenants/applications.py:103
 msgid "revoked at"
 msgstr "revocada el"
-
-#: apps/tenants/applications.py:104
-msgid "last used"
-msgstr "último uso"
 
 #: apps/tenants/applications.py:107
 msgid "application credential"
@@ -2671,35 +2700,35 @@ msgstr ""
 msgid "The link is not valid or has already been used."
 msgstr "El enlace no es válido o ya se ha usado."
 
-#: config/settings/base.py:270
+#: config/settings/base.py:274
 msgid "Spanish"
 msgstr "Español"
 
-#: config/settings/base.py:271
+#: config/settings/base.py:275
 msgid "English"
 msgstr "Inglés"
 
-#: config/settings/base.py:272
+#: config/settings/base.py:276
 msgid "Catalan"
 msgstr "Catalán"
 
-#: config/settings/base.py:273
+#: config/settings/base.py:277
 msgid "Galician"
 msgstr "Gallego"
 
-#: config/settings/base.py:274
+#: config/settings/base.py:278
 msgid "Basque"
 msgstr "Euskera"
 
-#: config/settings/base.py:275
+#: config/settings/base.py:279
 msgid "French"
 msgstr "Francés"
 
-#: config/settings/base.py:276
+#: config/settings/base.py:280
 msgid "Portuguese"
 msgstr "Portugués"
 
-#: config/settings/base.py:277
+#: config/settings/base.py:281
 msgid "German"
 msgstr "Alemán"
 

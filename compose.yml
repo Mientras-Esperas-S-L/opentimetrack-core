@@ -36,6 +36,18 @@ services:
       retries: 5
       start_period: 30s
 
+  # Los trabajos que se repiten --- recordatorios de fichaje, purga de metadatos
+  # --- se ejecutan por cron o por Celery, y lo elige quien instala con
+  # SCHEDULER en el .env. Ver docs/instalacion/trabajos-periodicos.md.
+  #
+  # Por defecto (SCHEDULER=cron) estos dos servicios no se levantan: una línea
+  # en la crontab hace lo mismo sin dos procesos más que vigilar. Con
+  # SCHEDULER=celery:
+  #
+  #   podman compose --profile celery up -d
+  #
+  # Los dos hacen falta y hacen cosas distintas: `beat` decide cuándo, `worker`
+  # ejecuta. Solo beat, y nada corre; solo worker, y nadie le manda nada.
   worker:
     build:
       context: ./backend
@@ -43,10 +55,27 @@ services:
     command: celery -A config worker -l info
     volumes:
       - ./backend:/app:z
+      - ./agreements:/agreements:ro,z
+      - ./holidays:/holidays:ro,z
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    profiles: ["celery"]
+
+  beat:
+    build:
+      context: ./backend
+      target: dev
+    command: celery -A config beat -l info
+    volumes:
+      - ./backend:/app:z
     env_file: .env
     depends_on:
       - redis
-    profiles: ["worker"]
+    profiles: ["celery"]
 
   web:
     build:

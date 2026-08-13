@@ -8,6 +8,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -49,6 +50,7 @@ LOCAL_APPS = [
     "apps.shifts",
     "apps.audit",
     "apps.reports",
+    "apps.notifications",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -95,10 +97,12 @@ DATABASES = {"default": env.db("DATABASE_URL")}
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
 
+REDIS_URL = env("REDIS_URL", default="redis://redis:6379/0")
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env("REDIS_URL", default="redis://redis:6379/0"),
+        "LOCATION": REDIS_URL,
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
     }
 }
@@ -323,6 +327,54 @@ FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 
 # How long an account link lasts, in seconds.
 PASSWORD_RESET_TIMEOUT = env.int("PASSWORD_RESET_TIMEOUT", default=60 * 60 * 24)
+
+# ---------------------------------------------------------- trabajos periódicos
+
+# Quién repite los trabajos que se repiten: `cron` o `celery`.
+#
+# Por defecto cron, y es una postura, no una pereza: el despliegue típico de
+# esto es una empresa con veinte personas en un servidor, y ahí cron ya está
+# instalado, no se cae, no hay que vigilarlo y una línea en la crontab es toda
+# la configuración. Pedirle un broker y dos procesos más para ejecutar un
+# comando cada cinco minutos es cobrarle infraestructura que no necesita.
+#
+# Quien ya tiene varias máquinas, quiere ver los trabajos y reintentarlos, o no
+# quiere depender de la crontab de un servidor concreto, pone `celery` y levanta
+# el worker y el beat. La lógica es la misma: las tareas de Celery llaman al
+# mismo comando de gestión que llamaría cron.
+SCHEDULER = env("SCHEDULER", default="cron")
+if SCHEDULER not in ("cron", "celery"):
+    raise ImproperlyConfigured(f"SCHEDULER debe ser 'cron' o 'celery', no {SCHEDULER!r}")
+
+# Cada cuánto se miran los recordatorios pendientes. Vale para las dos vías: es
+# el intervalo que se documenta para la crontab y el que programa celery-beat.
+REMINDER_EVERY_MINUTES = env.int("REMINDER_EVERY_MINUTES", default=5)
+
+# El mismo Redis que la caché salvo que se diga otra cosa: quien separa los
+# dos ya sabe por qué lo hace, y quien no, no tiene que montar dos.
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=REDIS_URL)
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="")
+CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
+CELERY_TIMEZONE = TIME_ZONE
+# Un recordatorio de fichar que se entrega media hora tarde no recuerda nada.
+# Mejor perderlo que confundir a quien lo reciba fuera de su momento.
+CELERY_TASK_SOFT_TIME_LIMIT = env.int("CELERY_TASK_SOFT_TIME_LIMIT", default=300)
+
+# ------------------------------------------------------ avisos en el navegador
+
+# Web Push necesita un par de claves propio del despliegue (VAPID). Se genera
+# una vez con `python manage.py vapid_keys` y vive en el entorno. Sin claves, el
+# push está apagado y todo sigue funcionando por correo: es una vía más, no un
+# requisito, y el producto tiene que poder instalarse sin ella.
+WEBPUSH_PUBLIC_KEY = env("WEBPUSH_PUBLIC_KEY", default="")
+WEBPUSH_PRIVATE_KEY = env("WEBPUSH_PRIVATE_KEY", default="")
+# Contacto al que el servicio de push del navegador escribiría si algo va mal.
+# Lo exige el estándar VAPID; ha de ser un mailto: o una URL.
+WEBPUSH_SUBJECT = env("WEBPUSH_SUBJECT", default=f"mailto:{DEFAULT_FROM_EMAIL}")
+# Cuánto guarda el servicio del navegador un aviso que no se pudo entregar.
+# Seis horas: un recordatorio de fichar que llega al día siguiente no recuerda
+# nada, confunde.
+WEBPUSH_TTL_SECONDS = env.int("WEBPUSH_TTL_SECONDS", default=6 * 60 * 60)
 
 # ------------------------------------------------------------------------ registro
 

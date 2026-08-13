@@ -120,8 +120,14 @@ def send_reminders(company, now=None) -> int:
 
 
 def _deliver(item) -> None:
-    """Email today; the channel is a detail. The frontend is a PWA, so web push
-    is the same message through a different pipe when it lands."""
+    """Both channels, same message: the inbox and, if registered, the browser.
+
+    Neither is the record and neither can fail into one. Push goes first because
+    it is the one that arrives while somebody is still at work --- which is the
+    only moment a "remember to clock out" is any use --- and the mail goes
+    anyway, because a browser that was never registered would otherwise be
+    silence.
+    """
     import logging
 
     from django.conf import settings
@@ -130,15 +136,15 @@ def _deliver(item) -> None:
     from django.utils import translation
     from django.utils.translation import gettext as _
 
+    from apps.notifications.push import send_push
+
     log = logging.getLogger(__name__)
     person = item.employee
-    if not person.email:
-        return
 
-    # This runs from cron, so no language is active. The person reads their own,
-    # falling back to the company's, so a reminder does not arrive in English to
-    # a Spanish worker just because it was a scheduled job that sent it. Both the
-    # subject and the body are translated, so both go inside the override.
+    # This runs from a scheduled job, so no language is active. The person reads
+    # their own, falling back to the company's, so a reminder does not arrive in
+    # English to a Spanish worker just because it was cron that sent it. Subject
+    # and body are both translated, so both go inside the override.
     language = person.locale or person.tenant.language
     clock_in = item.kind == PunchReminder.Kind.CLOCK_IN
     try:
@@ -153,12 +159,31 @@ def _deliver(item) -> None:
                 },
             )
             subject = _("Remember to clock in") if clock_in else _("You have not clocked out yet")
-        send_mail(
-            subject=subject,
-            message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[person.email],
-            fail_silently=True,
+            # Short on purpose: this lands on a lock screen. The long version is
+            # in the mail, and the real answer is one tap away in the app.
+            push_body = (
+                _("Your shift has started and you have not clocked in.")
+                if clock_in
+                else _("Your day is still open. Clock out when you finish.")
+            )
+
+        send_push(
+            person,
+            title=subject,
+            body=push_body,
+            url="/fichar",
+            # One notification per person, day and kind: the same tag replaces
+            # the previous one instead of stacking three identical cards.
+            tag=f"punch-{item.kind}-{item.day.isoformat()}",
         )
+
+        if person.email:
+            send_mail(
+                subject=subject,
+                message=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[person.email],
+                fail_silently=True,
+            )
     except Exception:
         log.exception("Could not send punch reminder to %s", person.pk)

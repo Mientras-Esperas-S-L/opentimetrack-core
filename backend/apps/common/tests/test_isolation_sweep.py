@@ -184,6 +184,7 @@ COLLECTIONS = [
     "/api/absences/balance/",
     "/api/absences/pending/",
     "/api/overtime/",
+    "/api/push/subscriptions/",
     "/api/reports/payroll-summary/",
 ]
 
@@ -508,6 +509,10 @@ def test_every_route_is_covered_by_this_sweep():
 
     # Reached by the sweep above, or exempt with a reason.
     covered = {
+        # La mitad pública de un par de claves. No dice nada de nadie y el
+        # navegador la necesita antes de suscribirse, así que es anónima a
+        # propósito y no hay nada que aislar.
+        "api/push/key/",
         # Public on purpose.
         "api/health/",
         "api/auth/token/",
@@ -576,6 +581,7 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^audit/(?P<pk>[^/.]+)/$",
         "api/overview/",
         "api/overtime/",
+        "api/push/subscriptions/",
         "api/company/",
         "api/working-time-rules/",
         "api/reports/working-time/",

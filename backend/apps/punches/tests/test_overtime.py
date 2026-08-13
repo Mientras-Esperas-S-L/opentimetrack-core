@@ -359,13 +359,10 @@ def test_a_day_that_stopped_being_overtime_does_not_sink_the_batch(company, peop
     assert answer.status_code == 200
     body = answer.json()
     assert [d["day"] for d in body["decided"]] == ["2026-09-01"]
-    assert body["failed"] == [
-        {
-            "day": "2026-09-02",
-            "code": "no_overtime",
-            "message": "That day has no overtime to rule on.",
-        }
-    ]
+    # Por el código, no por el texto: el mensaje está traducido y sale en el
+    # idioma de quien pregunta. El código es el contrato.
+    assert [(f["day"], f["code"]) for f in body["failed"]] == [("2026-09-02", "no_overtime")]
+    assert body["failed"][0]["message"]  # y va explicado, no vacío
 
 
 @pytest.mark.django_db

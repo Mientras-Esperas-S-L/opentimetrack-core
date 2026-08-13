@@ -27,6 +27,11 @@ jsonschema==4.26.0
 # Contraseñas (RF-01.6: hashing fuerte)
 argon2-cffi==25.1.0
 
+# Avisos en el navegador (Web Push, VAPID). Habla el estándar directamente con
+# el servicio de push del navegador: no hay servicio de terceros que contratar
+# ni cuenta que abrir, que es lo que hace que un despliegue propio pueda usarlo.
+pywebpush==2.0.3
+
 # Reports
 reportlab==5.0.0
 
