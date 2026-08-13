@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 8 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 9 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -38,7 +38,7 @@ vuelve a una limpia.
 | `applications/people` (integración Geosian) | limpia | 13/08 v5 | **lectura truncada a 500 en silencio**; el cursor se rompía con el `+` del huso |
 | `applications/attendance` | limpia | 13/08 v6 | **el día salía del reloj del contenedor, no de la empresa** |
 | Avisos push y correo | limpia | 13/08 v7 | — en el área; salió **una plural sin traducir que se veía en blanco** |
-| Importación de datos | sin tocar | — | — |
+| Importación de datos (festivos) | limpia | 13/08 v9 | **solo leía un país**; no comprobaba el fichero; el resumen contaba días que no escribía |
 
 ### Ley
 
@@ -54,7 +54,7 @@ vuelve a una limpia.
 | Art. 38 — vacaciones y recuperación | limpia | 13/08 | — |
 | Art. 4.b — consentimiento de las dos partes | limpia | 13/08 | — |
 | Constancia de la consulta a la RLT | sin tocar | — | «ausente» en la revisión del 13/08 |
-| Calendario con dos meses de antelación | sin tocar | — | «solo citado» |
+| Calendario con dos meses de antelación (38.3) | limpia | 13/08 v9 | **estaba solo citado**; ahora se avisa, y solo cuando las pone la empresa |
 | RGPD / art. 88 LOPDGDD | a medias | 13/08 | IP ajena cerrada; falta repasar la purga de metadatos |
 
 ## Hallazgos abiertos
@@ -88,6 +88,37 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 9 — La importación de festivos, y los dos meses del art. 38.3.**
+
+El comando escribe días en todas las empresas del país de un tirón y **no tenía
+ni una prueba**. Lo que escribe no es un dato cualquiera: un festivo dentro de
+un permiso no gasta día de vacaciones, y decide si el cuadrante señala trabajo
+en fiesta.
+
+Tres fallos. **Solo se podía importar un país**: se quedaba con el primer
+directorio por orden alfabético, así que con `es/` y `pt/` publicando el mismo
+año, las empresas portuguesas no recibían nada y el comando decía que había
+terminado --- mientras la cabecera del módulo presumía de que añadir un país es
+un fichero y no un cambio de código. **No comprobaba nada de lo que leía**, y
+`HOLIDAYS_DIR` existe justo para que un despliegue traiga el suyo: sin país daba
+un `KeyError` pelado, y una fecha del año equivocado ---la errata natural al
+copiar el fichero del año anterior--- se escribía y **no se podía deshacer
+reimportando**, porque la limpieza va por el rango del año que pides. Y **el
+resumen contaba días que no se escribían**, porque `ignore_conflicts` se traga
+en silencio lo que choque.
+
+Diecinueve pruebas donde no había ninguna; nueve se ponen rojas con el comando
+de antes.
+
+Y el punto legal de la misma área, que llevaba desde el 13/08 como «solo
+citado»: el art. 38.3 pide que las vacaciones se conozcan con dos meses. Ahora
+se avisa ---no se impide, como con el resto de los mínimos--- y **solo cuando
+las pone la empresa**: quien pide las suyas conoce las fechas por definición, y
+un aviso que saltara también ahí saldría en la mitad de las solicitudes y en dos
+semanas nadie lo miraría. Para distinguirlo hacía falta un dato que la fila no
+tenía: quién la metió. Decía de quién son las vacaciones y quién las aprobó, y
+se callaba lo del medio.
 
 **Vuelta 8 — La CI, que llevaba roja, y una intermitente que era un fallo.**
 
