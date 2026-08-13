@@ -46,7 +46,12 @@ import {
   leaveLength,
   timeOf,
 } from '../../components/format.js'
+import { FilterBar, PickFilter, SearchField } from '../../components/filters.jsx'
+import { matches, peopleIn } from '../../components/filtering.js'
+import { SelectAllBox, SelectBox, SelectionBar } from '../../components/selection.jsx'
+import { bulkSummary, runBulk } from '../../services/bulk.js'
 import { useAuth } from '../../hooks/useAuth.js'
+import { useSelection } from '../../hooks/useSelection.js'
 
 const KIND_LABELS = {
   ADD: 'Añadir un fichaje que falta',
@@ -204,13 +209,14 @@ const fmt = (value) => {
  *  deliberate: a refusal is what the person will read and ask about, and it
  *  should not be as effortless as a yes.
  */
-function RequestCard({ title, meta, reason, children, onApprove, onReject, busy }) {
+function RequestCard({ title, meta, reason, children, onApprove, onReject, busy, select }) {
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
       <Stack
         direction={{ xs: 'column', md: 'row' }}
         sx={{ gap: 2, justifyContent: 'space-between', alignItems: { md: 'flex-start' } }}
       >
+        {select}
         <Box sx={{ minWidth: 0, flexGrow: 1 }}>
           <Typography sx={{ fontWeight: 600 }}>{title}</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
@@ -247,8 +253,17 @@ function RequestCard({ title, meta, reason, children, onApprove, onReject, busy 
   )
 }
 
-function RejectDialog({ open, onClose, onConfirm, needsNote }) {
+/** El «no», de una en una o de varias a la vez.
+ *
+ *  Rechazar en bloque pasa por el mismo cuadro que rechazar una, y con el mismo
+ *  motivo obligatorio donde lo es: el texto que va a leer la persona no puede
+ *  depender de por qué botón se llegó. Y un motivo compartido por varias se
+ *  avisa, para que nadie escriba «no procede» pensando en un caso y se lo
+ *  mande a cinco.
+ */
+function RejectDialog({ open, onClose, onConfirm, needsNote, count = 1, busy }) {
   const [note, setNote] = useState('')
+  const many = count > 1
 
   const confirm = () => {
     onConfirm(note)
@@ -257,11 +272,12 @@ function RejectDialog({ open, onClose, onConfirm, needsNote }) {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Rechazar la solicitud</DialogTitle>
+      <DialogTitle>{many ? `Rechazar ${count} solicitudes` : 'Rechazar la solicitud'}</DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          La solicitud se conserva rechazada: que alguien lo pidiera y se le dijera que no también
-          es parte del historial.
+          {many
+            ? 'El mismo motivo se enviará a todas. Se conservan rechazadas: que alguien lo pidiera y se le dijera que no también es parte del historial.'
+            : 'La solicitud se conserva rechazada: que alguien lo pidiera y se le dijera que no también es parte del historial.'}
         </Typography>
         <TextField
           autoFocus
@@ -269,7 +285,11 @@ function RejectDialog({ open, onClose, onConfirm, needsNote }) {
           multiline
           minRows={3}
           label={needsNote ? 'Motivo del rechazo' : 'Motivo del rechazo (opcional)'}
-          placeholder="Lo leerá la persona que lo solicitó."
+          placeholder={
+            many
+              ? 'Lo leerán todas las personas afectadas.'
+              : 'Lo leerá la persona que lo solicitó.'
+          }
           value={note}
           onChange={(event) => setNote(event.target.value)}
         />
@@ -278,8 +298,13 @@ function RejectDialog({ open, onClose, onConfirm, needsNote }) {
         <Button onClick={onClose} color="inherit">
           Volver
         </Button>
-        <Button onClick={confirm} variant="contained" color="secondary">
-          Rechazar
+        <Button
+          onClick={confirm}
+          variant="contained"
+          color="secondary"
+          disabled={busy || (needsNote && !note.trim())}
+        >
+          {many ? `Rechazar las ${count}` : 'Rechazar'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -349,6 +374,31 @@ export default function Decisions() {
 
   const openReject = (action, id, needsNote) => setRejecting({ action, id, needsNote })
 
+  // La misma decisión sobre varias solicitudes de golpe. En serie y sin parar
+  // en el primer fallo: que una estuviera ya resuelta por otra persona no es
+  // razón para dejar sin responder a las trece siguientes.
+  const [bulking, setBulking] = useState(false)
+  const decideMany = async (rows, action, { done }) => {
+    setBulking(true)
+    try {
+      const outcome = await runBulk(rows, (row) => action(row.id))
+      setError(bulkSummary(outcome, { done }))
+      refresh()
+    } finally {
+      setBulking(false)
+    }
+  }
+
+  // El filtro es de cada pestaña: lo que se busca en ausencias no se parece a
+  // lo que se busca en correcciones, y arrastrar el texto de una a otra deja
+  // la siguiente vacía sin que se entienda por qué.
+  const [search, setSearch] = useState('')
+  const [who, setWho] = useState('')
+  const clearFilters = () => {
+    setSearch('')
+    setWho('')
+  }
+
   const absenceRows = absences.data ?? []
   const correctionRows = corrections.data?.rows ?? []
   // Those who have answered first: the company can act on them now, whereas
@@ -376,6 +426,35 @@ export default function Decisions() {
     (a, b) => Boolean(b.employee_responded_at) - Boolean(a.employee_responded_at),
   )
 
+  const peopleHere = peopleIn(
+    tab === 0 ? absenceRows : tab === 1 ? correctionRows : tab === 2 ? openRows : overtimeRows,
+  )
+  // Al resolver la última solicitud de alguien, esa persona desaparece de la
+  // lista y el filtro se quedaba apuntando a nadie: la pantalla decía «ninguna
+  // coincide» escondiendo las que sí quedaban. Se suelta al leer --- filtrar
+  // por quien ya no tiene nada pendiente no significa nada.
+  const forWhom = peopleHere.some((person) => person.value === who) ? who : ''
+
+  // Lo que se ve tras el filtro. Todo lo demás --- la selección, «todo», las
+  // acciones masivas --- opera sobre esto y nunca sobre la lista entera:
+  // aprobar de golpe cosas que no están en pantalla es aprobar sin mirar.
+  const mine = (row) => !forWhom || String(row.employee) === forWhom
+  const shownAbsences = absenceRows.filter(
+    (row) => mine(row) && matches(search, row.employee_name, leaveLabel(row), row.reason),
+  )
+  const shownCorrections = correctionRows.filter(
+    (row) => mine(row) && matches(search, row.employee_name, KIND_LABELS[row.kind], row.reason),
+  )
+  const shownOpen = openRows.filter(
+    (row) => mine(row) && matches(search, row.employee_name, KIND_LABELS[row.kind], row.reason),
+  )
+  const shownOvertime = overtimeGroups.filter((group) => mine(group) && matches(search, group.name))
+
+  const absencePick = useSelection(shownAbsences)
+  const correctionPick = useSelection(shownCorrections)
+
+  const filtering = Boolean(search || forWhom)
+
   return (
     <>
       <PageHeader
@@ -385,7 +464,16 @@ export default function Decisions() {
 
       <ErrorNote error={error} onClose={() => setError(null)} />
 
-      <Tabs value={tab} onChange={(_, next) => setTab(next)} sx={{ mb: 2 }}>
+      {/* Cambiar de pestaña con un filtro puesto dejaba la siguiente vacía sin
+          explicación. Se limpia al cambiar. */}
+      <Tabs
+        value={tab}
+        onChange={(_, next) => {
+          setTab(next)
+          clearFilters()
+        }}
+        sx={{ mb: 2 }}
+      >
         <Tab
           label={
             <Badge badgeContent={absenceRows.length} color="secondary" sx={{ pr: 1.5 }}>
@@ -416,17 +504,53 @@ export default function Decisions() {
         />
       </Tabs>
 
+      {/* Filtrar y seleccionar van juntos: «aprobar todo» sobre veinte cosas
+          mezcladas da miedo con razón; sobre las cuatro de una persona es
+          justo lo que alguien quiere hacer. */}
+      <FilterBar>
+        {tab < 2 && (
+          <SelectAllBox
+            selection={tab === 0 ? absencePick : correctionPick}
+            count={tab === 0 ? shownAbsences.length : shownCorrections.length}
+          />
+        )}
+        <SearchField
+          value={search}
+          onChange={setSearch}
+          placeholder="Nombre, tipo, motivo…"
+          width={260}
+        />
+        <PickFilter
+          label="Persona"
+          value={forWhom}
+          onChange={setWho}
+          options={peopleHere}
+          all="Todas las personas"
+          width={220}
+        />
+        {filtering && (
+          <Button size="small" color="inherit" onClick={clearFilters}>
+            Quitar filtros
+          </Button>
+        )}
+      </FilterBar>
+
       {tab === 0 &&
         (absences.isLoading ? (
           <Loading />
-        ) : absenceRows.length === 0 ? (
-          <Empty>No hay ausencias esperando respuesta.</Empty>
+        ) : shownAbsences.length === 0 ? (
+          <Empty>
+            {filtering
+              ? 'Ninguna ausencia coincide con el filtro.'
+              : 'No hay ausencias esperando respuesta.'}
+          </Empty>
         ) : (
           <Stack sx={{ gap: 1.5 }}>
-            {absenceRows.map((absence) => (
+            {shownAbsences.map((absence) => (
               <RequestCard
                 key={absence.id}
-                busy={decide.isPending}
+                busy={decide.isPending || bulking}
+                select={<SelectBox selection={absencePick} item={absence} />}
                 title={absence.employee_name}
                 meta={`${leaveLabel(absence)} · ${dayRange(absence.start_date, absence.end_date)} · ${leaveLength(absence)}`}
                 reason={absence.reason}
@@ -460,20 +584,56 @@ export default function Decisions() {
                 )}
               </RequestCard>
             ))}
+            <SelectionBar
+              selection={absencePick}
+              noun="ausencias"
+              busy={bulking}
+              actions={[
+                {
+                  label: 'Aprobar',
+                  onClick: () =>
+                    decideMany(
+                      shownAbsences.filter((row) => absencePick.isSelected(row)),
+                      approveAbsence,
+                      { done: 'aprobadas' },
+                    ).then(absencePick.clear),
+                },
+                {
+                  // Rechazar en bloque abre el mismo cuadro de motivo que
+                  // rechazar una: el «no» que se lee es el mismo, y sin motivo
+                  // no se distingue de un despiste.
+                  label: 'Rechazar',
+                  variant: 'text',
+                  color: 'inherit',
+                  onClick: () =>
+                    setRejecting({
+                      action: rejectAbsence,
+                      rows: shownAbsences.filter((row) => absencePick.isSelected(row)),
+                      needsNote: false,
+                      onDone: absencePick.clear,
+                    }),
+                },
+              ]}
+            />
           </Stack>
         ))}
 
       {tab === 1 &&
         (corrections.isLoading ? (
           <Loading />
-        ) : correctionRows.length === 0 ? (
-          <Empty>No hay correcciones esperando respuesta.</Empty>
+        ) : shownCorrections.length === 0 ? (
+          <Empty>
+            {filtering
+              ? 'Ninguna corrección coincide con el filtro.'
+              : 'No hay correcciones esperando respuesta.'}
+          </Empty>
         ) : (
           <Stack sx={{ gap: 1.5 }}>
-            {correctionRows.map((correction) => (
+            {shownCorrections.map((correction) => (
               <RequestCard
                 key={correction.id}
-                busy={decide.isPending}
+                busy={decide.isPending || bulking}
+                select={<SelectBox selection={correctionPick} item={correction} />}
                 title={correction.employee_name}
                 meta={KIND_LABELS[correction.kind] ?? correction.kind_display}
                 reason={correction.reason}
@@ -508,14 +668,46 @@ export default function Decisions() {
                 </Typography>
               </RequestCard>
             ))}
+            <SelectionBar
+              selection={correctionPick}
+              noun="correcciones"
+              busy={bulking}
+              actions={[
+                {
+                  label: 'Aprobar',
+                  onClick: () =>
+                    decideMany(
+                      shownCorrections.filter((row) => correctionPick.isSelected(row)),
+                      approveCorrection,
+                      { done: 'aprobadas' },
+                    ).then(correctionPick.clear),
+                },
+                {
+                  label: 'Rechazar',
+                  variant: 'text',
+                  color: 'inherit',
+                  onClick: () =>
+                    setRejecting({
+                      action: rejectCorrection,
+                      rows: shownCorrections.filter((row) => correctionPick.isSelected(row)),
+                      needsNote: true,
+                      onDone: correctionPick.clear,
+                    }),
+                },
+              ]}
+            />
           </Stack>
         ))}
 
       {tab === 2 &&
         (waiting.isLoading ? (
           <Loading />
-        ) : openRows.length === 0 ? (
-          <Empty>Ningún cambio propuesto por la empresa espera respuesta.</Empty>
+        ) : shownOpen.length === 0 ? (
+          <Empty>
+            {filtering
+              ? 'Ningún cambio coincide con el filtro.'
+              : 'Ningún cambio propuesto por la empresa espera respuesta.'}
+          </Empty>
         ) : (
           <Stack sx={{ gap: 1.5 }}>
             <Alert severity="info" variant="outlined">
@@ -525,7 +717,7 @@ export default function Decisions() {
               informe de Inspección.
             </Alert>
 
-            {openRows.map((correction) => (
+            {shownOpen.map((correction) => (
               <Paper key={correction.id} variant="outlined" sx={{ p: 2 }}>
                 <Stack
                   direction={{ xs: 'column', md: 'row' }}
@@ -627,8 +819,12 @@ export default function Decisions() {
       {tab === 3 &&
         (overtime.isLoading ? (
           <Loading />
-        ) : overtimeRows.length === 0 ? (
-          <Empty>No hay horas extra por resolver.</Empty>
+        ) : shownOvertime.length === 0 ? (
+          <Empty>
+            {filtering
+              ? 'Ninguna hora extra coincide con el filtro.'
+              : 'No hay horas extra por resolver.'}
+          </Empty>
         ) : (
           <Stack sx={{ gap: 1.5 }}>
             <Alert severity="info" variant="outlined">
@@ -637,7 +833,7 @@ export default function Decisions() {
               No se toca ningún fichaje.
             </Alert>
 
-            {overtimeGroups.map((group) => (
+            {shownOvertime.map((group) => (
               <OvertimePersonCard
                 key={group.employee}
                 group={group}
@@ -659,8 +855,18 @@ export default function Decisions() {
       <RejectDialog
         open={Boolean(rejecting)}
         needsNote={rejecting?.needsNote}
+        count={rejecting?.rows?.length ?? 1}
+        busy={decide.isPending || bulking}
         onClose={() => setRejecting(null)}
-        onConfirm={(note) => decide.mutate({ action: rejecting.action, id: rejecting.id, note })}
+        onConfirm={(note) => {
+          if (rejecting.rows) {
+            const { rows, action, onDone } = rejecting
+            setRejecting(null)
+            decideMany(rows, (id) => action(id, note), { done: 'rechazadas' }).then(onDone)
+            return
+          }
+          decide.mutate({ action: rejecting.action, id: rejecting.id, note })
+        }}
       />
     </>
   )
