@@ -70,10 +70,22 @@ test('pulsar deprisa elige a quien se ha escrito', async ({ page }) => {
 test('busca sin acentos', async ({ page }) => {
   const { campo } = await buscadorDeAusencia(page)
 
-  // «Ibáñez» se escribe con dos acentos y nadie los pone buscando. El recorte
-  // en cliente los ignora, y el del servidor también.
+  // «Ibáñez» se escribe con dos acentos y nadie los pone buscando.
   await campo.fill('ibanez')
+
+  // Al momento, por el recorte que hace el navegador sobre la lista cargada.
   await page.waitForTimeout(300)
+  await expect(page.getByRole('option').first()).toContainText('Ibáñez')
+
+  // Y **después de que conteste el servidor**, que es la mitad que faltaba:
+  // esta prueba fallaba una vez de cada tantas y pasaba al ejecutarla sola,
+  // porque mientras la lista anterior siguiera en pantalla el recorte del
+  // navegador la encontraba igual. Debajo, el servidor devolvía cero ---no
+  // ignoraba los acentos--- y eso solo se veía cuando su respuesta llegaba
+  // antes de teclear. En cuanto la plantilla no cabe en una página deja de ser
+  // intermitente: lo que no esté en la página cargada solo lo encuentra él.
+  await page.waitForTimeout(1600)
+  await expect(page.getByRole('option')).toHaveCount(1)
   await expect(page.getByRole('option').first()).toContainText('Ibáñez')
 })
 

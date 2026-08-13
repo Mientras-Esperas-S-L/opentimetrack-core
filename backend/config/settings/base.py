@@ -28,6 +28,10 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Registra el `unaccent` que usa la búsqueda: sin esto el lookup no
+    # existe y `last_name__unaccent__icontains` revienta en tiempo de
+    # consulta, no al arrancar.
+    "django.contrib.postgres",
 ]
 
 THIRD_PARTY_APPS = [
@@ -160,7 +164,10 @@ REST_FRAMEWORK = {
     # fields for it, so turning them on affects only the ones already asking.
     "DEFAULT_FILTER_BACKENDS": (
         "django_filters.rest_framework.DjangoFilterBackend",
-        "rest_framework.filters.SearchFilter",
+        # La nuestra, que ignora los acentos en los dos lados: `garcia`
+        # encontraba a nadie, y con una plantilla española eso es la mitad
+        # de los apellidos. Ver apps/common/filters.py.
+        "apps.common.filters.BusquedaSinAcentos",
         "rest_framework.filters.OrderingFilter",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
