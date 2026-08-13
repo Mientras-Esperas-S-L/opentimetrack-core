@@ -100,6 +100,49 @@ def _as_dict(person: User) -> dict:
     }
 
 
+class PersonInTheAnswerSerializer(serializers.Serializer):
+    """Una persona, tal y como sale. Solo para que el esquema lo diga."""
+
+    id = serializers.UUIDField()
+    email = serializers.EmailField()
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    employee_id = serializers.CharField()
+    oidc_sub = serializers.CharField()
+    is_active = serializers.BooleanField()
+    department = serializers.CharField()
+
+
+class PeoplePageSerializer(serializers.Serializer):
+    """Una tanda de personas, y cómo pedir la siguiente.
+
+    Declarado para el esquema, no para validar nada. Sin esto la respuesta
+    figuraba como «un objeto cualquiera» y quien escribiera un conector tenía
+    que leerse el código o adivinar --- y adivinando se pasa por alto
+    `has_more`, que es justo lo que hace falta para no quedarse con media
+    plantilla.
+    """
+
+    people = PersonInTheAnswerSerializer(many=True)
+    count = serializers.IntegerField(help_text="Cuánta gente encaja con el filtro, en total.")
+    has_more = serializers.BooleanField(help_text="Si falta gente por leer en otra tanda.")
+    next_since = serializers.DateTimeField(
+        allow_null=True,
+        help_text=(
+            "Con qué llamar otra vez: `?since=<esto>` trae la siguiente tanda. "
+            "Codifica el `+` del huso como `%2B`, o llegará como un espacio."
+        ),
+    )
+
+
+#: Cuánta gente devuelve una tanda de la lectura masiva.
+#:
+#: No es paginación al uso: el cursor es `updated_at`, que ya hacía falta para
+#: la lectura incremental. Quinientas caben de sobra en una respuesta y llevan a
+#: la siguiente tanda por el mismo camino.
+PAGE = 500
+
+
 @extend_schema(tags=["applications"])
 class ApplicationPeopleView(APIView):
     """La lista de personas y el alta, con credencial de aplicación."""
@@ -111,9 +154,17 @@ class ApplicationPeopleView(APIView):
         summary="List people",
         parameters=[
             OpenApiParameter("active", bool, description="Solo quien está de alta"),
-            OpenApiParameter("since", str, description="Cambios desde esta fecha (ISO 8601)"),
+            OpenApiParameter(
+                "since",
+                str,
+                description=(
+                    "Cambios desde esta fecha (ISO 8601). También es el cursor: "
+                    "vuelve a llamar con el `next_since` de la respuesta anterior "
+                    "mientras `has_more` sea cierto."
+                ),
+            ),
         ],
-        responses={200: dict},
+        responses={200: PeoplePageSerializer},
     )
     def get(self, request):
         company = request.user.application.tenant
@@ -128,15 +179,49 @@ class ApplicationPeopleView(APIView):
         if since:
             from django.utils.dateparse import parse_datetime
 
-            moment = parse_datetime(since)
+            # El `+` del huso se convierte en espacio al viajar en una URL si
+            # el cliente no lo codifica, y entonces «…123456+00:00» llega como
+            # «…123456 00:00» y no parsea. Se devuelve tal cual en `next_since`,
+            # así que un conector que siga el cursor de la forma más obvia se
+            # comía un 409 en la segunda vuelta --- y se quedaba con media
+            # plantilla creyendo que la tenía entera.
+            #
+            # Se perdona en el servidor porque ese espacio no puede venir de
+            # ningún otro sitio: una marca de tiempo no lleva espacios.
+            moment = parse_datetime(since) or parse_datetime(since.replace(" ", "+"))
             if moment is None:
                 raise BusinessRuleError(
                     code="bad_since", message=_("`since` must be an ISO 8601 timestamp.")
                 )
             people = people.filter(updated_at__gte=moment)
 
+        # Ordenado por `updated_at` porque ese es el cursor: el conector pide
+        # la siguiente tanda con `?since=` igual a la última fecha que vio.
+        people = people.order_by("updated_at")
+        total = people.count()
+        tanda = list(people[:PAGE])
+
         return Response(
-            {"people": [_as_dict(person) for person in people.order_by("updated_at")[:500]]}
+            {
+                "people": [_as_dict(person) for person in tanda],
+                # Sin esto la respuesta mentía por omisión. Devolvía quinientas
+                # y ni una palabra de que hubiera más: un conector de una
+                # empresa de seiscientas daba la plantilla por leída y las otras
+                # cien no existían para él --- ni sus fichajes, ni sus altas, ni
+                # sus bajas. Un recorte callado en una integración es peor que
+                # en una pantalla, porque no hay nadie mirando.
+                "count": total,
+                "has_more": total > len(tanda),
+                # Con qué seguir. Va aquí y no en la documentación porque una
+                # instrucción que hay que ir a buscar es una instrucción que no
+                # se sigue.
+                #
+                # El corte es inclusivo (`>=`), así que la última persona de
+                # esta tanda vuelve en la siguiente. Es a propósito: excluirla
+                # se saltaría a quien comparta su marca de tiempo, y el empuje
+                # es idempotente --- repetir una no cuesta nada, perder una sí.
+                "next_since": tanda[-1].updated_at.isoformat() if tanda else None,
+            }
         )
 
 

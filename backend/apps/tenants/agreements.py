@@ -31,6 +31,7 @@ from typing import Any
 import jsonschema
 import yaml
 from django.conf import settings
+from django.utils import timezone
 from django.utils.translation import gettext as _
 
 AGREEMENTS_DIR = Path(settings.AGREEMENTS_DIR)
@@ -222,7 +223,12 @@ def _dates_as_text(value: Any) -> Any:
 
 def inspect(ficha: Ficha, today: dt.date | None = None) -> list[Problem]:
     """Everything questionable about a ficha, fatal or not."""
-    today = today or dt.date.today()
+    # `timezone.localdate()` y no `dt.date.today()`: el segundo da la fecha UTC
+    # del contenedor, y entre medianoche y las dos de la madrugada un convenio
+    # verificado hoy se marcaría como «con fecha futura». Aquí no hay empresa en
+    # juego ---una ficha de convenio no es de nadie--- así que vale la zona
+    # activa de Django. Ver `apps/common/clock.py`.
+    today = today or timezone.localdate()
     problems: list[Problem] = []
     got = ficha.values
 

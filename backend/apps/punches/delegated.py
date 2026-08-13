@@ -23,7 +23,7 @@ from rest_framework.views import APIView
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import HasApplicationScope
 from apps.punches.models import PunchSource, PunchTrigger
-from apps.punches.serializers import PunchSerializer
+from apps.punches.serializers import PunchSerializer, validate_evidence
 from apps.punches.services import build_day_status, register_punch
 from apps.tenants.applications import ApplicationScope
 
@@ -53,7 +53,7 @@ class DelegatedPunchSerializer(serializers.Serializer):
     trigger = serializers.ChoiceField(
         choices=PunchTrigger.choices, required=False, default=PunchTrigger.MANUAL
     )
-    evidence = serializers.JSONField(required=False, default=dict)
+    evidence = serializers.JSONField(required=False, default=dict, validators=[validate_evidence])
 
 
 def resolve_employee(reference: str, company):

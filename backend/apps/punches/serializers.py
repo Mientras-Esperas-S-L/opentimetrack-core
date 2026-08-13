@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from apps.punches.models import (
@@ -46,6 +47,34 @@ class PunchSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+#: Lo que cabe en la evidencia de un fichaje, en caracteres del JSON serializado.
+#:
+#: El campo lo escribe una integración desde fuera y no tenía tope. Con seis mil
+#: peticiones por hora de cupo, un conector con una fuga ---o uno honesto que
+#: vuelca la traza GPS entera en cada fichaje--- llena la base sin hacer nada
+#: prohibido, y esos fichajes viven cuatro años y salen en cada informe.
+#:
+#: Cuatro mil caracteres son de sobra para lo que el campo existe: unas
+#: coordenadas, el nombre de una red, el identificador de un evento externo.
+#: Quien necesite adjuntar más está guardando un fichero en el sitio equivocado.
+EVIDENCE_MAX_CHARS = 4096
+
+
+def validate_evidence(value):
+    """Rechaza una evidencia desproporcionada, diciendo cuánto cabe."""
+    import json
+
+    if not value:
+        return value
+    tamaño = len(json.dumps(value, ensure_ascii=False))
+    if tamaño > EVIDENCE_MAX_CHARS:
+        raise serializers.ValidationError(
+            _("The evidence is too large: %(size)s characters, and the limit is %(max)s.")
+            % {"size": tamaño, "max": EVIDENCE_MAX_CHARS}
+        )
+    return value
+
+
 class PunchWriteSerializer(serializers.Serializer):
     """What a client is allowed to send.
 
@@ -62,7 +91,7 @@ class PunchWriteSerializer(serializers.Serializer):
     trigger = serializers.ChoiceField(
         choices=PunchTrigger.choices, required=False, default=PunchTrigger.MANUAL
     )
-    evidence = serializers.JSONField(required=False, default=dict)
+    evidence = serializers.JSONField(required=False, default=dict, validators=[validate_evidence])
 
     # Art. 3 of the pending decree. The client says *what kind* of span this is
     # and under what arrangement --- facts only the person can supply --- but

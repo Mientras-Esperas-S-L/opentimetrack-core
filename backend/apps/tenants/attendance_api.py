@@ -13,13 +13,12 @@ entonces las garantías serían opcionales.
 
 from __future__ import annotations
 
-from datetime import date
-
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import HasApplicationScope
 from apps.punches.delegated import resolve_employee
@@ -64,7 +63,20 @@ class ApplicationAttendanceView(APIView):
         return Response(
             {
                 "time_zone": company.time_zone,
-                "day": date.today().isoformat(),
+                # De la zona de la empresa, no del reloj del contenedor.
+                #
+                # `date.today()` da la fecha UTC del servidor, que entre
+                # medianoche y las dos de la madrugada (en verano) no es la de
+                # nadie en España: a las 00:30 de Madrid decía que era ayer
+                # mientras los tramos ya eran de hoy. La aplicación que pinta
+                # esto ponía la fecha de un día y los fichajes de otro, y quien
+                # más lo sufre es el turno de noche, que es justo el que cruza
+                # esa frontera todos los días.
+                #
+                # `apps/common/clock.py` existe por esto y avisa de que ya se
+                # había colado cuatro veces. Esta era la quinta, y el único
+                # `date.today()` que quedaba en todo el código.
+                "day": local_today(company).isoformat(),
                 "people": [_day_of(person, company) for person in people],
             }
         )
