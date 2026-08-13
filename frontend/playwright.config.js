@@ -28,6 +28,14 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'off',
+    // Para mirar lo que hacen las pruebas con los ojos, no solo el resultado:
+    //
+    //     OTT_SLOW_MO=350 npx playwright test --headed e2e/12-...
+    //
+    // Sin la variable no frena nada, así que no cuesta tiempo en las tandas
+    // normales. Se mira una vez y se entiende más que leyendo veinte
+    // aserciones.
+    launchOptions: { slowMo: Number(process.env.OTT_SLOW_MO ?? 0) },
   },
   projects: [
     // Abre una sesión por perfil y la deja guardada. Ver 00-sesiones.setup.js:

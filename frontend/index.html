@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Registro horario conforme al Art. 34.9 ET" />
     <title>OpenTimeTrack</title>
+
+    <!-- El icono de la pestaña. No estaba, y no se notaba en las pruebas
+         porque Chrome sin ventana no lo pide: la suite entera en verde y un
+         404 por cada visita real. Importa más de lo que parece en una
+         aplicación que la gente deja abierta todo el día entre otras veinte
+         pestañas --- se busca por el icono, no por el título recortado. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/icono-192.png" />
+
+    <!-- Hay un `service worker`, así que esto se puede instalar. Sin manifiesto
+         se instalaba sin nombre y con un cuadrado en blanco. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#1b5e4a" />
   </head>
   <body>
     <div id="root"></div>
