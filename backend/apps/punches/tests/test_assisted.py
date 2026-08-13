@@ -373,3 +373,187 @@ def test_a_company_may_switch_the_window_off(company, worker):
         de_noche = reminders_due(company, now=datetime(2026, 9, 1, 21, 30, tzinfo=UTC))
 
     assert len(de_noche) == 1
+
+
+@pytest.mark.django_db
+def test_la_ventana_de_silencio_va_en_la_hora_de_cada_persona(company, worker):
+    """Alguien en Canarias tiene su noche una hora después.
+
+    La ventana la fija la empresa ---de 21:00 a 07:00--- pero se mide en el
+    reloj de quien la sufre. A las 21:30 de Madrid son las 20:30 en Las Palmas:
+    ahí todavía no molesta, y callarse sería perder el aviso que sí sirve.
+
+    Es el mismo tipo de fallo que ya apareció tres veces hoy: dar por buena una
+    hora sin preguntar de quién es. Aquí estaba bien y no había nada que lo
+    sostuviera.
+    """
+    from apps.users.models import Workplace
+
+    with tenant_context(company.id):
+        canarias = Workplace.objects.create(
+            tenant=company, name="Delegación de Las Palmas", time_zone="Atlantic/Canary"
+        )
+        worker.workplace = canarias
+        worker.save(update_fields=["workplace"])
+
+        Shift.objects.create(
+            tenant=company,
+            employee=worker,
+            day=date(2026, 9, 1),
+            segments=[{"start": "12:00", "end": "20:00"}],  # hora canaria
+        )
+        Punch.objects.create(
+            tenant=company,
+            employee=worker,
+            punch_type=PunchType.IN,
+            timestamp=datetime(2026, 9, 1, 11, 0, tzinfo=UTC),  # 12:00 en Canarias
+        )
+
+        # 21:30 en Madrid = 20:30 en Las Palmas: fuera de su ventana de silencio.
+        de_canarias = reminders_due(company, now=datetime(2026, 9, 1, 19, 30, tzinfo=UTC))
+
+    assert len(de_canarias) == 1, "callado a una hora que para esa persona es la tarde"
+    assert de_canarias[0].kind == PunchReminder.Kind.CLOCK_OUT
+
+
+@pytest.mark.django_db
+def test_y_una_hora_despues_si_calla_en_canarias(company, worker):
+    """El otro lado, que es lo que convierte la anterior en una prueba.
+
+    Sin esto, un cambio que ignorara la ventana entera pasaría la de arriba.
+    """
+    from apps.users.models import Workplace
+
+    with tenant_context(company.id):
+        canarias = Workplace.objects.create(
+            tenant=company, name="Delegación de Las Palmas", time_zone="Atlantic/Canary"
+        )
+        worker.workplace = canarias
+        worker.save(update_fields=["workplace"])
+
+        Shift.objects.create(
+            tenant=company,
+            employee=worker,
+            day=date(2026, 9, 1),
+            segments=[{"start": "12:00", "end": "20:00"}],
+        )
+        Punch.objects.create(
+            tenant=company,
+            employee=worker,
+            punch_type=PunchType.IN,
+            timestamp=datetime(2026, 9, 1, 11, 0, tzinfo=UTC),
+        )
+
+        # 22:30 en Madrid = 21:30 en Las Palmas: ya dentro de su ventana.
+        tarde = reminders_due(company, now=datetime(2026, 9, 1, 20, 30, tzinfo=UTC))
+
+    assert tarde == []
+
+
+@pytest.mark.django_db
+def test_la_jornada_de_noche_que_sigue_abierta_se_recuerda_por_la_mañana(company, worker):
+    """El olvido más común, y el que peor encaja en «hoy».
+
+    Quien entra a las 22:00 y se va a las 06:00 sin fichar la salida deja el día
+    abierto, y a la mañana siguiente ese turno **pertenece a ayer**: mirar solo
+    la fecha de hoy no lo encontraría nunca, y el aviso no saldría jamás
+    precisamente para quien más lo necesita.
+
+    A las 07:30 ---ya fuera de la ventana de silencio, que acaba a las 07:00---
+    tiene que salir.
+    """
+    with tenant_context(company.id):
+        Shift.objects.create(
+            tenant=company,
+            employee=worker,
+            day=date(2026, 9, 1),
+            segments=[{"start": "22:00", "end": "06:00"}],  # cruza la medianoche
+        )
+        Punch.objects.create(
+            tenant=company,
+            employee=worker,
+            punch_type=PunchType.IN,
+            timestamp=datetime(2026, 9, 1, 20, 0, tzinfo=UTC),  # 22:00 Madrid
+        )
+
+        # 07:30 del día siguiente en Madrid.
+        por_la_mañana = reminders_due(company, now=datetime(2026, 9, 2, 5, 30, tzinfo=UTC))
+
+    assert len(por_la_mañana) == 1, "el turno de ayer no se miró"
+    assert por_la_mañana[0].kind == PunchReminder.Kind.CLOCK_OUT
+    assert por_la_mañana[0].day == date(2026, 9, 1), "el aviso va con el día del turno"
+
+
+@pytest.mark.django_db
+def test_de_madrugada_ese_mismo_turno_calla(company, worker):
+    """El contraste. A las 06:30 sigue siendo de noche para el art. 88.
+
+    Sin esta, un cambio que se saltara la ventana pasaría la de arriba, y el
+    turno de noche recibiría avisos justo cuando se va a dormir --- que es la
+    forma más segura de que los apague y no vuelva a verlos.
+    """
+    with tenant_context(company.id):
+        Shift.objects.create(
+            tenant=company,
+            employee=worker,
+            day=date(2026, 9, 1),
+            segments=[{"start": "22:00", "end": "06:00"}],
+        )
+        Punch.objects.create(
+            tenant=company,
+            employee=worker,
+            punch_type=PunchType.IN,
+            timestamp=datetime(2026, 9, 1, 20, 0, tzinfo=UTC),
+        )
+
+        # 06:30 en Madrid: el turno ya acabó, pero la ventana no.
+        de_madrugada = reminders_due(company, now=datetime(2026, 9, 2, 4, 30, tzinfo=UTC))
+
+    assert de_madrugada == []
+
+
+@pytest.mark.django_db
+def test_el_recordatorio_llega_en_el_idioma_de_cada_persona(company, worker):
+    """Sale de un trabajo programado, y ahí no hay idioma activo.
+
+    Sin fijarlo, el aviso se enviaría en el idioma por defecto del servidor: un
+    «Remember to clock in» a alguien que trabaja en Jerez. Y al revés --- una
+    empresa con gente de fuera --- cada cual en el suyo.
+
+    Se comprueban los dos sentidos: una prueba que solo mirase el castellano
+    pasaría igual si el idioma de la persona se ignorara por completo, porque el
+    castellano es el de la empresa.
+    """
+    with tenant_context(company.id):
+        Shift.objects.create(
+            tenant=company,
+            employee=worker,
+            day=date(2026, 9, 1),
+            segments=[{"start": "08:00", "end": "16:00"}],
+        )
+        Punch.objects.create(
+            tenant=company,
+            employee=worker,
+            punch_type=PunchType.IN,
+            timestamp=datetime(2026, 9, 1, 6, 0, tzinfo=UTC),
+        )
+
+        # Primero en el idioma de la empresa, que es el castellano.
+        mail.outbox.clear()
+        send_reminders(company, now=datetime(2026, 9, 1, 15, 30, tzinfo=UTC))
+        assert len(mail.outbox) == 1
+        # Por una palabra que solo aparece en castellano. «Fichar» no vale: el
+        # asunto de la salida es «Todavía no has fichado la salida», y buscar la
+        # raíz exacta convierte una prueba de idioma en una de conjugación.
+        assert "salida" in mail.outbox[0].subject.lower()
+
+        # Y ahora alguien que prefiere el inglés. Se borra el rastro del aviso
+        # anterior, que si no se manda una sola vez --- y eso ya está probado.
+        PunchReminder.objects.all().delete()
+        worker.locale = "en"
+        worker.save(update_fields=["locale"])
+
+        mail.outbox.clear()
+        send_reminders(company, now=datetime(2026, 9, 1, 15, 30, tzinfo=UTC))
+        assert len(mail.outbox) == 1
+        assert "clocked out" in mail.outbox[0].subject.lower()
