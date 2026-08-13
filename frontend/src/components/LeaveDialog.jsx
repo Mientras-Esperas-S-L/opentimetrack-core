@@ -122,7 +122,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
   // El catálogo y el consumo se consultan aquí, no en cada página que abre el
   // diálogo: así los dos usos no pueden divergir, y el consumo llega fresco en
   // cada apertura en vez de quedarse con el de la última vez.
-  const { data: allTypes = [] } = useQuery({
+  const { data: allTypes = [], isSuccess: typesLoaded } = useQuery({
     queryKey: ['leave-types'],
     queryFn: () => getLeaveTypes(),
     enabled: open,
@@ -175,7 +175,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
     setPartial(
       Boolean(chosen?.measured_in_hours) &&
         chosen?.family !== 'VACATION' &&
-        chosen?.family !== 'SUSPENSION'
+        chosen?.family !== 'SUSPENSION',
     )
   }
 
@@ -225,7 +225,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
 
             <Autocomplete
               options={[...types].sort((a, b) =>
-                (FAMILIES[a.family] ?? '').localeCompare(FAMILIES[b.family] ?? '')
+                (FAMILIES[a.family] ?? '').localeCompare(FAMILIES[b.family] ?? ''),
               )}
               groupBy={(option) => FAMILIES[option.family] ?? 'Otros'}
               getOptionLabel={(option) => option.name}
@@ -264,6 +264,18 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
               )}
             />
 
+            {/* Un desplegable vacío no dice nada, y aquí lo que calla es que la
+                empresa se quedó sin catálogo: era lo que le pasaba a toda
+                empresa recién dada de alta, y quien abría esto veía una lista
+                sin opciones y ninguna pista de por qué. Se espera a que la
+                consulta responda para no acusar de vacío lo que aún no llegó. */}
+            {typesLoaded && types.length === 0 && (
+              <Alert severity="warning" variant="outlined">
+                Esta empresa no tiene permisos configurados, así que no se puede pedir ninguno.
+                Quien administre puede cargar el catálogo del país desde los ajustes de la empresa.
+              </Alert>
+            )}
+
             {companyRecorded && (
               <Alert severity="info" variant="outlined">
                 Esto no pasa por la cola: se registra directamente en vigor, como hecho o como
@@ -295,8 +307,8 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
 
             {isSick && (
               <Typography variant="body2" color="text.secondary">
-                No hace falta adjuntar el parte, y el sistema no lo guarda. Desde 2023 lo recibe
-                la empresa directamente del INSS: basta con registrar las fechas.
+                No hace falta adjuntar el parte, y el sistema no lo guarda. Desde 2023 lo recibe la
+                empresa directamente del INSS: basta con registrar las fechas.
               </Typography>
             )}
 
@@ -374,7 +386,10 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                   <Typography variant="body2" color="text.secondary">
                     Son <strong>{days}</strong> {days === 1 ? 'día' : 'días'}
                     {asked != null && kind?.unit !== 'DAYS_CALENDAR' && (
-                      <> ({formatAmount(asked)} {UNITS[kind.unit]})</>
+                      <>
+                        {' '}
+                        ({formatAmount(asked)} {UNITS[kind.unit]})
+                      </>
                     )}
                     .
                     {kind?.family === 'VACATION' &&
@@ -385,8 +400,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
             {overAllowance && (
               <Alert severity="warning" variant="outlined">
                 {kind.name} da {kind.allowance}, y se están pidiendo {formatAmount(asked)}{' '}
-                {UNITS[kind.unit]}. No se impide: el convenio puede dar más de lo que consta
-                aquí.
+                {UNITS[kind.unit]}. No se impide: el convenio puede dar más de lo que consta aquí.
                 {Number(kind.extra_when_travelling) > 0 &&
                   ` Si hay desplazamiento, son ${Number(kind.extra_when_travelling)} días más.`}
               </Alert>

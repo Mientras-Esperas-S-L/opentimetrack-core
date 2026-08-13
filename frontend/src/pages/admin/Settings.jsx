@@ -14,7 +14,9 @@ import Typography from '@mui/material/Typography'
 import {
   getCompany,
   getEmployees,
+  getLeaveTypes,
   getWorkingTimeRules,
+  seedLeaveTypes,
   updateCompany,
   updateWorkingTimeRules,
 } from '../../services/api.js'
@@ -150,6 +152,19 @@ export default function Settings() {
   const { data: storedRules } = useQuery({
     queryKey: ['working-time-rules'],
     queryFn: getWorkingTimeRules,
+  })
+
+  // Cuántos permisos tiene la empresa. Sin número no se sabe si el catálogo
+  // está o falta, y faltaba en toda empresa recién dada de alta.
+  const { data: leaveTypes } = useQuery({
+    queryKey: ['leave-types'],
+    queryFn: () => getLeaveTypes(),
+  })
+  const permisos = leaveTypes?.length
+
+  const cargar = useMutation({
+    mutationFn: seedLeaveTypes,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leave-types'] }),
   })
 
   // Fill the forms once the settings arrive, without an effect.
@@ -627,6 +642,46 @@ export default function Settings() {
           ) : (
             <Loading rows={3} />
           )}
+        </Panel>
+
+        {/* El catálogo de permisos.
+            No se edita aquí ---cada permiso tiene su cifra, su unidad y su
+            periodo, y eso es una pantalla propia--- pero sí se dice cuántos hay
+            y se puede traer el del país. Existe por un fallo: una empresa
+            recién dada de alta se quedaba con cero, el desplegable de «Qué
+            pides» salía vacío, y el endpoint que lo arregla no lo llamaba
+            ninguna pantalla. */}
+        <Panel title="Permisos y ausencias">
+          <Stack sx={{ gap: 1.5 }}>
+            <Typography variant="body2">
+              {permisos === undefined
+                ? 'Contando…'
+                : permisos === 0
+                  ? 'No hay ningún permiso configurado, así que nadie puede pedir ninguno.'
+                  : `${permisos} permisos configurados.`}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Cargar el catálogo añade los que falten del país y no toca los que ya están: lo que tu
+              convenio mejore se queda como lo tengas.
+            </Typography>
+            {cargar.isSuccess && (
+              <Alert severity="success" variant="outlined">
+                {cargar.data?.added
+                  ? `Añadidos ${cargar.data.added}.`
+                  : 'No faltaba ninguno: no se ha tocado nada.'}
+              </Alert>
+            )}
+            <ErrorNote error={cargar.error} />
+            <Box>
+              <Button
+                variant="outlined"
+                disabled={cargar.isPending}
+                onClick={() => cargar.mutate()}
+              >
+                Cargar el catálogo del país
+              </Button>
+            </Box>
+          </Stack>
         </Panel>
 
         <Panel title="Conservación de datos">
