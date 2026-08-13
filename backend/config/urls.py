@@ -25,7 +25,7 @@ from apps.shifts.views import ShiftPatternViewSet, ShiftViewSet, WorkingTimeRule
 from apps.tenants.application_views import ApplicationViewSet
 from apps.tenants.attendance_api import ApplicationAttendanceView
 from apps.tenants.people_api import ApplicationPeopleView, ApplicationPersonView
-from apps.tenants.views import CompanyView, PublicHolidayViewSet
+from apps.tenants.views import CompanyView, PublicHolidayViewSet, RecordArrangementView
 from apps.users.views import (
     DepartmentViewSet,
     MeView,
@@ -70,6 +70,13 @@ urlpatterns = [
     path("api/reports/payroll-summary/", PayrollSummaryView.as_view(), name="payroll-summary"),
     path("api/overview/", OverviewView.as_view(), name="overview"),
     path("api/company/", CompanyView.as_view(), name="company"),
+    # Art. 34.9, párrafo segundo: cómo se organizó el registro. Cuelga de
+    # `company/` porque es de la empresa, no de una persona ni de un periodo.
+    path(
+        "api/company/record-arrangement/",
+        RecordArrangementView.as_view(),
+        name="record-arrangement",
+    ),
     path("api/working-time-rules/", WorkingTimeRulesView.as_view(), name="working-time-rules"),
     path(
         "api/punches/delegated/",

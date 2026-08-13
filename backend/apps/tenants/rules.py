@@ -208,3 +208,95 @@ __all__ = [
     "MINOR_WEEKLY_REST_HOURS",
     "WorkingTimeRules",
 ]
+
+
+class RecordBasis(models.TextChoices):
+    """Las tres vías del art. 34.9, y ninguna es «no consta».
+
+    «Mediante negociación colectiva o acuerdo de empresa o, en su defecto,
+    decisión del empresario previa consulta con los representantes legales de
+    los trabajadores en la empresa, se organizará y documentará este registro de
+    jornada.»
+
+    Son excluyentes y están ordenadas: la decisión del empresario es la de «en
+    su defecto», y solo esa arrastra la consulta previa. Guardarlas como texto
+    libre dejaría la diferencia en manos de cómo lo escribiera cada uno, y es
+    justo la diferencia que decide si faltaba una consulta.
+    """
+
+    COLLECTIVE = "COLLECTIVE", _("collective agreement")
+    COMPANY = "COMPANY", _("company-level agreement")
+    EMPLOYER = "EMPLOYER", _("employer decision after consulting the representatives")
+
+
+class RecordArrangement(models.Model):
+    """Cómo se organizó el registro de jornada en esta empresa, y desde cuándo.
+
+    El art. 34.9 pide dos cosas y el producto solo hacía una. Registrar la
+    jornada, sí. **Documentar cómo se organizó ese registro**, no: no había
+    dónde escribirlo, y es lo primero que una inspección pide después de los
+    propios registros --- antes que ningún fichaje, porque decide si el sistema
+    tiene amparo.
+
+    Se guarda la constancia, no el acta. Que exista un documento, de qué fecha y
+    con qué referencia es el hecho comprobable; el acta la custodia la empresa
+    con sus otros papeles. Meter aquí un almacén de documentos traería su propia
+    decisión de conservación ---esto no es registro de jornada, así que los
+    cuatro años del artículo no le aplican--- y esa decisión no se toma de
+    pasada.
+    """
+
+    tenant = models.OneToOneField(
+        "tenants.Tenant",
+        on_delete=models.CASCADE,
+        related_name="record_arrangement",
+        verbose_name=_("company"),
+    )
+
+    basis = models.CharField(
+        _("how it was organised"),
+        max_length=12,
+        choices=RecordBasis,
+        blank=True,
+        help_text=_("Art. 34.9 ET. Empty means it has not been declared yet."),
+    )
+
+    #: Cuál. «El convenio del metal de Sevilla» o «acuerdo de 3 de marzo con el
+    #: comité»: sin esto la vía elegida no se puede comprobar contra nada.
+    reference = models.CharField(_("which one"), max_length=200, blank=True)
+
+    #: Desde cuándo rige. No es la fecha de hoy: un sistema puesto en marcha en
+    #: 2023 y declarado ahora sigue rigiendo desde 2023, y la diferencia importa
+    #: si alguien pregunta por un periodo anterior.
+    in_force_since = models.DateField(_("in force since"), null=True, blank=True)
+
+    #: La consulta previa a la representación, que solo pide la tercera vía.
+    consulted_on = models.DateField(_("representatives consulted on"), null=True, blank=True)
+
+    note = models.TextField(_("note"), blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("record arrangement")
+        verbose_name_plural = _("record arrangements")
+
+    def __str__(self) -> str:
+        return f"{self.tenant_id} · {self.basis or 'sin declarar'}"
+
+    @classmethod
+    def for_company(cls, company):
+        arrangement, _created = cls.objects.get_or_create(tenant=company)
+        return arrangement
+
+    @property
+    def missing_consultation(self) -> bool:
+        """Decisión del empresario sin constancia de haber consultado.
+
+        Es el hueco concreto que el artículo señala, y el único que el producto
+        puede afirmar mirando sus propios datos: las otras dos vías son un
+        acuerdo, y un acuerdo no lleva consulta previa porque **es** la
+        negociación.
+        """
+        return self.basis == RecordBasis.EMPLOYER and self.consulted_on is None
