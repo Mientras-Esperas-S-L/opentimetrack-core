@@ -91,3 +91,21 @@ def test_signing_out_kills_the_refresh_token(worker):
         .status_code
         == 409
     )
+
+
+@pytest.mark.django_db
+def test_renewing_does_not_share_the_login_bucket(worker, settings):
+    """Detrás de un NAT, una oficina entera renueva desde la misma IP.
+
+    Con la cubeta del login --- cinco por minuto y anónima, o sea por IP --- la
+    sexta persona en abrir la aplicación por la mañana se habría encontrado con
+    la sesión cerrada teniéndola viva. Y al volver a entrar habría gastado la
+    misma cubeta.
+    """
+    from apps.users.views import RefreshView, SignInView
+
+    assert RefreshView.throttle_scope != SignInView.throttle_scope
+    rates = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]
+    login = int(rates["login"].split("/")[0])
+    renewal = int(rates[RefreshView.throttle_scope].split("/")[0])
+    assert renewal > login

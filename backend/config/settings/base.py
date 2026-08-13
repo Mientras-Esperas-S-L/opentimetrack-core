@@ -188,6 +188,17 @@ REST_FRAMEWORK = {
         # Password guessing and recovery mail. Per address for anonymous
         # callers, which is what an attacker varies last.
         "login": "5/min",
+        # Renovar la sesión NO puede compartir cubeta con el login, y el motivo
+        # solo se ve detrás de un NAT: la llamada es anónima, así que la cubeta
+        # va por IP, y una oficina entera abriendo la aplicación a las nueve
+        # agotaría cinco por minuto entre todos --- devolviendo al login a quien
+        # tenía la sesión perfectamente viva. Y al reintentar entrar gastarían
+        # la misma cubeta, así que la cosa se realimenta.
+        #
+        # Aflojarlo no abre nada: el token de refresco es un JWT firmado de un
+        # solo uso (rota y se invalida el anterior), así que probar a ciegas no
+        # es un ataque realista. El límite está para que nadie martillee.
+        "session_renewal": "60/min",
         "punch": "10/min",
         # An integration polls, so it gets more room than a person --- and its
         # own bucket, so a loop in one client cannot starve the staff.

@@ -508,3 +508,50 @@ def test_purging_metadata_leaves_a_trace(company, django_capture_on_commit_callb
     assert entry is not None
     assert entry.changes["purged"] == 1
     assert entry.actor is None  # cron, no person
+
+
+# ------------------------------- accesos que no ocurrieron
+
+
+@pytest.mark.django_db
+def test_naming_a_colleague_you_cannot_see_records_no_view(
+    company, django_capture_on_commit_callbacks
+):
+    """El registro de accesos no puede apuntar lecturas que no ocurrieron.
+
+    Bastaba con nombrar un identificador en el filtro: se anotaba «Fulano
+    consultó la ficha de Mengano» aunque el ámbito devolviera cero filas y
+    Fulano no hubiera visto nada. Y Mengano se lo encontraba escrito en su
+    pantalla de Actividad --- de las cosas que acaban en una conversación
+    desagradable entre dos personas que no ha hecho ninguna de las dos.
+
+    Peor todavía: un registro que apunta accesos que no pasaron deja de servir
+    como prueba de los que sí, que es justo para lo que existe.
+    """
+    with tenant_context(company.id):
+        curioso = make(company, "curioso@example.com")
+        vecino = make(company, "vecino@example.com")
+
+    with django_capture_on_commit_callbacks(execute=True):
+        answer = client_for(curioso).get("/api/punches/", {"employee": str(vecino.id)})
+
+    assert answer.status_code == 200
+    assert answer.json()["results"] == []  # no ha visto nada
+    with tenant_context(company.id):
+        assert not AuditLog.objects.filter(action=AuditAction.RECORD_VIEWED).exists()
+
+
+@pytest.mark.django_db
+def test_a_read_that_did_happen_is_still_recorded(company, django_capture_on_commit_callbacks):
+    """Y lo contrario sigue en pie: quien sí puede leerla, deja rastro."""
+    with tenant_context(company.id):
+        jefa = make(company, "jefa@example.com", role=Role.ADMIN)
+        persona = make(company, "persona@example.com")
+
+    with django_capture_on_commit_callbacks(execute=True):
+        client_for(jefa).get("/api/punches/", {"employee": str(persona.id)})
+
+    with tenant_context(company.id):
+        entry = AuditLog.objects.filter(action=AuditAction.RECORD_VIEWED).first()
+    assert entry is not None
+    assert entry.target_id == persona.id

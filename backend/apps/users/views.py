@@ -145,7 +145,10 @@ class RefreshView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes = []
-    throttle_scope = "login"
+    # Cubeta propia, no la del login. Ver el comentario en los ajustes: son
+    # llamadas anónimas, así que el límite va por IP, y compartirlo echaba del
+    # panel a una oficina entera detrás del mismo NAT.
+    throttle_scope = "session_renewal"
 
     @extend_schema(request=None, responses={200: dict})
     def post(self, request):

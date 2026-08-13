@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from apps.audit.services import record_view_of_others
 from apps.common.filters import LocalDayRangeFilter
 from apps.common.permissions import IsAuthenticatedInTenant
-from apps.common.scope import visible_people
+from apps.common.scope import person_in_scope, visible_people
 from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource
 from apps.punches.serializers import PunchSerializer, PunchWriteSerializer
 from apps.punches.services import build_day_status, register_punch
@@ -74,9 +74,18 @@ class PunchViewSet(
         """
         wanted = request.query_params.get("employee")
         if wanted and wanted != str(request.user.id):
-            from apps.users.models import User
-
-            person = User.objects.filter(tenant=request.user.tenant, pk=wanted).first()
+            # **Solo si de verdad puede verla.** Antes bastaba con nombrar un
+            # identificador: se anotaba «Fulano consultó la ficha de Mengano»
+            # aunque el ámbito devolviera cero filas y Fulano no hubiera visto
+            # nada. Dos daños, y el segundo es el grave:
+            #
+            # - Mengano abría su pantalla de Actividad y leía que un compañero
+            #   había consultado su registro. Falso, y de los que acaban en una
+            #   conversación desagradable entre dos personas.
+            # - Un registro de accesos que apunta accesos que no ocurrieron deja
+            #   de servir como prueba de los que sí. Es justo lo contrario de
+            #   para lo que existe.
+            person = person_in_scope(request.user, wanted)
             record_view_of_others(
                 request=request, target_employee=person, note="listado de fichajes"
             )

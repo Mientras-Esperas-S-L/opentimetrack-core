@@ -118,10 +118,21 @@ api.interceptors.response.use(
 
     if (status === 401) tokens.clear()
 
+    // El titular de un error de validación es siempre el mismo --- «Los datos
+    // enviados no son válidos» --- y lo que de verdad pasa viaja en `details`.
+    // Cuando el motivo no es de un campo concreto, DRF lo mete en
+    // `non_field_errors`, y ese es el mensaje que hay que enseñar: la pantalla
+    // de entrada decía «Los datos enviados no son válidos» donde el servidor
+    // había dicho «Credenciales incorrectas».
+    //
+    // Aquí y no en cada pantalla, porque el que lo pintaba mal era cada una.
+    const { non_field_errors: general, ...porCampo } = payload?.details ?? {}
+    const concreto = Array.isArray(general) ? general[0] : general
+
     return Promise.reject({
       code: payload?.code ?? 'network_error',
-      message: payload?.message ?? 'The server could not be reached.',
-      details: payload?.details ?? {},
+      message: concreto || payload?.message || 'The server could not be reached.',
+      details: porCampo,
       status,
     })
   },

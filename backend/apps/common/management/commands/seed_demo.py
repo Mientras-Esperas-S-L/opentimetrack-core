@@ -61,6 +61,12 @@ PASSWORD = "demo-password-2026"  # noqa: S105
 
 TAX_ID = "B00000001"
 
+#: La empresa de al lado. Existe para una sola cosa y no es decorativa: sin una
+#: segunda empresa no se puede *demostrar* que el aislamiento funciona, y una
+#: promesa que no se puede enseñar no vale nada delante de un cliente. Las
+#: pruebas de interfaz la usan para intentar colarse con identificadores suyos.
+NEIGHBOUR_TAX_ID = "B00000002"
+
 #: Fixed so two runs produce the same company. A demo that differs every time
 #: is one where "it looked different yesterday" is never a real observation.
 SEED = 20260812
@@ -115,7 +121,43 @@ class Command(BaseCommand):
             self._absences(company, people)
             self._corrections(company, people)
 
+        self._neighbour()
         self._report(company, people, rules)
+
+    def _neighbour(self):
+        """Una segunda empresa, mínima, para que el aislamiento sea comprobable.
+
+        Dos personas y un departamento: lo justo para que otra empresa tenga
+        identificadores que alguien de la primera pueda intentar usar. Todo lo
+        demás sobra --- no es una demo, es un vecino.
+        """
+        if Tenant.objects.filter(tax_id=NEIGHBOUR_TAX_ID).exists():
+            return
+
+        neighbour = Tenant.objects.create(
+            name="Vecina S.L.",
+            tax_id=NEIGHBOUR_TAX_ID,
+            country="ES",
+            time_zone="Europe/Madrid",
+        )
+        with tenant_context(neighbour.id):
+            admin = User.objects.create_user(
+                email="admin@vecina.local",
+                password=PASSWORD,
+                tenant=neighbour,
+                first_name="Elsa",
+                last_name="Vecina",
+                role=Role.ADMIN,
+            )
+            User.objects.create_user(
+                email="operario@vecina.local",
+                password=PASSWORD,
+                tenant=neighbour,
+                first_name="Tomás",
+                last_name="Vecino",
+            )
+            Department.objects.create(tenant=neighbour, name="Vecina · Operaciones")
+        return admin
 
     # ------------------------------------------------------------------ people
 
@@ -889,6 +931,9 @@ class Command(BaseCommand):
     # ------------------------------------------------------------------ tidy up
 
     def _wipe(self):
+        # La vecina primero: no tiene fichajes, así que se va de un tirón.
+        Tenant.objects.filter(tax_id=NEIGHBOUR_TAX_ID).delete()
+
         company = Tenant.objects.filter(tax_id=TAX_ID).first()
         if company is None:
             return
