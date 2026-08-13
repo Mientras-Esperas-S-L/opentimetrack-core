@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 12 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 13 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -53,7 +53,7 @@ vuelve a una limpia.
 | Art. 37.3 — permisos retribuidos | limpia | 13/08 v11 | **una empresa nueva se quedaba sin un solo permiso**; el catálogo cuadra con el articulado |
 | Art. 38 — vacaciones y recuperación | limpia | 13/08 | — |
 | Art. 4.b — consentimiento de las dos partes | limpia | 13/08 | — |
-| Constancia de la consulta a la RLT | sin tocar | — | «ausente» en la revisión del 13/08 |
+| Constancia de la consulta a la RLT | limpia | 14/08 v13 | **no había dónde declararlo**; ahora consta la vía, cuál, desde cuándo y la consulta |
 | Calendario con dos meses de antelación (38.3) | limpia | 13/08 v9 | **estaba solo citado**; ahora se avisa, y solo cuando las pone la empresa |
 | RGPD / art. 88 LOPDGDD | a medias | 13/08 | IP ajena cerrada; falta repasar la purga de metadatos |
 
@@ -94,6 +94,47 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 13 — La constancia de cómo se organizó el registro. Última área.**
+
+El art. 34.9 pide dos cosas y el producto hacía una. Llevar el registro, sí.
+**Documentar con qué amparo se organizó ese registro**, no: no había dónde
+escribirlo. Es lo primero que una inspección pide después de los propios
+registros, antes que ningún fichaje, porque decide si el sistema tiene respaldo.
+
+Las tres vías son excluyentes y están ordenadas ---la decisión del empresario es
+la de «en su defecto» y solo esa arrastra la consulta previa---, así que se
+guardan como opciones y no como texto libre: esa diferencia es justo la que
+decide si faltaba una consulta. Una decisión de empresa sin fecha de consulta se
+señala; un convenio **con** fecha de consulta se rechaza, porque un acuerdo es
+la negociación y sugerir un trámite que no existe confunde a quien lo lea
+después.
+
+Se guarda la constancia, no el acta: que exista un documento, de qué fecha y con
+qué referencia es el hecho comprobable. Un almacén de documentos traería su
+propia decisión de conservación ---esto no es registro de jornada, así que los
+cuatro años no le aplican--- y esa no se toma de pasada.
+
+Tres cosas más salieron por el camino, todas de comprobaciones que ya estaban:
+
+- **El barrido de aislamiento cazó la ruta nueva** antes de que se me olvidara
+  meterla, que es exactamente para lo que está.
+- **El registro de actividad imprimía «null»** donde el campo estaba vacío
+  ---«consulted_on: null → 2024-01-10»---. Le pasaba a cualquier entrada con un
+  campo opcional; no había salido porque ninguna de las que había guardaba un
+  nulo. Lo vio la prueba que vigila `undefined`, `NaN` y `null` en todas las
+  pantallas.
+- **Cinco entradas del catálogo estaban marcadas `fuzzy`**, o sea saliendo en
+  inglés. Una la metí yo en la vuelta 10 y se fue a `main`: al cambiar el texto
+  de un error, `makemessages` lo marcó fuzzy con la traducción vieja. Ya lo mira
+  una prueba.
+
+Y tres pruebas que **caducaban a medianoche**: congelaban el reloj para fichar y
+preguntaban por «hoy» fuera del bloque congelado. La tercera, que no era mía,
+usaba `date.today()` ---la fecha UTC del contenedor--- mientras el producto mira
+el día de la empresa: entre las doce y las dos de la madrugada en Madrid no
+coinciden. La trampa de `apps/common/clock.py`, esta vez dentro de una prueba,
+donde el aviso del módulo no lo lee nadie.
 
 **Vuelta 12 — El art. 34.2: un ajuste que no leía nadie.**
 

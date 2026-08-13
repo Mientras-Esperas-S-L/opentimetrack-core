@@ -398,3 +398,34 @@ eso no se ve leyendo el código, solo contando.
 **Regla:** antes de dar por bueno un aviso nuevo, ejecutarlo contra los datos de
 desarrollo y **contar por código**. Si es de los grandes, mirar caso por caso
 qué lo dispara: normalmente hay una clase entera que no debería contar.
+
+## Congelar el reloj y preguntar por «hoy» fuera del bloque (14/08/2026)
+
+Tres pruebas se pusieron rojas al pasar de las doce de la noche, y las tres por
+lo mismo: congelaban el reloj para fichar y luego comprobaban el estado del día
+**fuera** del `with freeze_time`, donde «hoy» es el día real. Pasaban todo el día
+que se escribieron y caducaban esa noche.
+
+La tercera era peor y no la había escrito yo: ponía una ausencia con
+`date.today()` —la fecha **UTC** del contenedor— mientras el producto mira el día
+de la empresa. Entre medianoche y las dos de la madrugada en Madrid no coinciden,
+así que la ausencia caía en el día anterior. Es la trampa que `apps/common/clock.py`
+documenta, **dentro de una prueba**, donde ese aviso no lo lee nadie.
+
+**Regla:** si una prueba congela el reloj, todo lo que pregunte por «hoy» va
+dentro del mismo bloque. Y en pruebas, `date.today()` está igual de prohibido que
+en el producto: `local_today(empresa)`.
+
+## Una traducción `fuzzy` sale en inglés y el fichero dice que está (14/08/2026)
+
+Cambié el texto de un error existente, `makemessages` marcó la entrada `fuzzy`
+con la traducción vieja, y ese mensaje salió en inglés en `main` durante dos
+vueltas de auditoría. El `.po` parecía completo y `msgfmt --statistics` contaba
+la entrada como traducida: solo la marca lo delataba.
+
+Y las adivinanzas de `makemessages` son malas por construcción: «collective
+agreement» salió como «Aplicada con acuerdo».
+
+**Regla:** después de `makemessages`, `grep -c '^#, fuzzy'` y revisar **todas**.
+Hay una prueba que lo hace en `apps/common/tests/test_exceptions.py`; si se toca
+un texto ya traducido, es la que avisa.
