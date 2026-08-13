@@ -15,9 +15,11 @@ import {
   getCompany,
   getEmployees,
   getLeaveTypes,
+  getRecordArrangement,
   getWorkingTimeRules,
   seedLeaveTypes,
   updateCompany,
+  updateRecordArrangement,
   updateWorkingTimeRules,
 } from '../../services/api.js'
 import { ErrorNote, Loading, PageHeader, Panel } from '../../components/common.jsx'
@@ -97,6 +99,10 @@ const NOMBRES = {
   language: 'Idioma',
   time_zone: 'Zona horaria',
   managers_see_everyone: 'Los responsables ven toda la empresa',
+  basis: 'Con qué amparo se organizó el registro',
+  reference: 'Cuál (convenio o acuerdo)',
+  in_force_since: 'En vigor desde',
+  consulted_on: 'Consulta a la representación',
   annual_leave_days: 'Días de vacaciones al año',
   annual_leave_in_working_days: 'Contar en días laborables',
   leave_year_start_month: 'Mes en que empieza el periodo',
@@ -167,6 +173,26 @@ export default function Settings() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leave-types'] }),
   })
 
+  // Cómo se organizó el registro de jornada. Art. 34.9, párrafo segundo: es lo
+  // primero que pide una inspección después de los propios registros, porque
+  // decide si el sistema tiene amparo.
+  const { data: amparo } = useQuery({
+    queryKey: ['record-arrangement'],
+    queryFn: getRecordArrangement,
+  })
+  const [organizacion, setOrganizacion] = useState(null)
+  if (amparo && organizacion === null) setOrganizacion(amparo)
+
+  const guardarAmparo = useMutation({
+    mutationFn: updateRecordArrangement,
+    onSuccess: (data) => {
+      setOrganizacion(data)
+      queryClient.invalidateQueries({ queryKey: ['record-arrangement'] })
+    },
+  })
+  const campoAmparo = (campo) => (event) =>
+    setOrganizacion({ ...organizacion, [campo]: event.target.value })
+
   // Fill the forms once the settings arrive, without an effect.
   if (company && form === null) setForm(company)
   if (storedRules && rules === null) setRules(storedRules)
@@ -230,6 +256,17 @@ export default function Settings() {
       ;(void id, country, framework, citations, minors)
       saveRules.mutate(figures)
     }
+    // El tercero. La pantalla ya guardaba dos sitios con un solo botón, y meter
+    // aquí el suyo evita dos botones que empiezan por «Guardar» en la misma
+    // página --- ambiguo para quien lo lee, y para la prueba que los buscaba.
+    if (organizacion) {
+      guardarAmparo.mutate({
+        basis: organizacion.basis ?? '',
+        reference: organizacion.reference ?? '',
+        in_force_since: organizacion.in_force_since || null,
+        consulted_on: organizacion.basis === 'EMPLOYER' ? organizacion.consulted_on || null : null,
+      })
+    }
   }
 
   /** The article and the note for a field, as the server gave them.
@@ -241,7 +278,11 @@ export default function Settings() {
    */
   // Lo tocado en las dos mitades de la pantalla: los datos de la empresa y las
   // reglas de jornada. Se guardan con el mismo botón, así que se cuentan juntas.
-  const cambios = [...cambiosPendientes(form, company), ...cambiosPendientes(rules, storedRules)]
+  const cambios = [
+    ...cambiosPendientes(form, company),
+    ...cambiosPendientes(rules, storedRules),
+    ...cambiosPendientes(organizacion, amparo),
+  ]
 
   const cite = (field) => {
     const c = rules?.citations?.[field]
@@ -651,6 +692,76 @@ export default function Settings() {
             recién dada de alta se quedaba con cero, el desplegable de «Qué
             pides» salía vacío, y el endpoint que lo arregla no lo llamaba
             ninguna pantalla. */}
+        {/* Art. 34.9, párrafo segundo: «se organizará y documentará este
+            registro de jornada». El producto registraba la jornada y no había
+            dónde escribir con qué amparo se organizó ese registro.
+
+            Se guarda la constancia, no el acta: que exista un documento, de qué
+            fecha y con qué referencia es el hecho comprobable. El acta la
+            custodia la empresa con sus otros papeles. */}
+        <Panel title="Cómo se organizó el registro">
+          <Stack sx={{ gap: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              El art. 34.9 ET pide dos cosas: llevar el registro y documentar cómo se organizó. Esto
+              es lo segundo, y es lo primero que se pide en una inspección.
+            </Typography>
+
+            {organizacion?.missing_consultation && (
+              <Alert severity="warning" variant="outlined">
+                Por decisión de la empresa hace falta consulta previa a la representación de los
+                trabajadores, y no consta su fecha. Es el único de los tres caminos que la exige: un
+                convenio o un acuerdo ya son la negociación.
+              </Alert>
+            )}
+
+            <TextField
+              select
+              fullWidth
+              label="Con qué amparo"
+              value={organizacion?.basis ?? ''}
+              onChange={campoAmparo('basis')}
+              helperText="Art. 34.9 ET. Vacío significa que todavía no se ha declarado."
+            >
+              <MenuItem value="">Sin declarar</MenuItem>
+              <MenuItem value="COLLECTIVE">Convenio colectivo</MenuItem>
+              <MenuItem value="COMPANY">Acuerdo de empresa</MenuItem>
+              <MenuItem value="EMPLOYER">
+                Decisión de la empresa, previa consulta a la representación
+              </MenuItem>
+            </TextField>
+
+            <TextField
+              fullWidth
+              label="Cuál"
+              value={organizacion?.reference ?? ''}
+              onChange={campoAmparo('reference')}
+              helperText="«Convenio del metal de Sevilla, art. 22», «acuerdo de 3 de marzo con el comité». Sin esto no hay contra qué comprobarlo."
+            />
+
+            <Stack direction="row" sx={{ gap: 2, flexWrap: 'wrap' }}>
+              <TextField
+                type="date"
+                label="En vigor desde"
+                slotProps={{ inputLabel: { shrink: true } }}
+                value={organizacion?.in_force_since ?? ''}
+                onChange={campoAmparo('in_force_since')}
+                helperText="No es la fecha de hoy: un sistema en marcha desde 2023 rige desde 2023."
+              />
+              {organizacion?.basis === 'EMPLOYER' && (
+                <TextField
+                  type="date"
+                  label="Consulta a la representación"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  value={organizacion?.consulted_on ?? ''}
+                  onChange={campoAmparo('consulted_on')}
+                />
+              )}
+            </Stack>
+
+            <ErrorNote error={guardarAmparo.error} />
+          </Stack>
+        </Panel>
+
         <Panel title="Permisos y ausencias">
           <Stack sx={{ gap: 1.5 }}>
             <Typography variant="body2">

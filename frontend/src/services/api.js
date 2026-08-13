@@ -347,6 +347,17 @@ export const updateLeaveType = async (id, payload) =>
   (await api.patch(`/leave-types/${id}/`, payload)).data
 export const seedLeaveTypes = () => post('/leave-types/seed/', {})
 
+/** Cómo se organizó el registro de jornada (art. 34.9, párrafo segundo).
+ *
+ *  Lo lee cualquiera de la empresa y lo escribe quien administra: el mismo
+ *  párrafo pone el registro a disposición de las personas trabajadoras y de sus
+ *  representantes, y saber con qué amparo se organizó es lo que permite a la
+ *  representación comprobar que se la consultó.
+ */
+export const getRecordArrangement = () => get('/company/record-arrangement/')
+export const updateRecordArrangement = async (payload) =>
+  (await api.patch('/company/record-arrangement/', payload)).data
+
 /** Lo que queda de cada permiso con tope. El catálogo dice que el art. 37.9 da
  *  cuatro días al año; esto dice que van dos. */
 /** Lo que cada permiso lleva consumido. Es lo que pinta el aviso de «llevas X
