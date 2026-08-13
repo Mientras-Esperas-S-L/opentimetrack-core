@@ -12,11 +12,7 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import TableViewIcon from '@mui/icons-material/TableView'
 
-import {
-  downloadReport,
-  generatePayrollSummaries,
-  getDepartments,
-} from '../../services/api.js'
+import { downloadReport, generatePayrollSummaries, getDepartments } from '../../services/api.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { ErrorNote, PageHeader, Panel } from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -59,7 +55,15 @@ export default function Reports() {
 
   const { data: departments = [] } = useQuery({
     queryKey: ['departments'],
-    queryFn: getDepartments,
+    // Envuelta, no pasada pelada: React Query llama a `queryFn` con su propio
+    // contexto ---`{ client, queryKey, signal }`--- y `getDepartments` toma ese
+    // objeto como parámetros de consulta. La petición salía siendo
+    // `/departments/?client=[object Object]&queryKey[]=departments&signal=...`.
+    //
+    // Hoy no rompe nada porque DRF ignora lo que no conoce, y por eso llevaba
+    // ahí sin que nadie lo viera. Rompería el día que exista un filtro que se
+    // llame como una de esas tres claves.
+    queryFn: () => getDepartments(),
   })
 
   // Defaults to whoever is asking: the record they are most likely to want,
