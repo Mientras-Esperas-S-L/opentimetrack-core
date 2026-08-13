@@ -19,13 +19,7 @@ import {
   getDepartments,
   updateDepartment,
 } from '../../services/api.js'
-import {
-  ConfirmDialog,
-  Empty,
-  ErrorNote,
-  Loading,
-  PageHeader,
-} from '../../components/common.jsx'
+import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
@@ -81,6 +75,16 @@ function DepartmentDialog({ open, department, onClose, onSave, saving, error }) 
               label="Quién lo lleva"
               value={form.managers}
               onChange={(ids) => setForm({ ...form, managers: ids })}
+              // Los nombres que ya tenemos, para las fichas de quien no esté en
+              // la primera página de la lista. `manager_names` viene en el
+              // mismo orden que `managers`: el serializador construye los dos
+              // recorriendo la misma relación.
+              knownNames={Object.fromEntries(
+                (department?.managers ?? []).map((id, index) => [
+                  id,
+                  department?.manager_names?.[index] ?? '',
+                ]),
+              )}
               helperText="Responsables que pueden leer y resolver por su gente. Sin nadie aquí, todos los responsables de la empresa ven a todo el mundo."
             />
           </Stack>
@@ -156,7 +160,8 @@ export default function Departments() {
         <Loading rows={3} />
       ) : rows.length === 0 ? (
         <Empty>
-          Todavía no hay departamentos. {isAdmin ? 'Crea el primero.' : 'Puede crearlos la administración.'}
+          Todavía no hay departamentos.{' '}
+          {isAdmin ? 'Crea el primero.' : 'Puede crearlos la administración.'}
         </Empty>
       ) : (
         <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
