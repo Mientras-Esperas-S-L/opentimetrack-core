@@ -22,7 +22,9 @@ import {
   applyCorrectionAnyway,
   approveAbsence,
   approveCorrection,
+  confirmHolidayRecovery,
   decideOvertime,
+  getHolidayRecoveries,
   getCorrections,
   getPendingAbsences,
   getPendingOvertime,
@@ -361,6 +363,14 @@ export default function Decisions() {
   // que se pasaron de lo previsto y que nadie ha resuelto.
   const overtime = useQuery({ queryKey: ['overtime', 'pending'], queryFn: getPendingOvertime })
 
+  // Art. 38.3: días de vacaciones que una baja se comió. Se detectan solos; los
+  // confirma una persona, porque devolver días al saldo sin que nadie lo mire
+  // es de lo que después no se sabe explicar.
+  const recoveries = useQuery({
+    queryKey: ['holiday-recoveries', 'pending'],
+    queryFn: getHolidayRecoveries,
+  })
+
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ['absences'] })
     queryClient.invalidateQueries({ queryKey: ['punches'] })
@@ -374,6 +384,16 @@ export default function Decisions() {
       setError(null)
       setRejecting(null)
       refresh()
+    },
+    onError: setError,
+  })
+
+  const ruleRecovery = useMutation({
+    mutationFn: confirmHolidayRecovery,
+    onSuccess: () => {
+      setError(null)
+      queryClient.invalidateQueries({ queryKey: ['holiday-recoveries'] })
+      queryClient.invalidateQueries({ queryKey: ['absences'] })
     },
     onError: setError,
   })
@@ -420,6 +440,7 @@ export default function Decisions() {
   // Those who have answered first: the company can act on them now, whereas
   // the silent ones are still inside their window to reply.
   const overtimeRows = overtime.data ?? []
+  const recoveryRows = recoveries.data ?? []
   // Por persona, y quien más tiempo acumula primero: la cola es de excepciones
   // y la excepción grande no puede quedar debajo de treinta días de cinco
   // minutos. Los días llegan ya ordenados por fecha desde el servidor.
@@ -515,6 +536,13 @@ export default function Decisions() {
           label={
             <Badge badgeContent={overtimeRows.length} color="secondary" sx={{ pr: 1.5 }}>
               Horas extra
+            </Badge>
+          }
+        />
+        <Tab
+          label={
+            <Badge badgeContent={recoveryRows.length} color="secondary" sx={{ pr: 1.5 }}>
+              Vacaciones por recuperar
             </Badge>
           }
         />
@@ -847,6 +875,61 @@ export default function Decisions() {
                   ruleOvertime.mutate({ employee: group.employee, ...payload })
                 }
               />
+            ))}
+          </Stack>
+        ))}
+
+      {tab === 4 &&
+        (recoveries.isLoading ? (
+          <Loading />
+        ) : recoveryRows.length === 0 ? (
+          <Empty>No hay vacaciones pendientes de recuperar.</Empty>
+        ) : (
+          <Stack sx={{ gap: 1.5 }}>
+            <Alert severity="info" variant="outlined">
+              Cuando una baja cae encima de unas vacaciones ya aprobadas, esos días no se han
+              disfrutado y se disfrutan después (art. 38.3 ET). Aquí solo se confirma que vuelven al
+              saldo: la baja y las vacaciones no se tocan.
+            </Alert>
+
+            {recoveryRows.map((row) => (
+              <Paper key={row.id} variant="outlined" sx={{ p: 2 }}>
+                <Stack
+                  direction={{ xs: 'column', md: 'row' }}
+                  sx={{ gap: 2, justifyContent: 'space-between', alignItems: { md: 'center' } }}
+                >
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{ fontWeight: 600 }}>{row.employee_name}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>
+                        {row.days} {row.days === 1 ? 'día' : 'días'}
+                      </strong>{' '}
+                      del {dayRange(row.first_day, row.last_day)} · {row.because_of}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {row.expires_on
+                        ? `Se pueden disfrutar hasta el ${dateOf(row.expires_on, { year: 'numeric' })}.`
+                        : 'Sin plazo: se disfrutan al terminar la suspensión, aunque acabe el año.'}
+                    </Typography>
+                  </Box>
+                  <Stack direction="row" sx={{ gap: 1, flexShrink: 0 }}>
+                    <Button
+                      variant="contained"
+                      disabled={ruleRecovery.isPending}
+                      onClick={() => ruleRecovery.mutate({ recovery: row.id, accept: true })}
+                    >
+                      Devolver al saldo
+                    </Button>
+                    <Button
+                      color="inherit"
+                      disabled={ruleRecovery.isPending}
+                      onClick={() => ruleRecovery.mutate({ recovery: row.id, accept: false })}
+                    >
+                      No procede
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Paper>
             ))}
           </Stack>
         ))}

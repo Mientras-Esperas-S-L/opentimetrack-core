@@ -41,6 +41,7 @@ def seed_leave_types(company) -> dict:
             paid=kind.paid,
             initiated_by=kind.initiated_by,
             needs_justification=kind.needs_justification,
+            vacation_recovery=kind.vacation_recovery,
             note=kind.note,
         )
         for kind in framework.leave_types

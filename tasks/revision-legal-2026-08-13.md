@@ -78,7 +78,7 @@ Tres estados:
 | **Devengo proporcional** en altas y bajas a mitad de periodo | **Aplicado el 13/08/2026** — antes daba el año entero desde el primer día |
 | Periodo de cómputo configurable (no tiene por qué ser el año natural) | **Aplicado** |
 | Calendario conocido con dos meses de antelación (38.3) | **Solo citado** | la cita está en el marco; nadie comprueba la antelación |
-| **IT o maternidad que solapa las vacaciones: se disfrutan después (38.3)** | **AUSENTE — hueco grave** | si alguien cae de baja durante sus vacaciones, hoy pierde esos días. Ver abajo |
+| **IT o maternidad que solapa las vacaciones: se disfrutan después (38.3)** | **Aplicado el 13/08/2026** — con sus dos regímenes separados, y de paso se descubrió que el producto **ni siquiera dejaba registrar** la baja que pisaba unas vacaciones |
 | No sustituibles por dinero salvo fin de contrato | **No aplica** | el producto no liquida; no hay forma de «pagarlas» |
 
 ## 7. Permisos retribuidos · art. 37.3 ET
@@ -133,15 +133,18 @@ puede contarlo bien, que es más de lo que hace media hoja de cálculo.
 **Dónde ponerlo:** en la tarjeta de la cola de «Horas extra» («lleva 62 h de 80
 este año»), y como comprobación del cuadrante.
 
-### 2. La baja que pisa las vacaciones — GRAVE
+### 2. La baja que pisa las vacaciones — CERRADO el 13/08/2026
 
-Art. 38.3 y jurisprudencia asentada del TJUE: si durante las vacaciones aparece
-una IT, esos días **no se pierden** y se disfrutan al terminar, incluso en otro
-año natural. Hoy el saldo los da por gastados.
+Y salió peor de lo que decía este documento. No es que el saldo diera los días
+por gastados: es que **el producto no dejaba registrar la baja**. Caer enfermo
+durante las vacaciones se trataba como un solapamiento de ausencias y se
+rechazaba, así que la persona se quedaba sin poder acreditar que estuvo enferma
+*y* sin los días.
 
-**Dónde ponerlo:** al aprobar una baja que solapa vacaciones aprobadas, devolver
-los días al saldo y dejar constancia. Necesita una decisión de diseño: si se
-devuelven solos o si se avisa y lo confirma un responsable.
+Resuelto con los dos regímenes del art. 38.3 bien separados ---el sin plazo del
+párrafo segundo y los dieciocho meses del tercero--- y con cuál aplica a cada
+permiso escrito en el marco legal del país, no en el servicio. Se detecta solo,
+lo confirma un responsable, y el saldo devuelve los días al confirmarse.
 
 ### 3. Recordatorios y desconexión digital — MENOR
 

@@ -10,6 +10,7 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.routers import DefaultRouter
 
+from apps.absences.recovery_views import HolidayRecoveryView
 from apps.absences.views import AbsenceViewSet, LeaveTypeViewSet
 from apps.audit.views import AuditLogViewSet
 from apps.common.views import HealthView
@@ -74,6 +75,11 @@ urlpatterns = [
         name="punch-delegated",
     ),
     path("api/overtime/", OvertimeView.as_view(), name="overtime"),
+    path(
+        "api/holiday-recoveries/",
+        HolidayRecoveryView.as_view(),
+        name="holiday-recoveries",
+    ),
     path("api/push/key/", PushKeyView.as_view(), name="push-key"),
     path("api/push/subscriptions/", PushSubscriptionView.as_view(), name="push-subscriptions"),
     path("api/", include(router.urls)),

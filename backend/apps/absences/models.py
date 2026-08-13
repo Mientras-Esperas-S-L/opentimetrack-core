@@ -151,6 +151,19 @@ class LeaveType(TenantOwnedModel):
     )
 
     paid = models.BooleanField(_("paid"), default=True)
+    vacation_recovery = models.CharField(
+        _("recovers holiday"),
+        max_length=20,
+        blank=True,
+        choices=[
+            ("UNLIMITED", _("Yes, with no deadline")),
+            ("EIGHTEEN_MONTHS", _("Yes, within eighteen months")),
+        ],
+        help_text=_(
+            "Whether overlapping with booked holiday gives the right to take it later, "
+            "and by when. Art. 38.3 ET sets two different regimes."
+        ),
+    )
     needs_justification = models.BooleanField(_("needs a supporting document"), default=False)
     note = models.TextField(_("note"), blank=True)
     is_active = models.BooleanField(_("active"), default=True)
@@ -396,3 +409,104 @@ class Absence(TenantOwnedModel):
     @property
     def days(self) -> int:
         return (self.end_date - self.start_date).days + 1
+
+
+class RecoveredHoliday(TenantOwnedModel):
+    """Días de vacaciones que una baja se comió, y que no se pierden.
+
+    Art. 38.3 ET. Si durante las vacaciones aparece una incapacidad temporal,
+    esos días **no se han disfrutado**: se disfrutan después. Hasta el
+    13/08/2026 el saldo los daba por gastados, que es quitarle días a alguien
+    justo cuando está de baja.
+
+    Dos regímenes distintos, y se confunden con facilidad porque el párrafo
+    largo es el que NO caduca:
+
+    - **Sin plazo** (párrafo 2.º): incapacidad derivada del embarazo, el parto o
+      la lactancia natural, y las suspensiones de los arts. 48.4, 48.5 y 48.7.
+      Se disfrutan al terminar la suspensión «aunque haya terminado el año
+      natural a que correspondan».
+    - **Dieciocho meses** (párrafo 3.º): el resto de contingencias --- enfermedad
+      común, accidente no laboral, accidente de trabajo, enfermedad profesional.
+      Hasta dieciocho meses desde el fin del año en que se originaron.
+
+    Cuál de los dos aplica lo dice el catálogo (`LeaveType.vacation_recovery`),
+    que lo copia del marco legal del país. Aquí no hay ninguna lista de códigos:
+    un país con otras reglas trae las suyas y esto no cambia.
+
+    **No devuelve los días solo.** Se detecta, se avisa, y un responsable lo
+    confirma. Un automatismo que devuelve días es de los que después nadie sabe
+    explicar delante de una inspección --- pero el derecho es del trabajador y no
+    puede depender de que alguien se acuerde, así que lo pendiente se ve en la
+    cola de decisiones y en la pantalla de la persona desde el primer día.
+    """
+
+    class Regime(models.TextChoices):
+        UNLIMITED = "UNLIMITED", _("No deadline (art. 38.3, second paragraph)")
+        EIGHTEEN_MONTHS = "EIGHTEEN_MONTHS", _("Eighteen months (art. 38.3, third paragraph)")
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", _("Waiting to be confirmed")
+        CONFIRMED = "CONFIRMED", _("Confirmed")
+        DISMISSED = "DISMISSED", _("Not applicable")
+
+    employee = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="recovered_holidays",
+        verbose_name=_("employee"),
+    )
+    #: Las vacaciones que se pisaron, y la baja que las pisó. Las dos, porque
+    #: sin la segunda no se puede explicar de dónde sale el derecho.
+    holiday = models.ForeignKey(
+        Absence,
+        on_delete=models.CASCADE,
+        related_name="recoveries",
+        verbose_name=_("holiday affected"),
+    )
+    sick_leave = models.ForeignKey(
+        Absence,
+        on_delete=models.CASCADE,
+        related_name="recoveries_caused",
+        verbose_name=_("leave that overlapped"),
+    )
+
+    first_day = models.DateField(_("from"))
+    last_day = models.DateField(_("to"))
+    #: En la unidad en que la empresa cuenta las vacaciones, que es la única en
+    #: la que el saldo sabe restar.
+    days = models.PositiveSmallIntegerField(_("days"))
+    working_days = models.BooleanField(_("counted in working days"), default=True)
+
+    regime = models.CharField(_("regime"), max_length=20, choices=Regime)
+    #: Nulo en el régimen sin plazo. No es «sin fecha todavía»: es que no la hay.
+    expires_on = models.DateField(_("must be taken by"), null=True, blank=True)
+
+    status = models.CharField(
+        _("status"), max_length=12, choices=Status, default=Status.PENDING, db_index=True
+    )
+    confirmed_by = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="holiday_recoveries_confirmed",
+        verbose_name=_("confirmed by"),
+    )
+    confirmed_at = models.DateTimeField(_("confirmed at"), null=True, blank=True)
+    note = models.CharField(_("note"), max_length=200, blank=True)
+
+    class Meta:
+        verbose_name = _("recovered holiday")
+        verbose_name_plural = _("recovered holidays")
+        constraints = [
+            # Un mismo solapamiento no puede anotarse dos veces: la detección
+            # corre cada vez que se aprueba o se cambia una baja.
+            models.UniqueConstraint(
+                fields=["holiday", "sick_leave", "first_day"],
+                name="one_recovery_per_overlap",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.days} d · {self.employee_id} · {self.first_day}"

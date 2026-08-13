@@ -243,6 +243,10 @@ export const getPendingAbsences = async () => rows(await get('/absences/pending/
 export const getPendingOvertime = async () => (await get('/overtime/')).pending ?? []
 export const decideOvertime = (payload) => post('/overtime/', payload)
 
+/** Días de vacaciones que una baja se comió y esperan confirmación (art. 38.3). */
+export const getHolidayRecoveries = async () => (await get('/holiday-recoveries/')).pending ?? []
+export const confirmHolidayRecovery = (payload) => post('/holiday-recoveries/', payload)
+
 // ------------------------------------------------- avisos en el navegador
 
 /** La clave pública del despliegue, y si el push está configurado siquiera.

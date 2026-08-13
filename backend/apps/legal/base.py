@@ -225,6 +225,18 @@ class LeaveKind:
     #: giving away days nobody granted.
     extra_when_travelling: float = 0
 
+    #: Si coincidir con unas vacaciones da derecho a disfrutarlas después, y
+    #: con qué plazo. Lo dice el marco de cada país, no el servicio: en España
+    #: sale del art. 38.3 ET y tiene **dos regímenes distintos** que se
+    #: confunden con facilidad, así que cada permiso lleva el suyo escrito.
+    #:
+    #: - `""` --- no da derecho a nada.
+    #: - `"UNLIMITED"` --- se disfrutan al terminar la suspensión, aunque haya
+    #:   acabado el año natural. Sin tope.
+    #: - `"EIGHTEEN_MONTHS"` --- hasta dieciocho meses desde el fin del año en
+    #:   que se originaron. Pasado el plazo, se pierden.
+    vacation_recovery: str = ""
+
     needs_justification: bool = False
     #: PERSON asks through the request flow; COMPANY records it directly, in
     #: force, because it is the company's own act or an accomplished fact.

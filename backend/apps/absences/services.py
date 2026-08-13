@@ -137,6 +137,12 @@ def vacation_balance(employee, company, day: date | None = None) -> LeaveBalance
         for a in inside.filter(status=AbsenceStatus.PENDING)
     )
 
+    # Los días que una baja se comió no se han disfrutado (art. 38.3), así que
+    # dejan de contar como gastados en cuanto un responsable lo confirma.
+    from apps.absences.recovery import recovered_days
+
+    taken = max(0, taken - recovered_days(employee=employee, company=company, start=start, end=end))
+
     return LeaveBalance(
         start,
         end,
@@ -316,7 +322,7 @@ def request_absence(
         end_time=end_time,
         reduction_share=reduction_share,
     ).first()
-    if clash is not None:
+    if clash is not None and not _may_overlap_holiday(leave_type, clash):
         raise BusinessRuleError(
             code="overlapping_absence",
             message=_("There is already leave recorded between %(from)s and %(to)s.")
@@ -516,6 +522,23 @@ def leave_over_the_limit(absence) -> dict | None:
     }
 
 
+def _may_overlap_holiday(leave_type, other: Absence) -> bool:
+    """Si esta baja puede pisar esas vacaciones en vez de chocar con ellas.
+
+    Caer de baja durante las vacaciones es **el caso que contempla el art.
+    38.3**, no un error de quien lo registra. Hasta el 13/08/2026 el producto lo
+    trataba como un solapamiento y se negaba a registrar la baja: la persona se
+    quedaba sin poder acreditar que estuvo enferma, y de paso sin los días.
+
+    Solo con vacaciones, y solo para los permisos a los que el marco legal del
+    país reconoce ese derecho. Dos bajas que se pisan siguen siendo un choque, y
+    unas vacaciones sobre otras también.
+    """
+    if other.absence_type != AbsenceType.VACATION:
+        return False
+    return bool(getattr(leave_type, "vacation_recovery", ""))
+
+
 def approve_absence(absence: Absence, *, resolved_by) -> Absence:
     _must_be_open(absence)
 
@@ -531,7 +554,8 @@ def approve_absence(absence: Absence, *, resolved_by) -> Absence:
     # Re-checked at approval, not only at request: something else may have been
     # approved for those dates in between.
     clash = _overlapping(absence.employee, absence.start_date, absence.end_date, absence.pk)
-    if clash.filter(status=AbsenceStatus.APPROVED).exists():
+    aprobadas = list(clash.filter(status=AbsenceStatus.APPROVED))
+    if aprobadas and not all(_may_overlap_holiday(absence.leave_type, otra) for otra in aprobadas):
         raise BusinessRuleError(
             code="overlapping_absence",
             message=_("Leave has since been approved for those dates."),
@@ -541,6 +565,13 @@ def approve_absence(absence: Absence, *, resolved_by) -> Absence:
     absence.approved_by = resolved_by
     absence.resolved_at = timezone.now()
     absence.save(update_fields=["status", "approved_by", "resolved_at", "updated_at"])
+
+    # Art. 38.3: si esta baja pisa unas vacaciones ya aprobadas, esos días no se
+    # han disfrutado. Se anotan para que un responsable lo confirme; no vuelven
+    # al saldo solos.
+    from apps.absences.recovery import detect_recoveries
+
+    detect_recoveries(absence=absence, company=absence.tenant)
     return absence
 
 

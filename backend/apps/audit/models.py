@@ -62,6 +62,14 @@ class AuditAction(models.TextChoices):
     ABSENCE_REJECTED = "ABSENCE_REJECTED", _("Rejected leave")
     OVERTIME_AUTHORISED = "OVERTIME_AUTHORISED", _("Authorised overtime")
     OVERTIME_REJECTED = "OVERTIME_REJECTED", _("Did not authorise overtime")
+    HOLIDAY_RECOVERY_CONFIRMED = (
+        "HOLIDAY_RECOVERY_CONFIRMED",
+        _("Confirmed holiday recovered from sick leave"),
+    )
+    HOLIDAY_RECOVERY_DISMISSED = (
+        "HOLIDAY_RECOVERY_DISMISSED",
+        _("Dismissed a holiday recovery"),
+    )
 
     # Somebody changed who can do what.
     PERSON_CREATED = "PERSON_CREATED", _("Added a person")

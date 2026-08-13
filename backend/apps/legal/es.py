@@ -199,6 +199,7 @@ ESPANA = LegalFramework(
         LeaveKind(
             code="es.sick.common",
             name="Baja por enfermedad común o accidente no laboral",
+            vacation_recovery="EIGHTEEN_MONTHS",
             family=LeaveFamily.SICK_LEAVE,
             basis="Art. 45.1.c ET",
             amount=None,
@@ -208,6 +209,7 @@ ESPANA = LegalFramework(
         LeaveKind(
             code="es.sick.work",
             name="Baja por accidente de trabajo o enfermedad profesional",
+            vacation_recovery="EIGHTEEN_MONTHS",
             family=LeaveFamily.SICK_LEAVE,
             basis="Art. 45.1.c ET",
             amount=None,
@@ -355,6 +357,7 @@ ESPANA = LegalFramework(
         LeaveKind(
             code="es.birth",
             name="Nacimiento y cuidado del menor",
+            vacation_recovery="UNLIMITED",
             family=LeaveFamily.SUSPENSION,
             basis="Art. 48.4 ET",
             paid=False,
@@ -368,6 +371,7 @@ ESPANA = LegalFramework(
         LeaveKind(
             code="es.adoption",
             name="Adopción, guarda con fines de adopción o acogimiento",
+            vacation_recovery="UNLIMITED",
             family=LeaveFamily.SUSPENSION,
             basis="Art. 48.5 ET",
             paid=False,
@@ -378,6 +382,7 @@ ESPANA = LegalFramework(
         LeaveKind(
             code="es.pregnancy_risk",
             name="Riesgo durante el embarazo",
+            vacation_recovery="UNLIMITED",
             family=LeaveFamily.SUSPENSION,
             basis="Art. 45.1.e ET",
             paid=False,
@@ -389,6 +394,7 @@ ESPANA = LegalFramework(
         LeaveKind(
             code="es.breastfeeding_risk",
             name="Riesgo durante la lactancia natural",
+            vacation_recovery="UNLIMITED",
             family=LeaveFamily.SUSPENSION,
             basis="Art. 45.1.e ET",
             paid=False,

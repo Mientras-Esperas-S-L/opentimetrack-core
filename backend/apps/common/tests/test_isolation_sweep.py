@@ -184,6 +184,7 @@ COLLECTIONS = [
     "/api/absences/balance/",
     "/api/absences/pending/",
     "/api/overtime/",
+    "/api/holiday-recoveries/",
     "/api/push/subscriptions/",
     "/api/reports/payroll-summary/",
 ]
@@ -440,6 +441,13 @@ def test_a_worker_cannot_do_a_managers_job(ours):
             {"cells": [{"employee": str(ours["worker"].id), "day": "2026-09-01"}]},
         ),
         ("patch", f"/api/punches/{ours['punch'].id}/void/", {"reason": "porque sí"}),
+        # Confirmar la recuperación de las propias vacaciones es decidir sobre
+        # el saldo de uno mismo.
+        (
+            "post",
+            "/api/holiday-recoveries/",
+            {"recovery": "00000000-0000-0000-0000-000000000000", "accept": True},
+        ),
         # Authorising your own overtime is deciding your own pay.
         (
             "post",
@@ -585,6 +593,7 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^audit/(?P<pk>[^/.]+)/$",
         "api/overview/",
         "api/overtime/",
+        "api/holiday-recoveries/",
         "api/push/subscriptions/",
         "api/company/",
         "api/working-time-rules/",
