@@ -12,6 +12,8 @@ import logging
 
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 from rest_framework import exceptions
 from rest_framework.response import Response
 from rest_framework.views import exception_handler as drf_exception_handler
@@ -51,6 +53,34 @@ class BusinessRuleError(exceptions.APIException):
         super().__init__(detail=message, code=code)
 
 
+def _mensaje_de_espera(segundos) -> str:
+    """Lo que se le dice a quien ha agotado el límite de intentos.
+
+    DRF trae el suyo traducido a máquina: «Solicitud fue regulada (throttled).
+    Se espera que esté disponible en 58 segundos.» Sin artículo, con una palabra
+    en inglés entre paréntesis, y en el peor momento posible --- lo lee quien
+    acaba de fallar cinco veces la contraseña, que ya está molesto y no está
+    para descifrar nada.
+
+    En minutos cuando pasa del minuto, porque «en 118 segundos» obliga a dividir
+    a quien solo quiere saber si le da tiempo a un café.
+    """
+    espera = int(segundos or 0)
+    if espera <= 0:
+        return str(_("Too many attempts. Wait a moment and try again."))
+    if espera < 60:
+        return str(_("Too many attempts. Try again in %(seconds)s seconds.") % {"seconds": espera})
+    minutos = round(espera / 60)
+    return str(
+        ngettext(
+            "Too many attempts. Try again in %(minutes)s minute.",
+            "Too many attempts. Try again in %(minutes)s minutes.",
+            minutos,
+        )
+        % {"minutes": minutos}
+    )
+
+
 def api_exception_handler(exc, context):
     """Envuelve la respuesta de DRF en el formato de error único."""
     if isinstance(exc, Http404):
@@ -68,6 +98,8 @@ def api_exception_handler(exc, context):
 
     if isinstance(exc, BusinessRuleError):
         code, message, details = exc.code, exc.message, exc.details
+    elif isinstance(exc, exceptions.Throttled):
+        code, message, details = "throttled", _mensaje_de_espera(exc.wait), {}
     else:
         code = getattr(exc, "default_code", None) or CODE_BY_STATUS.get(
             response.status_code, "error"

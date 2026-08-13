@@ -76,6 +76,10 @@ async function siguenValiendo(page, fichero) {
 
 for (const { perfil, correo } of SESIONES) {
   setup(`sesión de ${perfil}`, async ({ page }) => {
+    // Margen para esperar a que se reponga el cupo de intentos. El límite es de
+    // un minuto, así que con los treinta de serie no daba tiempo ni a un
+    // reintento.
+    setup.setTimeout(120_000)
     mkdirSync(CARPETA, { recursive: true })
     const fichero = `${CARPETA}/${perfil}.json`
 
@@ -87,11 +91,42 @@ for (const { perfil, correo } of SESIONES) {
       await page.goto('/')
       await page.evaluate(() => localStorage.clear())
       await page.goto('/')
-      const email = page.getByLabel('Correo electrónico')
-      await email.fill('')
-      await email.fill(correo)
-      await page.getByLabel('Contraseña').fill(CLAVE)
-      await page.getByRole('button', { name: 'Entrar' }).click()
+
+      // Con reintento si el cupo de intentos está lleno.
+      //
+      // El límite es de cinco por minuto **y va por dirección IP**, así que lo
+      // comparten todas las sesiones y también la prueba que lo agota a
+      // propósito en `17-la-puerta`. Dos tandas seguidas ---algo que pasa solo
+      // en cuanto hay un bucle de auditoría--- encontraban la puerta cerrada y
+      // fallaba el arranque, no la aplicación.
+      //
+      // Esperar es lo correcto: el cupo se repone en un minuto y aquí no hay
+      // prisa. Fallar dejaría toda la tanda en rojo por algo que se arregla
+      // solo.
+      for (let intento = 0; intento < 4; intento += 1) {
+        const email = page.getByLabel('Correo electrónico')
+        await email.fill('')
+        await email.fill(correo)
+        await page.getByLabel('Contraseña').fill(CLAVE)
+        await page.getByRole('button', { name: 'Entrar' }).click()
+        await page.waitForTimeout(800)
+
+        const puesto = await page.evaluate(() => localStorage.getItem('ott.access'))
+        if (puesto) break
+
+        const aviso = await page
+          .getByRole('alert')
+          .first()
+          .innerText()
+          .catch(() => '')
+        if (!/Demasiados intentos/.test(aviso)) break
+
+        // Lo que el propio aviso dice que falta, más un segundo de cortesía.
+        // Esperar un plazo fijo era adivinar: demasiado corto no sirve y
+        // demasiado largo agota el tiempo de la prueba.
+        const faltan = Number(aviso.match(/en (\d+) segundos/)?.[1] ?? 30)
+        await page.waitForTimeout((faltan + 1) * 1000)
+      }
     }
 
     // Hasta que el testigo esté puesto: sin esto se guardaría un estado vacío y
