@@ -26,4 +26,10 @@ export default [
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    // Las pruebas de interfaz y su configuración corren en Node, no en el
+    // navegador: sin esto, `process` es una variable no declarada.
+    files: ['e2e/**/*.js', 'playwright.config.js'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
 ]

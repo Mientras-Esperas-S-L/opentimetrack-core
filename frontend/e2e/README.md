@@ -34,11 +34,11 @@ esconder repitiendo hasta que pase.
 
 ## Qué hay
 
-| Fichero | Qué cubre |
-|---|---|
-| `01-entrada.spec.js` | La entrada: credenciales, mensaje idéntico exista o no el correo, cierre de sesión |
+| Fichero                  | Qué cubre                                                                          |
+| ------------------------ | ---------------------------------------------------------------------------------- |
+| `01-entrada.spec.js`     | La entrada: credenciales, mensaje idéntico exista o no el correo, cierre de sesión |
 | `02-aislamiento.spec.js` | Que conocer un identificador no sirva de nada, y lo que un operario no puede hacer |
-| `03-sesion.spec.js` | Renovación silenciosa del acceso, y qué ve cada perfil |
+| `03-sesion.spec.js`      | Renovación silenciosa del acceso, y qué ve cada perfil                             |
 
 ## La empresa vecina
 

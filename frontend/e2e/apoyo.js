@@ -79,7 +79,7 @@ export async function api(page, ruta, opciones = {}) {
         },
         body: opciones.body ? JSON.stringify(opciones.body) : undefined,
       })
-      let body = null
+      let body
       try {
         body = await respuesta.json()
       } catch {
