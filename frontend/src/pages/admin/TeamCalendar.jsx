@@ -25,6 +25,8 @@ import {
 import AddIcon from '@mui/icons-material/Add'
 
 import LeaveDialog from '../../components/LeaveDialog.jsx'
+import Alert from '@mui/material/Alert'
+
 import { Empty, Loading, PageHeader, StatusChip } from '../../components/common.jsx'
 import { dayRange, leaveLabel, leaveLength } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -168,11 +170,16 @@ export default function TeamCalendar() {
   const [kind, setKind] = useState('')
   const [state, setState] = useState('')
   const [recordError, setRecordError] = useState(null)
+  //: El aviso del art. 38.3 cuando las vacaciones se las pone otro. Se guarda
+  //: de la respuesta porque quien acaba de fijar las fechas es quien todavía
+  //: puede cambiarlas: en «Por decidir» ya solo queda aprobarlas o no.
+  const [avisoDePlazo, setAvisoDePlazo] = useState(null)
   const record = useMutation({
     mutationFn: requestAbsence,
-    onSuccess: () => {
+    onSuccess: (registrada) => {
       setRecording(false)
       setRecordError(null)
+      setAvisoDePlazo(registrada?.short_notice ? registrada : null)
       queryClient.invalidateQueries({ queryKey: ['absence-calendar'] })
       queryClient.invalidateQueries({ queryKey: ['absences'] })
       queryClient.invalidateQueries({ queryKey: ['leave-usage'] })
@@ -226,6 +233,20 @@ export default function TeamCalendar() {
           )
         }
       />
+
+      {avisoDePlazo && (
+        <Alert
+          severity="info"
+          variant="outlined"
+          onClose={() => setAvisoDePlazo(null)}
+          sx={{ mb: 2 }}
+        >
+          Registradas las vacaciones de {avisoDePlazo.employee_name} con{' '}
+          <strong>{avisoDePlazo.short_notice.days} días</strong> de antelación. El{' '}
+          {avisoDePlazo.short_notice.citation} pide dos meses para que dé tiempo a organizarse.
+          Quedan registradas igual; si no estaba acordado, todavía se pueden mover.
+        </Alert>
+      )}
 
       <LeaveDialog
         forPerson

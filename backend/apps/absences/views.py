@@ -26,6 +26,7 @@ from apps.absences.services import (
     leave_over_the_limit,
     reject_absence,
     request_absence,
+    short_holiday_notice,
     vacation_balance,
 )
 from apps.absences.uploads import validate_extension, validate_size
@@ -65,6 +66,15 @@ class AbsenceSerializer(serializers.ModelSerializer):
             return None
         return leave_over_the_limit(obj)
 
+    #: Vacaciones puestas por la empresa con menos de los dos meses del art.
+    #: 38.3. Va con la fila, y no solo al crearla, porque quien decide también
+    #: tiene que verlo: si el aviso solo llegara a quien las metió, bastaría con
+    #: no leerlo.
+    short_notice = serializers.SerializerMethodField()
+
+    def get_short_notice(self, obj) -> dict | None:
+        return short_holiday_notice(obj)
+
     # Whether there is one, not where it lives. The raw URL would be a bearer
     # secret sitting in every list response; the file comes from the
     # `justification` action, which checks who is asking.
@@ -92,11 +102,13 @@ class AbsenceSerializer(serializers.ModelSerializer):
             "days",
             "reduction_share",
             "over_the_limit",
+            "short_notice",
             "reason",
             "status",
             "status_display",
             "approved_by",
             "resolved_by_name",
+            "requested_by",
             "resolved_at",
             "has_justification",
             "created_at",
@@ -344,6 +356,7 @@ class AbsenceViewSet(
             reduction_share=data.get("reduction_share"),
             reason=data.get("reason", ""),
             justification=data.get("justification"),
+            requested_by=request.user,
         )
 
         if kind is not None and kind.initiated_by == "COMPANY":

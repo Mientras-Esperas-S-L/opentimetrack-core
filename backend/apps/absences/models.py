@@ -278,6 +278,26 @@ class Absence(TenantOwnedModel):
     )
     reason = models.TextField(_("reason"), blank=True)
 
+    #: Quién la metió, que no siempre es de quién es.
+    #:
+    #: La fila decía de quién son las vacaciones y quién las aprobó, y se
+    #: callaba lo del medio: si las pidió esa persona o se las pusieron. Son dos
+    #: hechos distintos y el art. 38.3 se apoya justo en esa diferencia ---el
+    #: plazo de dos meses existe para que a nadie le fijen las fechas encima---,
+    #: así que sin este dato no se puede ni avisar ni, más tarde, explicar por
+    #: qué unas vacaciones empezaron cuando empezaron.
+    #:
+    #: Vacío en las de antes: para ellas el dato no existe y ponerlo a alguien
+    #: sería inventarlo.
+    requested_by = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="absences_requested",
+        verbose_name=_("recorded by"),
+    )
+
     status = models.CharField(
         _("status"), max_length=10, choices=AbsenceStatus, default=AbsenceStatus.PENDING
     )

@@ -27,3 +27,15 @@ def local_today(where) -> date:
     for the Canary delegation.
     """
     return timezone.now().astimezone(where.tzinfo).date()
+
+
+def local_date_of(instant, where) -> date:
+    """El día que era, para quien lo vivió. `local_today` para un instante dado.
+
+    `instante.date()` tiene la misma trampa que `date.today()` y se ve menos:
+    un `DateTimeField` se guarda en UTC, así que algo creado a las 00:30 de
+    Madrid devuelve **el día anterior**. Da igual mientras solo se enseñe, y
+    deja de dar igual en cuanto se resta ---«¿cuántos días de aviso hubo?»---,
+    que es donde un día de menos cambia la respuesta.
+    """
+    return timezone.localtime(instant, where.tzinfo).date()

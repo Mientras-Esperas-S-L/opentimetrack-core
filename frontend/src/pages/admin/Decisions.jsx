@@ -732,6 +732,22 @@ export default function Decisions() {
                     catálogo—, pero conviene saberlo.
                   </Alert>
                 )}
+
+                {/* Vacaciones que puso otro, con menos de dos meses. El aviso
+                    llega aquí y no solo a quien las metió, porque si solo lo
+                    viera quien las puso bastaría con no leerlo.
+
+                    Tampoco impide: acortar el plazo de acuerdo es corriente y
+                    legítimo, y negarse a registrarlo dejaría fuera del sistema
+                    unas vacaciones que se van a disfrutar igual. */}
+                {absence.short_notice && (
+                  <Alert severity="info" variant="outlined" sx={{ mt: 1.5 }}>
+                    Las fechas se pusieron con <strong>{absence.short_notice.days} días</strong> de
+                    antelación, y el {absence.short_notice.citation} pide dos meses. El plazo existe
+                    para que dé tiempo a organizarse; se puede aprobar si la persona está de
+                    acuerdo.
+                  </Alert>
+                )}
               </RequestCard>
             ))}
             <ListaRecortada total={absences.data?.count} mostradas={absenceRows.length} />

@@ -25,6 +25,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.absences.models import REDUCES_THE_DAY, Absence, AbsenceStatus, AbsenceType
+from apps.common.clock import local_date_of
 from apps.common.exceptions import BusinessRuleError
 from apps.common.four_eyes import refuse_self_decision
 
@@ -285,6 +286,7 @@ def request_absence(
     reduction_share=None,
     reason: str = "",
     justification=None,
+    requested_by=None,
 ) -> Absence:
     """Records the request. Nothing is blocked until somebody approves it.
 
@@ -405,6 +407,10 @@ def request_absence(
         end_time=end_time,
         reduction_share=reduction_share,
         reason=reason.strip(),
+        # Quién la mete, que no siempre es de quién es. Por omisión, la propia
+        # persona: es lo que hacía todo el que llamaba a esto antes de que el
+        # campo existiera, y es lo que pasa en la mayoría de las veces.
+        requested_by=requested_by or employee,
     )
     if justification:
         absence.justification = justification
@@ -617,3 +623,49 @@ def _must_be_open(absence: Absence) -> None:
             code="already_resolved",
             message=_("This request has already been resolved."),
         )
+
+
+#: Los dos meses del art. 38.3, en días. No es un ajuste de empresa: el plazo lo
+#: fija la ley y el convenio solo puede mejorarlo, así que una empresa que lo
+#: bajara estaría configurando un incumplimiento.
+HOLIDAY_NOTICE_DAYS = 60
+
+
+def short_holiday_notice(absence) -> dict | None:
+    """Vacaciones puestas por la empresa con menos de dos meses de aviso.
+
+    «El trabajador conocerá las fechas que le correspondan dos meses antes, al
+    menos, del comienzo del disfrute» (art. 38.3 ET). El plazo existe para que
+    a nadie le fijen las vacaciones encima: es lo que permite reservar un vuelo,
+    cuadrar con la pareja o apuntar a un crío a un campamento.
+
+    Se avisa, no se impide, como con el resto de los mínimos: acortarlo de mutuo
+    acuerdo es corriente y legítimo, y negarse a registrarlo dejaría fuera del
+    sistema unas vacaciones que la gente va a disfrutar igual --- que es peor
+    que registrarlas con una nota.
+
+    **Solo cuando las pone otro.** Si las pide la persona, conoce las fechas por
+    definición: no hay plazo que incumplir y el aviso sería ruido. Esa
+    distinción es la razón de que `requested_by` exista; sin él, este aviso
+    saltaría en la mitad de las solicitudes normales y en dos semanas nadie lo
+    miraría, que es como se estropea un aviso.
+    """
+    if absence.absence_type != AbsenceType.VACATION:
+        return None
+    if absence.requested_by_id is None or absence.requested_by_id == absence.employee_id:
+        return None
+
+    # Desde que se metió, no desde hoy: el plazo se mide contra el momento en
+    # que la persona pudo conocer las fechas. Mirarlo contra hoy haría que unas
+    # vacaciones avisadas con tiempo se volvieran «con poco aviso» solas, según
+    # se acercara la fecha.
+    conocidas = local_date_of(absence.created_at or timezone.now(), absence.tenant)
+    dias = (absence.start_date - conocidas).days
+    if dias >= HOLIDAY_NOTICE_DAYS:
+        return None
+
+    return {
+        "days": dias,
+        "required": HOLIDAY_NOTICE_DAYS,
+        "citation": "Art. 38.3 ET",
+    }
