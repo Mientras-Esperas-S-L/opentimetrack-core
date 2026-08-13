@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 9 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 10 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -44,7 +44,7 @@ vuelve a una limpia.
 
 | Punto | Estado | Última pasada | Hallazgos |
 |---|---|---|---|
-| Art. 34.9 — registro objetivo, fiable, conservado | sin tocar | — | — |
+| Art. 34.9 — registro objetivo, fiable, conservado | limpia | 13/08 v10 | **el informe de empresa borraba a quien se fue**; nadie podía descargar el suyo desde la interfaz |
 | Art. 34.2 — distribución irregular del 10 % | sin tocar | — | «solo citado» en la revisión del 13/08 |
 | Art. 34.3/34.4 — jornada, descansos | limpia | 13/08 | avisos con cita |
 | Art. 35 — horas extra y su tope | limpia | 13/08 | — |
@@ -88,6 +88,38 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 10 — El art. 34.9, que es el producto entero.**
+
+Lo que aguantó, y conviene decirlo porque marca dónde no volver: el fichaje está
+protegido contra el borrado ---`PROTECT` en la persona, «a person with clock
+events is never deleted»---, la retención de cuatro años no se puede bajar por
+ajuste, y la purga de metadatos se lleva la IP y el dispositivo sin tocar el
+fichaje ni su hash.
+
+**El informe de toda la empresa borraba a quien se había ido.** Filtraba por
+`is_active`, así que el de marzo salía sin la persona que se marchó en abril, y
+no lo decía: un zip con doscientos documentos y uno menos. Lo que el artículo
+pone a disposición de la Inspección es el registro **del periodo**, no el de
+quien siga en plantilla el día que se pide --- y en una empresa con rotación esto
+pasa todos los meses, porque una inspección se pide justo del periodo en el que
+alguien se fue. Ahora entra quien está de alta más quien fichó en el rango; dos
+de las seis pruebas son el contraste que impide que el arreglo sea «meter a todo
+el mundo».
+
+**Y «a disposición de las personas trabajadoras» no se cumplía.** La API dejaba
+a cualquiera pedir el suyo desde el principio, pero la única pantalla que lo
+ofrecía estaba detrás del panel de gestión: a su disposición lo tenía quien
+administra, y no la persona de la que habla el artículo. Poder mirarlo en
+pantalla no es poder llevárselo --- lo que se enseña a un juzgado es el documento
+con su huella. Ahora hay un botón en «Mi jornada», y baja el mes que se está
+mirando, no el corriente.
+
+Dos fallos míos, los dos cazados por pruebas que acababa de escribir: el rótulo
+del botón decía «Invalid Date» ---`monthName` toma un objeto, no dos números---
+y la comprobación de que un operario no puede pedir el informe de otro **pasaba
+sin comprobar nada**, porque con una URL relativa la petición se la queda el
+servidor de desarrollo del frontend y devuelve el `index.html` con un 200.
 
 **Vuelta 9 — La importación de festivos, y los dos meses del art. 38.3.**
 

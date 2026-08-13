@@ -333,3 +333,19 @@ directorio no existe.
 —backend y frontend—, aunque el trabajo de la sesión no los tocara. Y al
 encontrar un fallo así, comprobar si venía de antes poniendo el fichero de
 entonces: cambia lo que hay que arreglar y evita buscar en el sitio equivocado.
+
+## Una URL relativa en una prueba de navegador no llega a la API (13/08/2026)
+
+`fetch('/api/...')` desde una página servida por Vite en el 3000 no llega al
+backend del 8000: se la queda el servidor de desarrollo y **devuelve el
+index.html con un 200**. La comprobación era «pedir el informe de otra persona
+da 400» y pasaba sin comprobar nada, porque recibía un 200 de HTML.
+
+Lo cazó que el 200 no cuadraba con lo que yo esperaba. Si hubiera escrito
+`expect(status).not.toBe(200)` —o si el producto llegara a devolver 200 de
+verdad— habría quedado en verde para siempre.
+
+**Regla:** en las pruebas de navegador, pedir siempre por el ayudante `api()` de
+`e2e/apoyo.js`, que apunta al servidor de la API con URL absoluta. Y cuando una
+respuesta sorprenda, mirar el **cuerpo** antes que el código: un HTML donde
+debería haber JSON dice a quién se le preguntó de verdad.
