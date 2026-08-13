@@ -39,6 +39,7 @@ import {
 } from '../../components/common.jsx'
 import LeaveDialog from '../../components/LeaveDialog.jsx'
 import { dateOf, dayRange, leaveLabel, leaveLength } from '../../components/format.js'
+import { FilterBar, PickFilter } from '../../components/filters.jsx'
 
 /** The balance, as a bar plus the three numbers behind it.
  *
@@ -58,7 +59,14 @@ function Balance({ balance }) {
       hint={`Periodo del ${dateOf(period_start, { year: 'numeric' })} al ${dateOf(period_end, { year: 'numeric' })}`}
     >
       <Stack direction="row" sx={{ alignItems: 'baseline', gap: 1, mb: 1.5 }}>
-        <Typography sx={{ fontSize: '2.6rem', fontWeight: 650, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+        <Typography
+          sx={{
+            fontSize: '2.6rem',
+            fontWeight: 650,
+            lineHeight: 1,
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
           {remaining}
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -114,11 +122,25 @@ export default function MyLeave() {
   const [error, setError] = useState(null)
   const [page, setPage] = useState(1)
   const [confirming, setConfirming] = useState(null)
+  //: Año y estado. Con tres años de antigüedad el historial es una lista larga
+  //: en la que hay que bajar buscando, y lo que se busca casi siempre es «las
+  //: de este año» o «las que están sin resolver».
+  const esteAño = new Date().getFullYear()
+  const [year, setYear] = useState(String(esteAño))
+  const [status, setStatus] = useState('')
 
-  const { data: balance } = useQuery({ queryKey: ['leave-balance'], queryFn: () => getLeaveBalance() })
+  const { data: balance } = useQuery({
+    queryKey: ['leave-balance'],
+    queryFn: () => getLeaveBalance(),
+  })
   const { data: absences, isLoading } = useQuery({
-    queryKey: ['absences', 'mine', page],
-    queryFn: () => getAbsences({ page }),
+    queryKey: ['absences', 'mine', page, year, status],
+    queryFn: () =>
+      getAbsences({
+        page,
+        ...(year ? { year } : {}),
+        ...(status ? { status } : {}),
+      }),
     placeholderData: (previous) => previous,
   })
 
@@ -165,10 +187,53 @@ export default function MyLeave() {
         Historial
       </Typography>
 
+      <FilterBar>
+        {/* Cinco años hacia atrás: el registro se conserva cuatro, así que más
+            allá no hay nada que enseñar. «Todos» al final y no al principio,
+            porque casi nadie lo quiere. */}
+        <PickFilter
+          label="Año"
+          value={year}
+          onChange={(valor) => {
+            setYear(valor)
+            setPage(1)
+          }}
+          options={Array.from({ length: 5 }, (_, i) => ({
+            value: String(esteAño - i),
+            label: String(esteAño - i),
+          }))}
+          all="Todos"
+          width={130}
+        />
+        <PickFilter
+          label="Estado"
+          value={status}
+          onChange={(valor) => {
+            setStatus(valor)
+            setPage(1)
+          }}
+          options={[
+            { value: 'PENDING', label: 'Sin resolver' },
+            { value: 'APPROVED', label: 'Aprobada' },
+            { value: 'REJECTED', label: 'Rechazada' },
+            { value: 'CANCELLED', label: 'Cancelada' },
+          ]}
+          all="Todos"
+          width={170}
+        />
+      </FilterBar>
+
       {isLoading ? (
         <Loading rows={3} />
       ) : rows.length === 0 ? (
-        <Empty>Todavía no has solicitado ninguna ausencia.</Empty>
+        <Empty>
+          {/* Con un filtro puesto, «no has solicitado ninguna» sería mentira:
+              las hay, pero en otro año o en otro estado. Y es una mentira que
+              se cree, porque el filtro está arriba y el mensaje abajo. */}
+          {year || status
+            ? 'Ninguna ausencia coincide con lo que has elegido arriba.'
+            : 'Todavía no has solicitado ninguna ausencia.'}
+        </Empty>
       ) : (
         <Stack sx={{ gap: 1 }}>
           {rows.map((absence) => (

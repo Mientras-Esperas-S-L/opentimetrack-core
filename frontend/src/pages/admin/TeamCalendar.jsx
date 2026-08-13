@@ -28,6 +28,7 @@ import LeaveDialog from '../../components/LeaveDialog.jsx'
 import { Empty, Loading, PageHeader, StatusChip } from '../../components/common.jsx'
 import { dayRange, leaveLabel, leaveLength } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
+import { PickFilter } from '../../components/filters.jsx'
 
 /** What is behind a coloured band, and what can be done about it.
  *
@@ -49,8 +50,8 @@ function AbsenceDialog({ absence, canDecide, busy, onClose, onApprove, onReject 
             <StatusChip status={absence?.status} label={absence?.status_display} />
           </Stack>
           <Typography variant="body2" color="text.secondary">
-            {absence && dayRange(absence.start_date, absence.end_date)} ·{' '}
-            {absence?.days} {absence?.days === 1 ? 'día' : 'días'}
+            {absence && dayRange(absence.start_date, absence.end_date)} · {absence?.days}{' '}
+            {absence?.days === 1 ? 'día' : 'días'}
           </Typography>
           {absence?.reason && (
             <Typography
@@ -88,6 +89,19 @@ function AbsenceDialog({ absence, canDecide, busy, onClose, onApprove, onReject 
  *  palette per person would need a legend nobody reads and would run out at
  *  twelve people.
  */
+/** Los tipos que el calendario distingue, con su nombre.
+ *
+ *  En una constante y no escritos dos veces: los usan la leyenda de colores y
+ *  el filtro, y si se separan acaban diciendo cosas distintas para lo mismo.
+ */
+const KIND_LABELS = {
+  VACATION: 'Vacaciones',
+  SICK_LEAVE: 'Baja',
+  PAID_LEAVE: 'Permiso',
+  UNPAID_LEAVE: 'Sin sueldo',
+  SUSPENSION: 'Suspensión',
+}
+
 const KIND_COLOUR = {
   VACATION: 'primary.main',
   SICK_LEAVE: 'secondary.main',
@@ -148,6 +162,11 @@ export default function TeamCalendar() {
   // una huelga, una suspensión. El servidor pone en vigor directamente lo que
   // registra la empresa; lo demás entra en la cola como siempre.
   const [recording, setRecording] = useState(false)
+  //: Qué se enseña del mes. Con una plantilla grande el calendario se llena y
+  //: la pregunta concreta ---«¿quién tiene vacaciones en agosto?», «¿qué queda
+  //: sin resolver?»--- se pierde entre lo demás.
+  const [kind, setKind] = useState('')
+  const [state, setState] = useState('')
   const [recordError, setRecordError] = useState(null)
   const record = useMutation({
     mutationFn: requestAbsence,
@@ -167,7 +186,10 @@ export default function TeamCalendar() {
     setCursor({ year: next.getFullYear(), month: next.getMonth() })
   }
 
-  const rows = absences ?? []
+  const todo = absences ?? []
+  const rows = todo.filter(
+    (span) => (!kind || span.absence_type === kind) && (!state || span.status === state),
+  )
 
   // One row per person, so a name is not repeated down the grid.
   const byPerson = new Map()
@@ -234,25 +256,37 @@ export default function TeamCalendar() {
           <TodayIcon />
         </IconButton>
 
+        <PickFilter
+          label="Tipo"
+          value={kind}
+          onChange={setKind}
+          options={Object.entries(KIND_LABELS).map(([value, label]) => ({ value, label }))}
+          all="Todos"
+          width={160}
+        />
+        <PickFilter
+          label="Estado"
+          value={state}
+          onChange={setState}
+          options={[
+            { value: 'PENDING', label: 'Sin resolver' },
+            { value: 'APPROVED', label: 'Concedidas' },
+          ]}
+          all="Todos"
+          width={160}
+        />
+
         <Box sx={{ flexGrow: 1 }} />
 
         <Stack direction="row" sx={{ gap: 1, flexWrap: 'wrap' }}>
-          {Object.entries({
-            VACATION: 'Vacaciones',
-            SICK_LEAVE: 'Baja',
-            PAID_LEAVE: 'Permiso',
-            UNPAID_LEAVE: 'Sin sueldo',
-            SUSPENSION: 'Suspensión',
-          }).map(
-            ([kind, label]) => (
-              <Stack key={kind} direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
-                <Box sx={{ width: 12, height: 12, borderRadius: 0.5, bgcolor: KIND_COLOUR[kind] }} />
-                <Typography variant="caption" color="text.secondary">
-                  {label}
-                </Typography>
-              </Stack>
-            ),
-          )}
+          {Object.entries(KIND_LABELS).map(([kind, label]) => (
+            <Stack key={kind} direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
+              <Box sx={{ width: 12, height: 12, borderRadius: 0.5, bgcolor: KIND_COLOUR[kind] }} />
+              <Typography variant="caption" color="text.secondary">
+                {label}
+              </Typography>
+            </Stack>
+          ))}
         </Stack>
       </Stack>
 
@@ -292,7 +326,10 @@ export default function TeamCalendar() {
                       py: 1,
                       textAlign: 'center',
                       bgcolor: weekday >= 5 ? 'action.hover' : 'transparent',
-                      ...(isToday(day) && { bgcolor: 'primary.main', color: 'primary.contrastText' }),
+                      ...(isToday(day) && {
+                        bgcolor: 'primary.main',
+                        color: 'primary.contrastText',
+                      }),
                     }}
                   >
                     <Typography
@@ -341,8 +378,7 @@ export default function TeamCalendar() {
                         role: 'button',
                         tabIndex: 0,
                         onClick: () => setOpen(span),
-                        onKeyDown: (event) =>
-                          ['Enter', ' '].includes(event.key) && setOpen(span),
+                        onKeyDown: (event) => ['Enter', ' '].includes(event.key) && setOpen(span),
                       })}
                       sx={{
                         m: 0.4,
@@ -356,7 +392,9 @@ export default function TeamCalendar() {
                                 // granted are different states, not degrees.
                                 backgroundImage: (t) =>
                                   `repeating-linear-gradient(45deg, ${
-                                    t.palette[span.absence_type === 'SICK_LEAVE' ? 'secondary' : 'primary'].main
+                                    t.palette[
+                                      span.absence_type === 'SICK_LEAVE' ? 'secondary' : 'primary'
+                                    ].main
                                   } 0 3px, transparent 3px 7px)`,
                               }
                             : { bgcolor: colour })),

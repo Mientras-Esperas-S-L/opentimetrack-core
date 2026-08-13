@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from datetime import date
 
+import django_filters
 from django.conf import settings
 from django.http import FileResponse, Http404, HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
@@ -252,6 +253,23 @@ class AbsenceRequestSerializer(serializers.Serializer):
         return attrs
 
 
+class AbsenceFilter(django_filters.FilterSet):
+    """Los filtros de la lista de ausencias.
+
+    `year` no sale de ningún campo: es el corte natural de las vacaciones ---se
+    devengan y se disfrutan por periodo--- y quien mira su historial con tres
+    años de antigüedad quiere el suyo, no una lista de sesenta filas. Pedirlo
+    con un rango obligaría a escribir dos fechas y a saber cuándo empieza el
+    periodo de la empresa.
+    """
+
+    year = django_filters.NumberFilter(field_name="start_date", lookup_expr="year")
+
+    class Meta:
+        model = Absence
+        fields = ["status", "absence_type", "employee", "leave_type", "year"]
+
+
 class AbsenceViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
@@ -263,7 +281,7 @@ class AbsenceViewSet(
     queryset = Absence.objects.none()
     serializer_class = AbsenceSerializer
     permission_classes = [IsAuthenticatedInTenant]
-    filterset_fields = ["status", "absence_type", "employee"]
+    filterset_class = AbsenceFilter
     ordering_fields = ["start_date", "created_at"]
     ordering = ["-start_date"]
 

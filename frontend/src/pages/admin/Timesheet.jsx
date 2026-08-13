@@ -25,6 +25,8 @@ import EditNoteIcon from '@mui/icons-material/EditNote'
 
 import { getPunches, PAGE_SIZE, requestCorrection } from '../../services/api.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
+import { PickFilter } from '../../components/filters.jsx'
+import { PUNCH_TYPES, SOURCE_OPTIONS } from '../../components/punches.js'
 import {
   Empty,
   ErrorNote,
@@ -60,7 +62,16 @@ function byDay(punches, zone) {
  *  leaving why --- and the record keeps who it concerns and who filed it as two
  *  separate facts.
  */
-function CorrectionDialog({ open, employee, employeeName, punch, onClose, onSubmit, saving, error }) {
+function CorrectionDialog({
+  open,
+  employee,
+  employeeName,
+  punch,
+  onClose,
+  onSubmit,
+  saving,
+  error,
+}) {
   const [form, setForm] = useState({ kind: 'ADD', proposed_type: 'OUT', when: '', reason: '' })
   const [loaded, setLoaded] = useState(null)
 
@@ -111,7 +122,12 @@ function CorrectionDialog({ open, employee, employeeName, punch, onClose, onSubm
                 {timeOf(punch.timestamp)} del {dateOf(punch.timestamp)}
               </Alert>
             ) : (
-              <TextField select label="Qué falta" value={form.proposed_type} onChange={set('proposed_type')}>
+              <TextField
+                select
+                label="Qué falta"
+                value={form.proposed_type}
+                onChange={set('proposed_type')}
+              >
                 <MenuItem value="IN">Una entrada</MenuItem>
                 <MenuItem value="OUT">Una salida</MenuItem>
               </TextField>
@@ -180,8 +196,20 @@ export default function Timesheet() {
   const [from, setFrom] = useState(firstOfThisMonth)
   const [to, setTo] = useState(today)
   const [page, setPage] = useState(1)
+  //: Tipo y origen. El origen era una columna que se enseñaba y no se podía
+  //: usar para buscar --- y es justo por lo que alguien entra aquí: «enséñame
+  //: los que registró el terminal», «los que hizo una aplicación en su
+  //: nombre». Esas dos son las que la Inspección mira primero.
+  const [kind, setKind] = useState('')
+  const [source, setSource] = useState('')
 
-  const filters = { employee: employee || undefined, date_from: from, date_to: to }
+  const filters = {
+    employee: employee || undefined,
+    punch_type: kind || undefined,
+    source: source || undefined,
+    date_from: from,
+    date_to: to,
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ['punches', { ...filters, page }],
@@ -218,7 +246,11 @@ export default function Timesheet() {
         subtitle="El registro tal y como está guardado. Un fichaje anulado sigue siendo legible: no se borra nada."
         action={
           employee && (
-            <Button variant="outlined" startIcon={<EditNoteIcon />} onClick={() => setCorrecting({})}>
+            <Button
+              variant="outlined"
+              startIcon={<EditNoteIcon />}
+              onClick={() => setCorrecting({})}
+            >
               Corregir
             </Button>
           )
@@ -262,6 +294,22 @@ export default function Timesheet() {
           slotProps={{ inputLabel: { shrink: true } }}
           error={to < from}
           helperText={to < from ? 'Va antes que la inicial.' : ' '}
+        />
+        <PickFilter
+          label="Tipo"
+          value={kind}
+          onChange={rephrase(setKind)}
+          options={PUNCH_TYPES}
+          all="Todos"
+          width={140}
+        />
+        <PickFilter
+          label="Origen"
+          value={source}
+          onChange={rephrase(setSource)}
+          options={SOURCE_OPTIONS}
+          all="Todos"
+          width={170}
         />
       </Stack>
 

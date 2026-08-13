@@ -12,6 +12,7 @@ import Paper from '@mui/material/Paper'
 import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { SOURCE_LABELS } from './punches.js'
 
 /** The small pieces every screen needs, so they look the same on all of them. */
 
@@ -160,6 +161,9 @@ export function Pager({ count, page, pageSize, onChange, noun = 'registros' }) {
           page={page}
           onChange={(_, next) => onChange(next)}
           shape="rounded"
+          // Sin `getItemAriaLabel` a mano: los rótulos los pone el paquete de
+          // español de MUI, aplicado en `theme.js`. Escribirlos aquí dejaría
+          // sin traducir cualquier otra paginación que se añada mañana.
         />
       )}
     </Stack>
@@ -234,16 +238,6 @@ const STATUS_LOOKS = {
 export function StatusChip({ status, label }) {
   const look = STATUS_LOOKS[status] ?? { label: status, color: 'default', variant: 'outlined' }
   return <Chip size="small" label={label ?? look.label} color={look.color} variant={look.variant} />
-}
-
-const SOURCE_LABELS = {
-  WEB: 'Web',
-  MOBILE: 'Móvil',
-  APPLICATION: 'App externa',
-  DELEGATED: 'En su nombre',
-  TERMINAL: 'Terminal',
-  ADMIN: 'Corrección',
-  IMPORT: 'Importado',
 }
 
 /** How the record got here. Not decoration: an event somebody else produced is

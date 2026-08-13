@@ -15,6 +15,7 @@ import { downloadAuditTrail, getAuditTrail, PAGE_SIZE } from '../../services/api
 import { Empty, Loading, PageHeader, Pager } from '../../components/common.jsx'
 import { dateOf, firstOfThisMonth, today } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
+import EmployeePicker from '../../components/EmployeePicker.jsx'
 
 /** Entries that are somebody reading, as opposed to somebody changing.
  *
@@ -73,6 +74,10 @@ export default function AuditTrail() {
   const { session } = useAuth()
   const isAdmin = session?.user?.role === 'ADMIN'
   const [action, setAction] = useState('')
+  //: Quién lo hizo. Solo para la administración: quien mira lo suyo ya sabe de
+  //: quién es cada línea, y ofrecerle un filtro de personas sugeriría que
+  //: puede mirar las de otros.
+  const [actor, setActor] = useState('')
 
   // A month, not "the most recent fifty". An inspection asks for a period, and
   // before this the screen had no way to express one: it showed one page and
@@ -88,8 +93,15 @@ export default function AuditTrail() {
   }
 
   const { data, isLoading } = useQuery({
-    queryKey: ['audit', { action, from, to, page }],
-    queryFn: () => getAuditTrail({ ...(action ? { action } : {}), date_from: from, date_to: to, page }),
+    queryKey: ['audit', { action, actor, from, to, page }],
+    queryFn: () =>
+      getAuditTrail({
+        ...(action ? { action } : {}),
+        ...(actor ? { actor } : {}),
+        date_from: from,
+        date_to: to,
+        page,
+      }),
     placeholderData: (previous) => previous,
   })
 
@@ -107,8 +119,12 @@ export default function AuditTrail() {
               onClick={async () => {
                 setExporting(true)
                 try {
+                  // Lo que se descarga es lo que se está viendo. Un fichero
+                  // más ancho que la pantalla es la forma callada de entregar
+                  // de más.
                   await downloadAuditTrail({
                     ...(action ? { action } : {}),
+                    ...(actor ? { actor } : {}),
                     date_from: from,
                     date_to: to,
                   })
@@ -147,6 +163,16 @@ export default function AuditTrail() {
             </MenuItem>
           ))}
         </TextField>
+        {isAdmin && (
+          <EmployeePicker
+            size="small"
+            label="Quién"
+            value={actor}
+            onChange={(id) => narrow(setActor)(id)}
+            everyoneLabel="Cualquiera"
+            sx={{ minWidth: 240 }}
+          />
+        )}
         <TextField
           size="small"
           type="date"
@@ -243,8 +269,8 @@ export default function AuditTrail() {
 
       {rows.length > 0 && (
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
-          Consultar tu propio registro no deja entrada: es un derecho, y anotarlo enterraría lo
-          que sí importa. {dateOf(new Date().toISOString())}
+          Consultar tu propio registro no deja entrada: es un derecho, y anotarlo enterraría lo que
+          sí importa. {dateOf(new Date().toISOString())}
         </Typography>
       )}
     </>
