@@ -20,6 +20,7 @@ import { useTheme } from '@mui/material/styles'
 
 import LogoutIcon from '@mui/icons-material/Logout'
 
+import ThemeToggle from '../components/ThemeToggle.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import { NAV_ADMIN, NAV_ME } from './navigation.jsx'
 import BottomNav from './BottomNav.jsx'
@@ -137,9 +138,16 @@ export default function AppShell() {
           <Chip
             size="small"
             variant="outlined"
-            label={user?.role === 'ADMIN' ? 'Administración' : canManage ? 'Responsable' : 'Persona trabajadora'}
+            label={
+              user?.role === 'ADMIN'
+                ? 'Administración'
+                : canManage
+                  ? 'Responsable'
+                  : 'Persona trabajadora'
+            }
             sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           />
+          <ThemeToggle />
           <Tooltip title={user ? `${user.first_name} ${user.last_name}`.trim() : ''}>
             <Avatar sx={{ width: 34, height: 34, bgcolor: 'primary.main', fontSize: '0.85rem' }}>
               {initialsOf(user)}
