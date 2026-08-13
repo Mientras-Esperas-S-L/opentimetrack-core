@@ -15,6 +15,7 @@ from apps.audit.views import AuditLogViewSet
 from apps.common.views import HealthView
 from apps.punches.correction_views import CorrectionViewSet
 from apps.punches.delegated import DelegatedPunchView
+from apps.punches.overtime_views import OvertimeView
 from apps.punches.views import PunchViewSet
 from apps.reports.overview import OverviewView
 from apps.reports.views import PayrollSummaryView, ReportView
@@ -69,6 +70,7 @@ urlpatterns = [
         DelegatedPunchView.as_view(),
         name="punch-delegated",
     ),
+    path("api/overtime/", OvertimeView.as_view(), name="overtime"),
     path("api/", include(router.urls)),
 ]
 

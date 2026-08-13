@@ -412,6 +412,79 @@ class PunchReminder(TenantOwnedModel):
         return f"{self.get_kind_display()} {self.employee_id} {self.day}"
 
 
+class OvertimeDecision(TenantOwnedModel):
+    """A manager's ruling on a day's overtime: authorised, and how it settles.
+
+    The record captures the real time; this is the layer on top that says which
+    of it is *authorised* overtime and whether it is paid or given back in rest.
+    It never alters a punch --- the day stays faithful --- it classifies it,
+    which is exactly how a company handles overtime without either hiding it or
+    letting it be inflated.
+
+    `minutes` is the amount ruled on, kept because a later correction can change
+    how much overtime a day really held: a decision about thirty minutes must
+    not silently stand as authorising two hours, so the day reopens for review
+    when the figure moves.
+    """
+
+    class Status(models.TextChoices):
+        AUTHORISED = "AUTHORISED", _("Authorised")
+        REJECTED = "REJECTED", _("Not authorised")
+
+    employee = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="overtime_decisions",
+        verbose_name=_("employee"),
+    )
+    day = models.DateField(_("day"))
+    minutes = models.PositiveIntegerField(_("overtime minutes ruled on"))
+    status = models.CharField(_("status"), max_length=10, choices=Status)
+    #: How authorised overtime settles (art. 35.1): paid, or compensated with
+    #: rest within four months. Blank when the overtime was not authorised ---
+    #: there is nothing to settle.
+    settlement = models.CharField(
+        _("settlement"), max_length=4, choices=OvertimeSettlement, blank=True
+    )
+    note = models.CharField(_("note"), max_length=200, blank=True)
+
+    decided_by = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="overtime_decisions_made",
+        verbose_name=_("decided by"),
+    )
+    #: True when the sole administrator ruled on their own overtime, since there
+    #: was no second person to pass it through. Recorded rather than hidden,
+    #: like the same case for corrections and leave.
+    decided_alone = models.BooleanField(_("decided alone"), default=False)
+    decided_at = models.DateTimeField(_("decided at"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("overtime decision")
+        verbose_name_plural = _("overtime decisions")
+        ordering = ["-day"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["employee", "day"], name="one_overtime_decision_per_person_day"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_status_display()} {self.employee_id} {self.day}"
+
+    def as_summary(self) -> dict:
+        """The prior ruling, for a screen re-opening a day whose figure moved."""
+        return {
+            "status": self.status,
+            "minutes": self.minutes,
+            "settlement": self.settlement,
+            "decided_by": self.decided_by.get_full_name() if self.decided_by else "",
+        }
+
+
 # Corrections live in their own module for readability; Django needs them
 # imported here to discover the model.
 from apps.punches.corrections import (  # noqa: E402
@@ -423,6 +496,7 @@ from apps.punches.corrections import (  # noqa: E402
 __all__ = [
     "CorrectionKind",
     "CorrectionStatus",
+    "OvertimeDecision",
     "Punch",
     "PunchCorrection",
     "PunchReminder",

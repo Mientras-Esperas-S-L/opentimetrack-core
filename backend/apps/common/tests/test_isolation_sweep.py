@@ -183,6 +183,7 @@ COLLECTIONS = [
     "/api/shifts/today/",
     "/api/absences/balance/",
     "/api/absences/pending/",
+    "/api/overtime/",
     "/api/reports/payroll-summary/",
 ]
 
@@ -322,6 +323,18 @@ def test_they_cannot_change_or_resolve_anything_of_ours(ours, theirs):
         # both their roster warnings and everybody's holiday balance.
         ("delete", f"/api/holidays/{ours['holiday'].id}/", None),
         ("patch", f"/api/leave-types/{ours['leave_type'].id}/", {"amount": 99}),
+        # Ruling on somebody else's overtime is deciding what another company
+        # pays, and it would land in their audit trail signed by an outsider.
+        (
+            "post",
+            "/api/overtime/",
+            {
+                "employee": str(ours["worker"].id),
+                "day": date.today().isoformat(),
+                "authorise": True,
+                "settlement": "PAID",
+            },
+        ),
     ]
     landed = []
 
@@ -426,6 +439,17 @@ def test_a_worker_cannot_do_a_managers_job(ours):
             {"cells": [{"employee": str(ours["worker"].id), "day": "2026-09-01"}]},
         ),
         ("patch", f"/api/punches/{ours['punch'].id}/void/", {"reason": "porque sí"}),
+        # Authorising your own overtime is deciding your own pay.
+        (
+            "post",
+            "/api/overtime/",
+            {
+                "employee": str(ours["other"].id),
+                "day": date.today().isoformat(),
+                "authorise": True,
+                "settlement": "PAID",
+            },
+        ),
     ]
     landed = []
 
@@ -551,6 +575,7 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^audit/export/$",
         "api/^audit/(?P<pk>[^/.]+)/$",
         "api/overview/",
+        "api/overtime/",
         "api/company/",
         "api/working-time-rules/",
         "api/reports/working-time/",

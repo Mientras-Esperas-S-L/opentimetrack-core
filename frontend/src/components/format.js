@@ -11,11 +11,24 @@
 
 const pad = (n) => String(n).padStart(2, '0')
 
-
 export function hhmm(totalSeconds) {
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   return `${pad(hours)}:${pad(minutes)}`
+}
+
+/** Una duración en minutos, dicha como la diría una persona.
+ *
+ *  «5 min», no «0,1 h»: cinco minutos en decimales de hora no se leen, y donde
+ *  esto se usa —lo que sobra o falta de una jornada— la cifra pequeña es
+ *  justamente la habitual.
+ */
+export function durationOf(totalMinutes) {
+  const total = Math.max(0, Math.round(Number(totalMinutes) || 0))
+  const hours = Math.floor(total / 60)
+  const minutes = total % 60
+  if (!hours) return `${minutes} min`
+  return minutes ? `${hours} h ${minutes} min` : `${hours} h`
 }
 
 export function timeOf(iso, timeZone) {
@@ -77,8 +90,7 @@ export const monthName = ({ year, month }) =>
  *  primera: unas dirían «Permiso» donde otras dicen «Visita médica», y ninguna
  *  diría las horas.
  */
-export const leaveLabel = (absence) =>
-  absence?.leave_type_name || absence?.type_display || ''
+export const leaveLabel = (absence) => absence?.leave_type_name || absence?.type_display || ''
 
 export const leaveLength = (absence) => {
   if (!absence) return ''

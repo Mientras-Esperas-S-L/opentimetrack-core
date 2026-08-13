@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-13 07:53+0000\n"
+"POT-Creation-Date: 2026-08-13 08:58+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -161,8 +161,9 @@ msgstr "retribuido"
 msgid "needs a supporting document"
 msgstr "necesita justificante"
 
-#: apps/absences/models.py:155 apps/audit/models.py:135
-#: apps/shifts/models.py:126 apps/tenants/holidays.py:85
+#: apps/absences/models.py:155 apps/audit/models.py:137
+#: apps/punches/models.py:449 apps/shifts/models.py:126
+#: apps/tenants/holidays.py:85
 msgid "note"
 msgstr "nota"
 
@@ -194,11 +195,12 @@ msgstr "Rechazada"
 
 #: apps/absences/models.py:214 apps/punches/corrections.py:72
 #: apps/punches/models.py:149 apps/punches/models.py:396
-#: apps/reports/payroll.py:97 apps/shifts/models.py:111
+#: apps/punches/models.py:438 apps/reports/payroll.py:97
+#: apps/shifts/models.py:111
 msgid "employee"
 msgstr "persona trabajadora"
 
-#: apps/absences/models.py:231 apps/audit/models.py:128
+#: apps/absences/models.py:231 apps/audit/models.py:130
 #: apps/punches/corrections.py:86 apps/punches/models.py:151
 msgid "type"
 msgstr "tipo"
@@ -236,6 +238,7 @@ msgid "reason"
 msgstr "motivo"
 
 #: apps/absences/models.py:269 apps/punches/corrections.py:95
+#: apps/punches/models.py:442
 msgid "status"
 msgstr "estado"
 
@@ -473,92 +476,100 @@ msgstr "Aprobó una ausencia"
 msgid "Rejected leave"
 msgstr "Rechazó una ausencia"
 
-#: apps/audit/models.py:65
+#: apps/audit/models.py:63
+msgid "Authorised overtime"
+msgstr "Autorizó horas extraordinarias"
+
+#: apps/audit/models.py:64
+msgid "Did not authorise overtime"
+msgstr "No autorizó las horas extraordinarias"
+
+#: apps/audit/models.py:67
 msgid "Added a person"
 msgstr "Dio de alta a una persona"
 
-#: apps/audit/models.py:66
+#: apps/audit/models.py:68
 msgid "Changed a person"
 msgstr "Modificó a una persona"
 
-#: apps/audit/models.py:67
+#: apps/audit/models.py:69
 msgid "Deactivated a person"
 msgstr "Dio de baja a una persona"
 
-#: apps/audit/models.py:68
+#: apps/audit/models.py:70
 msgid "Reactivated a person"
 msgstr "Reactivó a una persona"
 
-#: apps/audit/models.py:69
+#: apps/audit/models.py:71
 msgid "Changed a role"
 msgstr "Cambió un perfil"
 
-#: apps/audit/models.py:72
+#: apps/audit/models.py:74
 msgid "Sent a link to set a password"
 msgstr "Envió un enlace para establecer la contraseña"
 
-#: apps/audit/models.py:75
+#: apps/audit/models.py:77
 msgid "Changed company settings"
 msgstr "Cambió los ajustes de la empresa"
 
-#: apps/audit/models.py:76
+#: apps/audit/models.py:78
 msgid "Changed working time rules"
 msgstr "Cambió las reglas de jornada"
 
-#: apps/audit/models.py:79
+#: apps/audit/models.py:81
 msgid "Registered an application"
 msgstr "Registró una aplicación"
 
-#: apps/audit/models.py:80
+#: apps/audit/models.py:82
 msgid "Revoked an application credential"
 msgstr "Revocó una credencial de aplicación"
 
-#: apps/audit/models.py:83
+#: apps/audit/models.py:85
 msgid "Purged security metadata"
 msgstr "Purgó metadatos de seguridad"
 
-#: apps/audit/models.py:101
+#: apps/audit/models.py:103
 msgid "when"
 msgstr "cuándo"
 
-#: apps/audit/models.py:107 apps/common/models.py:97 apps/tenants/models.py:159
+#: apps/audit/models.py:109 apps/common/models.py:97 apps/tenants/models.py:159
 #: apps/tenants/models.py:187 apps/tenants/rules.py:38 apps/users/models.py:270
 msgid "company"
 msgstr "empresa"
 
-#: apps/audit/models.py:117
+#: apps/audit/models.py:119
 msgid "who"
 msgstr "quién"
 
-#: apps/audit/models.py:121
+#: apps/audit/models.py:123
 msgid "who (as recorded)"
 msgstr "quién (tal y como se registró)"
 
-#: apps/audit/models.py:123
+#: apps/audit/models.py:125
 msgid "action"
 msgstr "acción"
 
-#: apps/audit/models.py:129
+#: apps/audit/models.py:131
 msgid "identifier"
 msgstr "identificador"
 
-#: apps/audit/models.py:130
+#: apps/audit/models.py:132
 msgid "what (as recorded)"
 msgstr "sobre qué (tal y como se registró)"
 
-#: apps/audit/models.py:134
+#: apps/audit/models.py:136
 msgid "changes"
 msgstr "cambios"
 
-#: apps/audit/models.py:137 apps/punches/models.py:220
+#: apps/audit/models.py:139 apps/punches/models.py:220
 msgid "IP address"
 msgstr "dirección IP"
 
-#: apps/audit/models.py:140
+#: apps/audit/models.py:142
 msgid "audit entry"
 msgstr "entrada de auditoría"
 
-#: apps/audit/models.py:141
+#: apps/audit/models.py:143
 msgid "audit trail"
 msgstr "registro de actividad"
 
@@ -1096,8 +1107,8 @@ msgstr "prueba del disparador"
 msgid ""
 "What proves the trigger: coordinates, a network name, an external event id."
 msgstr ""
-"Lo que prueba el disparador: coordenadas, el nombre de una red, el id de "
-"un evento externo."
+"Lo que prueba el disparador: coordenadas, el nombre de una red, el id de un "
+"evento externo."
 
 #: apps/punches/models.py:244
 msgid "integrity hash"
@@ -1135,8 +1146,8 @@ msgstr "Falta la entrada"
 msgid "Day left open"
 msgstr "Jornada abierta"
 
-#: apps/punches/models.py:398 apps/shifts/models.py:113
-#: apps/tenants/holidays.py:63
+#: apps/punches/models.py:398 apps/punches/models.py:440
+#: apps/shifts/models.py:113 apps/tenants/holidays.py:63
 msgid "day"
 msgstr "día"
 
@@ -1151,6 +1162,50 @@ msgstr "recordatorio de fichaje"
 #: apps/punches/models.py:404
 msgid "clock reminders"
 msgstr "recordatorios de fichaje"
+
+#: apps/punches/models.py:431
+msgid "Authorised"
+msgstr "Autorizada"
+
+#: apps/punches/models.py:432
+msgid "Not authorised"
+msgstr "No autorizada"
+
+#: apps/punches/models.py:441
+msgid "overtime minutes ruled on"
+msgstr "minutos de horas extraordinarias resueltos"
+
+#: apps/punches/models.py:447
+msgid "settlement"
+msgstr "compensación"
+
+#: apps/punches/models.py:457
+msgid "decided by"
+msgstr "resuelta por"
+
+#: apps/punches/models.py:462
+msgid "decided alone"
+msgstr "resuelta en solitario"
+
+#: apps/punches/models.py:463
+msgid "decided at"
+msgstr "resuelta el"
+
+#: apps/punches/models.py:466
+msgid "overtime decision"
+msgstr "decisión sobre horas extraordinarias"
+
+#: apps/punches/models.py:467
+msgid "overtime decisions"
+msgstr "decisiones sobre horas extraordinarias"
+
+#: apps/punches/overtime.py:93
+msgid "That day has no overtime to rule on."
+msgstr "Ese día no tiene horas extraordinarias que resolver."
+
+#: apps/punches/overtime.py:101 apps/punches/services.py:328
+msgid "Say whether the overtime is paid or compensated with rest."
+msgstr "Indica si las horas extraordinarias se pagan o se compensan con descanso."
 
 #: apps/punches/reminders.py:155
 msgid "Remember to clock in"
@@ -1183,12 +1238,6 @@ msgstr ""
 "Art. 12.4.c ET: a tiempo parcial no caben horas extraordinarias, solo "
 "complementarias, salvo las de fuerza mayor para prevenir o reparar daños "
 "urgentes."
-
-#: apps/punches/services.py:328
-msgid "Say whether the overtime is paid or compensated with rest."
-msgstr ""
-"Indica si las horas extraordinarias se retribuyen o se compensan con "
-"descanso."
 
 #: apps/punches/services.py:389
 msgid "You cannot clock in: you have approved leave for today."
@@ -2111,8 +2160,8 @@ msgid ""
 "Cap on hours a part-time contract may work beyond what was agreed, as a "
 "percentage of it."
 msgstr ""
-"Tope de horas que una jornada parcial puede hacer por encima de lo "
-"pactado, en porcentaje."
+"Tope de horas que una jornada parcial puede hacer por encima de lo pactado, "
+"en porcentaje."
 
 #: apps/tenants/rules.py:111
 msgid "entry tolerance (minutes)"
@@ -2123,8 +2172,8 @@ msgid ""
 "A punch within this many minutes of the rostered start counts as on time. 0 "
 "is strict."
 msgstr ""
-"Fichar dentro de estos minutos del inicio del turno cuenta como puntual. "
-"0 es estricto."
+"Fichar dentro de estos minutos del inicio del turno cuenta como puntual. 0 "
+"es estricto."
 
 #: apps/tenants/rules.py:118
 msgid "exit tolerance (minutes)"
@@ -2458,8 +2507,8 @@ msgid ""
 "Send a reminder when a shift starts and there is no entry, or when a day is "
 "left open. It prompts the real punch; it never records one."
 msgstr ""
-"Envía un recordatorio si empieza el turno y no hay entrada, o si queda "
-"una jornada abierta. Empuja al fichaje real, nunca registra uno."
+"Envía un recordatorio si empieza el turno y no hay entrada, o si queda una "
+"jornada abierta. Empuja al fichaje real, nunca registra uno."
 
 #: apps/users/models.py:474
 msgid ""
@@ -2707,8 +2756,7 @@ msgstr ""
 "\n"
 "Hoy tienes turno en %(company)s y todavía no has fichado la entrada.\n"
 "\n"
-"Ficha cuando puedas, para que tu jornada quede registrada a la hora "
-"real."
+"Ficha cuando puedas, para que tu jornada quede registrada a la hora real."
 
 #: templates/emails/punch_reminder.txt:5
 #, python-format
@@ -2724,12 +2772,12 @@ msgid ""
 msgstr ""
 "Hola %(first_name)s:\n"
 "\n"
-"Tu jornada del %(day)s en %(company)s sigue abierta: fichaste la entrada "
-"y no la salida.\n"
+"Tu jornada del %(day)s en %(company)s sigue abierta: fichaste la entrada y "
+"no la salida.\n"
 "\n"
-"Ficha la salida cuando termines. El servidor pone la hora con tu "
-"fichaje, así que queda registrada tal cual, incluidas las horas de más "
-"si hoy te quedas más tiempo."
+"Ficha la salida cuando termines. El servidor pone la hora con tu fichaje, "
+"así que queda registrada tal cual, incluidas las horas de más si hoy te "
+"quedas más tiempo."
 
 #: templates/emails/punch_reminder.txt:12
 msgid ""

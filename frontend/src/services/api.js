@@ -164,8 +164,7 @@ export const rejectCorrection = (id, note = '') => post(`/corrections/${id}/reje
 // que las usara: una corrección propuesta por la empresa pasaba a esperar
 // respuesta y se quedaba ahí para siempre.
 export const acceptCorrection = (id) => post(`/corrections/${id}/accept/`)
-export const disputeCorrection = (id, account) =>
-  post(`/corrections/${id}/dispute/`, { account })
+export const disputeCorrection = (id, account) => post(`/corrections/${id}/dispute/`, { account })
 export const applyCorrectionAnyway = (id) => post(`/corrections/${id}/apply-anyway/`)
 
 // --------------------------------------------------------------------- absences
@@ -174,6 +173,10 @@ export const getAbsences = async (params) => page(await get('/absences/', params
 export const getAbsenceCalendar = async (from, to) =>
   rows(await get('/absences/calendar/', { from, to }))
 export const getPendingAbsences = async () => rows(await get('/absences/pending/'))
+
+/** Horas extra pendientes de que un responsable las autorice o rechace. */
+export const getPendingOvertime = async () => (await get('/overtime/')).pending ?? []
+export const decideOvertime = (payload) => post('/overtime/', payload)
 export const getLeaveBalance = (employee) => get('/absences/balance/', employee ? { employee } : {})
 export const requestAbsence = (payload) => post('/absences/', payload)
 export const approveAbsence = (id) => post(`/absences/${id}/approve/`)
@@ -243,8 +246,7 @@ export const seedLeaveTypes = () => post('/leave-types/seed/', {})
 
 /** Lo que queda de cada permiso con tope. El catálogo dice que el art. 37.9 da
  *  cuatro días al año; esto dice que van dos. */
-export const getLeaveUsage = async (params) =>
-  (await get('/leave-types/usage/', params)).data
+export const getLeaveUsage = async (params) => (await get('/leave-types/usage/', params)).data
 
 // ---------------------------------------------------------------------- shifts
 

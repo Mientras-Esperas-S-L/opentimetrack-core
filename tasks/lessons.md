@@ -61,3 +61,21 @@ Es la misma familia que la de encadenar con `&&` y leer «458 passed» como éxi
 **Regla:** `set -eo pipefail` siempre que haya una tubería. Y cuando un paso
 imprime cero líneas donde debería imprimir algo, eso **es** el fallo: no seguir
 adelante a ver si el siguiente sale bien.
+
+## Insertar algo justo antes de un símbolo deja su comentario huérfano (13/08/2026)
+
+Me ha pasado cuatro veces en la misma sesión, tres en Python y una en JSX.
+Escribo una clase o una función nueva y la coloco delante de otra que **ya
+tenía encima un decorador o su docstring**. El texto no viaja: se queda pegado
+a lo nuevo y lo de siempre se queda desnudo.
+
+En Python es peor porque el decorador *se aplica*:
+`@extend_schema` sobre la clase equivocada tumbó 75 tests con un
+`AttributeError` que no menciona ni el decorador ni la clase original. En JSX
+solo miente la documentación —dos comentarios describiendo un componente que no
+es el suyo—, y por eso pasa el lint y llega al commit.
+
+**Regla:** antes de insertar en un fichero, mirar la línea inmediatamente
+anterior al punto de inserción. Si es `@decorador`, `*/`, o un comentario, el
+sitio correcto está **antes** de ese bloque, no después. Y al terminar, releer
+las diez líneas de alrededor del hueco: es el único sitio donde vive este fallo.
