@@ -36,13 +36,7 @@ import {
   reviewRoster,
 } from '../../services/api.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
-import {
-  ConfirmDialog,
-  Empty,
-  ErrorNote,
-  Loading,
-  PageHeader,
-} from '../../components/common.jsx'
+import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
 import { dateOf } from '../../components/format.js'
 
 const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
@@ -149,8 +143,8 @@ function AssignDialog({ open, patterns, month, onClose, onSubmit, saving, error 
             </Box>
 
             <Alert severity="info" variant="outlined">
-              Si ya había turno esos días, se sustituye. El turno dice cuándo se puede trabajar;
-              no es un fichaje ni lo genera.
+              Si ya había turno esos días, se sustituye. El turno dice cuándo se puede trabajar; no
+              es un fichaje ni lo genera.
             </Alert>
           </Stack>
         </DialogContent>
@@ -158,7 +152,15 @@ function AssignDialog({ open, patterns, month, onClose, onSubmit, saving, error 
           <Button onClick={onClose} color="inherit">
             Cancelar
           </Button>
-          <Button type="submit" variant="contained" disabled={saving || !form.pattern}>
+          {/* Sin días marcados no hay nada que asignar, y decirlo aquí es
+              mejor que dejar pulsar y devolver un error. Vienen puestos de
+              lunes a viernes, así que solo se llega a cero quitándolos todos
+              a mano --- que es exactamente cuando alguien se ha liado. */}
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={saving || !form.pattern || form.weekdays.length === 0}
+          >
             Asignar
           </Button>
         </DialogActions>
@@ -319,9 +321,7 @@ export default function Roster() {
   })
   // Solo los de toda la empresa: los locales son de un centro, y sombrear la
   // columna entera diría que ese día libra gente que no libra.
-  const holidayByDay = new Map(
-    holidays.filter((h) => !h.workplace).map((h) => [h.day, h.name])
-  )
+  const holidayByDay = new Map(holidays.filter((h) => !h.workplace).map((h) => [h.day, h.name]))
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ['roster'] })
@@ -487,7 +487,7 @@ export default function Roster() {
           ],
           // Only once it actually saved: offering to undo a stroke that never
           // landed would "restore" cells that never changed.
-          { onSuccess: () => setUndo(before) }
+          { onSuccess: () => setUndo(before) },
         )
         return
       }
@@ -516,7 +516,7 @@ export default function Roster() {
       // Only worth offering if something actually changes. Painting mornings
       // over mornings is a no-op, and an undo button for a no-op is noise.
       const changed = stroke.some(
-        (cell, i) => (cell.pattern ?? null) !== (before[i].pattern ?? null) || before[i].segments
+        (cell, i) => (cell.pattern ?? null) !== (before[i].pattern ?? null) || before[i].segments,
       )
       paint.mutate(stroke, { onSuccess: () => setUndo(changed ? before : null) })
     }
@@ -576,9 +576,7 @@ export default function Roster() {
           <ChevronRightIcon />
         </IconButton>
         <Box sx={{ flexGrow: 1 }} />
-        {painting && (
-          <Chip size="small" variant="outlined" color="primary" label="Guardando…" />
-        )}
+        {painting && <Chip size="small" variant="outlined" color="primary" label="Guardando…" />}
         {rows.length > 0 && (
           <Chip size="small" variant="outlined" label={`${totalHours.toFixed(0)} h planificadas`} />
         )}
@@ -626,31 +624,31 @@ export default function Roster() {
                 const feast = holidayByDay.get(iso(month.year, month.month, day))
                 return (
                   <Tooltip key={day} title={feast ?? ''}>
-                  <Box
-                    sx={{
-                      py: 0.75,
-                      textAlign: 'center',
-                      bgcolor: feast
-                        ? 'warning.main'
-                        : weekday >= 5
-                          ? 'action.hover'
-                          : 'transparent',
-                      opacity: feast ? 0.28 : 1,
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      sx={{ display: 'block', fontSize: '0.6rem', color: 'text.secondary' }}
+                    <Box
+                      sx={{
+                        py: 0.75,
+                        textAlign: 'center',
+                        bgcolor: feast
+                          ? 'warning.main'
+                          : weekday >= 5
+                            ? 'action.hover'
+                            : 'transparent',
+                        opacity: feast ? 0.28 : 1,
+                      }}
                     >
-                      {WEEKDAYS[weekday]}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ fontSize: '0.68rem', fontVariantNumeric: 'tabular-nums' }}
-                    >
-                      {day}
-                    </Typography>
-                  </Box>
+                      <Typography
+                        variant="caption"
+                        sx={{ display: 'block', fontSize: '0.6rem', color: 'text.secondary' }}
+                      >
+                        {WEEKDAYS[weekday]}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ fontSize: '0.68rem', fontVariantNumeric: 'tabular-nums' }}
+                      >
+                        {day}
+                      </Typography>
+                    </Box>
                   </Tooltip>
                 )
               })}
@@ -758,9 +756,7 @@ export default function Roster() {
                           {/* The initial, not only the colour: a roster read on
                               a phone in sunlight, or by somebody who does not
                               distinguish two of them, still has to be legible. */}
-                          <Typography
-                            sx={{ fontSize: '0.6rem', color: '#fff', fontWeight: 700 }}
-                          >
+                          <Typography sx={{ fontSize: '0.6rem', color: '#fff', fontWeight: 700 }}>
                             {letter}
                           </Typography>
                         </Box>
@@ -790,12 +786,15 @@ export default function Roster() {
               detail: `Se borran ${rows.length} ${rows.length === 1 ? 'turno' : 'turnos'} de ${rostered.length} ${rostered.length === 1 ? 'persona' : 'personas'}. Los fichajes ya registrados no se tocan: el cuadrante es lo previsto, no lo trabajado.`,
               verb: 'Vaciar',
               run: () =>
+                // Sin `weekdays`: omitirlo es lo que significa «todos los días
+                // del mes», que es de lo que va este botón. Mandarlo vacío
+                // significa ninguno, y el servidor ya lo rechaza --- antes las
+                // dos cosas llegaban iguales.
                 wipe.mutate({
                   employees: rostered.map((p) => p.id),
                   pattern: patterns[0]?.id,
                   date_from: from,
                   date_to: to,
-                  weekdays: [],
                 }),
             })
           }
@@ -830,8 +829,7 @@ export default function Roster() {
             </Button>
           }
         >
-          Cuadrante actualizado en {undo?.length}{' '}
-          {undo?.length === 1 ? 'día' : 'días'}.
+          Cuadrante actualizado en {undo?.length} {undo?.length === 1 ? 'día' : 'días'}.
         </Alert>
       </Snackbar>
 

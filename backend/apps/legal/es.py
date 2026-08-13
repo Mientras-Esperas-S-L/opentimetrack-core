@@ -53,16 +53,19 @@ ESPANA = LegalFramework(
             "Art. 34.1 ET",
             "40 horas semanales de promedio en cómputo anual. Es un máximo legal "
             "ordinario; el convenio o el contrato pueden mejorarlo.",
+            ceiling=40,
         ),
         "daily_rest_hours": Citation(
             "Art. 34.3 ET",
             "Doce horas entre el final de una jornada y el comienzo de la siguiente. "
             "El RD 1561/1995 lo modifica en sectores concretos, y por eso apartarse "
             "se avisa en vez de impedirse.",
+            floor=12,
         ),
         "weekly_rest_hours": Citation(
             "Art. 37.1 ET",
             "Día y medio ininterrumpido. Acumulable en periodos de hasta catorce días.",
+            floor=36,
         ),
         "break_after_hours": Citation(
             "Art. 34.4 ET",
@@ -78,6 +81,7 @@ ESPANA = LegalFramework(
             "Art. 35.2 ET",
             "Ochenta horas al año. No cuentan las compensadas con descanso dentro de "
             "los cuatro meses siguientes, ni las de fuerza mayor del art. 35.3.",
+            ceiling=80,
         ),
         "night_starts_at": Citation(
             "Art. 36.1 ET",
@@ -554,6 +558,13 @@ ESPANA = LegalFramework(
     #
     # Canarias además está en otra zona horaria, que es la otra razón por la que
     # el centro de trabajo existe.
+    # Las dos de España. La hora canaria va una menos todo el año, así que un
+    # turno de mañana en Las Palmas empieza a las 07:00 suyas y a las 08:00 de
+    # Madrid --- y el registro tiene que contarlo en la de la persona.
+    time_zones={
+        "Europe/Madrid": "Península y Baleares",
+        "Atlantic/Canary": "Canarias",
+    },
     regions={
         "ES-AN": "Andalucía",
         "ES-AR": "Aragón",

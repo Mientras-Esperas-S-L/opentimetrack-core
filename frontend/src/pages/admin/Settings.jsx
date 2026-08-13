@@ -67,9 +67,71 @@ const LANGUAGES = [
 ]
 
 const MONTHS = [
-  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
 ]
+
+/** Cómo se llama cada ajuste en la pantalla.
+ *
+ *  Para poder decir **qué** se ha cambiado antes de guardar. Con diecinueve
+ *  campos y un solo botón, quien vuelve a esta pantalla después de un rato no
+ *  sabe si tocó algo ni qué, y el único remedio era recargar y perderlo.
+ *
+ *  Escrito aparte y no leído de los `label` porque un rótulo puede ser «y
+ *  acaba», que fuera de su fila no dice nada.
+ */
+const NOMBRES = {
+  name: 'Razón social',
+  language: 'Idioma',
+  time_zone: 'Zona horaria',
+  managers_see_everyone: 'Los responsables ven toda la empresa',
+  annual_leave_days: 'Días de vacaciones al año',
+  annual_leave_in_working_days: 'Contar en días laborables',
+  leave_year_start_month: 'Mes en que empieza el periodo',
+  weekly_hours: 'Horas semanales',
+  daily_rest_hours: 'Descanso entre jornadas',
+  weekly_rest_hours: 'Descanso semanal',
+  annual_overtime_hours: 'Horas extra al año',
+  entry_tolerance_minutes: 'Margen de entrada',
+  exit_tolerance_minutes: 'Margen de salida',
+  break_after_hours: 'Descanso a partir de',
+  break_minutes: 'Minutos de descanso',
+  break_counts_as_work: 'El descanso computa como trabajo',
+  night_starts_at: 'El trabajo nocturno empieza',
+  night_ends_at: 'El trabajo nocturno acaba',
+  record_retention_years: 'Conservación del registro',
+  security_metadata_retention_days: 'Conservación de metadatos',
+}
+
+/** Lo que se ha tocado y no se ha guardado todavía.
+ *
+ *  Compara lo escrito con lo que trajo el servidor, campo a campo. Los valores
+ *  se comparan como texto a propósito: un número que viene como 40 y se teclea
+ *  como «40» son el mismo ajuste, y decir que ha cambiado sería peor que
+ *  callarse.
+ */
+function cambiosPendientes(editado, guardado) {
+  if (!editado || !guardado) return []
+  return Object.keys(NOMBRES)
+    .filter((campo) => campo in editado && campo in guardado)
+    .filter((campo) => String(editado[campo] ?? '') !== String(guardado[campo] ?? ''))
+    .map((campo) => ({
+      campo,
+      nombre: NOMBRES[campo],
+      antes: String(guardado[campo] ?? '—'),
+      ahora: String(editado[campo] ?? '—'),
+    }))
+}
 
 export default function Settings() {
   const queryClient = useQueryClient()
@@ -150,7 +212,7 @@ export default function Settings() {
       // about the applicable law --- the country, its citations, the floors for
       // minors --- and sending it back would be asking to change the law.
       const { id, country, framework, citations, minors, ...figures } = rules
-      void id, country, framework, citations, minors
+      ;(void id, country, framework, citations, minors)
       saveRules.mutate(figures)
     }
   }
@@ -162,10 +224,56 @@ export default function Settings() {
    *  from the backend without anybody noticing. Now the screen renders what it
    *  is told, and a company elsewhere is told its own law.
    */
+  // Lo tocado en las dos mitades de la pantalla: los datos de la empresa y las
+  // reglas de jornada. Se guardan con el mismo botón, así que se cuentan juntas.
+  const cambios = [...cambiosPendientes(form, company), ...cambiosPendientes(rules, storedRules)]
+
   const cite = (field) => {
     const c = rules?.citations?.[field]
     if (!c) return ' '
     return [c.basis, c.note].filter(Boolean).join('. ')
+  }
+
+  /** Si el valor escrito se sale del límite que fija el artículo.
+   *
+   *  Devuelve la frase del aviso, o `null` si no hay nada que decir. El número
+   *  no está aquí: lo manda el marco legal del país junto a la cita, porque
+   *  escribir «12» en esta pantalla sería enseñarle la cifra española a una
+   *  empresa de fuera.
+   *
+   *  Avisa, no impide. El descanso entre jornadas es el caso claro: el
+   *  RD 1561/1995 lo baja de verdad en sectores concretos, así que un producto
+   *  que se negara estaría equivocado para esas empresas. Lo que no puede
+   *  hacer es callarse ---que es lo que hacía--- porque entonces la misma cifra
+   *  se revisa al llegar por convenio y pasa muda si se teclea a mano.
+   */
+  const outsideTheLaw = (field) => {
+    const c = rules?.citations?.[field]
+    const raw = rules?.[field]
+    // Un campo vacío no es salirse de nada: quien borra para reescribir pasa
+    // por aquí, y `Number('')` es cero --- que sí está por debajo de todo.
+    if (!c || raw === '' || raw == null) return null
+
+    const value = Number(raw)
+    if (Number.isNaN(value)) return null
+
+    if (c.floor != null && value < c.floor) {
+      return `Por debajo del mínimo de ${c.floor} que fija el ${c.basis}. Se guarda igual, pero debería ampararlo el convenio o una norma sectorial.`
+    }
+    if (c.ceiling != null && value > c.ceiling) {
+      return `Por encima del máximo de ${c.ceiling} que fija el ${c.basis}. Se guarda igual, pero debería ampararlo el convenio.`
+    }
+    return null
+  }
+
+  /** Las propiedades del campo que lleva límite legal, cita incluida. */
+  const legalField = (field) => {
+    const warning = outsideTheLaw(field)
+    return {
+      color: warning ? 'warning' : undefined,
+      focused: warning ? true : undefined,
+      helperText: warning ?? cite(field),
+    }
   }
 
   const setRule = (field) => (event) => {
@@ -179,13 +287,42 @@ export default function Settings() {
         title="Ajustes de la empresa"
         subtitle={`${form.name} · ${form.tax_id}`}
         action={
-          <Button type="submit" variant="contained" disabled={save.isPending}>
-            Guardar cambios
+          <Button
+            type="submit"
+            variant="contained"
+            // Desactivado cuando no hay nada que guardar: un botón que se puede
+            // pulsar promete que hará algo.
+            disabled={save.isPending || cambios.length === 0}
+          >
+            {cambios.length === 0
+              ? 'Guardar cambios'
+              : `Guardar ${cambios.length} ${cambios.length === 1 ? 'cambio' : 'cambios'}`}
           </Button>
         }
       />
 
       <ErrorNote error={error} onClose={() => setError(null)} />
+
+      {/* Qué se ha tocado, antes de guardarlo. Son diecinueve campos repartidos
+          en cuatro bloques con un solo botón al final: quien vuelve después de
+          un rato no sabe si cambió algo, y la única forma de averiguarlo era
+          recargar --- perdiéndolo. */}
+      {cambios.length > 0 && (
+        <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Sin guardar
+          </Typography>
+          <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+            {cambios.map((cambio) => (
+              <li key={cambio.campo}>
+                <Typography variant="body2" component="span">
+                  {cambio.nombre}: <s>{cambio.antes}</s> → <strong>{cambio.ahora}</strong>
+                </Typography>
+              </li>
+            ))}
+          </Box>
+        </Alert>
+      )}
 
       {/* Art. 4.b says the workers' representation must be informed when
           somebody disagrees with a change to their record. The system cannot
@@ -376,7 +513,7 @@ export default function Settings() {
                   label="Horas semanales"
                   value={rules.weekly_hours}
                   onChange={setRule('weekly_hours')}
-                  helperText={cite("weekly_hours")}
+                  {...legalField('weekly_hours')}
                 />
                 <TextField
                   fullWidth
@@ -384,7 +521,7 @@ export default function Settings() {
                   label="Descanso entre jornadas (h)"
                   value={rules.daily_rest_hours}
                   onChange={setRule('daily_rest_hours')}
-                  helperText={cite("daily_rest_hours")}
+                  {...legalField('daily_rest_hours')}
                 />
               </Stack>
 
@@ -395,7 +532,7 @@ export default function Settings() {
                   label="Descanso semanal (h)"
                   value={rules.weekly_rest_hours}
                   onChange={setRule('weekly_rest_hours')}
-                  helperText={cite("weekly_rest_hours")}
+                  {...legalField('weekly_rest_hours')}
                 />
                 <TextField
                   fullWidth
@@ -403,7 +540,7 @@ export default function Settings() {
                   label="Horas extra al año"
                   value={rules.annual_overtime_hours}
                   onChange={setRule('annual_overtime_hours')}
-                  helperText={cite("annual_overtime_hours")}
+                  {...legalField('annual_overtime_hours')}
                 />
               </Stack>
 
@@ -439,7 +576,7 @@ export default function Settings() {
                   label="Descanso a partir de (h)"
                   value={rules.break_after_hours}
                   onChange={setRule('break_after_hours')}
-                  helperText={cite("break_after_hours")}
+                  helperText={cite('break_after_hours')}
                 />
                 <TextField
                   fullWidth
@@ -500,7 +637,7 @@ export default function Settings() {
               label="Registro de jornada (años)"
               value={form.record_retention_years}
               onChange={set('record_retention_years')}
-              helperText={cite("record_retention_years")}
+              helperText={cite('record_retention_years')}
             />
             <TextField
               fullWidth

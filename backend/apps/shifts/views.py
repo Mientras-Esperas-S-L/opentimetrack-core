@@ -79,14 +79,45 @@ class ShiftSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "employee_name", "pattern_name", "colour", "minutes"]
 
 
+def _weekdays_wanted(data: dict) -> list[int]:
+    """Los días de la semana que pide la petición, distinguiendo dos cosas.
+
+    **Omitir** el campo significa todos los días del rango: es el atajo cómodo
+    para cubrir un periodo entero, y es lo que usa «Vaciar el mes».
+
+    **Mandarlo vacío** significa ningún día, y eso es un error que hay que
+    decir. Antes las dos cosas llegaban iguales ---el serializador ponía `[]`
+    por defecto--- y quien desmarcaba todos los días en el cuadrante se
+    encontraba turnos los siete, sábados y domingos incluidos. Justo lo
+    contrario de lo que había pedido, y sin un aviso.
+    """
+    if "weekdays" in data and not data["weekdays"]:
+        raise BusinessRuleError(
+            code="no_weekdays",
+            message=_("Pick at least one weekday, or leave the field out to mean every day."),
+        )
+    return data.get("weekdays") or list(range(7))
+
+
 class AssignSerializer(serializers.Serializer):
     employees = serializers.ListField(child=serializers.UUIDField(), allow_empty=False)
     pattern = serializers.UUIDField()
     date_from = serializers.DateField()
     date_to = serializers.DateField()
-    # Monday = 0. Empty means every day in the range.
+    # Monday = 0.
+    #
+    # **Omitido** significa todos los días del rango, que es el atajo cómodo
+    # para un conector que quiere cubrir un periodo entero. **Vacío** no: una
+    # lista vacía enviada a propósito significa ningún día, y hay que decirlo en
+    # vez de adivinar.
+    #
+    # La diferencia importa porque el cuadrante manda `[]` cuando se desmarcan
+    # todos los días. Con `default=list` las dos cosas llegaban iguales, y quien
+    # había quitado hasta el último día se encontraba turnos los siete
+    # ---sábados y domingos incluidos---, que es justo lo contrario de lo que
+    # pidió. Salió en las pruebas del cuadrante: apareció un turno el sábado 5.
     weekdays = serializers.ListField(
-        child=serializers.IntegerField(min_value=0, max_value=6), required=False, default=list
+        child=serializers.IntegerField(min_value=0, max_value=6), required=False
     )
 
 
@@ -228,8 +259,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
                 code="unknown_pattern", message=_("That shift pattern does not exist.")
             )
 
-        wanted = data["weekdays"] or list(range(7))
-        days = weekdays_in(data["date_from"], data["date_to"], wanted)
+        days = weekdays_in(data["date_from"], data["date_to"], _weekdays_wanted(data))
 
         from apps.users.models import User
 
@@ -285,8 +315,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
         form.is_valid(raise_exception=True)
         data = form.validated_data
 
-        wanted = data["weekdays"] or list(range(7))
-        days = weekdays_in(data["date_from"], data["date_to"], wanted)
+        days = weekdays_in(data["date_from"], data["date_to"], _weekdays_wanted(data))
 
         from apps.users.models import User
 
@@ -424,7 +453,17 @@ class WorkingTimeRulesView(APIView):
             "country": framework.country,
             "framework": framework.name,
             "citations": {
-                key: {"basis": c.basis, "note": c.note} for key, c in framework.citations.items()
+                key: {
+                    "basis": c.basis,
+                    "note": c.note,
+                    # El límite del artículo, cuando lo hay. Va aquí y no en la
+                    # pantalla porque es un dato del país: una copia en el
+                    # frontend acabaría enseñando la cifra española a una
+                    # empresa de fuera.
+                    "floor": c.floor,
+                    "ceiling": c.ceiling,
+                }
+                for key, c in framework.citations.items()
             },
             # Not settings and never will be: no agreement may lower them, so a
             # field to edit them would be a field whose only use is breaking the
@@ -453,6 +492,10 @@ class WorkingTimeRulesView(APIView):
             # carrying a copy of Spain's --- which is the mistake the citations
             # made before this endpoint existed.
             "regions": framework.regions,
+            # Igual que las regiones y por el mismo motivo: la pantalla del
+            # centro no puede llevar escrito «Europe/Madrid», que es una cifra
+            # española enseñada a quien no está en España.
+            "time_zones": framework.time_zones,
         }
 
     @extend_schema(request=RulesSerializer, responses={200: RulesSerializer})

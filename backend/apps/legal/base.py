@@ -43,10 +43,26 @@ class Citation:
     what the article actually says, and where it does not apply. Both come from
     the country and neither goes through gettext: translating a citation would
     produce something that reads correctly and points at the wrong law.
+
+    `floor` and `ceiling` are the limit the article sets on that figure, when it
+    sets one. They live here for the same reason the article does: the number is
+    a fact about the country's law, and a copy of it in the settings screen
+    would be a Spanish figure shown to a company elsewhere.
+
+    Crossing one is a **warning, not a refusal**, and that is deliberate. The
+    twelve-hour rest is the clear case: RD 1561/1995 genuinely lowers it for
+    particular sectors, so a product that refused would be wrong for those
+    companies and right for nobody. Silence was the other extreme, and it is
+    what this closes --- the same figure was checked when it arrived in a
+    collective agreement and went unremarked when typed into the settings form.
     """
 
     basis: str
     note: str = ""
+    #: El mínimo que fija el artículo, si fija alguno.
+    floor: float | None = None
+    #: El máximo que fija el artículo, si fija alguno.
+    ceiling: float | None = None
 
 
 @dataclass(frozen=True)
@@ -279,6 +295,20 @@ class LegalFramework:
     #: renamed, translated and abbreviated, and a calendar keyed by one starts
     #: giving a region somebody else's days.
     regions: dict[str, str] = field(default_factory=dict)
+    #: Las zonas horarias del país, como identificador IANA -> nombre de andar
+    #: por casa. Casi todos los países tienen una; España tiene dos, y esa es la
+    #: razón de que exista este campo.
+    #:
+    #: Sirve para que la pantalla ofrezca **las del país** en vez de pedir que
+    #: se teclee un identificador. «Europe/Madrid» no se adivina, y quien
+    #: escribía «Canarias» o «Madrid» a mano se llevaba un error de validación
+    #: sin ninguna pista de qué había que poner.
+    #:
+    #: No es una lista cerrada: una empresa española con una delegación en
+    #: Lisboa necesita «Europe/Lisbon», que no está aquí. Por eso el modelo
+    #: sigue aceptando cualquier zona IANA y esto es solo lo que se ofrece
+    #: primero.
+    time_zones: dict[str, str] = field(default_factory=dict)
     night: NightWork | None = None
     shifts: ShiftWork | None = None
 
