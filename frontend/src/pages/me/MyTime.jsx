@@ -35,6 +35,7 @@ import {
   StatusChip,
 } from '../../components/common.jsx'
 import { dateOf, hhmm, monthBounds, monthName, timeOf } from '../../components/format.js'
+import ChangeOnTheRecord from '../../components/ChangeOnTheRecord.jsx'
 import RemindersControl from '../../components/RemindersControl.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
@@ -253,17 +254,11 @@ function CorrectionRow({ correction, zone, onAccept, onDispute, busy }) {
         <Box sx={{ minWidth: 0, flexGrow: 1 }}>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {correction.kind_display}
-            {correction.proposed_timestamp && (
-              <>
-                {' · '}
-                <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {timeOf(correction.proposed_timestamp, zone)}
-                </Box>{' '}
-                del {dateOf(correction.proposed_timestamp)}
-              </>
-            )}
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+          {/* Qué cambia exactamente. Sin esto, autorizar una anulación era
+              autorizar «un fichaje» sin saber cuál. */}
+          <ChangeOnTheRecord correction={correction} zone={zone} />
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
             Pedida el {dateOf(correction.created_at)}
           </Typography>
           {correction.reason && (

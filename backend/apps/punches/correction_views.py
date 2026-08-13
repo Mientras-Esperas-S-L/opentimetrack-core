@@ -33,6 +33,16 @@ class CorrectionSerializer(serializers.ModelSerializer):
     kind_display = serializers.CharField(source="get_kind_display", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     result_detail = PunchSerializer(source="result", read_only=True)
+    # **El fichaje que se va a tocar.** Faltaba, y con él faltaba lo único que
+    # hace que el consentimiento del art. 4.b signifique algo: si la propuesta
+    # es anular un fichaje, `proposed_timestamp` va vacío por diseño, así que la
+    # persona veía «Anular un fichaje · Pedida el 12/08» y dos botones. Se le
+    # pedía autorizar un cambio sin decirle cuál. En un cambio de hora tampoco
+    # veía la que se sustituye, solo la nueva.
+    #
+    # La pantalla de quien propone sí lo enseñaba. La de quien tiene que
+    # consentir, no, que es justo al revés de como debería estar.
+    target_detail = PunchSerializer(source="target", read_only=True)
 
     class Meta:
         model = PunchCorrection
@@ -43,6 +53,7 @@ class CorrectionSerializer(serializers.ModelSerializer):
             "kind",
             "kind_display",
             "target",
+            "target_detail",
             "proposed_type",
             "proposed_timestamp",
             "reason",

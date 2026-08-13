@@ -376,3 +376,38 @@ def test_a_failed_notice_does_not_undo_the_correction(
     original.refresh_from_db()
     assert correction.status == CorrectionStatus.APPROVED
     assert not original.is_active
+
+
+@pytest.mark.django_db
+def test_the_person_can_see_which_punch_is_being_changed(company, employee, manager):
+    """Consentir un cambio exige saber cuál es el cambio (art. 4.b).
+
+    Una propuesta de **anular** no lleva hora nueva ---no hay ninguna--- así que
+    la pantalla de quien tenía que autorizarla decía «Anular un fichaje» y
+    ponía dos botones debajo. Se le pedía consentir sin decirle qué. Y en un
+    cambio de hora enseñaba la nueva y nunca la que sustituye, que es la mitad
+    de la información.
+    """
+    from rest_framework.test import APIClient
+
+    with tenant_context(company.id):
+        punch = register_punch(employee=employee, company=company)
+        correction = request_correction(
+            employee=employee,
+            company=company,
+            requested_by=manager,
+            kind=CorrectionKind.VOID,
+            target=punch,
+            reason="Se fichó desde el terminal de otra cuadrilla.",
+        )
+
+    client = APIClient()
+    client.force_authenticate(user=employee)
+    body = client.get(f"/api/corrections/{correction.id}/").json()
+
+    assert body["target_detail"] is not None
+    assert body["target_detail"]["id"] == str(punch.id)
+    assert body["target_detail"]["timestamp"]
+    assert body["target_detail"]["punch_type"] == punch.punch_type
+    # Y sigue sin haber hora propuesta, que es lo correcto en una anulación.
+    assert body["proposed_timestamp"] is None

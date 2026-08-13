@@ -46,6 +46,7 @@ import {
   leaveLength,
   timeOf,
 } from '../../components/format.js'
+import ChangeOnTheRecord from '../../components/ChangeOnTheRecord.jsx'
 import { FilterBar, PickFilter, SearchField } from '../../components/filters.jsx'
 import { matches, peopleIn } from '../../components/filtering.js'
 import { SelectAllBox, SelectBox, SelectionBar } from '../../components/selection.jsx'
@@ -659,18 +660,7 @@ export default function Decisions() {
                   direction="row"
                   sx={{ gap: 1, mt: 1, alignItems: 'center', flexWrap: 'wrap' }}
                 >
-                  {correction.proposed_timestamp && (
-                    <Typography variant="body2">
-                      Hora propuesta:{' '}
-                      <Box
-                        component="span"
-                        sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
-                      >
-                        {timeOf(correction.proposed_timestamp, zone)}
-                      </Box>{' '}
-                      del {dateOf(correction.proposed_timestamp)}
-                    </Typography>
-                  )}
+                  <ChangeOnTheRecord correction={correction} zone={zone} />
                   <SourceChip source="ADMIN" />
                 </Stack>
                 <Typography
