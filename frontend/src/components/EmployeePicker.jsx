@@ -40,6 +40,21 @@ import { useDebounced } from '../hooks/useDebounced.js'
  */
 const NOBODY = []
 
+/** Cómo se llama una persona en una lista. */
+const nombreDe = (person) =>
+  `${person.first_name ?? ''} ${person.last_name ?? ''}`.trim() || person.email
+
+/** Texto comparable: en minúsculas y sin acentos.
+ *
+ *  Para que «alvaro» encuentre a «Álvaro». Escribir el acento es justo lo que
+ *  nadie hace buscando deprisa, y el buscador no puede castigarlo.
+ */
+const plano = (texto) =>
+  (texto ?? '')
+    .toLocaleLowerCase('es')
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+
 export default function EmployeePicker({
   value,
   onChange,
@@ -88,8 +103,7 @@ export default function EmployeePicker({
   const people = useMemo(() => data?.rows ?? [], [data])
   const missing = Math.max((data?.count ?? 0) - people.length, 0)
 
-  const nameOf = (person) =>
-    `${person.first_name ?? ''} ${person.last_name ?? ''}`.trim() || person.email
+  const nameOf = nombreDe
 
   const byId = useMemo(() => new Map(people.map((person) => [person.id, person])), [people])
 
@@ -103,12 +117,31 @@ export default function EmployeePicker({
     return person ? nameOf(person) : (picked[id] ?? knownNames?.[id] ?? '…')
   }
 
+  // La lista que devolvió el servidor **corresponde a `settled`**, no a lo que
+  // hay escrito ahora mismo. Entre una tecla y la respuesta pasa más de un
+  // segundo, y durante ese rato la lista anterior sigue en pantalla completa.
+  //
+  // El daño no es estético. Escribiendo «Hugo» y pulsando rápido, la primera
+  // opción todavía era «Jose Almenara», y aquí eso significa registrarle la
+  // ausencia a quien no es. Salió al escribir las pruebas del calendario: la
+  // ausencia apareció a nombre de otra persona.
+  //
+  // Así que mientras el servidor se pone al día se recorta a mano por lo
+  // tecleado. La búsqueda del servidor sigue mandando ---encuentra por correo y
+  // por número de empleado, cosas que aquí no están--- pero ya no se enseña
+  // como resultado nada que no case con lo que la persona ve escrito.
+  const filtradas = useMemo(() => {
+    const aguja = plano(typed).trim()
+    if (aguja.length < 2) return people
+    return people.filter((person) => plano(nombreDe(person)).includes(aguja))
+  }, [people, typed])
+
   // `everyoneLabel` turns the field into a filter: no selection means the whole
   // company rather than nothing, and that has to be a visible option instead of
   // something people discover by clearing the box.
   const options = useMemo(
-    () => (everyoneLabel ? [{ id: '', __everyone: true }, ...people] : people),
-    [everyoneLabel, people],
+    () => (everyoneLabel ? [{ id: '', __everyone: true }, ...filtradas] : filtradas),
+    [everyoneLabel, filtradas],
   )
 
   // Sin `everyoneLabel`, la cadena vacía significa «nada elegido» y tiene que
@@ -192,7 +225,25 @@ export default function EmployeePicker({
         <TextField
           {...params}
           label={label}
-          required={required}
+          // `required` va al `input` de texto de dentro, y en modo múltiple ese
+          // campo **está vacío por diseño**: lo elegido vive en las fichas, no
+          // en el texto. Así que un formulario con un selector múltiple
+          // obligatorio era inválido para el navegador hiciera lo que hiciera
+          // la persona, y `<form>` cancelaba el envío sin decir nada.
+          //
+          // Se veía en «Asignar turno» del cuadrante: elegías turno, persona y
+          // fechas, pulsabas «Asignar» y **no pasaba nada**. Ni petición, ni
+          // aviso, ni el diálogo cerrándose. Salió porque una prueba se quedó
+          // esperando a que el diálogo se cerrara.
+          //
+          // Obligatorio solo mientras no haya nadie elegido, que es el patrón
+          // que documenta MUI para este caso. El asterisco se va al elegir, y
+          // es lo correcto: a partir de ahí no falta nada.
+          //
+          // Intentar conservar el asterisco tocando `slotProps.htmlInput`
+          // descabla el Autocomplete --- pisa lo que `renderInput` le pasa por
+          // `params`, y el campo deja de responder.
+          required={required && (multiple ? chosen.length === 0 : !chosen)}
           helperText={
             // Says out loud that the list is partial. Silence here is what made
             // the old dropdown misleading rather than merely awkward.
