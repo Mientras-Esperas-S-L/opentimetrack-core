@@ -137,9 +137,25 @@ export default function Clock() {
   const punch = useMutation({
     mutationFn: () =>
       clock(`web-${navigator.userAgentData?.platform ?? navigator.platform ?? 'unknown'}`),
-    onSuccess: () => {
+    onSuccess: (registrado) => {
       setError(null)
-      queryClient.invalidateQueries({ queryKey: ['today'] })
+
+      // El servidor ya manda el estado del día dentro de la respuesta, así que
+      // se usa en vez de volver a preguntarlo. Es la pantalla que más se usa y
+      // el peor momento para un viaje de más: la persona está delante del botón
+      // esperando a ver si el fichaje ha entrado, muchas veces con la cobertura
+      // de una obra.
+      //
+      // Se conserva lo que la consulta de `today` añade por su cuenta ---quién
+      // y en qué zona--- porque eso no viene en la respuesta del fichaje.
+      if (registrado?.day_status) {
+        queryClient.setQueryData(['today'], (antes) => ({ ...antes, ...registrado.day_status }))
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['today'] })
+      }
+
+      // Estas sí se vuelven a pedir: son de otras pantallas y el fichaje las
+      // cambia, pero nadie las está mirando en este instante.
       queryClient.invalidateQueries({ queryKey: ['overview'] })
       queryClient.invalidateQueries({ queryKey: ['punches'] })
       queryClient.invalidateQueries({ queryKey: ['my-shift-today'] })

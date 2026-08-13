@@ -7,6 +7,25 @@ const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
 const ACCESS = 'ott.access'
 const REFRESH = 'ott.refresh'
 
+/** A quién avisar cuando la sesión se pierde de verdad.
+ *
+ *  Hacía falta porque `tokens.clear()` vacía el almacén y **nadie se entera**.
+ *  Con la aplicación abierta y el acceso caducado, una consulta de fondo
+ *  recibía 401, el testigo se borraba... y la pantalla seguía puesta: React no
+ *  sabía nada. La consulta del panel se repite cada minuto, así que el
+ *  resultado era un 401 por minuto para siempre, con la persona delante de una
+ *  pantalla que no se arreglaba sola ni la mandaba a entrar.
+ *
+ *  Salió en la consola de un uso real el 13/08/2026, no en las pruebas: las
+ *  que había navegaban, y al navegar se vuelve a comprobar la sesión y todo
+ *  funciona. El caso roto es quedarse quieto dentro.
+ */
+let alPerderLaSesion = null
+
+export const onSessionLost = (fn) => {
+  alPerderLaSesion = fn
+}
+
 export const tokens = {
   get access() {
     return localStorage.getItem(ACCESS)
@@ -116,7 +135,12 @@ api.interceptors.response.use(
       }
     }
 
-    if (status === 401) tokens.clear()
+    if (status === 401) {
+      // Definitivo: o no había refresco, o el refresco también falló, o la
+      // repetición con el testigo nuevo volvió a dar 401.
+      tokens.clear()
+      alPerderLaSesion?.()
+    }
 
     // El titular de un error de validación es siempre el mismo --- «Los datos
     // enviados no son válidos» --- y lo que de verdad pasa viaja en `details`.
