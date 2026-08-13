@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 11 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 12 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -45,7 +45,7 @@ vuelve a una limpia.
 | Punto | Estado | Última pasada | Hallazgos |
 |---|---|---|---|
 | Art. 34.9 — registro objetivo, fiable, conservado | limpia | 13/08 v10 | **el informe de empresa borraba a quien se fue**; nadie podía descargar el suyo desde la interfaz |
-| Art. 34.2 — distribución irregular del 10 % | sin tocar | — | «solo citado» en la revisión del 13/08 |
+| Art. 34.2 — distribución irregular | limpia | 13/08 v12 | **el preaviso de 5 días no lo leía nadie**; el 10 % anual, descartado a propósito |
 | Art. 34.3/34.4 — jornada, descansos | limpia | 13/08 | avisos con cita |
 | Art. 35 — horas extra y su tope | limpia | 13/08 | — |
 | Art. 36 — nocturno y turnos | a medias | 13/08 | falta la fecha de la evaluación de salud |
@@ -94,6 +94,34 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 12 — El art. 34.2: un ajuste que no leía nadie.**
+
+`roster_notice_days` vivía en el modelo, en el marco legal con su cita, y en la
+pantalla de ajustes para que la empresa lo subiera si su convenio lo mejora.
+**Y no lo miraba ni una línea de código.** Es la misma familia que los
+`search_fields` declarados sin el filtro puesto: un ajuste que no lee nadie es
+peor que no tenerlo, porque quien lo configura se queda convencido de que el
+producto lo vigila.
+
+Ahora el cuadrante avisa con su cita, como los otros nueve. Tres decisiones que
+salieron de **medir** y no de suponer:
+
+- El plazo se cuenta desde que el turno se puso o se cambió, no desde hoy.
+  Contra hoy, uno planificado en enero para julio se volvería «de última hora»
+  solo por acercarse la fecha.
+- `updated_at` y no `created_at`: mover un turno de las siete a las quince es un
+  dato nuevo, y el artículo pide el día **y la hora**.
+- Un turno anotado **después** del día no cuenta. Eso no es poco preaviso, es
+  rellenar el cuadrante de la semana pasada --- y eran **94 de los 128** avisos
+  que salían en un mes de datos reales. Sin medirlo, el aviso habría nacido
+  siendo ruido.
+
+Y un falso positivo de cosecha propia: la comprobación de plurales de la vuelta
+7 daba por vacía toda traducción larga, porque gettext las parte y la primera
+línea es siempre `msgstr[N] ""` con el texto debajo. Ladrar sin motivo hace el
+mismo daño que callarse, porque a la segunda vez se desactiva; lleva ya su
+contraste para que siga cazando el fallo que la trajo.
 
 **Vuelta 11 — El art. 37.3, y un fallo que solo se veía fuera de desarrollo.**
 
@@ -395,6 +423,25 @@ Lo del 13/08/2026, antes de arrancar el bucle, está en
 `tasks/revision-ux-2026-08-13.md` y `tasks/revision-legal-2026-08-13.md`.
 
 ## Descartado a propósito
+
+- **El 10 % anual del art. 34.2.** «En defecto de pacto, la empresa podrá
+  distribuir de manera irregular a lo largo del año el diez por ciento de la
+  jornada.» No se calcula, y es una decisión, no un olvido.
+
+  Dos motivos. Uno: el tope solo rige **en defecto de pacto**, y el producto no
+  sabe si hay convenio o acuerdo de empresa que regule la distribución --- que es
+  el caso normal. Enseñar «has usado el 40 % de tu margen» a una empresa cuyo
+  convenio lo tiene pactado es decir algo falso con aire de dato.
+
+  Dos: para medirlo haría falta la distribución **ordinaria** de la jornada
+  contra la que comparar, y eso no está en el modelo: el cuadrante *es* la
+  distribución. Habría que inventarse la referencia, y un porcentaje construido
+  sobre una referencia inventada se lee como un hecho.
+
+  Lo que sí se hace es la otra mitad del artículo, que es la comprobable: el
+  preaviso. Si algún día se aborda, hace falta antes un sitio donde la empresa
+  declare si tiene pacto, y ese sitio es el mismo que el de la consulta a la
+  RLT.
 
 - **Selección múltiple en Fichajes.** Un asiento del registro se corrige de uno
   en uno (art. 4.b). Hay una prueba que se pone roja si aparece una casilla.

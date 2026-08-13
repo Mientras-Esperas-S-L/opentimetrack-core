@@ -366,3 +366,35 @@ llamaba nadie**.
 la primera persona, el primer fichaje— escribir la prueba que **arranca desde
 cero**, no desde el estado sembrado. Y cuando aparezca una función exportada
 que no llama nadie, no darla por muerta: preguntar quién debería llamarla.
+
+## Un ajuste que no lee nadie es peor que no tenerlo (13/08/2026)
+
+`roster_notice_days` estaba en el modelo, en el marco legal con su cita del art.
+34.2 y en la pantalla de ajustes, editable. **Ningún código lo leía.** Quien lo
+configuraba se quedaba convencido de que el producto vigilaba el preaviso.
+
+Ya había pasado igual con los `search_fields`: declarados en cuatro vistas con
+el `SearchFilter` sin activar, así que el buscador respondía con la plantilla
+entera. Y con los `throttle_scope`. Es un patrón, no una casualidad: se añade la
+configuración primero, se deja el código para después, y el «después» no deja
+rastro de que falta.
+
+**Regla:** al encontrar un ajuste, un campo o un flag, buscar **quién lo lee**
+antes de darlo por hecho —`grep` del nombre, y si solo sale en el modelo, la
+migración, el serializador y la pantalla, no lo lee nadie—. Y al añadir un
+ajuste nuevo, escribir en la misma tanda la prueba que lo cambia y comprueba que
+el comportamiento cambia.
+
+## Medir el ruido antes de soltar un aviso nuevo (13/08/2026)
+
+El aviso de preaviso, tal y como lo escribí primero, daba **128 hallazgos** en un
+mes de datos reales: el segundo grupo más grande, por delante de todo lo que
+importaba. De esos, 94 eran turnos anotados *después* del día —rellenar el
+cuadrante de la semana pasada—, que no son un problema de preaviso.
+
+Un aviso que sale 128 veces no se lee: entierra los tres que iban en serio. Y
+eso no se ve leyendo el código, solo contando.
+
+**Regla:** antes de dar por bueno un aviso nuevo, ejecutarlo contra los datos de
+desarrollo y **contar por código**. Si es de los grandes, mirar caso por caso
+qué lo dispara: normalmente hay una clase entera que no debería contar.
