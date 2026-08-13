@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 14 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 15 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -48,7 +48,7 @@ vuelve a una limpia.
 | Art. 34.2 — distribución irregular | limpia | 13/08 v12 | **el preaviso de 5 días no lo leía nadie**; el 10 % anual, descartado a propósito |
 | Art. 34.3/34.4 — jornada, descansos | limpia | 13/08 | avisos con cita |
 | Art. 35 — horas extra y su tope | limpia | 13/08 | — |
-| Art. 36 — nocturno y turnos | a medias | 13/08 | falta la fecha de la evaluación de salud |
+| Art. 36 — nocturno y turnos | limpia | 14/08 v15 | **el turno de noche no cerraba la jornada**; el veto de horas extra del 36.1 no se comprobaba |
 | Art. 37.1/37.2 — descanso semanal y festivos | limpia | 13/08 | — |
 | Art. 37.3 — permisos retribuidos | limpia | 13/08 v11 | **una empresa nueva se quedaba sin un solo permiso**; el catálogo cuadra con el articulado |
 | Art. 38 — vacaciones y recuperación | limpia | 13/08 | — |
@@ -58,6 +58,26 @@ vuelve a una limpia.
 | RGPD / art. 88 LOPDGDD | limpia | 14/08 v14 | **una empresa de baja guardaba las IP para siempre**; y el rastro había dejado de ser inmutable |
 
 ## Hallazgos abiertos
+
+- **La jornada de noche no se atribuye a ningún día.** Arreglada la deducción
+  del tipo, las marcas ya salen bien ---entrada a las 22:00, salida a las
+  06:00--- pero la reconciliación y el informe siguen partiendo el tramo por la
+  medianoche: el día 8 sale «entrada sin salida», el 9 «salida sin entrada
+  previa», y las ocho horas **no aparecen en ningún sitio**. Consecuencias
+  encadenadas: esa jornada no genera nunca fila de horas extra, y el estado del
+  día se lee mal a un lado y a otro de las doce.
+
+  Lo que falta es una **decisión de convenio, no un arreglo**: a qué día
+  pertenecen las horas de un turno que cruza la medianoche. Lo natural es el día
+  en que empezó ---es como está montado el cuadrante--- pero hay convenios que
+  parten por la medianoche a efectos de nocturnidad. Afecta a informes,
+  reconciliación, horas extra y estado del día, así que conviene decidirlo antes
+  de tocar nada.
+
+- **El tope de dieciséis horas de `MAX_OPEN_HOURS`.** Es la frontera entre
+  «cerró tarde» y «se olvidó de fichar», y no la fija ningún artículo. Elegido
+  por ser más largo que cualquier jornada de un tirón y bastante más corto que
+  un olvido de un día. **Conviene confirmarlo con la asesoría.**
 
 - **La IP del rastro de auditoría no caduca, y por diseño no puede caducar.**
   El fichaje suelta la suya al año; la entrada del rastro que describe ese mismo
@@ -108,6 +128,37 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 15 — El art. 36, y el fallo más grave de toda la auditoría.**
+
+Empezó como una vuelta pequeña. El hueco que el cuaderno traía ---«falta la
+fecha de la evaluación de salud»--- **no es un hueco**: `docs/cobertura-legal.md`
+lo excluye a propósito, «nosotros avisamos de que esa condición existe; el
+reconocimiento lo lleva el servicio de prevención». Anotado, y a mirar lo que sí
+nos toca.
+
+**El veto de horas extra del art. 36.1 no se comprobaba.** El aviso del
+cuadrante lo nombraba ---«trae una media de ocho horas, una prohibición de horas
+extra y una evaluación de salud»--- y luego la cola de «Por decidir» las
+autorizaba sin mencionarlo. `holds_night_worker_status` existía y se usaba en un
+solo sitio. Al lado están sus dos hermanas, que sí se comprobaban desde hacía
+tiempo: el veto a los menores (art. 6.3) y el de jornada parcial (art. 12.4.c).
+Faltaba la tercera.
+
+Y escribiendo la prueba de eso salió lo gordo: **un turno de noche daba dos
+entradas y ninguna salida**. La deducción del tipo miraba solo los fichajes del
+día local, así que al salir a las 06:00 el día nuevo no tenía ninguno y decía
+«entrada». La jornada no se cerraba nunca, el día quedaba en cero horas y la
+persona figuraba trabajando indefinidamente. En vigilancia, limpieza o
+residencias eso es el registro entero mal, todos los días, para toda la
+plantilla de noche --- y es justo la gente sobre la que el producto más avisa.
+
+La misma raíz mordía en otro sitio: quien entró a las diez no podía empezar una
+pausa a las tres de la mañana, porque la guarda preguntaba «¿está abierta la
+jornada?» por días locales.
+
+Las dos arregladas. La tercera capa ---a qué día pertenecen esas horas--- queda
+arriba, en los hallazgos abiertos, porque es una decisión y no un arreglo.
 
 **Vuelta 14 — La purga de metadatos, y una garantía que se había evaporado.**
 

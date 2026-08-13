@@ -446,3 +446,24 @@ extensiones, índices parciales— hay que **preguntárselo a la base que está
 sirviendo**, no a la de las pruebas. En OTT eso es `/api/health/`, que responde
 503 si faltan. Y toda garantía de ese tipo necesita su comando de reparación: sin
 él, avisar solo sirve para asustar.
+
+## «Hoy» no vale para quien trabaja de noche (14/08/2026)
+
+El fallo más grave de la auditoría: quien entra a las 22:00 y sale a las 06:00
+recibía **dos entradas y ninguna salida**, porque la deducción del tipo miraba
+los fichajes del **día local** y al salir el día nuevo estaba vacío. La jornada
+no se cerraba nunca y el día quedaba en cero horas.
+
+La misma raíz mordía en la guarda de las pausas, en la reconciliación y en el
+informe. Cuatro sitios, un solo supuesto: *una jornada cabe dentro de un día de
+calendario*. Para el turno de noche es falso, y el turno de noche no es un caso
+raro --- es una industria entera.
+
+**Regla:** en cualquier cálculo sobre jornadas, preguntarse qué pasa si el tramo
+**cruza la medianoche** antes de dar el código por bueno. Y al escribir la
+prueba, hacerla con un turno de noche de verdad (22:00 → 06:00), no con una
+jornada de mañana: una prueba de nueve a cinco nunca verá esta familia de fallos.
+
+Lo encontré de rebote, escribiendo una prueba de otra cosa. Eso también dice
+algo: cubrir un caso legal poco frecuente obliga a montar datos poco frecuentes,
+y ahí es donde aparecen los fallos que las pruebas cómodas no tocan.
