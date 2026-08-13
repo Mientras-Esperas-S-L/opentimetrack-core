@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+import django_filters
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
@@ -227,6 +228,27 @@ class MeView(APIView):
         return Response(UserSerializer(request.user).data)
 
 
+class PeopleFilter(django_filters.FilterSet):
+    """Los filtros de la lista de personas.
+
+    `can_manage` existe por un motivo concreto: el campo de «quién lleva el
+    departamento» ofrecía a toda la plantilla y el servidor solo acepta perfiles
+    que puedan gestionar, así que elegir a un operario daba un 400 después de
+    haberlo elegido. Un desplegable que ofrece lo que luego se niega es una
+    trampa, y la salida es no ofrecerlo.
+    """
+
+    can_manage = django_filters.BooleanFilter(method="filter_can_manage")
+
+    class Meta:
+        model = User
+        fields = ["role", "department", "is_active", "is_worker_representative"]
+
+    def filter_can_manage(self, queryset, name, value):
+        managing = {Role.MANAGER, Role.ADMIN}
+        return queryset.filter(role__in=managing) if value else queryset.exclude(role__in=managing)
+
+
 @extend_schema(tags=["people"])
 class UserViewSet(viewsets.ModelViewSet):
     """People in the company.
@@ -239,7 +261,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.none()
     serializer_class = UserSerializer
     permission_classes = [IsManagerOrAdmin]
-    filterset_fields = ["role", "department", "is_active", "is_worker_representative"]
+    filterset_class = PeopleFilter
     search_fields = ["first_name", "last_name", "email", "employee_id"]
     ordering_fields = ["last_name", "date_joined"]
 

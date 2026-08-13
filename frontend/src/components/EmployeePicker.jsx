@@ -50,6 +50,11 @@ export default function EmployeePicker({
    *  esté en la página cargada. Sin esto, editar un departamento cuyos
    *  responsables están en la página dos enseñaría fichas sin nombre. */
   knownNames,
+  /** Restringe a quien puede gestionar. Lo usa «quién lleva el departamento»:
+   *  el servidor solo acepta perfiles de responsable, así que ofrecer al resto
+   *  era ofrecer algo que luego se niega --- y se negaba con un 400 después de
+   *  haberlo elegido. */
+  onlyManagers = false,
   helperText,
   required,
   size,
@@ -67,8 +72,14 @@ export default function EmployeePicker({
   const search = settled.trim().length >= 2 ? settled.trim() : undefined
 
   const { data, isFetching } = useQuery({
-    queryKey: ['employees', 'picker', search],
-    queryFn: () => getEmployees({ is_active: true, search, ordering: 'last_name' }),
+    queryKey: ['employees', 'picker', search, onlyManagers],
+    queryFn: () =>
+      getEmployees({
+        is_active: true,
+        search,
+        ordering: 'last_name',
+        ...(onlyManagers ? { can_manage: true } : {}),
+      }),
     placeholderData: (previous) => previous,
   })
 
@@ -158,7 +169,13 @@ export default function EmployeePicker({
               ))
           : undefined
       }
-      noOptionsText={search ? 'Nadie coincide.' : 'Escribe para buscar.'}
+      noOptionsText={
+        search
+          ? 'Nadie coincide.'
+          : onlyManagers
+            ? 'Nadie tiene perfil de responsable todavía.'
+            : 'Escribe para buscar.'
+      }
       renderInput={(params) => (
         <TextField
           {...params}

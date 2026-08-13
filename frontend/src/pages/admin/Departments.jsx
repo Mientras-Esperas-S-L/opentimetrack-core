@@ -72,6 +72,7 @@ function DepartmentDialog({ open, department, onClose, onSave, saving, error }) 
                 oficina en vez de los que le tocan. */}
             <EmployeePicker
               multiple
+              onlyManagers
               label="Quién lo lleva"
               value={form.managers}
               onChange={(ids) => setForm({ ...form, managers: ids })}

@@ -91,11 +91,35 @@ export function Empty({ children }) {
   )
 }
 
+/** El error, con el motivo concreto y no solo el titular.
+ *
+ *  Un error de validación llega con la forma `{code, message, details}`, y el
+ *  `message` de esos es siempre el mismo: «Los datos enviados no son válidos».
+ *  Lo que dice **qué** pasa está en `details`, por campo, y hasta el 13/08/2026
+ *  no se enseñaba: el servidor contestaba «Hugo Bermejo no tiene perfil de
+ *  responsable, así que ponerle al mando no le daría nada» y la pantalla decía
+ *  «datos no válidos». Quien lo veía no tenía forma de saber qué corregir.
+ */
 export function ErrorNote({ error, onClose }) {
   if (!error) return null
+
+  // `details` es `{campo: [motivos]}`, y a veces el motivo es un objeto anidado
+  // (un serializador dentro de otro). Se aplana a líneas legibles.
+  const reasons = Object.values(error.details ?? {})
+    .flatMap((value) => (Array.isArray(value) ? value : [value]))
+    .map((reason) => (typeof reason === 'string' ? reason : JSON.stringify(reason)))
+    .filter(Boolean)
+
   return (
     <Alert severity="error" onClose={onClose} sx={{ mb: 2 }}>
       {error.message ?? String(error)}
+      {reasons.length > 0 && (
+        <Box component="ul" sx={{ m: 0, mt: 0.5, pl: 2.5 }}>
+          {reasons.map((reason) => (
+            <li key={reason}>{reason}</li>
+          ))}
+        </Box>
+      )}
     </Alert>
   )
 }
@@ -122,7 +146,11 @@ export function Pager({ count, page, pageSize, onChange, noun = 'registros' }) {
       direction={{ xs: 'column', sm: 'row' }}
       sx={{ gap: 1, mt: 2, alignItems: 'center', justifyContent: 'space-between' }}
     >
-      <Typography variant="body2" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ fontVariantNumeric: 'tabular-nums' }}
+      >
         {pages > 1 ? `${first}–${last} de ${count} ${noun}` : `${count} ${noun}`}
       </Typography>
       {pages > 1 && (
