@@ -134,3 +134,65 @@ export async function darDeBajaLasDePrueba(page, sufijo) {
     await api(page, `/employees/${persona.id}/`, { method: 'DELETE' })
   }
 }
+
+/** Lo que la consola dice y no cuenta como fallo del producto.
+ *
+ *  Cada línea lleva su motivo: una lista de excepciones que crece sin
+ *  justificarse acaba tapando justo lo que había que ver.
+ */
+const RUIDO_DE_CONSOLA = [
+  /\[vite\]/, // recarga en caliente del servidor de desarrollo
+  /Download the React DevTools/,
+  // Avisos de rendimiento de Chrome, no errores: saltan porque en desarrollo
+  // React va sin compilar y algún manejador tarda de más.
+  /\[Violation\]/,
+  // Lo emite MUI al abrir un diálogo, por cómo React 19 devuelve el foco.
+  // Es de la biblioteca y no hay nada nuestro que tocar.
+  /Blocked aria-hidden on an element/,
+]
+
+/** Empieza a vigilar la consola, y devuelve con qué se quejó.
+ *
+ *  El motivo de que esto exista está en el historial del 13/08: de los fallos
+ *  que aparecieron probando a mano, tres ---el `undefined` del cuadrante, las
+ *  dos personas con la misma clave de React, la consulta de permisos que
+ *  devolvía indefinido--- **ya estaban en la consola** antes de que nadie
+ *  abriera la pantalla. Escucharla es la prueba más barata que hay.
+ *
+ *  Se llama antes de `goto`, porque lo que se pierde no se recupera:
+ *
+ *      const ruido = vigilarConsola(page)
+ *      await irA(page, '/panel/centros', 'Centros de trabajo')
+ *      ...
+ *      expect(ruido()).toEqual([])
+ */
+export function vigilarConsola(page) {
+  const problemas = []
+  page.on('console', (mensaje) => {
+    if (mensaje.type() !== 'error' && mensaje.type() !== 'warning') return
+    const texto = mensaje.text()
+    if (!RUIDO_DE_CONSOLA.some((patron) => patron.test(texto))) {
+      problemas.push(`${mensaje.type()}: ${texto.slice(0, 240)}`)
+    }
+  })
+  page.on('pageerror', (error) => problemas.push(`excepción: ${error.message.slice(0, 240)}`))
+  return () => problemas
+}
+
+/** Los datos que no llegaron y se ven en pantalla.
+ *
+ *  Los tres primeros van con límite de palabra ---«NaN» dentro de «Fernández»
+ *  no es un hueco, ni «null» dentro de «anulado»---. El cuarto va como texto
+ *  literal a propósito: sus corchetes lo convierten en una clase de caracteres,
+ *  y `\b[object Object]\b` casa con cualquier letra suelta de la pantalla. Con
+ *  esa versión el primer barrido dio 29 pantallas en rojo, todas por el fallo
+ *  de la prueba.
+ */
+export async function huecosVisibles(page) {
+  const texto = await page.locator('body').innerText()
+  const huecos = ['undefined', 'NaN', 'null'].filter((señal) =>
+    new RegExp(`\\b${señal}\\b`).test(texto),
+  )
+  if (texto.includes('[object Object]')) huecos.push('[object Object]')
+  return huecos
+}
