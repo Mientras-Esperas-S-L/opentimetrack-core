@@ -178,7 +178,10 @@ def confirm_recovery(
         )
 
     alone = refuse_self_decision(
-        subject=recovery.employee, decider=decided_by, company=company, what="holiday recovery"
+        subject=recovery.employee,
+        decider=decided_by,
+        company=company,
+        what=_("a holiday recovery"),
     )
 
     recovery.status = (

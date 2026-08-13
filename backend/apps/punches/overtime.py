@@ -144,7 +144,7 @@ def decide_overtime(
         )
 
     alone = refuse_self_decision(
-        subject=employee, decider=decided_by, company=company, what="overtime"
+        subject=employee, decider=decided_by, company=company, what=_("overtime")
     )
 
     decision, _created = OvertimeDecision.objects.update_or_create(

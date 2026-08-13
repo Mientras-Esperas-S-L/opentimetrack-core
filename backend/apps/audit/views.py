@@ -37,8 +37,36 @@ class AuditLogFilter(LocalDayRangeFilter):
         fields = ["action", "actor", "target_id"]
 
 
+def _ip_for(entry, lector) -> str:
+    """La IP de una línea del registro, solo para quien le corresponde verla.
+
+    El registro se le enseña a cada persona con lo suyo: lo que hizo y lo que le
+    hicieron. Esa segunda mitad trae líneas donde quien actuó es otro ---un
+    responsable que le corrigió un fichaje--- y con ellas venía **la dirección
+    IP de ese responsable**.
+
+    No hace falta para nada de lo que el registro sirve: para saber quién le
+    tocó el fichaje ya está el nombre, y para reclamar, la fecha y el motivo. Lo
+    único que añadía era el dato personal de un compañero, que además dice desde
+    dónde trabaja --- y en un producto que presume de minimizar la IP, chirría.
+
+    Un administrador sí la ve entera: es quien investiga un acceso raro, y sin
+    la dirección no hay nada que investigar.
+    """
+    if lector is None:
+        return ""
+    if getattr(lector, "is_admin", False) or entry.actor_id == lector.id:
+        return entry.ip_address or ""
+    return ""
+
+
 class AuditLogSerializer(serializers.ModelSerializer):
     action_display = serializers.CharField(source="get_action_display", read_only=True)
+    #: De quien actuó, no de quien lee, y por eso no se sirve sin más.
+    ip_address = serializers.SerializerMethodField()
+
+    def get_ip_address(self, entry) -> str:
+        return _ip_for(entry, getattr(self.context.get("request"), "user", None))
 
     class Meta:
         model = AuditLog
@@ -113,7 +141,16 @@ class AuditLogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
         rows = self.filter_queryset(self.get_queryset())
 
         buffer = io.StringIO()
-        writer = csv.writer(buffer, delimiter=";")
+        # `lineterminator` explícito: `csv.writer` pone «\r\n» por defecto ---lo que
+        # dice la RFC 4180--- y eso llena el fichero de «^M» en cualquier editor de
+        # Unix. Molesto a la vista, pero lo que de verdad importa es que el «\r» se
+        # queda **pegado a la última columna** de cada línea: un `awk -F";"` o un
+        # `split(";")` de andar por casa devuelve «05:00\r» donde esperaba «05:00»,
+        # y eso no se ve hasta que alguien compara horas y no le cuadran.
+        #
+        # Excel y LibreOffice abren las dos formas igual de bien, así que no se
+        # pierde nada. Reportado el 13/08/2026.
+        writer = csv.writer(buffer, delimiter=";", lineterminator="\n")
         writer.writerow(
             [_("When"), _("Who"), _("What"), _("About"), _("Detail"), _("Note"), _("Address")]
         )
@@ -126,7 +163,12 @@ class AuditLogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
                     entry.target_label,
                     json.dumps(entry.changes, ensure_ascii=False) if entry.changes else "",
                     entry.note,
-                    entry.ip_address or "",
+                    # El mismo criterio que en la lista, y hay que repetirlo
+                    # aquí porque el fichero no pasa por el serializador: la
+                    # dirección solo la ve un administrador o quien actuó desde
+                    # ella. Un empleado que se descarga su historial no se lleva
+                    # las IP de los responsables que se lo tocaron.
+                    _ip_for(entry, request.user),
                 ]
             )
 
