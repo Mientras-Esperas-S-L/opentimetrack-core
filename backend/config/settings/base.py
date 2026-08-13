@@ -184,7 +184,21 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_THROTTLE_RATES": {
         "anon": "60/min",
-        "user": "1000/hour",
+        # Era «1000/hour», el valor de ejemplo de DRF, y la única tasa de este
+        # diccionario sin un motivo escrito al lado --- señal de que nadie la
+        # había elegido.
+        #
+        # Medido el 13/08/2026: una pantalla de gestión cuesta unas cinco
+        # peticiones, así que mil a la hora son doscientas pantallas, una cada
+        # dieciocho segundos sostenidos. Un cierre de mes las gasta, y el
+        # buscador de personas multiplica ---consulta mientras se teclea---.
+        # Cincuenta por minuto no lo alcanza nadie a mano y sigue siendo un
+        # techo firme contra el vaciado automático de la plantilla.
+        #
+        # Lo que hacía que esto doliera de verdad ya está arreglado aparte:
+        # agotar la cubeta cerraba la sesión, porque la pantalla trataba
+        # cualquier fallo de `/auth/me/` como un token inválido.
+        "user": "3000/hour",
         # Password guessing and recovery mail. Per address for anonymous
         # callers, which is what an attacker varies last.
         "login": "5/min",
@@ -348,7 +362,23 @@ PASSWORD_RESET_TIMEOUT = env.int("PASSWORD_RESET_TIMEOUT", default=60 * 60 * 24)
 # La necesita el reloj de la pantalla de fichar: enseña la hora del servidor,
 # que es la que se va a guardar, en vez de la del dispositivo, que puede ir
 # cinco minutos adelantada y sembrar justo la duda que el diseño quiere cerrar.
-CORS_EXPOSE_HEADERS = ["Date"]
+CORS_EXPOSE_HEADERS = [
+    "Date",
+    # Sin esto el navegador **oculta** la cabecera al JavaScript de la
+    # aplicación, aunque el servidor la mande. Y con ella se va el nombre del
+    # fichero, así que la descarga caía en un apaño: «informe» más la extensión
+    # que se había pedido.
+    #
+    # Eso rompía la entrega de toda la empresa, que no es un PDF sino un **zip**
+    # con un PDF por persona. Se guardaba como `informe.pdf`, y un zip con
+    # nombre de PDF no lo abre nada. Reportado el 13/08/2026 con esa frase
+    # exacta: «genera un pdf que no se puede abrir».
+    #
+    # De paso vuelven los nombres buenos que el servidor ya construía
+    # ---`working-time_B00000001_2026-06-29_2026-08-13.zip`--- en vez de un
+    # «informe.pdf» que no dice de quién ni de cuándo.
+    "Content-Disposition",
+]
 
 # ---------------------------------------------------------- trabajos periódicos
 

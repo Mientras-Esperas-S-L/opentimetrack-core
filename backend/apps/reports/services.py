@@ -337,7 +337,16 @@ def day_notes(row: DayRow) -> str:
 
 def to_csv(data: ReportData) -> str:
     buffer = io.StringIO()
-    writer = csv.writer(buffer, delimiter=";")
+    # `lineterminator` explícito: `csv.writer` pone «\r\n» por defecto ---lo que
+    # dice la RFC 4180--- y eso llena el fichero de «^M» en cualquier editor de
+    # Unix. Molesto a la vista, pero lo que de verdad importa es que el «\r» se
+    # queda **pegado a la última columna** de cada línea: un `awk -F";"` o un
+    # `split(";")` de andar por casa devuelve «05:00\r» donde esperaba «05:00»,
+    # y eso no se ve hasta que alguien compara horas y no le cuadran.
+    #
+    # Excel y LibreOffice abren las dos formas igual de bien, así que no se
+    # pierde nada. Reportado el 13/08/2026.
+    writer = csv.writer(buffer, delimiter=";", lineterminator="\n")
 
     writer.writerow([_("Working time record")])
     writer.writerow([_("Company"), data.company_name, _("Tax number"), data.company_tax_id])

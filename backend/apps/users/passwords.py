@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 
+from django.conf import settings
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -87,7 +88,12 @@ def send_account_email(user, *, base_url: str, invitation: bool = False) -> None
             "company": company,
             "link": link,
             "invitation": invitation,
-            "hours": 24,
+            # Del ajuste, no escrito a mano. Estaba puesto a 24 en las dos
+            # partes y coincidían, pero `PASSWORD_RESET_TIMEOUT` se puede
+            # cambiar por entorno: bajarlo a cuatro horas habría dejado un
+            # correo prometiendo veinticuatro, y quien lo creyera se
+            # encontraría el enlace muerto sin entender por qué.
+            "hours": round(settings.PASSWORD_RESET_TIMEOUT / 3600),
         },
     )
 
