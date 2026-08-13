@@ -290,3 +290,46 @@ limpio.
 **todas** las formas que declara, sin suponer que son singular y plural. Y
 comprobarlo ejecutándola con varios números (1, 2, 5), no leyendo el `.po`.
 La comprobación general vive en `apps/common/tests/test_exceptions.py`.
+
+## Una prueba intermitente es un fallo hasta que se demuestre lo contrario (13/08/2026)
+
+`busca sin acentos` fallaba una vez de cada tantas en la tanda entera y pasaba
+al ejecutarla sola. La lectura fácil es «prueba frágil, le pongo una espera».
+Era un fallo del producto: **la búsqueda del servidor no ignoraba los acentos**,
+`?search=garcia` devolvía cero, y con una plantilla española eso es la mitad de
+los apellidos.
+
+Lo que lo hacía intermitente es justo lo que lo hacía grave. El navegador
+recorta la lista ya cargada por su cuenta y **eso** sí ignora los acentos: si la
+respuesta anterior seguía en pantalla, lo tapaba. Solo se veía cuando la lista
+llegaba antes de teclear. Y en cuanto la plantilla no cabe en una página, lo que
+no esté en la página cargada solo lo puede encontrar el servidor: entonces pasa
+siempre.
+
+**Regla:** ante una intermitente, preguntar primero **qué condición la hace
+fallar** y si esa condición se da más a menudo en producción que en la tanda.
+«Pasa cuando la respuesta del servidor llega a tiempo» no es ruido: es el caso
+normal de un usuario. Solo después de descartar el producto se toca la prueba.
+
+Y el corolario, que es el que me pilló: **el comentario de esa prueba, escrito
+por mí, afirmaba que el servidor también ignoraba los acentos.** Nunca lo
+comprobé. Una afirmación en un comentario no es una comprobación; si merece
+estar escrita, merece un `assert`.
+
+## Correr la CI entera también cuando «solo» se comitea (13/08/2026)
+
+Comiteando siete vueltas de trabajo pasé las comprobaciones completas y salieron
+dos cosas que llevaban tiempo rotas y que nadie había visto: el paso del esquema
+fallaba **desde que entró la API de integración** —`--fail-on-warn` con dos
+avisos— y `npm run lint` daba 739 errores en local, todos del informe HTML de
+Playwright, que eslint entraba a leer.
+
+Los dos escondidos por el mismo motivo: **el sitio donde se rompe no es el sitio
+donde se mira**. El esquema solo se rompía en la CI, y las ramas no se habían
+empujado; el lint solo en local, porque en la CI el checkout está limpio y ese
+directorio no existe.
+
+**Regla:** antes de empujar, correr la secuencia entera de los dos lados
+—backend y frontend—, aunque el trabajo de la sesión no los tocara. Y al
+encontrar un fallo así, comprobar si venía de antes poniendo el fichero de
+entonces: cambia lo que hay que arreglar y evita buscar en el sitio equivocado.

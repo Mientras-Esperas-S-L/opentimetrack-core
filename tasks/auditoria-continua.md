@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 7 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 8 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -88,6 +88,41 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 8 — La CI, que llevaba roja, y una intermitente que era un fallo.**
+
+Dos cosas, y las dos salieron de correr las comprobaciones enteras antes de
+empujar en vez de dar por hecho el estado.
+
+**El paso del esquema fallaba desde que entró la API de integración.** Dos
+avisos, y `--fail-on-warn` los convierte en error. Comprobado que venían de
+antes poniendo el fichero de entonces y viéndolos salir igual. Uno era una
+colisión de nombres de operación ---las dos lecturas de personas se llamaban
+igual y el generador las desempataba con un número, así que qué método era cuál
+en un cliente generado dependía del orden en que se recorrieran las rutas---; el
+otro, un juego de valores con dos nombres, el mismo caso ya resuelto dos veces
+ahí al lado.
+
+**Y `npm run lint` daba 739 errores en local**, todos del informe HTML de
+Playwright, que eslint entraba a leer. En la CI no se veía porque el checkout es
+limpio y ese directorio no existe: se rompía solo en local, y justo para quien
+acababa de correr las pruebas.
+
+Lo gordo salió de una prueba que fallaba **una de cada tantas** y pasaba al
+ejecutarla sola. La tentación era llamarla frágil. Era un fallo del producto:
+**la búsqueda del servidor no ignoraba los acentos**, así que `garcia` devolvía
+cero y `ibanez` no daba con Rocío Ibáñez. Con una plantilla española eso es la
+mitad de los apellidos, y vale igual para los centros («Almacén») y los
+departamentos («Jardinería»).
+
+Lo tapaba el recorte que hace el navegador sobre la lista ya cargada, que sí los
+ignora: mientras la respuesta anterior siguiera en pantalla, la encontraba
+igual. Solo se veía cuando la lista llegaba antes de teclear. **En cuanto la
+plantilla no cabe en una página deja de ser intermitente y pasa siempre**, que
+es lo que lo hace serio.
+
+Y el comentario de esa misma prueba, escrito por mí, afirmaba que el servidor
+también los ignoraba. No lo comprobé al escribirlo.
 
 **Vuelta 7 — Avisos push y correo. Nada en el área, y un fallo mío al salir.**
 
