@@ -320,7 +320,9 @@ def test_pasar_la_tarjeta_dos_veces_no_cierra_la_jornada(client, company, employ
     assert segunda.status_code == 409
     assert segunda.data["error"]["code"] == "punch_too_soon"
 
-    with tenant_context(company.id):
+    # Con el mismo reloj con el que se fichó: `build_day_status` mira **hoy**, y
+    # preguntado desde el día real diría NOT_STARTED con toda la razón.
+    with tenant_context(company.id), freeze_time("2026-08-13 07:00:00"):
         assert Punch.objects.filter(employee=employee).count() == 1
         assert build_day_status(employee, company).state == "WORKING"
 

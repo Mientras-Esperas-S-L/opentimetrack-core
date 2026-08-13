@@ -16,6 +16,7 @@ from rest_framework.test import APIClient
 from apps.absences.catalogue import seed_leave_types
 from apps.absences.models import Absence, AbsenceStatus, AbsenceType, LeaveType
 from apps.absences.services import request_absence, vacation_balance
+from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError
 from apps.common.models import tenant_context
 from apps.punches.services import register_punch
@@ -156,13 +157,25 @@ def test_a_partial_absence_does_not_block_clocking(company, worker):
 
 @pytest.mark.django_db
 def test_a_whole_day_one_still_does(company, worker):
+    """El día de la empresa, no el del contenedor.
+
+    Estaba escrito con `date.today()`, que es la fecha **UTC** del contenedor, y
+    `register_punch` mira el día de la empresa. Entre medianoche y las dos de la
+    madrugada en Madrid las dos no coinciden: la ausencia quedaba en el día
+    anterior, el fichaje no chocaba con nada y la prueba fallaba sola.
+
+    Es exactamente la trampa por la que existe `apps/common/clock.py`, esta vez
+    dentro de una prueba --- donde no la miraba nadie porque el aviso está en el
+    módulo del producto.
+    """
     with tenant_context(company.id):
+        hoy = local_today(company)
         Absence.objects.create(
             tenant=company,
             employee=worker,
             absence_type=AbsenceType.VACATION,
-            start_date=date.today(),
-            end_date=date.today(),
+            start_date=hoy,
+            end_date=hoy,
             status=AbsenceStatus.APPROVED,
         )
         with pytest.raises(BusinessRuleError) as caught:

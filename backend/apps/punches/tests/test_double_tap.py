@@ -74,8 +74,12 @@ def test_pasados_unos_segundos_se_puede_fichar_la_salida(company, marta):
         with freeze_time("2026-08-13 08:00:10"):
             salida = register_punch(employee=marta, company=company)
 
-        assert salida.punch_type == PunchType.OUT
-        assert build_day_status(marta, company).state == "OFF"
+            # Dentro del reloj congelado, no fuera. `build_day_status` mira
+            # **hoy**, y con la comprobación fuera «hoy» era el día real: la
+            # prueba pasaba todo el día que se escribió y se ponía roja a
+            # medianoche, diciendo NOT_STARTED con toda la razón.
+            assert salida.punch_type == PunchType.OUT
+            assert build_day_status(marta, company).state == "OFF"
 
 
 @pytest.mark.django_db
