@@ -25,6 +25,45 @@ def _check_database() -> tuple[bool, str]:
     return True, "ok"
 
 
+#: Los tres guardianes de `audit.0002_append_only_trigger`.
+GUARDIANES = ("audit_log_no_update", "audit_log_no_delete", "audit_log_no_truncate")
+
+
+def _check_audit_is_append_only() -> tuple[bool, str]:
+    """Que el rastro siga siendo inmutable **en esta base**, no en la migración.
+
+    «Un rastro de auditoría que puede editar aquel a quien incrimina no es
+    prueba», dice la migración que los crea. Y estaban en la migración, con la
+    migración marcada como aplicada y su función presente --- pero los tres
+    triggers no estaban en la base de desarrollo, así que se podía editar y
+    borrar el rastro sin que nada chistara.
+
+    Da igual cómo se perdieron (una tabla recreada, una restauración, un
+    `migrate --fake`): lo que importa es que una garantía que solo vive en una
+    migración **se puede evaporar sin ruido**, y la única forma de saberlo es
+    preguntárselo a la base de datos que está sirviendo.
+
+    Aquí y no en una prueba: las pruebas corren sus migraciones enteras y
+    siempre los ven. Es exactamente el sitio donde no estaba el problema.
+    """
+    if connection.vendor != "postgresql":
+        return True, "no aplica"
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT tgname FROM pg_trigger "
+                "WHERE tgrelid = 'audit_auditlog'::regclass AND NOT tgisinternal"
+            )
+            puestos = {fila[0] for fila in cursor.fetchall()}
+    except Exception as exc:
+        return False, exc.__class__.__name__
+
+    faltan = [nombre for nombre in GUARDIANES if nombre not in puestos]
+    if faltan:
+        return False, "el rastro no es inmutable, faltan: " + ", ".join(faltan)
+    return True, "ok"
+
+
 def _check_cache() -> tuple[bool, str]:
     try:
         cache.set("healthcheck", "1", timeout=5)
@@ -54,7 +93,8 @@ class HealthView(APIView):
     def get(self, request):
         db_ok, db_detail = _check_database()
         cache_ok, cache_detail = _check_cache()
-        healthy = db_ok and cache_ok
+        audit_ok, audit_detail = _check_audit_is_append_only()
+        healthy = db_ok and cache_ok and audit_ok
 
         return Response(
             {
@@ -63,6 +103,7 @@ class HealthView(APIView):
                 "checks": {
                     "database": {"ok": db_ok, "detail": db_detail},
                     "cache": {"ok": cache_ok, "detail": cache_detail},
+                    "audit_append_only": {"ok": audit_ok, "detail": audit_detail},
                 },
             },
             status=status.HTTP_200_OK if healthy else status.HTTP_503_SERVICE_UNAVAILABLE,
