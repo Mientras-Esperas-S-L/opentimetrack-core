@@ -428,9 +428,7 @@ def test_the_annual_cap_counts_only_what_the_law_counts(company, people):
             settlement="REST",  # compensada: no computa
         )
         # El día 3 se queda sin resolver: todavía no es hora extra.
-        used = overtime_used(
-            employee=people["worker"], company=company, day=date(2026, 9, 30)
-        )
+        used = overtime_used(employee=people["worker"], company=company, day=date(2026, 9, 30))
 
     assert used["hours"] == 2.0
     assert used["cap_hours"] == 80
@@ -460,9 +458,7 @@ def test_going_over_the_cap_is_flagged(company, people):
                 authorise=True,
                 settlement="PAID",
             )
-        used = overtime_used(
-            employee=people["worker"], company=company, day=date(2026, 9, 30)
-        )
+        used = overtime_used(employee=people["worker"], company=company, day=date(2026, 9, 30))
 
     assert used["hours"] == 6.0
     assert used["over_the_cap"] is True
