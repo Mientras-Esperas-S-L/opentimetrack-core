@@ -15,25 +15,13 @@ import TableViewIcon from '@mui/icons-material/TableView'
 import { downloadReport, generatePayrollSummaries, getDepartments } from '../../services/api.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { ErrorNote, PageHeader, Panel } from '../../components/common.jsx'
+import { save } from '../../services/download.js'
 import { useAuth } from '../../hooks/useAuth.js'
 
 const isoDaysAgo = (days) => {
   const day = new Date()
   day.setDate(day.getDate() - days)
   return day.toISOString().slice(0, 10)
-}
-
-/** Hands the blob to the browser. Revoking the object URL matters here: these
- *  documents are not small and the tab may stay open all day. */
-function save({ blob, filename }) {
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  URL.revokeObjectURL(url)
 }
 
 export default function Reports() {

@@ -16,15 +16,18 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import DownloadIcon from '@mui/icons-material/Download'
 import EditNoteIcon from '@mui/icons-material/EditNote'
 
 import {
   acceptCorrection,
   disputeCorrection,
+  downloadReport,
   getCorrections,
   getPunches,
   requestCorrection,
 } from '../../services/api.js'
+import { save } from '../../services/download.js'
 import {
   Empty,
   ErrorNote,
@@ -345,6 +348,23 @@ export default function MyTime() {
   const [error, setError] = useState(null)
 
   const range = monthBounds(month)
+
+  // El registro **en la mano**, no solo en pantalla.
+  //
+  // El art. 34.9 dice que los registros «permanecerán a disposición de las
+  // personas trabajadoras». La API ya dejaba a cualquiera pedir el suyo ---por
+  // omisión es el de quien llama--- pero la única pantalla que lo ofrecía
+  // estaba detrás del panel de gestión, así que en la práctica solo lo tenía a
+  // su disposición quien administra. Poder mirarlo no es lo mismo que poder
+  // llevárselo: lo que se enseña a un juzgado o a la Inspección es el
+  // documento, con su huella, y esa la calcula el servidor.
+  const bajar = useMutation({
+    mutationFn: (format) =>
+      downloadReport({ date_from: range.from, date_to: range.to, format }),
+    onSuccess: save,
+    onError: setError,
+  })
+
   const { data: punches, isLoading } = useQuery({
     queryKey: ['punches', 'mine', range],
     queryFn: () =>
@@ -408,6 +428,14 @@ export default function MyTime() {
         action={
           <Stack direction="row" sx={{ gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
             <RemindersControl />
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              disabled={bajar.isPending}
+              onClick={() => bajar.mutate('pdf')}
+            >
+              Descargar {monthName(month)}
+            </Button>
             <Button variant="outlined" startIcon={<EditNoteIcon />} onClick={() => setAsking(true)}>
               Pedir una corrección
             </Button>
