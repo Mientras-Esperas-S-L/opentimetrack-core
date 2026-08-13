@@ -550,6 +550,34 @@ class SignUpSerializer(serializers.Serializer):
             last_name=validated["last_name"],
             role=Role.ADMIN,
         )
+
+        # El catálogo de permisos del país, desde el minuto uno.
+        #
+        # Sin esto una empresa recién dada de alta se quedaba con **cero**
+        # permisos: el desplegable de «Qué pides» salía vacío y nadie podía
+        # pedir un matrimonio, un fallecimiento ni una hospitalización. Todo el
+        # art. 37.3 quedaba fuera del producto, y no había forma de meterlo
+        # desde ninguna pantalla --- el endpoint que lo siembra existía y no lo
+        # llamaba nadie.
+        #
+        # Que sea automático no contradice el «copiar y no referenciar» del
+        # catálogo: esa decisión es sobre las ediciones de después. Los permisos
+        # del art. 37.3 son de la empresa desde que existe, pulse alguien un
+        # botón o no, y lo que se siembra es el suelo legal. Lo que su convenio
+        # mejore se edita encima, que es justo lo que la copia permite.
+        #
+        # `seed_leave_types` es idempotente, así que volver a llamarlo ---por
+        # el endpoint, para las empresas de antes--- añade lo que falte y no
+        # toca lo que hay.
+        # Importado aquí dentro, no arriba: `users` está por debajo de
+        # `absences` en el orden que declara la configuración, y traerlo al
+        # principio del módulo invertiría esa dependencia para siempre. Hoy
+        # no da ciclo ---`absences.models` no mira a `users`--- y el día que
+        # lo hiciera, reventaría al arrancar y lejos de aquí.
+        from apps.absences.catalogue import seed_leave_types
+
+        seed_leave_types(company)
+
         return {"company": company, "user": admin}
 
 
