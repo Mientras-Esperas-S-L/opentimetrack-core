@@ -48,7 +48,17 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         dry_run: bool = options["dry_run"]
-        companies = Tenant.objects.filter(is_active=True)
+        # **Todas**, también las que están de baja.
+        #
+        # Filtrar por `is_active` dejaba sus IP y sus dispositivos ahí para
+        # siempre, y el comando terminaba diciendo «Purged 0 events» --- o sea
+        # que todo iba bien. Justo al revés: el plazo de conservación no deja de
+        # correr porque una empresa deje de usar el producto, y esos son
+        # precisamente los datos que ya no mira nadie.
+        #
+        # Los fichajes de una empresa de baja siguen ahí, y tienen que seguir:
+        # son el registro y viven cuatro años. Lo que sobra es la IP.
+        companies = Tenant.objects.all()
         if options.get("tenant"):
             companies = companies.filter(tax_id=options["tenant"])
 

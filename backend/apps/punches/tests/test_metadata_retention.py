@@ -240,3 +240,53 @@ def test_the_purge_does_not_cross_between_companies(company, employee):
     yours.refresh_from_db()
     assert mine.ip_address is None
     assert yours.ip_address == "10.0.0.7"
+
+
+@pytest.mark.django_db
+def test_una_empresa_de_baja_tambien_se_purga(company, employee):
+    """El plazo no deja de correr porque la empresa deje de usar el producto.
+
+    El comando recorría solo las empresas activas, así que una que se daba de
+    baja conservaba las IP y los dispositivos de todos sus fichajes **para
+    siempre** --- y terminaba diciendo «Purged 0 events», o sea que todo iba
+    bien. Son justo los datos que ya no mira nadie.
+
+    Los fichajes siguen ahí y tienen que seguir: son el registro y viven cuatro
+    años. Lo que sobra es la IP.
+    """
+    with freeze_time("2026-08-11 10:00:00"):
+        punch = _punch(company, employee, when=timezone.now() - timedelta(days=400))
+
+        company.is_active = False
+        company.save(update_fields=["is_active"])
+
+        salida = StringIO()
+        call_command("purge_security_metadata", stdout=salida)
+
+    punch.refresh_from_db()
+    assert punch.ip_address is None, "una empresa de baja conservaba la IP para siempre"
+    assert punch.device_id == ""
+    assert "Purged 1" in salida.getvalue()
+
+
+@pytest.mark.django_db
+def test_y_el_fichaje_de_la_empresa_de_baja_sigue_entero(company, employee):
+    """El contraste, y el límite del arreglo.
+
+    Purgar los metadatos de una empresa de baja no puede convertirse en borrar
+    su registro: el art. 34.9 pide cuatro años y una baja no los acorta. Se va
+    la IP; la hora, el tipo y el sello se quedan.
+    """
+    with freeze_time("2026-08-11 10:00:00"):
+        punch = _punch(company, employee, when=timezone.now() - timedelta(days=400))
+        cuando, tipo, sello = punch.timestamp, punch.punch_type, punch.hash_integrity
+
+        company.is_active = False
+        company.save(update_fields=["is_active"])
+        call_command("purge_security_metadata", stdout=StringIO())
+
+    punch.refresh_from_db()
+    assert punch.timestamp == cuando
+    assert punch.punch_type == tipo
+    assert punch.hash_integrity == sello
+    assert punch.verify_hash(), "el sello dejó de cuadrar"
