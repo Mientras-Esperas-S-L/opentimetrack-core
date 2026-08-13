@@ -8,7 +8,7 @@
 
 import { expect, test } from '@playwright/test'
 
-import { api, irA, marca } from './apoyo.js'
+import { api, darDeBajaLasDePrueba, irA, marca } from './apoyo.js'
 
 test.use({ storageState: 'e2e/.sesiones/admin.json' })
 
@@ -38,6 +38,8 @@ test.describe('Alta de personas', () => {
 
   test('da de alta y aparece en la lista', async ({ page }) => {
     const sufijo = marca()
+    // Lo que la prueba crea, la prueba lo recoge.
+    test.info().annotations.push({ type: 'limpia', description: sufijo })
     await irA(page, '/panel/personas', 'Personas')
     await page.getByRole('button', { name: 'Dar de alta' }).click()
     const correo = await rellenarMinimo(page, sufijo)
@@ -46,6 +48,8 @@ test.describe('Alta de personas', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await page.getByPlaceholder('Buscar por nombre, correo o número').fill(sufijo)
     await expect(page.getByText(correo)).toBeVisible()
+
+    await darDeBajaLasDePrueba(page, sufijo)
   })
 
   test('el mismo correo dos veces lo rechaza, y dice por qué', async ({ page }) => {
@@ -67,6 +71,8 @@ test.describe('Alta de personas', () => {
         await page.getByRole('button', { name: 'Cancelar' }).click()
       }
     }
+
+    await darDeBajaLasDePrueba(page, sufijo)
   })
 
   test('el diálogo no arrastra lo del anterior al reabrirlo', async ({ page }) => {

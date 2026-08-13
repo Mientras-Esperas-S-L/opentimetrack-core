@@ -117,3 +117,20 @@ export async function apiSinSesion(page, ruta) {
     return { status: respuesta.status }
   }, ruta)
 }
+
+/** Da de baja a las personas que una prueba creó.
+ *
+ *  De baja, no borradas: la API no borra a nadie ---los fichajes viven cuatro
+ *  años--- y un ayudante que prometiera otra cosa mentiría. Con esto dejan de
+ *  salir en las listas, que es lo que hace falta para que la base de
+ *  desarrollo no acabe enseñando «Prueba De Playwright» junto a la plantilla
+ *  real.
+ *
+ *  Lo que quede de verdad se limpia a mano al resembrar (`seed_demo --reset`).
+ */
+export async function darDeBajaLasDePrueba(page, sufijo) {
+  const encontradas = await api(page, `/employees/?search=${sufijo}&is_active=true`)
+  for (const persona of encontradas.body?.results ?? []) {
+    await api(page, `/employees/${persona.id}/`, { method: 'DELETE' })
+  }
+}

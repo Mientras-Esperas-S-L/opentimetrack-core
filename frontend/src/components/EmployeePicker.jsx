@@ -157,9 +157,13 @@ export default function EmployeePicker({
         )
       }}
       renderOption={(props, option) => {
-        const { key, ...rest } = props
+        // Por identificador y no por la clave que trae MUI, que la deriva de la
+        // etiqueta: dos personas pueden llamarse igual --- pasa constantemente
+        // con apellidos comunes --- y React avisaba de claves repetidas y podía
+        // duplicar u omitir filas de la lista.
+        const { key: _derivada, ...rest } = props
         return (
-          <li key={key} {...rest}>
+          <li key={option.id || '__everyone'} {...rest}>
             {option.__everyone ? everyoneLabel : nameOf(option)}
           </li>
         )
