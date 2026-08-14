@@ -535,3 +535,20 @@ mitad, me lo habría creído.
 que algo conocido-vivo salga como vivo y algo conocido-muerto salga como muerto.
 Es el mismo principio que validar una comprobación limpia contra un caso
 positivo, y cuesta lo mismo: nada.
+
+## Una prueba de rendimiento que se trae los datos bien no prueba nada (14/08/2026)
+
+Midiendo el arreglo de la asistencia, la primera prueba llamaba al ayudante
+pasándole una lista de personas que **ella misma** había traído con el
+`select_related` correcto. El arreglo estaba en la **vista**, no en el ayudante,
+así que la prueba pasaba idéntica antes y después: verde con el código roto.
+
+Se vio al contrastar ---revertir y ver si se pone roja---, que es lo que hago con
+las de comportamiento y no se me había ocurrido hacer con una de coste.
+
+**Regla:** una prueba de consultas se hace **por donde entra la petición**, no
+por la función interna: el `select_related`, el `prefetch` y el `only` viven en
+la vista y una prueba que los reconstruye por su cuenta mide su propio código. Y
+contrastarla igual que las demás: revertir el arreglo y comprobar que se queja.
+Además, afirmar **que no crece** (dos tamaños distintos) en vez de un número
+mágico, que solo dice algo si no cambia al crecer.

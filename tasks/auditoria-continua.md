@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 19 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 20 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -106,10 +106,6 @@ vuelve a una limpia.
   que el RGPD prefiere. Si se decide, la pregunta es qué se pierde para
   investigar un incidente. **Por decidir, no por arreglar.**
 
-- **`app/attendance` hace tres consultas por persona.** Medido: 604 consultas y
-  215 ms con doscientas personas, 68 y 142 ms con veinte. Con mil serán tres mil
-  consultas. Reconciliar el día persona a persona no escala, y esto lo pide un
-  conector que puede llamarlo a menudo. Hace falta una consulta agregada.
 - **Ejecutar las pruebas con ventana de vez en cuando.** El favicon ausente
   llevaba ahí desde siempre con la suite entera en verde: Chrome sin ventana no
   lo pide. Lo mismo puede pasar con tipografías, impresión o consultas de medios.
@@ -141,6 +137,28 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 20 — La asistencia, de 73 consultas a 2.**
+
+Las dos familias de barrido de la vuelta 19 no dejaron nada más, y las de
+seguridad ya estaban cubiertas ---la suite adversarial cubre escribir *y* leer lo
+ajeno dentro de la empresa---, así que esta vuelta va al hallazgo de rendimiento
+que quedaba abierto desde la 6.
+
+Medido en la empresa de desarrollo, 19 personas: **73 consultas y 27 ms**, casi
+cuatro por cabeza. Ahora **2 y 3 ms**, y ya no crece con la plantilla.
+
+Tres cosas, y la tercera solo se ve contando el SQL. `build_day_status` cuesta
+dos consultas y ahora se le pueden pasar hechas. Los fichajes del día salen en
+una sola para todo el mundo. Y `person.tzinfo` mira el centro, pero **el centro
+sin zona propia cae en su empresa**: con `select_related("workplace")` seguía
+habiendo una consulta por persona, la de la empresa del centro. La cadena tenía
+un eslabón más de los que parece, y eso no se lee, se cuenta.
+
+Lo que más costó fue la prueba. La primera versión medía el ayudante con una
+lista que ella misma se traía bien, así que el `select_related` de la vista ---lo
+que se estaba arreglando--- no lo tocaba nadie: pasaba igual antes y después.
+Medida por el endpoint sí se pone roja con el código de antes.
 
 **Vuelta 19 — Segunda pasada, barriendo las dos clases que ya dieron fallos.**
 
