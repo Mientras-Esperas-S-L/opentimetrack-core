@@ -45,6 +45,24 @@ export const buildTheme = (mode = 'light') =>
             root: { backgroundImage: 'none' },
           },
         },
+        // La inicial de una persona, legible.
+        //
+        // El avatar por defecto de MUI pone texto del color del fondo de la
+        // página sobre un gris medio: **1.75 de contraste en claro**, o sea la
+        // letra prácticamente invisible, y 3.94 en oscuro. Es la inicial de
+        // quien está trabajando ahora mismo, en la portada.
+        //
+        // No se vio antes porque depende del dato: con nadie fichado la lista
+        // está vacía y el avatar no existe.
+        MuiAvatar: {
+          styleOverrides: {
+            colorDefault: {
+              backgroundColor: mode === 'light' ? '#1b5e4a' : '#4db6a0',
+              color: mode === 'light' ? '#ffffff' : '#12161a',
+              fontWeight: 600,
+            },
+          },
+        },
       },
     },
     // El paquete de español de MUI, y no por gusto: sus componentes rotulan en

@@ -106,12 +106,17 @@ test.describe('Resumen', () => {
     const total = (await api(page, '/corrections/?status=AWAITING_EMPLOYEE')).body?.count ?? 0
     const filas = await page.getByRole('button', { name: 'Aplicar sin acuerdo' }).count()
 
+    // El aviso de «se muestran 50 de 55» era el arreglo de la vuelta 2, cuando
+    // la cola llegaba recortada y no lo decía. En la 22 se sustituyó por un
+    // paginador, que además deja llegar a las que faltan --- el aviso mandaba a
+    // usar los filtros, y los filtros son en cliente sobre lo ya cargado.
+    //
+    // Esta prueba se quedó vieja sin que nadie lo notara, porque con menos de
+    // cincuenta propuestas tomaba la rama del «no debe aparecer» y pasaba.
     if (total > filas) {
-      // Cincuenta y cinco pendientes vistas como cincuenta, sin nada que dijera
-      // que faltaban cinco. Un recorte callado se lee como «ya está todo».
-      await expect(page.getByText(`Se muestran ${filas} de ${total}`)).toBeVisible()
+      await expect(page.getByText(`1–${filas} de ${total} propuestas`)).toBeVisible()
     } else {
-      await expect(page.getByText(/Se muestran \d+ de \d+/)).toHaveCount(0)
+      await expect(page.getByText(`${total} propuestas`)).toBeVisible()
     }
   })
 
