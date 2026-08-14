@@ -147,7 +147,7 @@ def test_el_catalogo_no_lleva_entradas_marcadas_fuzzy():
     # es como los crea: una comprobación que mirara solo el castellano habría
     # dado verde con los tres recién nacidos así.
     dudosas = []
-    for idioma in ("es", "ca", "gl", "eu"):
+    for idioma in ("es", "ca", "gl"):
         catalogo = Path(settings.BASE_DIR) / "locale" / idioma / "LC_MESSAGES" / "django.po"
         if not catalogo.exists():
             continue
@@ -165,11 +165,11 @@ def test_el_catalogo_no_lleva_entradas_marcadas_fuzzy():
     assert re.search(r"^#,.*\bfuzzy\b", ejemplo, flags=re.MULTILINE)
 
 
-@pytest.mark.parametrize("idioma", ["ca", "gl", "eu"])
+@pytest.mark.parametrize("idioma", ["ca", "gl"])
 def test_lo_que_no_esta_traducido_cae_al_castellano_y_no_al_ingles(idioma):
     """La razón de que un catálogo a medias sea utilizable.
 
-    Los tres catálogos nuevos traducen los mensajes que llegan a las personas y
+    Los catálogos nuevos traducen los mensajes que llegan a las personas y
     dejan sin traducir las etiquetas internas del modelo. Eso solo vale si lo
     que falta cae al **castellano**: si cayera al inglés ---que es el idioma en
     que se escriben los `msgid`--- una empresa catalana vería su producto en dos
@@ -185,7 +185,7 @@ def test_lo_que_no_esta_traducido_cae_al_castellano_y_no_al_ingles(idioma):
         assert translation.gettext(sin_traducir) == "trabajador nocturno"
 
 
-@pytest.mark.parametrize("idioma", ["ca", "gl", "eu"])
+@pytest.mark.parametrize("idioma", ["ca", "gl"])
 def test_los_mensajes_que_ve_una_persona_si_estan_traducidos(idioma):
     """El contraste del de arriba: si todo cayera al castellano, aquel pasaría
     igual y no probaría nada."""

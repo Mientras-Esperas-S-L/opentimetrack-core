@@ -305,15 +305,22 @@ MEDIA_ROOT = BASE_DIR / "media"
 # zone. Adding a locale is dropping a .po file in locale/.
 LANGUAGE_CODE = env("LANGUAGE_CODE", default="es")
 
+# Los que tienen catálogo, y solo esos.
+#
+# Estaban los ocho de siempre con traducción de uno. Un idioma sin catálogo no
+# falla: cae al castellano en silencio, porque `LANGUAGE_CODE` es `es` y Django
+# encadena por ahí. O sea que ofrecerlo era prometer algo que no pasaba, y quien
+# lo elegía se quedaba pensando que algo iba mal.
+#
+# El euskera llegó a tener catálogo y se retiró: iba incompleto ---los párrafos
+# largos de derecho laboral quedaron sin traducir--- y medio idioma en un
+# producto que explica obligaciones legales no es medio bueno, es confuso.
+# El fichero está en el historial, listo para que lo termine quien sepa.
 LANGUAGES = [
     ("es", _("Spanish")),
-    ("en", _("English")),
     ("ca", _("Catalan")),
     ("gl", _("Galician")),
-    ("eu", _("Basque")),
-    ("fr", _("French")),
-    ("pt", _("Portuguese")),
-    ("de", _("German")),
+    ("en", _("English")),
 ]
 
 LOCALE_PATHS = [BASE_DIR / "locale"]

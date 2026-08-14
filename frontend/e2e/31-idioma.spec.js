@@ -28,12 +28,12 @@ test.describe('Idioma', () => {
     const opciones = await page.getByRole('option').allInnerTexts()
 
     // Los cinco que tienen catálogo.
-    for (const real of ['Español', 'Català', 'Galego', 'Euskara', 'Inglés']) {
+    for (const real of ['Español', 'Català', 'Galego', 'Inglés']) {
       expect(opciones, `falta ${real}`).toContain(real)
     }
     // Y los tres que no lo tienen siguen fuera: ofrecerlos era prometer algo
     // que no pasaba, porque se contestaba en castellano igual.
-    for (const sinCatalogo of ['Francés', 'Portugués', 'Alemán']) {
+    for (const sinCatalogo of ['Euskara', 'Francés', 'Portugués', 'Alemán']) {
       expect(opciones, `sigue ofreciendo ${sinCatalogo}`).not.toContain(sinCatalogo)
     }
     await page.keyboard.press('Escape')

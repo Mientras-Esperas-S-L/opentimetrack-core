@@ -116,14 +116,15 @@ const needsHours = (regime) => regime === 'PART_TIME' || regime === 'TRAINING'
  *  Por eso un catálogo a medias es utilizable ---catalán donde llega a las
  *  personas, castellano en las etiquetas internas--- y no una mezcla con inglés.
  *
- *  Francés, portugués y alemán siguen fuera: ofrecerlos sin catálogo era
- *  prometer algo que no pasaba.
+ *  Euskera, francés, portugués y alemán siguen fuera. El euskera llegó a
+ *  tener catálogo y se retiró: iba incompleto ---faltaban los párrafos
+ *  largos de derecho laboral--- y medio idioma en un producto que explica
+ *  obligaciones legales no es medio bueno, es confuso.
  */
 const IDIOMAS = [
   ['es', 'Español'],
   ['ca', 'Català'],
   ['gl', 'Galego'],
-  ['eu', 'Euskara'],
   ['en', 'Inglés'],
 ]
 
