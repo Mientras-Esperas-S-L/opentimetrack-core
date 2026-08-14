@@ -506,3 +506,32 @@ backend ofrece —endpoints, campos del serializador, ajustes— y preguntar **q
 lo llama** desde el frontend. `grep` del nombre en `src/`: si solo aparece en
 `services/api.js`, está exportado y muerto. Es una comprobación de dos minutos
 que ha encontrado tres fallos de producto.
+
+## Un acento grave en `git commit -m "..."` se lo come el shell (14/08/2026)
+
+En zsh, dentro de comillas dobles, `` `algo` `` es sustitución de comandos: el
+shell intenta ejecutarlo y deja un hueco en el mensaje. Un commit de esta sesión
+quedó con «los demás sitios que acotan están bien:  con USE_TZ convierte…», sin
+el nombre del campo y con la frase coja. Se vio porque zsh además escupió
+`command not found`, pero si el nombre hubiera coincidido con un comando real
+---`date`, `test`, `time`--- habría entrado su salida en el mensaje sin avisar de
+nada.
+
+**Regla:** los mensajes de commit con nombres de código van por fichero
+(`git commit -F`) o con heredoc en comillas simples. Escapar `\`` funciona pero
+se olvida a la tercera.
+
+## Un barrido que acusa a todos no es un barrido (14/08/2026)
+
+La primera versión del barrido de «ajustes que nadie lee» dio **todos muertos**,
+incluidos `weekly_hours` y `daily_rest_hours`, que se leen por todas partes. La
+causa: `grep -oP` sobre varios ficheros antepone el nombre del fichero a cada
+resultado, así que el nombre del campo llevaba pegado `apps/tenants/rules.py:`.
+
+Lo delató que el resultado era absurdo. Si el fallo hubiera afectado solo a la
+mitad, me lo habría creído.
+
+**Regla:** un barrido se calibra antes de creérselo, con **los dos extremos**:
+que algo conocido-vivo salga como vivo y algo conocido-muerto salga como muerto.
+Es el mismo principio que validar una comprobación limpia contra un caso
+positivo, y cuesta lo mismo: nada.
