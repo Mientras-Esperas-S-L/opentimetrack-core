@@ -419,6 +419,18 @@ export const getAuditTrail = async (params) => page(await get('/audit/', params)
  *  fijado para el abono», y dejar elegir fechas produciría resúmenes que no
  *  cuadran con ninguna nómina. */
 export const getPayrollSummary = (params) => get('/reports/payroll-summary/', params)
+
+/** El mismo resumen, como documento. Devuelve el blob y el nombre que eligió el
+ *  servidor, igual que `downloadReport`. */
+export const downloadPayrollSummary = async (params) => {
+  const response = await api.get('/reports/payroll-summary/', { params, responseType: 'blob' })
+  const disposition = response.headers['content-disposition'] ?? ''
+  const match = disposition.match(/filename="?([^"]+)"?/)
+  return {
+    blob: response.data,
+    filename: match?.[1] ?? `resumen.${params?.format ?? 'pdf'}`,
+  }
+}
 export const generatePayrollSummaries = (day) =>
   post('/reports/payroll-summary/', day ? { day } : {})
 

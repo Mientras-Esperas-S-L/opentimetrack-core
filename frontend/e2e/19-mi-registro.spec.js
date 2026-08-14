@@ -27,7 +27,7 @@ test.describe('Mi jornada · un operario', () => {
     const ruido = vigilarConsola(page)
     await irA(page, '/mi-jornada', 'Mi jornada')
 
-    const boton = page.getByRole('button', { name: /^Descargar / })
+    const boton = page.getByRole('button', { name: /^Descargar \w+ de \d{4}$/ })
     await expect(boton).toBeVisible()
 
     const espera = page.waitForEvent('download')
@@ -49,9 +49,9 @@ test.describe('Mi jornada · un operario', () => {
     // diría, y se lee después.
     await irA(page, '/mi-jornada', 'Mi jornada')
 
-    const antes = await page.getByRole('button', { name: /^Descargar / }).textContent()
+    const antes = await page.getByRole('button', { name: /^Descargar \w+ de \d{4}$/ }).textContent()
     await page.getByRole('button', { name: 'Mes anterior' }).click()
-    const despues = await page.getByRole('button', { name: /^Descargar / }).textContent()
+    const despues = await page.getByRole('button', { name: /^Descargar \w+ de \d{4}$/ }).textContent()
 
     expect(despues).not.toBe(antes)
   })

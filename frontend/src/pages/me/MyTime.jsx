@@ -25,6 +25,8 @@ import {
   disputeCorrection,
   downloadReport,
   getCorrections,
+  downloadPayrollSummary,
+  getPayrollSummary,
   getPunches,
   requestCorrection,
 } from '../../services/api.js'
@@ -412,6 +414,24 @@ export default function MyTime() {
     enabled: Boolean(me),
   })
 
+  // El resumen que acompaña a la nómina. Existía entero en el servidor ---y su
+  // documentación decía «read for the person concerned»--- y ninguna pantalla se
+  // lo daba a esa persona: quien lleva la nómina podía generarlos, y quien
+  // trabaja no podía verlos. El periodo lo pone la empresa, no la petición,
+  // porque el artículo lo ata al «periodo fijado para el abono»: dejar elegir
+  // fechas produciría resúmenes que no cuadran con ninguna nómina.
+  const { data: resumen } = useQuery({
+    queryKey: ['payroll-summary', 'mine'],
+    queryFn: () => getPayrollSummary(),
+    enabled: Boolean(me),
+  })
+
+  const bajarResumen = useMutation({
+    mutationFn: () => downloadPayrollSummary({ format: 'pdf' }),
+    onSuccess: save,
+    onError: setError,
+  })
+
   const { data: corrections } = useQuery({
     queryKey: ['corrections', 'mine'],
     queryFn: () => getCorrections({ employee: me }),
@@ -483,6 +503,49 @@ export default function MyTime() {
           apart. Art. 4.b needs their authorisation, and until this existed the
           screen showed a chip saying their answer was awaited with no way to
           give one --- the proposal simply hung. */}
+      {/* El resumen del periodo de nómina, en cifras y descargable.
+          Va aquí y no en un sitio propio porque es la misma pregunta que ya
+          trae a nadie a esta pantalla ---«¿cuánto he trabajado?»--- solo que
+          medida contra el periodo que paga la empresa en vez de contra el mes
+          natural, que casi nunca coinciden. */}
+      {resumen && (
+        <Panel
+          title="Lo que va del periodo de nómina"
+          hint={`${resumen.period?.label ?? ''}. Es el resumen que acompaña a tu nómina: el periodo lo fija la empresa, no esta pantalla.`}
+          sx={{ mb: 3 }}
+        >
+          <Stack direction="row" sx={{ gap: 3, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <Box>
+              <Typography variant="h5" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                {hhmm(resumen.total_seconds)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                trabajadas en {resumen.days} {resumen.days === 1 ? 'día' : 'días'}
+              </Typography>
+            </Box>
+            {resumen.overtime_seconds > 0 && (
+              <Box>
+                <Typography variant="h6" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {hhmm(resumen.overtime_seconds)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  de más sobre lo previsto
+                </Typography>
+              </Box>
+            )}
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              disabled={bajarResumen.isPending}
+              onClick={() => bajarResumen.mutate()}
+              sx={{ ml: 'auto' }}
+            >
+              Descargar el resumen
+            </Button>
+          </Stack>
+        </Panel>
+      )}
+
       {waiting.length > 0 && (
         <Panel
           title={waiting.length === 1 ? 'Un cambio en tu registro' : 'Cambios en tu registro'}
