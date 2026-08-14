@@ -138,9 +138,23 @@ test.describe('Quien propone el cambio', () => {
   test('el fichaje original no se borra al aplicar la corrección', async ({ page, browser }) => {
     const { correccion, fichaje } = await proponerAnulacion(browser)
 
+    // La persona da su conformidad, que es el paso que faltaba. Antes esto era
+    // `test.skip(aplicada.status >= 400, 'necesita la conformidad de la persona
+    // primero')`: la prueba sabía cuál era el paso que le faltaba y en vez de
+    // darlo se rendía, así que llevaba sin comprobar nada. Y lo que comprueba
+    // es la regla que gobierna el módulo entero ---el original nunca se borra---.
+    const suyo = await browser.newContext({ storageState: 'e2e/.sesiones/operario.json' })
+    const suPagina = await suyo.newPage()
+    await suPagina.goto('/mi-jornada')
+    const conforme = await api(suPagina, `/corrections/${correccion.id}/accept/`, {
+      method: 'POST',
+    })
+    await suyo.close()
+    expect(conforme.status, JSON.stringify(conforme.body)).toBe(200)
+
     await page.goto('/panel')
-    const aplicada = await api(page, `/corrections/${correccion.id}/approve/`, { method: 'POST' })
-    test.skip(aplicada.status >= 400, 'necesita la conformidad de la persona primero')
+    const tras = await api(page, `/corrections/${correccion.id}/`)
+    expect(tras.body.status, 'aceptar no la aplicó').toBe('APPROVED')
 
     // Anulado y legible: el registro conserva lo que pasó y lo que se decidió.
     const original = await api(page, `/punches/${fichaje.id}/`)

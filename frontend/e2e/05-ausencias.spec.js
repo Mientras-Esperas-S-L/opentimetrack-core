@@ -126,10 +126,37 @@ test.describe('Resolver ausencias', () => {
 
   test('rechazar exige que quede constancia y la solicitud se conserva', async ({ page }) => {
     await irA(page, '/panel/decisiones', 'Por decidir')
-    const pendientes = await api(page, '/absences/pending/')
-    test.skip(!pendientes.body?.length, 'no hay ausencias pendientes en la semilla')
 
-    const una = pendientes.body[0]
+    // Se crea la solicitud en vez de esperar a que la semilla traiga una. Antes
+    // era `test.skip(!pendientes.body?.length, ...)` y llevaba sin ejecutarse:
+    // la cola de la base de desarrollo se vacía en cuanto alguien la usa, y el
+    // salto lo tapaba en silencio.
+    //
+    // Queda rechazada y eso está bien: una rechazada es historial ---es
+    // justamente lo que esta prueba comprueba--- y no ensucia la cola.
+    const gente = await api(page, '/employees/')
+    const yo = await api(page, '/auth/me/')
+    const otra = (gente.body?.results ?? []).find((p) => p.id !== yo.body.user.id)
+    expect(otra, 'hace falta otra persona: no se puede resolver lo propio').toBeTruthy()
+
+    const dentro = (dias) => {
+      const d = new Date()
+      d.setDate(d.getDate() + dias)
+      return d.toISOString().slice(0, 10)
+    }
+    const alta = await api(page, '/absences/', {
+      method: 'POST',
+      body: {
+        employee: otra.id,
+        absence_type: 'VACATION',
+        start_date: dentro(200),
+        end_date: dentro(201),
+        reason: 'Prueba de interfaz: solicitud para rechazar.',
+      },
+    })
+    expect(alta.status, JSON.stringify(alta.body)).toBe(201)
+
+    const una = alta.body
     const rechazo = await api(page, `/absences/${una.id}/reject/`, {
       method: 'POST',
       body: { note: 'Prueba de interfaz: coincide con dos bajas en la cuadrilla.' },

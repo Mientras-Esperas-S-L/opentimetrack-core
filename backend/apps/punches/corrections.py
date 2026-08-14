@@ -481,11 +481,41 @@ def _note_alone(note: str) -> str:
     return f"{note}\n\n{mark}".strip() if note else mark
 
 
+def _reclamar_pendiente(correction: PunchCorrection) -> PunchCorrection:
+    """Bloquea la corrección y exige que le toque decidir a la empresa.
+
+    Con un mensaje por estado, y no uno solo, porque «ya está resuelta» era
+    falso en el caso más frecuente: una corrección propuesta por la empresa pasa
+    a **esperando a la persona**, y aprobarla desde ahí contestaba que ya estaba
+    resuelta. A quien lo lee eso le dice que otro llegó antes, cuando lo que
+    pasa es que tiene que esperar a que la persona conteste ---o aplicar sin
+    acuerdo cuando venza el plazo del art. 4.b, que es una decisión distinta y
+    con consecuencias distintas---.
+    """
+    fresca = PunchCorrection.objects.select_for_update().get(pk=correction.pk)
+    if fresca.status == CorrectionStatus.PENDING:
+        return fresca
+
+    if fresca.status == CorrectionStatus.AWAITING_EMPLOYEE:
+        raise BusinessRuleError(
+            code="awaiting_the_employee",
+            message=_(
+                "The person concerned has not answered yet. Wait, or apply it "
+                "without agreement once the period has passed."
+            ),
+        )
+
+    raise BusinessRuleError(
+        code="already_resolved",
+        message=_("This request has already been resolved."),
+    )
+
+
 def approve_correction(correction: PunchCorrection, *, resolved_by, note: str = "") -> Punch | None:
     """Applies the correction, leaving the previous version readable."""
     # Bloqueando la fila, no mirando la copia en memoria: dos responsables
     # pulsando a la vez pasaban los dos. Ver `apps.common.transitions`.
-    correction = claim(PunchCorrection, correction.pk, desde=CorrectionStatus.PENDING)
+    correction = _reclamar_pendiente(correction)
 
     # A manager filing a correction on their own record and approving it was
     # two clicks, both theirs. See apps/common/four_eyes.py for why this is
@@ -529,7 +559,7 @@ def approve_correction(correction: PunchCorrection, *, resolved_by, note: str = 
 
 def reject_correction(correction: PunchCorrection, *, resolved_by, note: str = "") -> None:
     """Turns it down. The request stays: a refused claim is history too."""
-    correction = claim(PunchCorrection, correction.pk, desde=CorrectionStatus.PENDING)
+    correction = _reclamar_pendiente(correction)
 
     correction.status = CorrectionStatus.REJECTED
     correction.resolved_by = resolved_by
