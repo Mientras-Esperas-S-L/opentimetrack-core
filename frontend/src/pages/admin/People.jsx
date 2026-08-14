@@ -30,7 +30,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import SearchIcon from '@mui/icons-material/Search'
 
-import { SearchField } from '../../components/filters.jsx'
+import { FilterBar, SearchField } from '../../components/filters.jsx'
 
 import {
   createEmployee,
@@ -805,10 +805,12 @@ export default function People() {
         </Alert>
       )}
 
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        sx={{ gap: 2, mb: 2, alignItems: { sm: 'center' } }}
-      >
+      {/* La compartida, y por la misma razón que el buscador: esta pantalla se
+          fabricaba su propia fila y le faltaba el `flexWrap`. Entre 600 y 1000
+          px de ancho ---un portátil al 150 % de zoom, una tableta pequeña, media
+          ventana--- la fila pasaba a horizontal y se salía 60 px por la derecha,
+          con el interruptor de las bajas fuera de la pantalla. */}
+      <FilterBar>
         {/* El compartido, no uno propio. Esta pantalla se fabricaba el suyo y
             por eso se quedó fuera cuando el buscador común recibió su nombre
             accesible: se seguía oyendo como «cuadro de texto». De paso hereda
@@ -894,7 +896,7 @@ export default function People() {
           }
           label="Ver también las bajas"
         />
-      </Stack>
+      </FilterBar>
 
       {isAdmin && (
         <SelectionBar
