@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.utils import timezone, translation
 
+from apps.common.locale import activate_for
 from apps.common.models import reset_current_tenant, set_current_tenant
 
 
@@ -37,12 +38,28 @@ class TenantMiddleware:
 
 
 class LocaleAndTimeZoneMiddleware:
-    """Activates the language and time zone of whoever is asking.
+    """Clears the language and time zone after every request, and sets them for
+    the ones where it can.
 
-    Order of preference for the language: the person's own setting, then the
-    company's, then whatever `LocaleMiddleware` worked out from the request.
-    For the time zone there is no negotiation: it is the company's, because a
-    working-day record has to read in the zone where the work happened.
+    It used to do the whole job here, and for the API it did **nothing at all**:
+    the language block hung off `request.user.is_authenticated`, and API callers
+    authenticate with a bearer token that DRF resolves inside the view. At
+    middleware time there is no caller yet, so the condition was false on every
+    API request and neither the language nor the time zone was ever activated.
+
+    The class two above says exactly this about the tenant ---"for those the
+    tenant is set again by the permission class"--- and this one, written right
+    below it with the same shape, never got the same treatment. The activation
+    now lives in `apps.common.locale.activate_for`, called from the permission
+    class for bearer-token callers and from here for the paths where there
+    really is a user this early: the Django admin, and anything session-based.
+
+    What has to stay here is the clearing. `translation.activate` and
+    `timezone.activate` set thread locals, and this is the only thing that wraps
+    the whole request: without the `finally` the next request to reuse the
+    thread would answer in the previous caller's language. Both are cleared
+    unconditionally now, because who activated them is no longer knowable from
+    here.
     """
 
     def __init__(self, get_response):
@@ -50,25 +67,12 @@ class LocaleAndTimeZoneMiddleware:
 
     def __call__(self, request):
         user = getattr(request, "user", None)
-        activated_language = False
-
         if user is not None and user.is_authenticated:
-            company = getattr(user, "tenant", None)
-
-            language = getattr(user, "locale", "") or (
-                (company.settings or {}).get("language") if company else ""
-            )
-            if language:
-                translation.activate(language)
-                request.LANGUAGE_CODE = translation.get_language()
-                activated_language = True
-
-            if company is not None:
-                timezone.activate(company.tzinfo)
+            activate_for(user)
+            request.LANGUAGE_CODE = translation.get_language()
 
         try:
             return self.get_response(request)
         finally:
             timezone.deactivate()
-            if activated_language:
-                translation.deactivate()
+            translation.deactivate()

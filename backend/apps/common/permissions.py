@@ -9,6 +9,7 @@ from __future__ import annotations
 from django.utils.translation import gettext_lazy as _
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
+from apps.common.locale import activate_for
 from apps.common.models import set_current_tenant
 
 
@@ -32,6 +33,10 @@ class IsAuthenticatedInTenant(BasePermission):
             return bool(user.is_superuser)
 
         set_current_tenant(user.tenant_id)
+        # Aquí y no en el middleware, por lo mismo que el tenant: con un token
+        # bearer no hay quien pregunte hasta que DRF lo resuelve, ya dentro de
+        # la vista.
+        activate_for(user)
         return True
 
 
@@ -118,4 +123,5 @@ class HasApplicationScope(BasePermission):
             return False
 
         set_current_tenant(caller.tenant_id)
+        activate_for(caller)
         return True
