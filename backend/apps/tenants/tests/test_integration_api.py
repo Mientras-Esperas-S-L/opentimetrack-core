@@ -417,3 +417,108 @@ def test_la_asistencia_no_sale_de_la_empresa(company, other_company):
     assert "ajena@globex.example" not in str(todos.json())
     assert concreta.status_code == 409
     assert concreta.data["error"]["code"] == "employee_not_found"
+
+
+@pytest.mark.django_db
+def test_la_asistencia_no_crece_con_la_plantilla(connector, company):
+    """El mismo número de consultas con tres personas que con doce.
+
+    Era una por cabeza y pico: `build_day_status` cuesta dos ---los fichajes y
+    las reglas--- y `person.tzinfo` una tercera. Con doscientas personas eran
+    seiscientas consultas para responder una pregunta, y esto lo llama un
+    conector que puede preguntarlo a menudo.
+
+    **Por el endpoint y no por el ayudante**, que es la parte que costó:
+    la primera versión medía `_attendance_of` con una lista que la propia prueba
+    se traía bien, así que el `select_related` de la vista ---justo lo que se
+    estaba arreglando--- no lo tocaba nadie. Pasaba igual antes y después del
+    arreglo, o sea que no comprobaba nada.
+
+    Y con dos tamaños, porque un número fijo solo significa algo si no cambia al
+    crecer. Consultas y no milisegundos: el tiempo depende de la máquina.
+    """
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    from apps.punches.services import register_punch
+
+    with tenant_context(company.id):
+        for numero in range(12):
+            persona = User.objects.create_user(
+                email=f"p{numero}@example.com",
+                password="a-sufficiently-long-password",
+                tenant=company,
+                first_name=f"P{numero}",
+                employee_id=f"EMP-9{numero:03}",
+            )
+            register_punch(employee=persona, company=company)
+            if numero == 2:
+                # La foto con tres: se desactivan las que faltan y luego vuelven.
+                pass
+
+    def consultas_con(cuantas_activas):
+        with tenant_context(company.id):
+            User.objects.filter(employee_id__startswith="EMP-9").update(is_active=False)
+            ids = list(
+                User.objects.filter(employee_id__startswith="EMP-9")
+                .order_by("employee_id")
+                .values_list("pk", flat=True)[:cuantas_activas]
+            )
+            User.objects.filter(pk__in=ids).update(is_active=True)
+        with CaptureQueriesContext(connection) as capturadas:
+            respuesta = connector.get("/api/app/attendance/")
+        assert respuesta.status_code == 200, respuesta.data
+        return len(capturadas), respuesta.data["people"]
+
+    consultas_con(3)  # se descarta: la primera crea las reglas de la empresa
+
+    con_tres, pocas = consultas_con(3)
+    con_doce, muchas = consultas_con(12)
+
+    assert len(pocas) == 3
+    assert len(muchas) == 12
+    assert con_tres == con_doce, (
+        f"con 3 personas cuesta {con_tres} consultas y con 12 cuesta {con_doce}: "
+        "sigue creciendo con la plantilla"
+    )
+
+
+@pytest.mark.django_db
+def test_cada_persona_cuenta_su_dia_en_su_propio_huso(company):
+    """La ventana se pide de sobra y se recorta por persona.
+
+    Una oficina en Madrid y otra en Las Palmas van una hora aparte, así que una
+    sola ventana no puede ser exacta para las dos: recortar por la zona de la
+    empresa movería el día de quien no está en ella. Es el mismo fallo que este
+    fichero ya tuvo con `date.today()`.
+    """
+    from apps.tenants.attendance_api import _attendance_of
+    from apps.users.models import Workplace
+
+    with tenant_context(company.id):
+        canarias = Workplace.objects.create(
+            tenant=company, name="Las Palmas", time_zone="Atlantic/Canary"
+        )
+        insular = User.objects.create_user(
+            email="canaria@example.com",
+            password="a-sufficiently-long-password",
+            tenant=company,
+            first_name="Rocío",
+            workplace=canarias,
+        )
+        # 00:30 en Madrid es 23:30 del día anterior en Las Palmas.
+        with freeze_time("2026-09-08 22:30:00"):
+            from apps.punches.services import register_punch
+
+            register_punch(employee=insular, company=company)
+
+            filas = _attendance_of(
+                list(
+                    User.objects.filter(pk=insular.pk).select_related("workplace__tenant", "tenant")
+                ),
+                company,
+            )
+
+    # Para ella todavía es el día 8, así que su fichaje cuenta en su día.
+    assert filas[0]["state"] == "WORKING"
+    assert filas[0]["segments"], "el fichaje se salió de su propia ventana"

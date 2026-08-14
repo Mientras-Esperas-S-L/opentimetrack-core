@@ -224,7 +224,9 @@ def infer_type(employee, company, interval: str = PunchInterval.WORK) -> str:
     return PunchType.OUT
 
 
-def build_day_status(employee, company, day: date | None = None) -> DayStatus:
+def build_day_status(
+    employee, company, day: date | None = None, *, events=None, rules=None
+) -> DayStatus:
     """The day, as the record holds it.
 
     Whether a break comes off the hours is **the company's rule, not ours**.
@@ -232,11 +234,19 @@ def build_day_status(employee, company, day: date | None = None) -> DayStatus:
     agreement or the contract says so --- and a good many agreements do. Always
     deducting it would take roughly fifty-five hours a year off every worker in
     those companies, quietly and in the direction that favours the employer.
+
+    `events` y `rules` se pueden pasar hechos. Por sí sola esta función cuesta
+    dos consultas, y en un bucle sobre la plantilla eso son dos por persona ---
+    la asistencia de una empresa de doscientas eran seiscientas consultas para
+    responder una pregunta. Quien recorre a mucha gente los trae de una vez; el
+    resto llama igual que siempre y no se entera.
     """
     from apps.tenants.rules import WorkingTimeRules
 
-    events = list(punches_of_the_day(employee, company, day))
-    rules = WorkingTimeRules.for_company(company)
+    if events is None:
+        events = list(punches_of_the_day(employee, company, day))
+    if rules is None:
+        rules = WorkingTimeRules.for_company(company)
 
     segments: list[DaySegment] = []
     # One open span per kind of interval. A break happens *inside* the working

@@ -58,7 +58,16 @@ class ApplicationAttendanceView(APIView):
         else:
             from apps.users.models import User
 
-            people = list(User.objects.filter(tenant=company, is_active=True))
+            # `person.tzinfo` mira el centro, y **el centro sin zona propia
+            # cae en su empresa**: la cadena tiene un eslabón más de los que
+            # parece. Con `workplace` a secas seguía habiendo una consulta por
+            # persona, y era la de la empresa del centro. Se ve contando el SQL,
+            # no leyendo el código.
+            people = list(
+                User.objects.filter(tenant=company, is_active=True).select_related(
+                    "workplace__tenant", "tenant"
+                )
+            )
 
         return Response(
             {
@@ -77,13 +86,62 @@ class ApplicationAttendanceView(APIView):
                 # había colado cuatro veces. Esta era la quinta, y el único
                 # `date.today()` que quedaba en todo el código.
                 "day": local_today(company).isoformat(),
-                "people": [_day_of(person, company) for person in people],
+                "people": _attendance_of(people, company),
             }
         )
 
 
-def _day_of(person, company) -> dict:
-    estado = build_day_status(person, company)
+def _attendance_of(people, company) -> list[dict]:
+    """La asistencia de toda esa gente, sin una consulta por cabeza.
+
+    `build_day_status` cuesta dos consultas ---los fichajes y las reglas--- y
+    `person.tzinfo` una tercera si el centro no viene traído. En una plantilla
+    de doscientas eso eran seiscientas consultas para responder una pregunta, y
+    esto lo llama un conector que puede preguntarlo a menudo.
+
+    Ahora: los centros vienen con la gente, las reglas se leen una vez, y los
+    fichajes del día salen en **una** consulta para todo el mundo.
+
+    La ventana se coge con un día de margen a cada lado a propósito. El día de
+    cada persona es el de **su** centro ---una oficina en Madrid y otra en Las
+    Palmas van una hora aparte--- así que una sola ventana no puede ser exacta
+    para todas a la vez: se pide de sobra y se recorta por persona en memoria,
+    con sus propios límites. Recortar por la zona de la empresa habría movido el
+    día de quien no está en ella, que es el fallo que este mismo fichero ya tuvo
+    con `date.today()`.
+    """
+    from datetime import timedelta
+
+    from apps.punches.models import Punch
+    from apps.punches.services import local_day_bounds
+    from apps.tenants.rules import WorkingTimeRules
+
+    if not people:
+        return []
+
+    reglas = WorkingTimeRules.for_company(company)
+    inicio, fin = local_day_bounds(company)
+    eventos = Punch.objects.filter(
+        employee__in=people,
+        is_active=True,
+        timestamp__gte=inicio - timedelta(days=1),
+        timestamp__lt=fin + timedelta(days=1),
+    ).order_by("timestamp")
+
+    por_persona: dict = {}
+    for evento in eventos:
+        por_persona.setdefault(evento.employee_id, []).append(evento)
+
+    salida = []
+    for persona in people:
+        propios, propio_fin = local_day_bounds(persona)
+        suyos = [e for e in por_persona.get(persona.id, []) if propios <= e.timestamp < propio_fin]
+        salida.append(_day_of(persona, company, events=suyos, rules=reglas))
+    return salida
+
+
+def _day_of(person, company, *, events=None, rules=None) -> dict:
+    estado = build_day_status(person, company, events=events, rules=rules)
     return {
         "employee": str(person.id),
         "employee_id": person.employee_id,
