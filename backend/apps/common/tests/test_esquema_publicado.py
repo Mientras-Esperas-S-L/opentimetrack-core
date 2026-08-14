@@ -229,3 +229,70 @@ def test_cerrar_sesion_sin_el_token_ya_no_contesta_que_si(esquema):
     assert vacio.status_code == 409, "sigue diciendo que ha cerrado una sesión que no cerró"
     assert vacio.json()["error"]["code"] == "no_refresh_token"
     assert bueno.status_code == 204
+
+
+# --------------------------------------------------- los ámbitos de una aplicación
+
+
+def test_el_esquema_enumera_los_ambitos_que_existen(esquema):
+    """Se publicaban como una lista sin tipo ni valores.
+
+    `validate_scopes` rechaza cualquier cadena que no sea una de las seis, así
+    que quien integraba tenía que adivinarlas o leerse el código fuente. Es
+    justo la parte del contrato que existe **para** integrar.
+    """
+    from apps.tenants.applications import ApplicationScope
+
+    scopes = esquema["components"]["schemas"]["Application"]["properties"]["scopes"]
+
+    assert scopes["items"]["enum"] == [v for v, _e in ApplicationScope.choices]
+    # Y qué significa cada uno, no solo la cadena.
+    for valor, etiqueta in ApplicationScope.choices:
+        assert valor in scopes["description"]
+        assert str(etiqueta) in scopes["description"]
+
+
+def test_cada_operacion_dice_qué_ambito_pide(esquema):
+    """La única forma de averiguarlo era llamar y recibir un 403."""
+    con_ambito = {
+        (r, m): op["x-required-scope"]
+        for r, m, op in _operaciones(esquema)
+        if op.get("x-required-scope")
+    }
+    assert len(con_ambito) >= 6, f"solo {len(con_ambito)} operaciones lo dicen"
+    assert con_ambito[("/api/punches/delegated/", "post")] == "punch:delegated"
+    assert con_ambito[("/api/app/attendance/", "get")] == "read:attendance"
+
+
+def test_y_lo_dice_por_metodo_y_no_por_vista(esquema):
+    """La parte que hace que esto no sea peor que no documentarlo.
+
+    `ApplicationPersonView` pide `read:people` para leer y `write:people` para
+    escribir. Publicar el atributo de la clase sin mirar el método diría que con
+    permiso de lectura se puede dar de baja a alguien, y eso es una mentira más
+    cara que el silencio.
+    """
+    persona = "/api/app/people/{reference}/"
+    por_metodo = {m: op["x-required-scope"] for r, m, op in _operaciones(esquema) if r == persona}
+
+    assert por_metodo["get"] == "read:people"
+    assert por_metodo["put"] == "write:people"
+    assert por_metodo["delete"] == "write:people"
+
+
+def test_ninguna_vista_con_ambito_se_queda_sin_documentarlo():
+    """Que no se quede viejo: la vista nueva que pida un ámbito nace dicha.
+
+    Se compara contra el enrutador y no contra una lista escrita a mano, que es
+    lo que se queda atrás.
+    """
+    from apps.common.schema import _mapa_de_ambitos
+
+    mapa = _mapa_de_ambitos()
+    assert mapa, "la introspección no encuentra ninguna vista con ámbito"
+
+    esquema = SchemaGenerator().get_schema(request=None, public=True)
+    documentadas = {r for r, _m, op in _operaciones(esquema) if op.get("x-required-scope")}
+
+    faltan = sorted(set(mapa) - documentadas)
+    assert not faltan, f"piden un ámbito y el esquema no lo dice: {faltan}"

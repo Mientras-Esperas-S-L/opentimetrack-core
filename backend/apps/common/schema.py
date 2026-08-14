@@ -31,6 +31,11 @@ Declarar un 409 en un `GET` sería la otra forma de mentir.
 
 from __future__ import annotations
 
+import logging
+import re
+
+logger = logging.getLogger(__name__)
+
 #: El sobre, tal cual lo escribe `apps.common.exceptions.api_exception_handler`.
 #:
 #: `code` es lo único con lo que se puede ramificar: `message` va traducido al
@@ -147,5 +152,120 @@ def documentar_los_errores(result, generator, request, public):
             respuestas = operacion.setdefault("responses", {})
             for codigo, cuerpo in posibles.items():
                 respuestas.setdefault(codigo, cuerpo)
+
+    return result
+
+
+# --------------------------------------------------- los ámbitos de una aplicación
+
+
+def _ambitos():
+    from apps.tenants.applications import ApplicationScope
+
+    return [(valor, str(etiqueta)) for valor, etiqueta in ApplicationScope.choices]
+
+
+def _mapa_de_ambitos() -> dict[str, str]:
+    """De qué ámbito pide cada ruta, sacado de las propias vistas.
+
+    Se recorre el enrutador en vez de escribir la lista a mano por lo de
+    siempre: una vista nueva con `required_scope` nacería sin documentarlo y
+    nadie lo notaría, porque un esquema incompleto no rompe nada.
+    """
+    from django.urls import get_resolver
+
+    def recorrer(resolver, prefijo=""):
+        for patron in resolver.url_patterns:
+            if hasattr(patron, "url_patterns"):
+                yield from recorrer(patron, prefijo + str(patron.pattern))
+            else:
+                yield prefijo + str(patron.pattern), getattr(patron, "callback", None)
+
+    mapa: dict[str, dict[str, str]] = {}
+    for ruta, callback in recorrer(get_resolver()):
+        vista = getattr(callback, "cls", None) or getattr(callback, "view_class", None)
+        if getattr(vista, "required_scope", None) is None:
+            continue
+
+        # `api/app/people/<str:reference>/` -> `/api/app/people/{reference}/`
+        limpia = "/" + re.sub(r"<[^:>]+:([^>]+)>", r"{\1}", ruta.replace("^", "").replace("$", ""))
+        clave = limpia.rstrip("/") + "/"
+
+        # Por método, no por vista, y esta es la parte que importa: hay vistas
+        # que piden un ámbito distinto según lo que se haga. Leer una ficha y
+        # borrarla no son el mismo permiso, y publicar `read:people` en el
+        # DELETE diría que con permiso de lectura se puede dar de baja a alguien
+        # ---peor que no documentarlo---.
+        concreto = getattr(vista, "required_scope_for", None)
+        por_metodo = {}
+        for metodo in ("get", "post", "put", "patch", "delete"):
+            if not callable(concreto):
+                por_metodo[metodo] = str(vista.required_scope)
+                continue
+            fingida = type("Peticion", (), {"method": metodo.upper()})()
+            try:
+                por_metodo[metodo] = str(concreto(vista, fingida))
+            except Exception:
+                # A gritos y no en silencio. Caer al atributo de la clase es
+                # justo cómo se publica la documentación equivocada que este
+                # bloque existe para evitar, así que si `required_scope_for`
+                # se rompe hay que enterarse: el esquema saldría diciendo que
+                # con permiso de lectura se puede borrar a alguien.
+                logger.exception(
+                    "required_scope_for de %s falló para %s; el esquema publicará "
+                    "el ámbito de la clase, que puede ser el equivocado",
+                    vista.__name__,
+                    metodo.upper(),
+                )
+                por_metodo[metodo] = str(vista.required_scope)
+        mapa[clave] = por_metodo
+    return mapa
+
+
+def documentar_los_ambitos(result, generator, request, public):
+    """Dice qué ámbitos existen y cuál hace falta para cada llamada.
+
+    Los seis ámbitos se publicaban como una lista sin tipo ni valores: quien
+    integraba tenía que adivinar las cadenas o leerse el código, y
+    `validate_scopes` rechaza cualquier cosa que no sea una de las seis. Y
+    ninguna operación decía cuál pide, así que la única forma de averiguarlo era
+    llamar y recibir un 403.
+
+    Es justo la parte del contrato que existe **para** integrar.
+    """
+    ambitos = _ambitos()
+    forma = {
+        "type": "array",
+        "items": {"type": "string", "enum": [valor for valor, _e in ambitos]},
+        "description": (
+            "Permisos concedidos, uno a uno. Vacía significa que la aplicación no "
+            "puede hacer nada. Valores:\n\n"
+            + "\n".join(f"- `{valor}`: {etiqueta}" for valor, etiqueta in ambitos)
+        ),
+    }
+    for nombre in ("Application", "ApplicationRequest", "PatchedApplicationRequest"):
+        esquema = result.get("components", {}).get("schemas", {}).get(nombre)
+        if esquema and "scopes" in esquema.get("properties", {}):
+            esquema["properties"]["scopes"] = {**esquema["properties"]["scopes"], **forma}
+
+    mapa = _mapa_de_ambitos()
+    for ruta, operaciones in result.get("paths", {}).items():
+        por_metodo = mapa.get(ruta)
+        if not por_metodo:
+            continue
+        for metodo, operacion in operaciones.items():
+            if metodo not in {"get", "post", "put", "patch", "delete"}:
+                continue
+            ambito = por_metodo.get(metodo)
+            if not ambito:
+                continue
+            # En la descripción para quien lee, y como extensión para quien
+            # genera un cliente: las dos cosas, porque se consume de las dos.
+            operacion["x-required-scope"] = ambito
+            aviso = (
+                f"\n\n**Credencial de aplicación:** requiere el ámbito `{ambito}`. "
+                "Sin él responde 403."
+            )
+            operacion["description"] = (operacion.get("description") or "").rstrip() + aviso
 
     return result
