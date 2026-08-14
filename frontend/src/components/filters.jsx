@@ -41,7 +41,10 @@ export function SearchField({ value, onChange, placeholder = 'Buscar', width = 2
       value={value}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
-      sx={{ width }}
+      // Un tope, no una medida. Con `width` a secas el campo mide eso pase lo
+      // que pase, y en un móvil de 390 px un buscador de 380 más su borde se
+      // sale de la pantalla --- lo estrenó Personas al pasar a este componente.
+      sx={{ width: '100%', maxWidth: width }}
       slotProps={{
         // En el `input`, no en el `TextField`. Puesto arriba, MUI lo reenvía al
         // div de fuera y el campo se sigue oyendo como «cuadro de texto» a
