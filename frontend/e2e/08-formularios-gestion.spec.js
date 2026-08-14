@@ -164,13 +164,19 @@ test.describe('Ajustes de la empresa', () => {
 
     await irA(page, '/panel/ajustes', 'Ajustes de la empresa')
     const original = await page.getByLabel('Horas extra al año').inputValue()
+    // Distinto del que hay, no un número fijo. Con '72' escrito a mano, la
+    // prueba solo funcionaba la primera vez: si una tanda anterior se cortó
+    // antes de restaurar, el valor ya era 72, no había nada que guardar y el
+    // botón se quedaba desactivado --- treinta segundos esperando a que se
+    // habilitara algo que no tenía por qué habilitarse.
+    const otro = original === '72' ? '73' : '72'
 
-    await page.getByLabel('Horas extra al año').fill('72')
+    await page.getByLabel('Horas extra al año').fill(otro)
     await botonGuardar(page).click()
     await expect(guardado(page)).toBeVisible()
 
     await page.reload()
-    await expect(page.getByLabel('Horas extra al año')).toHaveValue('72')
+    await expect(page.getByLabel('Horas extra al año')).toHaveValue(otro)
 
     // Se deja como estaba. Los ajustes son de la empresa entera y esta base la
     // comparten las demás pruebas: dejar el tope en 72 h cambia lo que ve la
