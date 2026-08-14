@@ -82,14 +82,17 @@ class OverviewView(APIView):
         con descanso, art. 35.1--- así que una cola que nadie mira porque la
         portada dice que está vacía se convierte en un incumplimiento.
 
-        `overtime` va aparte y sin número a propósito: calcularlo cuesta medio
-        segundo con veinte personas ---hay que reconciliar cada día de cada
-        una--- y esto se pide al abrir el panel y se refresca cada minuto. Se
-        dice que hay cola sin decir cuánta, y la pantalla de decisiones, que ya
-        lo calcula, pone la cifra. Mejor un «hay» honesto que un número caro o
-        un cero falso.
+        Las horas extra iban aparte y **sin número**, porque calcularlas
+        costaba medio segundo con veinte personas y esto se refresca cada
+        minuto. Ya no: la misma lectura cuesta cinco consultas y cuarenta
+        milisegundos, así que se cuentan como las demás. Se deja
+        `overtime_pending` por si algún cliente viejo lo mira.
         """
         from apps.absences.recovery import pending_recoveries
+        from apps.punches.overtime import overtime_window, pending_overtime
+
+        primero, ultimo = overtime_window()
+        alcance = None if mine is None else visible_people(self.request.user)
 
         return {
             "absences": Absence.objects.filter(mine, status=AbsenceStatus.PENDING).count(),
@@ -102,6 +105,10 @@ class OverviewView(APIView):
                 mine, status=CorrectionStatus.AWAITING_EMPLOYEE
             ).count(),
             "recoveries": len(pending_recoveries(company=company)),
+            "overtime": len(
+                pending_overtime(company=company, first=primero, last=ultimo, scope=alcance)
+            ),
+            # Se mantiene por si un cliente viejo lo lee. Ahora hay número.
             "overtime_pending": True,
         }
 

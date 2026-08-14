@@ -118,13 +118,18 @@ export default function Overview() {
     espera.absences +
     espera.corrections +
     (espera.awaiting_employee ?? 0) +
-    (espera.recoveries ?? 0)
+    (espera.recoveries ?? 0) +
+    // Las horas extra entran en la cifra grande ahora que se pueden contar.
+    // Quedarse fuera era el fallo de la vuelta 2 en pequeño: la portada decía
+    // un número y «Por decidir» tenía más cosas que ese número.
+    (espera.overtime ?? 0)
 
-  // Las horas extra vienen sin número: contarlas cuesta medio segundo y esto se
-  // refresca cada minuto. Se dice que las hay, y la cifra la pone la pantalla
-  // que ya las calcula. Callarlas era peor --- tienen cuatro meses de plazo
-  // para compensarse con descanso (art. 35.1).
-  const hayHorasExtra = espera.overtime_pending === true
+  // Las horas extra ya traen número. Venían sin él porque contarlas costaba
+  // medio segundo y esto se refresca cada minuto; ahora la misma lectura son
+  // cinco consultas. Se sigue aceptando la forma vieja por si un servidor sin
+  // actualizar responde solo con el «hay».
+  const horasExtra = espera.overtime
+  const hayHorasExtra = horasExtra > 0 || (horasExtra === undefined && espera.overtime_pending)
 
   return (
     <>
@@ -223,9 +228,11 @@ export default function Overview() {
                 : 'Ver las horas extra por resolver'}
             </Button>
           )}
-          {hayHorasExtra && waiting > 0 && (
+          {horasExtra > 0 && (
             <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
-              Y las horas extra del mes, que también esperan decisión.
+              {horasExtra === 1
+                ? 'Uno de ellos son horas extra del mes, con cuatro meses de plazo para compensarse con descanso (art. 35.1).'
+                : `${horasExtra} de ellos son horas extra del mes, con cuatro meses de plazo para compensarse con descanso (art. 35.1).`}
             </Typography>
           )}
         </Stack>

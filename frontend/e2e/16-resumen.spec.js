@@ -28,8 +28,12 @@ async function loQueEspera(page) {
       (cuerpo.absences ?? 0) +
       (cuerpo.corrections ?? 0) +
       (cuerpo.awaiting_employee ?? 0) +
-      (cuerpo.recoveries ?? 0),
-    hayHorasExtra: cuerpo.overtime_pending === true,
+      (cuerpo.recoveries ?? 0) +
+      // Las horas extra entran desde que contarlas dejó de costar medio
+      // segundo. Quedarse fuera era el fallo de la vuelta 2 en pequeño: la
+      // portada decía un número y «Por decidir» tenía más cosas que ese número.
+      (cuerpo.overtime ?? 0),
+    hayHorasExtra: (cuerpo.overtime ?? 0) > 0 || cuerpo.overtime_pending === true,
     detalle: cuerpo,
   }
 }
@@ -43,9 +47,15 @@ test.describe('Resumen', () => {
 
     const { total, detalle } = await loQueEspera(page)
 
-    // Las cuatro colas que se pueden contar barato están todas en la respuesta.
+    // Las cinco colas están todas en la respuesta.
     // Si alguna desapareciera, la portada volvería a mentir en silencio.
-    for (const cola of ['absences', 'corrections', 'awaiting_employee', 'recoveries']) {
+    for (const cola of [
+      'absences',
+      'corrections',
+      'awaiting_employee',
+      'recoveries',
+      'overtime',
+    ]) {
       expect(detalle, `falta la cola ${cola}`).toHaveProperty(cola)
     }
 
