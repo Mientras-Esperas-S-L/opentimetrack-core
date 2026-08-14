@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
+import Alert from '@mui/material/Alert'
 import Dialog from '@mui/material/Dialog'
 import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
@@ -79,11 +80,16 @@ function byDay(punches, zone) {
   return [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]))
 }
 
-function CorrectionDialog({ open, onClose, onSubmit, saving, error }) {
+/** Un fichaje, escrito como lo reconoce quien lo hizo. */
+const nombreDelFichaje = (punch, zone) =>
+  `${dateOf(punch.timestamp)} · ${punch.punch_type === 'IN' ? 'entrada' : 'salida'} ${timeOf(punch.timestamp, zone)}`
+
+function CorrectionDialog({ open, onClose, onSubmit, saving, error, punches = [], zone }) {
   const [form, setForm] = useState({
     kind: 'ADD',
     proposed_type: 'OUT',
     proposed_timestamp: '',
+    target: '',
     reason: '',
   })
 
@@ -94,6 +100,11 @@ function CorrectionDialog({ open, onClose, onSubmit, saving, error }) {
     onSubmit({
       kind: form.kind,
       proposed_type: form.kind === 'ADD' ? form.proposed_type : undefined,
+      // Cuál se corrige. Sin esto el servidor responde «Indica qué fichaje se
+      // corrige» y la pantalla no ofrecía dónde indicarlo: la opción de cambiar
+      // una hora fallaba **siempre**, con un error que quien lo lee no puede
+      // resolver.
+      target: form.kind === 'MODIFY' ? form.target : undefined,
       proposed_timestamp: form.proposed_timestamp
         ? new Date(form.proposed_timestamp).toISOString()
         : undefined,
@@ -129,6 +140,30 @@ function CorrectionDialog({ open, onClose, onSubmit, saving, error }) {
                 <MenuItem value="OUT">La salida</MenuItem>
               </TextField>
             )}
+
+            {form.kind === 'MODIFY' &&
+              (punches.length === 0 ? (
+                <Alert severity="info" variant="outlined">
+                  No hay fichajes en el mes que estás viendo. Cambia de mes para elegir cuál
+                  corregir.
+                </Alert>
+              ) : (
+                <TextField
+                  select
+                  required
+                  fullWidth
+                  label="Cuál"
+                  value={form.target}
+                  onChange={set('target')}
+                  helperText="El que tiene la hora mal. El original no se borra: queda al lado del cambio."
+                >
+                  {punches.map((punch) => (
+                    <MenuItem key={punch.id} value={punch.id}>
+                      {nombreDelFichaje(punch, zone)}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              ))}
 
             <TextField
               required
@@ -359,8 +394,7 @@ export default function MyTime() {
   // llevárselo: lo que se enseña a un juzgado o a la Inspección es el
   // documento, con su huella, y esa la calcula el servidor.
   const bajar = useMutation({
-    mutationFn: (format) =>
-      downloadReport({ date_from: range.from, date_to: range.to, format }),
+    mutationFn: (format) => downloadReport({ date_from: range.from, date_to: range.to, format }),
     onSuccess: save,
     onError: setError,
   })
@@ -584,6 +618,8 @@ export default function MyTime() {
         open={asking}
         saving={ask.isPending}
         error={error}
+        punches={(punches?.rows ?? []).filter((p) => p.is_active !== false)}
+        zone={zone}
         onClose={() => {
           setAsking(false)
           setError(null)
