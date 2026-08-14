@@ -692,3 +692,22 @@ salida honesta sería traducirlo entero.
 **Regla:** antes de estimar una traducción, separar los mensajes por dónde
 aparecen y comprobar a qué idioma cae lo que falta. Las dos cosas cambian el
 tamaño del trabajo por un factor de tres.
+
+## Para saber si algo se ve, mirar los píxeles (14/08/2026)
+
+Cuatro falsos positivos en dos días, todos de la misma familia: preguntarle al
+DOM por algo que es una pregunta visual.
+
+- «El buscador no tiene etiqueta» --- la tenía, pero MUI la pone en un sitio que
+  mi consulta no miraba.
+- «El foco no se ve» --- tres sondas distintas: sin `outline`, sin `box-shadow`,
+  y añadir `Mui-focusVisible` a mano no cambia nada. Se ve.
+
+Y el que sí acertó, el de contraste, funcionó porque calculaba el color efectivo
+subiendo por los padres, no porque leyera una propiedad.
+
+**Regla:** «¿se ve X?» se responde con una captura antes y otra después, y
+`Buffer.compare`. Cuesta lo mismo que la consulta al DOM y no depende de saber
+cómo lo pinta la biblioteca. Y si no se puede construir el contraste ---apagar X
+y ver la prueba en rojo---, al menos validar el instrumento: dos capturas del
+mismo estado tienen que salir idénticas.

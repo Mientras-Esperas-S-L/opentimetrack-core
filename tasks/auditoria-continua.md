@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 27 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 29 · Vueltas seguidas sin hallazgos: 1
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -135,6 +135,37 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 29 — El teclado. Nada roto, y una lección de método.**
+
+El eje que quedaba de accesibilidad. Foco visible, diálogos que lo atrapan y lo
+devuelven al botón que los abrió, y se llega al botón de fichar tabulando. **La
+primera vuelta sin hallazgos.**
+
+Lo que costó fue medirlo. Tres sondas seguidas dijeron que el foco era invisible
+---no hay `outline`, no hay `box-shadow`, y añadir `Mui-focusVisible` a mano no
+cambia el fondo--- y las tres se equivocaban. Comparando **píxeles** se acabó en
+un intento. Van cuatro falsos positivos en dos días, todos por mirar el DOM en
+vez de mirar lo que se ve.
+
+**Vuelta 28 — Fichar sin cobertura.**
+
+El escenario de campo del producto. El service worker no guarda cola a propósito
+---la hora de un fichaje no se decide en el navegador, y está escrito en él---,
+así que sin red no se ficha: eso está bien decidido. Lo que estaba mal era lo
+que se decía. El aviso salía **en inglés** y no decía lo único que hace falta
+saber: que **no ha quedado nada**. Sin esa frase, quien está en una obra ve un
+aviso genérico y se va convencido de haber fichado.
+
+De rebote, **la inicial del avatar era casi invisible en tema claro**: 1.75 de
+contraste. No lo vio el barrido de la vuelta 26 y no es culpa del barrido ---
+depende del dato: con nadie fichado la lista está vacía y el avatar no existe.
+Salió al repetir la prueba con otra gente en pantalla, que es el argumento para
+dejarlas puestas en vez de pasarlas una vez.
+
+Y una prueba que se había quedado vieja sin que nadie lo notara: comprobaba el
+aviso que el paginador sustituyó en la vuelta 22, y pasaba porque con menos de
+cincuenta propuestas tomaba la rama del «no debe aparecer».
 
 **Vuelta 27 — El idioma, y la tercera promesa imposible.**
 
