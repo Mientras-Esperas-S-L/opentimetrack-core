@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 33 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 34 · Vueltas seguidas sin hallazgos: 1
 
 El 14/08 Francisco cerró las cinco decisiones que estaban esperándole. Cuatro
 están hechas y la quinta ---la capa de i18n del frontend--- está en marcha.
@@ -115,6 +115,27 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 34 --- Responsable contra administración (14/08) · SIN HALLAZGOS
+
+El cuarto corte de permisos, y el único que no estaba barrido. El de aislamiento
+cubría sin sesión, entre empresas, y operario contra responsable; faltaba
+responsable contra administración, que es una distinción real y con
+consecuencias ---emitir la credencial de una aplicación es repartir una llave a
+los registros de la empresa entera---.
+
+**Salió limpio.** Veintidós operaciones de administración correctamente negadas
+a un responsable y catorce de las suyas que sigue pudiendo hacer.
+
+Lo que queda no es un arreglo, es la guarda. Una vista nueva con la clase de
+permiso equivocada no se ve mirando la pantalla, porque el menú ya oculta lo que
+no toca ---y ocultar un enlace no es un permiso---. La tercera prueba deriva del
+código las rutas con control de rol y exige que cada una esté nombrada, así que
+olvidarse rompe la construcción en vez de pasar en silencio. Ya cazó una:
+`applications/scopes/`.
+
+Validada saboteando un permiso a propósito: cambiando `IsAdmin` por
+`IsManagerOrAdmin` en las aplicaciones, el barrido lo canta al instante.
 
 ### Vuelta 33 --- Lo que pasa cuando la entrada no es la esperada (14/08)
 
