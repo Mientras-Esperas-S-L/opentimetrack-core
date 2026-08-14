@@ -49,13 +49,7 @@ test.describe('Resumen', () => {
 
     // Las cinco colas están todas en la respuesta.
     // Si alguna desapareciera, la portada volvería a mentir en silencio.
-    for (const cola of [
-      'absences',
-      'corrections',
-      'awaiting_employee',
-      'recoveries',
-      'overtime',
-    ]) {
+    for (const cola of ['absences', 'corrections', 'awaiting_employee', 'recoveries', 'overtime']) {
       expect(detalle, `falta la cola ${cola}`).toHaveProperty(cola)
     }
 
@@ -72,7 +66,6 @@ test.describe('Resumen', () => {
 
   test('la portada y «Por decidir» dicen lo mismo', async ({ page }) => {
     await irA(page, '/panel', 'Resumen')
-    const { detalle } = await loQueEspera(page)
 
     // El contraste que hace falta: dos pantallas que cuentan lo mismo tienen
     // que decir lo mismo. Discrepaban en cinco, y era la pestaña la que
@@ -85,9 +78,24 @@ test.describe('Resumen', () => {
       return Number((await pestaña.innerText()).match(/(\d+)\s*$/)?.[1] ?? -1)
     }
 
-    expect(await numeroDe('Ausencias')).toBe(detalle.absences)
-    expect(await numeroDe('Fichajes')).toBe(detalle.corrections)
-    expect(await numeroDe('Sin acuerdo')).toBe(detalle.awaiting_employee)
+    // Se vuelven a leer las dos cifras juntas hasta que coincidan, en vez de
+    // comparar una foto de la API tomada hace un momento contra la pantalla de
+    // ahora. Esta base la comparten todas las pruebas y alguna resuelve colas
+    // en bloque: entre las dos lecturas el número **puede** haber cambiado, y
+    // eso no es el fallo que esta prueba busca --- el que busca es un truncado,
+    // que no se arregla solo por mirar otra vez.
+    await expect
+      .poll(async () => {
+        const { detalle: ahora } = await loQueEspera(page)
+        return (
+          [
+            await numeroDe('Ausencias'),
+            await numeroDe('Fichajes'),
+            await numeroDe('Sin acuerdo'),
+          ].join('/') === [ahora.absences, ahora.corrections, ahora.awaiting_employee].join('/')
+        )
+      })
+      .toBe(true)
   })
 
   test('una lista recortada lo dice', async ({ page }) => {
