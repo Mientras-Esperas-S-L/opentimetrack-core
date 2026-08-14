@@ -31,6 +31,7 @@ const DE_GESTION = [
   ['/panel/calendario', 'Calendario del equipo'],
   ['/panel/cuadrante', 'Cuadrante'],
   ['/panel/turnos', 'Turnos'],
+  ['/panel/permisos', 'Permisos'],
   ['/panel/fichajes', 'Fichajes'],
   ['/panel/decisiones', 'Por decidir'],
   ['/panel/informes', 'Informes'],
@@ -103,6 +104,7 @@ recorrer('responsable', 'e2e/.sesiones/responsable.json', [
   ['/panel/personas', 'Personas'],
   ['/panel/calendario', 'Calendario del equipo'],
   ['/panel/cuadrante', 'Cuadrante'],
+  ['/panel/permisos', 'Permisos'],
   ['/panel/decisiones', 'Por decidir'],
   ...DE_CADA_UNO,
 ])

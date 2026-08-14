@@ -18,6 +18,7 @@ import Departments from './pages/admin/Departments.jsx'
 import Workplaces from './pages/admin/Workplaces.jsx'
 import TeamCalendar from './pages/admin/TeamCalendar.jsx'
 import Roster from './pages/admin/Roster.jsx'
+import LeaveTypes from './pages/admin/LeaveTypes.jsx'
 import ShiftPatterns from './pages/admin/ShiftPatterns.jsx'
 import Settings from './pages/admin/Settings.jsx'
 import Applications from './pages/admin/Applications.jsx'
@@ -89,6 +90,7 @@ export default function App() {
               <Route path="calendario" element={<TeamCalendar />} />
               <Route path="cuadrante" element={<Roster />} />
               <Route path="turnos" element={<ShiftPatterns />} />
+            <Route path="permisos" element={<LeaveTypes />} />
               <Route path="ajustes" element={<Settings />} />
               <Route path="aplicaciones" element={<Applications />} />
               <Route path="fichajes" element={<Timesheet />} />

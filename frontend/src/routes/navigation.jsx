@@ -4,6 +4,7 @@ import PlaceIcon from '@mui/icons-material/Place'
 import ApartmentIcon from '@mui/icons-material/Apartment'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import EditCalendarIcon from '@mui/icons-material/EditCalendar'
+import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import ScheduleIcon from '@mui/icons-material/Schedule'
 import DescriptionIcon from '@mui/icons-material/Description'
 import GroupsIcon from '@mui/icons-material/Groups'
@@ -43,6 +44,10 @@ export const NAV_ADMIN = [
   { to: '/panel/calendario', label: 'Calendario', icon: <CalendarMonthIcon /> },
   { to: '/panel/cuadrante', label: 'Cuadrante', icon: <EditCalendarIcon /> },
   { to: '/panel/turnos', label: 'Turnos', icon: <ScheduleIcon /> },
+  // Lo lee cualquiera que gestione: saber cuánto da un permiso es lo que hace
+  // falta para resolver una solicitud. Editarlo lo comprueba la propia
+  // pantalla, que solo enseña «Cambiar» a administración.
+  { to: '/panel/permisos', label: 'Permisos', icon: <EventAvailableIcon /> },
   { to: '/panel/fichajes', label: 'Fichajes', icon: <AccessTimeIcon /> },
   { to: '/panel/decisiones', label: 'Por decidir', icon: <RuleIcon /> },
   { to: '/panel/informes', label: 'Informes', icon: <DescriptionIcon /> },
