@@ -21,6 +21,7 @@ from __future__ import annotations
 import pytest
 from freezegun import freeze_time
 
+from apps.common.exceptions import BusinessRuleError
 from apps.common.models import tenant_context
 from apps.punches.models import PunchInterval, PunchType
 from apps.punches.services import build_day_status, register_punch
@@ -127,3 +128,34 @@ def test_la_pausa_de_madrugada_tampoco_se_confunde(empresa, quien):
     assert pausa.punch_type == PunchType.IN
     assert fin.punch_type == PunchType.OUT
     assert salida.punch_type == PunchType.OUT, "la pausa se llevó por delante la jornada"
+
+
+@pytest.mark.django_db
+def test_el_doble_toque_tambien_protege_a_caballo_de_la_medianoche(empresa, quien):
+    """La guarda del doble toque miraba «los fichajes de hoy».
+
+    A las 23:59:58 y otra vez a las 00:00:01 el día nuevo está vacío, así que no
+    veía el primero y dejaba pasar el segundo: dos fichajes con tres segundos
+    entre ellos, que es exactamente lo que esta guarda existe para evitar. Un
+    turno que empieza a las 00:00 no es raro donde se trabaja de noche.
+    """
+    with tenant_context(empresa.id):
+        # 23:59:58 y 00:00:01 en hora de Madrid.
+        with freeze_time("2026-09-08 21:59:58"):
+            register_punch(employee=quien, company=empresa)
+        with freeze_time("2026-09-08 22:00:01"), pytest.raises(BusinessRuleError) as caido:
+            register_punch(employee=quien, company=empresa)
+
+    assert caido.value.code == "punch_too_soon"
+
+
+@pytest.mark.django_db
+def test_y_pasada_la_ventana_sigue_dejando_fichar(empresa, quien):
+    """El contraste: la protección es para el dedo, no para la persona."""
+    with tenant_context(empresa.id):
+        with freeze_time("2026-09-08 21:59:58"):
+            register_punch(employee=quien, company=empresa)
+        with freeze_time("2026-09-08 22:00:30"):
+            salida = register_punch(employee=quien, company=empresa)
+
+    assert salida.punch_type == PunchType.OUT

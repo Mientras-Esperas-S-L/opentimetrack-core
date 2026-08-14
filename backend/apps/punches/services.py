@@ -325,7 +325,12 @@ def _refuse_a_double_tap(employee, company, interval: str) -> None:
     """
     from django.utils import timezone
 
-    last = punches_of_the_day(employee, company).filter(interval=interval).last()
+    # El último de ese intervalo, **sin acotar por día**. Miraba «los de hoy», y
+    # a caballo de la medianoche eso deja de proteger: pulsar a las 23:59:58 y
+    # otra vez a las 00:00:01 daba dos fichajes, porque el día nuevo estaba
+    # vacío. Un turno que empieza a las 00:00 no es raro en una empresa que
+    # trabaja de noche, y es justo el fallo que esta guarda existe para evitar.
+    last = _last_open(employee, interval)
     if last is None:
         return
 
