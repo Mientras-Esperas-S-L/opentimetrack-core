@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 32 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 33 · Vueltas seguidas sin hallazgos: 0
 
 El 14/08 Francisco cerró las cinco decisiones que estaban esperándole. Cuatro
 están hechas y la quinta ---la capa de i18n del frontend--- está en marcha.
@@ -115,6 +115,41 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 33 --- Lo que pasa cuando la entrada no es la esperada (14/08)
+
+Tres ejes en una vuelta, porque los tres preguntan lo mismo: qué hace el
+producto cuando lo que llega no es lo que esperaba.
+
+**Rutas de error.** Sonda con basura en cada campo real de cada serializador,
+1296 peticiones. Tres 500, y los tres del mismo tipo: código que asume una
+cadena y corre **antes** de que valide nadie.
+
+El peor es `POST /api/auth/token/` con `{"email": 12}`: sin sesión, alcanzable
+desde Internet, y dentro de la función que existe para registrar los intentos
+fallidos ---la forma de un ataque---. En vez de la línea del registro salía una
+traza, justo con la entrada que más se parece a uno.
+
+Los otros dos: `source_for` en los fichajes, y `reassign` en los turnos, escrito
+ese mismo día.
+
+Método: la primera versión mandaba diccionarios genéricos y dio 71 «basuras
+aceptadas» que no eran nada, porque casi ninguna clave coincidía con un campo
+real. Sacar los campos del propio serializador es lo que la hizo encontrar algo,
+y además la hace crecer sola.
+
+**Datos extremos.** Nombres en su longitud máxima ---100 en un departamento, 120
+en un centro, 255 en una empresa--- y sin espacios. Rompían **tres** pantallas:
+Departamentos se salía 719 px en el móvil, Centros 675, y Ajustes 1435. Una
+línea en el tema las arregla las tres, y la novena pantalla que se añada nace
+arreglada.
+
+**Concurrencia.** Ninguna transición de estado estaba protegida: todas miraban
+la copia en memoria. Dos responsables a la vez dejaban una ausencia en
+`REJECTED` **con `approved_by` puesto**, y el rastro con una aprobación y un
+rechazo de la misma solicitud. Vivía en ausencias, correcciones y
+recuperaciones. Las horas extra se dejan como están: se pueden redecidir por
+diseño.
 
 ### Vuelta 32 --- Las cinco decisiones de Francisco (14/08)
 

@@ -785,3 +785,41 @@ persona de baja.
 y la limpieza **se comprueba**: `expect(vuelta.status).toBe(200)`. Una limpieza que no
 verifica su resultado es una limpieza que no sabes si ocurre. Y antes de dar por buena una
 tanda, mirar si ha dejado filas: `first_name='...'` cuenta en un segundo.
+
+## Una sonda que no acierta con los nombres reales no está probando nada (14/08/2026)
+
+Primera versión del barrido de entradas malformadas: diccionarios genéricos
+---`{"employee": None, "name": [], "day": {...}}`--- contra los 46 endpoints de
+escritura. 411 peticiones, y **71 «basuras aceptadas»** que parecían un hallazgo.
+
+No lo eran. Casi ninguna de esas claves era un campo real del endpoint que la recibía, así
+que DRF las ignoraba como ignora cualquier campo desconocido. Lo que medía la sonda era
+que DRF hace lo que tiene que hacer.
+
+La segunda versión saca los campos **del propio serializador** con `get_fields()`. 1296
+peticiones, y aparecieron tres 500 que la primera no vio ---uno de ellos en la pantalla de
+entrar, sin sesión---.
+
+**Regla**: una sonda que dispara a ciegas necesita demostrar que acertó. El histograma de
+códigos es la forma barata: si no hay cientos de 400, no está llegando a la validación.
+Y donde se pueda, los objetivos se sacan del código en vez de escribirlos a mano, que
+además hace que la prueba crezca sola.
+
+## El estado de un objeto en memoria no protege de nada (14/08/2026)
+
+Todas las decisiones del producto comprobaban lo mismo antes de escribir: que el objeto
+siguiera pendiente. Y lo comprobaban sobre la instancia que la petición había cargado, que
+por definición es de **antes** de que nadie escribiera.
+
+Dos responsables pulsando a la vez pasaban los dos. Sobre una ausencia el resultado no era
+un duplicado sino algo peor: `REJECTED` con `approved_by` puesto, una fila que se
+contradice, y el rastro con las dos decisiones.
+
+**Regla**: si una operación solo puede ocurrir una vez, el estado se relee **bloqueando la
+fila** dentro de la transacción, y se trabaja con lo releído. `if objeto.status == X` es
+una comprobación de cortesía, no una garantía.
+
+Y el corolario que me pilló: al poner el bloqueo, se rompió una función que fingía el
+estado en memoria (`correction.status = PENDING  # so approve_correction accepts it`) para
+colarse por la comprobación. Ese truco solo funciona mientras nadie relea. Que se rompa al
+arreglar la carrera es la señal de que el arreglo llega al sitio correcto.
