@@ -467,3 +467,23 @@ jornada de mañana: una prueba de nueve a cinco nunca verá esta familia de fall
 Lo encontré de rebote, escribiendo una prueba de otra cosa. Eso también dice
 algo: cubrir un caso legal poco frecuente obliga a montar datos poco frecuentes,
 y ahí es donde aparecen los fallos que las pruebas cómodas no tocan.
+
+## La base de desarrollo es de todos, y la rompo yo (14/08/2026)
+
+Dos veces en la misma vuelta, y las dos estaban ya escritas aquí arriba.
+
+Una prueba nueva creaba fichajes con **dos POST seguidos**; la protección del
+doble toque ---que puse yo en la vuelta 1--- rechazó el segundo, la jornada quedó
+abierta y Ana apareció fichada. Dieciséis pruebas de otros ficheros, que miran
+contadores en vivo, en rojo.
+
+Y varios sondeos por consola dejaron **ocho empresas de mentira** donde debe
+haber tres. Setenta y cuatro pruebas en rojo, y media hora buscando una
+regresión inexistente.
+
+**Regla:** un sondeo por consola que crea datos se limpia **en el mismo script**,
+con `try/finally`, no «luego». Y una prueba de navegador prefiere **buscar** un
+dato que existe ---retroceder de mes hasta encontrar fichajes--- antes que crear
+uno: lo que se crea hay que deshacerlo, y en este producto casi nada se deshace.
+Antes de dar por buena una tanda en rojo, mirar si la base tiene basura mía:
+`Tenant.objects.all()` deben ser tres.

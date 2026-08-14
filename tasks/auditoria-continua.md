@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 15 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 16 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -14,7 +14,7 @@ vuelve a una limpia.
 |---|---|---|---|
 | Fichar (`/`) | limpia | 13/08 v1 | **doble pulsación = jornada en cero** |
 | Resumen (`/panel`) | limpia | 13/08 v2 | **decía 2 de 57 esperando decisión** |
-| Mi jornada (`/mi-jornada`) | a medias | 13/08 | interruptor de recordatorios; falta el mes y «Pedir una corrección» |
+| Mi jornada (`/mi-jornada`) | limpia | 14/08 v16 | **«la hora no es la real» fallaba siempre**; descarga del propio registro (v10) |
 | Mis ausencias (`/mis-ausencias`) | a medias | 13/08 | filtros; falta el diálogo de «Solicitar» |
 | Personas | limpia | 13/08 | filtros, selección múltiple, `?department=` roto |
 | Departamentos | limpia | 13/08 | miembros desde el diálogo |
@@ -128,6 +128,29 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 16 — «Pedir una corrección», y una lección cara sobre la base compartida.**
+
+**La opción «la hora registrada no es la real» fallaba siempre.** El servidor
+exige decir qué fichaje se corrige ---sin eso el consentimiento del art. 4.b no
+significa nada--- y el diálogo no ofrecía dónde indicarlo: se recibía «Indica qué
+fichaje se corrige» y ningún sitio donde hacerlo. La otra mitad, «olvidé
+fichar», sí funcionaba, y por eso llevaba ahí sin verse.
+
+Y un fallo de sesión que salió **de sufrirlo**: de tanto correr la suite en un
+día se agotó el límite de peticiones por persona, y la pantalla de Ajustes se
+volvió el formulario de entrada con la sesión buena guardada al lado. Media hora
+buscando una regresión que no existía. En la vuelta 6 se arregló que el testigo
+dejara de borrarse con un 429; lo que veía la persona seguía siendo lo mismo,
+porque sin sesión en memoria la aplicación cae al formulario. Ahora distingue
+«no vale» de «no he podido comprobarla».
+
+Lo que más me ha costado de esta vuelta no fue encontrar nada: fue **el estropicio
+que hice yo**. Mi primera versión de la prueba creaba fichajes con dos POST
+seguidos, la protección del doble toque rechazaba el segundo, y Ana se quedó
+fichada: dieciséis pruebas de otros ficheros en rojo. Y varios sondeos por
+consola dejaron ocho empresas de mentira donde debía haber tres, que tumbaron
+setenta y cuatro. Ambas cosas estaban en `lessons.md` desde ayer.
 
 **Vuelta 15 — El art. 36, y el fallo más grave de toda la auditoría.**
 
