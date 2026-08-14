@@ -13,6 +13,14 @@ import { AuthContext } from './authContext.js'
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  //: No se pudo comprobar la sesión, y **no** porque no valga.
+  //:
+  //: Con el testigo bueno y el servidor devolviendo 429, la aplicación se
+  //: rendía y pintaba el formulario de entrada: se le pedía la contraseña a
+  //: quien tenía la sesión perfectamente viva, y volver a entrar también le
+  //: daba 429. En la vuelta 6 se arregló que el testigo ya no se borrara, pero
+  //: el resultado que veía la persona era el mismo.
+  const [unreachable, setUnreachable] = useState(null)
 
   // A stored token is not proof of a valid session: it may have expired, or the
   // person may have been deactivated. It gets checked against the server once.
@@ -42,18 +50,22 @@ export function AuthProvider({ children }) {
 
       // Tres intentos con espera creciente. Un tropiezo pasajero se arregla
       // solo y nadie se entera, que es como debería haber sido siempre.
+      let ultimo = null
       for (let intento = 0; intento < 3; intento += 1) {
         try {
           const data = await getMe()
           if (!cancelled) {
             setPreferredLanguage(data)
             setSession(data)
+            setUnreachable(null)
             setLoading(false)
           }
           return
         } catch (error) {
+          ultimo = error
           if (sesionRechazada(error)) {
             tokens.clear()
+            ultimo = null
             break
           }
           if (intento === 2) break
@@ -61,6 +73,8 @@ export function AuthProvider({ children }) {
           if (cancelled) return
         }
       }
+      // Se agotaron los intentos sin que nadie dijera que la sesión no vale.
+      if (!cancelled && ultimo) setUnreachable(ultimo)
 
       // Se acabaron los intentos sin que el servidor dijera que la sesión no
       // vale. El testigo se queda donde está: recargar puede funcionar, y
@@ -99,8 +113,8 @@ export function AuthProvider({ children }) {
   }, [])
 
   const value = useMemo(
-    () => ({ session, loading, signIn, signOut, setSession }),
-    [session, loading, signIn, signOut],
+    () => ({ session, loading, unreachable, signIn, signOut, setSession }),
+    [session, loading, unreachable, signIn, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
