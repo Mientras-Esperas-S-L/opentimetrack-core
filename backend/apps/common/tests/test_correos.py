@@ -30,6 +30,8 @@ primer mensaje que recibe cualquier empleado nuevo.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 from django.core import mail
 from django.template.loader import render_to_string
@@ -145,39 +147,37 @@ def test_el_enlace_de_cuenta_va_en_el_idioma_de_quien_lo_recibe(mixta, settings)
             send_account_email(mixta["jefa"], base_url="http://x", invitation=True)
             en_castellano = mail.outbox[0].body
 
-    # Se compara con el render directo en cada idioma en vez de buscar palabras
-    # catalanas: así la prueba sigue valiendo cuando alguien mejore la
-    # traducción, y no depende de qué esté traducido hoy.
-    with translation.override("ca"):
-        esperado_ca = render_to_string(
-            "emails/account_link.txt",
-            {
-                "first_name": "Quim",
-                "company": "Mixta SL",
-                "link": "x",
-                "invitation": True,
-                "hours": 24,
-            },
-        )
-    with translation.override("es"):
-        esperado_es = render_to_string(
-            "emails/account_link.txt",
-            {
-                "first_name": "Quim",
-                "company": "Mixta SL",
-                "link": "x",
-                "invitation": True,
-                "hours": 24,
-            },
-        )
+    # Se comparan los cuerpos **sin el enlace**, que trae un testigo distinto en
+    # cada llamada. La primera versión comparaba el cuerpo entero y fallaba por
+    # eso y no por el idioma; la segunda intentó sacar la frase del catálogo con
+    # `gettext`, y tampoco: ahí ese texto vive dentro de un `msgid` multilínea
+    # que incluye el saludo, así que la frase suelta no existe como mensaje.
+    def sin_enlace(texto: str) -> str:
+        return re.sub(r"https?://\S+", "", texto).strip()
 
-    # Hoy el catálogo catalán no traduce estos dos mensajes, así que los dos
-    # renders coinciden y la comparación no distinguiría nada. Lo que sí se
-    # puede fijar sin depender de eso es que el idioma **se activa**: si el
-    # catálogo se completa mañana, esta prueba empieza a distinguir sola.
-    if esperado_ca != esperado_es:
-        assert en_catalan.strip() == esperado_ca.strip()
-        assert en_castellano.strip() == esperado_es.strip()
+    esperado = {}
+    for idioma in ("ca", "es"):
+        with translation.override(idioma):
+            esperado[idioma] = sin_enlace(
+                render_to_string(
+                    "emails/account_link.txt",
+                    {
+                        "first_name": "Quim" if idioma == "ca" else "Luisa",
+                        "company": "Mixta SL",
+                        "link": "",
+                        "invitation": True,
+                        "hours": 24,
+                    },
+                )
+            )
+
+    # Sin `if`. La primera versión era `if esperado_ca != esperado_es:` porque el
+    # catálogo catalán no traducía este mensaje, con lo cual la prueba no
+    # comprobaba nada. La salida no era escribir mejor el `if`: era traducirlo,
+    # que además es lo que el producto necesitaba.
+    assert esperado["ca"] != esperado["es"], "sin traducción no se distingue: traduce el mensaje"
+    assert sin_enlace(en_catalan) == esperado["ca"], "salió en el idioma de quien lo mandó"
+    assert sin_enlace(en_castellano) == esperado["es"]
 
 
 @pytest.mark.django_db

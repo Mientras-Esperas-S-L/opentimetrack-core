@@ -76,6 +76,19 @@ def test_two_companies_may_each_have_their_own(company, other_company):
             employee_id="EMP-0001",
         )
 
+    # Dicho en voz alta y no dado por hecho. Antes la prueba no afirmaba nada:
+    # se apoyaba en que crear el segundo no lanzara `IntegrityError`, y eso
+    # también pasa si un día alguien quita la restricción entera. Que existe lo
+    # prueba la de arriba; que es **por empresa**, esto.
+    #
+    # Filtrando por `tenant` a mano, y no con `tenant_context`: `User.objects`
+    # es el único gestor del dominio que **no** filtra por la empresa en
+    # contexto, y está documentado por qué ---al entrar todavía no hay empresa,
+    # así que buscar el correo tiene que cruzar todas---. El aislamiento de las
+    # personas lo sostienen las vistas y los permisos, no el gestor.
+    assert User.objects.filter(tenant=company, employee_id="EMP-0001").count() == 1
+    assert User.objects.filter(tenant=other_company, employee_id="EMP-0001").count() == 1
+
 
 @pytest.mark.django_db
 def test_blank_is_not_a_collision(company):

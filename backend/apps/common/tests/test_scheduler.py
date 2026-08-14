@@ -89,5 +89,14 @@ def test_with_celery_beat_schedules_both_jobs(settings):
 @pytest.mark.django_db
 def test_the_management_command_runs_with_no_companies_at_all():
     """La vía de cron, de punta a punta. Sin empresas no hay nada que avisar, y
-    eso no es un error: es la primera noche de un despliegue nuevo."""
+    eso no es un error: es la primera noche de un despliegue nuevo.
+
+    Con la aserción escrita, que antes no la había: «no reventar» también lo
+    cumple un comando que se traga una excepción, y lo que hay que fijar es que
+    tampoco mande nada.
+    """
+    from django.core import mail
+
+    mail.outbox.clear()
     call_command("send_punch_reminders")
+    assert mail.outbox == [], "avisó a alguien en una instalación sin empresas"

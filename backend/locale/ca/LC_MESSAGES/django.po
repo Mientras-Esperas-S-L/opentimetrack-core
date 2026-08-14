@@ -2772,6 +2772,9 @@ msgid ""
 "An account has been created for you at %(company)s to record your working "
 "time."
 msgstr ""
+"Hola %(first_name)s:\n"
+"\n"
+"S'ha creat un compte per a tu a %(company)s per registrar la teva jornada."
 
 #: templates/emails/account_link.txt:4
 #, python-format
@@ -2780,6 +2783,9 @@ msgid ""
 "\n"
 "Somebody asked to reset the password of your account at %(company)s."
 msgstr ""
+"Hola %(first_name)s:\n"
+"\n"
+"Algú ha demanat restablir la contrasenya del teu compte a %(company)s."
 
 #: templates/emails/account_link.txt:8
 msgid "Open this link to set your password:"

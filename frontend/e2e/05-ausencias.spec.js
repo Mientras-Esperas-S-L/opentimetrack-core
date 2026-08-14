@@ -117,11 +117,55 @@ test.describe('Resolver ausencias', () => {
   test.use({ storageState: 'e2e/.sesiones/admin.json' })
 
   test('la cola enseña el aviso de tope cuando se pasa', async ({ page }) => {
+    // Antes esta prueba pedía los avisos y comprobaba
+    // `expect(await avisos.count()).toBeGreaterThanOrEqual(0)`, que es cierto
+    // siempre: un `count()` no puede ser negativo. Su propio comentario decía
+    // «no siempre hay una que se pase», y en vez de fabricar una que se pasara
+    // no comprobaba nada. Llevaba en verde sin mirar la pantalla.
     await irA(page, '/panel/decisiones', 'Por decidir')
-    // No siempre hay una que se pase; lo que se comprueba es que la pantalla
-    // sepa decirlo cuando la haya.
-    const avisos = page.getByText(/se pasaría del tope|y el permiso da/)
-    expect(await avisos.count()).toBeGreaterThanOrEqual(0)
+
+    const permisos = await api(page, '/leave-types/')
+    const conTope = (permisos.body?.results ?? permisos.body ?? []).find(
+      (t) => t.amount && Number(t.amount) > 0 && t.unit?.startsWith('DAYS') && t.is_active !== false,
+    )
+    expect(conTope, 'hace falta un permiso con tope en el catálogo').toBeTruthy()
+
+    const gente = await api(page, '/employees/')
+    const yo = await api(page, '/auth/me/')
+    const otra = (gente.body?.results ?? []).find((p) => p.id !== yo.body.user.id)
+    expect(otra, 'no se puede resolver lo propio: hace falta otra persona').toBeTruthy()
+
+    // Se pide el doble de lo que da, para que el exceso no dependa de festivos
+    // ni de fines de semana.
+    const dias = Number(conTope.amount) * 2
+    const desde = new Date()
+    desde.setDate(desde.getDate() + 300)
+    const hasta = new Date(desde)
+    hasta.setDate(hasta.getDate() + dias)
+
+    const alta = await api(page, '/absences/', {
+      method: 'POST',
+      body: {
+        employee: otra.id,
+        leave_type: conTope.id,
+        start_date: desde.toISOString().slice(0, 10),
+        end_date: hasta.toISOString().slice(0, 10),
+        reason: 'Prueba de interfaz: pasarse del tope a propósito.',
+      },
+    })
+    expect(alta.status, JSON.stringify(alta.body)).toBe(201)
+
+    try {
+      // Primero el servidor: si él no lo marca, la pantalla no tiene qué pintar
+      // y el fallo estaría en otro sitio.
+      expect(alta.body.over_the_limit, 'el servidor no marcó el exceso').toBeTruthy()
+
+      await page.reload()
+      await expect(page.getByText(/se pasaría del tope|y el permiso da/).first()).toBeVisible()
+    } finally {
+      const fuera = await api(page, `/absences/${alta.body.id}/cancel/`, { method: 'POST' })
+      expect([200, 204], 'la limpieza no retiró la solicitud').toContain(fuera.status)
+    }
   })
 
   test('rechazar exige que quede constancia y la solicitud se conserva', async ({ page }) => {
