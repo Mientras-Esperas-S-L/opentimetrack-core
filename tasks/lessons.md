@@ -859,3 +859,23 @@ con correcciones a las citas del que los propuso.
 superficie de permisos, una maquetación--- el abanico paga. Lo que NO se delega es la
 verificación de lo que sobrevive: los tres que arreglé primero los comprobé yo en el código
 antes de tocar nada, y uno venía con la ruta mal citada.
+
+## Una sonda con la ventana corta esconde justo lo que buscas (14/08/2026)
+
+Buscando N+1 monté una sonda con una ventana de cinco días. Encontró uno ---los festivos,
+preguntados por persona--- y lo arreglé. Después arreglé un segundo sitio que también olía
+a N+1, lo medí, **no quitaba ninguna consulta**, y estuve a punto de revertirlo por peso
+muerto.
+
+No lo era. `_check_weekly_hours` se salta las semanas incompletas a propósito, así que con
+cinco días su cuerpo no se ejecuta nunca. Con una ventana de un mes, ese segundo N+1 son
+diez consultas por persona: 40 contra 130.
+
+O sea que la sonda no medía el endpoint, medía una rama del endpoint. Y el error se
+disfrazaba de lo contrario: parecía que mi arreglo sobraba.
+
+**Regla**: los datos de una sonda de rendimiento tienen que cruzar los límites del dominio
+que el código mira ---semanas completas, meses, cambios de mes--- o hay código que no se
+ejecuta. Y antes de revertir un arreglo por «no mide nada», comprobar que la medición llega
+hasta él: poner un `print` en la función supuestamente cara cuesta un minuto y evita
+deshacer algo correcto.

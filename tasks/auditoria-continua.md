@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 35 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 36 · Vueltas seguidas sin hallazgos: 0
 
 El 14/08 Francisco cerró las cinco decisiones que estaban esperándole. Cuatro
 están hechas y la quinta ---la capa de i18n del frontend--- está en marcha.
@@ -115,6 +115,27 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 36 --- Cómo escala con el tamaño de la plantilla (14/08)
+
+Solo dos ficheros del proyecto medían consultas, y eran los dos arreglados esa
+misma mañana. El resto de la API no tenía ninguna cobertura de esto, y un N+1 no
+se ve nunca en desarrollo: con tres personas de prueba son doce consultas y con
+doscientas son dos mil, sin ningún aviso entre medias.
+
+Barrido de catorce endpoints con 3 personas y con 12. Trece planos y uno que
+crecía: **`/api/shifts/review/`, de 40 consultas a 130**. Es la pantalla que un
+responsable abre para ver qué incumple su cuadrante, así que la empresa grande
+es justo la que más la necesita.
+
+Dos N+1 en el mismo endpoint. Los festivos, preguntados por persona cuando
+dependen solo del centro. Y las reducciones de jornada, preguntadas por persona
+**y por semana**.
+
+Queda en 11 consultas, con tres personas y con doce.
+
+La prueba compara en vez de fijar un tope: un número máximo se sube cada vez que
+molesta, y «no puede crecer con la plantilla» o se cumple o no.
 
 ### Vuelta 35 --- El contrato publicado contra la realidad (14/08)
 
