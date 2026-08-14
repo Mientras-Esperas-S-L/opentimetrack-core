@@ -897,3 +897,30 @@ saltarse otras. Silencioso, y solo con más de cincuenta filas.
 `order_by` explícito. Y para buscar esta clase de fallo hay que mirar **el aviso en
 ejecución**, no el código: `grep order_by` da limpio porque lo que falla es lo que Django
 hace después.
+
+## Comprobar que algo se manda no es comprobar qué pone (14/08/2026)
+
+El correo de invitación saludaba «Hola :» desde siempre. Había pruebas de ese envío: que
+se manda, a quién, y que no se manda dos veces. Ninguna miraba **el cuerpo**.
+
+La causa era `{{ user.first_name }}` dentro de un `{% blocktranslate %}`, que no resuelve
+accesos a atributos y deja el hueco vacío. No avisa: la plantilla renderiza, el correo
+sale, y quien lo recibe lee su nombre en blanco.
+
+Es el primer mensaje que ve un empleado nuevo, y llevaba ahí desde el principio.
+
+**Regla**: de todo lo que se genera para una persona ---correos, PDF, CSV--- hay que
+comprobar el contenido y no solo que se produce. Y donde haya plantillas, renderizarlas al
+menos una vez en las pruebas: una plantilla que nunca se renderiza es código que nunca se
+ejecuta.
+
+## Cuatro veces con la misma piedra: nada de regex sobre Python (14/08/2026)
+
+Ya me lo apunté esta mañana y hoy he vuelto a romper `corrections.py` dos veces más con
+sustituciones de cadena sobre bloques multilínea: la primera dejó un `with` con dos
+espacios de indentación, la segunda dejó código huérfano tras reemplazar solo la cabecera
+de una llamada.
+
+Lo que funciona: `sed -n` para **leer** el bloque exacto, y Edit con el `old_string`
+completo. Cuesta una llamada más y no rompe nada. La regla ya estaba escrita; el fallo fue
+no seguirla cuando tenía prisa.

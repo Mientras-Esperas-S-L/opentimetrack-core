@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 37 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 38 · Vueltas seguidas sin hallazgos: 0
 
 El 14/08 Francisco cerró las cinco decisiones que estaban esperándole. Cuatro
 están hechas y la quinta ---la capa de i18n del frontend--- está en marcha.
@@ -115,6 +115,32 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 38 --- Los correos (14/08)
+
+Un correo no tiene petición detrás, así que no hereda idioma de ningún sitio
+sensato. De los cuatro que manda el producto **solo uno lo activaba**: los
+recordatorios de fichaje, cuyo comentario ya explicaba por qué. Los otros tres
+fallaban de dos maneras distintas.
+
+La invitación y los dos de correcciones los dispara otra persona desde su
+sesión, así que salían **en el idioma de quien actuó**: una empresa castellana
+pidiéndole conformidad a alguien que eligió catalán se la pedía en castellano, y
+de eso va justo el art. 4.b. El restablecimiento de contraseña llega sin sesión,
+así que caía a `LANGUAGE_CODE` dijera lo que dijera esa persona.
+
+**Y el que más se nota: la invitación saludaba «Hola :».** `{% blocktranslate %}`
+no resuelve accesos a atributos, así que `{{ user.first_name }}` dentro del
+bloque se renderiza vacío. Las otras tres plantillas pasan un `first_name` plano
+y salen bien; esta era la única con la forma que no funciona, y es el primer
+mensaje que recibe cualquier empleado nuevo.
+
+Llevaba así desde siempre porque **nada renderizaba estas plantillas**: las
+pruebas comprobaban que el correo se manda y a quién, nunca qué pone.
+
+La cuarta prueba es la que aguanta: comparar textos no sirve mientras los
+catálogos estén a medias, pero sí se puede exigir que todo sitio que mande
+correo active un idioma.
 
 ### Vuelta 37 --- Instalación desde cero (14/08)
 
