@@ -55,6 +55,7 @@ import { FilterBar, PickFilter, SearchField } from '../../components/filters.jsx
 import { matches, peopleIn } from '../../components/filtering.js'
 import { SelectAllBox, SelectBox, SelectionBar } from '../../components/selection.jsx'
 import { bulkSummary, runBulk } from '../../services/bulk.js'
+import { alFallar } from '../../services/stale.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useSelection } from '../../hooks/useSelection.js'
 
@@ -445,7 +446,9 @@ export default function Decisions() {
       setRejecting(null)
       refresh()
     },
-    onError: setError,
+    // Si otra persona resolvió esto antes, además de decirlo hay que quitarlo
+    // de la lista: si no, la fila sigue ahí invitando a pulsar otra vez.
+    onError: alFallar(setError, refresh),
   })
 
   const ruleRecovery = useMutation({
@@ -455,7 +458,7 @@ export default function Decisions() {
       queryClient.invalidateQueries({ queryKey: ['holiday-recoveries'] })
       queryClient.invalidateQueries({ queryKey: ['absences'] })
     },
-    onError: setError,
+    onError: alFallar(setError, refresh),
   })
 
   const ruleOvertime = useMutation({
@@ -465,7 +468,7 @@ export default function Decisions() {
       queryClient.invalidateQueries({ queryKey: ['overtime'] })
       queryClient.invalidateQueries({ queryKey: ['overview'] })
     },
-    onError: setError,
+    onError: alFallar(setError, refresh),
   })
 
   const openReject = (action, id, needsNote) => setRejecting({ action, id, needsNote })

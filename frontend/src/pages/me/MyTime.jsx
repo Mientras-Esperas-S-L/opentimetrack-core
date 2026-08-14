@@ -31,6 +31,7 @@ import {
   requestCorrection,
 } from '../../services/api.js'
 import { save } from '../../services/download.js'
+import { alFallar } from '../../services/stale.js'
 import {
   Empty,
   ErrorNote,
@@ -438,15 +439,23 @@ export default function MyTime() {
     enabled: Boolean(me),
   })
 
+  const refrescarCorrecciones = () => {
+    queryClient.invalidateQueries({ queryKey: ['corrections'] })
+    queryClient.invalidateQueries({ queryKey: ['punches'] })
+  }
+
   const answer = useMutation({
     mutationFn: ({ action, id, account }) => action(id, account),
     onSuccess: () => {
       setDisputing(null)
       setError(null)
-      queryClient.invalidateQueries({ queryKey: ['corrections'] })
-      queryClient.invalidateQueries({ queryKey: ['punches'] })
+      refrescarCorrecciones()
     },
-    onError: setError,
+    // Aquí la carrera es entre la persona y el plazo: puede aceptar en el mismo
+    // instante en que la empresa aplica el cambio sin acuerdo por haberse
+    // agotado la ventana del art. 4.b. Sin refrescar, la propuesta se queda en
+    // pantalla pidiéndole una respuesta que ya no cabe dar.
+    onError: alFallar(setError, refrescarCorrecciones),
   })
 
   const ask = useMutation({

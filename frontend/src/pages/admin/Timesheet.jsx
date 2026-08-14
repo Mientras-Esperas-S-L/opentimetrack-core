@@ -24,6 +24,7 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import EditNoteIcon from '@mui/icons-material/EditNote'
 
 import { getPunches, PAGE_SIZE, requestCorrection } from '../../services/api.js'
+import { alFallar } from '../../services/stale.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { PickFilter } from '../../components/filters.jsx'
 import { PUNCH_TYPES, SOURCE_OPTIONS } from '../../components/punches.js'
@@ -225,16 +226,20 @@ export default function Timesheet() {
     setPage(1)
   }
 
+  const refrescar = () => {
+    queryClient.invalidateQueries({ queryKey: ['punches'] })
+    queryClient.invalidateQueries({ queryKey: ['corrections'] })
+    queryClient.invalidateQueries({ queryKey: ['overview'] })
+  }
+
   const correct = useMutation({
     mutationFn: requestCorrection,
     onSuccess: () => {
       setCorrecting(null)
       setError(null)
-      queryClient.invalidateQueries({ queryKey: ['punches'] })
-      queryClient.invalidateQueries({ queryKey: ['corrections'] })
-      queryClient.invalidateQueries({ queryKey: ['overview'] })
+      refrescar()
     },
-    onError: setError,
+    onError: alFallar(setError, refrescar),
   })
 
   const days = byDay(data?.rows ?? [], zone)
