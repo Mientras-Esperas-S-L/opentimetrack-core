@@ -924,3 +924,36 @@ de una llamada.
 Lo que funciona: `sed -n` para **leer** el bloque exacto, y Edit con el `old_string`
 completo. Cuesta una llamada más y no rompe nada. La regla ya estaba escrita; el fallo fue
 no seguirla cuando tenía prisa.
+
+## Si no puedes leer lo que generas, no lo estás comprobando (14/08/2026)
+
+El PDF del informe de jornada ---el documento que se le entrega a una inspección--- tenía
+una prueba que comprobaba que empieza por `%PDF-` y que pesa más de mil bytes. Nada más,
+porque en el proyecto no había con qué abrir un PDF.
+
+Al añadir `pypdf` y leerlo, salieron tres cosas que el código calculaba y ningún
+renderizador imprimía, incluida la discrepancia del art. 4.b: una corrección impuesta
+sobre la objeción de la persona salía idéntica a una aceptada.
+
+La forma de la prueba **decidió** lo que se podía encontrar. Mientras la única
+comprobación posible fuera «es un PDF», el contenido podía ser cualquier cosa.
+
+**Regla**: si el producto genera un formato que las pruebas no saben leer, añadir la
+dependencia que lo lea es parte de probarlo, no un lujo. Vale para PDF, para ZIP, para
+imágenes. Y el coste es de dependencia de desarrollo, que es el más barato que hay.
+
+## Lo que un renderizador ignora no lo dice nadie (14/08/2026)
+
+`DayRow` tenía `disputed`, `dissent`, `break_seconds` y `standby_seconds`. Se calculaban
+en `build_report`, se totalizaban en `ReportData`, y **ninguno de los dos formatos los
+imprimía**. No hay error, no hay aviso: los campos existen, tienen el valor correcto, y se
+caen por el borde al pintar.
+
+Es primo del patrón que ya llevo cinco veces apuntado ---«la pieza existe y nadie la
+llama»--- con una variante: aquí la pieza se calcula y se tira.
+
+**Regla**: para un objeto que se serializa a un documento, comparar los campos que tiene
+con los que el renderizador lee. `grep` del nombre del campo en el fichero del
+renderizador cuesta un minuto y da la lista de lo que se está tirando. Y si hay dos
+formatos, comprobar que dicen lo mismo: aquí los dos ignoraban lo mismo, así que
+compararlos entre ellos tampoco lo habría cazado.

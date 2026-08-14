@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 38 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 39 · Vueltas seguidas sin hallazgos: 0
 
 El 14/08 Francisco cerró las cinco decisiones que estaban esperándole. Cuatro
 están hechas y la quinta ---la capa de i18n del frontend--- está en marcha.
@@ -115,6 +115,33 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 39 --- Qué pone el informe que se entrega (14/08)
+
+Había pruebas del PDF y comprobaban que empieza por `%PDF-` y que pesa más de
+mil bytes. Nada leía su contenido, y es el documento de más peso del producto:
+lo que el art. 34.9 obliga a poner a disposición de la Inspección.
+
+El grueso estaba bien ---la cita del artículo, empresa, CIF, persona, periodo,
+zona horaria, la tabla con el turno de noche en su día, el total y una huella---.
+Faltaban tres cosas que el código **calculaba** y ningún renderizador imprimía:
+
+**La discrepancia del art. 4.b.** `row.disputed` y `row.dissent` se calculaban y
+los dos formatos los ignoraban: una corrección impuesta sobre la objeción de la
+persona salía **exactamente igual** que una aceptada. El código lo tenía escrito
+en dos sitios ---«it travels to the inspection report»--- y no viajaba.
+
+**Las pausas y las esperas**, que el art. 3.d y el 3.g piden registrar
+precisamente porque no computan como jornada. Se sumaban y no se imprimían.
+
+**La huella no cubría nada de eso.** Su comentario ya decía el principio ---«están
+en el documento, así que están en la huella»--- y se aplicaba a la mitad. Dos
+informes del mismo periodo, uno con corrección impuesta y otro sin ella, daban
+la misma huella.
+
+Se añade `pypdf` a las dependencias de prueba: sin poder leer el PDF no había
+forma de comprobar qué pone, y esa era la razón de que llevara así desde
+siempre.
 
 ### Vuelta 38 --- Los correos (14/08)
 
