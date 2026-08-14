@@ -19,7 +19,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from django.db import models, transaction
-from django.utils import timezone
+from django.utils import timezone, translation
 from django.utils.translation import gettext_lazy as _
 
 from apps.common.exceptions import BusinessRuleError
@@ -587,26 +587,37 @@ def notify_employee_of_proposal(correction: PunchCorrection) -> None:
     if not correction.employee.email:
         return
 
+    # En el idioma de **quien lo recibe**, no en el de quien actuó. Este correo
+    # lo dispara un responsable desde su sesión, así que el idioma activo era el
+    # suyo: en una empresa castellana, alguien que eligió catalán recibía en
+    # castellano una petición de conformidad sobre su propio registro. Y de eso
+    # va justo el art. 4.b, que la persona acepte o discrepe con conocimiento.
+    #
+    # Los recordatorios de fichaje ya lo hacían así desde el principio; estos
+    # dos correos y el del enlace de cuenta se habían quedado sin ello.
+    idioma = correction.employee.locale or correction.tenant.language
+
     try:
         rules = WorkingTimeRules.for_company(correction.tenant)
-        body = render_to_string(
-            "emails/record_change_proposed.txt",
-            {
-                "first_name": correction.employee.first_name,
-                "company": correction.tenant.name,
-                "summary": _summarise(correction),
-                "reason": correction.reason,
-                "proposed_by": correction.requested_by.get_full_name(),
-                "days": rules.correction_consent_days,
-            },
-        )
-        send_mail(
-            subject=_("Your employer proposes a change to your working time record"),
-            message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[correction.employee.email],
-            fail_silently=True,
-        )
+        with translation.override(idioma or None):
+            body = render_to_string(
+                "emails/record_change_proposed.txt",
+                {
+                    "first_name": correction.employee.first_name,
+                    "company": correction.tenant.name,
+                    "summary": _summarise(correction),
+                    "reason": correction.reason,
+                    "proposed_by": correction.requested_by.get_full_name(),
+                    "days": rules.correction_consent_days,
+                },
+            )
+            send_mail(
+                subject=_("Your employer proposes a change to your working time record"),
+                message=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[correction.employee.email],
+                fail_silently=True,
+            )
     except Exception:
         log.exception(
             "Could not tell %s about correction %s", correction.employee_id, correction.pk
@@ -658,8 +669,13 @@ def notify_employee(correction: PunchCorrection) -> None:
     if not correction.employee.email:
         return
 
+    # El idioma de quien lo recibe, por lo mismo que en la propuesta: este aviso
+    # lo dispara quien resuelve la corrección, y le llega a otra persona.
+    idioma = correction.employee.locale or correction.tenant.language
+
     try:
-        _send_change_notice(correction, settings, send_mail, render_to_string, date_format)
+        with translation.override(idioma or None):
+            _send_change_notice(correction, settings, send_mail, render_to_string, date_format)
     except Exception:
         # Worth a full trace: silence here means people stop being told their
         # record changed, and nobody would notice.

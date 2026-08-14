@@ -2767,7 +2767,7 @@ msgstr ""
 #: templates/emails/account_link.txt:1
 #, python-format
 msgid ""
-"Hello %(user.first_name)s,\n"
+"Hello %(first_name)s,\n"
 "\n"
 "An account has been created for you at %(company)s to record your working "
 "time."
@@ -2776,7 +2776,7 @@ msgstr ""
 #: templates/emails/account_link.txt:4
 #, python-format
 msgid ""
-"Hello %(user.first_name)s,\n"
+"Hello %(first_name)s,\n"
 "\n"
 "Somebody asked to reset the password of your account at %(company)s."
 msgstr ""

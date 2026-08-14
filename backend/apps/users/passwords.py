@@ -22,6 +22,7 @@ from django.conf import settings
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from django.utils import translation
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.translation import gettext as _
@@ -70,10 +71,32 @@ def resolve_token(uid: str, token: str):
 
 
 def send_account_email(user, *, base_url: str, invitation: bool = False) -> None:
-    """Sends the link to set a password."""
+    """Sends the link to set a password, in the language of whoever receives it.
+
+    El idioma va explícito y no heredado del contexto, que es lo que hacía
+    antes, y estaba mal por los dos caminos que llegan aquí:
+
+    - **La invitación** la manda quien administra, así que el idioma activo era
+      **el suyo**. Una empresa castellana invitando a alguien que eligió catalán
+      le mandaba el correo en castellano.
+    - **El restablecimiento** llega sin sesión, así que no había ningún idioma
+      activo y caía a `LANGUAGE_CODE`. Da igual lo que hubiera elegido esa
+      persona.
+
+    Los recordatorios de fichaje ya lo hacían así y su comentario explica por
+    qué: «para que no llegue en inglés a alguien que trabaja en castellano solo
+    porque lo mandó el cron». Aquí faltaba, y el asunto y el cuerpo van los dos
+    dentro del `override` porque los dos se traducen.
+    """
     uid, token = build_token(user)
     link = f"{base_url.rstrip('/')}/set-password/{uid}/{token}/"
 
+    idioma = user.locale or (user.tenant.language if user.tenant else "")
+    with translation.override(idioma or None):
+        _enviar_enlace(user, link=link, invitation=invitation)
+
+
+def _enviar_enlace(user, *, link: str, invitation: bool) -> None:
     company = user.tenant.name if user.tenant else _("the platform")
     subject = (
         _("Your account at %(company)s") % {"company": company}
@@ -84,6 +107,15 @@ def send_account_email(user, *, base_url: str, invitation: bool = False) -> None
     body = render_to_string(
         "emails/account_link.txt",
         {
+            # El nombre suelto y no `user.first_name` dentro de la plantilla:
+            # `{% blocktranslate %}` **no resuelve accesos a atributos**, así que
+            # el hueco quedaba vacío y el correo saludaba «Hola :». Es el primero
+            # que recibe cualquier empleado nuevo, y llevaba así desde siempre
+            # porque nada renderiza estas plantillas en las pruebas.
+            #
+            # Las otras tres plantillas ya pasaban el nombre así. Esta era la
+            # única con la forma que no funciona.
+            "first_name": user.first_name,
             "user": user,
             "company": company,
             "link": link,

@@ -1,7 +1,7 @@
-{% load i18n %}{% if invitation %}{% blocktranslate %}Hello {{ user.first_name }},
+{% load i18n %}{% if invitation %}{% blocktranslate %}Hello {{ first_name }},
 
 An account has been created for you at {{ company }} to record your working time.{% endblocktranslate %}
-{% else %}{% blocktranslate %}Hello {{ user.first_name }},
+{% else %}{% blocktranslate %}Hello {{ first_name }},
 
 Somebody asked to reset the password of your account at {{ company }}.{% endblocktranslate %}
 {% endif %}
