@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 24 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 25 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -123,6 +123,29 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 25 — El móvil, que es donde se ficha y donde nadie miraba.**
+
+Toda la suite corría a ancho de escritorio. Fichar se hace con el teléfono en la
+mano, en una obra o en un portal, y esa anchura no la ejercitaba nadie: la misma
+forma que el favicon que solo se veía con ventana.
+
+**El producto aguanta bien**, y conviene dejarlo escrito porque no era evidente:
+ninguna pantalla se sale, los diálogos caben con sus botones dentro (326 de 390)
+y el botón de fichar mide 255×64 en la mitad inferior, donde llega el pulgar. Los
+mandos pequeños que salieron ---30 px el conmutador de tema, 26 el paginador---
+están por encima del mínimo de 24 que pide la norma, aunque por debajo de lo
+cómodo; cambiarlos es una decisión de diseño y no un arreglo.
+
+El único fallo era **mío y de la vuelta anterior**: el buscador de Personas pasó
+al componente compartido, que fijaba el ancho en vez de ponerle un tope. 380 px
+más el borde en una pantalla de 390. Un día de vida.
+
+Y de rebote, la razón de que la suite entera saliera en rojo dos veces esta
+semana: con doscientas pruebas a cinco peticiones cada una, **la suite agota el
+cupo por hora de la cuenta que usan todas**, y lo que se ve no es un límite sino
+la pantalla de entrar en mitad de otra prueba. `dev.py` ya resolvía esto para
+pytest y dejaba fuera el caso del navegador.
 
 **Vuelta 24 — Barrido de nombres accesibles: cinco sitios.**
 

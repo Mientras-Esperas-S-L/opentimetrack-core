@@ -621,3 +621,20 @@ componente común no arregla a quien no lo usa.
 ---`getAttribute('aria-label')` sobre el elemento real--- y buscar quién más hace
 lo mismo a mano en vez de usar el componente compartido: `grep` del
 `placeholder`, del rótulo o del icono.
+
+## Una anchura que nadie prueba es una anchura que está rota (14/08/2026)
+
+La suite entera corría a ancho de escritorio, y el producto se usa **de pie, con
+el móvil**. Barriendo a 390 px salió un desborde, y era de un cambio del día
+anterior: un `width` fijo donde antes había un `maxWidth`.
+
+Un día de vida. Sin el barrido habría llegado a producción y se habría visto
+como «la lista de personas tiene una barra rara abajo».
+
+**Regla:** lo mismo que con la ventana. Hay ejes que ninguna prueba recorre por
+defecto ---anchura, idioma, zona horaria, tema oscuro, impresión--- y en cada uno
+cabe una familia de fallos entera. Cuando se descubra uno, la prueba se queda: un
+barrido que encontró algo una vez encuentra la regresión la próxima.
+
+Y el corolario del que menos me acordaba: `width` en un `sx` de MUI es una
+medida, no un tope. Para que encoja hace falta `width: '100%'` con `maxWidth`.
