@@ -109,6 +109,21 @@ const NIGHT_STATUS = [
 const takesHours = (regime) => regime !== 'VARIABLE'
 const needsHours = (regime) => regime === 'PART_TIME' || regime === 'TRAINING'
 
+/** Los idiomas que de verdad existen.
+ *
+ *  Django ofrece ocho en `LANGUAGES` y solo hay catálogo de castellano; los
+ *  otros seis ---catalán, gallego, euskera, francés, portugués, alemán--- caen
+ *  en castellano sin decirlo. Ofrecer «Catalán» y contestar en castellano es
+ *  peor que no ofrecerlo: promete algo que no pasa.
+ *
+ *  El inglés sí funciona: los mensajes se escriben en inglés y el catálogo los
+ *  traduce, así que quien lo elige recibe el original.
+ */
+const IDIOMAS = [
+  ['es', 'Español'],
+  ['en', 'Inglés'],
+]
+
 const EMPTY_FORM = {
   first_name: '',
   last_name: '',
@@ -118,6 +133,7 @@ const EMPTY_FORM = {
   department: '',
   workplace: '',
   annual_leave_days: '',
+  locale: '',
   // Art. 3.b and 3.e of the pending decree, plus the two fields the domain
   // logic reads and nothing could fill: without a date of birth no
   // under-eighteen protection is ever applied, and with nobody marked as a
@@ -147,6 +163,7 @@ const fromPerson = (person) => ({
   department: person.department ?? '',
   workplace: person.workplace ?? '',
   annual_leave_days: person.annual_leave_days ?? '',
+  locale: person.locale ?? '',
   date_of_birth: person.date_of_birth ?? '',
   regime: person.regime || 'FULL_TIME',
   contracted_hours: person.contracted_hours ?? '',
@@ -269,6 +286,27 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                 onChange={set('annual_leave_days')}
                 helperText="Vacío = los de la empresa."
               />
+              {/* El idioma de esta persona. Los ajustes de la empresa decían
+                  «cada persona puede usar otro distinto» y no había dónde
+                  elegirlo: el campo existía en el modelo y en la API, y ninguna
+                  pantalla lo ofrecía. En esto se nota, además, fuera de la
+                  pantalla: los recordatorios y los avisos por correo salen en el
+                  idioma de quien los recibe. */}
+              <TextField
+                select
+                fullWidth
+                label="Idioma"
+                value={form.locale ?? ''}
+                onChange={set('locale')}
+                helperText="Vacío = el de la empresa."
+              >
+                <MenuItem value="">El de la empresa</MenuItem>
+                {IDIOMAS.map(([codigo, nombre]) => (
+                  <MenuItem key={codigo} value={codigo}>
+                    {nombre}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Stack>
 
             {/* El centro no es el departamento: uno dice con quién trabaja y el

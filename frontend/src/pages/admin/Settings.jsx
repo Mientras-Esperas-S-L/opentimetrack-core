@@ -59,15 +59,22 @@ const offsetOf = (zone) => {
   }
 }
 
+/** Los que de verdad existen.
+ *
+ *  Estaban los ocho de `LANGUAGES` de Django y solo hay catálogo de castellano.
+ *  Elegir «Catalán» dejaba el producto en castellano sin decir nada: ni un
+ *  aviso, ni un error, ni media palabra en catalán. Ofrecer un idioma y
+ *  contestar en otro es peor que no ofrecerlo --- quien lo elige se queda
+ *  pensando que algo no funciona, y no hay nada que arreglar.
+ *
+ *  El inglés sí: los mensajes se escriben en inglés y el catálogo los traduce,
+ *  así que quien lo elige recibe el original.
+ *
+ *  Cuando haya un catálogo más, esta lista crece con él y no antes.
+ */
 const LANGUAGES = [
   ['es', 'Español'],
   ['en', 'Inglés'],
-  ['ca', 'Catalán'],
-  ['gl', 'Gallego'],
-  ['eu', 'Euskera'],
-  ['fr', 'Francés'],
-  ['pt', 'Portugués'],
-  ['de', 'Alemán'],
 ]
 
 const MONTHS = [
@@ -464,6 +471,15 @@ export default function Settings() {
                   {label}
                 </MenuItem>
               ))}
+              {/* Si una empresa se quedó con uno de los que se han retirado, su
+                  valor sigue en la lista: un `select` con un valor que no está
+                  entre sus opciones se pinta vacío y avisa por consola, y de
+                  paso le borraría el ajuste al primer guardado. */}
+              {form.language && !LANGUAGES.some(([code]) => code === form.language) && (
+                <MenuItem value={form.language}>
+                  {form.language} (ya no disponible; responde en español)
+                </MenuItem>
+              )}
             </TextField>
           </Stack>
         </Panel>
