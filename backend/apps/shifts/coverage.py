@@ -170,7 +170,17 @@ def who_can_cover(*, shift: Shift, company, rules=None) -> list[Candidato]:
     lunes = shift.day - timedelta(days=shift.day.weekday())
     domingo = lunes + timedelta(days=6)
 
-    gente = list(User.objects.filter(is_active=True).select_related("workplace"))
+    # `tenant=company` explícito, y es la línea más importante del fichero.
+    # `User` no es `TenantOwnedModel` a propósito ---al entrar todavía no hay
+    # empresa--- así que `User.objects` abarca la plataforma entera y aquí no
+    # había nada que la acotara: el panel de cobertura ofrecía como candidatos a
+    # la plantilla de **todos los clientes**, con nombre y UUID.
+    #
+    # Y salían marcados viables y ordenados delante, que es lo que lo hacía
+    # invisible: los dos bloqueos que podrían frenarlos ---turnos y ausencias---
+    # sí filtran por empresa, así que para alguien de fuera venían vacíos.
+    # Cuanto más ajena era la persona, mejor candidata parecía.
+    gente = list(User.objects.filter(tenant=company, is_active=True).select_related("workplace"))
 
     # Los turnos de esa semana de todo el mundo, de una vez: quien mira esto
     # está mirando a la plantilla entera y una consulta por cabeza convierte una

@@ -460,7 +460,16 @@ class ShiftViewSet(viewsets.ModelViewSet):
         forma = ReassignSerializer(data=request.data)
         forma.is_valid(raise_exception=True)
 
-        destino = User.objects.filter(pk=forma.validated_data["employee"], is_active=True).first()
+        # `tenant=` explícito: sin él esto aceptaba el UUID de una persona de
+        # otra empresa y le enlazaba el turno, dejando además su nombre escrito
+        # en el rastro append-only de la empresa equivocada. Sus dos vecinas
+        # ---`assign` y `clear`--- sí lo llevaban; esta se escribió después y se
+        # quedó sin él. El UUID que hace falta lo repartía `coverage`.
+        destino = User.objects.filter(
+            tenant=request.user.tenant,
+            pk=forma.validated_data["employee"],
+            is_active=True,
+        ).first()
         if destino is None:
             raise BusinessRuleError(
                 code="unknown_employee",

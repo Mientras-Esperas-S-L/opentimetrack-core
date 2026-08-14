@@ -2,6 +2,10 @@
 
 Vueltas dadas: 42 · Vueltas seguidas sin hallazgos: 0
 
+**Parada el 14/08/2026.** La prueba de convergencia dice que NO ha convergido:
+6 lentes nuevas, 6 no vacías, 15 hallazgos de 17 sobrevivieron a la refutación.
+Dos de aislamiento entre empresas arreglados el mismo día; 13 pendientes.
+
 El 14/08 Francisco cerró las cinco decisiones que estaban esperándole. Cuatro
 están hechas y la quinta ---la capa de i18n del frontend--- está en marcha.
 
@@ -60,6 +64,109 @@ vuelve a una limpia.
 | Constancia de la consulta a la RLT | limpia | 14/08 v13 | **no había dónde declararlo**; ahora consta la vía, cuál, desde cuándo y la consulta |
 | Calendario con dos meses de antelación (38.3) | limpia | 13/08 v9 | **estaba solo citado**; ahora se avisa, y solo cuando las pone la empresa |
 | RGPD / art. 88 LOPDGDD | limpia | 14/08 v14 | **una empresa de baja guardaba las IP para siempre**; y el rastro había dejado de ser inmutable |
+
+## Prueba de convergencia (14/08/2026) --- NO ha convergido
+
+Seis lentes que las 42 vueltas no habían usado, cada hallazgo pasado por un
+escéptico que partía de que era falso. **15 sobrevivieron, 2 fueron refutados,
+y ninguna de las seis lentes volvió de vacío.** Diez de gravedad alta.
+
+Lo que mide esto: la etiqueta «limpia» de las 35 áreas dice qué lentes se
+pasaron, no la salud del código. Cambiar de lente sigue dando hallazgos graves,
+así que el trabajo no está terminado --- está sin empezar por ese lado.
+
+### Arreglado el mismo día
+
+Los dos de aislamiento entre empresas, porque una fuga de datos de un cliente a
+otro no se deja para la vuelta siguiente. Los dos eran míos, escritos el 12/08
+en la vuelta de cobertura de turnos, y encadenaban: el primero repartía los
+identificadores que el segundo necesitaba.
+
+- `apps/shifts/coverage.py` --- el panel de cobertura ofrecía como candidatos a
+  la plantilla de **todos los clientes de la plataforma**, con nombre y UUID. Y
+  salían marcados viables y ordenados delante, porque los dos bloqueos que
+  podrían frenarlos (turnos y ausencias) sí filtran por empresa y para alguien
+  de fuera venían vacíos: cuanto más ajena la persona, mejor candidata parecía.
+- `apps/shifts/views.py` --- `reassign` aceptaba uno de esos UUID, enlazaba el
+  turno y escribía el nombre de esa persona en el rastro append-only de la
+  empresa equivocada. Sus vecinas `assign` y `clear` sí llevaban el filtro.
+
+Con sonda permanente en `apps/common/tests/test_nadie_ve_la_empresa_de_al_lado.py`,
+que recorre todos los `User.objects` del proyecto y exige `tenant=` o un motivo
+escrito. La primera versión de esa sonda tenía la exención por nombre de fichero
+(`views.py`) en vez de por ruta, con lo que eximía a `shifts/views.py`: habría
+pasado en verde sin ver el fallo que la motivó.
+
+### Pendiente de arreglar --- 13 hallazgos
+
+Ordenados por gravedad. Cada uno viene con su escenario reproducido; el detalle
+completo (evidencia y refutación) está en el registro del workflow.
+
+- **[alta] El informe entregado descuenta la pausa aunque el convenio diga que es tiempo de trabajo**
+  `backend/apps/reports/services.py:279` --- lente: aritmetica
+  Empresa de jardinería (el convenio estatal viene en el propio repositorio: `agreements/es/jardineria-estatal.yaml` fija `break_counts_as_work: true`, Art. 16). Ana ficha entrada 06:00, pausa 10:00-10:15, salida 14:00. `build_day_status` responde 28.800 s (8 h, la pausa cuenta) y la pantalla se lo enseña así. El mismo día, en el mismo instante, `build_report` devuelve `total_seconds = 27.900` (7 h 45) y eso es lo que sale en el PDF, en el CSV y en el resumen de nómina. La línea 279 hace `row.seconds = max(row.seconds - row.break_seconds, 0)` sin preguntar nunca por `rules.break_counts_as_work`;
+  Consecuencia: Al trabajador: quince minutos menos por jornada en el documento oficial del art. 34.9, unas 55 h al año, y en la dirección que favorece al empresario. El documento que se entrega a la Inspección y el que se adjunta al recibo de salarios dicen menos horas de las que el propio producto ha contado en pantalla. A la empresa: dos cifras distintas para el mismo día en el mismo sistema, y la que se entre
+
+- **[alta] Retirar la solicitud borra la fila y deja el justificante en el almacén para siempre, sin nada que lo apunte**
+  `backend/apps/absences/services.py:618` --- lente: ficheros
+  Ana adjunta a un permiso el justificante de una cita hospitalaria (PDF, dato de salud) y luego pulsa «Retirar». `cancel_absence` hace `absence.delete()`. Django no borra ficheros al borrar filas desde la 1.3, y en todo el proyecto no hay ni un `post_delete`, ni un `FileField` con limpieza, ni una tarea periódica que barra el almacén (`config/celery.py` solo purga metadatos de fichaje). La fila desaparece y el fichero sigue entero. Igual por cascada al borrar a la persona o la empresa. Y como la fila ya no existe, el solape deja de bloquear: se puede repetir pedir+retirar sobre la misma fecha i
+  Consecuencia: A la persona: un dato de categoría especial que ella misma retiró se queda conservado sin plazo. A la empresa: no puede atender una supresión (art. 17 RGPD) ni cumplir su propio plazo de conservación (art. 5.1.e) porque no hay ninguna fila, pantalla ni comando que sepa que ese fichero existe; solo aparecería mirando el disco o el bucket a mano. Y cualquier empleado con sesión puede, a 3000 peticio
+
+- **[alta] Aprobar una corrección de hora reconstruye el fichaje desde cero y tira los campos del art. 3: el intervalo, la naturaleza de las horas y su liquidación**
+  `backend/apps/punches/corrections.py:577` --- lente: invariantes
+  Marta ficha entrada 08:00, pausa 14:00, vuelta 14:30 y salida 18:00 (los cuatro por `POST /api/punches/`, que acepta `interval` como ChoiceField). Se equivocó: volvió a las 15:00. Pide `POST /api/corrections/` kind=MODIFY sobre el fichaje de vuelta de pausa con proposed_timestamp 15:00; la responsable aprueba. `_create` construye el sustituto con solo tenant, employee, punch_type, timestamp, source y recorded_by, así que sale con interval=WORK en vez de BREAK. Medido: el 12/08 pasa a leerse como un tramo WORK 08:00-15:00, la pausa abierta desde las 14:00 sin cerrar nunca, la salida real de las
+  Consecuencia: A la persona: una jornada de 9,5 h que consta como 0 h trabajadas y aparece eternamente «en pausa», y horas extra pagadas que se convierten en ordinarias sin que nadie lo decida ni quede rastro. A la empresa: el procedimiento del art. 4.b ---el único camino legítimo para tocar el registro--- es el que corrompe el asiento, y lo hace en silencio, con correo de conformidad incluido. Además vacía el h
+
+- **[alta] `proposed_type` entra sin validar y acaba en `punch_type`: un fichaje que no es ni entrada ni salida y que no cuenta para nada**
+  `backend/apps/punches/correction_views.py:86` --- lente: invariantes
+  `proposed_type` es un `serializers.CharField` sin choices, `request_correction` solo comprueba que no venga vacío, y `_create` hace `punch.save()` sin `full_clean()`; la columna `punch_type` es varchar(3) sin CHECK. Recorrido completo por la API con APIClient: `POST /api/corrections/` {kind: ADD, proposed_type: "in", proposed_timestamp: 2026-08-12T06:00:00Z, reason: ...} responde 201, la responsable hace `POST /api/corrections/{id}/approve/` y responde 200. El fichaje queda guardado con punch_type='in' y `get_punch_type_display()` devuelve 'in'. `build_day_status` compara con `event.punch_type
+  Consecuencia: La persona pide que le añadan la entrada que olvidó, la empresa la aprueba, ambos reciben la confirmación («An entry was added: at 12/08/2026 08:00») y el día sigue en cero horas: el asiento existe en la tabla pero ningún lector lo interpreta. Peor: `infer_type` tampoco lo reconoce como OUT, así que el siguiente fichaje real de esa persona se deduce como salida y encadena una salida sin entrada. E
+
+- **[alta] Con la red lenta, la pantalla de fichar jura que no se ha registrado nada, y la segunda pulsación que ella misma pide cae fuera de la ventana antidoble**
+  `frontend/src/pages/Clock.jsx:239` --- lente: perdida-de-trabajo
+  Una operaria en una obra pulsa «Fichar entrada». La petición llega y el servidor crea la ENTRADA, pero la respuesta tarda más de 10 s (`timeout: 10000` en api.js:48). Axios aborta, el interceptor no tiene `error.response`, así que devuelve `{code:'network_error', status:0}` y Clock.jsx pinta en negrita «No se ha registrado nada. Vuelve a pulsar cuando tengas cobertura.». Ella vuelve a pulsar, unos segundos después. La guarda `_refuse_a_double_tap` solo cubre 5 s (`DOUBLE_TAP_SECONDS = 5`, apps/punches/services.py:334) y la espera del propio cliente ya ha sido de 10, así que el segundo toque no
+  Consecuencia: El registro de esa persona —que es la prueba del art. 34.9— queda falseado justo el día que peor cobertura hubo, y arreglarlo ya no es fichar otra vez: hace falta una corrección con motivo y el acuerdo de las dos partes (art. 4.b). El aviso no es neutral: es el que provoca la segunda pulsación. La ventana de 5 s se eligió pensando en «un cliente que reintenta» (así está escrito en el cuaderno, vue
+
+- **[alta] Un tropiezo pasajero al renovar la sesión (502, 429, wifi) borra el formulario entero y tira el testigo de refresco, que seguía siendo válido**
+  `frontend/src/services/api.js:133` --- lente: perdida-de-trabajo
+  Una administradora lleva cinco minutos rellenando «Dar de alta» (más de veinte campos). Su acceso, que dura 15 minutos, caduca justo antes de pulsar Guardar. El PATCH/POST recibe 401, el interceptor llama una vez a `POST /auth/refresh/` y esa llamada se estrella por algo pasajero: un 502 del balanceador mientras se despliega, un 429 de la cubeta anónima que comparte toda la oficina detrás del mismo NAT, el wifi parpadeando, o su propio plazo de 10 s. El `catch { tokens.clear() }` de la línea 133 lo trata como «esta sesión ya no vale»: borra los dos testigos, cae al `if (status === 401)` de la 
+  Consecuencia: Se pierde el trabajo de quien estaba escribiendo, sin aviso ni forma de recuperarlo, por un fallo que no tenía nada que ver con su sesión. Y encima se destruye el refresco, que valía siete días: recargar no la devuelve dentro, tiene que volver a teclear la contraseña. Es el mismo error que el proyecto ya cazó y arregló para `/auth/me/` —AuthContext hace tres intentos y solo borra en 401 o 403, y h
+
+- **[alta] El fichaje delegado no tiene clave de idempotencia: un reintento del conector convierte la entrada en salida y borra la jornada entera**
+  `backend/apps/punches/delegated.py:131` --- lente: integraciones
+  El lector NFC ficha la entrada de Rosa a las 08:00. El servidor la graba y devuelve 201, pero la respuesta se pierde (corte de red, proceso muerto, timeout del cliente). El conector reintenta el mismo POST /api/punches/delegated/ {"employee_ref": "EMP-0042"} a los 30 s. La guarda del doble toque son 5 s (DOUBLE_TAP_SECONDS, services.py:334), así que los 30 s la esquivan; y el tipo se deduce del estado (infer_type), así que el reintento no graba otra entrada: graba una SALIDA. Ejecutado con freezegun: primera llamada 201 IN, estado WORKING; reintento 201 OUT; day_status pasa a OFF con worked_se
+  Consecuencia: La jornada legal de esa persona queda registrada como 30 segundos en lugar de nueve horas, y ese registro es el que se enseña ante una inspección. Deshacerlo obliga a pasar por el flujo del art. 4.b, que necesita el acuerdo de las dos partes. El disparador no es raro: el timeout después de que la escritura ya se confirmó es el modo de fallo más común de un conector, y register_punch es atómico per
+
+- **[alta] Todo lo que una aplicación externa hace sobre las personas se queda fuera del rastro de auditoría: la entrada se descarta y solo queda un WARNING en el log**
+  `backend/apps/tenants/people_api.py:313` --- lente: integraciones
+  El conector da de alta a alguien (PUT /api/app/people/EMP-0042/ -> 201), le cambia el correo (PUT -> 200) y lo da de baja (DELETE -> 200, is_active=False). Las tres llamadas invocan record(...) con actor=None y actor_label="aplicación · Geosian", pero NO pasan company=. En audit/services.py:47 `tenant = company or getattr(actor, "tenant", None)` da None con actor=None, y en la línea 52 la entrada se descarta con un log.warning. Ejecutado: las tres operaciones salen bien, la persona queda desactivada en la base, y AuditLog.objects.filter(target_type="user") devuelve []. Son los dos únicos recor
+  Consecuencia: Una aplicación integrada desactiva a una persona —que a partir de ese momento no puede fichar, register_punch la rechaza con employee_inactive— o le cambia el correo, que es su identificador de acceso, y en la pantalla de auditoría no hay ni una línea: ni quién, ni cuándo, ni qué había antes. El changes={"before": ..., "after": ...} que el código construye para saber qué pisó el conector se tira. 
+
+- **[media] La jornada de una persona a tiempo parcial se calcula con la semana de la empresa, y los permisos por horas salen al doble o a la mitad**
+  `backend/apps/absences/usage.py:176` --- lente: aritmetica
+  Ana, `regime=PART_TIME`, `contracted_hours=20` (20 h/semana = 4 h/día), sin cuadrante — que es justo el caso que el docstring dice cubrir. (a) Art. 37.9 ET, tal y como lo trae el catálogo (`apps/legal/es.py:302`: 4 días laborables al año, «se pide por horas»): Ana coge ocho ausencias de 4 h, o sea **ocho jornadas suyas enteras**. `leave_usage` devuelve `used=4.0`, `remaining=0.0`, `over=False`: se le han concedido ocho días de un permiso de cuatro. (b) Art. 53.2 ET, seis horas a la semana durante el preaviso: Ana se toma **un** día suyo (4 h) registrado como día completo. `leave_usage` devuelv
+  Consecuencia: Al trabajador, en el caso (b): el producto le dice que ha agotado y superado un permiso legal habiéndose ausentado 4 de las 6 horas a las que tiene derecho, y `over=True` es lo que ve quien aprueba. Le pueden denegar horas que le corresponden justo durante un preaviso, que es cuando más las necesita. A la empresa, en el caso (a): concede el doble de lo que el art. 37.9 obliga sin enterarse, y el s
+
+- **[media] Con almacén de objetos (el valor por defecto de producción) el botón «Justificante» no descarga nada y no avisa: la CSP publicada no nombra el dominio del almacén**
+  `deploy/cabeceras.md:30` --- lente: ficheros
+  Despliegue por defecto: `prod.py:78` pone `STORAGE_BACKEND` a `s3`, y `deploy/cabeceras.md:30` publica `connect-src 'self' https://API.EJEMPLO.COM`. La persona pulsa «Justificante» en Mis ausencias; `downloadJustification` (frontend/src/services/api.js:315) lanza un XHR a /api/absences/<id>/justification/; la vista responde 302 al dominio del almacén (views.py:530); el navegador bloquea la redirección porque ese tercer origen no está en `connect-src` (la CSP se vuelve a evaluar sobre el destino de la redirección). axios rechaza, y el `onClick` de MyLeave.jsx:277 llama a una función async sin `
+  Consecuencia: En la configuración de producción que documenta el propio producto, ni la persona ni quien aprueba pueden recuperar el justificante que la aplicación pidió subir — y el fallo es mudo, así que se lee como «la aplicación no responde», no como un problema de despliegue. La pareja de pruebas que cubre este camino no lo ve: `test_with_object_storage_it_redirects_instead_of_proxying` solo comprueba que 
+
+- **[media] `oidc_sub` es único a nivel global, no por empresa, y contradice el diseño multiempresa que el propio modelo declara**
+  `backend/apps/users/models.py:481` --- lente: invariantes
+  La cabecera de users/models.py dice que el correo es único por empresa y no globalmente «porque una persona puede trabajar para dos empresas, y en un sistema pensado para integradores multiempresa eso deja de ser un caso raro». Pero `oidc_sub` lleva `unique=True` a secas, sin la empresa y sin el emisor. Un grupo con dos empresas en el mismo OTT y un único proveedor de identidad: el conector de la primera hace `PUT /api/app/people/EMP-0042/` con oidc_sub="azure|abc123" y responde 201. El conector de la segunda hace `PUT /api/app/people/G-7/` con el mismo sub. `_resolve` filtra por `tenant=compa
+  Consecuencia: La segunda empresa no puede dar de alta a esa persona por el conector, y lo que recibe es un 500 sin código de error ---justo lo que el docstring de `_refuse_collisions` dice que hay que evitar: «un choque contra ellas sale como un 500 y un conector no puede reaccionar a eso»---. Quien lo sufre es una persona que existe, trabaja en las dos empresas y no puede fichar en la segunda hasta que alguien
+
+- **[media] El justificante que la pantalla promete admitir hasta 10 MB se aborta a los 10 s: la solicitud queda creada en el servidor y a la persona se le dice que no hay conexión**
+  `frontend/src/components/LeaveDialog.jsx:475` --- lente: perdida-de-trabajo
+  Alguien pide un permiso del art. 37.3 desde el móvil y adjunta la foto del justificante, 8 MB, por debajo del límite que la propia pantalla anuncia («PDF o foto, hasta 10 MB»). Con una subida de 4G razonable (5 Mb/s), el envío tarda más de los 10 s de `timeout` de api.js:48. Axios aborta la petición, pero el cuerpo ya había llegado: el servidor crea la solicitud con su justificante. En pantalla aparece «No hay conexión con el servidor.» y el diálogo sigue abierto con todo relleno, como si no se hubiera enviado nada.
+  Consecuencia: La persona se va creyendo que no ha pedido el permiso —vuelve a intentarlo, lo pide por otra vía o se queda sin pedirlo— mientras su responsable ve en la cola una solicitud de quince días que quien la mandó da por no enviada. El diagnóstico que se le da además es falso: no es la conexión, es que el cliente dejó de esperar. El aviso de 10 MB solo se cumple si la subida va a más de 8 Mb/s sostenidos
+
+- **[media] Una baja hecha desde el panel no toca updated_at, así que la lectura incremental del conector no la ve nunca**
+  `backend/apps/users/views.py:570` --- lente: integraciones
+  El conector trae la plantilla entera de GET /api/app/people/ y se guarda next_since. Después la administración da de baja a Rosa desde el panel: DELETE /api/employees/<id>/ guarda con `instance.save(update_fields=campos)` donde campos es ["is_active", "contract_end"], sin "updated_at". Django fija auto_now en la instancia pero solo escribe los campos de update_fields, así que la columna updated_at no cambia en la base. La siguiente lectura incremental, GET /api/app/people/?since=<cursor>, filtra por updated_at__gte y Rosa no entra. Ejecutado: is_active pasa a False en la base, updated_at antes
+  Consecuencia: La aplicación de gestión mantiene indefinidamente como activa a alguien que ya no está en la empresa: sigue en sus listados, sigue en los cuadrantes que pinta y sigue mandando fichajes delegados por ella, que OTT rechaza con employee_inactive sin que nadie mire esos errores. Y una integración que reconcilie —comparar su padrón contra el de OTT por incremental— no ve ninguna diferencia y no corrige
+
 
 ## Hallazgos abiertos
 
