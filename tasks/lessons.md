@@ -604,3 +604,20 @@ para los dos: `aria-label` con el nombre de la fila.
 **Regla:** un rótulo de botón que se repite en la pantalla, o que es un verbo
 suelto, pide un nombre accesible con su contexto. Y en las pruebas, `exact: true`
 o un texto que no pueda ser prefijo de otro.
+
+## Un arreglo de accesibilidad hay que verlo en el DOM, no darlo por hecho (14/08/2026)
+
+Puse `aria-label` en el `TextField` del buscador y la sonda lo seguía marcando:
+MUI reenvía las props sueltas al **div de fuera**, no al `input`. Va en
+`slotProps.htmlInput`. Sin volver a mirar, habría dado por arreglado algo que no
+lo estaba --- y la siguiente vez que alguien lo revisara vería el `aria-label` en
+el código y pensaría lo mismo.
+
+Y el segundo: el componente compartido ya estaba bien y **Personas se fabricaba
+el suyo**, así que la pantalla más usada se quedó fuera del arreglo. Arreglar un
+componente común no arregla a quien no lo usa.
+
+**Regla:** después de tocar accesibilidad, comprobarlo **en el navegador**
+---`getAttribute('aria-label')` sobre el elemento real--- y buscar quién más hace
+lo mismo a mano en vez de usar el componente compartido: `grep` del
+`placeholder`, del rótulo o del icono.

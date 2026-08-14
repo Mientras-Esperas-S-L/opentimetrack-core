@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 23 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 24 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -123,6 +123,30 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 24 — Barrido de nombres accesibles: cinco sitios.**
+
+Salió del tropiezo de ayer: la prueba de Permisos clicaba el conmutador de tema
+porque los dos botones se llamaban «Cambiar». Lo que confunde a un localizador
+confunde igual a quien navega con lector de pantalla, así que se barrieron las
+catorce pantallas.
+
+**47 botones «Corregir»** en Fichajes, 19 «Editar» en Personas, 7 en Turnos, 6
+en Departamentos, y 7 «Eliminar» --- donde peor sienta equivocarse. Ninguno decía
+de qué fila era.
+
+Y el **buscador compartido no tenía nombre**: un `placeholder` no es una
+etiqueta, desaparece al escribir y hay lectores que no lo anuncian. Con dos
+detalles que costaron: el `aria-label` va en `slotProps.htmlInput` ---puesto en
+el `TextField`, MUI lo reenvía al div de fuera y la sonda lo seguía marcando
+después de «arreglarlo»--- y **Personas se fabricaba su propio buscador**, así
+que se quedó fuera del arreglo del componente común. Ahora usa el compartido y
+hereda el botón de vaciar, que allí tampoco había.
+
+Ningún mando estaba mudo, que era lo que más miedo daba.
+
+La sonda se queda como prueba de las catorce pantallas, contrastada quitando el
+`aria-label`: tres pantallas en rojo.
 
 **Vuelta 23 — La pantalla de permisos, y el diseño que no servía sin ella.**
 
