@@ -118,8 +118,20 @@ class SignInView(APIView):
         The application log already goes to file and to the log collector, and
         a burst of these is the shape of an attack, which is an operational
         question rather than part of the working-time record.
+
+        Lo que llega aquí no ha pasado por ninguna validación ---se llama porque
+        el serializador **falló**--- y esta es la puerta de la calle: sin sesión,
+        alcanzable desde Internet, y lo primero que prueba cualquiera. Con
+        `{"email": 12}` la línea de abajo hacía `12.strip()` y devolvía un 500.
+
+        La ironía es la parte que conviene recordar: esta función existe para
+        dejar constancia de los intentos fallidos, que son la forma de un
+        ataque, y se rompía justo con la entrada que más se parece a uno. En vez
+        de la línea de registro salía una traza. Encontrado con una sonda que
+        mete tipos equivocados en cada campo.
         """
-        email = (request.data.get("email") or "").strip().lower()
+        crudo = request.data.get("email") if isinstance(request.data, dict) else None
+        email = crudo.strip().lower() if isinstance(crudo, str) else ""
         logger.warning(
             "Failed sign-in for %s from %s",
             email or "(no address)",

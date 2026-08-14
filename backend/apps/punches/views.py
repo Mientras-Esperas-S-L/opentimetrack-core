@@ -36,8 +36,21 @@ class PunchFilter(LocalDayRangeFilter):
 
 
 def source_for(request) -> str:
-    """Whether it came from the mobile app or the web panel."""
-    declared = (request.data or {}).get("source", "").upper()
+    """Whether it came from the mobile app or the web panel.
+
+    Lee el cuerpo a pelo, **antes** de que el serializador valide nada, porque
+    decide con qué origen se guarda el fichaje. Eso significa que aquí puede
+    llegar cualquier cosa: `{"source": 12}` hacía `12.upper()` y devolvía un 500
+    ---encontrado con una sonda que mete tipos equivocados en los campos reales
+    de cada serializador---.
+
+    Solo una cadena puede declarar un origen. Lo demás no es un error que haya
+    que contar: esta función ya tiene una respuesta para «no me han dicho nada
+    utilizable», que es mirar el agente del navegador, y un número es
+    exactamente eso.
+    """
+    declarado = (request.data or {}).get("source")
+    declared = declarado.upper() if isinstance(declarado, str) else ""
     if declared in {PunchSource.MOBILE, PunchSource.WEB, PunchSource.TERMINAL}:
         return declared
     agent = request.META.get("HTTP_USER_AGENT", "").lower()

@@ -761,3 +761,27 @@ dependencias nuevas hace falta reiniciar el servicio.
 **Regla**: dependencia nueva del frontend = `podman compose exec web npm install` **y**
 `podman compose restart web`. Y si una prueba de sesión falla sola mientras las demás
 pasan, mirar el log del contenedor antes de mirar la prueba.
+
+## Una prueba que crea gente en la base compartida tiene que devolverla como estaba (14/08/2026)
+
+Tercera vez que envenenó la base de desarrollo, y la tercera de una forma distinta.
+
+La prueba de cobertura creaba una persona con correo único por tanda, le ponía un turno,
+la daba de baja, y al terminar solo borraba el turno. Como **dar de baja no borra** ---que
+es la promesa del producto y está bien--- no hay forma de quitarla por API. A las nueve
+tandas había nueve personas de baja con `contract_end` de hoy, y empezaron a fallar dos
+pruebas de otros ficheros que contaban filas.
+
+Lo que lo hizo difícil de leer: las que fallaban no eran las mías, y cambiaban de una
+ejecución a otra.
+
+Y la limpieza que escribí para arreglarlo tampoco servía: llamaba a
+`POST /employees/{id}/reactivate/`, una ruta que **no existe** ---reactivar es un
+`PATCH {is_active: true}`---. El ayudante `api` de las pruebas no comprueba el código, así
+que el 404 se lo tragaba en silencio y la prueba seguía pasando mientras dejaba a la
+persona de baja.
+
+**Regla**: identidad fija y no una por tanda ---se reutiliza y se devuelve a su estado---
+y la limpieza **se comprueba**: `expect(vuelta.status).toBe(200)`. Una limpieza que no
+verifica su resultado es una limpieza que no sabes si ocurre. Y antes de dar por buena una
+tanda, mirar si ha dejado filas: `first_name='...'` cuenta en un segundo.

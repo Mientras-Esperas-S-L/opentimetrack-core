@@ -370,7 +370,17 @@ class ShiftViewSet(viewsets.ModelViewSet):
         from apps.users.models import User
 
         shift = self.get_object()
-        destino = User.objects.filter(pk=request.data.get("employee"), is_active=True).first()
+
+        # Por serializador y no filtrando con lo que venga: `pk=[]` levanta un
+        # `ValidationError` de Django ---no de DRF--- que nadie captura, y la
+        # respuesta era un 500. Lo cazó una sonda que mete tipos equivocados en
+        # los campos reales, y el fallo era de este mismo endpoint recién
+        # escrito: un `filter(pk=...)` acepta lo que le den hasta que la base de
+        # datos se queja.
+        forma = ReassignSerializer(data=request.data)
+        forma.is_valid(raise_exception=True)
+
+        destino = User.objects.filter(pk=forma.validated_data["employee"], is_active=True).first()
         if destino is None:
             raise BusinessRuleError(
                 code="unknown_employee",
@@ -504,6 +514,12 @@ def _describe(part, as_time: tuple[str, ...] = ()) -> dict | None:
         key: {"basis": c.basis, "note": c.note} for key, c in part.citations.items()
     }
     return body
+
+
+class ReassignSerializer(serializers.Serializer):
+    """A quién pasa el turno. Un identificador y nada más."""
+
+    employee = serializers.UUIDField()
 
 
 class RulesSerializer(serializers.ModelSerializer):

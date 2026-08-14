@@ -28,21 +28,44 @@ const DENTRO_DE = (dias) => {
 test.describe('Cobertura de turnos', () => {
   test.use({ storageState: 'e2e/.sesiones/admin.json' })
 
-  /** Crea a alguien con un turno futuro, lo da de baja, y lo limpia al salir. */
-  const conUnHueco = async (page, hacer) => {
-    const sufijo = Date.now().toString().slice(-6)
-    const alta = await api(page, '/employees/', {
-      method: 'POST',
-      body: {
-        email: `sevaa${sufijo}@example.com`,
-        first_name: 'Cobertura',
-        last_name: `Prueba ${sufijo}`,
-      },
-    })
-    expect(alta.status, JSON.stringify(alta.body)).toBe(201)
-    const quien = alta.body.id
-    const dia = DENTRO_DE(12)
+  /** Una persona con un turno futuro, dada de baja, y todo como estaba al salir.
+   *
+   *  Con un correo **fijo** y no uno por tanda. La primera versión creaba a
+   *  alguien nuevo cada vez y solo limpiaba su turno: dar de baja no borra ---esa
+   *  es la promesa de la pantalla--- así que no hay forma de quitar a la persona
+   *  por API, y cada ejecución dejaba una más. A las nueve tandas empezaron a
+   *  fallar dos pruebas de otros ficheros por los recuentos. Es la segunda vez
+   *  que envenenó la base compartida de la misma manera.
+   *
+   *  Con identidad fija se reutiliza a la misma y se le devuelve el alta al
+   *  terminar, así que la base queda igual que estaba corran las tandas que
+   *  corran.
+   */
+  const CORREO = 'cobertura.prueba@example.com'
 
+  const conUnHueco = async (page, hacer) => {
+    const existentes = await api(page, `/employees/?search=${CORREO}&is_active=`)
+    let quien = (existentes.body?.results ?? existentes.body ?? []).find(
+      (p) => p.email === CORREO,
+    )?.id
+
+    if (!quien) {
+      const alta = await api(page, '/employees/', {
+        method: 'POST',
+        body: { email: CORREO, first_name: 'Cobertura', last_name: 'Prueba' },
+      })
+      expect(alta.status, JSON.stringify(alta.body)).toBe(201)
+      quien = alta.body.id
+    } else {
+      // De una tanda anterior interrumpida: se le devuelve el alta antes de
+      // volver a montar el caso.
+      await api(page, `/employees/${quien}/`, {
+        method: 'PATCH',
+        body: { is_active: true, contract_end: null },
+      })
+    }
+
+    const dia = DENTRO_DE(12)
     const turno = await api(page, '/shifts/', {
       method: 'POST',
       body: { employee: quien, day: dia, segments: [{ start: '08:00', end: '16:00' }] },
@@ -55,6 +78,16 @@ test.describe('Cobertura de turnos', () => {
       await hacer({ quien, dia, baja, turnoId: turno.body.id })
     } finally {
       await api(page, `/shifts/${turno.body.id}/`, { method: 'DELETE' })
+      // El alta de vuelta y la fecha de fin borrada: si no, la persona se queda
+      // «se fue el 14/08» y sale como hueco en todas las tandas siguientes.
+      // Reactivar es un PATCH y no una accion `/reactivate/`: la primera
+      // version llamaba a una ruta que no existe y se tragaba el 404 sin
+      // decir nada, dejando a la persona de baja tanda tras tanda.
+      const vuelta = await api(page, `/employees/${quien}/`, {
+        method: 'PATCH',
+        body: { is_active: true, contract_end: null },
+      })
+      expect(vuelta.status, 'la limpieza no devolvio el alta').toBe(200)
     }
   }
 
