@@ -296,3 +296,78 @@ def test_ninguna_vista_con_ambito_se_queda_sin_documentarlo():
 
     faltan = sorted(set(mapa) - documentadas)
     assert not faltan, f"piden un ámbito y el esquema no lo dice: {faltan}"
+
+
+# ------------------------------------------- lo que decía devolver, y lo que devuelve
+
+
+def test_entrar_declara_que_devuelve_los_tokens(esquema):
+    """La primera llamada de cualquier integración, y decía «sin cuerpo».
+
+    Entrar, darse de alta y poner contraseña devuelven las tres
+    `{access, refresh, user, tenant}` y se publicaban como `responses={200:
+    None}`. Un cliente generado del esquema tipaba el retorno como vacío, así
+    que no había forma de sacar el token sin salirse del cliente; y quien lo
+    escribiera a mano tenía que adivinar entre `access`, `token`,
+    `access_token` o `jwt`, porque el contrato no nombraba el campo.
+    """
+    for ruta, codigo in (
+        ("/api/auth/token/", "200"),
+        ("/api/auth/register/", "201"),
+        ("/api/auth/set-password/", "200"),
+    ):
+        cuerpo = esquema["paths"][ruta]["post"]["responses"][codigo]
+        referencia = cuerpo["content"]["application/json"]["schema"]["$ref"]
+        assert referencia.endswith("/Session"), f"{ruta} sigue sin decir qué devuelve"
+
+    sesion = esquema["components"]["schemas"]["Session"]["properties"]
+    assert {"access", "refresh", "user", "tenant"} <= set(sesion)
+
+
+def test_las_listas_que_no_paginan_no_prometen_el_sobre_paginado(esquema):
+    """`roster`, `calendar` y `pending` devuelven un array pelado.
+
+    Declaraban `{count, next, previous, results}` porque el generador mira la
+    clase de paginación del ViewSet y no lo que hace cada acción. Quien leyera
+    el contrato escribía `respuesta.results.map(...)` y recibía `undefined`: la
+    peor forma de fallar, porque no falla.
+
+    Y declaraban `?employee=`, `?search=` y `?page=` por la misma herencia. Ese
+    es el otro medio hallazgo: pedir el cuadrante de una persona devolvía el de
+    la plantilla entera, en silencio y con la forma correcta.
+    """
+    for ruta in ("/api/shifts/roster/", "/api/absences/calendar/", "/api/absences/pending/"):
+        operacion = esquema["paths"][ruta]["get"]
+        forma = operacion["responses"]["200"]["content"]["application/json"]["schema"]
+        assert forma.get("type") == "array", f"{ruta} sigue prometiendo el sobre paginado"
+
+        declarados = {p["name"] for p in operacion.get("parameters", [])}
+        inventados = declarados - {"from", "to"}
+        assert not inventados, f"{ruta} promete filtros que no aplica: {sorted(inventados)}"
+
+
+def test_lo_que_devuelve_un_envoltorio_no_se_declara_como_su_contenido(esquema):
+    """`/api/auth/me/` decía devolver un `User` y devuelve `{user, tenant}`.
+
+    Un cliente generado leía `respuesta.first_name` y recibía `undefined`: el
+    nombre está un nivel más abajo.
+    """
+    referencia = esquema["paths"]["/api/auth/me/"]["get"]["responses"]["200"]["content"][
+        "application/json"
+    ]["schema"]["$ref"]
+    assert referencia.endswith("/MeEnvelope")
+
+    dentro = esquema["components"]["schemas"]["MeEnvelope"]["properties"]
+    assert set(dentro) == {"user", "tenant"}
+
+
+def test_la_baja_declara_el_recuento_que_devuelve(esquema):
+    """Cambió hoy de 204 mudo a 200 con cuerpo, y el esquema se quedó atrás.
+
+    El recuento es lo que le dice a quien administra si hay un cuadrante que
+    rehacer, así que no enterarse de que viene es no usarlo.
+    """
+    respuestas = esquema["paths"]["/api/employees/{id}/"]["delete"]["responses"]
+    assert "204" not in respuestas, "sigue prometiendo un 204 que ya no devuelve"
+    referencia = respuestas["200"]["content"]["application/json"]["schema"]["$ref"]
+    assert referencia.endswith("/Deactivation")

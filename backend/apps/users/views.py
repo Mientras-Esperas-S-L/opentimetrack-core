@@ -49,6 +49,23 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
+class SessionSerializer(serializers.Serializer):
+    """Lo que devuelven entrar, darse de alta y poner contraseña.
+
+    Las tres se publicaban como `responses={200: None}` ---«sin cuerpo»--- y las
+    tres devuelven los tokens. Es **la primera llamada** que hace cualquier
+    integración, así que el contrato no solo estaba incompleto: no nombraba
+    siquiera el campo `access`, y quien lo escribiera a mano tenía que adivinar
+    entre `access`, `token`, `access_token` o `jwt`. Un cliente generado del
+    esquema tipaba el retorno como vacío.
+    """
+
+    access = serializers.CharField(help_text="JWT de la persona. Va en `Authorization: Bearer`.")
+    refresh = serializers.CharField(help_text="Se cambia por uno nuevo en /api/auth/refresh/.")
+    user = UserSerializer()
+    tenant = TenantSerializer()
+
+
 @extend_schema(tags=["auth"])
 class SignUpView(APIView):
     """Registers a company and its first administrator."""
@@ -57,7 +74,7 @@ class SignUpView(APIView):
     authentication_classes: list = []
     throttle_scope = "login"
 
-    @extend_schema(request=SignUpSerializer, responses={201: None}, auth=[])
+    @extend_schema(request=SignUpSerializer, responses={201: SessionSerializer}, auth=[])
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -82,7 +99,7 @@ class SignInView(APIView):
     authentication_classes: list = []
     throttle_scope = "login"
 
-    @extend_schema(request=SignInSerializer, responses={200: None}, auth=[])
+    @extend_schema(request=SignInSerializer, responses={200: SessionSerializer}, auth=[])
     def post(self, request):
         serializer = SignInSerializer(data=request.data, context={"request": request})
         if not serializer.is_valid():
@@ -241,11 +258,35 @@ class MePreferencesSerializer(serializers.Serializer):
     wants_punch_reminders = serializers.BooleanField(required=False)
 
 
+class DeactivationSerializer(serializers.Serializer):
+    """Lo que deja atrás una baja.
+
+    Esta operación pasó hoy de 204 mudo a 200 con cuerpo, y el esquema se quedó
+    prometiendo el 204: quien integrara leyendo el contrato no sabría que la
+    respuesta trae el recuento que le dice si hay un cuadrante que rehacer.
+    """
+
+    future_shifts = serializers.IntegerField(
+        help_text="Turnos que le quedaban asignados después de la baja. No se han borrado."
+    )
+
+
+class MeEnvelopeSerializer(serializers.Serializer):
+    """Quién eres y en qué empresa. Se declaraba como `User` a secas.
+
+    Un cliente generado leía `respuesta.first_name` y recibía `undefined`: el
+    nombre está un nivel más abajo, en `user`.
+    """
+
+    user = UserSerializer()
+    tenant = TenantSerializer()
+
+
 @extend_schema(tags=["auth"])
 class MeView(APIView):
     permission_classes = [IsAuthenticatedInTenant]
 
-    @extend_schema(responses={200: UserSerializer})
+    @extend_schema(responses={200: MeEnvelopeSerializer})
     def get(self, request):
         return Response(
             {
@@ -478,6 +519,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 target_label=person.get_full_name() or person.email,
             )
 
+    @extend_schema(responses={200: DeactivationSerializer})
     def destroy(self, request, *args, **kwargs):
         """Devuelve cuántos turnos quedan colgando, en vez de un 204 mudo.
 
@@ -650,7 +692,7 @@ class PasswordSetView(APIView):
     authentication_classes: list = []
     throttle_scope = "login"
 
-    @extend_schema(request=PasswordSetSerializer, responses={200: None}, auth=[])
+    @extend_schema(request=PasswordSetSerializer, responses={200: SessionSerializer}, auth=[])
     def post(self, request):
         serializer = PasswordSetSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

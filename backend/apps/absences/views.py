@@ -13,7 +13,7 @@ import django_filters
 from django.conf import settings
 from django.http import FileResponse, Http404, HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import mixins, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -514,11 +514,18 @@ class AbsenceViewSet(
         return Response({"employee": str(employee.id), **balance.as_dict()})
 
     @extend_schema(
+        # Ver el mismo comentario en `ShiftViewSet.roster`: no es una lista del
+        # ViewSet y publicaba por herencia filtros que nunca aplica.
+        filters=False,
         parameters=[
-            OpenApiParameter("from", str, description="YYYY-MM-DD"),
-            OpenApiParameter("to", str, description="YYYY-MM-DD"),
+            OpenApiParameter("from", str, required=True, description="YYYY-MM-DD, inclusive."),
+            OpenApiParameter("to", str, required=True, description="YYYY-MM-DD, inclusive."),
         ],
-        responses={200: AbsenceSerializer(many=True)},
+        responses={
+            200: OpenApiResponse(
+                response={"type": "array", "items": {"$ref": "#/components/schemas/Absence"}},
+            )
+        },
     )
     @action(detail=False, methods=["get"])
     def calendar(self, request):
@@ -550,7 +557,16 @@ class AbsenceViewSet(
         )
         return Response(AbsenceSerializer(window, many=True).data)
 
-    @extend_schema(responses={200: AbsenceSerializer(many=True)})
+    @extend_schema(
+        # No lee un solo parámetro: la cola es la cola. El generador publicaba
+        # `page`, `search`, `ordering` y cinco filtros por herencia del ViewSet.
+        filters=False,
+        responses={
+            200: OpenApiResponse(
+                response={"type": "array", "items": {"$ref": "#/components/schemas/Absence"}},
+            )
+        },
+    )
     @action(detail=False, methods=["get"])
     def pending(self, request):
         """The approval queue. What a manager opens the panel to deal with."""

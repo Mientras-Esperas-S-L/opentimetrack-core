@@ -10,7 +10,7 @@ from datetime import date
 
 from django.db.models import Count
 from django.utils.translation import gettext_lazy as _
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -249,11 +249,26 @@ class ShiftViewSet(viewsets.ModelViewSet):
             ) from exc
 
     @extend_schema(
+        # `filters=False` porque esta acción **no** es una lista del ViewSet: no
+        # pagina, no ordena, no busca y no aplica sus filtros. El generador los
+        # publicaba todos por herencia, así que el contrato prometía
+        # `?employee=` y quien lo usara recibía la plantilla entera creyendo que
+        # había filtrado. Silencioso y con la forma correcta: lo peor.
+        filters=False,
         parameters=[
-            OpenApiParameter("from", str, description="YYYY-MM-DD"),
-            OpenApiParameter("to", str, description="YYYY-MM-DD"),
+            OpenApiParameter("from", str, required=True, description="YYYY-MM-DD, inclusive."),
+            OpenApiParameter("to", str, required=True, description="YYYY-MM-DD, inclusive."),
         ],
-        responses={200: ShiftSerializer(many=True)},
+        responses={
+            200: OpenApiResponse(
+                # A mano, porque con `ShiftSerializer(many=True)` el generador
+                # le pone el sobre paginado del ViewSet. Esta acción no pasa por
+                # el paginador ---devuelve `Response(datos)` sin más--- así que
+                # quien leyera el contrato escribía `respuesta.results.map(...)`
+                # y recibía `undefined`.
+                response={"type": "array", "items": {"$ref": "#/components/schemas/Shift"}},
+            )
+        },
     )
     @action(detail=False, methods=["get"])
     def roster(self, request):
