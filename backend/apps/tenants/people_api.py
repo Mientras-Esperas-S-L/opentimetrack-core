@@ -318,7 +318,6 @@ class ApplicationPersonView(APIView):
             target_type="user",
             target_label=person.get_full_name() or person.email,
             changes={"before": antes, "after": _as_dict(person)},
-            request=request,
         )
         return Response(
             _as_dict(person), status=status.HTTP_201_CREATED if creado else status.HTTP_200_OK
@@ -350,7 +349,6 @@ class ApplicationPersonView(APIView):
                 target=person,
                 target_type="user",
                 target_label=person.get_full_name() or person.email,
-                request=request,
             )
         return Response(_as_dict(person))
 

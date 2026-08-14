@@ -134,7 +134,6 @@ class ReportView(APIView):
                 target_label=employee.get_full_name(),
                 changes={"from": str(date_from), "to": str(date_to)},
                 note=f"hash {data.fingerprint[:16]}",
-                request=request,
             )
         return response
 
@@ -207,7 +206,6 @@ class ReportView(APIView):
                     target_label=person.get_full_name(),
                     changes={"from": str(date_from), "to": str(date_to)},
                     note=f"hash {data.fingerprint[:16]}",
-                    request=request,
                 )
 
         stem = f"working-time_{company.tax_id}_{date_from}_{date_to}"

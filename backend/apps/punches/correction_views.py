@@ -180,7 +180,6 @@ class CorrectionViewSet(
             target_label=employee.get_full_name(),
             changes={"kind": correction.kind},
             note=correction.reason[:300],
-            request=request,
         )
         return Response(CorrectionSerializer(correction).data, status=status.HTTP_201_CREATED)
 
@@ -230,7 +229,6 @@ class CorrectionViewSet(
             target_label=correction.employee.get_full_name(),
             changes={"correction": str(correction.pk), "agreed": True},
             note=correction.reason[:300],
-            request=request,
         )
         return Response(CorrectionSerializer(correction).data)
 
@@ -256,7 +254,6 @@ class CorrectionViewSet(
             target_label=correction.employee.get_full_name(),
             changes={"correction": str(correction.pk)},
             note=correction.employee_dissent[:300],
-            request=request,
         )
         return Response(CorrectionSerializer(correction).data)
 
@@ -284,7 +281,6 @@ class CorrectionViewSet(
             target_label=correction.employee.get_full_name(),
             changes={"correction": str(correction.pk)},
             note=correction.employee_dissent[:300],
-            request=request,
         )
         return Response(CorrectionSerializer(correction).data)
 
@@ -312,7 +308,6 @@ class CorrectionViewSet(
             target_label=correction.employee.get_full_name(),
             changes={"kind": correction.kind, "correction": str(correction.pk)},
             note=correction.reason[:300],
-            request=request,
         )
         return Response(CorrectionSerializer(correction).data)
 
@@ -340,6 +335,5 @@ class CorrectionViewSet(
             target_label=correction.employee.get_full_name(),
             changes={"correction": str(correction.pk)},
             note=form.validated_data.get("note", "")[:300],
-            request=request,
         )
         return Response(CorrectionSerializer(correction).data)

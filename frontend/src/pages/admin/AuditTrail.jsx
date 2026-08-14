@@ -259,14 +259,6 @@ export default function AuditTrail() {
                     >
                       {when(entry.at)}
                     </Typography>
-                    {entry.ip_address && (
-                      <Chip
-                        size="small"
-                        variant="outlined"
-                        label={entry.ip_address}
-                        sx={{ height: 18, fontSize: '0.62rem', mt: 0.5 }}
-                      />
-                    )}
                   </Stack>
                 </Stack>
               </Paper>

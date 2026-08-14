@@ -711,3 +711,19 @@ subiendo por los padres, no porque leyera una propiedad.
 cómo lo pinta la biblioteca. Y si no se puede construir el contraste ---apagar X
 y ver la prueba en rojo---, al menos validar el instrumento: dos capturas del
 mismo estado tienen que salir idénticas.
+
+## Una migración creada no es una migración aplicada (14/08/2026)
+
+Añadí `max_open_hours` y quité tres columnas. Las pruebas siguieron en verde ---830 de
+830--- porque pytest levanta su propia base de datos y la migra entera cada vez. La de
+desarrollo se quedó atrás, y la aplicación empezó a devolver 500 en `/api/overview/` con
+un `column ... does not exist`. Me enteré porque Francisco me pegó el log.
+
+Es primo del envenenamiento de la base compartida que ya tengo apuntado, pero por el otro
+lado: allí dejaba datos malos, aquí dejo el esquema viejo. Y es más traicionero, porque el
+verde de la suite es exactamente la señal que te hace pensar que has terminado.
+
+**Regla**: `makemigrations` y `migrate` van juntos en la misma tanda de comandos. Si en una
+vuelta se toca un modelo, la comprobación final no es «pasan las pruebas», es «pasan las
+pruebas **y** la aplicación de desarrollo responde». Un `curl` a un endpoint que use lo
+tocado cuesta un segundo y ve lo que la suite no puede ver.

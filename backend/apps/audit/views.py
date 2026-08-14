@@ -37,37 +37,8 @@ class AuditLogFilter(LocalDayRangeFilter):
         fields = ["action", "actor", "target_id"]
 
 
-def _ip_for(entry, lector) -> str:
-    """La IP de una línea del registro, solo para quien le corresponde verla.
-
-    El registro se le enseña a cada persona con lo suyo: lo que hizo y lo que le
-    hicieron. Esa segunda mitad trae líneas donde quien actuó es otro ---un
-    responsable que le corrigió un fichaje--- y con ellas venía **la dirección
-    IP de ese responsable**.
-
-    No hace falta para nada de lo que el registro sirve: para saber quién le
-    tocó el fichaje ya está el nombre, y para reclamar, la fecha y el motivo. Lo
-    único que añadía era el dato personal de un compañero, que además dice desde
-    dónde trabaja --- y en un producto que presume de minimizar la IP, chirría.
-
-    Un administrador sí la ve entera: es quien investiga un acceso raro, y sin
-    la dirección no hay nada que investigar.
-    """
-    if lector is None:
-        return ""
-    if getattr(lector, "is_admin", False) or entry.actor_id == lector.id:
-        return entry.ip_address or ""
-    return ""
-
-
 class AuditLogSerializer(serializers.ModelSerializer):
     action_display = serializers.CharField(source="get_action_display", read_only=True)
-    #: De quien actuó, no de quien lee, y por eso no se sirve sin más.
-    ip_address = serializers.SerializerMethodField()
-
-    def get_ip_address(self, entry) -> str:
-        return _ip_for(entry, getattr(self.context.get("request"), "user", None))
-
     class Meta:
         model = AuditLog
         fields = [
@@ -82,7 +53,6 @@ class AuditLogSerializer(serializers.ModelSerializer):
             "target_label",
             "changes",
             "note",
-            "ip_address",
         ]
         read_only_fields = fields
 
@@ -182,7 +152,6 @@ class AuditLogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
                 "to": request.query_params.get("date_to", ""),
                 "rows": rows.count(),
             },
-            request=request,
         )
 
         response = HttpResponse(buffer.getvalue(), content_type="text/csv; charset=utf-8")

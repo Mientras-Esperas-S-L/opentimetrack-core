@@ -381,7 +381,6 @@ class AbsenceViewSet(
                         "to": absence.end_date.isoformat(),
                         "recorded_by_company": True,
                     },
-                    request=request,
                 )
 
         return Response(AbsenceSerializer(absence).data, status=status.HTTP_201_CREATED)
@@ -429,7 +428,6 @@ class AbsenceViewSet(
                 "from": absence.start_date.isoformat(),
                 "to": absence.end_date.isoformat(),
             },
-            request=request,
         )
         return Response(AbsenceSerializer(absence).data)
 
@@ -448,7 +446,6 @@ class AbsenceViewSet(
                 "from": absence.start_date.isoformat(),
                 "to": absence.end_date.isoformat(),
             },
-            request=request,
         )
         return Response(AbsenceSerializer(absence).data)
 
@@ -486,7 +483,6 @@ class AbsenceViewSet(
                 target_type="user",
                 target_label=absence.employee.get_full_name(),
                 changes={"absence": str(absence.pk), "type": absence.absence_type},
-                request=request,
             )
 
         if getattr(settings, "STORAGE_BACKEND", "filesystem") == "s3":

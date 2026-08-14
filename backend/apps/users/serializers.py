@@ -192,7 +192,6 @@ class DepartmentSerializer(serializers.ModelSerializer):
                 changes={
                     "department": [antes, person.department.name if person.department else ""]
                 },
-                request=request,
             )
 
     def validate_managers(self, value):
@@ -482,14 +481,6 @@ class UserWriteSerializer(serializers.ModelSerializer):
     def create(self, validated):
         password = validated.pop("password", None)
         company = self.context["request"].user.tenant
-
-        limits = getattr(company, "limits", None)
-        if limits is not None:
-            current = User.objects.filter(tenant=company, is_active=True).count()
-            if not limits.allows_another_employee(current):
-                raise serializers.ValidationError(
-                    {"non_field_errors": [_("The employee limit for this company is reached.")]}
-                )
 
         user = User(tenant=company, **validated)
         if password:

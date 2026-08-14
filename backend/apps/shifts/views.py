@@ -521,6 +521,5 @@ class WorkingTimeRulesView(APIView):
                 target_type="company",
                 target_label=request.user.tenant.name,
                 changes=changed,
-                request=request,
             )
         return Response(self._body(rules, request))

@@ -77,6 +77,5 @@ class HolidayRecoveryView(APIView):
                 "to": recovery.last_day.isoformat(),
                 "regime": recovery.regime,
             },
-            request=request,
         )
         return Response({"status": recovery.status, "days": recovery.days})

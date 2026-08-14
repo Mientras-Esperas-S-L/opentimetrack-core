@@ -37,7 +37,6 @@ def record(
     target_label: str = "",
     changes: dict | None = None,
     note: str = "",
-    request=None,
 ) -> None:
     """Adds an entry. Silent on success, loud on failure, never fatal.
 
@@ -63,7 +62,6 @@ def record(
             target_label=target_label or (str(target)[:200] if target else ""),
             changes=changes or {},
             note=note[:300],
-            ip_address=_ip_of(request),
         )
         # After commit: an entry describing something that then rolled back
         # would be a lie, and a lie in the audit trail is worse than a gap.
@@ -77,16 +75,6 @@ def _label_of(actor) -> str:
         return "sistema"
     name = getattr(actor, "get_full_name", lambda: "")() or getattr(actor, "email", "")
     return str(name)[:160]
-
-
-def _ip_of(request) -> str | None:
-    if request is None:
-        return None
-    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    if forwarded:
-        # Leftmost is the client; the rest are the proxies it passed through.
-        return forwarded.split(",")[0].strip()
-    return request.META.get("REMOTE_ADDR")
 
 
 def record_view_of_others(*, request, target_employee, note: str = "") -> None:
@@ -107,5 +95,4 @@ def record_view_of_others(*, request, target_employee, note: str = "") -> None:
         target_type="user",
         target_label=target_employee.get_full_name() or target_employee.email,
         note=note,
-        request=request,
     )

@@ -127,7 +127,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             target=application,
             target_label=application.name,
             changes={"scopes": application.scopes},
-            request=self.request,
         )
 
     def perform_update(self, serializer):
@@ -143,7 +142,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 target_label=application.name,
                 changes={"scopes": [before, application.scopes]},
                 note=str(_("Permissions changed")),
-                request=self.request,
             )
 
     def perform_destroy(self, instance):
@@ -163,7 +161,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             actor=self.request.user,
             target=instance,
             target_label=instance.name,
-            request=self.request,
         )
 
     @extend_schema(request=IssueSerializer, responses={201: dict})
@@ -195,7 +192,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             target=application,
             target_label=application.name,
             note=str(_("Credential issued: …%(hint)s")) % {"hint": credential.token_hint},
-            request=request,
         )
 
         return Response(
@@ -239,7 +235,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             target=application,
             target_label=application.name,
             note=str(_("Credential revoked: …%(hint)s")) % {"hint": found.token_hint},
-            request=request,
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
 

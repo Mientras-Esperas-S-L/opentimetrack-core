@@ -363,7 +363,6 @@ class UserViewSet(viewsets.ModelViewSet):
             actor=self.request.user,
             target=person,
             target_label=person.get_full_name() or person.email,
-            request=self.request,
         )
         return True
 
@@ -375,7 +374,6 @@ class UserViewSet(viewsets.ModelViewSet):
             target=person,
             target_label=person.get_full_name() or person.email,
             changes={"role": person.role},
-            request=self.request,
         )
 
         # Without this the account exists and nobody can get into it: creating a
@@ -424,7 +422,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 actor=self.request.user,
                 target=person,
                 target_label=person.get_full_name() or person.email,
-                request=self.request,
             )
             return
 
@@ -438,7 +435,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 target=person,
                 target_label=person.get_full_name() or person.email,
                 changes={"role": [before, new_role]},
-                request=self.request,
             )
         else:
             record(
@@ -446,7 +442,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 actor=self.request.user,
                 target=person,
                 target_label=person.get_full_name() or person.email,
-                request=self.request,
             )
 
     def perform_destroy(self, instance):
@@ -469,7 +464,6 @@ class UserViewSet(viewsets.ModelViewSet):
             actor=self.request.user,
             target=instance,
             target_label=instance.get_full_name() or instance.email,
-            request=self.request,
         )
 
 

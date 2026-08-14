@@ -146,7 +146,6 @@ class OvertimeView(APIView):
                     "settlement": decision.settlement,
                     "decided_alone": decision.decided_alone,
                 },
-                request=request,
             )
             decided.append(
                 {

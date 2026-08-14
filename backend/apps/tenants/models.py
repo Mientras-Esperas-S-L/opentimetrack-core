@@ -186,9 +186,19 @@ class TenantLimits(BaseModel):
         related_name="limits",
         verbose_name=_("company"),
     )
-    max_employees = models.IntegerField(_("maximum employees"), null=True, blank=True)
-    max_admins = models.IntegerField(_("maximum administrators"), null=True, blank=True)
-    max_storage_mb = models.IntegerField(_("maximum storage (MB)"), null=True, blank=True)
+    # Aquí vivían `max_employees`, `max_admins` y `max_storage_mb`. Se han
+    # quitado: un tope de plantilla y una cuota de disco son límites de
+    # facturación, y facturar es cosa del servicio alojado, no de Core.
+    #
+    # No eran código muerto del todo, y eso era lo malo. `max_employees` se
+    # comprobaba de verdad al dar de alta a alguien, así que una instalación
+    # propia con una fila de límites podía negarse a añadir empleados con un
+    # «The employee limit for this company is reached.» que no venía de ningún
+    # contrato: se lo ponía el software a sí mismo. En un producto que se
+    # ofrece abierto e integrable eso es justo lo que no puede pasar.
+    #
+    # `features` se queda porque no es una cuota: dice qué hay montado, no
+    # cuánto se ha pagado.
     features = models.JSONField(_("enabled features"), default=dict, blank=True)
 
     class Meta:
@@ -197,12 +207,6 @@ class TenantLimits(BaseModel):
 
     def __str__(self) -> str:
         return f"Limits for {self.tenant.name}"
-
-    def allows_another_employee(self, current: int) -> bool:
-        return self.max_employees is None or current < self.max_employees
-
-    def allows_another_admin(self, current: int) -> bool:
-        return self.max_admins is None or current < self.max_admins
 
 
 # Applications live in their own module for readability, but Django needs them

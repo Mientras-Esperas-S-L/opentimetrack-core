@@ -144,7 +144,24 @@ class AuditLog(models.Model):
     changes = models.JSONField(_("changes"), default=dict, blank=True)
     note = models.CharField(_("note"), max_length=300, blank=True)
 
-    ip_address = models.GenericIPAddressField(_("IP address"), null=True, blank=True)
+    # Aquí vivía `ip_address`. Se ha quitado, y el motivo es que chocaba de
+    # frente con la otra garantía de esta tabla.
+    #
+    # Una IP es dato personal ---está resuelto desde Breyer, y la AEPD lo trata
+    # así---, y el RGPD pide poder borrarla cuando alguien lo pide (art. 17) y
+    # no guardarla indefinidamente (art. 5.1.e). Esta tabla es inmutable por
+    # tres disparadores que hacen fallar UPDATE, DELETE y TRUNCATE, así que no
+    # es que fuera difícil borrarla: la base de datos lo rechazaba. Las dos
+    # garantías se peleaban y había que ceder en una.
+    #
+    # Cede la IP. Lo que el rastro tiene que decir es quién hizo qué y cuándo,
+    # y eso lo dice `actor`, que además está amparado por el propio art. 34.9.
+    # La IP añadía poco a ese trabajo y traía el problema entero. Para
+    # investigar un acceso raro están los registros del servidor web, que sí
+    # caducan solos.
+    #
+    # Ojo con el malentendido fácil: los cuatro años de conservación del art.
+    # 34.9 son de los fichajes, no de esto.
 
     class Meta:
         verbose_name = _("audit entry")

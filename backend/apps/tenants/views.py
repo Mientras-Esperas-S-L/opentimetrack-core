@@ -223,7 +223,6 @@ class CompanyView(APIView):
                 target_type="company",
                 target_label=company.name,
                 changes=changed,
-                request=request,
             )
         return Response(serializer.data)
 
@@ -274,6 +273,5 @@ class RecordArrangementView(APIView):
                 target_label=request.user.tenant.name,
                 changes=cambios,
                 note="art. 34.9: organización del registro",
-                request=request,
             )
         return Response(serializer.data)
