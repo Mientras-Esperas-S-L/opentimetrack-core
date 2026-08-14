@@ -88,6 +88,11 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
   // extraordinarias.» El aviso del cuadrante ya mencionaba esta prohibición y
   // aquí, que es donde se autorizan, no la nombraba nadie.
   const nocturno = rows.some((row) => row.night_worker)
+  // La noche que los relojes se atrasan, toda la plantilla de noche aparece
+  // aquí con sesenta minutos y filas idénticas. La cifra es correcta ---esa
+  // gente trabajó nueve horas de verdad--- pero decidir sobre ella sin saber de
+  // dónde sale no es decidir.
+  const cambioDeHora = rows.find((row) => row.clock_change_minutes)?.clock_change_minutes ?? 0
 
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
@@ -117,6 +122,15 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
               Tiene la condición de trabajadora o trabajador nocturno, y el art. 36.1 ET prohíbe las
               horas extraordinarias a quien la tenga. Las horas ya se trabajaron y hay que
               clasificarlas; lo que no puede es repetirse.
+            </Typography>
+          )}
+          {cambioDeHora !== 0 && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+              Esa noche los relojes se {cambioDeHora < 0 ? 'atrasaron' : 'adelantaron'} una hora, así
+              que el turno duró {cambioDeHora < 0 ? 'una hora más' : 'una hora menos'} de lo
+              previsto. {cambioDeHora < 0
+                ? 'La hora se trabajó de verdad y por eso aparece aquí; qué se hace con ella lo dice el convenio.'
+                : ''}
             </Typography>
           )}
           {/* El tope del art. 35.2. Autorizar sin saber que esta persona va

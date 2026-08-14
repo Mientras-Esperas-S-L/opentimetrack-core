@@ -22,6 +22,7 @@ from django.utils.translation import gettext_lazy as _
 from apps import legal
 from apps.common.exceptions import BusinessRuleError
 from apps.common.four_eyes import refuse_self_decision
+from apps.common.dst import change_across
 from apps.punches.models import OvertimeDecision, OvertimeSettlement, Punch
 
 
@@ -124,6 +125,12 @@ def pending_overtime(*, company, first: date, last: date, scope=None) -> list[di
         )
         if recon.overtime_minutes <= 0:
             continue
+
+        cambio = 0
+        quien = shift.employee
+        suyos = por_dia.get((shift.employee_id, shift.day), [])
+        if suyos:
+            cambio = change_across(suyos[0].timestamp, suyos[-1].timestamp, quien)
         decision = decided.get((shift.employee_id, shift.day))
         if decision is not None and decision.minutes == recon.overtime_minutes:
             continue  # already ruled on, for this same figure
@@ -141,6 +148,21 @@ def pending_overtime(*, company, first: date, last: date, scope=None) -> list[di
                 # Viaja con la fila por lo mismo: quien decide lo necesita **al
                 # decidir**, y una segunda consulta significa que nadie lo mira.
                 "night_worker": nocturnos.get(shift.employee_id, False),
+                # Los minutos que el reloj se movió durante el turno. Cero los
+                # 363 días normales del año.
+                #
+                # La noche que los relojes se atrasan, toda la plantilla de
+                # noche aparece aquí con sesenta minutos de horas extra, y quien
+                # tiene que autorizarlas veía una docena de filas idénticas sin
+                # ningún motivo a la vista. La cifra es correcta ---esa gente
+                # trabajó nueve horas de verdad, y la ley va por el tiempo
+                # efectivamente trabajado--- pero decidir sobre ella sin saber de
+                # dónde sale no es decidir.
+                #
+                # Qué se hace con esa hora ---pagarla, compensarla, o que el
+                # convenio diga que la noche cuenta por su nominal--- es de la
+                # empresa. El producto pone el dato al lado del número.
+                "clock_change_minutes": cambio,
             }
         )
     return rows
