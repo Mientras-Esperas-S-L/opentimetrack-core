@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 22 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 23 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -22,6 +22,7 @@ vuelve a una limpia.
 | Calendario del equipo | limpia | 13/08 | filtros; cuatro manos |
 | Cuadrante | limpia | 13/08 | formulario no enviable; días vacíos = todos |
 | Turnos | limpia | 13/08 | — |
+| Permisos (`/panel/permisos`) | limpia | 14/08 v23 | **no existía**: el catálogo no se podía editar desde ninguna pantalla |
 | Fichajes | limpia | 13/08 | filtros de tipo y origen |
 | Por decidir | limpia | 13/08 v2 | resolver en bloque; **contadores truncados a 50** |
 | Informes | limpia | 13/08 | zip con nombre de PDF; CSV con CRLF |
@@ -110,12 +111,6 @@ vuelve a una limpia.
   llevaba ahí desde siempre con la suite entera en verde: Chrome sin ventana no
   lo pide. Lo mismo puede pasar con tipografías, impresión o consultas de medios.
 
-- **El catálogo de permisos no se puede editar desde ninguna pantalla.** Se
-  siembra con la empresa y se puede recargar desde Ajustes, pero cada permiso
-  tiene su cifra, su unidad y su periodo, y el convenio mejora cualquiera de
-  ellos --- que es la razón entera de que el catálogo se copie en vez de leerse
-  del marco. Hoy esa mejora solo se puede aplicar por API. El `LeaveTypeViewSet`
-  ya es un ModelViewSet completo: falta la pantalla.
 - **Fichar no ofrece pausa ni modo de trabajo.** El modelo los soporta
   ---`PunchInterval.BREAK`, `work_mode`--- y la pantalla solo tiene un botón.
   Puede ser deliberado (un toque, sin decisiones) pero entonces el descanso del
@@ -128,6 +123,29 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 23 — La pantalla de permisos, y el diseño que no servía sin ella.**
+
+Existía todo lo demás: el modelo con sus unidades y periodos, la siembra por
+país, el endpoint completo, y hasta `createLeaveType` y `updateLeaveType`
+exportados en el cliente. No había pantalla --- así que la mejora que trae un
+convenio solo se podía aplicar por API, y **la decisión de copiar el catálogo en
+vez de leerlo del marco legal, tomada justo para permitir esa mejora, no servía
+para nada**.
+
+Es la cuarta de la familia «la pieza existe y nadie la llama», y la más cara:
+las otras tres eran un hueco; esta dejaba sin efecto una decisión de diseño
+entera.
+
+Se edita cuánto da, no de qué artículo sale. Vacío en «cuánto da» significa sin
+tope ---«el tiempo indispensable»--- porque mandar 0 sería inventarse un límite
+de cero. Y retirar un permiso solo lo quita de las solicitudes nuevas: uno cuyo
+motivo deja de renderizarse es un registro que perdió algo.
+
+De paso, un fallo de accesibilidad de cosecha propia: el botón decía «Cambiar» a
+secas, y treinta y dos «Cambiar» seguidos no le dicen nada a quien navega con
+lector de pantalla. Salió porque la prueba clicaba el «Cambiar entre claro y
+oscuro» de la cabecera --- `name` en Playwright casa por subcadena.
 
 **Vuelta 22 — El paginador de «Por decidir», y era peor de lo anotado.**
 

@@ -588,3 +588,19 @@ con filtrar y ver que el total no cambiaba.
 Y la nota del cuaderno decía «las tres colas paginadas». Son dos: las otras
 devuelven la cola entera. Una nota de hace nueve vueltas se comprueba antes de
 trabajar sobre ella.
+
+## `getByRole(name)` casa por subcadena (14/08/2026)
+
+`page.getByRole('button', { name: 'Cambiar' })` también acierta al «Cambiar entre
+claro y oscuro» de la cabecera. El clic se iba al conmutador de tema, no se abría
+ningún diálogo, y la prueba fallaba en la línea siguiente diciendo que no
+encontraba un texto --- que es el sitio equivocado para buscar la causa.
+
+Lo bueno es lo que enseña del **producto**: un rótulo que choca con otro para el
+localizador choca igual para quien navega con lector de pantalla. Treinta y dos
+botones «Cambiar» en una lista no dicen cuál es cuál. La solución es la misma
+para los dos: `aria-label` con el nombre de la fila.
+
+**Regla:** un rótulo de botón que se repite en la pantalla, o que es un verbo
+suelto, pide un nombre accesible con su contexto. Y en las pruebas, `exact: true`
+o un texto que no pueda ser prefijo de otro.
