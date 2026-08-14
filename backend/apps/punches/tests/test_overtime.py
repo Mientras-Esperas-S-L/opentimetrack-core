@@ -6,9 +6,10 @@ ese tiempo es extra autorizada y cómo se salda. Nunca toca un fichaje.
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
+from freezegun import freeze_time
 from rest_framework.test import APIClient
 
 from apps.common.models import tenant_context
@@ -488,3 +489,59 @@ def test_the_queue_says_how_much_of_the_cap_is_gone(company, people):
     )
     assert listed["pending"][0]["used_this_year"]["hours"] == 2.0
     assert listed["pending"][0]["used_this_year"]["cap_hours"] == 80
+
+
+@pytest.mark.django_db
+def test_la_cola_de_horas_extra_no_crece_con_los_dias(company, people):
+    """El mismo número de consultas con una semana que con un mes.
+
+    Costaba 1449 consultas y medio segundo en una empresa de veinte personas:
+    482 pedían las mismas reglas de la empresa, 243 volvían a pedir un turno que
+    el bucle ya tenía en la mano, y 241 los fichajes de un día. Por eso el
+    Resumen decía que había horas extra sin decir cuántas --- contarlas costaba
+    más que todo lo demás junto.
+
+    Se compara **el coste de dos ventanas distintas**, no un número fijo: un
+    número solo significa algo si no cambia al crecer.
+    """
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    from apps.punches.overtime import pending_overtime
+    from apps.punches.services import register_punch
+    from apps.shifts.models import Shift
+
+    with tenant_context(company.id):
+        for numero in range(28):
+            dia = date(2026, 9, 1) + timedelta(days=numero)
+            Shift.objects.create(
+                tenant=company,
+                employee=people["worker"],
+                day=dia,
+                segments=[{"start": "08:00", "end": "16:00"}],
+            )
+            with freeze_time(f"{dia.isoformat()} 06:00:00"):
+                register_punch(employee=people["worker"], company=company)
+            with freeze_time(f"{dia.isoformat()} 15:00:00"):
+                register_punch(employee=people["worker"], company=company)
+
+    def coste(dias):
+        with tenant_context(company.id):
+            with CaptureQueriesContext(connection) as capturadas:
+                filas = pending_overtime(
+                    company=company,
+                    first=date(2026, 9, 1),
+                    last=date(2026, 9, 1) + timedelta(days=dias - 1),
+                )
+            return len(capturadas), filas
+
+    coste(7)  # se descarta: la primera crea las reglas de la empresa
+
+    con_semana, de_semana = coste(7)
+    con_mes, de_mes = coste(28)
+
+    assert de_semana, "no salió ninguna fila que decidir"
+    assert len(de_mes) > len(de_semana), "el mes debería traer más días"
+    assert con_semana == con_mes, (
+        f"una semana cuesta {con_semana} consultas y un mes {con_mes}: sigue creciendo con los días"
+    )

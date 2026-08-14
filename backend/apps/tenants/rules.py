@@ -166,8 +166,23 @@ class WorkingTimeRules(BaseModel):
         """
         from apps.legal import for_company as framework_for
 
+        # Recordadas en la propia empresa mientras dure la petición.
+        #
+        # Son las mismas reglas para toda ella y esto se llama desde dentro de
+        # los bucles: una lectura de horas extra pendientes pedía **482 veces**
+        # la misma fila. El objeto `Tenant` vive lo que la petición, así que el
+        # recuerdo se muere con ella y no hay nada que invalidar.
+        #
+        # Un proceso largo que cambie las reglas y siga usando el mismo objeto
+        # vería las de antes. Es el precio, y se paga barato: quien las cambia
+        # es la pantalla de ajustes, que trae su propia instancia.
+        recordadas = getattr(company, "_working_time_rules", None)
+        if recordadas is not None:
+            return recordadas
+
         framework = framework_for(company)
         rules, _created = cls.objects.get_or_create(tenant=company, defaults=framework.defaults)
+        company._working_time_rules = rules
         return rules
 
 

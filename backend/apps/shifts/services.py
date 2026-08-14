@@ -1151,7 +1151,9 @@ class DayReconciliation:
         }
 
 
-def day_reconciliation(*, employee, company, day: date) -> DayReconciliation:
+def day_reconciliation(
+    *, employee, company, day: date, shift=None, events=None
+) -> DayReconciliation:
     """The day as the record holds it, against the day as the roster planned it.
 
     Never invents time --- it reads what was punched and what was rostered and
@@ -1163,8 +1165,12 @@ def day_reconciliation(*, employee, company, day: date) -> DayReconciliation:
     from apps.punches.services import build_day_status
     from apps.tenants.rules import WorkingTimeRules
 
-    shift = Shift.objects.filter(employee=employee, day=day).first()
-    status = build_day_status(employee, company, day)
+    # `shift` se puede pasar hecho. Quien recorre un mes de cuadrante ya lo tiene
+    # en la mano, y volver a pedirlo era una consulta por día y persona: en una
+    # lectura de horas extra pendientes, doscientas cuarenta y tres.
+    if shift is None:
+        shift = Shift.objects.filter(employee=employee, day=day).first()
+    status = build_day_status(employee, company, day, events=events)
     worked = status.worked_seconds // 60
 
     if shift is None:

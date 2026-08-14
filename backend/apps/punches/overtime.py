@@ -22,7 +22,7 @@ from django.utils.translation import gettext_lazy as _
 from apps import legal
 from apps.common.exceptions import BusinessRuleError
 from apps.common.four_eyes import refuse_self_decision
-from apps.punches.models import OvertimeDecision, OvertimeSettlement
+from apps.punches.models import OvertimeDecision, OvertimeSettlement, Punch
 
 
 def pending_overtime(*, company, first: date, last: date, scope=None) -> list[dict]:
@@ -36,7 +36,12 @@ def pending_overtime(*, company, first: date, last: date, scope=None) -> list[di
     from apps.shifts.models import Shift
     from apps.shifts.services import day_reconciliation
 
-    shifts = Shift.objects.filter(day__gte=first, day__lte=last).select_related("employee")
+    # La cadena entera: `employee.tzinfo` mira el centro, y el centro sin zona
+    # propia cae en su empresa. Con `select_related("employee")` a secas seguían
+    # saliendo dos consultas por persona y día, las del centro y la empresa.
+    shifts = Shift.objects.filter(day__gte=first, day__lte=last).select_related(
+        "employee__workplace__tenant", "employee__tenant"
+    )
     if scope is not None:
         shifts = shifts.filter(employee__in=scope)
 
@@ -66,9 +71,41 @@ def pending_overtime(*, company, first: date, last: date, scope=None) -> list[di
         for employee_id, roster in por_persona.items()
     }
 
+    # Los fichajes de la ventana, de una vez y repartidos por persona y día
+    # **local suyo**. Antes era una consulta por día y persona ---doscientas
+    # cuarenta y una en un mes de una empresa de veinte--- y esto lo pide la
+    # pantalla de decisiones cada vez que se abre.
+    #
+    # El día es el de su centro, no el de la empresa: una oficina en Madrid y
+    # otra en Las Palmas van una hora aparte, y esa hora decide si un fichaje
+    # cae en un día o en el anterior.
+
+    turnos = list(shifts.order_by("employee_id", "day"))
+    por_dia: dict = {}
+    if turnos:
+        gente = {turno.employee_id: turno.employee for turno in turnos}
+        primero = min(turno.day for turno in turnos)
+        ultimo = max(turno.day for turno in turnos)
+        eventos = Punch.objects.filter(
+            employee_id__in=gente,
+            is_active=True,
+            timestamp__date__gte=primero - timedelta(days=1),
+            timestamp__date__lte=ultimo + timedelta(days=1),
+        ).order_by("timestamp")
+        for evento in eventos:
+            quien = gente[evento.employee_id]
+            local = evento.timestamp.astimezone(quien.tzinfo).date()
+            por_dia.setdefault((evento.employee_id, local), []).append(evento)
+
     rows = []
-    for shift in shifts.order_by("employee_id", "day"):
-        recon = day_reconciliation(employee=shift.employee, company=company, day=shift.day)
+    for shift in turnos:
+        recon = day_reconciliation(
+            employee=shift.employee,
+            company=company,
+            day=shift.day,
+            shift=shift,
+            events=por_dia.get((shift.employee_id, shift.day), []),
+        )
         if recon.overtime_minutes <= 0:
             continue
         decision = decided.get((shift.employee_id, shift.day))
