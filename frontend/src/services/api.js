@@ -155,7 +155,10 @@ api.interceptors.response.use(
 
     return Promise.reject({
       code: payload?.code ?? 'network_error',
-      message: concreto || payload?.message || 'The server could not be reached.',
+      // En castellano, como el resto del producto. Estaba en inglés, y es el
+      // único texto que lee quien está en una obra y no consigue fichar: el
+      // peor sitio posible para el idioma equivocado.
+      message: concreto || payload?.message || 'No hay conexión con el servidor.',
       details: porCampo,
       status,
     })

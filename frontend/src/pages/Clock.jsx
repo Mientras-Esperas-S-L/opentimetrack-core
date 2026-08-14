@@ -227,6 +227,18 @@ export default function Clock() {
                 onClose={() => setError(null)}
               >
                 {error.message}
+                {/* Lo que de verdad hace falta saber, y solo aquí, donde se
+                    escribe en el registro: **no ha quedado nada**. Sin esta
+                    frase, quien está en un sótano ve un aviso, se encoge de
+                    hombros y se va convencido de haber fichado --- que es cómo se
+                    pierde un fichaje sin que nadie se entere.
+                    El service worker no guarda cola a propósito: la hora de un
+                    fichaje no se decide en el navegador. */}
+                {error.code === 'network_error' && (
+                  <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 600 }}>
+                    No se ha registrado nada. Vuelve a pulsar cuando tengas cobertura.
+                  </Typography>
+                )}
               </Alert>
             )}
 
