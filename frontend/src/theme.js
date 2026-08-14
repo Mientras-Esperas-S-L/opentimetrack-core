@@ -80,6 +80,28 @@ export const buildTheme = (mode = 'light', idioma = 'es') =>
         //
         // No se vio antes porque depende del dato: con nadie fichado la lista
         // está vacía y el avatar no existe.
+        // Un nombre largo no puede sacar la página de la pantalla.
+        //
+        // El modelo acepta cien caracteres en el nombre de un departamento, y
+        // cien caracteres sin un solo espacio ---un código, dos nombres
+        // pegados--- no tienen dónde partirse: la tarjeta se estiraba 434 px
+        // más allá del borde en escritorio y 719 en el móvil, y la página
+        // entera se desplazaba en horizontal.
+        //
+        // Va en el tema y no en la pantalla que falló porque son ocho las que
+        // pintan nombres libres en tarjetas, y la novena que se añada mañana
+        // nace con el mismo agujero. Mismo criterio que el paquete de idioma de
+        // aquí abajo.
+        //
+        // `anywhere` y no `break-word`: la diferencia es que `anywhere` sí
+        // reduce el ancho mínimo del contenido, que es lo que necesita un hijo
+        // de un flex para encogerse de verdad. Con `break-word` el contenedor
+        // sigue reservando el ancho de la palabra entera.
+        MuiTypography: {
+          styleOverrides: {
+            root: { overflowWrap: 'anywhere' },
+          },
+        },
         MuiAvatar: {
           styleOverrides: {
             colorDefault: {
