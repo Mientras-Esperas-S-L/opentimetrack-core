@@ -30,6 +30,8 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import SearchIcon from '@mui/icons-material/Search'
 
+import { SearchField } from '../../components/filters.jsx'
+
 import {
   createEmployee,
   deactivateEmployee,
@@ -547,6 +549,9 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
  *  next to "Editar".
  */
 function RowActions({ person, busy, onEdit, onInvite, onReactivate, onDeactivate }) {
+  // Una sola vez: se usa en cuatro rótulos accesibles de esta fila y estaba
+  // escrito a mano en tres sitios distintos.
+  const quien = `${person.first_name} ${person.last_name}`.trim() || person.email
   const [anchor, setAnchor] = useState(null)
   const close = () => setAnchor(null)
   const pick = (run) => () => {
@@ -557,18 +562,21 @@ function RowActions({ person, busy, onEdit, onInvite, onReactivate, onDeactivate
   return (
     <Stack direction="row" sx={{ gap: 0.5, justifyContent: 'flex-end', alignItems: 'center' }}>
       {person.is_active ? (
-        <Button size="small" onClick={onEdit}>
+        // Con el nombre dentro del rótulo accesible: una lista de diecinueve
+        // botones «Editar» no le dice a nadie cuál es cuál, y quien navega con
+        // lector de pantalla oye exactamente eso.
+        <Button size="small" aria-label={`Editar ${quien}`} onClick={onEdit}>
           Editar
         </Button>
       ) : (
-        <Button size="small" onClick={onReactivate}>
+        <Button size="small" aria-label={`Volver a dar de alta a ${quien}`} onClick={onReactivate}>
           Volver a dar de alta
         </Button>
       )}
 
       <IconButton
         size="small"
-        aria-label={`Más acciones para ${person.first_name} ${person.last_name}`.trim()}
+        aria-label={`Más acciones para ${quien}`}
         onClick={(event) => setAnchor(event.currentTarget)}
       >
         <MoreVertIcon fontSize="small" />
@@ -759,24 +767,18 @@ export default function People() {
         direction={{ xs: 'column', sm: 'row' }}
         sx={{ gap: 2, mb: 2, alignItems: { sm: 'center' } }}
       >
-        <TextField
-          size="small"
-          placeholder="Buscar por nombre, correo o número"
+        {/* El compartido, no uno propio. Esta pantalla se fabricaba el suyo y
+            por eso se quedó fuera cuando el buscador común recibió su nombre
+            accesible: se seguía oyendo como «cuadro de texto». De paso hereda
+            el botón de vaciar, que aquí tampoco había. */}
+        <SearchField
           value={search}
-          onChange={(event) => {
-            setSearch(event.target.value)
+          onChange={(texto) => {
+            setSearch(texto)
             setPage(1)
           }}
-          sx={{ flexGrow: 1, maxWidth: 380 }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            },
-          }}
+          placeholder="Buscar por nombre, correo o número"
+          width={380}
         />
         {/* Los tres que separan de verdad a la plantilla. «Sin departamento»
             es su propia opción y no un hueco en blanco: es la primera pregunta

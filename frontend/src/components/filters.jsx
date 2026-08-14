@@ -43,6 +43,14 @@ export function SearchField({ value, onChange, placeholder = 'Buscar', width = 2
       placeholder={placeholder}
       sx={{ width }}
       slotProps={{
+        // En el `input`, no en el `TextField`. Puesto arriba, MUI lo reenvía al
+        // div de fuera y el campo se sigue oyendo como «cuadro de texto» a
+        // secas: la sonda lo seguía marcando después de «arreglarlo».
+        //
+        // Y hace falta: el marcador de posición no es una etiqueta ---desaparece
+        // al escribir, y hay lectores que no lo anuncian--- así que el buscador
+        // no tenía nombre en cinco pantallas.
+        htmlInput: { 'aria-label': placeholder },
         input: {
           startAdornment: (
             <InputAdornment position="start">

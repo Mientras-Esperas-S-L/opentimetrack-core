@@ -233,7 +233,11 @@ export default function Departments() {
 
                 {isAdmin && (
                   <Stack direction="row" sx={{ gap: 0.5, flexShrink: 0 }}>
-                    <Button size="small" onClick={() => setEditing(department)}>
+                    <Button
+                      size="small"
+                      aria-label={`Editar ${department.name}`}
+                      onClick={() => setEditing(department)}
+                    >
                       Editar
                     </Button>
                     {/* Only when empty. Removing one that still has people would

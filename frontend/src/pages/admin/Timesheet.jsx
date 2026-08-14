@@ -392,6 +392,10 @@ export default function Timesheet() {
                               <Button
                                 size="small"
                                 sx={{ minWidth: 0, px: 1 }}
+                                // Cuál. Cuarenta y siete botones «Corregir»
+                                // seguidos no dicen de qué fichaje son, y quien
+                                // navega con lector de pantalla oye eso.
+                                aria-label={`Corregir el fichaje de ${punch.employee_name} de las ${timeOf(punch.timestamp, zone)}`}
                                 onClick={() => setCorrecting({ punch })}
                               >
                                 Corregir

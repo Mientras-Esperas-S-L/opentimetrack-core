@@ -30,6 +30,11 @@ test.describe('Permisos · administración', () => {
   test('el buscador filtra por artículo', async ({ page }) => {
     // Buscar por artículo es lo que hace quien viene del convenio en la mano.
     await irA(page, '/panel/permisos', 'Permisos')
+    // A que haya lista antes de teclear: filtrar sobre una lista que todavía no
+    // ha llegado deja la pantalla en «ningún permiso coincide», y el filtro se
+    // aplica sobre lo que hay en memoria. Sin esta espera la prueba pasaba sola
+    // y fallaba dentro de la tanda entera, que es cuando la pantalla tarda más.
+    await expect(page.getByText('Art. 37.3.a ET').first()).toBeVisible()
 
     await page.getByPlaceholder('Buscar por nombre o artículo').fill('37.3.b bis')
 

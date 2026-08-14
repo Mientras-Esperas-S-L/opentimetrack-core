@@ -284,7 +284,11 @@ export default function ShiftPatterns() {
                 </Box>
                 {isAdmin && (
                   <Stack direction="row" sx={{ gap: 0.5, flexShrink: 0 }}>
-                    <Button size="small" onClick={() => setEditing(pattern)}>
+                    <Button
+                      size="small"
+                      aria-label={`Editar ${pattern.name}`}
+                      onClick={() => setEditing(pattern)}
+                    >
                       Editar
                     </Button>
                     <Button
@@ -306,6 +310,10 @@ export default function ShiftPatterns() {
                         })
                       }
                       disabled={remove.isPending}
+                      // Cuál se elimina. Es el rótulo donde más caro sale que
+                      // se repita: siete «Eliminar» seguidos y quien no ve la
+                      // pantalla no sabe cuál está a punto de pulsar.
+                      aria-label={`Eliminar ${pattern.name}`}
                     >
                       Eliminar
                     </Button>
