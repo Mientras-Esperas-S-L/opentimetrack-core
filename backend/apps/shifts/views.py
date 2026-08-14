@@ -203,7 +203,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
     #: it names: adding one and forgetting to list it here hands the whole
     #: company's calendar to anybody with a login, and the omission looks like
     #: nothing on the screen.
-    WRITES = {"create", "update", "partial_update", "destroy", "assign", "clear", "paint"}
+    WRITES = {"create", "update", "partial_update", "destroy", "assign", "clear", "paint", "reassign"}
 
     #: Lecturas que tampoco son de cualquiera. `coverage` no escribe nada, pero
     #: de cada compañero dice cuántas horas lleva esa semana y si está de baja,
@@ -348,6 +348,59 @@ class ShiftViewSet(viewsets.ModelViewSet):
             company=request.user.tenant, first=first, last=last, employee=employee
         )
         return Response({"findings": _grouped(findings)})
+
+    @extend_schema(request=None, responses={200: dict})
+    @action(detail=True, methods=["post"])
+    def reassign(self, request, pk=None):
+        """Pasa un turno de una persona a otra.
+
+        Una operación y no dos. La primera versión de la pantalla asignaba a la
+        nueva y después limpiaba a la anterior, y ese orden tiene un fallo en
+        medio que deja el turno duplicado ---o, al revés, borrado y sin nadie---.
+        Mover conserva además el identificador del turno, así que lo que ya
+        apuntara a él sigue apuntando a lo mismo.
+
+        No comprueba si la persona nueva puede: eso lo dice `coverage`, y lo dice
+        con matices ---puede pero se pasa de horas, puede pero se queda sin
+        descanso--- que aquí solo se podrían convertir en un sí o un no. Cubrir
+        una baja incumpliendo algo a sabiendas es una decisión legítima de quien
+        organiza; lo que el producto tiene que hacer es enseñarle el precio y
+        dejar constancia, no impedírselo.
+        """
+        from apps.users.models import User
+
+        shift = self.get_object()
+        destino = User.objects.filter(pk=request.data.get("employee"), is_active=True).first()
+        if destino is None:
+            raise BusinessRuleError(
+                code="unknown_employee",
+                message=_("That person is not on the staff list."),
+            )
+
+        if Shift.objects.filter(employee=destino, day=shift.day).exists():
+            raise BusinessRuleError(
+                code="already_rostered",
+                message=_("They already have a shift that day."),
+            )
+
+        antes = shift.employee
+        shift.employee = destino
+        shift.save(update_fields=["employee"])
+
+        record(
+            action=AuditAction.SHIFT_REASSIGNED,
+            actor=request.user,
+            target=shift,
+            target_label=f"{shift.day.isoformat()} {antes.get_full_name()}",
+            changes={
+                "employee": [str(antes.id), str(destino.id)],
+                "from_label": antes.get_full_name() or antes.email,
+                "to_label": destino.get_full_name() or destino.email,
+            },
+            note=str(_("Shift covered by somebody else.")),
+        )
+
+        return Response(ShiftSerializer(shift).data)
 
     @extend_schema(responses={200: dict})
     @action(detail=False, methods=["get"], url_path="coverage")

@@ -373,7 +373,10 @@ def test_a_failure_writing_the_trail_does_not_break_the_action(
     with django_capture_on_commit_callbacks(execute=True):
         response = client_for(admin).delete(f"/api/employees/{worker.id}/")
 
-    assert response.status_code == 204
+    # 200 y no 204: la baja devuelve cuántos turnos deja sin nadie que los
+    # trabaje. Que el rastro reviente no puede cambiar eso, que es lo que esta
+    # prueba sostiene.
+    assert response.status_code == 200
     worker.refresh_from_db()
     assert not worker.is_active
 

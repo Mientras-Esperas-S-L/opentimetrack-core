@@ -77,6 +77,11 @@ class AuditAction(models.TextChoices):
     PERSON_DEACTIVATED = "PERSON_DEACTIVATED", _("Deactivated a person")
     PERSON_REACTIVATED = "PERSON_REACTIVATED", _("Reactivated a person")
     ROLE_CHANGED = "ROLE_CHANGED", _("Changed a role")
+    # El cuadrante no dejaba rastro de nada, y esta es la operación que más
+    # falta hace que lo deje: cambia quién trabaja qué día, y a veces se hace
+    # sabiendo que a quien lo coge se le quedan menos de doce horas de descanso.
+    # Quien lo decidió y cuándo es lo que después nadie recuerda.
+    SHIFT_REASSIGNED = "SHIFT_REASSIGNED", _("Moved a shift to somebody else")
     # Sending it hands somebody a way into the company's records, so it is a
     # change to who can do what and not a piece of housekeeping.
     INVITATION_SENT = "INVITATION_SENT", _("Sent a link to set a password")

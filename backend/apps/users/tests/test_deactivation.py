@@ -155,7 +155,12 @@ def test_deactivating_somebody_else_still_works(company):
 
     response = client_for(admin).delete(f"/api/employees/{worker.id}/")
 
-    assert response.status_code == 204
+    # 200 con cuerpo y no 204: la respuesta dice cuántos turnos quedan sin
+    # nadie después de la baja. Quien acaba de pulsar es quien va a tener que
+    # rehacer el cuadrante, y enterarse tres días después son tres días de
+    # ausencias sin justificar.
+    assert response.status_code == 200
+    assert response.json()["future_shifts"] == 0
     worker.refresh_from_db()
     assert not worker.is_active
 

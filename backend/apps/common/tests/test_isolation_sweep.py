@@ -599,6 +599,7 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^shifts/review/$",
         "api/^shifts/roster/$",
         "api/^shifts/coverage/$",
+        "api/^shifts/(?P<pk>[^/.]+)/reassign/$",
         "api/^shift-patterns/$",
         "api/^shift-patterns/(?P<pk>[^/.]+)/$",
         "api/^applications/$",

@@ -407,6 +407,22 @@ export const clearShifts = (payload) => post('/shifts/clear/', payload)
  */
 export const paintShifts = (cells) => post('/shifts/paint/', { cells })
 export const reviewRoster = (from, to) => get('/shifts/review/', { from, to })
+
+/** Los turnos que se han quedado sin nadie, con quién puede cogerlos.
+ *
+ *  Aparte de `reviewRoster` aunque el backend sepa las dos cosas: la revisión
+ *  contesta «qué se aparta de la norma» y esto contesta «qué hay que resolver
+ *  hoy». Mezclarlas dejaría los huecos enterrados entre veintidós clases de
+ *  aviso, que es de donde venimos.
+ */
+export const getCoverage = (from, to) => get('/shifts/coverage/', { from, to })
+
+/** Pasa un turno de una persona a otra. Una operación, no dos.
+ *
+ *  Asignar a la nueva y limpiar a la anterior por separado tiene un fallo en
+ *  medio que deja el turno duplicado, o borrado y sin nadie.
+ */
+export const reassignShift = (id, employee) => post(`/shifts/${id}/reassign/`, { employee })
 export const getMyShiftToday = () => get('/shifts/today/')
 
 export const getWorkingTimeRules = () => get('/working-time-rules/')

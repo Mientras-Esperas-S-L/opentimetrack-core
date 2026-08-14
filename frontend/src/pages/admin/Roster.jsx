@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import AlertTitle from '@mui/material/AlertTitle'
@@ -33,9 +33,11 @@ import {
   getHolidays,
   getShiftPatterns,
   paintShifts,
+  getCoverage,
   reviewRoster,
 } from '../../services/api.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
+import CoberturaPendiente from '../../components/CoberturaPendiente.jsx'
 import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
 import { dateOf } from '../../components/format.js'
 
@@ -308,6 +310,17 @@ export default function Roster() {
     queryKey: ['roster', from, to],
     queryFn: () => getRoster(from, to),
   })
+  // La misma clave que usa el panel de cobertura, así que es la misma consulta:
+  // React Query la sirve de su caché y el mes no se pide dos veces.
+  const { data: coverage } = useQuery({
+    queryKey: ['coverage', from, to],
+    queryFn: () => getCoverage(from, to),
+  })
+  const sinCubrir = useMemo(
+    () => new Set((coverage?.uncovered ?? []).map((h) => h.shift_id)),
+    [coverage],
+  )
+
   const { data: review } = useQuery({
     queryKey: ['roster-review', from, to],
     queryFn: () => reviewRoster(from, to),
@@ -555,6 +568,13 @@ export default function Roster() {
 
       <ErrorNote error={error} onClose={() => setError(null)} />
 
+      {/* Antes de la rejilla y antes de los avisos: es lo único de esta
+          pantalla que hay que resolver hoy. Los avisos describen en qué se
+          aparta el cuadrante de las reglas; esto son turnos que nadie va a
+          trabajar, y mientras sigan así esa persona sale cada día como
+          ausencia sin justificar. */}
+      <CoberturaPendiente from={from} to={to} />
+
       {patterns.length === 0 && (
         <Alert severity="info" sx={{ mb: 2 }}>
           Todavía no hay turnos definidos. Créalos en <strong>Turnos</strong> antes de montar el
@@ -733,6 +753,7 @@ export default function Roster() {
                       )
                     }
 
+                    const huerfano = Boolean(shift && sinCubrir.has(shift.id))
                     const colour = preview?.colour ?? shift.colour
                     const letter = (preview?.letter ?? shift.pattern_name ?? '·')
                       .slice(0, 1)
@@ -749,10 +770,28 @@ export default function Roster() {
                             ? ''
                             : `${shift.pattern_name || 'Turno'} · ${shift.segments
                                 .map((s) => `${s.start}–${s.end}`)
-                                .join(' y ')}`
+                                .join(' y ')}${huerfano ? ' · sin cubrir' : ''}`
                         }
                       >
-                        <Box {...handlers} sx={{ ...cell, bgcolor: colour }}>
+                        <Box
+                          {...handlers}
+                          sx={{
+                            ...cell,
+                            bgcolor: colour,
+                            // Sin nadie que lo trabaje. Rayado y no solo de otro
+                            // color: la rejilla ya usa el color para decir qué
+                            // turno es, y meter un color más ahí lo haría
+                            // ilegible para quien no distinga dos de ellos. El
+                            // rayado se ve aunque el color no.
+                            ...(huerfano && {
+                              backgroundImage:
+                                'repeating-linear-gradient(45deg, rgba(0,0,0,.45) 0 3px, transparent 3px 6px)',
+                              outline: '2px dashed',
+                              outlineColor: 'warning.main',
+                              outlineOffset: '-2px',
+                            }),
+                          }}
+                        >
                           {/* The initial, not only the colour: a roster read on
                               a phone in sunlight, or by somebody who does not
                               distinguish two of them, still has to be legible. */}

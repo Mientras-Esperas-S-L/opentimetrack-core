@@ -445,6 +445,19 @@ class UserViewSet(viewsets.ModelViewSet):
                 target_label=person.get_full_name() or person.email,
             )
 
+    def destroy(self, request, *args, **kwargs):
+        """Devuelve cuántos turnos quedan colgando, en vez de un 204 mudo.
+
+        Dar de baja a alguien deja sus turnos futuros sin nadie que los trabaje,
+        y hasta ahora la pantalla no lo decía. Quien lo necesita saber es quien
+        acaba de pulsar, en ese momento: es quien va a tener que rehacer el
+        cuadrante, y si se entera tres días después ya han pasado tres días de
+        ausencias sin justificar.
+        """
+        self._turnos_pendientes = 0
+        super().destroy(request, *args, **kwargs)
+        return Response({"future_shifts": self._turnos_pendientes})
+
     def perform_destroy(self, instance):
         """Deactivate rather than delete: their clock events must survive."""
         # Found by deactivating the wrong account while testing the panel and
@@ -487,6 +500,10 @@ class UserViewSet(viewsets.ModelViewSet):
         from apps.shifts.models import Shift
 
         pendientes = Shift.objects.filter(employee=instance, day__gt=hoy).count()
+        # Se guarda para que `destroy` lo devuelva: quien acaba de dar la baja es
+        # quien tiene que ir a rehacer el cuadrante, y el momento de enterarse
+        # es ahora y no cuando alguien abra la pantalla del cuadrante.
+        self._turnos_pendientes = pendientes
 
         record(
             action=AuditAction.PERSON_DEACTIVATED,

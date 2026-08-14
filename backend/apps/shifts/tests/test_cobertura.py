@@ -266,3 +266,112 @@ def test_quien_solo_ficha_no_puede_mirarlo(empresa):
         )
 
     assert respuesta.status_code == 403
+
+
+# --------------------------------------------------------------- reasignar
+
+
+@pytest.mark.django_db
+def test_reasignar_mueve_el_turno_y_no_lo_duplica(empresa):
+    """Una operación, no dos.
+
+    La primera versión de la pantalla asignaba a la nueva y limpiaba a la
+    anterior por separado. Ese orden tiene un fallo en medio que deja el turno
+    duplicado, y el orden contrario lo deja borrado y sin nadie.
+    """
+    with tenant_context(empresa.id):
+        jefa = _persona(empresa, "Luisa", "jefa@example.com", role=Role.ADMIN)
+        se_fue = _persona(empresa, "Chelo", "chelo@example.com")
+        cubre = _persona(empresa, "Ana", "ana@example.com")
+        turno = _turno(empresa, se_fue, LUNES)
+
+        respuesta = _como(jefa).post(
+            f"/api/shifts/{turno.id}/reassign/", {"employee": str(cubre.id)}, format="json"
+        )
+
+        assert respuesta.status_code == 200, respuesta.json()
+        turno.refresh_from_db()
+        assert turno.employee_id == cubre.id
+        assert Shift.objects.filter(day=LUNES).count() == 1, "el turno se duplicó"
+
+
+@pytest.mark.django_db
+def test_no_se_puede_poner_a_alguien_dos_veces_el_mismo_dia(empresa):
+    with tenant_context(empresa.id):
+        jefa = _persona(empresa, "Luisa", "jefa@example.com", role=Role.ADMIN)
+        se_fue = _persona(empresa, "Chelo", "chelo@example.com")
+        ocupada = _persona(empresa, "Ana", "ana@example.com")
+        _turno(empresa, ocupada, LUNES, "14:00", "22:00")
+        turno = _turno(empresa, se_fue, LUNES)
+
+        respuesta = _como(jefa).post(
+            f"/api/shifts/{turno.id}/reassign/", {"employee": str(ocupada.id)}, format="json"
+        )
+
+    assert respuesta.status_code == 409
+    assert respuesta.json()["error"]["code"] == "already_rostered"
+
+
+@pytest.mark.django_db
+def test_reasignar_deja_rastro_de_quien_y_a_quien(empresa, django_capture_on_commit_callbacks):
+    """El cuadrante no dejaba rastro de nada, y esta es la operación que más
+    falta hace que lo deje: cambia quién trabaja qué día, y a veces se hace
+    sabiendo que a quien lo coge se le quedan menos de doce horas de descanso."""
+    from apps.audit.models import AuditLog
+
+    with tenant_context(empresa.id):
+        jefa = _persona(empresa, "Luisa", "jefa@example.com", role=Role.ADMIN)
+        se_fue = _persona(empresa, "Chelo", "chelo@example.com")
+        cubre = _persona(empresa, "Ana", "ana@example.com")
+        turno = _turno(empresa, se_fue, LUNES)
+
+        with django_capture_on_commit_callbacks(execute=True):
+            _como(jefa).post(
+                f"/api/shifts/{turno.id}/reassign/", {"employee": str(cubre.id)}, format="json"
+            )
+
+        entradas = [e for e in AuditLog.objects.all() if e.changes.get("to_label")]
+
+    assert entradas, "reasignar un turno no dejó rastro"
+    assert entradas[0].changes["from_label"] == "Chelo"
+    assert entradas[0].changes["to_label"] == "Ana"
+
+
+@pytest.mark.django_db
+def test_reasignar_es_de_quien_gestiona(empresa):
+    with tenant_context(empresa.id):
+        curro = _persona(empresa, "Curro", "curro@example.com")
+        otro = _persona(empresa, "Otro", "otro@example.com")
+        turno = _turno(empresa, otro, LUNES)
+
+        respuesta = _como(curro).post(
+            f"/api/shifts/{turno.id}/reassign/", {"employee": str(curro.id)}, format="json"
+        )
+
+    assert respuesta.status_code == 403
+
+
+@pytest.mark.django_db
+def test_se_puede_reasignar_a_quien_incumple_algo_a_sabiendas(empresa):
+    """A propósito, y es la decisión de diseño del módulo entero.
+
+    `coverage` dice el precio con matices ---puede pero se pasa de horas, puede
+    pero se queda sin descanso--- y aquí solo se podrían convertir en un sí o un
+    no. Cubrir una baja incumpliendo algo a sabiendas es una decisión legítima
+    de quien organiza; el producto le enseña el precio y deja constancia, no se
+    lo impide.
+    """
+    with tenant_context(empresa.id):
+        jefa = _persona(empresa, "Luisa", "jefa@example.com", role=Role.ADMIN)
+        se_fue = _persona(empresa, "Chelo", "chelo@example.com")
+        justo = _persona(
+            empresa, "Ana", "ana@example.com", contracted_hours=8, contracted_period="WEEK"
+        )
+        _turno(empresa, justo, LUNES + timedelta(days=1))
+        turno = _turno(empresa, se_fue, LUNES)
+
+        respuesta = _como(jefa).post(
+            f"/api/shifts/{turno.id}/reassign/", {"employee": str(justo.id)}, format="json"
+        )
+
+    assert respuesta.status_code == 200, "el producto no puede impedir una decisión de organización"

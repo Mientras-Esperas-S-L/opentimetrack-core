@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link as RouterLink } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
@@ -651,6 +652,11 @@ export default function People() {
   const [error, setError] = useState(null)
   const [sent, setSent] = useState(null) // address the last link went to
   const [confirming, setConfirming] = useState(null)
+  // Turnos que la última baja ha dejado sin nadie. Se enseña aquí y no solo en
+  // el cuadrante porque quien acaba de dar la baja es quien tiene que ir a
+  // rehacerlo, y si se entera tres días después ya son tres días de ausencias
+  // sin justificar.
+  const [colgando, setColgando] = useState(0)
   const [page, setPage] = useState(1)
   const [dept, setDept] = useState('')
   const [place, setPlace] = useState('')
@@ -713,7 +719,12 @@ export default function People() {
 
   const deactivate = useMutation({
     mutationFn: deactivateEmployee,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
+    onSuccess: (respuesta) => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] })
+      // El cuadrante también: sus turnos futuros acaban de quedarse sin nadie.
+      queryClient.invalidateQueries({ queryKey: ['coverage'] })
+      setColgando(respuesta?.future_shifts || 0)
+    },
     onError: setError,
   })
 
@@ -798,6 +809,24 @@ export default function People() {
       />
 
       <ErrorNote error={error} onClose={() => setError(null)} />
+
+      {colgando > 0 && (
+        <Alert
+          severity="warning"
+          variant="outlined"
+          sx={{ mb: 2 }}
+          onClose={() => setColgando(0)}
+          action={
+            <Button size="small" component={RouterLink} to="/panel/cuadrante">
+              Ir al cuadrante
+            </Button>
+          }
+        >
+          Le quedaban {colgando} {colgando === 1 ? 'turno asignado' : 'turnos asignados'} después de
+          hoy. No se han borrado: hay que ponerles a otra persona, o esos días saldrán como
+          ausencia sin justificar.
+        </Alert>
+      )}
 
       {sent && (
         <Alert severity="success" onClose={() => setSent(null)} sx={{ mb: 2 }}>
