@@ -27,11 +27,14 @@ test.describe('Idioma', () => {
     await page.getByRole('combobox', { name: 'Idioma' }).click()
     const opciones = await page.getByRole('option').allInnerTexts()
 
-    expect(opciones).toContain('Español')
-    expect(opciones).toContain('Inglés')
-    // Los seis sin catálogo, fuera: se contestaba en castellano igual.
-    for (const inventado of ['Catalán', 'Gallego', 'Euskera', 'Francés', 'Alemán']) {
-      expect(opciones, `sigue ofreciendo ${inventado}`).not.toContain(inventado)
+    // Los cinco que tienen catálogo.
+    for (const real of ['Español', 'Català', 'Galego', 'Euskara', 'Inglés']) {
+      expect(opciones, `falta ${real}`).toContain(real)
+    }
+    // Y los tres que no lo tienen siguen fuera: ofrecerlos era prometer algo
+    // que no pasaba, porque se contestaba en castellano igual.
+    for (const sinCatalogo of ['Francés', 'Portugués', 'Alemán']) {
+      expect(opciones, `sigue ofreciendo ${sinCatalogo}`).not.toContain(sinCatalogo)
     }
     await page.keyboard.press('Escape')
   })

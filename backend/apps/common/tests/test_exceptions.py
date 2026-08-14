@@ -142,16 +142,57 @@ def test_el_catalogo_no_lleva_entradas_marcadas_fuzzy():
     fichero parece completo y `msgfmt --statistics` cuenta la entrada como
     traducida. Solo la marca lo delata.
     """
-    catalogo = Path(settings.BASE_DIR) / "locale" / "es" / "LC_MESSAGES" / "django.po"
-    bloques = catalogo.read_text(encoding="utf-8").split("\n\n")
+    # Los cuatro catálogos, no solo el castellano. Al añadir catalán, gallego y
+    # euskera, `makemessages` dejó los tres con la cabecera marcada `fuzzy`, que
+    # es como los crea: una comprobación que mirara solo el castellano habría
+    # dado verde con los tres recién nacidos así.
+    dudosas = []
+    for idioma in ("es", "ca", "gl", "eu"):
+        catalogo = Path(settings.BASE_DIR) / "locale" / idioma / "LC_MESSAGES" / "django.po"
+        if not catalogo.exists():
+            continue
+        for bloque in catalogo.read_text(encoding="utf-8").split("\n\n"):
+            if re.search(r"^#,.*\bfuzzy\b", bloque, flags=re.MULTILINE):
+                dudosas.append(f"[{idioma}] {bloque}")
 
-    dudosas = [b for b in bloques if re.search(r"^#,.*\bfuzzy\b", b, flags=re.MULTILINE)]
     assert not dudosas, (
-        "hay traducciones marcadas fuzzy, que en ejecución salen en inglés:\n\n"
-        + "\n\n".join(dudosas)
+        "hay traducciones marcadas fuzzy, que en ejecución no se usan:\n\n" + "\n\n".join(dudosas)
     )
 
     # El contraste, porque esto acaba de dar cero y cero no prueba nada por sí
     # solo: la marca se busca donde de verdad la escribe gettext.
     ejemplo = '#: apps/x.py:1\n#, fuzzy\nmsgid "a"\nmsgstr "b"'
     assert re.search(r"^#,.*\bfuzzy\b", ejemplo, flags=re.MULTILINE)
+
+
+@pytest.mark.parametrize("idioma", ["ca", "gl", "eu"])
+def test_lo_que_no_esta_traducido_cae_al_castellano_y_no_al_ingles(idioma):
+    """La razón de que un catálogo a medias sea utilizable.
+
+    Los tres catálogos nuevos traducen los mensajes que llegan a las personas y
+    dejan sin traducir las etiquetas internas del modelo. Eso solo vale si lo
+    que falta cae al **castellano**: si cayera al inglés ---que es el idioma en
+    que se escriben los `msgid`--- una empresa catalana vería su producto en dos
+    idiomas extranjeros a la vez.
+
+    Cae al castellano porque `LANGUAGE_CODE` es `es` y Django encadena por ahí.
+    Es un comportamiento del que depende toda la decisión, así que se comprueba
+    en vez de darse por sabido.
+    """
+    sin_traducir = "night worker"  # etiqueta de modelo, fuera del subconjunto
+
+    with translation.override(idioma):
+        assert translation.gettext(sin_traducir) == "trabajador nocturno"
+
+
+@pytest.mark.parametrize("idioma", ["ca", "gl", "eu"])
+def test_los_mensajes_que_ve_una_persona_si_estan_traducidos(idioma):
+    """El contraste del de arriba: si todo cayera al castellano, aquel pasaría
+    igual y no probaría nada."""
+    with translation.override(idioma):
+        traducido = translation.gettext(
+            "You clocked a moment ago. Check the screen before clocking again."
+        )
+
+    assert traducido != "Acabas de fichar. Mira la pantalla antes de volver a pulsar."
+    assert traducido

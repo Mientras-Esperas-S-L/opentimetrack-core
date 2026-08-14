@@ -111,16 +111,19 @@ const needsHours = (regime) => regime === 'PART_TIME' || regime === 'TRAINING'
 
 /** Los idiomas que de verdad existen.
  *
- *  Django ofrece ocho en `LANGUAGES` y solo hay catálogo de castellano; los
- *  otros seis ---catalán, gallego, euskera, francés, portugués, alemán--- caen
- *  en castellano sin decirlo. Ofrecer «Catalán» y contestar en castellano es
- *  peor que no ofrecerlo: promete algo que no pasa.
+ *  Cinco, y cada uno con su catálogo. Lo que no está traducido cae al
+ *  castellano, no al inglés: `LANGUAGE_CODE` es `es` y Django encadena por ahí.
+ *  Por eso un catálogo a medias es utilizable ---catalán donde llega a las
+ *  personas, castellano en las etiquetas internas--- y no una mezcla con inglés.
  *
- *  El inglés sí funciona: los mensajes se escriben en inglés y el catálogo los
- *  traduce, así que quien lo elige recibe el original.
+ *  Francés, portugués y alemán siguen fuera: ofrecerlos sin catálogo era
+ *  prometer algo que no pasaba.
  */
 const IDIOMAS = [
   ['es', 'Español'],
+  ['ca', 'Català'],
+  ['gl', 'Galego'],
+  ['eu', 'Euskara'],
   ['en', 'Inglés'],
 ]
 

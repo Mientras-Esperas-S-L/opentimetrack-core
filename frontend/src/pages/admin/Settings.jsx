@@ -74,6 +74,9 @@ const offsetOf = (zone) => {
  */
 const LANGUAGES = [
   ['es', 'Español'],
+  ['ca', 'Català'],
+  ['gl', 'Galego'],
+  ['eu', 'Euskara'],
   ['en', 'Inglés'],
 ]
 
