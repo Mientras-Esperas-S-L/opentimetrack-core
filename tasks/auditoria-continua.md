@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 17 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 18 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -58,6 +58,13 @@ vuelve a una limpia.
 | RGPD / art. 88 LOPDGDD | limpia | 14/08 v14 | **una empresa de baja guardaba las IP para siempre**; y el rastro había dejado de ser inmutable |
 
 ## Hallazgos abiertos
+
+- **Tres exportaciones del cliente que nadie llama, y son decisiones abiertas.**
+  El barrido al revés de la vuelta 18 dejó estas: `signUp` ---no hay pantalla de
+  alta de empresa, así que un cliente nuevo solo se da de alta por API---,
+  `createLeaveType` y `updateLeaveType` ---el catálogo no se puede editar, que ya
+  estaba anotado--- y `getEmployee`, que probablemente sobra. Ninguna es un fallo
+  por sí sola; las tres son «¿esto tenía que existir?».
 
 - **La jornada de noche no se atribuye a ningún día.** Arreglada la deducción
   del tipo, las marcas ya salen bien ---entrada a las 22:00, salida a las
@@ -128,6 +135,30 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 18 — Segunda pasada, con la comprobación al revés.**
+
+Sin áreas sin tocar ni a medias, la vuelta se hace por técnica en vez de por
+pantalla: coger lo que el backend ofrece y buscar **quién lo llama**. Es la que
+salió de la vuelta 17 y cuesta dos minutos.
+
+**Las setenta y dos rutas de la API tienen cliente**, salvo las tres de
+integración externa, que es como debe ser. Ahí no había nada.
+
+Al revés sí: seis funciones exportadas en `services/api.js` que ninguna pantalla
+usa. Una era un fallo de producto --- **el resumen que acompaña a la nómina**.
+Estaba entero en el servidor, con su periodo, sus cifras, su huella y su descarga
+en PDF; su documentación dice «read for the person concerned»; y ninguna pantalla
+se lo daba a esa persona. Quien lleva la nómina podía generarlos desde Informes y
+quien trabaja no podía verlos --- con `generatePayrollSummaries` usada y
+`getPayrollSummary` muerta, la una al lado de la otra.
+
+Van tres fallos encontrados con la misma técnica en dos vueltas.
+
+Y una prueba que **solo funcionaba la primera vez**: fijaba el tope de horas
+extra en 72, y si una tanda anterior se cortó antes de restaurarlo, ya valía 72
+--- nada que guardar, botón desactivado, treinta segundos de espera. Ahora elige
+un valor distinto del que hay.
 
 **Vuelta 17 — «Solicitar», y el tramo que faltaba. Última área a medias.**
 
