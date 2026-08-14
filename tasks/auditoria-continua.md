@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 18 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 19 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -58,6 +58,12 @@ vuelve a una limpia.
 | RGPD / art. 88 LOPDGDD | limpia | 14/08 v14 | **una empresa de baja guardaba las IP para siempre**; y el rastro había dejado de ser inmutable |
 
 ## Hallazgos abiertos
+
+- **`max_employees`, `max_admins` y `max_storage_mb` no los aplica nada.** Son
+  campos de `Tenant` con pinta de cuota de plan y ningún código los lee. No están
+  expuestos en la API, así que nadie los puede poner y creerse protegido --- es
+  esquema muerto, no una trampa. Huelen a preocupación de Cloud dentro del Core:
+  **por decidir**, y encaja con la línea Core/Cloud que está sin cerrar.
 
 - **Tres exportaciones del cliente que nadie llama, y son decisiones abiertas.**
   El barrido al revés de la vuelta 18 dejó estas: `signUp` ---no hay pantalla de
@@ -135,6 +141,34 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 19 — Segunda pasada, barriendo las dos clases que ya dieron fallos.**
+
+Dos barridos, uno por cada familia con antecedentes.
+
+**Ajustes que nadie lee.** El de `roster_notice_days` en la vuelta 12 hacía
+sospechar de más. No los hay: los veintinueve ajustes de empresa y de reglas
+tienen lector. Solo quedan tres campos de cuota ---`max_employees`,
+`max_admins`, `max_storage_mb`--- que nada aplica, y que ni siquiera están
+expuestos: esquema muerto, arriba anotado.
+
+La primera versión del barrido dio **todos muertos**, incluidos `weekly_hours` y
+`daily_rest_hours`, que evidentemente se leen. Era un `grep -oP` sobre varios
+ficheros, que antepone el nombre del fichero a cada resultado. Un barrido que
+acusa a todo el mundo no es un barrido: se calibra mirando que lo conocido salga
+donde debe.
+
+**Cálculos que no sobreviven a la medianoche.** Aquí sí había uno, y es el mismo
+supuesto que dejó el turno de noche sin cerrar: **la guarda del doble toque
+miraba «los fichajes de hoy»**, así que pulsar a las 23:59:58 y otra vez a las
+00:00:01 daba dos fichajes --- el día nuevo estaba vacío. Tres segundos entre uno
+y otro, que es justo lo que esa guarda existe para evitar, y un turno que empieza
+a las 00:00 es corriente donde se trabaja de noche.
+
+Los demás sitios que acotan por día están bien, y conviene dejarlo escrito:
+`timestamp__date` con USE_TZ convierte a la zona activa, que el middleware fija a
+la de la empresa; y el gráfico del Resumen cuenta **eventos** y lo dice en su
+propia documentación, así que partir una noche en dos días es correcto ahí.
 
 **Vuelta 18 — Segunda pasada, con la comprobación al revés.**
 
