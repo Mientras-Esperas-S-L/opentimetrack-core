@@ -205,8 +205,16 @@ class ShiftViewSet(viewsets.ModelViewSet):
     #: nothing on the screen.
     WRITES = {"create", "update", "partial_update", "destroy", "assign", "clear", "paint"}
 
+    #: Lecturas que tampoco son de cualquiera. `coverage` no escribe nada, pero
+    #: de cada compañero dice cuántas horas lleva esa semana y si está de baja,
+    #: y eso no es asunto de quien solo ficha. Aparte de `WRITES` porque el
+    #: motivo es distinto ---ahí es quién puede decidir, aquí es quién puede
+    #: mirar--- y juntarlas haría que la próxima lectura sensible se colara por
+    #: no ser una escritura.
+    MANAGER_READS = {"coverage"}
+
     def get_permissions(self):
-        if self.action in self.WRITES:
+        if self.action in self.WRITES or self.action in self.MANAGER_READS:
             return [IsManagerOrAdmin()]
         return super().get_permissions()
 
@@ -340,6 +348,42 @@ class ShiftViewSet(viewsets.ModelViewSet):
             company=request.user.tenant, first=first, last=last, employee=employee
         )
         return Response({"findings": _grouped(findings)})
+
+    @extend_schema(responses={200: dict})
+    @action(detail=False, methods=["get"], url_path="coverage")
+    def coverage(self, request):
+        """Los turnos que se han quedado sin nadie, y quién puede cogerlos.
+
+        Solo para quien gestiona: reasignar el turno de otra persona es una
+        decisión de organización, y la lista de candidatos dice de cada
+        compañero cuántas horas lleva y si está de baja.
+
+        Los candidatos van dentro de cada hueco y no en una lista aparte porque
+        dependen del turno: quién puede cubrir el martes de mañana no es quién
+        puede cubrir el miércoles de noche, y servirlos juntos obligaría a la
+        pantalla a recalcularlo mal.
+        """
+        from apps.shifts.coverage import uncovered, who_can_cover
+        from apps.tenants.rules import WorkingTimeRules
+
+        first, last = self._window(request)
+        company = request.user.tenant
+        rules = WorkingTimeRules.for_company(company)
+
+        huecos = []
+        for hueco in uncovered(company=company, first=first, last=last):
+            candidatos = who_can_cover(shift=hueco.shift, company=company, rules=rules)
+            huecos.append(
+                {
+                    **hueco.as_dict(),
+                    # Los inviables se sirven igual, con su motivo: sin ellos,
+                    # quien mira no sabe si la lista está corta porque no hay
+                    # nadie o porque el filtro se pasó de listo.
+                    "candidates": [c.as_dict() for c in candidatos],
+                }
+            )
+
+        return Response({"uncovered": huecos})
 
     @extend_schema(responses={200: dict})
     @action(detail=False, methods=["get"], url_path="today")

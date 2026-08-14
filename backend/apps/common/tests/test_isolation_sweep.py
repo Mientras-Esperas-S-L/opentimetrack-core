@@ -182,6 +182,10 @@ COLLECTIONS = [
     "/api/working-time-rules/",
     "/api/punches/today/",
     "/api/shifts/today/",
+    # Solo lo lee quien gestiona, y por eso importa que esté aquí: de cada
+    # compañero dice cuántas horas lleva y si está de baja, así que una fuga
+    # entre empresas enseñaría la plantilla ajena entera.
+    "/api/shifts/coverage/",
     "/api/absences/balance/",
     "/api/absences/pending/",
     "/api/overtime/",
@@ -594,6 +598,7 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^shifts/paint/$",
         "api/^shifts/review/$",
         "api/^shifts/roster/$",
+        "api/^shifts/coverage/$",
         "api/^shift-patterns/$",
         "api/^shift-patterns/(?P<pk>[^/.]+)/$",
         "api/^applications/$",
