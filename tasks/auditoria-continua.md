@@ -1,6 +1,9 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 29 · Vueltas seguidas sin hallazgos: 1
+Vueltas dadas: 32 · Vueltas seguidas sin hallazgos: 0
+
+El 14/08 Francisco cerró las cinco decisiones que estaban esperándole. Cuatro
+están hechas y la quinta ---la capa de i18n del frontend--- está en marcha.
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -60,23 +63,34 @@ vuelve a una limpia.
 
 ## Hallazgos abiertos
 
-- **La interfaz no está traducida, y eso no lo arreglan los catálogos.** Las
-  cadenas de la aplicación están escritas en castellano dentro del JSX: no hay
-  capa de i18n en el frontend. Con catalán elegido, una persona recibe en
-  catalán los correos y los mensajes de error, y sigue viendo «Fichar», «Mi
-  jornada» y «Mis ausencias» en castellano. Sacar el texto de las pantallas a un
-  catálogo es un trabajo de otro orden ---más de mil cadenas--- y **por decidir**.
+- **La capa de i18n del frontend: DECIDIDO QUE SÍ (14/08), en marcha.** Las
+  cadenas están escritas en castellano dentro del JSX. Con catalán elegido, una
+  persona recibe en catalán los correos y los errores de la API, y sigue viendo
+  «Fichar» y «Mi jornada» en castellano.
+
+  Medido el 14/08, y es menos de lo que decía esta nota: **~460 cadenas**, no
+  más de mil. Son 305 literales entrecomillados, 116 nodos de texto suelto en el
+  JSX y 37 plantillas con interpolación, repartidas sobre todo en Ajustes (62),
+  Personas (53) y Decisiones (37).
+
+  Dos cosas que condicionan el montaje y ya están comprobadas:
+
+  - MUI trae `caES` pero **no** `glES` ni `euES`. Para gallego hay que dejarle
+    `esES`, o sus textos internos ---paginación, tablas--- saldrían en inglés,
+    que es exactamente el fallo que ya se cazó en el backend.
+  - La resolución del idioma **ya existe y es correcta**: `api.js` calcula
+    `user.locale || tenant.language || navigator.language` y la manda en
+    `Accept-Language`. Lo que falta no es decidir el idioma, es que las cadenas
+    de React lo usen.
+
+  Traducir bien 460 cadenas de prosa cuidada a catalán y gallego es trabajo de
+  traductor, no mío. Lo que se entrega es la maquinaria montada de punta a
+  punta y el catálogo extraído listo para pasárselo a alguien.
 
 - **Los tres catálogos nuevos piden revisión nativa.** Catalán y gallego están
   completos en los 188 mensajes que llegan a las personas. El euskera va con 148
   y le faltan 35 párrafos largos de derecho laboral, que caen al castellano a
   propósito. La cabecera de cada `.po` lo dice en su idioma.
-
-- **`max_employees`, `max_admins` y `max_storage_mb` no los aplica nada.** Son
-  campos de `Tenant` con pinta de cuota de plan y ningún código los lee. No están
-  expuestos en la API, así que nadie los puede poner y creerse protegido --- es
-  esquema muerto, no una trampa. Huelen a preocupación de Cloud dentro del Core:
-  **por decidir**, y encaja con la línea Core/Cloud que está sin cerrar.
 
 - **Tres exportaciones del cliente que nadie llama, y son decisiones abiertas.**
   El barrido al revés de la vuelta 18 dejó estas: `signUp` ---no hay pantalla de
@@ -84,40 +98,6 @@ vuelve a una limpia.
   `createLeaveType` y `updateLeaveType` ---el catálogo no se puede editar, que ya
   estaba anotado--- y `getEmployee`, que probablemente sobra. Ninguna es un fallo
   por sí sola; las tres son «¿esto tenía que existir?».
-
-- **La jornada de noche no se atribuye a ningún día.** Arreglada la deducción
-  del tipo, las marcas ya salen bien ---entrada a las 22:00, salida a las
-  06:00--- pero la reconciliación y el informe siguen partiendo el tramo por la
-  medianoche: el día 8 sale «entrada sin salida», el 9 «salida sin entrada
-  previa», y las ocho horas **no aparecen en ningún sitio**. Consecuencias
-  encadenadas: esa jornada no genera nunca fila de horas extra, y el estado del
-  día se lee mal a un lado y a otro de las doce.
-
-  Lo que falta es una **decisión de convenio, no un arreglo**: a qué día
-  pertenecen las horas de un turno que cruza la medianoche. Lo natural es el día
-  en que empezó ---es como está montado el cuadrante--- pero hay convenios que
-  parten por la medianoche a efectos de nocturnidad. Afecta a informes,
-  reconciliación, horas extra y estado del día, así que conviene decidirlo antes
-  de tocar nada.
-
-- **El tope de dieciséis horas de `MAX_OPEN_HOURS`.** Es la frontera entre
-  «cerró tarde» y «se olvidó de fichar», y no la fija ningún artículo. Elegido
-  por ser más largo que cualquier jornada de un tirón y bastante más corto que
-  un olvido de un día. **Conviene confirmarlo con la asesoría.**
-
-- **La IP del rastro de auditoría no caduca, y por diseño no puede caducar.**
-  El fichaje suelta la suya al año; la entrada del rastro que describe ese mismo
-  hecho la conserva indefinidamente, y el razonamiento de la purga ---«pasada
-  esa ventana no hay base para tenerla»--- no distingue entre las dos.
-
-  Intenté purgarla y **no se puede**: la tabla es *append-only* por tres
-  triggers, que rechazan UPDATE, DELETE y TRUNCATE. Esa restricción es una
-  decisión más fuerte que mi mejora y no la voy a saltar por mi cuenta.
-
-  Es una tensión real entre dos principios correctos, y la salida limpia no es
-  borrar después sino **no guardarla**: minimizar al recoger, que además es lo
-  que el RGPD prefiere. Si se decide, la pregunta es qué se pierde para
-  investigar un incidente. **Por decidir, no por arreglar.**
 
 - **Ejecutar las pruebas con ventana de vez en cuando.** El favicon ausente
   llevaba ahí desde siempre con la suite entera en verde: Chrome sin ventana no
@@ -135,6 +115,90 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 32 --- Las cinco decisiones de Francisco (14/08)
+
+Cuatro hechas en el día. La quinta, la capa de i18n, sigue en «Hallazgos
+abiertos» porque está en marcha.
+
+**Las horas de un turno de noche cuentan en el día en que empieza.** La otra
+mitad del turno de noche: las marcas ya salían bien y la atribución seguía
+partiendo por la medianoche, así que esas ocho horas no aparecían en ningún
+día. Ni en el estado, ni en el informe, ni en las extras, ni en la
+conciliación. La regla y sus artículos, en `apps/punches/workday.py`. Lo que
+**no** sigue la regla y queda separado: la nocturnidad, que se cuenta por la
+franja 22:00-06:00 vaya al día que vaya.
+
+De regalo: sin día, «la jornada de ahora» ya no es «hoy». A las tres de la
+madrugada, quien entró a las 22:00 veía «sin empezar» en su propia pantalla.
+
+**El tope de horas abiertas pasa a ser de cada empresa.** `max_open_hours` en
+`WorkingTimeRules`, dieciséis por defecto, con su campo en Ajustes y su prueba
+de punta a punta. Lo pidió Francisco por las guardias de veinticuatro horas
+---bomberos, residencias, vigilancia---, donde dieciséis parte la guardia por
+la mitad.
+
+**La IP sale del rastro de auditoría.** Chocaba con la inmutabilidad de la
+tabla: los tres disparadores rechazan UPDATE y DELETE, así que no había forma
+de borrarla ni para atender una solicitud del art. 17. Se va la columna, se va
+la lógica que decidía a quién enseñársela, y se va el parámetro `request` de
+`record()`, que solo estaba para sacarla ---33 llamadas dejan de pasarlo---.
+
+**Los topes de cuota salen del Core.** Y aquí me equivoqué al levantarlos:
+`max_employees` **no** estaba muerto, se comprobaba de verdad al dar de alta.
+Eso empeora el caso: una instalación propia podía negarse a añadir empleados
+con un mensaje que no venía de ningún contrato.
+
+### Vuelta 31 --- El idioma no se activaba en ninguna petición (14/08)
+
+Salió al ir a montar el i18n del frontend y preguntarme cómo se resuelve hoy el
+idioma. `LocaleAndTimeZoneMiddleware` colgaba todo su cuerpo de
+`request.user.is_authenticated`, y la API autentica por JWT, que DRF resuelve
+dentro de la vista. El middleware ve `AnonymousUser` **siempre**: ni idioma ni
+zona horaria se activaron nunca.
+
+La clase de dos más arriba tiene el diagnóstico escrito ---«for those the tenant
+is set again by the permission class»--- y esta, escrita justo debajo con la
+misma forma, nunca recibió el mismo trato.
+
+Debajo había un segundo fallo independiente: la mitad de la empresa leía
+`company.settings["language"]`, clave de un JSON que nada escribe nunca, cuando
+el idioma vive en `Tenant.language`.
+
+No saltó antes porque la web manda `Accept-Language` por su cuenta. Se rompía
+donde no hay navegador: correos, tareas de fondo, integraciones.
+
+**El aviso metodológico vale más que el fallo.** Escribí la prueba con
+`force_authenticate`, que deja el `request.user` de Django sin tocar. Fallaron
+las dos mitades, también la que yo daba por buena, y eso fue lo que destapó el
+problema de fondo. Una prueba hecha desde la interfaz habría dado verde.
+
+### Vuelta 30 --- El zoom del navegador (14/08)
+
+Al 200 % en un portátil de 1280 la página cree que mide 640: por encima de los
+600 en que MUI pasa las filas a horizontal, y por debajo de lo que hace falta
+para que quepan. Personas se salía 60 px por la derecha y el interruptor de
+«ver también las bajas» quedaba fuera de la pantalla.
+
+Se fabricaba su propia fila de filtros en vez de usar `FilterBar`, y la suya no
+llevaba `flexWrap`. Es la segunda mitad de un fallo ya conocido: esa misma
+pantalla también se fabricaba su propio buscador, y por eso se quedó sin nombre
+accesible cuando el común lo recibió.
+
+### Fuera de vuelta --- La baja sin fecha (14/08)
+
+De una pregunta de Francisco: ¿qué pasa si alguien deja la empresa con el
+cuadrante ya hecho? Sondeado antes de contestar: **nada**. Los turnos futuros
+seguían asignados y la revisión no decía una palabra.
+
+La baja ponía `is_active = False` y nada más. La comprobación del contrato se
+salta a quien no tiene fechas, que es toda la plantilla indefinida. Y el
+cuadrante es contra lo que se comparan los fichajes, así que quien se fue iba a
+salir como ausencia sin justificar todos los días.
+
+Lo que faltaba no era una comprobación sino **una fecha**: `is_active` es un sí
+o un no sin día. Ahora la baja escribe el último día que la relación cubre y la
+comprobación que ya existía funciona sola.
 
 **Vuelta 29 — El teclado. Nada roto, y una lección de método.**
 
