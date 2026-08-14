@@ -20,6 +20,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.audit.models import AuditAction
 from apps.audit.services import record
+from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError
 from apps.common.models import set_current_tenant
 from apps.common.permissions import (
@@ -457,13 +458,48 @@ class UserViewSet(viewsets.ModelViewSet):
 
         self._refuse_if_it_leaves_no_admin(instance, deactivating=True)
 
+        # Una baja sin fecha no se puede responder, y eso es justo lo que
+        # faltaba. `is_active` es un sí o un no sin día, así que nada de lo que
+        # razona por fechas ---la revisión del cuadrante, las ausencias--- podía
+        # enterarse: quien se iba seguía con sus turnos del mes que viene
+        # asignados, y como el cuadrante es contra lo que se comparan los
+        # fichajes, iba a salir como ausencia sin justificar cada día.
+        #
+        # La fecha es hoy, en la zona de la empresa. Se pisa un `contract_end`
+        # posterior porque irse antes de que venza el contrato es lo corriente
+        # ---una baja voluntaria, un despido--- y lo que la fecha tiene que
+        # decir es el último día que la relación cubre. Uno anterior no se toca:
+        # ese contrato ya había terminado y la baja solo lo formaliza en el
+        # sistema.
+        campos = ["is_active"]
+        hoy = local_today(instance)
+        if instance.contract_end is None or instance.contract_end > hoy:
+            instance.contract_end = hoy
+            campos.append("contract_end")
+
         instance.is_active = False
-        instance.save(update_fields=["is_active"])
+        instance.save(update_fields=campos)
+
+        # Los turnos que le quedaban no se borran, que es la promesa de esta
+        # pantalla: dar de baja no borra nada. Se cuentan para decirlo, y a
+        # partir de ahora la revisión del cuadrante los marca sola, porque ya
+        # hay una fecha contra la que compararlos.
+        from apps.shifts.models import Shift
+
+        pendientes = Shift.objects.filter(employee=instance, day__gt=hoy).count()
+
         record(
             action=AuditAction.PERSON_DEACTIVATED,
             actor=self.request.user,
             target=instance,
             target_label=instance.get_full_name() or instance.email,
+            changes={"contract_end": hoy.isoformat(), "future_shifts": pendientes},
+            note=(
+                str(_("Left on %(day)s. %(count)s shift(s) still rostered after that."))
+                % {"day": hoy.isoformat(), "count": pendientes}
+                if pendientes
+                else str(_("Left on %(day)s.")) % {"day": hoy.isoformat()}
+            ),
         )
 
 

@@ -121,6 +121,7 @@ const NOMBRES = {
   annual_overtime_hours: 'Horas extra al año',
   entry_tolerance_minutes: 'Margen de entrada',
   exit_tolerance_minutes: 'Margen de salida',
+  max_open_hours: 'Jornada abierta como mucho',
   break_after_hours: 'Descanso a partir de',
   break_minutes: 'Minutos de descanso',
   break_counts_as_work: 'El descanso computa como trabajo',
@@ -642,6 +643,21 @@ export default function Settings() {
                   helperText="Irse dentro de este margen del fin no es salir antes."
                 />
               </Stack>
+
+              {/* La frontera entre «cerró tarde» y «se olvidó de fichar». No la
+                  fija ningún artículo, y por eso la pone cada empresa: con
+                  guardias de veinticuatro horas ---bomberos, residencias,
+                  vigilancia--- dieciséis parte la guardia por la mitad y el
+                  registro de esa noche sale mal. */}
+              <TextField
+                fullWidth
+                type="number"
+                label="Una jornada puede seguir abierta (h)"
+                value={rules.max_open_hours}
+                onChange={setRule('max_open_hours')}
+                slotProps={{ htmlInput: { min: 1, step: 1 } }}
+                helperText="Pasado este rato, una jornada sin cerrar se lee como un olvido de fichar y no como un turno en marcha. Súbelo si hay guardias de 24 h; cuanto más alto, más tarda en detectarse un olvido."
+              />
 
               <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
                 <TextField
