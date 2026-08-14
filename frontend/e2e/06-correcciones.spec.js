@@ -14,16 +14,41 @@ import { expect, test } from '@playwright/test'
 
 import { api, irA } from './apoyo.js'
 
-/** Prepara una propuesta de la empresa sobre el registro del operario. */
+/** Prepara una propuesta de la empresa sobre el registro del operario.
+ *
+ *  El fichaje se **crea aquí**, y no se toma prestado de la semilla como hacía
+ *  antes. Cazado el 14/08 en la tanda completa: cuatro pruebas de este fichero
+ *  fallando con «Cannot read properties of undefined», porque la de abajo
+ *  ---«el fichaje original no se borra»--- aplica la anulación y deja el
+ *  fichaje en `is_active=false`. El filtro de la búsqueda pedía activos, así
+ *  que el fichero pasaba **una vez por base de datos** y en la siguiente tanda
+ *  ya no encontraba ninguno. Que se rompa por agotamiento de la semilla es el
+ *  peor modo de fallo: no señala al defecto, señala a la prueba anterior.
+ *
+ *  Se ficha dos veces para volver a dejar a la persona como estaba: si entraba
+ *  cerrada, entrada y salida; si entraba abierta, salida y entrada. De las dos
+ *  nos quedamos con la salida, que es lo que hay que anular.
+ */
 async function proponerAnulacion(browser) {
+  const suyo = await browser.newContext({ storageState: 'e2e/.sesiones/operario.json' })
+  const suPagina = await suyo.newPage()
+  await suPagina.goto('/mi-jornada')
+
+  const primero = await api(suPagina, '/punches/', { method: 'POST', body: {} })
+  // La guarda del doble toque rechaza dos eventos de la misma persona con
+  // menos de cinco segundos entre ellos, y hace bien: aquí toca esperarla.
+  await suPagina.waitForTimeout(5500)
+  const segundo = await api(suPagina, '/punches/', { method: 'POST', body: {} })
+  await suyo.close()
+
+  const fichaje = [primero.body, segundo.body].find((p) => p?.punch_type === 'OUT')
+  expect(fichaje, `no se pudo crear la salida: ${JSON.stringify(segundo.body)}`).toBeTruthy()
+
   const admin = await browser.newContext({ storageState: 'e2e/.sesiones/admin.json' })
   const page = await admin.newPage()
   await page.goto('/panel')
-
   const gente = await api(page, '/employees/?search=operario')
   const persona = gente.body.results[0]
-  const fichajes = await api(page, `/punches/?employee=${persona.id}&is_active=true`)
-  const fichaje = fichajes.body.results.find((p) => p.punch_type === 'OUT')
 
   const propuesta = await api(page, '/corrections/', {
     method: 'POST',
@@ -179,7 +204,11 @@ test.describe('Quien propone el cambio', () => {
     const impuesta = await api(page, `/corrections/${correccion.id}/apply-anyway/`, {
       method: 'POST',
     })
-    test.skip(impuesta.status >= 400, `la empresa no pudo aplicarlo: ${impuesta.status}`)
+    // Era `test.skip(impuesta.status >= 400, ...)`. Que la empresa no pueda
+    // aplicar sobre una discrepancia **es** el fallo que esta prueba busca, y
+    // saltar cuando aparece la dejaba sin comprobar nada justo el día que
+    // hiciera falta. Tercera vez que aparece el patrón en esta suite.
+    expect(impuesta.status, JSON.stringify(impuesta.body)).toBeLessThan(300)
 
     const despues = await api(page, `/corrections/${correccion.id}/`)
     expect(despues.body.applied_without_agreement).toBe(true)

@@ -82,6 +82,27 @@ class AuditAction(models.TextChoices):
     # sabiendo que a quien lo coge se le quedan menos de doce horas de descanso.
     # Quien lo decidió y cuándo es lo que después nadie recuerda.
     SHIFT_REASSIGNED = "SHIFT_REASSIGNED", _("Moved a shift to somebody else")
+    # El cuadrante en bloque. Una sola entrada por operación y no una por turno:
+    # pintar un mes a veinte personas son seiscientas filas, y seiscientas
+    # entradas idénticas no son un rastro, son ruido que entierra el resto.
+    #
+    # Lo que hay que poder responder después es quién repintó, cuándo, y sobre
+    # qué tramo ---y en el caso de vaciar, cuántos turnos se llevó por delante---.
+    SHIFTS_ASSIGNED = "SHIFTS_ASSIGNED", _("Painted shifts over a period")
+    SHIFTS_CLEARED = "SHIFTS_CLEARED", _("Cleared shifts over a period")
+    # Cuánto da un permiso es lo que se le debe a la plantilla. Bajar el de
+    # matrimonio de quince días a diez cambia el derecho de todo el mundo, y no
+    # constaba quién lo había hecho.
+    LEAVE_TYPE_CHANGED = "LEAVE_TYPE_CHANGED", _("Changed what a leave grants")
+    # El armazón contra el que se mide el registro: centros, departamentos,
+    # turnos-tipo y el calendario de festivos. Ninguno dejaba rastro, y no son
+    # decoración: un centro lleva su zona horaria ---cambiarla mueve el límite
+    # del día de toda su gente--- y un festivo decide qué cuenta como laborable.
+    #
+    # Una sola acción para los cuatro, con `target_type` diciendo cuál. Cuatro
+    # entradas del enum para el mismo hecho ---«alguien cambió el marco»--- solo
+    # harían más difícil filtrar el rastro.
+    STRUCTURE_CHANGED = "STRUCTURE_CHANGED", _("Changed the structure or the calendar")
     # Sending it hands somebody a way into the company's records, so it is a
     # change to who can do what and not a piece of housekeeping.
     INVITATION_SENT = "INVITATION_SENT", _("Sent a link to set a password")

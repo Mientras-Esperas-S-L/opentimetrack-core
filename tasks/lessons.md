@@ -1030,3 +1030,39 @@ la aserción es firme y su contraste lo demuestra.
 **Regla**: si te descubres condicionando una aserción a que el producto esté completo,
 completa el producto. Y si de verdad no se puede hoy, `pytest.xfail` con motivo, que sale
 en el informe; un `if` silencioso, no.
+
+## El `tail -4` de un informe largo se come justo lo que importa (14/08/2026)
+
+Lancé la tanda E2E completa de fondo y leí el final con `tail -4`. Decía «245 passed»
+y me lo creí. El resumen entero decía **243 passed, 6 failed**: las líneas de fallo
+van *antes* del recuento, y las corté yo.
+
+No es un descuido de teclas: es la misma familia que «un vacío no es prueba de
+ausencia». Un recorte de la salida puede convertir un informe rojo en uno verde sin
+que nada avise, porque el trozo que queda **es** verde y es cierto.
+
+**Regla**: de un informe de pruebas se lee el bloque de fallos y el recuento, o se
+filtra por `failed|passed|skipped`. Nunca `tail -N` a ciegas. Y si el recuento no
+cuadra con el total anunciado (245 de 249), eso ya es la señal: hay 4 sin explicar.
+
+## Una prueba que gasta datos de la semilla pasa una vez por base de datos (14/08/2026)
+
+`06-correcciones` tomaba prestado un fichaje existente del operario, y una de sus
+propias pruebas ---la que aplica la anulación--- lo dejaba en `is_active=false`. El
+filtro de búsqueda pedía activos. Resultado: el fichero verde en la primera tanda y
+cuatro rojos en la siguiente, con un `Cannot read properties of undefined` que no
+señala al defecto sino a la prueba anterior.
+
+**Regla**: si una prueba **consume** un recurso (lo anula, lo borra, lo cierra), tiene
+que **crearlo** ella. Tomarlo prestado solo vale para lo que se lee. Y el contraste de
+que está bien arreglado no es que pase: es que pase **dos veces seguidas**.
+
+## Neutralizar código para el contraste: `pass`, no borrar (14/08/2026)
+
+Para probar que las pruebas nuevas fallaban sin el arreglo, quité los `record()` con
+una expresión regular. Las cinco pruebas fallaron --- por `IndentationError`. Un `if`
+se quedó sin cuerpo, y un contraste que falla por sintaxis no demuestra nada.
+
+**Regla**: para neutralizar una llamada, **sustitúyela por `pass` con su mismo
+sangrado** contando paréntesis, no la borres. Y mira el motivo del fallo: si pone
+`SyntaxError` o `IndentationError`, el contraste no ha corrido.

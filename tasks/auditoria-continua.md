@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 41 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 42 · Vueltas seguidas sin hallazgos: 0
 
 El 14/08 Francisco cerró las cinco decisiones que estaban esperándole. Cuatro
 están hechas y la quinta ---la capa de i18n del frontend--- está en marcha.
@@ -31,7 +31,7 @@ vuelve a una limpia.
 | Informes | limpia | 13/08 | zip con nombre de PDF; CSV con CRLF |
 | Aplicaciones | limpia | 13/08 | — |
 | Ajustes | limpia | 13/08 | límites legales sin aviso; cambios sin guardar |
-| Registro de actividad | limpia | 13/08 | IP de un compañero |
+| Registro de actividad | limpia | 14/08 v42 | IP de un compañero; **6 escrituras sin rastro**, entre ellas vaciar el cuadrante |
 | Entrar / recuperar contraseña | limpia | 13/08 v3 | **el aviso de demasiados intentos, traducido a máquina** |
 
 ### API sin pantalla
@@ -115,6 +115,53 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 42 --- Lo que cambia datos sin decir quién (14/08)
+
+El rastro de actividad es de lo que este producto vende, y estaba lleno para
+unas cosas y vacío para otras. Barrido de las 58 operaciones de escritura: 25
+con `record()`, 33 sin.
+
+La mayoría de las 33 están bien así, y conviene dejarlo escrito para que nadie
+las «arregle» luego: entrar, salir, renovar sesión y recuperar contraseña son
+mecánica de sesión; el fichaje **es** el registro y auditarlo duplicaría la
+tabla; las preferencias del móvil son del móvil. Seis gaps de verdad, todos del
+mismo tipo --- **cosas que se configuran una vez, nadie mira, y el día que los
+números no cuadran hay que reconstruir por qué**:
+
+- **El cuadrante.** `assign`, `paint` y `clear` podían repintar o **vaciar** un
+  mes entero de toda la plantilla sin que constara nadie. Y el cuadrante es
+  contra lo que se comparan los fichajes.
+- **El catálogo de permisos.** Bajar el de matrimonio de 15 días a 10 cambia el
+  derecho de todo el mundo. Se anota **desde qué cifra**, que es la mitad que
+  importa: el convenio puede haber mejorado la legal, y bajarla después no se
+  distingue de corregir una errata.
+- **Centros, departamentos, turnos-tipo y festivos.** El armazón contra el que
+  se mide el registro. Un centro lleva la **zona horaria**: cambiarla mueve el
+  límite del día de toda su gente sin tocar ni un fichaje. Un festivo decide qué
+  cuenta como laborable, y de ahí sale el saldo de vacaciones.
+
+Una entrada por operación y no por turno: pintar un mes a veinte personas son
+seiscientas filas, y seiscientas entradas idénticas no son un rastro, son ruido
+que entierra el resto. Y solo si cambió algo de la lista: un rastro que anota
+cada pulsación de «Guardar» es uno que nadie lee.
+
+**La parte que va a durar es la sonda.** Un endpoint que cambia datos y no deja
+constancia no rompe ninguna prueba ni se ve en la pantalla: solo se nota el día
+que alguien pregunta quién lo hizo. Así que
+`test_ninguna_escritura_nueva_nace_sin_rastro` recorre las escrituras del
+proyecto y exige, para cada una, o un `record()` o una entrada en
+`SIN_RASTRO_A_PROPOSITO` **con su motivo escrito**. Encontró las cuatro del
+armazón después de que yo diera por cerradas las dos primeras.
+
+**Y de camino, la tanda E2E completa.** El resumen entero decía 243 de 249, no
+las «245 pasadas» que había leído en un `tail -4` truncado. Cuatro de
+`06-correcciones` caían por agotamiento de la semilla: el ayudante tomaba
+prestado un fichaje existente y la prueba de aplicar la anulación lo dejaba en
+`is_active=false`, así que el fichero **pasaba una vez por base de datos**.
+Ahora la prueba crea el fichaje que va a anular ---dos pulsaciones, que dejan a
+la persona como estaba--- y aguanta dos pasadas seguidas. Las otras dos eran un
+`ERR_CONNECTION_RESET` del contenedor, no del producto.
 
 ### Vuelta 41 --- Auditar la auditoría (14/08)
 

@@ -176,7 +176,46 @@ class LeaveTypeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # No code: a code is how the seed recognises one of its own, and a row
         # the company invented has no counterpart to recognise.
-        serializer.save(tenant=self.request.user.tenant, code="")
+        tipo = serializer.save(tenant=self.request.user.tenant, code="")
+        self._anotar(tipo, _("Added"))
+
+    def perform_update(self, serializer):
+        """Cuánto da un permiso es lo que se le debe a la plantilla.
+
+        Ninguna operación de este catálogo dejaba rastro. Bajar el permiso de
+        matrimonio de quince días a diez cambia el derecho de todo el mundo, y
+        no constaba quién lo había hecho ni desde qué cifra ---que es la mitad
+        que importa, porque el convenio puede haber mejorado la legal y bajarla
+        después no se distingue de corregir una errata---.
+        """
+        antes = {
+            "amount": str(serializer.instance.amount),
+            "unit": serializer.instance.unit,
+            "period": serializer.instance.period,
+            "is_active": serializer.instance.is_active,
+        }
+        tipo = serializer.save()
+        despues = {
+            "amount": str(tipo.amount),
+            "unit": tipo.unit,
+            "period": tipo.period,
+            "is_active": tipo.is_active,
+        }
+        cambiados = {k: [antes[k], despues[k]] for k in antes if antes[k] != despues[k]}
+        # Solo si de verdad cambió algo que importa: guardar sin tocar la cifra
+        # ---retocar la nota, por ejemplo--- no merece una entrada.
+        if cambiados:
+            self._anotar(tipo, _("Changed"), cambiados)
+
+    def _anotar(self, tipo, que, cambios=None):
+        record(
+            action=AuditAction.LEAVE_TYPE_CHANGED,
+            actor=self.request.user,
+            target=tipo,
+            target_label=f"{que}: {tipo.name}",
+            changes=cambios or {},
+            note=str(tipo.basis or ""),
+        )
 
     def perform_destroy(self, instance):
         used = instance.absences.count()
@@ -189,6 +228,8 @@ class LeaveTypeViewSet(viewsets.ModelViewSet):
                 )
                 % {"count": used},
             )
+        # Antes de borrar, porque después el objeto ya no puede decir su nombre.
+        self._anotar(instance, _("Deleted"))
         instance.delete()
 
     @extend_schema(

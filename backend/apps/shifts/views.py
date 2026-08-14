@@ -19,6 +19,7 @@ from rest_framework.views import APIView
 from apps import legal
 from apps.audit.models import AuditAction
 from apps.audit.services import record
+from apps.audit.trail import StructureTrail
 from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import (
@@ -173,13 +174,17 @@ class ClearSerializer(AssignSerializer):
 
 
 @extend_schema(tags=["shifts"])
-class ShiftPatternViewSet(viewsets.ModelViewSet):
+class ShiftPatternViewSet(StructureTrail, viewsets.ModelViewSet):
     """The shapes of a working day. Anyone reads; an administrator draws."""
 
     queryset = ShiftPattern.objects.none()
     serializer_class = ShiftPatternSerializer
     permission_classes = [ReadForAllWriteForAdmin]
     filterset_fields = ["is_active"]
+    # Los tramos son la forma del día: mover un turno de 08:00 a 07:00 cambia a
+    # qué hora se espera a todo el que lo tenga puesto, y contra eso se comparan
+    # los fichajes después.
+    trail_fields = ("name", "segments", "is_active")
 
     def get_queryset(self):
         # El `order_by` explícito aunque el modelo declare `ordering = ["name"]`,
@@ -195,7 +200,7 @@ class ShiftPatternViewSet(viewsets.ModelViewSet):
         return ShiftPattern.objects.annotate(shifts_count=Count("shifts")).order_by("name")
 
     def perform_create(self, serializer):
-        serializer.save(tenant=self.request.user.tenant)
+        self.anotar(serializer.save(tenant=self.request.user.tenant), _("Added"))
 
 
 @extend_schema(tags=["shifts"])
@@ -326,6 +331,24 @@ class ShiftViewSet(viewsets.ModelViewSet):
                 )
             )
 
+        # Una entrada por operación, no una por turno: pintar un mes a veinte
+        # personas son seiscientas filas, y seiscientas entradas idénticas no
+        # son un rastro sino ruido que entierra el resto. Lo que hay que poder
+        # responder después es quién repintó, cuándo y sobre qué tramo.
+        record(
+            action=AuditAction.SHIFTS_ASSIGNED,
+            actor=request.user,
+            target_type="shift",
+            target_label=f"{data['date_from'].isoformat()} — {data['date_to'].isoformat()}",
+            changes={
+                "created": created,
+                "people": len(people),
+                "pattern": pattern.name,
+                "from": data["date_from"].isoformat(),
+                "to": data["date_to"].isoformat(),
+            },
+        )
+
         # Reviewed straight away: a roster that breaks a rest rule is worth
         # knowing about now, not the day somebody notices on the calendar.
         findings = review_roster(
@@ -370,6 +393,23 @@ class ShiftViewSet(viewsets.ModelViewSet):
         removed = 0
         for person in User.objects.filter(tenant=request.user.tenant, pk__in=data["employees"]):
             removed += clear_shifts(employee=person, days=days)
+
+        # De las tres del cuadrante esta es la que más falta hace que conste:
+        # borra. Un mes que desaparece sin que nadie figure haciéndolo es
+        # justamente el hueco que una inspección no puede reconstruir, porque el
+        # cuadrante es contra lo que se comparan los fichajes.
+        record(
+            action=AuditAction.SHIFTS_CLEARED,
+            actor=request.user,
+            target_type="shift",
+            target_label=f"{data['date_from'].isoformat()} — {data['date_to'].isoformat()}",
+            changes={
+                "removed": removed,
+                "people": len(data["employees"]),
+                "from": data["date_from"].isoformat(),
+                "to": data["date_to"].isoformat(),
+            },
+        )
         return Response({"removed": removed})
 
     @extend_schema(

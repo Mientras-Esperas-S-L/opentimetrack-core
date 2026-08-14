@@ -17,6 +17,7 @@ from rest_framework.views import APIView
 
 from apps.audit.models import AuditAction
 from apps.audit.services import record
+from apps.audit.trail import StructureTrail
 from apps.common.permissions import IsAdmin, IsAuthenticatedInTenant, ReadForAllWriteForAdmin
 from apps.common.scope import unassigned_managers
 from apps.tenants.holidays import HolidayScope, PublicHoliday
@@ -143,7 +144,7 @@ class PublicHolidaySerializer(serializers.ModelSerializer):
 
 
 @extend_schema(tags=["organisation"])
-class PublicHolidayViewSet(viewsets.ModelViewSet):
+class PublicHolidayViewSet(StructureTrail, viewsets.ModelViewSet):
     """The calendar. Anyone reads; an administrator writes.
 
     Read for everybody because a person is entitled to know which days they are
@@ -155,6 +156,10 @@ class PublicHolidayViewSet(viewsets.ModelViewSet):
     permission_classes = [ReadForAllWriteForAdmin]
     filterset_fields = ["scope", "workplace"]
     ordering = ["day"]
+    # Un festivo decide qué día no se espera a nadie, y de ahí sale tanto lo que
+    # se compara contra los fichajes como el saldo de vacaciones. Quitar uno a
+    # mitad de año es un cambio de cuentas, no de calendario.
+    trail_fields = ("day", "name", "scope", "workplace")
 
     def get_queryset(self):
         qs = PublicHoliday.objects.select_related("workplace")
@@ -173,7 +178,7 @@ class PublicHolidayViewSet(viewsets.ModelViewSet):
             if serializer.validated_data.get("workplace")
             else HolidayScope.COMPANY
         )
-        serializer.save(tenant=self.request.user.tenant, scope=scope)
+        self.anotar(serializer.save(tenant=self.request.user.tenant, scope=scope), _("Added"))
 
 
 @extend_schema(tags=["tenants"])

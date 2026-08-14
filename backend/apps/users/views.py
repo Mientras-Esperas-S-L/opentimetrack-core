@@ -20,6 +20,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.audit.models import AuditAction
 from apps.audit.services import record
+from apps.audit.trail import StructureTrail
 from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError
 from apps.common.models import set_current_tenant
@@ -596,22 +597,23 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(tags=["organisation"])
-class DepartmentViewSet(viewsets.ModelViewSet):
+class DepartmentViewSet(StructureTrail, viewsets.ModelViewSet):
     queryset = Department.objects.none()
     serializer_class = DepartmentSerializer
     permission_classes = [ReadForAllWriteForAdmin]
     filterset_fields = ["is_active"]
     search_fields = ["name"]
+    trail_fields = ("name", "is_active")
 
     def get_queryset(self):
         return Department.objects.all()
 
     def perform_create(self, serializer):
-        serializer.save(tenant=self.request.user.tenant)
+        self.anotar(serializer.save(tenant=self.request.user.tenant), _("Added"))
 
 
 @extend_schema(tags=["organisation"])
-class WorkplaceViewSet(viewsets.ModelViewSet):
+class WorkplaceViewSet(StructureTrail, viewsets.ModelViewSet):
     """Centros de trabajo. Anyone reads; an administrator writes.
 
     Read for anyone on purpose: a person is entitled to know which workplace
@@ -624,12 +626,16 @@ class WorkplaceViewSet(viewsets.ModelViewSet):
     permission_classes = [ReadForAllWriteForAdmin]
     filterset_fields = ["is_active", "region"]
     search_fields = ["name", "municipality"]
+    # `time_zone` es el que de verdad hay que poder mirar: es con la que se mide
+    # la jornada de su gente, así que cambiarla mueve el límite del día de todos
+    # a la vez y sin tocar ni un fichaje.
+    trail_fields = ("name", "time_zone", "region", "municipality", "is_active")
 
     def get_queryset(self):
         return Workplace.objects.all()
 
     def perform_create(self, serializer):
-        serializer.save(tenant=self.request.user.tenant)
+        self.anotar(serializer.save(tenant=self.request.user.tenant), _("Added"))
 
     def perform_destroy(self, instance):
         """Refused while anybody works there.
@@ -650,7 +656,7 @@ class WorkplaceViewSet(viewsets.ModelViewSet):
                 )
                 % {"count": working},
             )
-        instance.delete()
+        super().perform_destroy(instance)
 
 
 @extend_schema(tags=["auth"])
