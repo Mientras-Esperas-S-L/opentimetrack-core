@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
+import Box from '@mui/material/Box'
+import AttachFileIcon from '@mui/icons-material/AttachFile'
 import Autocomplete from '@mui/material/Autocomplete'
 import Button from '@mui/material/Button'
 import Dialog from '@mui/material/Dialog'
@@ -108,6 +110,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
   const [form, setForm] = useState(EMPTY)
   const [person, setPerson] = useState('')
   const [partial, setPartial] = useState(false)
+  const [justificante, setJustificante] = useState(null)
   const [loaded, setLoaded] = useState(false)
 
   // Rellena las fechas al abrir y limpia al cerrar, sin efecto.
@@ -118,6 +121,9 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
     setPartial(false)
   }
   if (!open && loaded) setLoaded(false)
+  // Y el fichero se olvida al cerrar: adjuntar el justificante de un permiso a
+  // la solicitud siguiente sería peor que no tenerlo.
+  if (!open && justificante) setJustificante(null)
 
   // El catálogo y el consumo se consultan aquí, no en cada página que abre el
   // diálogo: así los dos usos no pueden divergir, y el consumo llega fresco en
@@ -207,6 +213,11 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
             reduction_share:
               canReduce && form.reduction_share !== '' ? Number(form.reduction_share) : null,
             reason: form.reason,
+            // El justificante. La API lo aceptaba desde el principio y ninguna
+            // pantalla lo mandaba nunca: el permiso que lo pide se solicitaba
+            // con un texto y nada más, mientras el propio diálogo prometía que
+            // «se puede adjuntar después».
+            justification: justificante,
           })
         }}
       >
@@ -434,10 +445,37 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                 isSick
                   ? 'No hace falta indicar la dolencia.'
                   : kind?.needs_justification
-                    ? 'Este permiso pide justificante. Se puede adjuntar después.'
+                    ? 'Este permiso pide justificante.'
                     : 'Lo verá quien resuelva la solicitud.'
               }
             />
+
+            {/* Solo donde el permiso lo pide, y nunca en una baja: desde el RD
+                1060/2022 el parte no se le entrega a la empresa, y el servidor
+                rechaza el fichero. Ofrecerlo aquí sería invitar a subir un dato
+                de salud que no debe estar. */}
+            {kind?.needs_justification && !isSick && (
+              <Box>
+                <Button component="label" variant="outlined" startIcon={<AttachFileIcon />}>
+                  {justificante ? 'Cambiar el justificante' : 'Adjuntar el justificante'}
+                  <input
+                    hidden
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.heif"
+                    onChange={(event) => setJustificante(event.target.files?.[0] ?? null)}
+                  />
+                </Button>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 0.5 }}
+                >
+                  {justificante
+                    ? justificante.name
+                    : 'PDF o foto, hasta 10 MB. Opcional ahora: la solicitud se puede enviar sin él.'}
+                </Typography>
+              </Box>
+            )}
           </Stack>
         </DialogContent>
         <DialogActions>

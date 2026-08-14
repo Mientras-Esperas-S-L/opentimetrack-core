@@ -281,7 +281,22 @@ export const subscribePush = (payload) => post('/push/subscriptions/', payload)
 export const unsubscribePush = (endpoint) =>
   api.delete('/push/subscriptions/', { data: { endpoint } })
 export const getLeaveBalance = (employee) => get('/absences/balance/', employee ? { employee } : {})
-export const requestAbsence = (payload) => post('/absences/', payload)
+/** Pedir una ausencia, con su justificante si lo lleva.
+ *
+ *  El fichero obliga a `multipart`, así que se arma un FormData solo cuando lo
+ *  hay: mandar todo como multipart siempre convertiría cada `null` en la cadena
+ *  «null» al otro lado, que es de los errores que tardan un día en verse.
+ */
+export const requestAbsence = (payload) => {
+  if (!payload?.justification) return post('/absences/', payload)
+
+  const cuerpo = new FormData()
+  for (const [campo, valor] of Object.entries(payload)) {
+    if (valor === undefined || valor === null || valor === '') continue
+    cuerpo.append(campo, valor)
+  }
+  return post('/absences/', cuerpo, { headers: { 'Content-Type': 'multipart/form-data' } })
+}
 export const approveAbsence = (id) => post(`/absences/${id}/approve/`)
 export const rejectAbsence = (id) => post(`/absences/${id}/reject/`)
 export const cancelAbsence = (id) => post(`/absences/${id}/cancel/`)
