@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 21 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 22 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -110,10 +110,6 @@ vuelve a una limpia.
   llevaba ahí desde siempre con la suite entera en verde: Chrome sin ventana no
   lo pide. Lo mismo puede pasar con tipografías, impresión o consultas de medios.
 
-- **«Por decidir» no tiene paginador.** Las colas de correcciones llegan de
-  cincuenta en cincuenta y ahora al menos se avisa del recorte, pero a las que
-  faltan solo se llega filtrando. Con una plantilla grande eso no basta. El
-  componente `Pager` ya existe; es cablearlo en las tres colas paginadas.
 - **El catálogo de permisos no se puede editar desde ninguna pantalla.** Se
   siembra con la empresa y se puede recargar desde Ajustes, pero cada permiso
   tiene su cifra, su unidad y su periodo, y el convenio mejora cualquiera de
@@ -132,6 +128,27 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 22 — El paginador de «Por decidir», y era peor de lo anotado.**
+
+El cuaderno decía «a las que faltan solo se llega filtrando». Mirándolo: **los
+filtros son en cliente sobre lo ya cargado**, así que el aviso ---«se muestran 50
+de 137, usa los filtros de arriba para llegar al resto»--- proponía algo que no
+podía funcionar. A las 87 restantes no se llegaba desde ninguna parte, y el
+mensaje hacía creer que sí. Peor que no decir nada.
+
+Y son **dos** colas, no tres: las ausencias pendientes, las horas extra y las
+recuperaciones son acciones que devuelven la cola entera. Eso salió de mirar el
+backend en vez de fiarse de la nota de hace nueve vueltas.
+
+La selección se vacía al cambiar de página, porque las acciones en bloque actúan
+sobre lo que se ve y arrastrar marcas de una página que ya no está delante es
+cómo se aprueba algo sin haberlo mirado.
+
+De paso, la prueba del Resumen que me había mordido dos veces: comparaba una
+foto de la API contra la pantalla de después, en una base donde otra prueba
+resuelve colas en bloque. Ahora relee las dos cifras juntas hasta que coincidan
+--- lo que busca es un truncado, y un truncado no se arregla mirando otra vez.
 
 **Vuelta 21 — Las horas extra: de 1449 consultas a 5, y el número que faltaba.**
 

@@ -569,3 +569,22 @@ ordenar por repeticiones. Lo que salga arriba casi nunca es la consulta gorda qu
 uno sospechaba: es una barata llamada muchas veces. Y para arreglarla, recordarla
 en un objeto que viva lo que la petición ---la propia empresa--- en vez de montar
 una caché con invalidación, que trae más problemas de los que quita.
+
+## Un aviso que propone una salida que no existe es peor que no avisar (14/08/2026)
+
+«Se muestran 50 de 137. Usa los filtros de arriba para llegar al resto.» Los
+filtros son en cliente sobre las cincuenta ya cargadas, así que seguir el consejo
+no podía funcionar. Quien leyera el aviso se iba convencido de que había forma de
+llegar, y la buscaba.
+
+Escribí ese mensaje yo, en la vuelta 2, al arreglar el contador truncado. Arreglé
+la mitad ---decir que faltaban--- y me inventé la otra.
+
+**Regla:** cuando un aviso dice cómo salir del problema, seguir esa instrucción
+literalmente antes de darla por buena. Si el remedio está en otra pantalla o en
+otro mecanismo, comprobar que ese mecanismo hace lo que uno cree: aquí bastaba
+con filtrar y ver que el total no cambiaba.
+
+Y la nota del cuaderno decía «las tres colas paginadas». Son dos: las otras
+devuelven la cola entera. Una nota de hace nueve vueltas se comprueba antes de
+trabajar sobre ella.
