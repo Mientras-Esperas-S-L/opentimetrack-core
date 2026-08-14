@@ -552,3 +552,20 @@ la vista y una prueba que los reconstruye por su cuenta mide su propio código. 
 contrastarla igual que las demás: revertir el arreglo y comprobar que se queja.
 Además, afirmar **que no crece** (dos tamaños distintos) en vez de un número
 mágico, que solo dice algo si no cambia al crecer.
+
+## Las funciones que parecen baratas son las que hay que contar (14/08/2026)
+
+`WorkingTimeRules.for_company(company)` devuelve una fila y se llama desde
+dentro de los bucles. En una lectura de horas extra pendientes se ejecutaba
+**482 veces** con el mismo argumento: un `get_or_create` cada vez. Es más de la
+mitad de las 1449 consultas de esa página.
+
+No se ve leyendo el código, porque en el sitio donde está la llamada es
+razonable. Se ve agrupando el SQL por sentencia y mirando el número de la
+izquierda.
+
+**Regla:** al mirar el coste de una pantalla, agrupar las consultas por texto y
+ordenar por repeticiones. Lo que salga arriba casi nunca es la consulta gorda que
+uno sospechaba: es una barata llamada muchas veces. Y para arreglarla, recordarla
+en un objeto que viva lo que la petición ---la propia empresa--- en vez de montar
+una caché con invalidación, que trae más problemas de los que quita.

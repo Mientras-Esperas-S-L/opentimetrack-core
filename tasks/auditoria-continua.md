@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 20 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 21 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -114,11 +114,6 @@ vuelve a una limpia.
   cincuenta en cincuenta y ahora al menos se avisa del recorte, pero a las que
   faltan solo se llega filtrando. Con una plantilla grande eso no basta. El
   componente `Pager` ya existe; es cablearlo en las tres colas paginadas.
-- **Contar las horas extra pendientes cuesta medio segundo** con veinte
-  personas, porque reconcilia cada día de cada una. Por eso el Resumen dice que
-  las hay sin decir cuántas. Con cien personas serán dos segundos y medio y la
-  pantalla de decisiones se notará. Hace falta una consulta agregada, no un
-  bucle por persona y día.
 - **El catálogo de permisos no se puede editar desde ninguna pantalla.** Se
   siembra con la empresa y se puede recargar desde Ajustes, pero cada permiso
   tiene su cifra, su unidad y su periodo, y el convenio mejora cualquiera de
@@ -137,6 +132,26 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 21 — Las horas extra: de 1449 consultas a 5, y el número que faltaba.**
+
+Medio segundo en una empresa de veinte, y esto lo pide la pantalla de decisiones
+cada vez que se abre. Ahora 48 ms.
+
+Tres causas, y la primera es la que enseña algo. **482 consultas pedían las
+mismas reglas de la empresa**: `for_company` hace un `get_or_create` cada vez y
+se llama desde dentro de los bucles. Es una función que parece barata ---devuelve
+una fila--- y aparece en todas partes; ahí es donde se esconden estas cosas.
+**243 volvían a pedir un turno que el bucle ya tenía en la mano.** Y **241
+traían los fichajes de un día**, que ahora salen de una vez.
+
+Con el cuidado de siempre: el día es el de **su** centro y no el de la empresa.
+
+Y lo que se abre al arreglarlo: el Resumen ya cuenta las horas extra con número.
+Iban aparte y sin cifra justo porque contarlas era caro, y quedarse fuera de la
+cifra grande era el fallo de la vuelta 2 en pequeño. Debajo se dice cuántas de
+ellas son horas extra, con su plazo de cuatro meses, porque no es lo mismo una
+solicitud que espera respuesta que unas horas que caducan.
 
 **Vuelta 20 — La asistencia, de 73 consultas a 2.**
 
