@@ -2873,3 +2873,15 @@ msgid ""
 "\n"
 "If this does not match what happened, tell whoever manages your working time."
 msgstr ""
+
+#: apps/reports/services.py
+msgid "changed without the person's agreement (art. 4.b)"
+msgstr "modificat sense la conformitat de la persona (art. 4.b)"
+
+#: apps/reports/services.py
+msgid "Breaks, not counted as working time"
+msgstr "Pauses, que no computen com a jornada"
+
+#: apps/reports/services.py
+msgid "Waiting time, not counted as working time"
+msgstr "Temps d'espera, que no computa com a jornada"

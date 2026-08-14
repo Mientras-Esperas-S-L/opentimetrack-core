@@ -3140,3 +3140,15 @@ msgstr ""
 "historial, y puedes descargar tu registro completo cuando quieras.\n"
 "\n"
 "Si esto no coincide con lo que pasó, díselo a quien gestione tu jornada."
+
+#: apps/reports/services.py
+msgid "changed without the person's agreement (art. 4.b)"
+msgstr "modificado sin la conformidad de la persona (art. 4.b)"
+
+#: apps/reports/services.py
+msgid "Breaks, not counted as working time"
+msgstr "Pausas, que no computan como jornada"
+
+#: apps/reports/services.py
+msgid "Waiting time, not counted as working time"
+msgstr "Tiempo de espera, que no computa como jornada"

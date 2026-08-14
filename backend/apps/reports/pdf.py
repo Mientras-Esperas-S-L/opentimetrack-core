@@ -141,15 +141,40 @@ def render_pdf(data: ReportData) -> bytes:
     table.setStyle(TableStyle(style))
     story += [table, Spacer(1, 5 * mm)]
 
-    total = Table(
-        [[_("Total for the period"), _format_hours(data.total_seconds)]],
-        colWidths=[132 * mm, 42 * mm],
-    )
+    # Las pausas y las esperas van **aparte** del total y no dentro, que es la
+    # razón entera de registrarlas: el art. 3.d pide las interrupciones que no
+    # son tiempo efectivo y el 3.g las esperas, precisamente porque no cuentan
+    # como jornada. Se calculaban desde el principio y no se imprimían en
+    # ninguno de los dos formatos, así que el informe decía las horas y se
+    # callaba de qué estaban descontadas.
+    #
+    # Solo se enseñan cuando las hay: una línea de «Pausas 00:00» en el informe
+    # de quien nunca ficha pausas es ruido en un documento que se lee entero.
+    lineas = [[_("Total for the period"), _format_hours(data.total_seconds)]]
+    if data.total_break_seconds:
+        lineas.append(
+            [_("Breaks, not counted as working time"), _format_hours(data.total_break_seconds)]
+        )
+    if data.total_standby_seconds:
+        lineas.append(
+            [
+                _("Waiting time, not counted as working time"),
+                _format_hours(data.total_standby_seconds),
+            ]
+        )
+
+    total = Table(lineas, colWidths=[132 * mm, 42 * mm])
     total.setStyle(
         TableStyle(
             [
-                ("FONT", (0, 0), (-1, -1), "Helvetica-Bold", 10),
-                ("ALIGN", (1, 0), (1, 0), "RIGHT"),
+                # En negrita solo el total; lo que se descuenta va debajo y en
+                # normal, porque es subordinado y competir en peso con la cifra
+                # principal es lo que hace que un documento no se lea.
+                ("FONT", (0, 0), (-1, 0), "Helvetica-Bold", 10),
+                ("FONT", (0, 1), (-1, -1), "Helvetica", 9),
+                # Todas las filas, no solo la primera: el rango iba fijo a
+                # `(1, 0)` porque antes solo había una.
+                ("ALIGN", (1, 0), (1, -1), "RIGHT"),
                 ("LINEABOVE", (0, 0), (-1, 0), 0.8, INK),
                 ("TOPPADDING", (0, 0), (-1, -1), 5),
             ]

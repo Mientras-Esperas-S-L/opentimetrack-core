@@ -328,7 +328,31 @@ def _fingerprint(data: ReportData) -> str:
         for start, end in row.standby:
             parts.append(f"{row.day}|S|{start.isoformat()}|{end.isoformat() if end else ''}")
         parts.append(f"{row.day}|{row.seconds}|{row.overtime_seconds}")
+
+        # Y lo que la fila **dice**, no solo lo que dura. El principio ya estaba
+        # escrito tres líneas más arriba ---«están en el documento, así que están
+        # en la huella»--- y se aplicaba a la mitad: la ausencia y las
+        # observaciones salen impresas y no entraban.
+        #
+        # Lo grave era la discrepancia del art. 4.b. Dos informes del mismo
+        # periodo, uno con una corrección impuesta sobre la objeción de la
+        # persona y otro sin ella, daban **la misma huella**. El sello promete
+        # que el documento entregado es el que se generó, y no lo cubría justo
+        # en la parte que más peso tiene.
+        #
+        # Se sellan las notas ya montadas y no cada campo suelto: así lo que se
+        # añada mañana al documento entra en el sello sin que nadie se acuerde.
+        # El texto va traducido, así que se sella la marca y no la frase ---la
+        # misma jornada en catalán y en castellano es el mismo hecho---.
+        if row.absence:
+            parts.append(f"{row.day}|A|{row.absence}")
+        if row.disputed:
+            parts.append(f"{row.day}|D|{'|'.join(row.dissent)}")
+        if row.incidents or row.delegated:
+            parts.append(f"{row.day}|N|{len(row.incidents)}|{int(row.delegated)}")
+
     parts.append(str(data.total_seconds))
+    parts.append(f"{data.total_break_seconds}|{data.total_standby_seconds}")
     return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
 
 
@@ -336,16 +360,34 @@ def _fingerprint(data: ReportData) -> str:
 
 
 def day_notes(row: DayRow) -> str:
-    """Notes for one day: incidents, and whether an application recorded it.
+    """Notes for one day: incidents, delegation, y la discrepancia del art. 4.b.
 
     Delegation is stated in both outputs, and it is stated here rather than in
     each renderer so the two cannot drift apart -- which they already did once,
     with the PDF saying it and the CSV keeping quiet.
+
+    La discrepancia se añadió aquí por lo mismo, y porque **no estaba en
+    ninguno de los dos**. `build_report` calculaba `row.disputed` y
+    `row.dissent`, y los dos renderizadores los ignoraban: la corrección
+    impuesta sobre la objeción de la persona salía en el informe exactamente
+    igual que una aceptada.
+
+    Eso es justo lo que el art. 4.b existe para impedir. El propio código lo
+    tenía escrito en dos sitios ---«it travels to the inspection report: a
+    reader has to be able to tell a correction both parties accepted from one
+    imposed over an objection», y «the modification and the disagreement travel
+    together»--- y no viajaba.
     """
     notes = list(row.incidents)
     if row.delegated:
         notes.append(_("recorded by an application"))
-    return "; ".join(notes)
+    if row.disputed:
+        # Primero la marca, y después lo que dijo la persona. Sin la marca, un
+        # día sin texto de discrepancia ---puede no haberlo escrito--- se leería
+        # como un día normal.
+        notes.append(_("changed without the person's agreement (art. 4.b)"))
+        notes.extend(row.dissent)
+    return "; ".join(str(n) for n in notes)
 
 
 def to_csv(data: ReportData) -> str:
@@ -391,6 +433,20 @@ def to_csv(data: ReportData) -> str:
 
     writer.writerow([])
     writer.writerow([_("Total"), _format_hours(data.total_seconds)])
+    # Aparte del total y no dentro: ver el comentario en `pdf.py`. Los dos
+    # formatos lo dicen igual porque el informe es el mismo documento en dos
+    # envases, y que uno cuente algo que el otro calla ya pasó una vez.
+    if data.total_break_seconds:
+        writer.writerow(
+            [_("Breaks, not counted as working time"), _format_hours(data.total_break_seconds)]
+        )
+    if data.total_standby_seconds:
+        writer.writerow(
+            [
+                _("Waiting time, not counted as working time"),
+                _format_hours(data.total_standby_seconds),
+            ]
+        )
     writer.writerow([_("Generated"), data.generated_at.isoformat()])
     writer.writerow([_("Verification hash"), data.fingerprint])
 

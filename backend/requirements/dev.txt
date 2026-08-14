@@ -9,6 +9,11 @@ pytest-django==4.14.0
 pytest-cov==7.1.0
 factory-boy==3.3.3
 freezegun==1.5.5
+# Para leer los PDF que genera el producto. Solo en pruebas: el informe de
+# jornada es lo que se le entrega a una inspección y no había forma de
+# comprobar qué pone dentro ---la prueba que había miraba que empezara por
+# «%PDF-» y que pesara más de mil bytes---.
+pypdf==6.1.3
 
 # Utilidades
 django-extensions==4.1
