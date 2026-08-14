@@ -121,9 +121,10 @@ class AuditLogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
         # Excel y LibreOffice abren las dos formas igual de bien, así que no se
         # pierde nada. Reportado el 13/08/2026.
         writer = csv.writer(buffer, delimiter=";", lineterminator="\n")
-        writer.writerow(
-            [_("When"), _("Who"), _("What"), _("About"), _("Detail"), _("Note"), _("Address")]
-        )
+        # Sin columna de dirección: el rastro ya no guarda IP. Ver el comentario
+        # del modelo --- chocaba con la inmutabilidad de la tabla, que hacía
+        # imposible borrarla ni para atender una solicitud del art. 17.
+        writer.writerow([_("When"), _("Who"), _("What"), _("About"), _("Detail"), _("Note")])
         for entry in rows.iterator(chunk_size=500):
             writer.writerow(
                 [
@@ -133,12 +134,6 @@ class AuditLogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
                     entry.target_label,
                     json.dumps(entry.changes, ensure_ascii=False) if entry.changes else "",
                     entry.note,
-                    # El mismo criterio que en la lista, y hay que repetirlo
-                    # aquí porque el fichero no pasa por el serializador: la
-                    # dirección solo la ve un administrador o quien actuó desde
-                    # ella. Un empleado que se descarga su historial no se lleva
-                    # las IP de los responsables que se lo tocaron.
-                    _ip_for(entry, request.user),
                 ]
             )
 

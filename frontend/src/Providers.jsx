@@ -1,12 +1,10 @@
 import { useCallback, useMemo, useState } from 'react'
-import CssBaseline from '@mui/material/CssBaseline'
-import { ThemeProvider } from '@mui/material/styles'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ColorSchemeContext } from './context/colorSchemeContext.js'
-import { buildTheme } from './theme.js'
+import ConIdioma from './i18n/ConIdioma.jsx'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -51,17 +49,19 @@ export default function Providers({ children }) {
   }, [])
 
   const resolved = choice === 'system' ? (prefersDark ? 'dark' : 'light') : choice
-  const theme = useMemo(() => buildTheme(resolved), [resolved])
   const scheme = useMemo(() => ({ choice, resolved, setChoice }), [choice, resolved, setChoice])
 
+  // `AuthProvider` pasa por encima del tema, que antes iba fuera. El idioma sale
+  // de la sesión y el paquete de idioma de MUI vive dentro del tema, así que
+  // para construir el tema hace falta saber ya quién está dentro. El modo claro
+  // u oscuro sigue viniendo de arriba porque es del aparato, no de la persona.
   return (
     <ColorSchemeContext.Provider value={scheme}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>{children}</AuthProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ConIdioma modo={resolved}>{children}</ConIdioma>
+        </AuthProvider>
+      </QueryClientProvider>
     </ColorSchemeContext.Provider>
   )
 }

@@ -101,5 +101,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Catálogos de traducción
+        run: npm run i18n:check
+
       - name: Construir
         run: npm run build

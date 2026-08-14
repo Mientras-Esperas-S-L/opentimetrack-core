@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import AppBar from '@mui/material/AppBar'
 import Avatar from '@mui/material/Avatar'
@@ -35,6 +36,8 @@ function initialsOf(user) {
 }
 
 function NavSection({ title, items, onNavigate }) {
+  const { t } = useTranslation()
+
   return (
     <List
       dense
@@ -72,7 +75,7 @@ function NavSection({ title, items, onNavigate }) {
           }}
         >
           <ListItemIcon sx={{ minWidth: 38 }}>{icon}</ListItemIcon>
-          <ListItemText primary={label} />
+          <ListItemText primary={t(label)} />
         </ListItemButton>
       ))}
     </List>
@@ -80,6 +83,7 @@ function NavSection({ title, items, onNavigate }) {
 }
 
 export default function AppShell() {
+  const { t } = useTranslation()
   const { session, signOut } = useAuth()
   const theme = useTheme()
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
@@ -95,11 +99,11 @@ export default function AppShell() {
 
   const navigation = (
     <Box sx={{ overflowY: 'auto', pb: 2 }}>
-      <NavSection title="Mi trabajo" items={NAV_ME} />
+      <NavSection title={t('Mi trabajo')} items={NAV_ME} />
       {canManage && (
         <>
           <Divider sx={{ my: 1, mx: 2 }} />
-          <NavSection title="Gestión" items={management} />
+          <NavSection title={t('Gestión')} items={management} />
         </>
       )}
     </Box>
@@ -126,7 +130,8 @@ export default function AppShell() {
         <Toolbar sx={{ gap: 2 }}>
           <Stack sx={{ minWidth: 0, flexGrow: 1 }}>
             <Typography variant="h2" noWrap sx={{ fontSize: '1.05rem' }}>
-              {isDesktop ? currentLabel : 'OpenTimeTrack'}
+              {/* El nombre del producto no se traduce: es un nombre propio. */}
+              {isDesktop ? t(currentLabel) : 'OpenTimeTrack'}
             </Typography>
             {company?.name && (
               <Typography variant="caption" color="text.secondary" noWrap>
@@ -140,10 +145,10 @@ export default function AppShell() {
             variant="outlined"
             label={
               user?.role === 'ADMIN'
-                ? 'Administración'
+                ? t('Administración')
                 : canManage
-                  ? 'Responsable'
-                  : 'Persona trabajadora'
+                  ? t('Responsable')
+                  : t('Persona trabajadora')
             }
             sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           />
@@ -153,8 +158,8 @@ export default function AppShell() {
               {initialsOf(user)}
             </Avatar>
           </Tooltip>
-          <Tooltip title="Cerrar sesión">
-            <IconButton onClick={signOut} edge="end" aria-label="Cerrar sesión">
+          <Tooltip title={t('Cerrar sesión')}>
+            <IconButton onClick={signOut} edge="end" aria-label={t('Cerrar sesión')}>
               <LogoutIcon />
             </IconButton>
           </Tooltip>

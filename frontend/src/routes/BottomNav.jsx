@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import BottomNavigation from '@mui/material/BottomNavigation'
 import BottomNavigationAction from '@mui/material/BottomNavigationAction'
@@ -13,6 +14,7 @@ import { NAV_ADMIN, NAV_ME } from './navigation.jsx'
  *  going anyway.
  */
 export default function BottomNav({ canManage }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
@@ -46,7 +48,7 @@ export default function BottomNav({ canManage }) {
         sx={{ bgcolor: 'background.paper' }}
       >
         {items.map((item) => (
-          <BottomNavigationAction key={item.to} label={item.label} icon={item.icon} />
+          <BottomNavigationAction key={item.to} label={t(item.label)} icon={item.icon} />
         ))}
       </BottomNavigation>
     </Paper>

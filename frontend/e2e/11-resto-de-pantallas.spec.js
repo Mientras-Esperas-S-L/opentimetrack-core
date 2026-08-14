@@ -224,12 +224,16 @@ test.describe('Lo de cada uno', () => {
       const sobreMi = linea.target_id === soyYo || linea.actor === soyYo
       expect(sobreMi, `una línea del registro no le incumbe: ${JSON.stringify(linea)}`).toBe(true)
 
-      // Y de las líneas que hizo otro ---un responsable corrigiéndole un
-      // fichaje--- no se lleva su IP. Saber quién se lo tocó es su derecho;
-      // desde dónde trabaja ese compañero, no.
-      if (linea.actor !== soyYo) {
-        expect(linea.ip_address, `sale la IP de ${linea.actor_label}`).toBe('')
-      }
+      // Y ninguna línea lleva dirección IP, de nadie. Antes sí la llevaba y se
+      // tapaba enseñándosela solo a quien administraba o a quien había actuado
+      // desde ella; ahora no se guarda, porque la tabla es inmutable y una IP
+      // guardada ahí no se podía borrar ni para atender una solicitud del art.
+      // 17. Se comprueba que el campo no está, no que venga vacío: vacío era la
+      // solución vieja.
+      expect(
+        Object.keys(linea).some((clave) => clave.toLowerCase().includes('ip')),
+        `el registro vuelve a traer una dirección: ${JSON.stringify(linea)}`,
+      ).toBe(false)
     }
   })
 })

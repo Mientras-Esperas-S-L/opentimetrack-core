@@ -727,3 +727,37 @@ verde de la suite es exactamente la señal que te hace pensar que has terminado.
 vuelta se toca un modelo, la comprobación final no es «pasan las pruebas», es «pasan las
 pruebas **y** la aplicación de desarrollo responde». Un `curl` a un endpoint que use lo
 tocado cuesta un segundo y ve lo que la suite no puede ver.
+
+## Quitar un campo es buscarlo por todas sus salidas, no por una (14/08/2026)
+
+Quité `ip_address` del rastro de auditoría. Escribí una prueba que comprobaba dos cosas
+---que la columna no está en la tabla y que el JSON de la API no la sirve--- y hasta puse
+en su docstring que se comprobaba «por las dos puntas porque son dos formas distintas de
+que vuelva». Verde. 838 pruebas verdes.
+
+Y el CSV que se descarga seguía llamando a la función que había borrado, así que la
+descarga del registro devolvía un 500. Lo cazó una prueba de punta a punta que se quedó
+esperando un fichero que no llegaba nunca.
+
+El fichero no pasa por el serializador: se escribe a mano, columna a columna. O sea que
+comprobar el serializador no dice **nada** de él. Lo tenía escrito y no lo hice.
+
+**Regla**: antes de quitar un campo, `grep` de su nombre **y del de las funciones que lo
+resolvían**, y de ahí sale la lista de salidas que hay que comprobar. Aquí eran tres:
+tabla, JSON y CSV. Escribir «por las dos puntas» en un docstring no es haber mirado las
+puntas que hay.
+
+## Instalar en el host no es instalar en el contenedor (14/08/2026)
+
+`npm install i18next` en el host, y Vite ---que corre en el contenedor con su propio
+`/app/node_modules`--- devolviendo «Failed to resolve import». La pantalla de entrar dejó
+de pintarse y tres de las cuatro sesiones de las pruebas siguieron pasando porque
+reutilizaban su testigo guardado: solo fallaba la que entraba de verdad, que es la señal
+más fácil de leer como «cosa rara de esa prueba».
+
+Y con la dependencia ya instalada dentro seguía fallando: Vite cachea el prebundle y con
+dependencias nuevas hace falta reiniciar el servicio.
+
+**Regla**: dependencia nueva del frontend = `podman compose exec web npm install` **y**
+`podman compose restart web`. Y si una prueba de sesión falla sola mientras las demás
+pasan, mirar el log del contenedor antes de mirar la prueba.

@@ -17,9 +17,15 @@ Cede la IP. El rastro tiene que decir quién hizo qué y cuándo, y eso lo dice 
 actor. Para investigar un acceso raro están los registros del servidor web, que
 sí caducan solos.
 
-Se comprueba por las dos puntas ---la columna y lo que sirve la API--- porque
-son dos formas distintas de que vuelva: alguien que añade el campo «porque hace
-falta para depurar», y alguien que lo sirve desde otro sitio.
+Se comprueba por las tres puntas ---la columna, el JSON de la API y el CSV que
+se descarga--- porque son tres formas distintas de que vuelva.
+
+La tercera está aquí por haberla olvidado. La primera versión de estas pruebas
+miraba la columna y el JSON, se puso verde, y **el CSV se quedó llamando a una
+función borrada**: la descarga del registro reventaba con un 500. Lo cazó una
+prueba de punta a punta que esperaba un fichero que no llegó nunca. El fichero
+no pasa por el serializador, así que comprobar el serializador no dice nada de
+él, y eso es exactamente lo que el docstring de arriba decía y yo no hice.
 """
 
 from __future__ import annotations
@@ -125,3 +131,27 @@ def test_y_el_rastro_sigue_diciendo_quien_y_cuando(company, jefa):
     assert fila["actor_label"] == "Luisa"
     assert fila["at"]
     assert fila["action"] == "login"
+
+
+@pytest.mark.django_db
+def test_el_csv_que_se_descarga_tampoco_la_lleva(company, jefa):
+    """Y se descarga, que es la mitad que se olvidó.
+
+    El CSV no pasa por el serializador: se escribe a mano, columna a columna. La
+    comprobación de que el JSON no lleva IP no dice nada de este fichero, y
+    cuando se quitó la función que la resolvía, esta ruta se quedó llamándola.
+    """
+    with tenant_context(company.id):
+        AuditLog.objects.create(
+            tenant=company, actor=jefa, actor_label="Luisa", action="login", note="Entró"
+        )
+        cliente = APIClient()
+        cliente.credentials(HTTP_AUTHORIZATION=f"Bearer {RefreshToken.for_user(jefa).access_token}")
+        respuesta = cliente.get("/api/audit/export/")
+
+    assert respuesta.status_code == 200, "la descarga del registro está rota"
+    texto = b"".join(respuesta.streaming_content).decode() if respuesta.streaming else respuesta.content.decode()
+
+    cabecera = texto.splitlines()[0]
+    assert "Luisa" in texto, "sin filas esto no comprueba nada"
+    assert not any(p in cabecera.lower() for p in ("address", "direcci", "ip"))

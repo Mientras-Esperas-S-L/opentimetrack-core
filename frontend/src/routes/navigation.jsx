@@ -17,6 +17,11 @@ import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard'
 
 /** The two halves of the application, kept in one place.
  *
+ *  `label` es a la vez el texto en castellano y la clave de traducción, y se
+ *  traduce **donde se pinta**, no aquí. Estas listas son constantes de módulo:
+ *  llamar a `t()` al definirlas congelaría el idioma en el que estuviera la
+ *  aplicación al importar el fichero, que es antes de que haya sesión.
+ *
  *  The split is not cosmetic: everything under "Mi trabajo" is about the person
  *  using it and needs no privilege, everything under "Gestión" is about other
  *  people and does. Adding a screen to the wrong list is the kind of mistake

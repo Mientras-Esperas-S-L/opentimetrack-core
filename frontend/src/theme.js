@@ -1,11 +1,37 @@
 import { createTheme } from '@mui/material/styles'
-import { esES } from '@mui/material/locale'
+import { caES, esES } from '@mui/material/locale'
+
+/** El paquete de MUI que toca a cada idioma.
+ *
+ *  MUI trae catalán y **no trae gallego**. Sin esta tabla, un gallego se
+ *  quedaría con el paquete por defecto de MUI, que está en inglés: los
+ *  `aria-label` de la paginación y los botones del buscador saldrían en un
+ *  tercer idioma. Es el mismo fallo que ya se cazó en el backend ---caer al
+ *  inglés en vez de al castellano--- y aquí se evita a mano.
+ *
+ *  Así que gallego usa el castellano para lo interno de MUI mientras nuestras
+ *  propias cadenas sí van en gallego. No es lo ideal, pero es lo correcto: un
+ *  producto a medias en dos idiomas de aquí se lee; en gallego e inglés, no.
+ */
+const PAQUETE_MUI = { es: esES, ca: caES, gl: esES }
+
+/** «Abrir», no «Abierto».
+ *
+ *  MUI traduce «open» por lo que el desplegable **está**, no por lo que el
+ *  botón **hace**. Solo el castellano lo tiene mal; el catalán del paquete dice
+ *  «Obrir», que es correcto.
+ */
+const CORRECCIONES = {
+  es: { components: { MuiAutocomplete: { defaultProps: { openText: 'Abrir' } } } },
+  ca: {},
+  gl: { components: { MuiAutocomplete: { defaultProps: { openText: 'Abrir' } } } },
+}
 
 // Un tema propio, no el azul por defecto de MUI. La idea es que la pantalla de
 // fichaje se lea de un vistazo en un móvil viejo y a pleno sol: contraste alto,
 // tipografía grande y un acento que distinga "dentro" de "fuera" sin depender
 // solo del color.
-export const buildTheme = (mode = 'light') =>
+export const buildTheme = (mode = 'light', idioma = 'es') =>
   createTheme(
     {
       palette: {
@@ -74,12 +100,9 @@ export const buildTheme = (mode = 'light') =>
     //
     // Va aquí y no componente a componente para que lo que se añada mañana
     // nazca traducido.
-    esES,
-    // Después de `esES` a propósito: `createTheme` fusiona de izquierda a
-    // derecha y gana el último, así que una corrección puesta antes del paquete
-    // no se aplica --- me pasó con esta misma.
-    //
-    // MUI traduce «open» por «Abierto», que es lo que el desplegable está, no lo
-    // que el botón hace. Lo demás del paquete vale tal cual.
-    { components: { MuiAutocomplete: { defaultProps: { openText: 'Abrir' } } } },
+    PAQUETE_MUI[idioma] ?? esES,
+    // Después del paquete a propósito: `createTheme` fusiona de izquierda a
+    // derecha y gana el último, así que una corrección puesta antes no se
+    // aplica --- me pasó con esta misma.
+    CORRECCIONES[idioma] ?? {},
   )
