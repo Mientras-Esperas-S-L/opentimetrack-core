@@ -109,14 +109,44 @@ class PublicHoliday(TenantOwnedModel):
         return f"{self.day} {self.name}"
 
 
-def holidays_for(person, first, last) -> set:
+def holidays_by_workplace(first, last) -> dict:
+    """Los festivos del tramo, agrupados por centro, en una consulta.
+
+    La respuesta de `holidays_for` depende solo del **centro** de la persona, no
+    de la persona, así que preguntarla por cabeza es preguntar lo mismo muchas
+    veces. La revisión del cuadrante lo hacía dentro de su bucle y crecía una
+    consulta por empleado: doce para tres personas, veintiuna para doce, y más
+    de doscientas para una plantilla de doscientas. Justo la pantalla que se
+    abre para ver qué incumple el cuadrante de toda la empresa.
+
+    La clave `None` son los festivos de toda la empresa, que le tocan a todo el
+    mundo además de los suyos.
+    """
+    por_centro: dict = {}
+    filas = PublicHoliday.objects.filter(day__gte=first, day__lte=last).values_list(
+        "workplace_id", "day"
+    )
+    for workplace_id, dia in filas:
+        por_centro.setdefault(workplace_id, set()).add(dia)
+    return por_centro
+
+
+def holidays_for(person, first, last, por_centro=None) -> set:
     """The days in the range that are holidays **for that person**.
 
     Their workplace's, plus the company-wide ones. Asked of the person rather
     than of the company because that is the only level at which the answer is
     single: two sites of the same firm do not share their last two days.
+
+    `por_centro` es lo que devuelve `holidays_by_workplace`, ya traído de una
+    vez. Sin él consulta por su cuenta, que está bien para una llamada suelta y
+    era un N+1 dentro de un bucle.
     """
-    rows = PublicHoliday.objects.filter(day__gte=first, day__lte=last).filter(
-        models.Q(workplace__isnull=True) | models.Q(workplace_id=person.workplace_id)
-    )
-    return set(rows.values_list("day", flat=True))
+    if por_centro is None:
+        rows = PublicHoliday.objects.filter(day__gte=first, day__lte=last).filter(
+            models.Q(workplace__isnull=True) | models.Q(workplace_id=person.workplace_id)
+        )
+        return set(rows.values_list("day", flat=True))
+
+    # Los de la empresa entera más los de su centro.
+    return por_centro.get(None, set()) | por_centro.get(person.workplace_id, set())

@@ -236,10 +236,13 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
 
     framework = legal.for_company(company)
 
+    # De una vez, no una consulta por cabeza. Ver `reductions_in`.
+    reducciones = reductions_in(company, first, last)
+
     findings: list[Finding] = []
     for employee_id, roster in by_person.items():
         findings.extend(_check_daily_rest(roster, rules, framework.shifts, first, last))
-        findings.extend(_check_weekly_hours(employee_id, roster, rules, first, last))
+        findings.extend(_check_weekly_hours(employee_id, roster, rules, first, last, reducciones))
         findings.extend(_check_breaks(roster, rules, first, last))
         findings.extend(
             _check_weekly_rest(
@@ -253,7 +256,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     findings.extend(_check_leave_clashes(first, last, employee))
     findings.extend(_check_rostered_on_a_holiday(by_person, first, last))
     findings.extend(_check_outside_the_contract(by_person))
-    findings.extend(_check_time_actually_worked(company, rules, first, last, employee))
+    findings.extend(_check_time_actually_worked(company, rules, first, last, employee, reducciones))
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -418,7 +421,7 @@ def _start_of(shift) -> str:
     return min(span["start"] for span in shift.segments)
 
 
-def _check_weekly_hours(employee_id, roster, rules, first, last) -> list[Finding]:
+def _check_weekly_hours(employee_id, roster, rules, first, last, reductions=None) -> list[Finding]:
     """Hours per week, against two different things.
 
     They used to be one check against the company's figure, which meant a
@@ -477,7 +480,7 @@ def _check_weekly_hours(employee_id, roster, rules, first, last) -> list[Finding
         # allows. Scaling that as well was the first version of this, and it
         # turned "over the contract" --- which during an ERTE is a serious
         # matter --- into "over the legal maximum", a different accusation.
-        share = _reduced_share(person, monday, sunday)
+        share = _reduced_share(person, monday, sunday, reductions)
         week_agreed = agreed * share if agreed is not None else None
 
         if hours > ceiling:
@@ -530,27 +533,72 @@ def _check_weekly_hours(employee_id, roster, rules, first, last) -> list[Finding
     return found
 
 
-def _reduced_share(person, first, last) -> float:
+def reductions_in(company, first: date, last: date) -> dict:
+    """Las reducciones aprobadas de toda la plantilla, en una consulta.
+
+    Existe porque `_reduced_share` la hacía **por persona y por semana**, dentro
+    de dos bucles. La revisión del cuadrante crecía una consulta por cabeza: doce
+    para tres personas, veintiuna para doce, y más de doscientas para una
+    plantilla de doscientas. Justo la pantalla que un responsable abre para ver
+    qué incumple su cuadrante.
+
+    Se devuelve la lista de tramos por persona en vez del porcentaje ya
+    calculado porque el porcentaje depende de la ventana que se pregunte ---una
+    semana concreta--- y esa cambia dentro del bucle.
+    """
+    from apps.absences.models import Absence, AbsenceStatus
+
+    filas = Absence.objects.filter(
+        status=AbsenceStatus.APPROVED,
+        start_date__lte=last,
+        end_date__gte=first,
+        reduction_share__isnull=False,
+        reduction_share__lt=100,
+    ).values_list("employee_id", "start_date", "end_date", "reduction_share")
+
+    por_persona: dict = {}
+    for employee_id, desde, hasta, cuanto in filas:
+        por_persona.setdefault(employee_id, []).append((desde, hasta, cuanto))
+    return por_persona
+
+
+def _reduced_share(person, first, last, reductions=None) -> float:
     """How much of the ordinary day is still expected, over that stretch.
 
     One unless there is an approved suspension that **reduces** rather than
     stops --- an ERTE under art. 47 taking forty per cent off for six months.
     The smallest share wins when two overlap, which should not happen and is the
     safe answer if it ever does.
+
+    `reductions` es el mapa que devuelve `reductions_in`, ya traído de una vez.
+    Sin él consulta por su cuenta, que es correcto para una llamada suelta y era
+    un N+1 dentro de un bucle.
     """
     from apps.absences.models import Absence, AbsenceStatus
 
-    reductions = Absence.objects.filter(
-        employee=person,
-        status=AbsenceStatus.APPROVED,
-        start_date__lte=last,
-        end_date__gte=first,
-        reduction_share__isnull=False,
-        reduction_share__lt=100,
-    ).values_list("reduction_share", flat=True)
+    person_id = getattr(person, "id", person)
+
+    if reductions is None:
+        tramos = Absence.objects.filter(
+            employee=person,
+            status=AbsenceStatus.APPROVED,
+            start_date__lte=last,
+            end_date__gte=first,
+            reduction_share__isnull=False,
+            reduction_share__lt=100,
+        ).values_list("start_date", "end_date", "reduction_share")
+    else:
+        # El mapa se trae por la ventana entera, así que aquí hay que volver a
+        # comprobar el solape con la ventana concreta que se pregunta: si no,
+        # una reducción de marzo bajaría la cuota de una semana de septiembre.
+        tramos = [
+            (desde, hasta, cuanto)
+            for desde, hasta, cuanto in reductions.get(person_id, [])
+            if desde <= last and hasta >= first
+        ]
 
     share = 1.0
-    for reduced in reductions:
+    for _desde, _hasta, reduced in tramos:
         share = min(share, max(0.0, 1 - float(reduced) / 100))
     return share
 
@@ -908,7 +956,9 @@ def _check_under_eighteen(roster, rules, minors, first, last) -> list[Finding]:
     return found
 
 
-def _check_time_actually_worked(company, rules, first, last, employee) -> list[Finding]:
+def _check_time_actually_worked(
+    company, rules, first, last, employee, reductions=None
+) -> list[Finding]:
     """The same limits, against the record instead of the plan.
 
     Every other check here reads the roster, and that leaves two holes.
@@ -971,7 +1021,7 @@ def _check_time_actually_worked(company, rules, first, last, employee) -> list[F
             # during an ERTE, are exactly the ones an inspection of an ERTE
             # goes looking for. The legal maximum stays put, as everywhere.
             week_agreed = (
-                agreed * _reduced_share(person, monday, monday + timedelta(days=6))
+                agreed * _reduced_share(person, monday, monday + timedelta(days=6), reductions)
                 if agreed is not None
                 else None
             )
@@ -1048,14 +1098,17 @@ def _check_rostered_on_a_holiday(by_person, first, last) -> list[Finding]:
     are the town hall's, so a company with sites in two provinces has two
     calendars and one of them is not the other's.
     """
-    from apps.tenants.holidays import holidays_for
+    from apps.tenants.holidays import holidays_by_workplace, holidays_for
+
+    # De una vez y por centro: la respuesta no depende de la persona.
+    por_centro = holidays_by_workplace(first, last)
 
     found = []
     for roster in by_person.values():
         if not roster:
             continue
         person = roster[0].employee
-        off = holidays_for(person, first, last)
+        off = holidays_for(person, first, last, por_centro)
         if not off:
             continue
         for shift in roster:
