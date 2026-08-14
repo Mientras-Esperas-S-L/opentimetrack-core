@@ -257,6 +257,14 @@ SPECTACULAR_SETTINGS = {
     # PunchType appears both on the clock event and on a correction request.
     # Without this the generator invents two names for one set of choices, and a
     # client generated from the schema ends up with duplicate types.
+    # El esquema declaraba solo el camino feliz: ni un 400, ni un 403, ni un 409
+    # en ciento diecinueve operaciones, y ningún componente que dijera qué forma
+    # tiene un error. Para un producto que vende su API como funcionalidad, eso
+    # es justo la mitad que hace falta. El porqué y el cómo, en el módulo.
+    "POSTPROCESSING_HOOKS": [
+        "drf_spectacular.hooks.postprocess_schema_enums",
+        "apps.common.schema.documentar_los_errores",
+    ],
     "ENUM_NAME_OVERRIDES": {
         "PunchTypeEnum": "apps.punches.models.PunchType.choices",
         # Punch.work_mode and User.default_work_mode hold the same two values.

@@ -11,7 +11,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -227,6 +227,20 @@ class ReportView(APIView):
         return response
 
 
+class PayrollRunRequestSerializer(serializers.Serializer):
+    """Qué periodo se genera. Se publicaba como «sin cuerpo» y sí lo lee.
+
+    Opcional de verdad ---sin él se toma hoy--- pero un integrador que lea «no
+    lleva cuerpo» no puede saber que existe la opción, así que genera siempre el
+    periodo en curso sin enterarse de que podía pedir otro.
+    """
+
+    day = serializers.DateField(
+        required=False,
+        help_text="Un día cualquiera del periodo que se quiere generar. Por defecto, hoy.",
+    )
+
+
 @extend_schema(tags=["reports"])
 class PayrollSummaryView(APIView):
     """The summary that goes out with the payslip (art. 6.1).
@@ -291,7 +305,7 @@ class PayrollSummaryView(APIView):
             }
         )
 
-    @extend_schema(request=None, responses={201: dict})
+    @extend_schema(request=PayrollRunRequestSerializer, responses={201: dict})
     def post(self, request):
         """Generates the period's summaries for the whole company, and records it.
 

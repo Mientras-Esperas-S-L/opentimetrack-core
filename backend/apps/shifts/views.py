@@ -99,6 +99,12 @@ def _weekdays_wanted(data: dict) -> list[int]:
     return data.get("weekdays") or list(range(7))
 
 
+class ReassignSerializer(serializers.Serializer):
+    """A quién pasa el turno. Un identificador y nada más."""
+
+    employee = serializers.UUIDField()
+
+
 class AssignSerializer(serializers.Serializer):
     employees = serializers.ListField(child=serializers.UUIDField(), allow_empty=False)
     pattern = serializers.UUIDField()
@@ -349,7 +355,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
         )
         return Response({"findings": _grouped(findings)})
 
-    @extend_schema(request=None, responses={200: dict})
+    @extend_schema(request=ReassignSerializer, responses={200: dict})
     @action(detail=True, methods=["post"])
     def reassign(self, request, pk=None):
         """Pasa un turno de una persona a otra.
@@ -514,12 +520,6 @@ def _describe(part, as_time: tuple[str, ...] = ()) -> dict | None:
         key: {"basis": c.basis, "note": c.note} for key, c in part.citations.items()
     }
     return body
-
-
-class ReassignSerializer(serializers.Serializer):
-    """A quién pasa el turno. Un identificador y nada más."""
-
-    employee = serializers.UUIDField()
 
 
 class RulesSerializer(serializers.ModelSerializer):

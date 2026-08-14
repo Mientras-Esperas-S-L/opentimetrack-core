@@ -140,6 +140,17 @@ class SignInView(APIView):
         )
 
 
+class RefreshRequestSerializer(serializers.Serializer):
+    """El token de refresco. Va en el cuerpo, no en la cabecera.
+
+    Existe para que el esquema lo diga. Estas dos operaciones se publicaban con
+    `request=None` y las dos leen el cuerpo: quien integrara leyendo el contrato
+    mandaba una petición vacía.
+    """
+
+    refresh = serializers.CharField()
+
+
 @extend_schema(tags=["auth"])
 class RefreshView(APIView):
     """Trades a refresh token for a fresh access token.
@@ -163,7 +174,7 @@ class RefreshView(APIView):
     # panel a una oficina entera detrás del mismo NAT.
     throttle_scope = "session_renewal"
 
-    @extend_schema(request=None, responses={200: dict})
+    @extend_schema(request=RefreshRequestSerializer, responses={200: dict})
     def post(self, request):
         token = request.data.get("refresh")
         if not token:
@@ -193,9 +204,19 @@ class SignOutView(APIView):
 
     permission_classes = [IsAuthenticatedInTenant]
 
-    @extend_schema(request=None, responses={204: None})
+    @extend_schema(request=RefreshRequestSerializer, responses={204: None})
     def post(self, request):
         token = request.data.get("refresh")
+        if not token:
+            # Sin token no se invalida nada, y devolver 204 sería mentir en el
+            # peor sitio: quien integra lee «204», da la sesión por cerrada, y
+            # el token de refresco sigue valiendo una semana. El esquema decía
+            # `request=None`, así que un cliente escrito leyendo el contrato
+            # mandaba justo la petición vacía.
+            raise BusinessRuleError(
+                code="no_refresh_token",
+                message=_("Send the refresh token to close the session."),
+            )
         if token:
             try:
                 RefreshToken(token).blacklist()

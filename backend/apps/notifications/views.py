@@ -8,7 +8,7 @@ what gets sent is decided by the product, not by whoever holds a token.
 
 from __future__ import annotations
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import serializers, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -50,6 +50,15 @@ class PushSubscriptionSerializer(serializers.Serializer):
     )
 
 
+class PushUnsubscribeRequestSerializer(serializers.Serializer):
+    """Cuál se da de baja. Se acepta en el cuerpo o como parámetro."""
+
+    endpoint = serializers.CharField(
+        required=False,
+        help_text="Sin él se dan de baja todas las suscripciones de esta persona.",
+    )
+
+
 class PushSubscriptionView(APIView):
     """The caller's own browsers.
 
@@ -85,7 +94,22 @@ class PushSubscriptionView(APIView):
         )
         return Response({"subscribed": True}, status=status.HTTP_201_CREATED)
 
-    @extend_schema(tags=["notifications"], responses={204: None})
+    @extend_schema(
+        tags=["notifications"],
+        request=PushUnsubscribeRequestSerializer,
+        parameters=[
+            OpenApiParameter(
+                "endpoint",
+                str,
+                description=(
+                    "Cuál se da de baja. **Sin él se dan de baja todas las de esta "
+                    "persona**, que a veces es lo que se quiere ---cerrar sesión en "
+                    "todas partes--- y a veces no. Se acepta también en el cuerpo."
+                ),
+            )
+        ],
+        responses={204: None},
+    )
     def delete(self, request):
         endpoint = request.data.get("endpoint") or request.query_params.get("endpoint")
         rows = PushSubscription.objects.filter(employee=request.user)
