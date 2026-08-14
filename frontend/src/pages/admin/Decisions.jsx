@@ -28,6 +28,7 @@ import {
   getCorrections,
   getPendingAbsences,
   getPendingOvertime,
+  PAGE_SIZE,
   rejectAbsence,
   rejectCorrection,
 } from '../../services/api.js'
@@ -37,6 +38,7 @@ import {
   ErrorNote,
   Loading,
   PageHeader,
+  Pager,
   SourceChip,
   StatusChip,
 } from '../../components/common.jsx'
@@ -374,9 +376,18 @@ export default function Decisions() {
   const [confirming, setConfirming] = useState(null)
 
   const absences = useQuery({ queryKey: ['absences', 'pending'], queryFn: getPendingAbsences })
+
+  // Solo estas dos colas paginan: `/absences/pending/`, las horas extra y las
+  // recuperaciones son acciones que devuelven la cola entera. Aquí llegaban de
+  // cincuenta en cincuenta, y a las que faltaban solo se llegaba filtrando ---
+  // un aviso decía que había más y no había forma de pasar a verlas.
+  const [paginaCorrecciones, setPaginaCorrecciones] = useState(1)
+  const [paginaEspera, setPaginaEspera] = useState(1)
+
   const corrections = useQuery({
-    queryKey: ['corrections', 'pending'],
-    queryFn: () => getCorrections({ status: 'PENDING' }),
+    queryKey: ['corrections', 'pending', paginaCorrecciones],
+    queryFn: () => getCorrections({ status: 'PENDING', page: paginaCorrecciones }),
+    placeholderData: (previous) => previous,
   })
 
   // Art. 4.b. A change the company proposed on somebody else's record waits for
@@ -389,8 +400,9 @@ export default function Decisions() {
   // change without agreement, so those are finished and belong in the record,
   // not in a list of things to decide.
   const waiting = useQuery({
-    queryKey: ['corrections', 'awaiting'],
-    queryFn: () => getCorrections({ status: 'AWAITING_EMPLOYEE' }),
+    queryKey: ['corrections', 'awaiting', paginaEspera],
+    queryFn: () => getCorrections({ status: 'AWAITING_EMPLOYEE', page: paginaEspera }),
+    placeholderData: (previous) => previous,
   })
 
   // Horas extra pendientes de autorizar. La cola por excepción del tiempo: días
@@ -835,7 +847,20 @@ export default function Decisions() {
                 </Typography>
               </RequestCard>
             ))}
-            <ListaRecortada total={corrections.data?.count} mostradas={correctionRows.length} />
+            <Pager
+              count={corrections.data?.count}
+              page={paginaCorrecciones}
+              pageSize={PAGE_SIZE}
+              noun="correcciones"
+              onChange={(pagina) => {
+                setPaginaCorrecciones(pagina)
+                // La selección se vacía al cambiar de página: las acciones en
+                // bloque actúan sobre lo que se ve, y arrastrar marcas de una
+                // página que ya no está a la vista es cómo se aprueba algo sin
+                // haberlo mirado.
+                correctionPick.clear()
+              }}
+            />
             <SelectionBar
               selection={correctionPick}
               noun="correcciones"
@@ -1000,7 +1025,16 @@ export default function Decisions() {
 
                 Retirar en bloque sí hace falta: una cola de propuestas viejas
                 que ya no vienen a cuento se limpia entera. */}
-            <ListaRecortada total={waiting.data?.count} mostradas={openRows.length} />
+            <Pager
+              count={waiting.data?.count}
+              page={paginaEspera}
+              pageSize={PAGE_SIZE}
+              noun="propuestas"
+              onChange={(pagina) => {
+                setPaginaEspera(pagina)
+                openPick.clear()
+              }}
+            />
             <SelectionBar
               selection={openPick}
               noun="propuestas"
