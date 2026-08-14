@@ -10,9 +10,18 @@ export const buildTheme = (mode = 'light') =>
     {
       palette: {
         mode,
+        // Los tres se aclaran en oscuro, y hasta ahora solo lo hacía el
+        // primero. Sobre el papel oscuro (#1a2026), el verde de «Aprobada»
+        // quedaba en 3.26 de contraste y el terracota de «Aplicada sin acuerdo»
+        // en 3.24 --- por debajo del 4.5 que pide la norma para texto normal, y
+        // justo en los distintivos que dicen en qué estado está algo.
+        //
+        // Salió barriendo el contraste real en oscuro. El del terracota no lo
+        // vio el barrido ---su estado no aparecía en ninguna de las pantallas
+        // recorridas--- sino la cuenta, al mirar por qué el otro fallaba.
         primary: { main: mode === 'light' ? '#1b5e4a' : '#4db6a0' },
-        secondary: { main: '#b0533a' },
-        success: { main: '#2e7d52' },
+        secondary: { main: mode === 'light' ? '#b0533a' : '#e08a70' },
+        success: { main: mode === 'light' ? '#2e7d52' : '#57c48c' },
         background:
           mode === 'light'
             ? { default: '#f6f7f5', paper: '#ffffff' }
