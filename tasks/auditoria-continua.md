@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 39 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 40 · Vueltas seguidas sin hallazgos: 0
 
 El 14/08 Francisco cerró las cinco decisiones que estaban esperándole. Cuatro
 están hechas y la quinta ---la capa de i18n del frontend--- está en marcha.
@@ -115,6 +115,32 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 40 --- Qué hace la interfaz con los errores de la API (14/08)
+
+El interceptor está bien hecho: normaliza a `{code, message, details, status}`,
+renueva la sesión en un 401 y saca el `non_field_errors`. Y las pantallas
+enseñan el mensaje, que **es lo correcto**: los mensajes están escritos con
+cuidado y traducidos, y ramificar sobre los ochenta códigos del backend sería
+peor producto. Eso no es un hallazgo por mucho que el número asuste.
+
+Lo que sí lo es: hay una clase de error donde enseñar el mensaje no basta,
+porque significa que **lo que hay en pantalla ya no es verdad**. Las treinta y
+cuatro mutaciones hacían `onError: setError` y ninguna refrescaba.
+
+El caso lo trajo el bloqueo de decisiones concurrentes de esa misma mañana: dos
+responsables, uno resuelve, el otro pulsa y lee «ya está resuelta» con la fila
+todavía en la lista. Vuelve a pulsar, mismo error, y la cola le miente hasta que
+recarga. El propio código reconocía el escenario en el camino en lote.
+
+Cuatro códigos, no todos los 409: refrescar en cualquier error traería la lista
+entera cada vez que falta un campo, que es la mayoría de las veces. Hay prueba
+de contraste.
+
+**Nota de método**: la prueba finge la respuesta del servidor. Lo que cambió es
+del navegador, y montar el caso de verdad dejaría una ausencia aprobada por
+ejecución ---no se pueden borrar, a propósito---. Como la mutación va
+interceptada, el servidor nunca la ve y el dato de prueba se retira limpio.
 
 ### Vuelta 39 --- Qué pone el informe que se entrega (14/08)
 

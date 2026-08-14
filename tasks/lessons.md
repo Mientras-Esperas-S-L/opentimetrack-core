@@ -957,3 +957,34 @@ con los que el renderizador lee. `grep` del nombre del campo en el fichero del
 renderizador cuesta un minuto y da la lista de lo que se está tirando. Y si hay dos
 formatos, comprobar que dicen lo mismo: aquí los dos ignoraban lo mismo, así que
 compararlos entre ellos tampoco lo habría cazado.
+
+## Un `test.skip` condicional puede esconder que la prueba no prueba nada (14/08/2026)
+
+La prueba de «otro llegó antes» empezaba con
+`test.skip(!(await boton.count()), 'no hay nada pendiente en esta base')`. Se ejecutó tres
+veces seguidas, salió verde las tres, y no comprobó nada: la cola estaba vacía y el skip
+se lo tragaba en silencio.
+
+Peor todavía cuando le añadí el montaje del dato: la prueba **creaba** su solicitud y
+seguía saltando, porque contaba el botón antes de que la página terminara de recargar. El
+skip convertía un fallo de sincronización en un verde.
+
+**Regla**: un `skip` condicional solo vale cuando la condición es del entorno y no del
+caso ---un navegador que no existe, una función del sistema que falta---. Si la prueba
+monta sus propios datos, la ausencia de lo que espera es un fallo y hay que esperarlo con
+`toBeVisible()`. Y un `skip` que se dispara siempre es indistinguible de una prueba
+borrada: si la salida dice «skipped», hay que ir a mirar por qué.
+
+## Enseñar el error no siempre es responder al error (14/08/2026)
+
+Todas las mutaciones del frontend hacían `onError: setError`, y para casi todos los
+rechazos eso está bien: el servidor dice qué falta y la lista sigue siendo verdad.
+
+Pero unos pocos códigos significan otra cosa: **alguien llegó antes**. Ahí el mensaje solo
+es la mitad, porque la fila sigue en pantalla y la persona vuelve a pulsar. La interfaz
+tiene que enseñar el mensaje **y** volver a pedir los datos.
+
+**Regla**: al mirar el manejo de errores de una interfaz, separar los que hablan de *lo que
+enviaste* de los que hablan de *lo que ya no es cierto*. Los primeros se enseñan; los
+segundos se enseñan y se refrescan. Y refrescar en todos es la solución perezosa que se
+paga en cada error de validación.
