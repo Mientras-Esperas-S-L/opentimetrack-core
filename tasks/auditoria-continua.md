@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 16 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 17 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -15,7 +15,7 @@ vuelve a una limpia.
 | Fichar (`/`) | limpia | 13/08 v1 | **doble pulsación = jornada en cero** |
 | Resumen (`/panel`) | limpia | 13/08 v2 | **decía 2 de 57 esperando decisión** |
 | Mi jornada (`/mi-jornada`) | limpia | 14/08 v16 | **«la hora no es la real» fallaba siempre**; descarga del propio registro (v10) |
-| Mis ausencias (`/mis-ausencias`) | a medias | 13/08 | filtros; falta el diálogo de «Solicitar» |
+| Mis ausencias (`/mis-ausencias`) | limpia | 14/08 v17 | **el justificante no se podía adjuntar nunca**, y el diálogo prometía que sí |
 | Personas | limpia | 13/08 | filtros, selección múltiple, `?department=` roto |
 | Departamentos | limpia | 13/08 | miembros desde el diálogo |
 | Centros | limpia | 13/08 | zona horaria de texto libre |
@@ -128,6 +128,26 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 17 — «Solicitar», y el tramo que faltaba. Última área a medias.**
+
+**El justificante no se podía adjuntar.** La API lo aceptaba desde el principio,
+el modelo lo guarda con sus validadores ---PDF o imagen, hasta 10 MB---, la lista
+enseñaba un distintivo de «tiene justificante» y hay un endpoint para
+descargarlo con su control de acceso probado. Y ninguna pantalla lo subía nunca.
+
+Peor que el hueco: el propio diálogo prometía que «se puede adjuntar después», y
+no se podía ni antes ni después. Todo el camino de vuelta montado menos la ida.
+
+Es la misma forma que el catálogo de permisos de la vuelta 11 y que
+`roster_notice_days` de la 12: **la pieza existe, está bien hecha, y nadie la
+llama**. Tres veces en siete vueltas. Merece buscarse a propósito.
+
+Con dos cuidados que no son cosméticos: nunca en una baja ---desde el RD
+1060/2022 el parte no se le entrega a la empresa y el servidor rechaza el
+fichero, así que ofrecerlo sería invitar a subir un dato de salud que no debe
+estar--- y el fichero se olvida al cerrar el diálogo, porque adjuntar el
+justificante de un permiso a la solicitud siguiente sería peor que no tenerlo.
 
 **Vuelta 16 — «Pedir una corrección», y una lección cara sobre la base compartida.**
 

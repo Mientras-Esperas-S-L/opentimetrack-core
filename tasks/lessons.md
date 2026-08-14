@@ -487,3 +487,22 @@ dato que existe ---retroceder de mes hasta encontrar fichajes--- antes que crear
 uno: lo que se crea hay que deshacerlo, y en este producto casi nada se deshace.
 Antes de dar por buena una tanda en rojo, mirar si la base tiene basura mía:
 `Tenant.objects.all()` deben ser tres.
+
+## «La pieza existe y nadie la llama», tres veces en siete vueltas (14/08/2026)
+
+- El **catálogo de permisos** se sembraba con un endpoint que ninguna pantalla
+  invocaba: toda empresa nueva se quedaba con cero permisos (vuelta 11).
+- **`roster_notice_days`** vivía en el modelo, en el marco legal y en Ajustes, y
+  no lo leía ni una línea de código (vuelta 12).
+- El **justificante** tenía campo, validadores, distintivo en la lista y endpoint
+  de descarga con su control de acceso probado. Nadie lo subía (vuelta 17).
+
+Las tres se ven igual: la mitad difícil está bien hecha, y falta el hilo que la
+conecta. Y las tres pasan desapercibidas porque **lo que hay funciona**: lo que
+falla es lo que no está.
+
+**Regla:** al auditar un área, hacer la búsqueda al revés. Coger lo que el
+backend ofrece —endpoints, campos del serializador, ajustes— y preguntar **quién
+lo llama** desde el frontend. `grep` del nombre en `src/`: si solo aparece en
+`services/api.js`, está exportado y muerto. Es una comprobación de dos minutos
+que ha encontrado tres fallos de producto.
