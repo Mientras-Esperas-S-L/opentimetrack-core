@@ -823,3 +823,39 @@ Y el corolario que me pilló: al poner el bloqueo, se rompió una función que f
 estado en memoria (`correction.status = PENDING  # so approve_correction accepts it`) para
 colarse por la comprobación. Ese truco solo funciona mientras nadie relea. Que se rompa al
 arreglar la carrera es la señal de que el arreglo llega al sitio correcto.
+
+## Nada de regex sobre estructuras multilínea de Python (14/08/2026)
+
+Tres veces en la misma sesión. Un `re.sub` sobre decoradores apilados se comió la clase
+`AbsenceViewSet` entera; otro dejó `@extend_schema(tags=["auth"])` colgando sobre un
+serializador en vez de sobre su vista, y el contenedor se quedó caído hasta que Francisco
+me pegó el log ---el recargador de Django **no vuelve solo** de un error de importación en
+`urls.py`---. Antes, un script de limpieza de paréntesis rompió trece ficheros.
+
+El patrón: los decoradores, los bloques `class` y las llamadas multilínea no son texto
+plano, y un `.*?` con `re.S` se come lo que no debe sin avisar.
+
+**Regla**: para tocar estructura de Python, Read + Edit con el bloque exacto. El regex vale
+para líneas sueltas e independientes (un import, una línea `assert`), y ahí hay que
+comprobar el número de coincidencias antes de escribir. Y después de tocar `views.py` o
+`urls.py`, un `curl` al `/api/health/`: la suite pasa con su propia base y no ve que el
+servidor de desarrollo está muerto.
+
+## Un abanico de agentes ve lo que uno no mira (14/08/2026)
+
+En la vuelta del esquema hice mi propia lectura y encontré una cosa: que solo se
+documentaba el camino feliz. Lancé además siete agentes, uno por dimensión, cada hallazgo
+con un refutador que partía de que estaba mal.
+
+Mi hallazgo coincidió con una de las siete dimensiones. Las otras seis encontraron cosas
+que yo no habría mirado: que cinco operaciones declaran «sin cuerpo» y leen el cuerpo ---una
+de ellas cerrar sesión, devolviendo 204 sin invalidar nada--- y que tres listas prometen el
+sobre paginado devolviendo un array.
+
+Y el refutador ganó su sitio: de 57 propuestos tumbó 18, y varios de los que sostuvo vinieron
+con correcciones a las citas del que los propuso.
+
+**Regla**: para auditar algo con varias dimensiones independientes ---un esquema, una
+superficie de permisos, una maquetación--- el abanico paga. Lo que NO se delega es la
+verificación de lo que sobrevive: los tres que arreglé primero los comprobé yo en el código
+antes de tocar nada, y uno venía con la ruta mal citada.

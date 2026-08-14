@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 34 · Vueltas seguidas sin hallazgos: 1
+Vueltas dadas: 35 · Vueltas seguidas sin hallazgos: 0
 
 El 14/08 Francisco cerró las cinco decisiones que estaban esperándole. Cuatro
 están hechas y la quinta ---la capa de i18n del frontend--- está en marcha.
@@ -115,6 +115,52 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 35 --- El contrato publicado contra la realidad (14/08)
+
+El producto vende su API de integración como funcionalidad, así que el esquema
+OpenAPI **es** contrato. Primera vuelta hecha con un abanico de agentes: siete
+dimensiones en paralelo, cada hallazgo con un refutador que intentaba tumbarlo.
+57 propuestos, 39 sostenidos. Lo mío por mi cuenta coincidió con una dimensión
+entera; las otras seis encontraron cosas que yo no vi.
+
+**Solo contaba el camino feliz.** 200, 201, 204 y poco más: ni un 400, ni un
+403, ni un 409 en 119 operaciones, y ningún componente que dijera qué forma
+tiene un error. El peor hueco es el 409, que es como este producto rechaza por
+regla de negocio: sin documentarlo, un cliente razonable lo trata como fallo
+transitorio y reintenta en bucle algo que nunca va a salir. Tampoco se decía que
+hay un `code` estable con el que ramificar, así que la alternativa era comparar
+mensajes traducidos.
+
+Va como gancho de posprocesado: los códigos se derivan de la operación, así que
+la vista 120 nace documentada. Me equivoqué leyendo `security` al revés y el
+esquema salió declarando un 401 en la pantalla de entrar; hay prueba que lo fija.
+
+**Cinco operaciones decían no llevar cuerpo y lo leían.** La grave: cerrar
+sesión. Sin cuerpo no invalidaba nada **y devolvía 204**, así que un cliente
+escrito leyendo el contrato daba la sesión por cerrada mientras el token de
+refresco seguía valiendo una semana. Su propio docstring dice «signing out
+actually signs out».
+
+**Cinco decían devolver una cosa y devolvían otra.** Entrar, alta y poner
+contraseña se publicaban «sin cuerpo» y devuelven los tokens ---la primera
+llamada de cualquier integración, y el contrato ni nombraba `access`---.
+`auth/me` decía `User` y devuelve `{user, tenant}`. Y `roster`, `calendar` y
+`pending` prometían el sobre paginado devolviendo un array, más filtros
+heredados que nunca aplican: pedir el cuadrante de una persona devolvía el de la
+plantilla entera, en silencio y con la forma correcta.
+
+**Los ámbitos, la parte que existe para integrar.** Los seis se publicaban sin
+tipo ni valores, y ninguna operación decía cuál pide. Ahora salen del enrutador
+y **por método**: leer una ficha pide `read:people` y borrarla `write:people`, y
+publicar el atributo de la clase habría dicho que con permiso de lectura se
+puede dar de baja a alguien.
+
+Quedan sostenidos y sin hacer unos veinte hallazgos más, casi todos respuestas
+declaradas como objeto libre (`/api/app/attendance/`, `/api/punches/today/`,
+`/api/absences/balance/`, la emisión de credencial) y filtros sin documentar en
+auditoría. Ninguno rompe nada hoy; todos hacen que quien integre tenga que leer
+el código.
 
 ### Vuelta 34 --- Responsable contra administración (14/08) · SIN HALLAZGOS
 
