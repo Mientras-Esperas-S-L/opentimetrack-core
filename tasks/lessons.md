@@ -638,3 +638,18 @@ barrido que encontró algo una vez encuentra la regresión la próxima.
 
 Y el corolario del que menos me acordaba: `width` en un `sx` de MUI es una
 medida, no un tope. Para que encoja hace falta `width: '100%'` con `maxWidth`.
+
+## Un barrido encuentra lo que se cruza; la causa encuentra el resto (14/08/2026)
+
+Barriendo el contraste en tema oscuro salió **un** color flojo: el verde de
+«Aprobada», 3.26. Al mirar por qué, la causa era que `success` no se aclaraba en
+oscuro mientras `primary` sí. La pregunta siguiente ---«¿quién más está en ese
+caso?»--- destapó el segundo, `secondary` en 3.24, que el barrido **no había
+visto** porque su estado no aparecía en ninguna de las diez pantallas recorridas.
+
+Un barrido solo ve lo que se cruza. Lo que estaba en la pantalla número once
+sigue ahí.
+
+**Regla:** cuando un barrido devuelva un hallazgo, no arreglarlo y seguir.
+Entender **por qué** ocurre y buscar a mano quién más comparte esa causa: suele
+ser una lista corta y suele tener a alguien más dentro.

@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 25 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 26 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -123,6 +123,27 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 26 — El tema oscuro, que nadie había mirado.**
+
+Otro eje sin recorrer, de los que quedaron nombrados en la vuelta anterior. El
+conmutador lleva semanas puesto y el oscuro no lo había visto nadie.
+
+Dos colores de estado por debajo del mínimo: el verde de «Aprobada» en **3.26**
+de contraste y el terracota de «Aplicada sin acuerdo» en **3.24**, contra el 4.5
+que pide la norma. Y justo en los distintivos que dicen en qué estado está algo,
+que es para lo que se miran.
+
+La causa es de una línea: `primary` se aclaraba en oscuro y los otros dos se
+habían quedado con el color del claro.
+
+Lo que más enseña: **el del terracota no lo vio el barrido**. Su estado no
+aparecía en ninguna de las pantallas recorridas; lo vio la cuenta, al mirar por
+qué fallaba el otro. Un barrido encuentra lo que se cruza en el camino; el resto
+lo encuentra entender la causa y preguntarse quién más está en el mismo caso.
+
+Comprobado además que el modo claro no empeoró, que es lo fácil de romper al
+tocar una paleta.
 
 **Vuelta 25 — El móvil, que es donde se ficha y donde nadie miraba.**
 
