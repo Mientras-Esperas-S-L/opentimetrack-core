@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 26 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 27 · Vueltas seguidas sin hallazgos: 0
 
 El estado de cada área no es una opinión: «limpia» significa que se ejercitó
 entera en una pasada y no salió nada. Mientras quede una «sin tocar», no se
@@ -123,6 +123,22 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+**Vuelta 27 — El idioma, y la tercera promesa imposible.**
+
+Dos hallazgos, y el segundo ya es un patrón.
+
+**Los ajustes ofrecían ocho idiomas** y solo hay catálogo de castellano. Elegir
+«Catalán» dejaba el producto en castellano sin decir nada. Lo que sí conviene
+saber ---y que la sonda aclaró--- es que **no caen en inglés sino en castellano**,
+porque `LANGUAGE_CODE` es `es`: o sea que el daño era la promesa, no el
+resultado. Quedan los dos que funcionan.
+
+Y la misma pantalla decía **«cada persona puede usar otro distinto»** con el
+campo en el modelo, en la API, y sin ningún sitio donde elegirlo. Es la tercera
+vez: antes fueron «se puede adjuntar después» (v17) y «usa los filtros de arriba
+para llegar al resto» (v22). Tres textos escritos describiendo lo que el
+producto *debería* poder hacer en vez de lo que hace.
 
 **Vuelta 26 — El tema oscuro, que nadie había mirado.**
 

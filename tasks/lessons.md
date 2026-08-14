@@ -653,3 +653,24 @@ sigue ahí.
 **Regla:** cuando un barrido devuelva un hallazgo, no arreglarlo y seguir.
 Entender **por qué** ocurre y buscar a mano quién más comparte esa causa: suele
 ser una lista corta y suele tener a alguien más dentro.
+
+## Los textos de la interfaz se comprueban como el código (14/08/2026)
+
+Tres veces en diez vueltas, un texto ha prometido algo que no existía:
+
+- «Se muestran 50 de 137. **Usa los filtros de arriba** para llegar al resto» ---
+  los filtros son en cliente sobre lo cargado (v22).
+- «Este permiso pide justificante. **Se puede adjuntar después**» --- no se podía
+  ni antes ni después (v17).
+- «Idioma. **Cada persona puede usar otro distinto**» --- el campo existía y no
+  había dónde elegirlo (v27).
+
+Las tres las escribí describiendo lo que el producto **debería** poder hacer, en
+el momento de arreglar la mitad de al lado. Y las tres sobrevivieron porque un
+texto no lo comprueba nadie: no falla, no sale en la consola, no rompe una
+prueba.
+
+**Regla:** cualquier frase de la interfaz que afirme una capacidad ---«se puede»,
+«usa», «cada uno», «después»--- es una aserción. Se comprueba haciéndola:
+seguirla literalmente, o escribir la prueba que la ejerce. Si al escribirla uno
+descubre que no hay por dónde, ese es el hallazgo.
