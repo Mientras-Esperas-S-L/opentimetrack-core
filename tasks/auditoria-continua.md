@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 40 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 41 · Vueltas seguidas sin hallazgos: 0
 
 El 14/08 Francisco cerró las cinco decisiones que estaban esperándole. Cuatro
 están hechas y la quinta ---la capa de i18n del frontend--- está en marcha.
@@ -115,6 +115,33 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 41 --- Auditar la auditoría (14/08)
+
+Después de encontrar dos pruebas que nunca se ejecutaban, la pregunta era cuánto
+del verde es real.
+
+**Tranquilizador, y conviene decirlo así: 166 pruebas E2E, cero sin aserción.
+865 de backend, dos con la aserción implícita y una condicional.** Las suites
+están sanas.
+
+Lo que había: una aserción vacía de verdad ---`count() >= 0`, cierto siempre---
+en la prueba del aviso de tope, cuyo propio comentario admitía que «no siempre
+hay una que se pase» sin fabricar ninguna. Dos del backend apoyadas en «no
+lanzar excepción», que es defendible pero pasaría igual si se quitara la
+restricción que dicen probar. Y una condicional mía de esa misma mañana, cuyo
+`if` era falso siempre.
+
+Para la condicional la salida no fue escribir mejor el `if`: fue **traducir los
+dos mensajes** al catalán y al gallego, que era lo que el producto necesitaba.
+
+**Lo que más enseñó fue el método.** Cuatro instrumentos seguidos me dieron
+resultados falsos: un regex que cortaba los cuerpos por la llave equivocada
+(166 falsos positivos), otro que enganchaba el `({ page })` en vez del cuerpo,
+un patrón que no veía `expect.poll(`, y una aserción mía que daba por hecho que
+`User.objects` filtra por empresa. Los cuatro se cazaron igual: validando el
+instrumento contra un caso que ya se sabía la respuesta, **antes** de creerse el
+resultado.
 
 ### Vuelta 40 --- Qué hace la interfaz con los errores de la API (14/08)
 

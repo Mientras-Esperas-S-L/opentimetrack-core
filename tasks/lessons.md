@@ -988,3 +988,45 @@ tiene que enseñar el mensaje **y** volver a pedir los datos.
 enviaste* de los que hablan de *lo que ya no es cierto*. Los primeros se enseñan; los
 segundos se enseñan y se refrescan. Y refrescar en todos es la solución perezosa que se
 paga en cada error de validación.
+
+## Valida el instrumento antes de creerte el barrido (14/08/2026)
+
+En una sola vuelta, cuatro sondas seguidas me dieron resultados falsos:
+
+- Un regex para extraer cuerpos de `test(...)` cortaba por la llave equivocada y dijo que
+  **166 de 166** pruebas no tenían aserciones.
+- El siguiente enganchaba el `({ page })` del parámetro en vez del cuerpo, con el mismo
+  resultado.
+- El patrón `expect(` no veía `expect.poll(`, y marcó como vacía una prueba que sí afirma.
+- Una aserción mía daba por hecho que `User.objects` filtra por la empresa en contexto.
+  No lo hace, está documentado por qué, y casi lo reporto como fuga de aislamiento.
+
+Ninguno costó nada arreglarlo. Lo que habría costado caro es haberme creído el primero: un
+informe diciendo «la suite entera no comprueba nada» habría sido una mentira con mucha
+autoridad.
+
+**Regla**: antes de leer los resultados de un barrido, pásalo por un caso cuya respuesta ya
+conoces y comprueba que la da bien. Dos líneas:
+
+    assert "expect(" in cuerpos["una prueba que sé que afirma"], "el instrumento está roto"
+    assert total > 500, "no está recorriendo lo que cree"
+
+Y el corolario: cuando un barrido da un número extremo ---todo o nada--- la primera
+hipótesis es que el instrumento está mal, no que el código lo esté.
+
+## Una aserción dentro de un `if` que hoy es falso es una aserción que no existe (14/08/2026)
+
+Escribí `if esperado_ca != esperado_es:` alrededor de dos comprobaciones, con un comentario
+honesto explicando que el catálogo catalán todavía no traducía esos mensajes y que «si el
+catálogo se completa mañana, esta prueba empieza a distinguir sola».
+
+Suena razonable y es falso en la práctica: nadie vuelve. La prueba pasaba en verde sin
+ejecutar ni una de sus dos aserciones, y el comentario le daba coartada.
+
+La salida no era escribir mejor la condición: era **quitar la razón de que existiera** —
+traducir los dos mensajes, que era lo que el producto necesitaba de todas formas. Después,
+la aserción es firme y su contraste lo demuestra.
+
+**Regla**: si te descubres condicionando una aserción a que el producto esté completo,
+completa el producto. Y si de verdad no se puede hoy, `pytest.xfail` con motivo, que sale
+en el informe; un `if` silencioso, no.
