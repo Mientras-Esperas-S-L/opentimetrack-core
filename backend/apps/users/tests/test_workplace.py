@@ -98,10 +98,14 @@ def test_the_same_instant_falls_on_different_days(company, sites):
 
         from datetime import date
 
-        assert punches_of_the_day(here, company, date(2026, 9, 2)).count() == 1
-        assert punches_of_the_day(here, company, date(2026, 9, 1)).count() == 0
-        assert punches_of_the_day(there, company, date(2026, 9, 1)).count() == 1
-        assert punches_of_the_day(there, company, date(2026, 9, 2)).count() == 0
+        # Una lista y no un QuerySet: `punches_of_the_day` responde por jornadas
+        # ---la de un turno de noche cruza la medianoche--- y eso se resuelve en
+        # memoria sobre una ventana más ancha que el día.
+
+        assert len(punches_of_the_day(here, company, date(2026, 9, 2))) == 1
+        assert len(punches_of_the_day(here, company, date(2026, 9, 1))) == 0
+        assert len(punches_of_the_day(there, company, date(2026, 9, 1))) == 1
+        assert len(punches_of_the_day(there, company, date(2026, 9, 2))) == 0
 
 
 # ------------------------------------------------------------------- the API

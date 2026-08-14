@@ -92,10 +92,26 @@ def pending_overtime(*, company, first: date, last: date, scope=None) -> list[di
             timestamp__date__gte=primero - timedelta(days=1),
             timestamp__date__lte=ultimo + timedelta(days=1),
         ).order_by("timestamp")
+        # Por jornadas y no por el día local de cada fichaje: la salida de un
+        # turno de noche cae al día siguiente que su entrada, y agrupando así
+        # las horas de la noche no aparecían en ninguno de los dos ---ni como
+        # extras ni como nada---. Se asigna por persona porque la atribución
+        # necesita ver la secuencia de cada una, no la de todas mezcladas.
+        from apps.punches.workday import assign_workdays
+        from apps.tenants.rules import WorkingTimeRules
+
+        tope = WorkingTimeRules.for_company(company).max_open_hours
+        de_cada_uno: dict[int, list] = {}
         for evento in eventos:
-            quien = gente[evento.employee_id]
-            local = evento.timestamp.astimezone(quien.tzinfo).date()
-            por_dia.setdefault((evento.employee_id, local), []).append(evento)
+            de_cada_uno.setdefault(evento.employee_id, []).append(evento)
+
+        for employee_id, suyos in de_cada_uno.items():
+            quien = gente[employee_id]
+            de_quien = assign_workdays(suyos, quien, max_open_hours=tope)
+            for evento in suyos:
+                jornada = de_quien.get(evento.id)
+                if jornada is not None:
+                    por_dia.setdefault((employee_id, jornada), []).append(evento)
 
     rows = []
     for shift in turnos:

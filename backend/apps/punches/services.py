@@ -136,20 +136,24 @@ def local_day_bounds(where, moment: datetime | None = None) -> tuple[datetime, d
     return start_local, start_local + timedelta(days=1)
 
 
-def punches_of_the_day(employee, company, day: date | None = None):
-    # The person's zone, not the company's: `employee.tzinfo` is their
-    # workplace's and falls back to the company's when they have none.
-    reference = timezone.now()
-    if day is not None:
-        reference = datetime.combine(day, datetime.min.time(), tzinfo=employee.tzinfo)
+def punches_of_the_day(employee, company, day: date | None = None, *, rules=None):
+    """Los fichajes de la jornada de ese día.
 
-    start, end = local_day_bounds(employee, reference)
-    return Punch.objects.filter(
-        employee=employee,
-        is_active=True,
-        timestamp__gte=start,
-        timestamp__lt=end,
-    ).order_by("timestamp")
+    De la **jornada**, no del día natural: quien entra el martes a las 22:00 y
+    sale el miércoles a las 06:00 ha hecho ocho horas del martes, y el miércoles
+    no ha trabajado. El porqué, con los artículos, está en `apps.punches.workday`.
+
+    Sin día se entiende «la jornada de ahora»: la que esté abierta si la hay, y
+    si no la de hoy. No es lo mismo que «hoy», y esa diferencia es la que hacía
+    que a las tres de la mañana un turno de noche viera «sin empezar» en su
+    propia pantalla mientras estaba trabajando.
+    """
+    from apps.punches.workday import current_workday, punches_of_the_workday
+
+    tope = _max_open_hours(employee, company, rules)
+    if day is None:
+        day = current_workday(employee, max_open_hours=tope)
+    return punches_of_the_workday(employee, day, max_open_hours=tope)
 
 
 #: Cuánto puede seguir abierto un intervalo y que el siguiente fichaje lo cierre.
@@ -165,18 +169,38 @@ def punches_of_the_day(employee, company, day: date | None = None):
 #: vería su entrada del martes leída como el cierre del lunes, que es otro error
 #: distinto y peor de deshacer. Para eso está el mecanismo de correcciones.
 #:
-#: Dieciséis horas: más largo que cualquier jornada de un tirón ---el descanso
-#: diario del art. 34.3 son doce horas, y ni con las reducciones del RD
-#: 1561/1995 se llega a dieciséis--- y bastante más corto que las veinticuatro
-#: de un olvido. **El número conviene confirmarlo con la asesoría**: es la
-#: frontera entre «cerró tarde» y «se olvidó», y no la fija ningún artículo.
-MAX_OPEN_HOURS = 16
+#: Dieciséis horas es el **suelo por defecto**, no la regla: la frontera entre
+#: «cerró tarde» y «se olvidó» no la fija ningún artículo, así que la pone cada
+#: empresa en `WorkingTimeRules.max_open_hours`. Dieciséis cubre la jornada
+#: partida más larga que se ve ---de 8:00 a 20:00 son doce horas de reloj--- y
+#: se queda por debajo de veinticuatro para que un día de silencio se cace.
+#:
+#: Quien tiene guardias de veinticuatro horas ---bomberos, residencias,
+#: vigilancia--- necesita subirlo, o dieciséis le parte la guardia en dos.
+DEFAULT_MAX_OPEN_HOURS = 16
 
 
-def _last_open(employee, interval: str):
+def _max_open_hours(employee, company=None, rules=None) -> int:
+    """Cuánto aguanta abierta una jornada en esta empresa.
+
+    `rules` se puede pasar hecho: quien recorre a mucha gente ya lo trae, y
+    resolverlo por persona sería una consulta por cabeza. `for_company` lo
+    memoriza en la empresa, así que las llamadas sueltas tampoco duelen.
+    """
+    if rules is None:
+        from apps.tenants.rules import WorkingTimeRules
+
+        company = company or getattr(employee, "tenant", None)
+        if company is None:
+            return DEFAULT_MAX_OPEN_HOURS
+        rules = WorkingTimeRules.for_company(company)
+    return getattr(rules, "max_open_hours", None) or DEFAULT_MAX_OPEN_HOURS
+
+
+def _last_open(employee, interval: str, *, rules=None):
     """El último evento de ese intervalo que aún puede pertenecer a la jornada
     en curso, sea de hoy o de anoche. Devuelve `None` si no hay ninguno."""
-    frontera = timezone.now() - timedelta(hours=MAX_OPEN_HOURS)
+    frontera = timezone.now() - timedelta(hours=_max_open_hours(employee, rules=rules))
     return (
         Punch.objects.filter(
             employee=employee,
@@ -189,7 +213,7 @@ def _last_open(employee, interval: str):
     )
 
 
-def work_is_open(employee) -> bool:
+def work_is_open(employee, *, rules=None) -> bool:
     """Si la jornada está abierta ahora mismo, cruce o no la medianoche.
 
     `build_day_status` responde por **días locales**, y para un turno de noche
@@ -198,11 +222,11 @@ def work_is_open(employee) -> bool:
     podía empezar una pausa a las tres --- el producto le respondía que su
     jornada tenía que estar abierta primero.
     """
-    ultimo = _last_open(employee, PunchInterval.WORK)
+    ultimo = _last_open(employee, PunchInterval.WORK, rules=rules)
     return ultimo is not None and ultimo.punch_type == PunchType.IN
 
 
-def infer_type(employee, company, interval: str = PunchInterval.WORK) -> str:
+def infer_type(employee, company, interval: str = PunchInterval.WORK, *, rules=None) -> str:
     """Opens or closes, worked out from the last event **of that interval**.
 
     The person is not asked which one it is: one tap, no choices, no chance of
@@ -216,9 +240,9 @@ def infer_type(employee, company, interval: str = PunchInterval.WORK) -> str:
     medianoche y su salida cae en otro día local que el de su entrada. Lo que
     decide es el último evento de ese intervalo, esté en el día que esté,
     siempre que siga abierto y no haya pasado tanto tiempo que ya no pueda ser
-    la misma jornada (`MAX_OPEN_HOURS`).
+    la misma jornada (el tope de la empresa).
     """
-    last = _last_open(employee, interval)
+    last = _last_open(employee, interval, rules=rules)
     if last is None or last.punch_type == PunchType.OUT:
         return PunchType.IN
     return PunchType.OUT
@@ -243,10 +267,10 @@ def build_day_status(
     """
     from apps.tenants.rules import WorkingTimeRules
 
-    if events is None:
-        events = list(punches_of_the_day(employee, company, day))
     if rules is None:
         rules = WorkingTimeRules.for_company(company)
+    if events is None:
+        events = list(punches_of_the_day(employee, company, day, rules=rules))
 
     segments: list[DaySegment] = []
     # One open span per kind of interval. A break happens *inside* the working

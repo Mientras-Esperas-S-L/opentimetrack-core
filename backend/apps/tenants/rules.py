@@ -144,6 +144,28 @@ class WorkingTimeRules(BaseModel):
         help_text=_("Days of notice before a roster change."),
     )
 
+    # La frontera entre «cerró tarde» y «se olvidó de fichar la salida». No la
+    # fija ningún artículo, y por eso es de la empresa y no nuestra.
+    #
+    # Dieciséis cubre la jornada partida más larga que se ve ---de 8:00 a 20:00
+    # son doce horas de reloj--- con sitio para una salida tardía, y se queda
+    # por debajo de veinticuatro para que un día entero de silencio se cace.
+    # Pero hay plantillas de guardias de veinticuatro horas: bomberos,
+    # residencias, vigilancia. Ahí dieciséis parte la guardia en dos y el
+    # registro sale mal, que es justo el fallo que esto vino a arreglar.
+    #
+    # Subirlo tiene precio y conviene que lo pague quien decide: cuanto más
+    # alto, más tarda en detectarse un olvido. Una empresa con guardias de
+    # veinticuatro necesita algo más de veinticuatro, no cuarenta.
+    max_open_hours = models.PositiveSmallIntegerField(
+        _("longest a working day may stay open (hours)"),
+        default=16,
+        help_text=_(
+            "After this, an unclosed working day is read as a forgotten clock-out "
+            "rather than a shift still running. Raise it for 24-hour on-call rosters."
+        ),
+    )
+
     class Meta:
         verbose_name = _("working time rules")
         verbose_name_plural = _("working time rules")

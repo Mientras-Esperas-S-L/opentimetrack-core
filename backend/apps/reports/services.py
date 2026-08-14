@@ -13,7 +13,7 @@ import csv
 import hashlib
 import io
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.utils.translation import gettext as _
 
@@ -160,12 +160,18 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
     # hour, and the ones that start before 01:00 on the wrong date entirely.
     zone = employee.tzinfo
 
+    # El margen cubre el tope de la empresa y no un día fijo: con guardias de
+    # veinticuatro horas una jornada del día anterior al pedido puede terminar
+    # dentro, y un día de margen se quedaría corto.
+    margen = timedelta(hours=rules.max_open_hours) + timedelta(days=1)
     punches = list(
         Punch.objects.filter(
             employee=employee,
             is_active=True,
-            timestamp__date__gte=date_from - timedelta(days=1),
-            timestamp__date__lte=date_to + timedelta(days=1),
+            timestamp__gte=datetime.combine(date_from, time.min, tzinfo=zone) - margen,
+            timestamp__lt=datetime.combine(date_to, time.min, tzinfo=zone)
+            + timedelta(days=1)
+            + margen,
         ).order_by("timestamp")
     )
 
@@ -178,13 +184,20 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
         )
     )
 
-    # Group by *local* day: the boundary of a working day is a local matter, and
-    # grouping by UTC would file a night shift under the wrong date.
+    # Por jornadas, no por días naturales. Agrupar por el día local de cada
+    # fichaje ---que es lo que hacía, con un comentario diciendo que así se
+    # arreglaba el turno de noche--- parte la jornada de quien entra a las 22:00
+    # y sale a las 06:00: dos horas en un día, seis en el siguiente, y el
+    # informe que se entrega a una inspección dice que trabajó dos días. El
+    # porqué, con los artículos, en `apps.punches.workday`.
+    from apps.punches.workday import assign_workdays
+
+    de_quien = assign_workdays(punches, employee, max_open_hours=rules.max_open_hours)
     by_day: dict[date, list[Punch]] = {}
     for punch in punches:
-        local_day = punch.timestamp.astimezone(zone).date()
-        if date_from <= local_day <= date_to:
-            by_day.setdefault(local_day, []).append(punch)
+        jornada = de_quien.get(punch.id)
+        if jornada is not None and date_from <= jornada <= date_to:
+            by_day.setdefault(jornada, []).append(punch)
 
     rows: list[DayRow] = []
     total = 0
