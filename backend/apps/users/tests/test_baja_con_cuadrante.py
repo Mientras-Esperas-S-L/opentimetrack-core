@@ -168,7 +168,9 @@ def test_quien_sigue_de_alta_no_recibe_ningun_aviso(empresa, jefa, se_va):
 
 
 @pytest.mark.django_db
-def test_la_baja_queda_contada_en_el_rastro(empresa, jefa, se_va, django_capture_on_commit_callbacks):
+def test_la_baja_queda_contada_en_el_rastro(
+    empresa, jefa, se_va, django_capture_on_commit_callbacks
+):
     """Cuántos turnos quedaban colgando, dicho en el momento de la baja.
 
     Es el dato que quien administra necesita para saber si tiene que ir a

@@ -23,9 +23,9 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.common.exceptions import BusinessRuleError
-from apps.common.transitions import claim
 from apps.common.four_eyes import refuse_self_decision
 from apps.common.models import TenantOwnedModel
+from apps.common.transitions import claim
 from apps.punches.models import Punch, PunchSource, PunchType
 
 

@@ -93,12 +93,12 @@ def test_pero_la_puerta_de_entrada_no_declara_un_401(esquema):
     credencial. Un integrador que lea eso escribe una rama que nunca se ejecuta,
     y peor, duda de si le falta algo.
     """
-    abiertas = [
-        (r, m, op) for r, m, op in _operaciones(esquema) if not op.get("security")
-    ]
+    abiertas = [(r, m, op) for r, m, op in _operaciones(esquema) if not op.get("security")]
     # Contraste del contraste: si `security` dejara de emitirse, esta lista
     # sería todo el esquema y la comprobación pasaría sin significar nada.
-    assert 3 <= len(abiertas) <= 8, f"las operaciones abiertas deberían ser un puñado: {len(abiertas)}"
+    assert 3 <= len(abiertas) <= 8, (
+        f"las operaciones abiertas deberían ser un puñado: {len(abiertas)}"
+    )
 
     for ruta, metodo, operacion in abiertas:
         codigos = set(operacion.get("responses", {}))
@@ -181,7 +181,9 @@ def test_ninguna_operacion_dice_no_llevar_cuerpo_y_luego_lo_lee(esquema):
     }
     for ruta, metodo in obligan:
         operacion = esquema["paths"][ruta][metodo]
-        assert operacion.get("requestBody"), f"{metodo.upper()} {ruta} sigue publicándose sin cuerpo"
+        assert operacion.get("requestBody"), (
+            f"{metodo.upper()} {ruta} sigue publicándose sin cuerpo"
+        )
 
     # El de dar de baja una suscripción va como parámetro y no como cuerpo, que
     # para un DELETE es la forma correcta. Lo que importa es que se diga que
@@ -205,9 +207,7 @@ def test_cerrar_sesion_sin_el_token_ya_no_contesta_que_si(esquema):
     from apps.tenants.models import Tenant
     from apps.users.models import User
 
-    empresa = Tenant.objects.create(
-        name="Salir SL", tax_id="B33333333", time_zone="Europe/Madrid"
-    )
+    empresa = Tenant.objects.create(name="Salir SL", tax_id="B33333333", time_zone="Europe/Madrid")
     with tenant_context(empresa.id):
         quien = User.objects.create_user(
             email="sale@example.com",

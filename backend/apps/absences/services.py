@@ -26,9 +26,9 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.absences.models import REDUCES_THE_DAY, Absence, AbsenceStatus, AbsenceType
 from apps.common.clock import local_date_of
-from apps.common.transitions import claim
 from apps.common.exceptions import BusinessRuleError
 from apps.common.four_eyes import refuse_self_decision
+from apps.common.transitions import claim
 
 # ------------------------------------------------------------------- the period
 

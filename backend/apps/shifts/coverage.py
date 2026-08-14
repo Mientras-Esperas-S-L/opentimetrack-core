@@ -151,9 +151,7 @@ def _minutos_de_la_semana(employee_id, dia: date, turnos_por_persona: dict) -> i
     lunes = dia - timedelta(days=dia.weekday())
     domingo = lunes + timedelta(days=6)
     return sum(
-        s.minutes
-        for s in turnos_por_persona.get(employee_id, [])
-        if lunes <= s.day <= domingo
+        s.minutes for s in turnos_por_persona.get(employee_id, []) if lunes <= s.day <= domingo
     )
 
 
@@ -178,7 +176,9 @@ def who_can_cover(*, shift: Shift, company, rules=None) -> list[Candidato]:
     # está mirando a la plantilla entera y una consulta por cabeza convierte una
     # pantalla en una espera.
     turnos_por_persona: dict = {}
-    for otro in Shift.objects.filter(day__gte=lunes - timedelta(days=1), day__lte=domingo + timedelta(days=1)):
+    for otro in Shift.objects.filter(
+        day__gte=lunes - timedelta(days=1), day__lte=domingo + timedelta(days=1)
+    ):
         turnos_por_persona.setdefault(otro.employee_id, []).append(otro)
 
     de_baja = _ausencias_que_paran_el_dia(company, shift.day, shift.day)

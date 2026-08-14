@@ -40,7 +40,6 @@ from __future__ import annotations
 # tres disparadores que la hacen inmutable---. El desmontaje falla con
 # «Database couldn't be flushed» y parece un problema de la prueba. La
 # transacción normal de pytest-django deshace por rollback y no toca la tabla.
-
 import collections
 import json
 from datetime import date, timedelta
@@ -115,9 +114,18 @@ def _objetivos(mundo):
     """Ruta, método y de qué serializador salen los campos."""
     from apps.absences.views import AbsenceRequestSerializer
     from apps.punches.views import PunchSerializer
-    from apps.shifts.views import AssignSerializer, ReassignSerializer, RulesSerializer, ShiftSerializer
+    from apps.shifts.views import (
+        AssignSerializer,
+        ReassignSerializer,
+        RulesSerializer,
+        ShiftSerializer,
+    )
     from apps.tenants.views import CompanySerializer, RecordArrangementSerializer
-    from apps.users.serializers import DepartmentSerializer, UserWriteSerializer, WorkplaceSerializer
+    from apps.users.serializers import (
+        DepartmentSerializer,
+        UserWriteSerializer,
+        WorkplaceSerializer,
+    )
 
     turno = mundo["shift"].id
     return [
@@ -162,7 +170,7 @@ def _reventar(cliente, metodo, ruta, campos) -> tuple[list[str], collections.Cou
                 respuesta = cliente.generic(
                     metodo, ruta, json.dumps({campo: veneno}), content_type="application/json"
                 )
-            except Exception as exc:  # noqa: BLE001 --- el cliente de pruebas relanza los 500
+            except Exception as exc:
                 fallos.append(f"{metodo} {ruta} · {campo} = {etiqueta} → {type(exc).__name__}")
                 continue
             codigos[respuesta.status_code] += 1

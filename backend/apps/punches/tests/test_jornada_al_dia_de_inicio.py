@@ -49,7 +49,9 @@ OCHO_HORAS = 8 * 3600
 
 @pytest.fixture
 def empresa(db):
-    return Tenant.objects.create(name="Vigilancia SL", tax_id="B11111111", time_zone="Europe/Madrid")
+    return Tenant.objects.create(
+        name="Vigilancia SL", tax_id="B11111111", time_zone="Europe/Madrid"
+    )
 
 
 @pytest.fixture
@@ -157,9 +159,7 @@ def test_el_informe_las_pone_el_dia_de_la_entrada(empresa, quien):
 
     with tenant_context(empresa.id):
         _turno_de_noche(empresa, quien)
-        informe = build_report(
-            employee=quien, company=empresa, date_from=MARTES, date_to=MIERCOLES
-        )
+        informe = build_report(employee=quien, company=empresa, date_from=MARTES, date_to=MIERCOLES)
 
     por_dia = {fila.day: fila.seconds for fila in informe.rows}
     assert por_dia[MARTES] == OCHO_HORAS

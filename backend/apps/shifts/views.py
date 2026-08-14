@@ -209,7 +209,16 @@ class ShiftViewSet(viewsets.ModelViewSet):
     #: it names: adding one and forgetting to list it here hands the whole
     #: company's calendar to anybody with a login, and the omission looks like
     #: nothing on the screen.
-    WRITES = {"create", "update", "partial_update", "destroy", "assign", "clear", "paint", "reassign"}
+    WRITES = {
+        "create",
+        "update",
+        "partial_update",
+        "destroy",
+        "assign",
+        "clear",
+        "paint",
+        "reassign",
+    }
 
     #: Lecturas que tampoco son de cualquiera. `coverage` no escribe nada, pero
     #: de cada compañero dice cuántas horas lleva esa semana y si está de baja,

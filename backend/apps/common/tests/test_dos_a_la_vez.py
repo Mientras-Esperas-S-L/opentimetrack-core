@@ -166,8 +166,8 @@ def test_pero_una_sola_decision_sigue_funcionando(gente):
 @pytest.mark.django_db
 def test_y_una_recuperacion_tampoco_se_decide_dos_veces(gente):
     """El mismo patrón vivía en tres sitios; este es el tercero."""
-    from apps.absences.recovery import confirm_recovery
     from apps.absences.models import RecoveredHoliday
+    from apps.absences.recovery import confirm_recovery
 
     with tenant_context(gente["empresa"].id):
         hoy = date.today()

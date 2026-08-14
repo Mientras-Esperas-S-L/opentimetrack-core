@@ -51,9 +51,7 @@ PASSWORD = "a-sufficiently-long-password"
 
 @pytest.fixture
 def mundo(db):
-    empresa = Tenant.objects.create(
-        name="Roles SL", tax_id="B20000001", time_zone="Europe/Madrid"
-    )
+    empresa = Tenant.objects.create(name="Roles SL", tax_id="B20000001", time_zone="Europe/Madrid")
     with tenant_context(empresa.id):
         yield {
             "empresa": empresa,
@@ -116,7 +114,11 @@ def _solo_administracion(m):
         ("POST", "/api/workplaces/", {"name": "Nuevo", "time_zone": "Europe/Madrid"}),
         ("PATCH", f"/api/workplaces/{cen}/", {"name": "Cambiado"}),
         ("DELETE", f"/api/workplaces/{cen}/", None),
-        ("POST", "/api/shift-patterns/", {"name": "T", "segments": [{"start": "14:00", "end": "22:00"}]}),
+        (
+            "POST",
+            "/api/shift-patterns/",
+            {"name": "T", "segments": [{"start": "14:00", "end": "22:00"}]},
+        ),
         ("PATCH", f"/api/shift-patterns/{pat}/", {"name": "Cambiado"}),
         ("DELETE", f"/api/shift-patterns/{pat}/", None),
     ]
@@ -138,8 +140,11 @@ def _lo_suyo(m):
         ("GET", "/api/reports/payroll-summary/", None),
         ("GET", "/api/shifts/review/?from=2026-09-01&to=2026-09-30", None),
         ("GET", "/api/shifts/coverage/?from=2026-09-01&to=2026-09-30", None),
-        ("POST", "/api/shifts/", {"employee": curro, "day": manana,
-                                  "segments": [{"start": "08:00", "end": "16:00"}]}),
+        (
+            "POST",
+            "/api/shifts/",
+            {"employee": curro, "day": manana, "segments": [{"start": "08:00", "end": "16:00"}]},
+        ),
         ("POST", f"/api/shifts/{turno}/reassign/", {"employee": curro}),
         ("POST", "/api/shifts/clear/", {"employee": curro, "days": []}),
     ]

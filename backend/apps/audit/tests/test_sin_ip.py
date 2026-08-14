@@ -150,7 +150,11 @@ def test_el_csv_que_se_descarga_tampoco_la_lleva(company, jefa):
         respuesta = cliente.get("/api/audit/export/")
 
     assert respuesta.status_code == 200, "la descarga del registro está rota"
-    texto = b"".join(respuesta.streaming_content).decode() if respuesta.streaming else respuesta.content.decode()
+    texto = (
+        b"".join(respuesta.streaming_content).decode()
+        if respuesta.streaming
+        else respuesta.content.decode()
+    )
 
     cabecera = texto.splitlines()[0]
     assert "Luisa" in texto, "sin filas esto no comprueba nada"

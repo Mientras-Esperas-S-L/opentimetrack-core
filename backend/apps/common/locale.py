@@ -42,7 +42,9 @@ def activate_for(caller) -> None:
     # `Tenant.language` is the real column with the choices and the default;
     # the middleware used to read `company.settings["language"]`, a key of a
     # JSON blob that nothing in the codebase has ever written.
-    language = getattr(caller, "locale", "") or (getattr(company, "language", "") if company else "")
+    language = getattr(caller, "locale", "") or (
+        getattr(company, "language", "") if company else ""
+    )
     if language:
         translation.activate(language)
 

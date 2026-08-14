@@ -38,9 +38,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.absences.models import Absence, AbsenceStatus, AbsenceType, RecoveredHoliday
-from apps.common.exceptions import BusinessRuleError
-from apps.common.transitions import claim
 from apps.common.four_eyes import refuse_self_decision
+from apps.common.transitions import claim
 
 
 def detect_recoveries(*, absence, company) -> list[RecoveredHoliday]:

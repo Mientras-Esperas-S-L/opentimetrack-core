@@ -36,7 +36,9 @@ from django.utils.translation import gettext_lazy as _
 from apps.common.exceptions import BusinessRuleError
 
 
-def claim(modelo, pk, *, desde, code: str = "already_resolved", message=None, campo: str = "status"):
+def claim(
+    modelo, pk, *, desde, code: str = "already_resolved", message=None, campo: str = "status"
+):
     """Bloquea la fila y exige que siga en el estado de partida.
 
     `desde` admite un valor o varios: hay transiciones que salen de más de un

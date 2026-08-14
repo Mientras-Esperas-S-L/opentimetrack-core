@@ -39,6 +39,7 @@ class AuditLogFilter(LocalDayRangeFilter):
 
 class AuditLogSerializer(serializers.ModelSerializer):
     action_display = serializers.CharField(source="get_action_display", read_only=True)
+
     class Meta:
         model = AuditLog
         fields = [

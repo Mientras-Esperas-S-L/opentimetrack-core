@@ -79,9 +79,7 @@ def _respuesta(descripcion: str) -> dict:
 
 #: Qué puede pasar, y cuándo. El texto importa: es lo que lee quien integra.
 CUANDO_LLEVA_CUERPO = {
-    "400": _respuesta(
-        "Los datos enviados no son válidos. `details` trae los campos que fallan."
-    ),
+    "400": _respuesta("Los datos enviados no son válidos. `details` trae los campos que fallan."),
 }
 CUANDO_ESCRIBE = {
     "409": _respuesta(
@@ -102,9 +100,7 @@ SIEMPRE_QUE_HAY_SESION = {
     "403": _respuesta("La credencial es válida pero no alcanza para esta operación."),
 }
 SIEMPRE = {
-    "429": _respuesta(
-        "Demasiadas peticiones. `message` dice cuánto falta para poder reintentar."
-    ),
+    "429": _respuesta("Demasiadas peticiones. `message` dice cuánto falta para poder reintentar."),
 }
 
 ESCRITURAS = {"post", "put", "patch", "delete"}
