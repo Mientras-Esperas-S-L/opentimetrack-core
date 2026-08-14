@@ -30,3 +30,22 @@ AUTH_PASSWORD_VALIDATORS = []
 # keeps the throttles real and the counters private.
 if env.bool("PYTEST_RUNNING", default=False) or "pytest" in sys.argv[0]:
     CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+
+# Y lo mismo para la suite de navegador, que no pasa por pytest.
+#
+# Playwright habla con **este** servidor, así que su cubeta es la de Redis y la
+# comparte entre tandas: doscientas pruebas a cinco peticiones cada una agotan
+# las tres mil por hora de la cuenta que usan todas. Lo que se ve entonces no es
+# un límite, es la pantalla de entrar en mitad de una prueba de Ajustes --- y se
+# tarda media hora en descubrir que no hay ninguna regresión.
+#
+# Solo `user`, que es la que estorba. `login` se queda en cinco por minuto a
+# propósito: hay una prueba que la agota para comprobar el aviso, y subirla aquí
+# dejaría esa prueba comprobando otra cosa.
+REST_FRAMEWORK = {
+    **REST_FRAMEWORK,
+    "DEFAULT_THROTTLE_RATES": {
+        **REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"],
+        "user": env("DEV_USER_THROTTLE", default="100000/hour"),
+    },
+}
