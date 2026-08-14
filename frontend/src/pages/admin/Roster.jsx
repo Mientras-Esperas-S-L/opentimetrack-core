@@ -231,8 +231,19 @@ function Palette({ patterns, tool, onPick }) {
  *  while "Ana, 8 h de descanso el 2 de septiembre, art. 34.3 ET" is something
  *  to fix. And the article is there so it can be argued with.
  */
+//: Cuántos se enseñan antes de plegar. Ocho llena el aviso sin taparlo todo.
+const FINDINGS_VISIBLE = 8
+
 function Findings({ findings }) {
+  //: Plegado de entrada y desplegable a mano. Hasta el 14/08/2026 el resto no
+  //: era un enlace sino un «y 39 más.» muerto, así que con cuarenta y siete
+  //: avisos había treinta y nueve que no se podían leer de ninguna manera.
+  const [todos, setTodos] = useState(false)
+
   if (!findings?.length) return null
+
+  const ocultos = findings.length - FINDINGS_VISIBLE
+  const visibles = todos ? findings : findings.slice(0, FINDINGS_VISIBLE)
 
   return (
     <Alert severity="warning" sx={{ mb: 2 }}>
@@ -245,7 +256,7 @@ function Findings({ findings }) {
         decisión es de la empresa.
       </Typography>
       <Stack component="ul" sx={{ m: 0, pl: 2.5, gap: 0.5 }}>
-        {findings.slice(0, 8).map((finding, i) => (
+        {visibles.map((finding, i) => (
           <Typography component="li" variant="body2" key={i}>
             <strong>{finding.employee_name}</strong>
             {/* One row per person and kind. Somebody whose pattern is nine
@@ -263,10 +274,17 @@ function Findings({ findings }) {
             )}
           </Typography>
         ))}
-        {findings.length > 8 && (
-          <Typography component="li" variant="body2" color="text.secondary">
-            y {findings.length - 8} más.
-          </Typography>
+        {ocultos > 0 && (
+          <Box component="li" sx={{ listStyle: 'none', ml: -2.5 }}>
+            <Button
+              size="small"
+              color="inherit"
+              onClick={() => setTodos((antes) => !antes)}
+              sx={{ textTransform: 'none' }}
+            >
+              {todos ? `Ver solo los ${FINDINGS_VISIBLE} primeros` : `Ver los ${ocultos} restantes`}
+            </Button>
+          </Box>
         )}
       </Stack>
     </Alert>

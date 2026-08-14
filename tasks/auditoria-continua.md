@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 36 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 37 · Vueltas seguidas sin hallazgos: 0
 
 El 14/08 Francisco cerró las cinco decisiones que estaban esperándole. Cuatro
 están hechas y la quinta ---la capa de i18n del frontend--- está en marcha.
@@ -115,6 +115,33 @@ vuelve a una limpia.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 37 --- Instalación desde cero (14/08)
+
+Base de datos vacía de verdad, migrada de cero, y los primeros cinco minutos de
+un cliente nuevo.
+
+**Casi todo bien, y una parte con historia.** Los tres disparadores del rastro y
+la extensión `unaccent` los pone la migración: aquel incidente en que faltaban
+era del entorno, no del código. Sin deriva entre modelos y migraciones, y CI ya
+lo comprueba.
+
+El primer día funciona: se da de alta la empresa, recibe sus 32 permisos
+sembrados y sus reglas con valores, `record-arrangement` dice honestamente que
+no consta nada, y se puede fichar al momento. Ninguna pantalla revienta con cero
+datos. Los festivos vienen vacíos y la pantalla lo dice con el camino para
+traerlos.
+
+**El hallazgo, pequeño y con causa interesante.** El catálogo de turnos paginaba
+sin orden, y no por olvido: su modelo declara `ordering = ["name"]`. Lo que pasa
+es que `annotate` con un agregado mete un `GROUP BY` y Django descarta la
+ordenación por defecto en las consultas agregadas. La anotación se añadió para
+decir cuántos días usan un turno antes de borrarlo y se llevó el orden por
+delante. Sin orden, la página 2 puede repetir filas de la 1 y saltarse otras.
+
+La prueba mira **el aviso de DRF** y no el código: buscar `order_by` en los
+`get_queryset` habría dado limpio, porque el problema es lo que Django hace
+después. Una de doce listas.
 
 ### Vuelta 36 --- Cómo escala con el tamaño de la plantilla (14/08)
 

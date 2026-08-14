@@ -182,7 +182,17 @@ class ShiftPatternViewSet(viewsets.ModelViewSet):
     filterset_fields = ["is_active"]
 
     def get_queryset(self):
-        return ShiftPattern.objects.annotate(shifts_count=Count("shifts"))
+        # El `order_by` explícito aunque el modelo declare `ordering = ["name"]`,
+        # y esa es justo la trampa: `annotate` con un agregado mete un GROUP BY,
+        # y Django **descarta la ordenación por defecto** en las consultas
+        # agregadas. La anotación se añadió para poder decir cuántos días usan
+        # un turno antes de borrarlo, y se llevó el orden por delante sin que
+        # nada lo dijera salvo un aviso de DRF que solo se ve en las pruebas.
+        #
+        # Sin orden, PostgreSQL no promete nada entre páginas: la 2 puede
+        # repetir filas de la 1 y saltarse otras. Con pocos turnos no se nota,
+        # que es lo que lo hace difícil de encontrar.
+        return ShiftPattern.objects.annotate(shifts_count=Count("shifts")).order_by("name")
 
     def perform_create(self, serializer):
         serializer.save(tenant=self.request.user.tenant)

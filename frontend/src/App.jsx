@@ -6,6 +6,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 
 import AppShell from './routes/AppShell.jsx'
 import RequireManager from './routes/RequireManager.jsx'
+import RequireAdmin from './routes/RequireAdmin.jsx'
 import SignIn from './pages/SignIn.jsx'
 import SetPassword from './pages/SetPassword.jsx'
 import Clock from './pages/Clock.jsx'
@@ -90,12 +91,18 @@ export default function App() {
               <Route path="calendario" element={<TeamCalendar />} />
               <Route path="cuadrante" element={<Roster />} />
               <Route path="turnos" element={<ShiftPatterns />} />
-            <Route path="permisos" element={<LeaveTypes />} />
+              <Route path="permisos" element={<LeaveTypes />} />
               <Route path="ajustes" element={<Settings />} />
-              <Route path="aplicaciones" element={<Applications />} />
               <Route path="fichajes" element={<Timesheet />} />
               <Route path="decisiones" element={<Decisions />} />
               <Route path="informes" element={<Reports />} />
+
+              {/* Y una vuelta más de tuerca para lo que solo abre
+                administración. El menú ya lo esconde con `adminOnly`, pero
+                esconder no es prohibir: la dirección se puede escribir. */}
+              <Route element={<RequireAdmin />}>
+                <Route path="aplicaciones" element={<Applications />} />
+              </Route>
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

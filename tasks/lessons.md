@@ -879,3 +879,21 @@ que el código mira ---semanas completas, meses, cambios de mes--- o hay código
 ejecuta. Y antes de revertir un arreglo por «no mide nada», comprobar que la medición llega
 hasta él: poner un `print` en la función supuestamente cara cuesta un minuto y evita
 deshacer algo correcto.
+
+## `annotate` se lleva por delante el `Meta.ordering` (14/08/2026)
+
+El catálogo de turnos paginaba sin orden. Mi primera lectura fue «se les olvidó el
+`order_by`», y el modelo declaraba `ordering = ["name"]`.
+
+`annotate` con un agregado mete un `GROUP BY`, y Django **descarta la ordenación por
+defecto** en las consultas agregadas. La anotación se añadió para poder decir cuántos días
+usan un turno antes de borrarlo, y se llevó el orden con ella. La única señal era un
+`UnorderedObjectListWarning` que no se ve porque nada convierte los avisos en fallos.
+
+Sin orden, PostgreSQL no promete nada entre páginas: la 2 puede repetir filas de la 1 y
+saltarse otras. Silencioso, y solo con más de cincuenta filas.
+
+**Regla**: un `annotate` con agregado sobre un modelo con `Meta.ordering` necesita
+`order_by` explícito. Y para buscar esta clase de fallo hay que mirar **el aviso en
+ejecución**, no el código: `grep order_by` da limpio porque lo que falla es lo que Django
+hace después.

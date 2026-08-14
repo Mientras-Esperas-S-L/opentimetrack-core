@@ -182,7 +182,16 @@ export default function Applications() {
   const [confirming, setConfirming] = useState(null)
   const [error, setError] = useState(null)
 
-  const { data: applications, isLoading } = useQuery({
+  // `loadError` aparte del `error` de las mutaciones: si la lista no se pudo
+  // leer, decir «todavía no hay ninguna» es afirmar lo contrario de lo que
+  // sabemos. Pasaba con un responsable que escribía la dirección a mano ---
+  // el servidor contestaba 403 y la pantalla le decía que la empresa no tenía
+  // ninguna aplicación autorizada.
+  const {
+    data: applications,
+    isLoading,
+    error: loadError,
+  } = useQuery({
     queryKey: ['applications'],
     queryFn: () => getApplications(),
   })
@@ -240,6 +249,8 @@ export default function Applications() {
 
       {isLoading ? (
         <Loading rows={3} />
+      ) : loadError ? (
+        <ErrorNote error={loadError} />
       ) : rows.length === 0 ? (
         <Empty>
           Todavía no hay ninguna. Se autoriza una cuando un terminal o un lector tiene que fichar
