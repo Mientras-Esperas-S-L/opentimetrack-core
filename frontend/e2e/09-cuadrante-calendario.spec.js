@@ -223,12 +223,15 @@ test.describe('Calendario del equipo', () => {
     // Sin resolver, no aprobada. Es la regla entera del producto: quien
     // registra no decide, ni siquiera cuando quien registra manda. Se ve rayada
     // en el calendario, y el contador del mes lo dice con palabras.
-    const creada = await api(page, '/absences/?search=Prueba')
+    // La búsqueda va **al servidor** con la marca propia, no filtrando en el
+    // cliente una página de «Prueba». La versión anterior pedía `search=Prueba`
+    // y buscaba la suya en la respuesta: como la suite deja ausencias de prueba
+    // que quedan aprobadas ---y una aprobada no se puede cancelar, así que la
+    // limpieza no se las lleva--- llegaron a acumularse cincuenta y cuatro, la
+    // página se llenó con las cincuenta primeras y la recién creada no salía.
+    // Fallaba diciendo «no llegó al servidor» cuando sí había llegado.
+    const creada = await api(page, `/absences/?search=${encodeURIComponent(mimarca)}`)
     const filas = creada.body?.results ?? creada.body ?? []
-    // Por **su** marca, no por «Prueba» a secas: otras pruebas dejan ausencias
-    // que también empiezan así ---y alguna ya aprobada--- y `find` cogía la
-    // primera que encontrara. La prueba fallaba diciendo que su solicitud
-    // estaba aprobada, y era la de otro fichero.
     const mia = filas.find((a) => a.reason === mimarca)
     expect(mia, 'la ausencia no llegó al servidor').toBeTruthy()
     expect(mia.status).toBe('PENDING')

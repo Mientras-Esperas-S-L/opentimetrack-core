@@ -26,6 +26,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.absences.models import REDUCES_THE_DAY, Absence, AbsenceStatus, AbsenceType
 from apps.common.clock import local_date_of
+from apps.common.transitions import claim
 from apps.common.exceptions import BusinessRuleError
 from apps.common.four_eyes import refuse_self_decision
 
@@ -546,7 +547,7 @@ def _may_overlap_holiday(leave_type, other: Absence) -> bool:
 
 
 def approve_absence(absence: Absence, *, resolved_by) -> Absence:
-    _must_be_open(absence)
+    absence = _must_be_open(absence)
 
     # Less grave than the working-time record --- leave is the company's to grant
     # --- but the same principle, and an auditor asks the same question.
@@ -583,7 +584,7 @@ def approve_absence(absence: Absence, *, resolved_by) -> Absence:
 
 def reject_absence(absence: Absence, *, resolved_by) -> Absence:
     """Turned down requests are kept: a refused claim is history too."""
-    _must_be_open(absence)
+    absence = _must_be_open(absence)
 
     # Refusing your own is harmless in itself, but allowing it would leave the
     # rule half applied and invite somebody to wonder which half.
@@ -608,7 +609,7 @@ def cancel_absence(absence: Absence, *, cancelled_by) -> None:
     has blocked days and possibly other people's plans, so undoing it is a
     decision for whoever approved it.
     """
-    _must_be_open(absence)
+    absence = _must_be_open(absence)
     if absence.employee_id != cancelled_by.id and not cancelled_by.can_manage:
         raise BusinessRuleError(
             code="not_your_request",
@@ -617,12 +618,18 @@ def cancel_absence(absence: Absence, *, cancelled_by) -> None:
     absence.delete()
 
 
-def _must_be_open(absence: Absence) -> None:
-    if absence.status != AbsenceStatus.PENDING:
-        raise BusinessRuleError(
-            code="already_resolved",
-            message=_("This request has already been resolved."),
-        )
+def _must_be_open(absence: Absence) -> Absence:
+    """Bloquea la solicitud y exige que siga sin resolver. Devuelve la fila fresca.
+
+    Antes solo miraba `absence.status` de la instancia que traía quien llama, y
+    esa la cargó la petición **antes** de que ninguna otra escribiera. Con dos
+    responsables pulsando a la vez, las dos veían `PENDING`, las dos pasaban y
+    las dos escribían: la ausencia acababa en `REJECTED` con `approved_by`
+    puesto, y el rastro con una aprobación y un rechazo de la misma solicitud.
+
+    El porqué del `select_for_update`, en `apps.common.transitions`.
+    """
+    return claim(Absence, absence.pk, desde=AbsenceStatus.PENDING)
 
 
 #: Los dos meses del art. 38.3, en días. No es un ajuste de empresa: el plazo lo

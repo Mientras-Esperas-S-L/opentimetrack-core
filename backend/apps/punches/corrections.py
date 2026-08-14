@@ -23,6 +23,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.common.exceptions import BusinessRuleError
+from apps.common.transitions import claim
 from apps.common.four_eyes import refuse_self_decision
 from apps.common.models import TenantOwnedModel
 from apps.punches.models import Punch, PunchSource, PunchType
@@ -297,7 +298,7 @@ def propose_correction(
 @transaction.atomic
 def accept_correction(correction: PunchCorrection, *, employee) -> Punch | None:
     """The person agrees. Both authorisations are in, so it applies."""
-    _must_be_awaiting(correction)
+    correction = _must_be_awaiting(correction)
     if correction.employee_id != employee.id:
         raise BusinessRuleError(
             code="not_your_record",
@@ -323,7 +324,7 @@ def dispute_correction(correction: PunchCorrection, *, employee, account: str) -
     decides whether to go ahead. Their account is mandatory: a disagreement with
     no content is not something a reader can weigh against the change.
     """
-    _must_be_awaiting(correction)
+    correction = _must_be_awaiting(correction)
     if correction.employee_id != employee.id:
         raise BusinessRuleError(
             code="not_your_record",
@@ -364,7 +365,7 @@ def apply_without_agreement(correction: PunchCorrection, *, resolved_by) -> Punc
     Two ways to get here: the person disagreed, or they did not answer within
     the window the company configured.
     """
-    _must_be_awaiting(correction)
+    correction = _must_be_awaiting(correction)
 
     silent = correction.employee_agreed is None
     if silent and not _consent_window_has_passed(correction):
@@ -384,7 +385,19 @@ def apply_without_agreement(correction: PunchCorrection, *, resolved_by) -> Punc
     correction.applied_without_agreement = True
     correction.save(update_fields=["applied_without_agreement", "employee_dissent", "updated_at"])
 
-    correction.status = CorrectionStatus.PENDING  # so approve_correction accepts it
+    # El paso a «pendiente» se **escribe**, no se finge en memoria. Antes esta
+    # línea era `correction.status = PENDING  # so approve_correction accepts
+    # it` y funcionaba porque `approve_correction` miraba el objeto que se le
+    # pasaba. Ahora vuelve a leer la fila bloqueándola ---que es lo que impide
+    # que dos responsables la resuelvan a la vez--- y un estado inventado en
+    # memoria ya no la engaña.
+    #
+    # Escribirlo además es más honesto: entre estas dos líneas la corrección
+    # está de verdad pendiente de aplicarse, y si algo revienta en medio, la
+    # transacción de la función deshace las dos.
+    correction.status = CorrectionStatus.PENDING
+    correction.save(update_fields=["status", "updated_at"])
+
     result = approve_correction(correction, resolved_by=resolved_by)
 
     correction.status = CorrectionStatus.DISPUTED
@@ -392,12 +405,22 @@ def apply_without_agreement(correction: PunchCorrection, *, resolved_by) -> Punc
     return result
 
 
-def _must_be_awaiting(correction: PunchCorrection) -> None:
-    if correction.status != CorrectionStatus.AWAITING_EMPLOYEE:
-        raise BusinessRuleError(
-            code="not_awaiting_the_employee",
-            message=_("This change is not waiting for the person concerned."),
-        )
+def _must_be_awaiting(correction: PunchCorrection) -> PunchCorrection:
+    """Bloquea y exige que siga esperando a la persona. Devuelve la fila fresca.
+
+    Aquí la carrera es entre la persona y el plazo: puede aceptar en el mismo
+    instante en que un responsable aplica el cambio sin acuerdo por haberse
+    agotado la ventana del art. 4.b, y entonces el registro diría a la vez que
+    hubo acuerdo y que no lo hubo. Cuál de las dos cosas pasó es exactamente lo
+    que hay que poder responder después.
+    """
+    return claim(
+        PunchCorrection,
+        correction.pk,
+        desde=CorrectionStatus.AWAITING_EMPLOYEE,
+        code="not_awaiting_the_employee",
+        message=_("This change is not waiting for the person concerned."),
+    )
 
 
 def _consent_window_has_passed(correction: PunchCorrection) -> bool:
@@ -460,11 +483,9 @@ def _note_alone(note: str) -> str:
 
 def approve_correction(correction: PunchCorrection, *, resolved_by, note: str = "") -> Punch | None:
     """Applies the correction, leaving the previous version readable."""
-    if not correction.is_open:
-        raise BusinessRuleError(
-            code="already_resolved",
-            message=_("This request has already been resolved."),
-        )
+    # Bloqueando la fila, no mirando la copia en memoria: dos responsables
+    # pulsando a la vez pasaban los dos. Ver `apps.common.transitions`.
+    correction = claim(PunchCorrection, correction.pk, desde=CorrectionStatus.PENDING)
 
     # A manager filing a correction on their own record and approving it was
     # two clicks, both theirs. See apps/common/four_eyes.py for why this is
@@ -508,11 +529,7 @@ def approve_correction(correction: PunchCorrection, *, resolved_by, note: str = 
 
 def reject_correction(correction: PunchCorrection, *, resolved_by, note: str = "") -> None:
     """Turns it down. The request stays: a refused claim is history too."""
-    if not correction.is_open:
-        raise BusinessRuleError(
-            code="already_resolved",
-            message=_("This request has already been resolved."),
-        )
+    correction = claim(PunchCorrection, correction.pk, desde=CorrectionStatus.PENDING)
 
     correction.status = CorrectionStatus.REJECTED
     correction.resolved_by = resolved_by

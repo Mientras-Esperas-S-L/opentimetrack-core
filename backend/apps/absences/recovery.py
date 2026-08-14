@@ -39,6 +39,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.absences.models import Absence, AbsenceStatus, AbsenceType, RecoveredHoliday
 from apps.common.exceptions import BusinessRuleError
+from apps.common.transitions import claim
 from apps.common.four_eyes import refuse_self_decision
 
 
@@ -171,11 +172,16 @@ def confirm_recovery(
     otro motivo--- pero es una decisión sobre el derecho de otra persona, así
     que pasa por los cuatro ojos como las demás.
     """
-    if recovery.status != RecoveredHoliday.Status.PENDING:
-        raise BusinessRuleError(
-            code="already_decided",
-            message=_("That recovery has already been decided."),
-        )
+    # Bloqueando la fila, no mirando la copia que trajo quien llama: dos
+    # responsables decidiendo a la vez pasaban los dos. Ver
+    # `apps.common.transitions`.
+    recovery = claim(
+        RecoveredHoliday,
+        recovery.pk,
+        desde=RecoveredHoliday.Status.PENDING,
+        code="already_decided",
+        message=_("That recovery has already been decided."),
+    )
 
     alone = refuse_self_decision(
         subject=recovery.employee,
