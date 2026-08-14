@@ -674,3 +674,21 @@ prueba.
 «usa», «cada uno», «después»--- es una aserción. Se comprueba haciéndola:
 seguirla literalmente, o escribir la prueba que la ejerce. Si al escribirla uno
 descubre que no hay por dónde, ese es el hallazgo.
+
+## No todos los mensajes de un catálogo valen lo mismo (14/08/2026)
+
+Traducir los 627 mensajes a tres idiomas eran ~85.000 caracteres. Separándolos
+por dónde nacen resultó que **188 llegan de verdad a una persona** ---vistas,
+servicios, correos--- y 343 son etiquetas de modelo que solo se ven en el admin
+de Django y en el esquema de la API. Traducir los 188 es el 30 % del trabajo y
+casi todo el valor.
+
+Lo que hace viable esa decisión es un detalle que había que **comprobar y no
+suponer**: lo no traducido cae al idioma por defecto del proyecto ---castellano,
+por `LANGUAGE_CODE`--- y no al inglés de los `msgid`. Si cayera al inglés, medio
+catálogo sin traducir daría un producto en dos idiomas extranjeros y la única
+salida honesta sería traducirlo entero.
+
+**Regla:** antes de estimar una traducción, separar los mensajes por dónde
+aparecen y comprobar a qué idioma cae lo que falta. Las dos cosas cambian el
+tamaño del trabajo por un factor de tres.

@@ -60,6 +60,18 @@ vuelve a una limpia.
 
 ## Hallazgos abiertos
 
+- **La interfaz no está traducida, y eso no lo arreglan los catálogos.** Las
+  cadenas de la aplicación están escritas en castellano dentro del JSX: no hay
+  capa de i18n en el frontend. Con catalán elegido, una persona recibe en
+  catalán los correos y los mensajes de error, y sigue viendo «Fichar», «Mi
+  jornada» y «Mis ausencias» en castellano. Sacar el texto de las pantallas a un
+  catálogo es un trabajo de otro orden ---más de mil cadenas--- y **por decidir**.
+
+- **Los tres catálogos nuevos piden revisión nativa.** Catalán y gallego están
+  completos en los 188 mensajes que llegan a las personas. El euskera va con 148
+  y le faltan 35 párrafos largos de derecho laboral, que caen al castellano a
+  propósito. La cabecera de cada `.po` lo dice en su idioma.
+
 - **`max_employees`, `max_admins` y `max_storage_mb` no los aplica nada.** Son
   campos de `Tenant` con pinta de cuota de plan y ningún código los lee. No están
   expuestos en la API, así que nadie los puede poner y creerse protegido --- es
