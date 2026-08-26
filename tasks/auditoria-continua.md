@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 106 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 107 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -340,6 +340,66 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 107 --- El guardián del rastro no veía un trigger apagado (27/08)
+
+Lente: **atacar lo que el código declara imposible**. Sale de la lección de la
+vuelta anterior ---cuando el código afirma algo de sí mismo, hay que
+comprobarlo--- pero apuntando a las afirmaciones más fuertes que hay: «nadie
+escribe en el rastro por construcción», «la API no deja editar un fichaje», y los
+tres triggers que hacen la tabla de solo añadir.
+
+#### Lo que aguantó
+
+Los siete métodos que no deberían existir, con **las cuatro sesiones**
+---administración, responsable, operario y una empresa vecina---: `POST`, `PATCH`,
+`PUT` y `DELETE` sobre el rastro y sobre un fichaje. **Los 26 intentos, 405.**
+
+Y de paso, el aislamiento: el operario ve solo sus fichajes, administración y el
+responsable los de su alcance, y la empresa vecina **cero**. El control ---un
+`GET` que sí debe funcionar--- contestó 200 en las cuatro, que es lo que
+demuestra que la sonda sabía distinguir.
+
+Los triggers, atacados por SQL directo, rechazan `UPDATE`, `DELETE` y `TRUNCATE`
+con su mensaje propio, y dejan pasar el `INSERT`.
+
+#### Lo que no
+
+`_check_audit_is_append_only`, el guardián de salud, preguntaba **si los tres
+triggers están**. Existe precisamente porque una vez se perdieron en una base
+real con la migración marcada como aplicada ---«una garantía que solo vive en una
+migración se puede evaporar sin ruido», dice su comentario, que enumera «una
+tabla recreada, una restauración, un `migrate --fake`»---.
+
+**Estar no basta.** `ALTER TABLE ... DISABLE TRIGGER` deja el nombre en
+`pg_trigger` y el trigger sin disparar, y eso es lo que hace `pg_restore
+--disable-triggers`: **la restauración de una copia**, que su propia lista ya
+citaba. Medido:
+
+    trigger apagado (tgenabled='D')  ->  el guardián decía  (True, 'ok')
+    y una fila del rastro se dejó reescribir
+
+Arreglado: se mira `tgenabled` y solo valen `O` y `A`. El aviso distingue
+«faltan» de «apagados», porque son averías distintas ---una se recrea, la otra se
+vuelve a encender---. Tres pruebas, y con el guardián sin endurecer falla la del
+trigger apagado.
+
+#### El falso negativo que casi me creo
+
+Los tres primeros ataques por SQL salieron «rechazados» y parecían la
+confirmación de que los triggers protegían. No lo eran: la tabla no se llama
+`audit_log` sino `audit_auditlog`, y los tres errores eran «relation does not
+exist». Lo delató el **control** ---un `INSERT` que sí debía funcionar y
+funcionó---, que dejaba claro que el modelo existía y que mi consulta no lo
+estaba tocando. Sin esas dos líneas, la vuelta habría cerrado diciendo que todo
+estaba protegido, y por el motivo contrario.
+
+#### Anotado por honestidad
+
+La sonda del trigger apagado **reescribió el campo `note` de una fila del rastro
+de la base de desarrollo** (una de `STRUCTURE_CHANGED`) y lo dejó vacío. Es la
+base de desarrollo y la fila sigue ahí, pero conviene que conste: la
+comprobación consistía justamente en escribir donde no se debe poder.
 
 ### Vuelta 106 --- El informe declaraba ocho horas donde se trabajaron nueve (27/08)
 

@@ -3061,3 +3061,47 @@ quedó como afirmación.
 una prueba sin escribir**. Escríbela. Y al auditar, esas frases son la mejor
 lista de candidatos que hay: dicen exactamente qué comprobar y dónde, y nadie
 las ha verificado precisamente porque suenan a que ya lo están.
+
+## 201. Un trigger apagado sigue estando en `pg_trigger`
+
+El producto tiene un guardián de salud que comprueba que los tres triggers que
+hacen inmutable el rastro siguen puestos. Existe porque una vez **se perdieron**
+en una base real, con la migración marcada como aplicada: «una garantía que solo
+vive en una migración se puede evaporar sin ruido», dice su propio comentario.
+
+Preguntaba por el nombre. `ALTER TABLE ... DISABLE TRIGGER` deja el nombre en
+`pg_trigger` y el trigger sin disparar --- y eso es exactamente lo que hace
+`pg_restore --disable-triggers`, es decir, **la restauración de una copia**, que
+el mismo comentario ya citaba entre las formas de perderlos. Medido: con
+`audit_log_no_update` apagado, la comprobación contestaba «ok» y una fila del
+rastro se dejó reescribir.
+
+`tgenabled` lo dice: `O` dispara siempre, `A` también en réplica, `D` no dispara
+nunca y `R` solo en sesiones de replicación. Solo los dos primeros valen.
+
+**Regla**: comprobar que una salvaguarda **existe** no es comprobar que
+**actúa**. Cuando la comprobación se hace por catálogo ---`pg_trigger`,
+`pg_constraint`, una lista de permisos, un fichero de reglas--- hay que mirar
+también el campo que dice si está activa, porque desactivar suele ser más fácil
+y más silencioso que borrar.
+
+**Y distinguir las averías**: faltar y estar apagado piden arreglos distintos
+---recrearlo contra volver a encenderlo--- así que el aviso tiene que decir cuál
+de las dos es.
+
+## 202. Antes de creerte un rechazo, comprueba que preguntaste bien
+
+Al atacar el rastro por SQL, los tres intentos ---UPDATE, DELETE, TRUNCATE---
+salieron «rechazados». Parecía la confirmación de que los triggers protegían.
+
+No lo era: la tabla no se llama `audit_log` sino `audit_auditlog`, y los tres
+errores eran «relation does not exist». Lo que lo delató fue el **control**: un
+INSERT que sí debía funcionar y funcionó, lo que dejaba claro que el modelo
+existía y que mi consulta no lo estaba tocando.
+
+**Regla**: cuando una prueba de ataque salga «bien rechazada», comprueba que el
+rechazo es el que esperabas y no un error de escritura. Un control que **debe
+pasar**, junto al que debe fallar, cuesta dos líneas y es lo único que distingue
+«está protegido» de «me he equivocado de nombre». Es la lección 143 en su forma
+más barata de pasar por alto: aquí el falso negativo venía disfrazado del
+resultado que quería ver.

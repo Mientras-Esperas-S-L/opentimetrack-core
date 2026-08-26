@@ -45,22 +45,44 @@ def _check_audit_is_append_only() -> tuple[bool, str]:
 
     Aquí y no en una prueba: las pruebas corren sus migraciones enteras y
     siempre los ven. Es exactamente el sitio donde no estaba el problema.
+
+    **Y estar no basta: hay que estar encendido.** `ALTER TABLE ... DISABLE
+    TRIGGER` lo deja en `pg_trigger` con el mismo nombre y sin disparar, que es
+    lo que hace `pg_restore --disable-triggers` --- la restauración que este mismo
+    comentario ya nombraba entre las formas de perderlos. Medido: con el trigger
+    apagado esta comprobación contestaba «ok» y una fila del rastro se dejaba
+    reescribir. Un `tgenabled` de `D` (apagado) o `R` (solo en réplica) es tan
+    inútil como no tenerlo, y se distingue de faltar porque el arreglo es otro:
+    uno se vuelve a encender, el otro hay que recrearlo.
     """
     if connection.vendor != "postgresql":
         return True, "no aplica"
     try:
         with connection.cursor() as cursor:
             cursor.execute(
-                "SELECT tgname FROM pg_trigger "
+                "SELECT tgname, tgenabled FROM pg_trigger "
                 "WHERE tgrelid = 'audit_auditlog'::regclass AND NOT tgisinternal"
             )
-            puestos = {fila[0] for fila in cursor.fetchall()}
+            estado = dict(cursor.fetchall())
     except Exception as exc:
         return False, exc.__class__.__name__
 
-    faltan = [nombre for nombre in GUARDIANES if nombre not in puestos]
-    if faltan:
-        return False, "el rastro no es inmutable, faltan: " + ", ".join(faltan)
+    #: `O` dispara siempre en un servidor normal y `A` también en réplica. `D`
+    #: no dispara nunca, y `R` solo cuando la sesión es de replicación, que en
+    #: el servidor que atiende no ocurre.
+    ENCENDIDOS = {"O", "A"}
+
+    faltan = [nombre for nombre in GUARDIANES if nombre not in estado]
+    apagados = [
+        nombre for nombre in GUARDIANES if nombre in estado and estado[nombre] not in ENCENDIDOS
+    ]
+    if faltan or apagados:
+        partes = []
+        if faltan:
+            partes.append("faltan: " + ", ".join(faltan))
+        if apagados:
+            partes.append("apagados: " + ", ".join(apagados))
+        return False, "el rastro no es inmutable, " + "; ".join(partes)
     return True, "ok"
 
 
