@@ -48,6 +48,7 @@ import {
   durationOf,
   leaveLabel,
   leaveLength,
+  plural,
   timeOf,
 } from '../../components/format.js'
 import ChangeOnTheRecord from '../../components/ChangeOnTheRecord.jsx'
@@ -127,9 +128,10 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
           )}
           {cambioDeHora !== 0 && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-              Esa noche los relojes se {cambioDeHora < 0 ? 'atrasaron' : 'adelantaron'} una hora, así
-              que el turno duró {cambioDeHora < 0 ? 'una hora más' : 'una hora menos'} de lo
-              previsto. {cambioDeHora < 0
+              Esa noche los relojes se {cambioDeHora < 0 ? 'atrasaron' : 'adelantaron'} una hora,
+              así que el turno duró {cambioDeHora < 0 ? 'una hora más' : 'una hora menos'} de lo
+              previsto.{' '}
+              {cambioDeHora < 0
                 ? 'La hora se trabajó de verdad y por eso aparece aquí; qué se hace con ella lo dice el convenio.'
                 : ''}
             </Typography>
@@ -382,6 +384,9 @@ function RejectDialog({ open, onClose, onConfirm, needsNote, count = 1, busy }) 
 
 export default function Decisions() {
   const { session } = useAuth()
+  // Respaldo. Cada corrección dice el huso de la persona a la que afecta: en
+  // una empresa con delegaciones, leer todas las horas en el de la central es
+  // proponer un cambio a una hora que esa persona no reconoce.
   const zone = session?.tenant?.time_zone
   const queryClient = useQueryClient()
 
@@ -547,6 +552,14 @@ export default function Decisions() {
    *  El número de la pestaña es lo que decide si alguien entra a mirar, así que
    *  redondear a la baja es peor que no ponerlo.
    */
+  /** El tope del contador de una pestaña.
+   *
+   *  MUI corta en 99 por defecto, así que una cola de 125 se pintaba «99+»
+   *  mientras el Resumen decía 125 --- dos pantallas de la misma aplicación
+   *  contando lo mismo y diciendo cosas distintas. Es el mismo pecado que
+   *  documenta `cuantasHay` un piso más abajo: redondear a la baja el número
+   *  que decide si alguien entra a mirar.
+   */
   const cuantasHay = (consulta, filas) => consulta.data?.count ?? filas.length
 
   const absenceRows = absences.data ?? []
@@ -649,6 +662,7 @@ export default function Decisions() {
         <Tab
           label={
             <Badge
+              max={999}
               badgeContent={cuantasHay(absences, absenceRows)}
               color="secondary"
               sx={{ pr: 1.5 }}
@@ -660,6 +674,7 @@ export default function Decisions() {
         <Tab
           label={
             <Badge
+              max={999}
               badgeContent={cuantasHay(corrections, correctionRows)}
               color="secondary"
               sx={{ pr: 1.5 }}
@@ -670,7 +685,12 @@ export default function Decisions() {
         />
         <Tab
           label={
-            <Badge badgeContent={cuantasHay(waiting, openRows)} color="secondary" sx={{ pr: 1.5 }}>
+            <Badge
+              max={999}
+              badgeContent={cuantasHay(waiting, openRows)}
+              color="secondary"
+              sx={{ pr: 1.5 }}
+            >
               Sin acuerdo
             </Badge>
           }
@@ -678,6 +698,7 @@ export default function Decisions() {
         <Tab
           label={
             <Badge
+              max={999}
               badgeContent={cuantasHay(overtime, overtimeRows)}
               color="secondary"
               sx={{ pr: 1.5 }}
@@ -689,6 +710,7 @@ export default function Decisions() {
         <Tab
           label={
             <Badge
+              max={999}
               badgeContent={cuantasHay(recoveries, recoveryRows)}
               color="secondary"
               sx={{ pr: 1.5 }}
@@ -782,9 +804,12 @@ export default function Decisions() {
                     unas vacaciones que se van a disfrutar igual. */}
                 {absence.short_notice && (
                   <Alert severity="info" variant="outlined" sx={{ mt: 1.5 }}>
-                    Las fechas se pusieron con <strong>{absence.short_notice.days} días</strong> de
-                    antelación, y el {absence.short_notice.citation} pide dos meses. El plazo existe
-                    para que dé tiempo a organizarse; se puede aprobar si la persona está de
+                    Las fechas se pusieron con{' '}
+                    <strong>
+                      {absence.short_notice.days} {plural(absence.short_notice.days, 'día', 'días')}
+                    </strong>{' '}
+                    de antelación, y el {absence.short_notice.citation} pide dos meses. El plazo
+                    existe para que dé tiempo a organizarse; se puede aprobar si la persona está de
                     acuerdo.
                   </Alert>
                 )}
@@ -851,7 +876,7 @@ export default function Decisions() {
                   direction="row"
                   sx={{ gap: 1, mt: 1, alignItems: 'center', flexWrap: 'wrap' }}
                 >
-                  <ChangeOnTheRecord correction={correction} zone={zone} />
+                  <ChangeOnTheRecord correction={correction} zone={correction.time_zone ?? zone} />
                   <SourceChip source="ADMIN" />
                 </Stack>
                 <Typography
@@ -955,8 +980,10 @@ export default function Decisions() {
                       {correction.proposed_timestamp && (
                         <>
                           {' · '}
-                          {timeOf(correction.proposed_timestamp, zone)} del{' '}
-                          {dateOf(correction.proposed_timestamp)}
+                          {timeOf(
+                            correction.proposed_timestamp,
+                            correction.time_zone ?? zone,
+                          )} del {dateOf(correction.proposed_timestamp)}
                         </>
                       )}
                     </Typography>

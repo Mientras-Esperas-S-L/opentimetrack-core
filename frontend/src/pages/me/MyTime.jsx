@@ -24,10 +24,10 @@ import {
   acceptCorrection,
   disputeCorrection,
   downloadReport,
-  getCorrections,
+  getAllCorrections,
   downloadPayrollSummary,
   getPayrollSummary,
-  getPunches,
+  getAllPunches,
   requestCorrection,
 } from '../../services/api.js'
 import { save } from '../../services/download.js'
@@ -41,7 +41,14 @@ import {
   SourceChip,
   StatusChip,
 } from '../../components/common.jsx'
-import { dateOf, hhmm, monthBounds, monthName, timeOf } from '../../components/format.js'
+import {
+  capitalised,
+  dateOf,
+  hhmm,
+  monthBounds,
+  monthName,
+  timeOf,
+} from '../../components/format.js'
 import ChangeOnTheRecord from '../../components/ChangeOnTheRecord.jsx'
 import RemindersControl from '../../components/RemindersControl.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -372,7 +379,12 @@ const thisMonth = () => {
 
 export default function MyTime() {
   const { session } = useAuth()
-  const zone = session?.tenant?.time_zone
+  // La suya, no la de la empresa. Para una delegación en Las Palmas son sesenta
+  // minutos: quien fichaba a las 23:30 lo veía aquí como las 00:30 **del día
+  // siguiente**, mientras el informe que se entrega ---que sí resuelve por
+  // persona--- lo ponía en el día correcto. El registro que uno consulta y el
+  // que se entrega tienen que ser el mismo (art. 34.9).
+  const zone = session?.user?.effective_time_zone ?? session?.tenant?.time_zone
   const me = session?.user?.id
   const queryClient = useQueryClient()
 
@@ -405,7 +417,7 @@ export default function MyTime() {
   const { data: punches, isLoading } = useQuery({
     queryKey: ['punches', 'mine', range],
     queryFn: () =>
-      getPunches({
+      getAllPunches({
         employee: me,
         date_from: range.from,
         date_to: range.to,
@@ -435,7 +447,7 @@ export default function MyTime() {
 
   const { data: corrections } = useQuery({
     queryKey: ['corrections', 'mine'],
-    queryFn: () => getCorrections({ employee: me }),
+    queryFn: () => getAllCorrections({ employee: me }),
     enabled: Boolean(me),
   })
 
@@ -482,6 +494,11 @@ export default function MyTime() {
   const waiting = correctionRows.filter((c) => c.status === 'AWAITING_EMPLOYEE')
   const history = correctionRows.filter((c) => c.status !== 'AWAITING_EMPLOYEE')
   const days = byDay(punches?.rows ?? [], zone)
+  // El servidor sirve el registro de cincuenta en cincuenta. Esta pantalla pide
+  // el mes entero, pero si aun así quedara algo fuera hay que decirlo: el
+  // subtítulo promete el registro completo, y un mes recortado en silencio se
+  // lee como si esos días no se hubiera fichado.
+  const faltanFichajes = punches?.hasMore ?? false
 
   return (
     <>
@@ -615,6 +632,13 @@ export default function MyTime() {
         )}
       </Stack>
 
+      {faltanFichajes && (
+        <Alert severity="warning" variant="outlined" sx={{ mb: 1.5 }}>
+          Este mes tiene más fichajes de los que caben aquí, así que no los estás viendo todos.
+          Descarga el informe del periodo para tenerlo completo.
+        </Alert>
+      )}
+
       {isLoading ? (
         <Loading rows={5} />
       ) : days.length === 0 ? (
@@ -629,8 +653,8 @@ export default function MyTime() {
                   direction="row"
                   sx={{ justifyContent: 'space-between', alignItems: 'baseline', gap: 2, mb: 1 }}
                 >
-                  <Typography sx={{ fontWeight: 600, textTransform: 'capitalize' }}>
-                    {dateOf(day, { weekday: 'long', year: undefined })}
+                  <Typography sx={{ fontWeight: 600 }}>
+                    {capitalised(dateOf(day, { weekday: 'long', year: undefined }))}
                   </Typography>
                   <Typography
                     // A span: the Chip below renders a div, and a div inside a

@@ -23,7 +23,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import EditNoteIcon from '@mui/icons-material/EditNote'
 
-import { getPunches, PAGE_SIZE, requestCorrection } from '../../services/api.js'
+import { getAllPunches, getPunches, PAGE_SIZE, requestCorrection } from '../../services/api.js'
 import { alFallar } from '../../services/stale.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { PickFilter } from '../../components/filters.jsx'
@@ -37,7 +37,7 @@ import {
   SourceChip,
 } from '../../components/common.jsx'
 import { firstOfThisMonth, today } from '../../components/format.js'
-import { dateOf, timeOf } from '../../components/format.js'
+import { dateOf, timeOf, timeOfWithSeconds } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 
 /** Groups the flat list of events by local day, newest first.
@@ -46,10 +46,114 @@ import { useAuth } from '../../hooks/useAuth.js'
  *  server-side keeps the endpoint honest --- it returns the record as stored ---
  *  and the grouping is presentation.
  */
+/** Las filas de un listado de fichajes.
+ *
+ *  `conFecha` porque hay dos vistas: agrupada por día ---y entonces la fecha va
+ *  en el encabezado del grupo--- o plana, y entonces cada fila tiene que decir
+ *  de qué día es. La plana existe porque el volcado de toda la empresa se
+ *  pagina por fichaje, y agrupar por día encima de eso partía el día del borde
+ *  entre dos páginas.
+ */
+function TablaDeFichajes({ eventos, employee, zone, conFecha = false, setCorrecting }) {
+  return (
+    <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            {conFecha && <TableCell sx={{ width: 118 }}>Fecha</TableCell>}
+            <TableCell sx={{ width: 92 }}>Hora</TableCell>
+            <TableCell sx={{ width: 110 }}>Tipo</TableCell>
+            {!employee && <TableCell>Persona</TableCell>}
+            <TableCell align="right">Origen</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {eventos.map((punch) => (
+            <TableRow
+              key={punch.id}
+              hover
+              sx={{
+                // A voided event stays in the list, struck through:
+                // hiding it would misrepresent the record.
+                ...(punch.is_active === false && {
+                  opacity: 0.5,
+                  textDecoration: 'line-through',
+                }),
+              }}
+            >
+              {conFecha && (
+                <TableCell sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {dateOf(punch.timestamp)}
+                </TableCell>
+              )}
+              <TableCell sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
+                {timeOf(punch.timestamp, punch.time_zone ?? zone)}
+              </TableCell>
+              <TableCell>
+                <Chip
+                  size="small"
+                  variant={punch.punch_type === 'IN' ? 'filled' : 'outlined'}
+                  color={punch.punch_type === 'IN' ? 'success' : 'default'}
+                  icon={
+                    punch.punch_type === 'IN' ? (
+                      <ArrowDownwardIcon sx={{ fontSize: 14 }} />
+                    ) : (
+                      <ArrowUpwardIcon sx={{ fontSize: 14 }} />
+                    )
+                  }
+                  label={punch.punch_type === 'IN' ? 'Entrada' : 'Salida'}
+                  sx={{ height: 22, fontSize: '0.72rem' }}
+                />
+              </TableCell>
+              {!employee && (
+                <TableCell>
+                  <Typography variant="body2">{punch.employee_name ?? '—'}</Typography>
+                </TableCell>
+              )}
+              <TableCell align="right">
+                <Stack
+                  direction="row"
+                  sx={{ gap: 1, justifyContent: 'flex-end', alignItems: 'center' }}
+                >
+                  <SourceChip source={punch.source} />
+                  {punch.is_active !== false && (
+                    <Button
+                      size="small"
+                      sx={{ minWidth: 0, px: 1 }}
+                      // Cuál. Cuarenta y siete botones «Corregir»
+                      // seguidos no dicen de qué fichaje son, y quien
+                      // navega con lector de pantalla oye eso.
+                      //
+                      // Al segundo, y diciendo si es entrada o salida:
+                      // hasta el minuto no basta. Una persona puede
+                      // tener cuatro fichajes dentro del mismo minuto
+                      // ---entrar, salir, volver--- y entonces los
+                      // cuatro botones se oían exactamente igual.
+                      aria-label={`Corregir la ${punch.punch_type === 'IN' ? 'entrada' : 'salida'} de ${punch.employee_name} de las ${timeOfWithSeconds(punch.timestamp, punch.time_zone ?? zone)}`}
+                      onClick={() => setCorrecting({ punch })}
+                    >
+                      Corregir
+                    </Button>
+                  )}
+                </Stack>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  )
+}
+
 function byDay(punches, zone) {
   const groups = new Map()
   for (const punch of punches) {
-    const day = new Date(punch.timestamp).toLocaleDateString('sv-SE', { timeZone: zone })
+    // El día de quien lo vivió. Con la zona de la empresa, un fichaje de las
+    // 23:30 en una delegación de Las Palmas caía en el día siguiente, que es
+    // el de la central y no el suyo.
+    const day = new Date(punch.timestamp).toLocaleDateString('sv-SE', {
+      timeZone: punch.time_zone ?? zone,
+    })
     if (!groups.has(day)) groups.set(day, [])
     groups.get(day).push(punch)
   }
@@ -182,6 +286,9 @@ function CorrectionDialog({
 
 export default function Timesheet() {
   const { session } = useAuth()
+  // Respaldo. La hora de cada fila sale del propio fichaje, que dice en qué
+  // huso se vivió: un volcado mezcla gente de varias delegaciones y una sola
+  // zona para todas las filas es una hora inventada para parte de ellas.
   const zone = session?.tenant?.time_zone
   const queryClient = useQueryClient()
 
@@ -212,9 +319,27 @@ export default function Timesheet() {
     date_to: to,
   }
 
+  // Dos vistas, porque son dos preguntas distintas y solo una se puede agrupar
+  // por día sin mentir.
+  //
+  // Con una persona elegida se mira su jornada, y ahí el día es la unidad: se
+  // trae el periodo entero. Cortar cada cincuenta fichajes partía el día del
+  // borde entre dos páginas ---medido en la demo: 34 fichajes de esa persona y
+  // ese mismo día se iban a la siguiente--- y el día aparecía dos veces, con la
+  // mitad de sus horas cada vez, sin nada que lo dijera.
+  //
+  // Sin persona esto es un volcado de toda la empresa: se pagina por fichaje,
+  // que es la unidad que se lista, y cada fila lleva su fecha. Agrupar por día
+  // aquí encima de una paginación por fichaje era justo lo que producía el día
+  // repetido.
+  const porDia = Boolean(employee)
+
   const { data, isLoading } = useQuery({
-    queryKey: ['punches', { ...filters, page }],
-    queryFn: () => getPunches({ ...filters, page, ordering: '-timestamp' }),
+    queryKey: ['punches', { ...filters, page: porDia ? 'todo' : page }],
+    queryFn: () =>
+      porDia
+        ? getAllPunches({ ...filters, ordering: '-timestamp' })
+        : getPunches({ ...filters, page, ordering: '-timestamp' }),
     placeholderData: (previous) => previous,
   })
 
@@ -242,7 +367,12 @@ export default function Timesheet() {
     onError: alFallar(setError, refrescar),
   })
 
-  const days = byDay(data?.rows ?? [], zone)
+  const rows = data?.rows ?? []
+  const days = porDia ? byDay(rows, zone) : []
+  // El periodo de una persona cabe entero salvo que alguien pida medio año. Si
+  // no cabe hay que decirlo: un volcado recortado en silencio se lee como si
+  // esos días no se hubiera fichado.
+  const faltan = porDia && (data?.hasMore ?? false)
 
   return (
     <>
@@ -318,10 +448,25 @@ export default function Timesheet() {
         />
       </Stack>
 
+      {faltan && (
+        <Alert severity="warning" variant="outlined" sx={{ mb: 2 }}>
+          Este periodo tiene más fichajes de los que caben aquí, así que no los estás viendo todos.
+          Acorta las fechas para verlo completo.
+        </Alert>
+      )}
+
       {isLoading ? (
         <Loading rows={6} />
-      ) : days.length === 0 ? (
+      ) : rows.length === 0 ? (
         <Empty>No hay fichajes en ese periodo.</Empty>
+      ) : !porDia ? (
+        <TablaDeFichajes
+          eventos={rows}
+          employee={employee}
+          zone={zone}
+          conFecha
+          setCorrecting={setCorrecting}
+        />
       ) : (
         <Stack sx={{ gap: 2 }}>
           {days.map(([day, events]) => (
@@ -339,92 +484,27 @@ export default function Timesheet() {
                 {dateOf(day, { weekday: 'long', year: 'numeric' })}
               </Typography>
 
-              <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ width: 92 }}>Hora</TableCell>
-                      <TableCell sx={{ width: 110 }}>Tipo</TableCell>
-                      {!employee && <TableCell>Persona</TableCell>}
-                      <TableCell align="right">Origen</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {events.map((punch) => (
-                      <TableRow
-                        key={punch.id}
-                        hover
-                        sx={{
-                          // A voided event stays in the list, struck through:
-                          // hiding it would misrepresent the record.
-                          ...(punch.is_active === false && {
-                            opacity: 0.5,
-                            textDecoration: 'line-through',
-                          }),
-                        }}
-                      >
-                        <TableCell sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
-                          {timeOf(punch.timestamp, zone)}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            size="small"
-                            variant={punch.punch_type === 'IN' ? 'filled' : 'outlined'}
-                            color={punch.punch_type === 'IN' ? 'success' : 'default'}
-                            icon={
-                              punch.punch_type === 'IN' ? (
-                                <ArrowDownwardIcon sx={{ fontSize: 14 }} />
-                              ) : (
-                                <ArrowUpwardIcon sx={{ fontSize: 14 }} />
-                              )
-                            }
-                            label={punch.punch_type === 'IN' ? 'Entrada' : 'Salida'}
-                            sx={{ height: 22, fontSize: '0.72rem' }}
-                          />
-                        </TableCell>
-                        {!employee && (
-                          <TableCell>
-                            <Typography variant="body2">{punch.employee_name ?? '—'}</Typography>
-                          </TableCell>
-                        )}
-                        <TableCell align="right">
-                          <Stack
-                            direction="row"
-                            sx={{ gap: 1, justifyContent: 'flex-end', alignItems: 'center' }}
-                          >
-                            <SourceChip source={punch.source} />
-                            {punch.is_active !== false && (
-                              <Button
-                                size="small"
-                                sx={{ minWidth: 0, px: 1 }}
-                                // Cuál. Cuarenta y siete botones «Corregir»
-                                // seguidos no dicen de qué fichaje son, y quien
-                                // navega con lector de pantalla oye eso.
-                                aria-label={`Corregir el fichaje de ${punch.employee_name} de las ${timeOf(punch.timestamp, zone)}`}
-                                onClick={() => setCorrecting({ punch })}
-                              >
-                                Corregir
-                              </Button>
-                            )}
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <TablaDeFichajes
+                eventos={events}
+                employee={employee}
+                zone={zone}
+                setCorrecting={setCorrecting}
+              />
             </Box>
           ))}
         </Stack>
       )}
 
-      <Pager
-        count={data?.count ?? 0}
-        page={page}
-        pageSize={PAGE_SIZE}
-        onChange={setPage}
-        noun="fichajes"
-      />
+      {/* Solo en el volcado: la vista de una persona trae el periodo entero. */}
+      {!porDia && (
+        <Pager
+          count={data?.count ?? 0}
+          page={page}
+          pageSize={PAGE_SIZE}
+          onChange={setPage}
+          noun="fichajes"
+        />
+      )}
 
       <CorrectionDialog
         open={correcting !== null}

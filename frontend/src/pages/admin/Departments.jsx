@@ -240,18 +240,32 @@ export default function Departments() {
                     >
                       Editar
                     </Button>
-                    {/* Only when empty. Removing one that still has people would
-                        leave them unassigned without saying so. */}
-                    {department.people_count === 0 && (
+                    {/* Vacío de gente **y** sin nadie al mando.
+
+                        `people_count` cuenta quién está dentro, y eso no es lo
+                        único que cuelga: quien responde del departamento es la
+                        otra población. Ofreciendo el botón solo por lo primero,
+                        la pantalla proponía un borrado que el servidor rechaza
+                        ---409 `department_has_managers`--- y lo hacía con un
+                        texto que prometía que no afectaba a nadie.
+
+                        Retirar el departamento de quien lo dirige la deja «al
+                        mando de nada», y eso **amplía** lo que puede leer a
+                        toda la empresa. Por eso se mueve primero a los
+                        responsables, y por eso aquí no se ofrece. */}
+                    {department.people_count === 0 && (department.managers ?? []).length === 0 && (
                       <Button
                         size="small"
                         color="inherit"
+                        // Cuál. Siete departamentos seguidos daban siete botones
+                        // «Eliminar» que sonaban igual con lector de pantalla.
+                        aria-label={`Eliminar el departamento ${department.name}`}
                         onClick={() =>
                           setConfirming({
                             title: 'Eliminar departamento',
                             body: department.name,
                             detail:
-                              'No tiene a nadie asignado, así que no afecta a ninguna persona. No se puede deshacer.',
+                              'No tiene a nadie asignado ni nadie que responda de él, así que no afecta a ninguna persona. No se puede deshacer.',
                             verb: 'Eliminar',
                             run: () => remove.mutate(department.id),
                           })

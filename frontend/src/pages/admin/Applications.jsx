@@ -24,10 +24,18 @@ import {
   getApplicationScopes,
   getApplications,
   issueCredential,
+  PAGE_SIZE,
   revokeApplication,
   revokeCredential,
 } from '../../services/api.js'
-import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
+import {
+  ConfirmDialog,
+  Empty,
+  ErrorNote,
+  Loading,
+  PageHeader,
+  Pager,
+} from '../../components/common.jsx'
 import { dateOf } from '../../components/format.js'
 
 /** Shown once, right after issuing. There is no second chance and the box says
@@ -181,6 +189,11 @@ export default function Applications() {
   const [token, setToken] = useState(null)
   const [confirming, setConfirming] = useState(null)
   const [error, setError] = useState(null)
+  // Cincuenta por página, como el resto del panel. Sin esto la pantalla pintaba
+  // la primera tanda y callaba el resto: una aplicación autorizada que no cabía
+  // no se veía ni se podía revocar, y revocar es lo que corta el acceso de un
+  // conector a los registros de la empresa.
+  const [page, setPage] = useState(1)
 
   // `loadError` aparte del `error` de las mutaciones: si la lista no se pudo
   // leer, decir «todavía no hay ninguna» es afirmar lo contrario de lo que
@@ -192,8 +205,9 @@ export default function Applications() {
     isLoading,
     error: loadError,
   } = useQuery({
-    queryKey: ['applications'],
-    queryFn: () => getApplications(),
+    queryKey: ['applications', page],
+    queryFn: () => getApplications({ page }),
+    placeholderData: (previous) => previous,
   })
   const { data: scopes = [] } = useQuery({
     queryKey: ['application-scopes'],
@@ -299,6 +313,11 @@ export default function Applications() {
                     <Button
                       size="small"
                       color="inherit"
+                      // Dos botones de la misma tarjeta se llamaban «Revocar»:
+                      // este tumba la aplicación entera y el de abajo un solo
+                      // token. Quien navega con lector de pantalla oía el mismo
+                      // rótulo para las dos cosas y no tenía cómo distinguirlas.
+                      aria-label="Revocar la aplicación"
                       onClick={() =>
                         setConfirming({
                           title: 'Revocar la aplicación',
@@ -342,6 +361,7 @@ export default function Applications() {
                           <Button
                             size="small"
                             color="inherit"
+                            aria-label={`Revocar el token ${credential.label ?? ''}`.trim()}
                             onClick={() =>
                               setConfirming({
                                 title: 'Revocar el token',
@@ -371,6 +391,14 @@ export default function Applications() {
           ))}
         </Stack>
       )}
+
+      <Pager
+        count={applications?.count ?? 0}
+        page={page}
+        pageSize={PAGE_SIZE}
+        onChange={setPage}
+        noun="aplicaciones"
+      />
 
       <ApplicationDialog
         open={creating}

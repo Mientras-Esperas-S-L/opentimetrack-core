@@ -129,15 +129,39 @@ api.interceptors.response.use(
           const access = await renew()
           failed.headers.Authorization = `Bearer ${access}`
           return api(failed)
-        } catch {
+        } catch (fallo) {
+          // **Solo si el servidor dice que la sesión no vale.** Un 502 del
+          // balanceador mientras se despliega, un 429 de la cubeta que comparte
+          // toda una oficina detrás del mismo NAT, o el wifi parpadeando, no
+          // dicen nada sobre el refresco --- y el refresco dura siete días.
+          //
+          // Tratarlos como sesión caducada tiraba a la calle a quien llevaba
+          // cinco minutos rellenando un alta, le borraba el formulario y
+          // destruía además un testigo que seguía siendo bueno: recargar ya no
+          // la devolvía dentro, tenía que volver a teclear la contraseña.
+          //
+          // Es la misma distinción que `AuthContext` hace para `/auth/me/`, con
+          // el mismo motivo escrito allí. Aquí faltaba.
+          //
+          // `session_expired` entra en la lista porque **este servidor no
+          // contesta 401 a un refresco malo**: lo trata como regla de negocio y
+          // sale con 409. Mirar solo el estado dejaba fuera el caso legítimo ---
+          // el refresco caducado de verdad--- y entonces nadie volvía al
+          // formulario de entrada. Se comprueba por código, que es explícito,
+          // y no por el 409, que significa muchas otras cosas.
+          const rechazo =
+            fallo?.status === 401 || fallo?.status === 403 || fallo?.code === 'session_expired'
+          if (!rechazo) {
+            throw fallo
+          }
           tokens.clear()
         }
       }
     }
 
     if (status === 401) {
-      // Definitivo: o no había refresco, o el refresco también falló, o la
-      // repetición con el testigo nuevo volvió a dar 401.
+      // Definitivo: o no había refresco, o el refresco lo rechazó de verdad, o
+      // la repetición con el testigo nuevo volvió a dar 401.
       tokens.clear()
       alPerderLaSesion?.()
     }
@@ -153,12 +177,24 @@ api.interceptors.response.use(
     const { non_field_errors: general, ...porCampo } = payload?.details ?? {}
     const concreto = Array.isArray(general) ? general[0] : general
 
+    // `network_error` y un plazo agotado no son lo mismo, y la diferencia
+    // decide qué se le puede decir a quien acaba de fichar. Sin respuesta y sin
+    // haber salido, no ha quedado nada. Sin respuesta **después** de que la
+    // petición viajara, el servidor ha podido registrarla perfectamente: es el
+    // modo de fallo normal de una obra con mala cobertura, y afirmar ahí que no
+    // se registró nada es lo que provoca el segundo fichaje.
+    const plazoAgotado =
+      !error.response && (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT')
+
     return Promise.reject({
-      code: payload?.code ?? 'network_error',
+      code: payload?.code ?? (plazoAgotado ? 'timeout' : 'network_error'),
       // En castellano, como el resto del producto. Estaba en inglés, y es el
       // único texto que lee quien está en una obra y no consigue fichar: el
       // peor sitio posible para el idioma equivocado.
-      message: concreto || payload?.message || 'No hay conexión con el servidor.',
+      message:
+        concreto ||
+        payload?.message ||
+        (plazoAgotado ? 'El servidor tarda en contestar.' : 'No hay conexión con el servidor.'),
       details: porCampo,
       status,
     })
@@ -190,6 +226,29 @@ const page = (data) => ({
 /** How many rows a page holds. Mirrors DRF's PAGE_SIZE: the client cannot ask
  *  the server what it is, and guessing wrong would misnumber every page. */
 export const PAGE_SIZE = 50
+
+/** Un periodo acotado, entero: recorre las páginas hasta traerlo todo.
+ *
+ * Un `Pager` no sirve para todas las listas. Los fichajes de una persona se
+ * pintan agrupados por jornada, así que cortar cada cincuenta filas dejaría la
+ * entrada de un día en una página y su salida en la siguiente: no es que se vea
+ * incómodo, es que el día se lee mal. Y son los fichajes de esa persona, que el
+ * art. 34.9 le da derecho a consultar.
+ *
+ * El tope existe para no encadenar peticiones sin final si el filtro se va de
+ * las manos. Cuando se alcanza, la respuesta lo dice con `hasMore` en vez de
+ * hacer pasar por completo lo que no lo está: quien la usa tiene que avisar.
+ */
+const periodoEntero = async (path, params, { tope = 20 } = {}) => {
+  const filas = []
+  let ultima = { count: 0, hasMore: false }
+  for (let numero = 1; numero <= tope; numero += 1) {
+    ultima = page(await get(path, { ...params, page: numero }))
+    filas.push(...ultima.rows)
+    if (!ultima.hasMore) return { rows: filas, count: ultima.count, hasMore: false }
+  }
+  return { rows: filas, count: ultima.count, hasMore: true }
+}
 
 export const getHealth = () => get('/health/')
 
@@ -239,6 +298,8 @@ export const setPasswordFromLink = async (payload) => {
 export const getToday = () => get('/punches/today/')
 export const clock = (deviceId) => post('/punches/', { device_id: deviceId })
 export const getPunches = async (params) => page(await get('/punches/', params))
+/** Todos los fichajes del periodo, sin partir ninguna jornada. */
+export const getAllPunches = (params) => periodoEntero('/punches/', params)
 // No hay `voidPunch`: anular un fichaje se hace con una corrección de tipo
 // VOID, que exige motivo, deja autor y avisa a la persona. Un atajo sin esas
 // garantías vaciaría el procedimiento.
@@ -246,6 +307,8 @@ export const getPunches = async (params) => page(await get('/punches/', params))
 // ----------------------------------------------------------------- corrections
 
 export const getCorrections = async (params) => page(await get('/corrections/', params))
+/** Todas las solicitudes de una persona: son suyas y las mira de una vez. */
+export const getAllCorrections = (params) => periodoEntero('/corrections/', params)
 export const requestCorrection = (payload) => post('/corrections/', payload)
 export const approveCorrection = (id, note = '') => post(`/corrections/${id}/approve/`, { note })
 export const rejectCorrection = (id, note = '') => post(`/corrections/${id}/reject/`, { note })
@@ -298,7 +361,31 @@ export const requestAbsence = (payload) => {
     if (valor === undefined || valor === null || valor === '') continue
     cuerpo.append(campo, valor)
   }
-  return post('/absences/', cuerpo, { headers: { 'Content-Type': 'multipart/form-data' } })
+  return post('/absences/', cuerpo, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: plazoParaSubir(payload.justification?.size),
+  })
+}
+
+/** Cuánto esperar por una subida, según lo que pesa.
+ *
+ *  Los diez segundos de siempre valen para una petición que solo lleva texto y
+ *  no para una foto de ocho megas: la pantalla anuncia «PDF o foto, hasta 10
+ *  MB», y ese límite solo se cumplía si la subida iba a más de 8 Mb/s
+ *  sostenidos. Por debajo, axios abortaba **con el cuerpo ya enviado**: el
+ *  servidor creaba la solicitud y a la persona se le decía que no había
+ *  conexión. Se iba creyendo que no había pedido el permiso mientras su
+ *  responsable lo veía en la cola.
+ *
+ *  128 KB/s es una subida de 4G mala, no una buena: el plazo tiene que aguantar
+ *  el peor caso razonable, porque agotarlo de menos falsea lo que se le cuenta a
+ *  quien está esperando. Diez megas salen a poco más de minuto y medio.
+ */
+const SUBIDA_BYTES_POR_SEGUNDO = 128 * 1024
+
+export const plazoParaSubir = (bytes) => {
+  const peso = Number(bytes) || 0
+  return 10_000 + Math.ceil(peso / SUBIDA_BYTES_POR_SEGUNDO) * 1000
 }
 export const approveAbsence = (id) => post(`/absences/${id}/approve/`)
 export const rejectAbsence = (id) => post(`/absences/${id}/reject/`)
