@@ -2076,3 +2076,36 @@ pasada posterior y la llamada que lo usaba se había perdido en la abortada.
 **Regla**: si un script hace varias sustituciones, o escribe después de cada una,
 o comprueba el resultado en el fichero y no en la salida del script. Un «ok»
 impreso dice que la cadena se encontró, no que el fichero se haya guardado.
+
+## 139. Una prueba de cobertura se saca del enrutador, no de una lista escrita a mano
+
+La matriz de permisos de la vuelta 83 se barrió a mano y salió limpia. Al
+convertirla en prueba, la tentación era escribir la lista de las 51 rutas dentro
+del fichero: es más rápido y el verde sale igual.
+
+Sería una prueba que **caduca el día que la escribes**. La ruta que abrirá un
+hueco es la que alguien añada dentro de seis meses, y esa no va a estar en una
+lista escrita hoy --- justamente porque nadie se acordará de añadirla.
+
+Sacándolas de `get_resolver().url_patterns`, la prueba crece sola y una ruta
+nueva sin permisos aparece el día que se escribe. Lleva un `assert len(rutas) >
+40` para que, si algún día el enrutador se lee mal y devuelve cuatro rutas, salga
+en rojo en vez de dar un verde sobre nada.
+
+**Regla**: cuando una prueba afirma algo sobre *todo* un conjunto ---todas las
+rutas, todos los modelos, todos los serializadores---, el conjunto se saca del
+sitio donde vive, y se comprueba que no ha salido vacío. Una lista escrita a mano
+no prueba «todos», prueba «estos».
+
+## 140. Una vuelta sin hallazgo puede dejar un guard
+
+El bucle pide sumar uno al contador cuando no se encuentra nada, y eso está bien:
+una vuelta en blanco es información. Pero acabarla sin tocar nada desaprovecha el
+barrido, que es la parte cara.
+
+Los dos guards que más han rendido ---`test_entrada_malformada` con tres 500 y
+`test_no_crece_con_la_plantilla` con dos N+1--- encontraron sus fallos **en
+vueltas posteriores** a la que los escribió. En la suya salieron verdes.
+
+**Regla**: si una vuelta barre algo ancho y sale limpia, el barrido se deja
+escrito como prueba antes de cerrarla. El hallazgo llega después, y llega solo.

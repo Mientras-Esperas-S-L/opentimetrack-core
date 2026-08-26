@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 82 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 83 · Vueltas seguidas sin hallazgos: **1**
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -68,6 +68,7 @@ vuelve a una limpia.
 | `applications/attendance` | limpia | 13/08 v6 | **el día salía del reloj del contenedor, no de la empresa** |
 | Avisos push y correo | limpia | 13/08 v7 | — en el área; salió **una plural sin traducir que se veía en blanco** |
 | Importación de datos (festivos) | limpia | 13/08 v9 | **solo leía un país**; no comprobaba el fichero; el resumen contaba días que no escribía |
+| La matriz de permisos entera (51 rutas × 4 roles) | limpia | 26/08 v83 | — **sin hallazgo**; el barrido queda como prueba |
 
 ### Ley
 
@@ -236,6 +237,64 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 83 --- La matriz entera, y esta vez no había nada (26/08)
+
+**Primera vuelta sin hallazgo.** Contador de vueltas seguidas sin hallazgos: 0 → **1**.
+
+La lente: dejar de mirar áreas y mirar **la matriz completa**, cada ruta contra
+cada rol. Las vueltas anteriores han ido comprobando permisos área por área, que
+es como se encuentran los fallos de una pantalla; lo que no se había hecho nunca
+es la tabla entera de una vez, que es como se encuentran los **huecos entre**
+áreas --- la ruta que nadie revisó porque no era de nadie.
+
+#### Los cuatro ejes, y lo que dio cada uno
+
+**Lectura por rol.** Las 51 rutas de lista, con sesión de operario, responsable,
+administración y una administradora de otra empresa. Todas filtran por alcance.
+Dos merecían una segunda mirada y las dos aguantaron:
+
+- `/api/audit/` responde **200 a un operario**, que de primeras parece un hueco.
+  No lo es: la lista le llega **vacía** ---0 entradas, contra 1 que ve la
+  administración--- porque el filtro es por alcance, no por ruta. Un 403 sería
+  más legible, pero no es un fallo de aislamiento.
+- El cuadrante (`/api/shifts/roster/` y `/review/`) le enseña al operario **solo
+  el suyo**, y solo su propio aviso ---un `break_owed` sobre sí mismo---, no los
+  del compañero de otro departamento.
+
+**Escritura de gestión con sesión de operario.** Diez intentos: 403 en los nueve
+de gestión, y 409 `not_your_request` al pedir una ausencia a nombre de otro.
+
+**Una responsable haciendo de administración.** Diez intentos, diez 403: reglas
+de jornada, datos de empresa, crear departamento, centro o persona, autorizar una
+aplicación, declarar el registro, **subirse a sí misma a administradora**, y
+tocar o dar de baja a alguien de otro departamento. Comprobado después contra la
+base: sigue siendo `MANAGER`, y el de Oficina sigue llamándose como se llamaba y
+sigue activo.
+
+**Otra empresa con nuestros identificadores en la mano.** Diez intentos, todos
+**404** ---leer, dar de baja, renombrar, aprobar una corrección, aprobar una
+ausencia, leer un justificante, borrar un turno--- y 400 el informe. El 404 en
+vez del 403 es deliberado: un 403 confirmaría que el recurso existe, y eso ya es
+contar algo de una empresa que no es la suya.
+
+#### Lo que deja la vuelta, ya que no deja un arreglo
+
+`apps/common/tests/test_la_matriz_de_permisos.py`, cinco pruebas. **Saca las
+rutas del enrutador**, no de una lista escrita a mano, así que una ruta nueva sin
+permisos aparece ahí el día que se escribe, sin que nadie se acuerde de añadirla.
+
+Es el mismo tipo de guard que `test_entrada_malformada` y
+`test_no_crece_con_la_plantilla`, y los dos encontraron cosas **en vueltas
+posteriores** a la que los escribió: tres 500 el primero, dos N+1 el segundo. Una
+vuelta sin hallazgo no tiene por qué acabar sin dejar nada.
+
+**Lo que el guard no cubre**, y queda dicho para que un verde no se lea como más
+de lo que es: comprueba **códigos**, no contenidos. Un 200 con la lista filtrada
+y un 200 con la lista entera son idénticos desde fuera. Eso lo siguen cubriendo
+las pruebas de cada área ---el rastro, el cuadrante, los justificantes--- y son
+esas las que hay que mirar si algún día se sospecha de una fuga *dentro* de una
+respuesta.
 
 ### Vuelta 82 --- Recuperar la cuenta no echaba a nadie (26/08)
 
