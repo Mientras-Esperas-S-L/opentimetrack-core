@@ -24,12 +24,17 @@ from apps.punches.corrections import (
     reject_correction,
     request_correction,
 )
-from apps.punches.models import Punch
+from apps.punches.models import Punch, PunchType
 from apps.punches.serializers import PunchSerializer
 
 
 class CorrectionSerializer(serializers.ModelSerializer):
     employee_name = serializers.CharField(source="employee.get_full_name", read_only=True)
+    #: El huso de la persona a la que afecta. `target_detail` y `result_detail`
+    #: lo traen por su cuenta ---son fichajes---, pero `proposed_timestamp` va
+    #: suelto y sin esto se pintaba en el de la empresa: para una delegación en
+    #: otro huso, la hora que se propone poner se leía con una hora de más.
+    time_zone = serializers.SerializerMethodField()
     kind_display = serializers.CharField(source="get_kind_display", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     result_detail = PunchSerializer(source="result", read_only=True)
@@ -50,6 +55,7 @@ class CorrectionSerializer(serializers.ModelSerializer):
             "id",
             "employee",
             "employee_name",
+            "time_zone",
             "kind",
             "kind_display",
             "target",
@@ -77,13 +83,21 @@ class CorrectionSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
+    def get_time_zone(self, obj) -> str:
+        return str(obj.employee.tzinfo)
+
 
 class CorrectionRequestSerializer(serializers.Serializer):
     kind = serializers.ChoiceField(choices=CorrectionKind.choices)
     # Only a manager may name somebody else; anyone else corrects their own.
     employee = serializers.UUIDField(required=False, allow_null=True)
     target = serializers.UUIDField(required=False, allow_null=True)
-    proposed_type = serializers.CharField(required=False, allow_blank=True)
+    # Choices, not free text: an unknown value used to reach the record and be
+    # understood by no reader. The service checks it too --- this is here so a
+    # client gets a field error instead of a generic refusal.
+    proposed_type = serializers.ChoiceField(
+        choices=PunchType.choices, required=False, allow_blank=True
+    )
     proposed_timestamp = serializers.DateTimeField(required=False, allow_null=True)
 
     # Mandatory, and not merely required by the form: a correction with no
@@ -119,7 +133,21 @@ class CorrectionViewSet(
     filterset_fields = ["status", "kind", "employee"]
 
     def get_queryset(self):
-        qs = PunchCorrection.objects.select_related("employee", "target", "result").all()
+        # Los saltos hasta el huso de cada persona, por el suyo y por el de los
+        # dos fichajes que cuelgan: sin ellos se pregunta una vez por fila.
+        qs = PunchCorrection.objects.select_related(
+            "employee",
+            "employee__workplace",
+            "employee__tenant",
+            "target",
+            "target__employee",
+            "target__employee__workplace",
+            "target__employee__tenant",
+            "result",
+            "result__employee",
+            "result__employee__workplace",
+            "result__employee__tenant",
+        ).all()
         # Their own if they are not a manager; the departments they answer for
         # if they are. `visible_people` returns None for "no restriction", so an
         # administrator adds no join.

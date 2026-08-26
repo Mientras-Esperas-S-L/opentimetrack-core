@@ -411,3 +411,132 @@ def test_the_person_can_see_which_punch_is_being_changed(company, employee, mana
     assert body["target_detail"]["punch_type"] == punch.punch_type
     # Y sigue sin haber hora propuesta, que es lo correcto en una anulación.
     assert body["proposed_timestamp"] is None
+
+
+# ------------------------------------------- what the corrected event must carry
+
+
+@pytest.mark.django_db
+def test_correcting_the_hour_keeps_what_the_event_was(company, employee, manager):
+    """Art. 4.b is the only legitimate way to touch the record. It must not corrupt it.
+
+    The substitute used to be built from scratch with six fields, so everything
+    art. 3 asks the record to carry --- whether the span was work or a break,
+    whether the hours were ordinary or overtime, how the overtime is settled ---
+    was silently reset. Correcting the end of a break turned it into a work
+    span: the day then read as one endless shift with a break open since the
+    morning, and 0 h worked.
+    """
+    from apps.punches.models import HoursNature, OvertimeSettlement, PunchInterval, WorkMode
+
+    with freeze_time("2026-08-12 06:00:00"):
+        register_punch(employee=employee, company=company)
+    with freeze_time("2026-08-12 12:00:00"):
+        register_punch(employee=employee, company=company, interval=PunchInterval.BREAK)
+    with freeze_time("2026-08-12 12:30:00"):
+        vuelta = register_punch(
+            employee=employee,
+            company=company,
+            interval=PunchInterval.BREAK,
+            work_mode=WorkMode.REMOTE,
+            hours_nature=HoursNature.OVERTIME,
+            overtime_settlement=OvertimeSettlement.REST,
+        )
+    with freeze_time("2026-08-12 16:00:00"):
+        register_punch(employee=employee, company=company)
+
+    correction = request_correction(
+        employee=employee,
+        company=company,
+        requested_by=employee,
+        kind=CorrectionKind.MODIFY,
+        reason="Volví a las 13:00, no a las 12:30.",
+        target=vuelta,
+        proposed_type=vuelta.punch_type,
+        proposed_timestamp=vuelta.timestamp + timedelta(minutes=30),
+    )
+    nuevo = approve_correction(correction, resolved_by=manager)
+
+    assert nuevo.interval == PunchInterval.BREAK
+    assert nuevo.work_mode == WorkMode.REMOTE
+    assert nuevo.hours_nature == HoursNature.OVERTIME
+    assert nuevo.overtime_settlement == OvertimeSettlement.REST
+
+
+@pytest.mark.django_db
+def test_a_corrected_day_still_adds_up(company, employee, manager):
+    """The symptom the lost fields produced: a nine-hour day reading as zero."""
+    from datetime import date
+
+    from apps.punches.models import PunchInterval
+
+    with freeze_time("2026-08-12 06:00:00"):
+        register_punch(employee=employee, company=company)
+    with freeze_time("2026-08-12 12:00:00"):
+        register_punch(employee=employee, company=company, interval=PunchInterval.BREAK)
+    with freeze_time("2026-08-12 12:30:00"):
+        vuelta = register_punch(employee=employee, company=company, interval=PunchInterval.BREAK)
+    with freeze_time("2026-08-12 16:00:00"):
+        register_punch(employee=employee, company=company)
+
+    correction = request_correction(
+        employee=employee,
+        company=company,
+        requested_by=employee,
+        kind=CorrectionKind.MODIFY,
+        reason="Volví a las 13:00.",
+        target=vuelta,
+        proposed_type=vuelta.punch_type,
+        proposed_timestamp=vuelta.timestamp + timedelta(minutes=30),
+    )
+    approve_correction(correction, resolved_by=manager)
+
+    day = build_day_status(employee=employee, company=company, day=date(2026, 8, 12))
+    assert day.state == "OFF"
+    assert day.break_seconds == 3600
+    assert day.worked_seconds == 9 * 3600
+
+
+@pytest.mark.django_db
+def test_the_proposed_type_has_to_be_an_entry_or_an_exit(company, employee):
+    """`punch_type` is varchar(3) with no CHECK, and `save()` skips `full_clean()`.
+
+    Lowercase "in" used to sail through the whole flow: 201 on the request, 200
+    on the approval, a confirmation email to both parties --- and a day still
+    reading zero hours, because no reader recognises that value. Worse, the next
+    real punch is then inferred as an exit and chains a second wrong event.
+    """
+    with pytest.raises(BusinessRuleError) as caught:
+        request_correction(
+            employee=employee,
+            company=company,
+            requested_by=employee,
+            kind=CorrectionKind.ADD,
+            reason="Olvidé fichar la entrada.",
+            proposed_type="in",
+            proposed_timestamp=timezone.now() - timedelta(hours=2),
+        )
+
+    assert caught.value.code == "unknown_type"
+
+
+@pytest.mark.django_db
+def test_the_api_refuses_an_unknown_type_with_a_readable_error(company, employee, manager):
+    """And it comes back as a 400, not as a 500 a connector cannot react to."""
+    from rest_framework.test import APIClient
+
+    client = APIClient()
+    client.force_authenticate(user=employee)
+    response = client.post(
+        "/api/corrections/",
+        {
+            "kind": CorrectionKind.ADD,
+            "proposed_type": "in",
+            "proposed_timestamp": (timezone.now() - timedelta(hours=2)).isoformat(),
+            "reason": "Olvidé fichar la entrada.",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert Punch.objects.filter(employee=employee).count() == 0

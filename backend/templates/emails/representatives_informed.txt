@@ -1,0 +1,16 @@
+{% load i18n %}{% blocktranslate %}Hello,
+
+You are recorded as a workers' representative at {{ company }}.{% endblocktranslate %}
+
+{% blocktranslate %}{{ employee }} disagrees with a change the company proposes to their
+working time record, dated {{ day }}.{% endblocktranslate %}
+
+{% blocktranslate %}Art. 4.b of the working-time record decree requires that you be informed
+when this happens. The company may still apply the change, and if it does, the
+record will show it was made without agreement, with their account beside it.
+
+What they wrote is not reproduced here. Art. 6.2 grants you access to the
+register, so you can consult the entry and its history in the application.{% endblocktranslate %}
+
+-------------------------------------------------------------------------------
+OpenTimeTrack

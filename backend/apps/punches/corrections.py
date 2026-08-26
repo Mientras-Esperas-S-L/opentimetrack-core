@@ -240,6 +240,18 @@ def request_correction(
             message=_("Say whether the missing event is an entry or an exit."),
         )
 
+    # And it has to be one of the two. `punch_type` is a plain varchar with no
+    # constraint and `Punch.save()` does not call `full_clean()`, so an unknown
+    # value would be stored happily and then understood by nobody: the day reads
+    # zero hours, and the next real punch is inferred against an event no reader
+    # recognises. Checked here because this is the single door --- the company
+    # proposing a change comes through it too.
+    if proposed_type and proposed_type not in PunchType.values:
+        raise BusinessRuleError(
+            code="unknown_type",
+            message=_("An event is either an entry or an exit."),
+        )
+
     return PunchCorrection.objects.create(
         tenant=company,
         employee=employee,
@@ -431,6 +443,51 @@ def _consent_window_has_passed(correction: PunchCorrection) -> bool:
     return timezone.now() >= deadline
 
 
+def _mail_the_representatives(correction: PunchCorrection, representatives) -> None:
+    """El aviso que el art. 4.b pide, enviado de verdad.
+
+    Estaba escrito y no salía: la fila guardaba la hora y una nota con nombre y
+    apellidos ---«Informados: Fulana»--- y ese texto viaja al informe de
+    inspección. El `help_text` que la empresa lee al marcar la casilla promete
+    «informado cuando alguien discrepa». Nadie recibía nada.
+
+    **Qué se manda y qué no.** Que hay una discrepancia, de quién y de qué día.
+    El texto que la persona escribió **no** se reproduce: puede contar por qué
+    faltó a una hora, y eso es suyo. Quien recibe el aviso tiene acceso al
+    registro por el art. 6.2 y puede consultarlo si le hace falta, que es la
+    diferencia entre informar y difundir.
+
+    `fail_silently` por lo mismo que el aviso a la persona: que no salga un
+    correo no puede tumbar la discrepancia, que es justo lo que el artículo
+    protege.
+    """
+    from django.conf import settings
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+
+    zone = correction.tenant.tzinfo
+    when = correction.target.timestamp if correction.target else correction.proposed_timestamp
+    body = render_to_string(
+        "emails/representatives_informed.txt",
+        {
+            "company": correction.tenant.name,
+            "employee": correction.employee.get_full_name() or correction.employee.email,
+            "day": when.astimezone(zone).strftime("%d/%m/%Y") if when else "",
+        },
+    )
+
+    for quien in representatives:
+        if not quien.email:
+            continue
+        send_mail(
+            subject=_("Somebody disagrees with a change to their working time record"),
+            message=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[quien.email],
+            fail_silently=True,
+        )
+
+
 def _inform_representatives(correction: PunchCorrection) -> None:
     """Art. 4.b: on disagreement, the workers' representatives are informed.
 
@@ -447,6 +504,7 @@ def _inform_representatives(correction: PunchCorrection) -> None:
 
     correction.representatives_notified_at = timezone.now()
     if representatives.exists():
+        _mail_the_representatives(correction, representatives)
         correction.representatives_notice = str(
             _("Informed: %(names)s")
             % {"names": ", ".join(r.get_full_name() or r.email for r in representatives)[:150]}
@@ -517,6 +575,31 @@ def approve_correction(correction: PunchCorrection, *, resolved_by, note: str = 
     # pulsando a la vez pasaban los dos. Ver `apps.common.transitions`.
     correction = _reclamar_pendiente(correction)
 
+    # El fichaje que se pretende cambiar tiene que seguir siendo el vigente.
+    #
+    # Nada impide dos solicitudes sobre el mismo asiento ---ni debería: te
+    # deniegan una y pides otra con mejor motivo--- y aprobar las dos dejaba
+    # **tres fichajes: dos entradas activas y una anulada**. El registro decía
+    # que la persona entró dos veces sin salir, y eso rompe el cómputo del día.
+    #
+    # Medido sin concurrencia de por medio: dos peticiones seguidas y dos
+    # aprobaciones seguidas, que es un camino normal del producto. La segunda
+    # aprobación anulaba un fichaje ya anulado ---o sea, nada--- y creaba otro
+    # sustituto encima.
+    #
+    # Se rechaza en vez de aplicarse: el asiento que esa solicitud describía ya
+    # no existe, así que aprobarla es aprobar un cambio sobre algo que cambió.
+    # La vía sigue abierta y es la correcta: pedir una corrección nueva sobre el
+    # fichaje vigente, que es el que hay que discutir ahora.
+    if correction.target_id is not None and not correction.target.is_active:
+        raise BusinessRuleError(
+            code="target_already_changed",
+            message=_(
+                "That entry has already been changed by another correction. Ask for a new "
+                "one on the entry as it stands now."
+            ),
+        )
+
     # A manager filing a correction on their own record and approving it was
     # two clicks, both theirs. See apps/common/four_eyes.py for why this is
     # refused rather than merely logged, and why the sole-administrator case
@@ -561,10 +644,27 @@ def reject_correction(correction: PunchCorrection, *, resolved_by, note: str = "
     """Turns it down. The request stays: a refused claim is history too."""
     correction = _reclamar_pendiente(correction)
 
+    # Por los cuatro ojos igual que aprobar, y esto faltaba: la puerta estaba
+    # cerrada en un sentido y abierta en el otro. Un responsable no podía
+    # aprobar un cambio sobre su propio fichaje y **sí podía rechazarlo**, él
+    # solo, dejando el registro como estaba.
+    #
+    # No cambiar nada también es decidir. Si la empresa propone corregir el
+    # fichaje de un responsable ---quitarle una hora que no trabajó, por
+    # ejemplo--- archivar esa propuesta es exactamente la decisión que el art.
+    # 4.b quiere que pase por una segunda persona. Y la corrección queda
+    # cerrada: quien la propuso tiene que volver a empezar.
+    alone = refuse_self_decision(
+        subject=correction.employee,
+        decider=resolved_by,
+        company=correction.tenant,
+        what=_("a change to the working-time record"),
+    )
+
     correction.status = CorrectionStatus.REJECTED
     correction.resolved_by = resolved_by
     correction.resolved_at = timezone.now()
-    correction.resolution_note = note
+    correction.resolution_note = _note_alone(note) if alone else note
     correction.save()
 
 
@@ -573,7 +673,20 @@ def _create(correction: PunchCorrection) -> Punch:
 
     Marked `ADMIN`, because it was not recorded as it happened. Somebody stated
     afterwards that it happened, and the record says so.
+
+    **A correction changes what it was asked to change and nothing else.** On a
+    MODIFY the substitute inherits from the event it replaces everything art. 3
+    makes the record carry --- whether the span was work, a break or standby
+    time (3.c, 3.d, 3.g), on site or remote (3.e), ordinary or overtime and how
+    that overtime is settled (3.f), force majeure and any flexibility measure.
+    Building it from scratch reset all of that silently: correcting the end of a
+    break turned it into a work span, and a nine-hour day came out as zero.
+
+    On an ADD there is nothing to inherit --- nobody ever stated those facts ---
+    so the field defaults stand, which is the honest answer.
     """
+    previous = correction.target if correction.kind == CorrectionKind.MODIFY else None
+
     punch = Punch(
         tenant=correction.tenant,
         employee=correction.employee,
@@ -583,6 +696,13 @@ def _create(correction: PunchCorrection) -> Punch:
         source_application="",
         recorded_by=correction.resolved_by,
     )
+    if previous is not None:
+        punch.interval = previous.interval
+        punch.work_mode = previous.work_mode
+        punch.hours_nature = previous.hours_nature
+        punch.overtime_settlement = previous.overtime_settlement
+        punch.force_majeure = previous.force_majeure
+        punch.flexibility_measure = previous.flexibility_measure
     punch.save()
     return punch
 
