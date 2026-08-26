@@ -32,7 +32,7 @@ from apps.common.permissions import (
 )
 from apps.common.scope import people_queryset
 from apps.users.models import Department, Role, Workplace
-from apps.users.passwords import resolve_token, send_account_email
+from apps.users.passwords import resolve_token, revoke_sessions, send_account_email
 from apps.users.serializers import (
     DepartmentSerializer,
     PasswordResetRequestSerializer,
@@ -577,6 +577,16 @@ class UserViewSet(viewsets.ModelViewSet):
         instance.is_active = False
         instance.save(update_fields=campos)
 
+        # Y se cierran sus sesiones. El acceso deja de valer al instante ---la
+        # autenticación mira `is_active`--- pero el refresco vivía siete días y
+        # rotando, así que el móvil de quien acaba de irse seguía teniendo una
+        # credencial viva.
+        #
+        # Lo que lo hace concreto es que la baja es **reversible**: medido, al
+        # reincorporar a la persona su sesión de antes volvía a funcionar sin que
+        # hubiera vuelto a escribir la contraseña.
+        revoke_sessions(instance)
+
         # Los turnos que le quedaban no se borran, que es la promesa de esta
         # pantalla: dar de baja no borra nada. Se cuentan para decirlo, y a
         # partir de ahora la revisión del cuadrante los marca sola, porque ya
@@ -756,6 +766,15 @@ class PasswordSetView(APIView):
         user.set_password(serializer.validated_data["password"])
         user.save(update_fields=["password"])
         set_current_tenant(user.tenant_id)
+
+        # Y se cierran las sesiones que hubiera abiertas, **antes** de emitir la
+        # nueva --- si no, se revocaría la que se acaba de dar.
+        #
+        # Quien cambia su contraseña suele estar haciendo justo esto: recuperar
+        # una cuenta porque cree que le han visto la clave o ha perdido el móvil.
+        # Medido antes de esta línea: ese móvil seguía renovando la sesión y
+        # leyendo datos después del cambio. Recuperar la cuenta no echaba a nadie.
+        revoke_sessions(user)
 
         # Straight in, so nobody has to type the password they just chose.
         return Response(

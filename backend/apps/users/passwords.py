@@ -48,6 +48,42 @@ class AccountTokenGenerator(PasswordResetTokenGenerator):
 token_generator = AccountTokenGenerator()
 
 
+def revoke_sessions(user) -> int:
+    """Cierra todas las sesiones abiertas de esa persona. Devuelve cuántas.
+
+    Un testigo de acceso vive quince minutos y uno de refresco **siete días**, y
+    rota: mientras alguien lo use, se renueva solo. Así que una sesión abierta no
+    caduca por sí sola en ningún plazo útil.
+
+    Los dos momentos en que eso importa se comprobaron y fallaban los dos:
+
+    - **Cambiar la contraseña.** Es lo que hace quien cree que le han visto la
+      clave o ha perdido el móvil, y era exactamente lo que no servía: medido, el
+      dispositivo perdido seguía renovando la sesión y leyendo datos después del
+      cambio. Recuperar la cuenta no echaba a nadie.
+    - **Dar de baja a una persona.** El acceso deja de valer al instante ---la
+      autenticación mira `is_active`--- pero el refresco sobrevivía. Y la baja es
+      reversible: al reincorporarla, la sesión de antes volvía a funcionar sin que
+      hubiera vuelto a escribir su contraseña.
+
+    Se ponen en la lista negra los refrescos vivos, que es lo que ya hace la
+    rotación con el testigo usado --- el mecanismo estaba puesto y no se llamaba
+    desde aquí. Los accesos ya emitidos siguen valiendo hasta quince minutos: son
+    de vida corta a propósito y no hay dónde revocarlos sin consultar la base en
+    cada petición.
+    """
+    from rest_framework_simplejwt.token_blacklist.models import (
+        BlacklistedToken,
+        OutstandingToken,
+    )
+
+    cerradas = 0
+    for vivo in OutstandingToken.objects.filter(user=user):
+        _, creada = BlacklistedToken.objects.get_or_create(token=vivo)
+        cerradas += 1 if creada else 0
+    return cerradas
+
+
 def build_token(user) -> tuple[str, str]:
     """Returns the pair (identifier, token) that travels in the link."""
     return urlsafe_base64_encode(force_bytes(user.pk)), token_generator.make_token(user)
