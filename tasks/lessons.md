@@ -2687,3 +2687,30 @@ quedándose sucio y rompiendo a otras.
 pasa que...» está describiendo un mecanismo, no una peculiaridad de esa prueba.
 Antes de esquivarlo ahí, preguntarse a quién más alcanza --- y si la respuesta es
 «a cualquiera que use este recurso compartido», el arreglo va en el mecanismo.
+
+## 181. Contar lo que hay es más rápido que forzar el fallo que lo produce
+
+Estuve tres intentos montando `mock`s para provocar que un fichero quedara
+huérfano: parchear el almacén, romper el PDF a mitad del lote, hacer fallar el
+rastro. Dos de los tres ni siquiera llegaron a aplicarse ---el atributo no
+existía, el nombre no era ese.
+
+La comprobación que sirvió fue mirar el disco: **4.403 ficheros, 12
+referenciados**. En una consulta estaba el hallazgo, y además con su magnitud, su
+reparto por días y sus nombres, que fue lo que señaló el camino real.
+
+**Regla**: cuando se sospecha que algo deja residuos, contarlos antes de intentar
+fabricar uno. El estado acumulado de una base de desarrollo es un registro de todo
+lo que ha fallado durante meses, y responde de golpe si el fallo existe, cuánto
+pasa y desde cuándo.
+
+## 182. Un `FileField` que se reemplaza no borra el fichero anterior
+
+Django asigna el nuevo y deja el viejo en el almacén. Una señal `post_delete`
+---que es lo que suele escribirse--- cubre el borrado de la fila y **no** cubre
+esto, que es el camino más frecuente: subir el documento bueno después del
+equivocado.
+
+**Regla**: al proteger los ficheros de un modelo hay que cubrir los dos caminos, y
+el de la sustitución va en `pre_save` comparando el nombre anterior con el nuevo.
+Solo ese campo, solo cuando cambia, y en `on_commit` como el otro.

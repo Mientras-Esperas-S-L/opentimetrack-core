@@ -131,3 +131,66 @@ def test_borrar_en_bloque_tambien_se_los_lleva(company, ana, django_capture_on_c
         ana.absences.all().delete()
 
     assert not any(default_storage.exists(r) for r in rutas)
+
+
+@pytest.mark.django_db
+def test_el_justificante_que_se_sustituye_tambien_se_va(
+    company, ana, tmp_path, settings, django_capture_on_commit_callbacks
+):
+    """Lo que faltaba: el fichero viejo cuando llega otro.
+
+    Esta prueba resolvió el fichero que se queda al **borrar la fila**. Quedaba el
+    otro camino y es el más frecuente ---sustituirlo--- porque Django asigna el
+    nuevo y no toca el viejo: quien sube el justificante bueno después del equivocado
+    dejaba el equivocado en el servidor para siempre, sin ninguna fila que lo
+    apunte.
+
+    Medido antes de arreglarlo, en la base de desarrollo: **4.391 huérfanos**
+    frente a doce referenciados, unos mil por tanda. Todos justificantes, que es lo
+    que el art. 9 llama dato sensible, y sin nada que sepa que existen no hay forma
+    de atender una supresión (art. 17) ni de cumplir el plazo de conservación
+    (art. 5.1.e).
+    """
+    settings.MEDIA_ROOT = str(tmp_path)
+    with tenant_context(company.id):
+        absence = request_absence(
+            employee=ana,
+            company=company,
+            absence_type=AbsenceType.PERSONAL,
+            start_date=date(2026, 9, 20),
+            end_date=date(2026, 9, 20),
+            justification=SimpleUploadedFile("malo.pdf", b"%PDF-1.4\nmalo\n"),
+        )
+        equivocado = absence.justification.name
+        assert default_storage.exists(equivocado)
+
+        # El `capture`, por lo mismo que en la prueba de arriba: la limpieza va en
+        # `on_commit` y dentro de una prueba nada confirma nunca.
+        with django_capture_on_commit_callbacks(execute=True):
+            absence.justification = SimpleUploadedFile("bueno.pdf", b"%PDF-1.4\nbueno\n")
+            absence.save(update_fields=["justification"])
+        bueno = absence.justification.name
+
+    assert not default_storage.exists(equivocado), "el justificante sustituido se quedaba en disco"
+    assert default_storage.exists(bueno), "y el nuevo tiene que estar"
+
+
+@pytest.mark.django_db
+def test_guardar_otra_cosa_no_se_lleva_el_justificante(company, ana, tmp_path, settings):
+    """Lo que no puede romperse: solo se borra cuando el fichero **cambia**."""
+    settings.MEDIA_ROOT = str(tmp_path)
+    with tenant_context(company.id):
+        absence = request_absence(
+            employee=ana,
+            company=company,
+            absence_type=AbsenceType.PERSONAL,
+            start_date=date(2026, 9, 21),
+            end_date=date(2026, 9, 21),
+            justification=SimpleUploadedFile("citacion.pdf", b"%PDF-1.4\ncitacion\n"),
+        )
+        guardado = absence.justification.name
+
+        absence.reason = "se corrige el motivo, no el fichero"
+        absence.save(update_fields=["reason"])
+
+    assert default_storage.exists(guardado), "un save de otro campo se llevó el justificante"

@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 97 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 98 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -83,6 +83,7 @@ vuelve a una limpia.
 | La pantalla y el documento dicen lo mismo | limpia | 26/08 v95 | **un cero separaba los dos**: fichar leía 16 y el informe 0 |
 | Lo que la prueba de accesibilidad no miraba | limpia | 26/08 v96 | **doce «Asignar» idénticos** en una pantalla fuera de su lista |
 | Por qué la tanda falla en un sitio distinto cada vez | limpia | 26/08 v97 | **un fallo dejaba un ajuste de empresa cambiado** y rompía a los siguientes |
+| Fallos parciales (qué queda a medias) | limpia | 26/08 v98 | **4.391 justificantes huérfanos**: sustituir uno dejaba el anterior en disco |
 
 ### Ley
 
@@ -140,6 +141,14 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 
 ## Hallazgos abiertos
+
+- **4.391 justificantes huérfanos en el disco de desarrollo.** (v98) 8,1 MiB de
+  ficheros sin ninguna fila que los apunte, acumulados a razón de mil por tanda
+  desde el 12/08. La causa está arreglada ---sustituir un justificante ya borra el
+  anterior--- pero **lo ya acumulado sigue ahí**, y son datos del art. 9. Se
+  limpian comparando `MEDIA_ROOT` con `Absence.objects_all_tenants`, que es como
+  se contaron; no se ha hecho porque borrar ficheros de la base de desarrollo lo
+  decide su dueño. **Para Francisco.**
 
 - **La tanda de navegador falla en una prueba distinta cada vez.** (v96) Tres
   corridas del mismo árbol, sin tocar nada: 274 de 275 pasan siempre y cae una
@@ -286,6 +295,57 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 98 --- Cuatro mil justificantes sin dueño (26/08)
+
+La lente: **fallos parciales.** Qué queda a medias cuando algo del camino falla.
+El teclado, que era la otra candidata, ya estaba hecho ---`33-teclado.spec.js`, y
+su docstring dice que salió limpio.
+
+#### Tres ángulos que salieron limpios, y por qué
+
+- **El rastro antes del zip.** `_many` escribe los asientos de exportación y
+  **después** arma el fichero. Forzando que el PDF de la tercera persona reviente:
+  la descarga da 500 y el rastro suma **+0**. Lo salva `ATOMIC_REQUESTS = True`
+  ---la petición entera es una transacción, y los `on_commit` de `record()` no
+  llegan a correr. El rastro no miente.
+- **El almacén caído al subir.** Con el guardado del fichero reventando, la
+  ausencia **no se crea**: la transacción lo deshace.
+- **La solicitud rechazada.** Una segunda ausencia que se solapa contesta 409 y
+  **no deja su fichero**: el fichero solo se escribe cuando el modelo se guarda.
+
+#### Y el hallazgo, contando lo que hay en disco
+
+En vez de seguir forzando fallos, la comprobación directa: **cuántos ficheros hay
+sin fila que los apunte**.
+
+| | |
+|---|---|
+| ficheros en el almacén | **4.403** |
+| referenciados por una ausencia | **12** |
+| **huérfanos** | **4.391** (8,1 MiB) |
+
+Y repartidos por todos los días con tandas ---1.226 el 12/08, 975 el 13, 841 el
+14, 990 hoy---, o sea **unos mil por tanda**.
+
+El camino resultó ser el más frecuente de todos: **sustituir el justificante**.
+Django asigna el nuevo y no toca el viejo, así que quien sube el bueno después del
+equivocado deja el equivocado en el servidor para siempre. Al borrar la fila
+después, la señal de la vuelta 45 se lleva **el actual**; el sustituido llevaba ya
+tiempo sin dueño.
+
+Eso es exactamente lo que aquella vuelta quería evitar y dejó escrito: sin nada que
+sepa que el fichero existe no se puede atender una supresión (art. 17) ni cumplir
+el plazo de conservación (art. 5.1.e). Y son justificantes, art. 9.
+
+Arreglado con una señal `pre_save` que reutiliza `descartar_justificante`, mirando
+solo ese campo y solo cuando de verdad cambia --- con prueba de que un `save()` de
+otro campo no se lleva el fichero por delante.
+
+**Los 4.391 que ya están en disco no se han tocado**: son de la base de desarrollo
+y borrar ficheros de ahí lo decide su dueño. Queda en hallazgos abiertos.
+
+2 pruebas nuevas (1.138 en el backend).
 
 ### Vuelta 97 --- Un fallo que fabricaba los siguientes (26/08)
 

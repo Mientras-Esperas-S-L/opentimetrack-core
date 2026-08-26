@@ -10,7 +10,7 @@ import logging
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, pre_save
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
@@ -570,6 +570,38 @@ def descartar_justificante(instance) -> None:
             logger.warning("No se pudo borrar el justificante %s", nombre, exc_info=True)
 
     transaction.on_commit(quitarlo)
+
+
+@receiver(pre_save, sender=Absence)
+def _borrar_el_justificante_que_se_sustituye(sender, instance, **kwargs):
+    """El anterior se va cuando llega otro. Lo que faltaba del art. 17.
+
+    La vuelta 45 resolvió el fichero que se queda cuando **se borra la fila**.
+    Quedaba el otro camino, y es el más frecuente: **sustituirlo**. Django asigna
+    el nuevo y no toca el viejo, así que quien sube el parte bueno después del
+    equivocado deja el equivocado en el servidor para siempre, sin ninguna fila
+    que lo apunte.
+
+    Medido en la base de desarrollo: **4.391 ficheros huérfanos** frente a doce
+    referenciados, unos mil por cada tanda de pruebas. Todos justificantes, que es
+    justamente lo que el art. 9 llama dato sensible.
+
+    Al borrar la fila, la señal de borrado se lleva **el actual**; el sustituido
+    ya llevaba tiempo sin dueño.
+
+    Solo mira este campo y solo cuando de verdad cambia: un `save()` que toca
+    otra cosa no puede llevarse el justificante por delante.
+    """
+    if not instance.pk:
+        return
+
+    anterior = sender.objects_all_tenants.filter(pk=instance.pk).first()
+    if anterior is None or not anterior.justification:
+        return
+    if anterior.justification.name == getattr(instance.justification, "name", None):
+        return
+
+    descartar_justificante(anterior)
 
 
 @receiver(post_delete, sender=Absence)
