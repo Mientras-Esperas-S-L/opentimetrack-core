@@ -11,9 +11,18 @@ DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
 # The Vite SPA runs outside the API container.
+#
+# El puerto sale de `OTT_PORT_WEB`, el mismo que publica el compose. Estaba
+# escrito a mano, y eso convertía una opción documentada en una trampa: quien
+# mueve el puerto ---para levantar esto junto a otro proyecto, que es justo por
+# lo que existe la variable--- se encuentra con que no puede entrar, y la
+# pantalla le dice «No hay conexión con el servidor», que apunta a cualquier
+# sitio menos a CORS. Un valor por defecto que se contradice con otro valor por
+# defecto del mismo repositorio es peor que no tenerlo.
+_PUERTO_WEB = env.int("OTT_PORT_WEB", default=3000)
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",
-    default=["http://localhost:3000", "http://127.0.0.1:3000"],
+    default=[f"http://localhost:{_PUERTO_WEB}", f"http://127.0.0.1:{_PUERTO_WEB}"],
 )
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

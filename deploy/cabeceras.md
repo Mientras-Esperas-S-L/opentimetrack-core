@@ -27,7 +27,7 @@ Content-Security-Policy:
   style-src 'self' 'unsafe-inline';
   img-src 'self' data: blob:;
   font-src 'self' data:;
-  connect-src 'self' https://API.EJEMPLO.COM;
+  connect-src 'self' https://API.EJEMPLO.COM https://ALMACEN.EJEMPLO.COM;
   frame-ancestors 'none';
   base-uri 'self';
   form-action 'self';
@@ -43,6 +43,17 @@ nonces si algún día se sirve la SPA desde Django, que no es el caso.
 **`connect-src` tiene que nombrar la API.** Va en otro origen —`CORS_ALLOWED_ORIGINS`
 existe justo por eso—, así que con `'self'` a secas no se puede llamar a nada.
 Sustituir por el dominio real.
+
+**Y también el almacén de objetos, si lo hay.** `STORAGE_BACKEND=s3` es el valor
+por defecto en producción, y con él la descarga de un justificante no la sirve la
+API: responde un 302 al dominio del almacén, con una URL firmada de vida corta.
+El navegador vuelve a evaluar la CSP **sobre el destino de la redirección**, así
+que si ese origen no está nombrado, la descarga se bloquea.
+
+Y se bloquea en silencio, que es lo peor: no hay error de la API que enseñar, y
+quien lo sufre lee «la aplicación no responde» en vez de «falta un dominio en una
+cabecera». Con `STORAGE_BACKEND=filesystem` no hace falta, porque ahí el fichero
+lo sirve la propia API.
 
 **`img-src` lleva `data:` y `blob:`.** Las descargas de justificantes e informes
 se hacen creando un blob en el cliente.

@@ -89,8 +89,14 @@ sistema no se inventa una hora de fin.
   descanso sin haber fichado entrada.
 - **No te deja fichar entrada.** Tienes una ausencia aprobada para hoy. Sí te
   deja cerrar una jornada que ya habías abierto.
-- **Te han dado de baja.** Aunque tu sesión siga abierta, el fichaje se
-  rechaza.
+- **Te han dado de baja.** La sesión deja de valer en el acto, aunque la tuvieras
+  abierta: la siguiente cosa que hagas te devuelve a la pantalla de entrada, y
+  ahí ya no puedes entrar. No es solo el fichaje --- tampoco puedes consultar tu
+  registro.
+
+  Tus fichajes **no se borran**: se conservan cuatro años, como los de todo el
+  mundo, y salen en el informe que la empresa entrega. Para pedir una copia hay
+  que pedírsela a la empresa.
 
 ---
 
@@ -501,6 +507,18 @@ El token va en la cabecera `Authorization: Bearer …` de cada petición.
 
 **Se pueden tener varios tokens a la vez**, y es lo que permite cambiarlos sin
 cortar el servicio: emites el nuevo, lo pones en el terminal, revocas el viejo.
+
+### Lo que hay que decirle a quien programe el terminal
+
+Cada fichaje tiene que ir con una cabecera `Idempotency-Key` que lo identifique:
+la puerta, la persona y el turno, por ejemplo. Sin ella se rechaza.
+
+No es burocracia. Si la respuesta se pierde por un corte de red, el terminal
+vuelve a intentarlo, y sin esa clave el segundo intento **no repite la entrada:
+graba una salida**, porque el sistema deduce el tipo de lo que había. Una jornada
+de nueve horas se queda en treinta segundos, y arreglarlo ya no es fichar otra
+vez: hace falta una corrección con el acuerdo de las dos partes. Con la clave, el
+reintento devuelve el mismo fichaje y no graba nada.
 
 Lo que registre una aplicación va marcado como **En su nombre** o **Terminal**,
 nunca como si lo hubiera hecho la persona. Son pruebas distintas y quien lea el

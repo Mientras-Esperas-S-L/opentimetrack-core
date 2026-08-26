@@ -3,6 +3,14 @@
 #   podman compose up --build
 #
 # Objetivo declarado: de cero a la API respondiendo en menos de 15 minutos.
+#
+# Los puertos que se publican en el host salen de variables con valor por
+# defecto, de modo que quien no defina nada sigue teniendo 8000/3000/5432/6379
+# como hasta ahora. Se parametrizaron para poder convivir con otra pila en la
+# misma maquina: si Geosian esta levantado, ocupa 8000 y 6379 y esta no arranca.
+# Los valores propios van en el .env (OTT_PORT_API, OTT_PORT_WEB, OTT_PORT_DB,
+# OTT_PORT_REDIS). Ojo: OTT_PORT_API tambien viaja a VITE_API_URL, porque el
+# navegador llama a la API por el puerto del host, no por el de la red interna.
 
 name: opentimetrack
 
@@ -22,7 +30,7 @@ services:
       # publican por año, y un despliegue puede querer los suyos.
       - ./holidays:/holidays:ro,z
     ports:
-      - "8000:8000"
+      - "${OTT_PORT_API:-8000}:8000"
     env_file: .env
     depends_on:
       db:
@@ -85,9 +93,9 @@ services:
       - ./frontend:/app:z
       - /app/node_modules
     ports:
-      - "3000:3000"
+      - "${OTT_PORT_WEB:-3000}:3000"
     environment:
-      VITE_API_URL: http://localhost:8000/api
+      VITE_API_URL: http://localhost:${OTT_PORT_API:-8000}/api
 
   db:
     image: docker.io/library/postgres:18-alpine
@@ -101,7 +109,7 @@ services:
       # `pg_upgrade --link` no tropieza con el limite del punto de montaje.
       - pgdata:/var/lib/postgresql
     ports:
-      - "5432:5432"
+      - "${OTT_PORT_DB:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ott -d opentimetrack"]
       interval: 5s
@@ -114,7 +122,7 @@ services:
     volumes:
       - redisdata:/data
     ports:
-      - "6379:6379"
+      - "${OTT_PORT_REDIS:-6379}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
