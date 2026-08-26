@@ -58,7 +58,10 @@ class PunchSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_time_zone(self, obj) -> str:
-        return str(obj.employee.tzinfo)
+        # El que se guardó con el fichaje. El de la persona solo para los
+        # anteriores a que se guardara: leer una hora vieja con el huso de hoy
+        # convierte un cambio de organización en un cambio del registro.
+        return obj.time_zone or str(obj.employee.tzinfo)
 
 
 #: Lo que cabe en la evidencia de un fichaje, en caracteres del JSON serializado.

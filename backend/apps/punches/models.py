@@ -194,6 +194,24 @@ class Punch(TenantOwnedModel):
     # Server time, in UTC. Never supplied by the client.
     timestamp = models.DateTimeField(_("timestamp"), db_index=True)
 
+    #: El huso en el que se vivió esa hora, **congelado aquí**.
+    #:
+    #: La marca se guarda en UTC y hay que leerla en algún huso para decir «las
+    #: nueve». Ese huso salía de la persona ---su centro, o la empresa si no
+    #: tiene---, y eso es un dato de **hoy** aplicado a un hecho de **entonces**:
+    #: quien fichó a las 09:00 en Las Palmas y hoy está en Madrid aparecía
+    #: fichando a las 10:00, y su registro de mayo cambiaba al retirar el centro
+    #: en el que había estado. Medido: la misma fila del informe pasaba de
+    #: `09:00;17:00` a `10:00;18:00` por borrar un centro de trabajo.
+    #:
+    #: El art. 34.9 quiere el registro **fiable**, y un asiento que se relee
+    #: distinto según cómo esté organizada la empresa hoy no lo es. Por lo mismo
+    #: que `hash_integrity` congela el contenido: el hecho se guarda como fue.
+    #:
+    #: Vacío en los anteriores a este campo. Quien lo lee cae entonces al huso de
+    #: la persona, que es la mejor respuesta disponible para ellos.
+    time_zone = models.CharField(_("time zone"), max_length=64, blank=True)
+
     # Where it came from, for the audit trail.
     source = models.CharField(
         _("source"), max_length=16, choices=PunchSource, default=PunchSource.WEB

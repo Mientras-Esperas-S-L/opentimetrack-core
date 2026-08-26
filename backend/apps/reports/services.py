@@ -156,6 +156,25 @@ def _agreed_as_text(employee, rules) -> str:
     return text
 
 
+def zone_of(punch, fallback):
+    """El huso con el que se grabó ese fichaje, o el de la persona si no lo tiene.
+
+    Los anteriores a que el campo existiera caen al de la persona, que es la
+    mejor respuesta disponible para ellos y la que tenían antes.
+    """
+    import zoneinfo
+
+    guardado = getattr(punch, "time_zone", "")
+    if not guardado:
+        return fallback
+    try:
+        return zoneinfo.ZoneInfo(guardado)
+    except Exception:
+        # Un huso que ya no existe en la base de datos del sistema no puede
+        # tumbar el informe del art. 34.9.
+        return fallback
+
+
 def build_report(*, employee, company, date_from: date, date_to: date) -> ReportData:
     """Collect the working days of one person over a period."""
     from django.utils import timezone
@@ -166,6 +185,11 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
     # Theirs, which is their workplace's or the company's. A record for somebody
     # in Las Palmas rendered in Madrid time would show every day shifted by an
     # hour, and the ones that start before 01:00 on the wrong date entirely.
+    #
+    # Es el huso de **hoy**, y se usa para elegir los días del periodo y para
+    # agrupar. Cada evento se lee además con el que se guardó con él, que es lo
+    # que impide que el registro cambie hacia atrás: medido, borrar un centro de
+    # trabajo movía una fila de `09:00;17:00` a `10:00;18:00`.
     zone = employee.tzinfo
 
     # El margen cubre el tope de la empresa y no un día fijo: con guardias de
@@ -275,7 +299,7 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
                 row.imported = True
             elif event.was_delegated:
                 row.delegated = True
-            local = event.timestamp.astimezone(zone)
+            local = event.timestamp.astimezone(zone_of(event, zone))
             kind = event.interval
 
             if event.punch_type == PunchType.IN:

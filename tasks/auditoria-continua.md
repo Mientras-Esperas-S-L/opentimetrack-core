@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 92 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 93 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -78,6 +78,7 @@ vuelve a una limpia.
 | Lo que las tandas dejan detrás | limpia | 26/08 v90 | — **sin hallazgo**; la suite limpia bien y el sedimento es histórico |
 | El camino de vuelta (deshacer) | limpia | 26/08 v91 | **una propuesta equivocada no se podía retirar**; la otra parte tenía que pararla |
 | Lo que se borra de verdad | limpia | 26/08 v92 | **un responsable hacía desaparecer la solicitud de otro**, sin fila y sin rastro |
+| Lo que se lleva un borrado (cascadas) | limpia | 26/08 v93 | **el registro cambiaba una hora hacia atrás** al retirar un centro |
 
 ### Ley
 
@@ -262,6 +263,67 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 93 --- El registro que cambiaba hacia atrás (26/08)
+
+La lente: **qué se lleva por delante un borrado.** Seguía el hilo de la vuelta
+anterior: si cancelar borraba sin dejar rastro, ¿qué más se borra, y qué cuelga en
+cascada de lo que sí se puede borrar?
+
+#### Tres candidatos que salieron limpios
+
+- **El `delete()` de `audit/trail.py`** parecía borrar el rastro. No: es el mixin
+  de los viewsets y borra el objeto que gestionan, anotando antes con la foto de
+  sus campos. «Antes de borrar: después el objeto ya no puede decir cómo se
+  llamaba.» Ejemplar.
+- **El catálogo de permisos** está protegido: borrar un tipo que alguien usó
+  contesta 409 `leave_type_in_use`, y borrar uno sin usar deja su asiento en el
+  rastro. Mi hipótesis era que al no llevar `StructureTrail` no anotaba nada, y
+  era falsa.
+- **El recibo de idempotencia** cuelga en cascada de la aplicación integrada, y su
+  docstring explica por qué está ahí y no en el fichaje: «el registro de lo que
+  pasó se queda exactamente como estaba».
+
+#### Y el hallazgo, por el único camino que quedaba
+
+Un centro de trabajo se puede retirar cuando no queda nadie dentro. Y con él se
+van sus festivos locales, que era lo que iba buscando. Pero al comparar el informe
+antes y después apareció otra cosa, más grave:
+
+| | la misma fila del informe |
+|---|---|
+| antes de retirar el centro | `2026-05-30;09:00;17:00;08:00` |
+| después | `2026-05-30;10:00;18:00;08:00` |
+
+**Una hora de diferencia en el documento del art. 34.9.** No era el festivo: era
+el **huso**. El centro estaba en `Atlantic/Canary` y, al retirarlo, la persona
+hereda el de la empresa, `Europe/Madrid`.
+
+La marca se guarda en UTC y hay que leerla en algún huso para decir «las nueve».
+Ese huso salía de `employee.tzinfo` ---un dato de **hoy** aplicado a un hecho de
+**entonces**. Y el `hash_integrity` seguía cuadrando, porque la fila no había
+cambiado: lo que cambiaba era **cómo se leía**.
+
+Hay tres caminos al mismo sitio, y el borrado es el menos probable de los tres:
+retirar el centro, **cambiarle el huso**, o **mover a la persona a otro centro**.
+Los tres reescribían su registro anterior.
+
+#### El arreglo: el huso se congela con la hora
+
+`Punch.time_zone`, por lo mismo que `hash_integrity` congela el contenido. Lo
+escriben el fichaje y la corrección ---que cambia la hora, no el sitio donde se
+vivió--- y lo leen el informe y la API.
+
+La vuelta 70 ya había puesto el huso en cada fichaje de la API, y por eso creí un
+momento que estaba resuelto: pero lo puso **derivado** con un
+`SerializerMethodField` sobre el centro actual, así que se movía con la empresa.
+
+Lo que no se rompe, y va con prueba: los fichajes anteriores al campo caen al huso
+de la persona ---la mejor respuesta que hay para ellos, y la que tenían--- y un
+huso que ya no exista en la base del sistema no tumba el informe.
+
+5 pruebas nuevas (1.128 en el backend) y una migración. Comprobado que los tres
+caminos caen sin el arreglo.
 
 ### Vuelta 92 --- La solicitud que desaparecía (26/08)
 

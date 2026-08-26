@@ -2451,3 +2451,27 @@ escriben igual.
 ---de `def esa` a `def la_siguiente`--- y sustituir ahí. Buscar la línea en todo el
 fichero encuentra a sus hermanas, y en el mejor caso aborta; en el peor, cambia la
 transición equivocada.
+
+## 165. Un dato de hoy aplicado a un hecho de entonces reescribe el pasado
+
+El informe leía cada marca UTC con `employee.tzinfo`: el huso del centro **actual**
+de la persona. Retirar ese centro, cambiarle el huso o mudar a la persona movían
+sus horas de mayo una hora, en el documento del art. 34.9. Y el hash de integridad
+seguía cuadrando, porque la fila no cambiaba --- cambiaba cómo se leía.
+
+**Regla**: en un registro con valor probatorio, todo lo que hace falta para
+**interpretar** un hecho se congela con el hecho, no se consulta al presente.
+Huso, tarifa, jornada pactada, redondeo: si vive en una tabla que alguien puede
+editar, el asiento de hace un año se lee distinto mañana. El criterio es el mismo
+que ya aplicaba el hash al contenido.
+
+## 166. «Expuesto en la API» no es «guardado»
+
+La vuelta 70 puso el huso en cada fichaje, y al ver el campo dije que esto ya
+estaba resuelto. Lo estaba a medias: era un `SerializerMethodField` derivado del
+centro actual, así que se movía con la empresa igual que el informe.
+
+**Regla**: cuando un campo aparece en una respuesta de la API, mirar si es una
+columna o un método antes de contar con él para nada que tenga que durar. Un
+`SerializerMethodField` es una vista del presente; solo una columna congela el
+pasado.

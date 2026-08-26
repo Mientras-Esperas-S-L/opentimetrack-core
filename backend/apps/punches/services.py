@@ -486,6 +486,10 @@ def register_punch(
         punch_type=punch_type,
         # Server time. Never from the client, ever.
         timestamp=timezone.now(),
+        # Y el huso en el que se vive esa hora, congelado con ella: leerla más
+        # tarde con el huso de hoy convierte un cambio de organización en un
+        # cambio del registro.
+        time_zone=str(employee.tzinfo),
         source=source,
         source_application=source_application,
         recorded_by=recorded_by,
