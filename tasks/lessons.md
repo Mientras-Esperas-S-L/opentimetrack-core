@@ -2872,3 +2872,26 @@ y una fila desfasada manda a alguien a implementar lo que ya existe.
 no se lee. Y al implementar algo que una tabla daba por ausente, la tabla entra
 en el mismo cambio que el código. De catorce filas comprobadas así en la vuelta
 101, trece eran correctas y una llevaba meses mintiendo.
+
+## 193. Un ayudante que avisa de para qué no sirve se está usando justo para eso
+
+`rows()` en `services/api.js` lleva escrito encima: «solo para endpoints que
+responden con todo; usarlo en uno paginado tira `count` y `next` --- que es
+exactamente lo que pasaba, y hacía que los fichajes, las personas y el rastro
+enseñaran las cincuenta primeras filas y no dijeran nada del resto».
+
+El aviso es de cuando se arreglaron esas tres pantallas. Quedaron **cinco
+llamadas más** al mismo ayudante sobre endpoints igual de paginados
+---departamentos, centros, festivos, tipos de permiso y patrones de turno---, y
+ahí siguieron. Ninguna vista del backend desactiva la paginación, así que la
+condición del comentario no la cumplía nadie.
+
+Duele más en un catálogo que en una lista: una lista con `Pager` dice «1-50 de
+1.284», pero un catálogo llena un **selector**, y lo que no se cargó no se puede
+elegir. No hay error, la opción no está.
+
+**Regla**: cuando arregles un fallo en tres sitios y escribas el aviso, **cuenta
+los que faltan en el mismo cambio**. Un comentario que dice «no uses esto así»
+es una lista de deberes pendiente, no una protección: `grep` de quién llama al
+ayudante y decidir uno por uno. Y al revés, al auditar: **los comentarios que
+avisan de un mal uso son el mejor sitio donde buscar ese mal uso**.

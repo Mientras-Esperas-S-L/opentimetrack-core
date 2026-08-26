@@ -277,6 +277,32 @@ const periodoEntero = async (path, params, { tope = 20 } = {}) => {
   return { rows: filas, count: ultima.count, hasMore: true }
 }
 
+/** Un catálogo entero, que es como el producto lo necesita.
+ *
+ *  `rows()` se queda con la primera página y tira `next` sin decir nada. Para
+ *  una lista con `Pager` da igual ---la pantalla ya dice «1-50 de 1.284»---,
+ *  pero un catálogo alimenta un **selector**, y lo que no se carga no se puede
+ *  elegir: nadie ve un error, sencillamente la opción no está.
+ *
+ *  Ninguna vista del backend desactiva la paginación, así que estos cinco
+ *  venían cortados a cincuenta desde siempre. Hoy el catálogo de permisos va
+ *  por treinta y dos, y los festivos de un año pasan de cincuenta en cuanto la
+ *  empresa tiene centros en varios municipios --- dos locales por cada uno.
+ *
+ *  Si de verdad hubiera más de mil, `periodoEntero` deja de pedir y aquí se
+ *  dice: callarlo sería el mismo fallo con otro número.
+ */
+const catalogoEntero = async (path, params) => {
+  const { rows: filas, count, hasMore } = await periodoEntero(path, params)
+  if (hasMore) {
+    console.warn(
+      `[catálogo] ${path} tiene ${count} elementos y se han traído ${filas.length}: ` +
+        'lo que falta no se podrá elegir',
+    )
+  }
+  return filas
+}
+
 export const getHealth = () => get('/health/')
 
 // ------------------------------------------------------------------- session
@@ -449,7 +475,7 @@ export const reactivateEmployee = async (id) =>
   (await api.patch(`/employees/${id}/`, { is_active: true })).data
 export const inviteEmployee = (id) => post(`/employees/${id}/invite/`)
 
-export const getDepartments = async (params) => rows(await get('/departments/', params))
+export const getDepartments = async (params) => catalogoEntero('/departments/', params)
 export const createDepartment = (payload) => post('/departments/', payload)
 export const updateDepartment = async (id, payload) =>
   (await api.patch(`/departments/${id}/`, payload)).data
@@ -457,7 +483,7 @@ export const deleteDepartment = async (id) => (await api.delete(`/departments/${
 
 /** Centros de trabajo. Cualquiera los lee: una persona tiene derecho a saber
  *  dónde se lleva su registro y qué calendario de festivos se le aplica. */
-export const getWorkplaces = async (params) => rows(await get('/workplaces/', params))
+export const getWorkplaces = async (params) => catalogoEntero('/workplaces/', params)
 export const createWorkplace = (payload) => post('/workplaces/', payload)
 export const updateWorkplace = async (id, payload) =>
   (await api.patch(`/workplaces/${id}/`, payload)).data
@@ -465,7 +491,7 @@ export const deleteWorkplace = async (id) => (await api.delete(`/workplaces/${id
 
 /** Festivos. Cualquiera los lee: son los días que no se espera que trabaje, y
  *  de ellos depende su saldo de vacaciones. */
-export const getHolidays = async (params) => rows(await get('/holidays/', params))
+export const getHolidays = async (params) => catalogoEntero('/holidays/', params)
 export const createHoliday = (payload) => post('/holidays/', payload)
 export const deleteHoliday = async (id) => (await api.delete(`/holidays/${id}/`)).data
 
@@ -473,7 +499,7 @@ export const deleteHoliday = async (id) => (await api.delete(`/holidays/${id}/`)
  *  un permiso que no ve, y lo que necesita saber antes de pedirlo es cuánto da
  *  y de qué artículo sale. */
 export const getLeaveTypes = async (params) =>
-  rows(await get('/leave-types/', { is_active: true, ...params }))
+  catalogoEntero('/leave-types/', { is_active: true, ...params })
 export const createLeaveType = (payload) => post('/leave-types/', payload)
 export const updateLeaveType = async (id, payload) =>
   (await api.patch(`/leave-types/${id}/`, payload)).data
@@ -503,7 +529,7 @@ export const getLeaveUsage = async (params) => rows(await get('/leave-types/usag
 
 // ---------------------------------------------------------------------- shifts
 
-export const getShiftPatterns = async () => rows(await get('/shift-patterns/'))
+export const getShiftPatterns = async () => catalogoEntero('/shift-patterns/')
 export const createShiftPattern = (payload) => post('/shift-patterns/', payload)
 export const updateShiftPattern = async (id, payload) =>
   (await api.patch(`/shift-patterns/${id}/`, payload)).data

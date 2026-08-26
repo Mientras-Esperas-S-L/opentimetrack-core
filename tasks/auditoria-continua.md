@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 101 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 102 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -312,6 +312,66 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 102 --- Los cinco catálogos que venían cortados a cincuenta (27/08)
+
+La lente sale de la lección de la vuelta anterior, que es como salió también la
+99 de la 98: **qué más asume que cabe en una página**. El guard del sedimento
+casi se queda ciego por eso, y la pregunta era si el producto tenía el mismo
+punto ciego.
+
+Lo tenía, y el propio código lo decía. `rows()` en `services/api.js` lleva
+escrito encima que es «solo para endpoints que responden con todo» y que usarlo
+en uno paginado tira `count` y `next` ---«que es exactamente lo que pasaba, y
+hacía que los fichajes, las personas y el rastro enseñaran las cincuenta
+primeras filas»---. Ese aviso es de cuando se arreglaron esas tres pantallas.
+**Quedaron cinco llamadas más sin tocar**, y ninguna vista del backend desactiva
+la paginación, así que la condición del comentario no la cumplía nadie:
+
+| Catálogo | Cuántos hay hoy | Para qué se usa |
+|---|---|---|
+| `/leave-types/` | **32** de 50 | el selector de «qué permiso pido» |
+| `/holidays/` | 0 en la demo | los días que no se espera que se trabaje |
+| `/departments/` | 4 | selector de departamento |
+| `/workplaces/` | 2 | selector de centro |
+| `/shift-patterns/` | 7 | selector de patrón de turno |
+
+**Duele distinto en un catálogo que en una lista.** Una lista con `Pager` dice
+«1-50 de 1.284» y quien mira sabe que hay más. Un catálogo llena un **selector**:
+lo que no se cargó no se puede elegir, no sale ningún error, la opción
+sencillamente no está. Y los dos comentarios que hay sobre estos getters dicen
+para qué tienen que estar completos: de los festivos «depende su saldo de
+vacaciones», y del catálogo de permisos, «nadie puede pedir un permiso que no
+ve».
+
+El de permisos va por **32 de 50**, y crece con cada convenio. Los festivos pasan
+de cincuenta en cuanto la empresa tiene centros en varios municipios: dos locales
+por cada uno, más los nacionales y autonómicos.
+
+#### Qué se ha hecho
+
+- **No se ha escrito ningún mecanismo nuevo.** `periodoEntero()` ya existía en el
+  mismo fichero ---recorre páginas, con tope de veinte y `hasMore` para no
+  mentir---, así que los cinco getters pasan por él a través de
+  `catalogoEntero()`. Si alguna vez hubiera más de mil, se dice por consola en
+  vez de callarlo.
+- **`48-el-catalogo-entero.spec.js`**: crea 55 festivos ---cinco más de los que
+  caben--- en el año que viene, comprueba que la pantalla enseña el de fecha más
+  tardía y que el contador dice 55, y los retira en un `finally`.
+- **El guard de la vuelta 101 vigila ahora también los festivos**, que son
+  catálogo y no estaban: un día marcado como festivo cambia lo que se espera que
+  la gente trabaje.
+
+#### Comprobado, no supuesto
+
+Los nueve endpoints que pasaban por `rows()` se midieron uno a uno con la sesión
+real: **cinco vienen paginados y cuatro planos** ---`/leave-types/usage/`,
+`/shifts/roster/`, `/absences/calendar/` y `/absences/pending/`---, y esos cuatro
+se han dejado como estaban.
+
+Y la prueba se validó al revés antes de darla por buena: **con el arreglo
+revertido falla**, diciendo que el festivo 55 no llegó a la pantalla. Sin eso no
+habría sabido si prueba algo.
 
 ### Vuelta 101 --- El guard del sedimento (26/08)
 

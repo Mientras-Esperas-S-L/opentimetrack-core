@@ -140,6 +140,28 @@ test.describe('Al terminar la tanda', () => {
     expect(sobran, `una prueba creó un departamento y no lo retiró. ${COMO_SE_ARREGLA}`).toEqual([])
   })
 
+  test('no quedan festivos inventados', async ({ page }) => {
+    await irA(page, '/panel/centros', 'Centros de trabajo')
+
+    // Por año, que es como los pide la pantalla: el de ahora y sus dos vecinos,
+    // que son los únicos que el selector ofrece y por tanto los únicos donde una
+    // prueba puede haber dejado algo.
+    const ahora = new Date().getFullYear()
+    const sobran = []
+    for (const año of [ahora - 1, ahora, ahora + 1]) {
+      const dias = await listaEntera(page, '/holidays/', `&year=${año}`)
+      sobran.push(
+        ...dias.filter((d) => DE_PRUEBA.test(d.name ?? '')).map((d) => `${d.day} ${d.name}`),
+      )
+    }
+
+    expect(
+      sobran,
+      'una prueba inventó festivos y no los retiró. Un día marcado como festivo ' +
+        `cambia lo que se espera que la gente trabaje. ${COMO_SE_ARREGLA}`,
+    ).toEqual([])
+  })
+
   test('los ajustes de la empresa quedan como estaban', async ({ page }) => {
     await irA(page, '/panel/ajustes', 'Ajustes de la empresa')
 
