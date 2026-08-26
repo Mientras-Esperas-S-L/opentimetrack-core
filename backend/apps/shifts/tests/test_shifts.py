@@ -231,9 +231,24 @@ def test_too_many_hours_in_a_week_are_reported(company, worker):
 
 
 @pytest.mark.django_db
-def test_a_week_only_half_inside_the_window_is_not_reported(company, worker):
-    """Reporting a half-counted week as an excess is worse than saying nothing:
-    whoever reads it goes looking for hours that are not there."""
+def test_a_week_only_half_inside_the_window_is_counted_whole(company, worker):
+    """Counted whole, not halved --- and not skipped either.
+
+    This used to assert nothing was reported, and the reasoning held for what it
+    could do then: reporting a **half-counted** week as an excess is worse than
+    saying nothing, because whoever reads it goes looking for hours that are not
+    there.
+
+    What it did instead was skip the week, and that left the week of every month
+    boundary unreviewed: forty-five hours across the end of June and the start of
+    July showed up neither in June nor in July. Those shifts are in the database,
+    so `review_roster` now reads out to the Monday and Sunday of the edge weeks
+    and the week is measured entire.
+
+    Seven mornings are 56 hours. The figure proves which of the three behaviours
+    is in place: 56 is the whole week, 40 would be the five days inside the
+    window, and nothing at all would be the old skip.
+    """
     with tenant_context(company.id):
         for offset in range(7):
             shift(company, worker, date(2026, 9, 7) + timedelta(days=offset), MORNING)
@@ -241,7 +256,10 @@ def test_a_week_only_half_inside_the_window_is_not_reported(company, worker):
         # Window cuts the week in half.
         findings = review_roster(company=company, first=date(2026, 9, 9), last=date(2026, 9, 30))
 
-    assert [f for f in findings if f.code == "weekly_hours_exceeded"] == []
+    excess = [f for f in findings if f.code == "weekly_hours_exceeded"]
+    assert len(excess) == 1, excess
+    assert "56" in excess[0].message, excess[0].message
+    assert excess[0].day == date(2026, 9, 7), "the warning belongs to the Monday of that week"
 
 
 @pytest.mark.django_db

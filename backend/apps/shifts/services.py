@@ -222,12 +222,25 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     working days is a property of the boundary between two shifts, so checking a
     month in isolation would miss whether the first day of it clashes with the
     last day of the month before.
+
+    **Y las semanas de los bordes, enteras.** El tope semanal es una propiedad de
+    la semana, y una semana a caballo de dos meses no cabe en ninguno de los dos:
+    revisando junio no salía, revisando julio tampoco, y solo aparecía mirando los
+    dos juntos. Medido con cuarenta y cinco horas planificadas del 29 de junio al
+    5 de julio de 2026 --- por encima de las cuarenta del art. 34.1, y quien revisa
+    el cuadrante mes a mes no lo veía nunca.
+
+    Los demás chequeos no se enteran: todos filtran por `first`/`last` antes de
+    reportar, así que leer más días les da contexto y no les hace hablar de días
+    que nadie pidió.
     """
     rules = WorkingTimeRules.for_company(company)
 
-    shifts = Shift.objects.filter(
-        day__gte=first - timedelta(days=1), day__lte=last + timedelta(days=1)
-    ).select_related("employee")
+    # Hasta el lunes de la semana del primer día y el domingo de la del último.
+    desde = first - timedelta(days=first.weekday() or 1)
+    hasta = last + timedelta(days=(6 - last.weekday()) or 1)
+
+    shifts = Shift.objects.filter(day__gte=desde, day__lte=hasta).select_related("employee")
     if employee is not None:
         shifts = shifts.filter(employee=employee)
 
@@ -470,9 +483,16 @@ def _check_weekly_hours(employee_id, roster, rules, first, last, reductions=None
     Reporting it as an excess would be wrong; saying nothing loses the only
     signal that the roster is asking for hours nobody agreed to.
 
-    Weeks only partly inside the window are skipped. Reporting a half-counted
-    week as an excess would be worse than saying nothing: whoever reads it goes
-    looking for hours that are not there and stops trusting the rest.
+    Las semanas que **solapan** el periodo se cuentan enteras, con los turnos de
+    los días de fuera incluidos --- `review_roster` los carga a propósito. Antes se
+    exigía que la semana cupiera dentro y se descartaba si no, y eso dejaba sin
+    revisar la semana de cada borde: la de un mes a caballo del siguiente no salía
+    en ninguno de los dos.
+
+    Lo que sigue sin hacerse, y con razón, es contar **media** semana y avisar de
+    ella: quien lee un exceso a medias va a buscar horas que no están y deja de
+    fiarse del resto. La diferencia es que ahora la semana se cuenta completa en
+    vez de no contarse.
     """
     weeks: dict = {}
     for shift in roster:
@@ -495,7 +515,19 @@ def _check_weekly_hours(employee_id, roster, rules, first, last, reductions=None
             days=min(s.day for s in shifts_of_week).weekday()
         )
         sunday = monday + timedelta(days=6)
-        if monday < first or sunday > last:
+        # Que **solape** el periodo, no que quepa entero dentro.
+        #
+        # Antes se exigía que cupiera, y el razonamiento era bueno para el caso
+        # que tenía delante: contar media semana y avisar es peor que callar,
+        # porque quien lo lee va a buscar horas que no están. Lo que no se
+        # consideró es contar la semana **completa** --- esos turnos están en la
+        # base, solo estaban fuera del rango pedido, y ahora se cargan.
+        #
+        # Sin esto, una semana a caballo de dos meses no cabía en ninguno:
+        # cuarenta y cinco horas del 29 de junio al 5 de julio no salían
+        # revisando junio, ni revisando julio, y quien revisa el cuadrante mes a
+        # mes no las veía nunca.
+        if sunday < first or monday > last:
             continue
 
         hours = sum(s.minutes for s in shifts_of_week) / 60
