@@ -25,6 +25,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.common.exceptions import BusinessRuleError
 from apps.common.four_eyes import refuse_self_decision
 from apps.common.models import TenantOwnedModel
+from apps.common.texto import validate_texto_legible
 from apps.common.transitions import claim
 from apps.punches.models import Punch, PunchSource, PunchType
 
@@ -90,6 +91,7 @@ class PunchCorrection(TenantOwnedModel):
     reason = models.TextField(
         _("reason"),
         help_text=_("Why the record does not match what happened. Required."),
+        validators=[validate_texto_legible],
     )
 
     status = models.CharField(
@@ -110,7 +112,9 @@ class PunchCorrection(TenantOwnedModel):
         verbose_name=_("resolved by"),
     )
     resolved_at = models.DateTimeField(_("resolved at"), null=True, blank=True)
-    resolution_note = models.TextField(_("resolution note"), blank=True)
+    resolution_note = models.TextField(
+        _("resolution note"), blank=True, validators=[validate_texto_legible]
+    )
 
     result = models.ForeignKey(
         Punch,
@@ -139,6 +143,7 @@ class PunchCorrection(TenantOwnedModel):
     employee_dissent = models.TextField(
         _("the person's account"),
         blank=True,
+        validators=[validate_texto_legible],
         help_text=_(
             "Their version, kept beside the change and never instead of it. Art. 4.b "
             "lets the company record the modification and the person their "

@@ -2285,3 +2285,16 @@ mismo árbol y el estado ya recolocado, las 26 del fichero pasan.
 primero los ficheros que tocan datos de la demo y verlos verdes antes de leer
 nada como hallazgo. Y si dos pruebas de guardar-y-recargar caen a la vez, mirar el
 estado de la demo antes que el diff.
+
+## 153. Un `ModelSerializer` hereda los validadores del campo; un `Serializer` no
+
+El validador de texto puesto en los campos del modelo funcionaba en el alta de
+personas y no en las correcciones. La diferencia no era el servicio ni el
+modelo: `EmployeeSerializer` es un `ModelSerializer` y arrastra los
+`validators=[...]` de cada campo, mientras que `CorrectionRequestSerializer` es un
+`serializers.Serializer` con los campos escritos a mano, que no heredan nada.
+
+**Regla**: al añadir un validador a un campo de modelo, mirar por qué serializer
+entra ese dato. Si es un `Serializer` a mano, hay que declararlo también ahí --- y
+si el servicio crea con `objects.create()`, ese es el **único** sitio donde se va
+a ejecutar.

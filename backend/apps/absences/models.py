@@ -16,6 +16,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.absences.uploads import validate_content, validate_extension, validate_size
 from apps.common.models import TenantOwnedModel
+from apps.common.texto import validate_texto_legible
 
 logger = logging.getLogger(__name__)
 
@@ -171,7 +172,7 @@ class LeaveType(TenantOwnedModel):
         ),
     )
     needs_justification = models.BooleanField(_("needs a supporting document"), default=False)
-    note = models.TextField(_("note"), blank=True)
+    note = models.TextField(_("note"), blank=True, validators=[validate_texto_legible])
     is_active = models.BooleanField(_("active"), default=True)
 
     class Meta:
@@ -282,7 +283,7 @@ class Absence(TenantOwnedModel):
             "it. Empty means the whole day. 40 means they still work 60 %."
         ),
     )
-    reason = models.TextField(_("reason"), blank=True)
+    reason = models.TextField(_("reason"), blank=True, validators=[validate_texto_legible])
 
     #: Quién la metió, que no siempre es de quién es.
     #:

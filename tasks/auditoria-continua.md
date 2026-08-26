@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 86 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 87 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -72,6 +72,7 @@ vuelve a una limpia.
 | La persona que se mueve (cambios de departamento) | limpia | 26/08 v84 | **ceder un departamento ampliaba a quien lo cedía** a toda la plantilla |
 | El borde del año (Nochevieja a caballo) | limpia | 26/08 v85 | **un 500 por una regla del modelo**; las vacaciones a caballo no salían en el año siguiente |
 | Lo que las vueltas anteriores dejaron desfasado | limpia | 26/08 v86 | **una corrección que no podía resolver nadie**; dos textos que decían lo contrario de lo que pasa |
+| El texto que escribe la persona (Unicode) | limpia | 26/08 v87 | **un motivo que en pantalla dice otra cosa** que en el registro |
 
 ### Ley
 
@@ -249,6 +250,64 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 87 --- Un motivo que se lee al revés (26/08)
+
+La lente: **el texto que escribe la persona.** Unicode trae caracteres que no se
+ven y cambian lo que se lee, y este producto guarda texto que otro lee para
+decidir.
+
+#### El hallazgo: `U+202E` en el motivo de una corrección
+
+`RIGHT-TO-LEFT OVERRIDE` invierte todo lo que va detrás. El motivo lo escribe
+quien pide la corrección y lo lee quien la aprueba, así que
+`"Fiche a las 8\u202e00:41 sal y 00:9 a"` **está guardado tal cual** y en
+pantalla se lee al revés a partir de la marca.
+
+No es cosmético: el art. 4.b pide que las dos partes acuerden el cambio de un
+asiento, y el acuerdo se da leyendo ese motivo. Su último inciso obliga a
+reflejar la discrepancia de quien no está de acuerdo, que es otro campo de texto
+libre ---`employee_dissent`--- y el más delicado de los tres.
+
+**Se rechaza en vez de limpiarse, y es una decisión.** Limpiar significaría
+editar lo que alguien escribió, y uno de esos campos es justamente la
+discrepancia que un trabajador hace constar. Quitarle caracteres a eso, aunque
+sean invisibles, es corregir su declaración.
+
+El mensaje dice **qué carácter** y con su número ---`U+202E (RIGHT-TO-LEFT
+OVERRIDE)`---, porque decir «hay un carácter raro» sobre un texto donde no se ve
+nada raro no sirve para arreglarlo.
+
+Y llega como 400 gracias a la vuelta 85: hasta entonces una `ValidationError` de
+modelo salía como 500.
+
+#### Los tres sitios que salieron limpios, que es la mitad del trabajo
+
+- **El nombre de una persona no es vector.** Un operario no puede cambiárselo:
+  403. Lo pone administración, que ya tiene todo el poder. Aun así lleva el
+  validador, porque un nombre invertido en el PDF que se entrega es otro nombre.
+- **El CSV aguanta.** Un nombre con salto de línea sale entrecomillado y un
+  `;9999` pegado dentro no crea columnas: 11 filas de CSV frente a 12 líneas
+  físicas, y la diferencia es exactamente el salto embebido. Medido por los
+  bytes, no por cómo se ve.
+- **El PDF también.** ReportLab no arrastra la marca: la dibuja como un cuadrado
+  y el `U+202E` **no viaja dentro del fichero**. Feo, no engañoso.
+
+#### Dónde tuvo que ir el validador, y por qué no donde yo creía
+
+Puesto en los campos del modelo, no se ejecutaba: el servicio crea con
+`objects.create()`, que no pasa por `full_clean()`. Es la lección 144, escrita
+esta misma tarde, cazándome a las dos horas.
+
+El alta de personas sí funcionaba desde el principio, y eso enseñó dónde está la
+diferencia: su serializer es un `ModelSerializer` y hereda los validadores del
+campo; los de corrección y ausencia declaran los campos a mano y no heredan nada.
+Así que la declaración va también ahí. La regla sigue viviendo en un solo sitio,
+`apps/common/texto.py`; lo que se repite es la declaración, no la lógica.
+
+8 pruebas nuevas (1.100 en el backend), cuatro de ellas de lo que **no** se puede
+romper: acentos, eñes, emoji, saltos de línea y tabuladores siguen pasando. Un
+filtro que se lleve por delante un texto normal se apaga a la semana.
 
 ### Vuelta 86 --- «Que lo decida otra», y esa otra no la ve (26/08)
 

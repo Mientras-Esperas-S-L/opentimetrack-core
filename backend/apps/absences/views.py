@@ -41,6 +41,7 @@ from apps.common.permissions import (
     ReadForAllWriteForAdmin,
 )
 from apps.common.scope import person_in_scope, visible_people
+from apps.common.texto import validate_texto_legible
 
 
 class AbsenceSerializer(serializers.ModelSerializer):
@@ -268,7 +269,9 @@ class AbsenceRequestSerializer(serializers.Serializer):
     absence_type = serializers.ChoiceField(choices=AbsenceType.choices, required=False)
     start_date = serializers.DateField()
     end_date = serializers.DateField()
-    reason = serializers.CharField(required=False, allow_blank=True, default="")
+    reason = serializers.CharField(
+        required=False, allow_blank=True, default="", validators=[validate_texto_legible]
+    )
     # The same two validators the model carries. They went in when a file that
     # was too big came back as a **500**: `full_clean` refused with a Django
     # `ValidationError` and DRF did not translate it.
@@ -332,9 +335,7 @@ class AbsenceFilter(django_filters.FilterSet):
 
     def _del_año(self, queryset, name, value):
         año = int(value)
-        return queryset.filter(
-            start_date__lte=date(año, 12, 31), end_date__gte=date(año, 1, 1)
-        )
+        return queryset.filter(start_date__lte=date(año, 12, 31), end_date__gte=date(año, 1, 1))
 
     class Meta:
         model = Absence

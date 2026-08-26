@@ -24,6 +24,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.common.models import BaseModel, TenantOwnedModel
+from apps.common.texto import validate_texto_legible
 from apps.tenants.models import validate_time_zone
 
 
@@ -31,7 +32,9 @@ class Department(TenantOwnedModel):
     """Organisational unit inside a company."""
 
     name = models.CharField(_("name"), max_length=100)
-    description = models.TextField(_("description"), blank=True)
+    description = models.TextField(
+        _("description"), blank=True, validators=[validate_texto_legible]
+    )
     is_active = models.BooleanField(_("active"), default=True)
 
     # Who answers for it. Several, because holiday does not stop for the one
@@ -293,8 +296,12 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     )
 
     email = models.EmailField(_("email address"), max_length=254)
-    first_name = models.CharField(_("first name"), max_length=100)
-    last_name = models.CharField(_("last name"), max_length=100)
+    first_name = models.CharField(
+        _("first name"), max_length=100, validators=[validate_texto_legible]
+    )
+    last_name = models.CharField(
+        _("last name"), max_length=100, validators=[validate_texto_legible]
+    )
     role = models.CharField(_("role"), max_length=20, choices=Role, default=Role.EMPLOYEE)
     employee_id = models.CharField(
         _("staff number"),

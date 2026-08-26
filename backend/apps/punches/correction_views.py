@@ -13,6 +13,7 @@ from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import IsAuthenticatedInTenant, IsManagerOrAdmin
 from apps.common.scope import visible_people
+from apps.common.texto import validate_texto_legible
 from apps.punches.corrections import (
     CorrectionKind,
     PunchCorrection,
@@ -102,7 +103,13 @@ class CorrectionRequestSerializer(serializers.Serializer):
 
     # Mandatory, and not merely required by the form: a correction with no
     # stated reason is indistinguishable from tampering.
-    reason = serializers.CharField(min_length=5, max_length=500)
+    #
+    # El validador se declara aquí además de en el modelo porque el servicio
+    # crea con `objects.create()`, que no pasa por `full_clean()`. La regla vive
+    # en `apps.common.texto`; lo que se repite es la declaración, no la lógica.
+    reason = serializers.CharField(
+        min_length=5, max_length=500, validators=[validate_texto_legible]
+    )
 
 
 class DissentSerializer(serializers.Serializer):
