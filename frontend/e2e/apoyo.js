@@ -47,8 +47,20 @@ export const EMPRESA = {
 
 /** Un sufijo distinto en cada ejecución, para que crear no choque con lo de
  *  ayer. Sin esto, la segunda vuelta falla por «ya existe» y se acaba
- *  ejecutando la suite solo tras sembrar. */
-export const marca = () => `p${Date.now().toString().slice(-7)}`
+ *  ejecutando la suite solo tras sembrar.
+ *
+ *  **Con los siete últimos dígitos de los milisegundos no lo era.** Siete
+ *  dígitos cubren diez millones de milisegundos, o sea **dos horas y cuarenta y
+ *  seis minutos**: pasado ese rato la marca se repite. Y aquí eso no se perdona,
+ *  porque dar de baja a una persona no libera su correo ---el producto la
+ *  desactiva a propósito, para que sus fichajes sobrevivan--- así que un correo
+ *  repetido choca contra una cuenta inactiva que ni se ve en la lista.
+ *
+ *  Con 286 cuentas de prueba acumuladas la probabilidad rondaba el medio por
+ *  ciento por tanda; con el tiempo se paga. Ahora va el instante completo en
+ *  base 36 y cuatro caracteres al azar, y sigue empezando por `p` porque los
+ *  filtros de limpieza buscan ese prefijo. */
+export const marca = () => `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
 
 /** Entra por el formulario, como una persona.
  *

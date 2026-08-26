@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 94 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 95 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -80,6 +80,7 @@ vuelve a una limpia.
 | Lo que se borra de verdad | limpia | 26/08 v92 | **un responsable hacía desaparecer la solicitud de otro**, sin fila y sin rastro |
 | Lo que se lleva un borrado (cascadas) | limpia | 26/08 v93 | **el registro cambiaba una hora hacia atrás** al retirar un centro |
 | Qué más se relee con las reglas de hoy | limpia | 26/08 v94 | **un turno de noche pasaba a «entrada sin salida»** al bajar un tope |
+| La pantalla y el documento dicen lo mismo | limpia | 26/08 v95 | **un cero separaba los dos**: fichar leía 16 y el informe 0 |
 
 ### Ley
 
@@ -274,6 +275,104 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 95 --- Un cero que separaba la pantalla del documento (26/08)
+
+La lente: **la pantalla y el documento tienen que decir lo mismo.** El informe lo
+promete por escrito ---«la cifra en pantalla y la del documento son el mismo
+día»--- y salió de leer, mientras corría la tanda anterior, que el tope de jornada
+abierta lo resolvían **dos sitios de dos maneras**:
+
+- `punches.services`, con `getattr(rules, "max_open_hours", None) or DEFAULT`,
+- el informe, con el campo a pelo.
+
+Iguales para cualquier valor normal. Distintos para el cero.
+
+#### El hallazgo
+
+`PositiveSmallIntegerField` admite cero y el campo no tenía suelo, así que la API
+lo aceptaba con **200 y sin avisos**. Y entonces:
+
+| | qué tope usaba |
+|---|---|
+| fichar | **16**, porque el cero caía al valor por defecto |
+| el informe | **0** |
+
+Con eso, un turno de noche bien fichado ---entra a las 21:00, sale a las 05:00---
+salía en el documento como `21:00;;00:00;entrada sin salida`, mientras la pantalla
+de fichar seguía funcionando como si nada. Ocho horas trabajadas que el documento
+no reconoce y la pantalla sí.
+
+Es el patrón de la vuelta 77 ---un cero apagando una salvaguarda--- con un
+agravante: aquí el cero no apaga algo, **separa a dos que tienen que coincidir**.
+
+#### Dos arreglos, uno por mitad
+
+**El suelo**: `MinValueValidator(1)`. Cero no significa nada en «cuánto aguanta
+abierta una jornada», y ahora contesta 400. Subirlo a 24 para guardias sigue
+valiendo, con prueba, porque para eso existe el ajuste.
+
+**La resolución, en un solo sitio**: `max_open_hours()` deja de ser privada
+---ahora la usan dos apps--- y el informe pregunta a la misma función que el
+fichaje. El suelo evita el estado absurdo; esto evita que cualquier otro valor
+tratado de forma especial vuelva a separarlos. La prueba escribe el cero
+**saltándose la validación**, como llegaría un dato heredado, y comprueba que los
+dos caen al mismo número.
+
+Comprobado que cada mitad tiene su prueba y que cada una cae al quitar su arreglo.
+
+4 pruebas nuevas (1.136 en el backend) y una migración.
+
+#### Y otro rojo de la tanda que no era del cambio
+
+`09-cuadrante-calendario` falló con un diálogo que no se cerraba al registrar una
+ausencia. Aislado, nueve verdes. El mecanismo lo tenía **escrito la propia prueba**
+unas líneas más abajo:
+
+> como la suite deja ausencias de prueba que quedan aprobadas ---y una aprobada no
+> se puede cancelar, así que la limpieza no se las lleva--- llegaron a acumularse
+> cincuenta y cuatro
+
+Ese residuo ya había roto antes la búsqueda de la propia prueba, y se arregló
+buscando por marca propia. Volvió por otro lado: la prueba pedía siempre **el 14 y
+el 15 de diciembre**, así que la ausencia que deja adrede sin resolver choca con la
+de la tanda anterior en cuanto una queda aprobada. Ahora el **día sale de la
+tanda** ---el mes se queda en diciembre porque la navegación del calendario avanza
+hasta él a botonazos.
+
+Tres pruebas en dos vueltas por lo mismo: **una prueba que escribe no puede
+compartir sus sujetos ni sus fechas con las demás.** Está como regla en las
+lecciones 170 y 174.
+
+#### El cuarto rojo sí era del producto
+
+`28-nombres-accesibles` falló en `/panel/centros`: **tres botones «Editar»**
+idénticos. Su regla es que más de dos rótulos iguales son un fallo, y lo explica:
+«a partir de tres es una lista de filas y hay que decir de cuál es cada uno».
+
+Con los **dos** centros de la semilla no se notaba nunca. Apareció porque una
+prueba dejó un tercero, y entonces un lector de pantalla oye «Editar, Editar,
+Editar» sin saber de qué centro. `Departments.jsx` ya lo hacía bien
+---`aria-label={`Editar ${department.name}`}`--- y por eso pasa con seis filas;
+`Workplaces.jsx` se había quedado sin ello. Arreglado, con la comprobación de que
+cae sin el arreglo.
+
+**El sedimento sirvió de algo por una vez**: fue lo que puso la tercera fila.
+
+#### Y midiendo el alcance salió un hueco para la vuelta siguiente
+
+Bajando el umbral a dos ---una sonda, no la prueba--- para ver qué pantallas
+fallarían con una fila más:
+
+| pantalla | rótulos repetidos |
+|---|---|
+| `/panel/aplicaciones` | «Emitir token» ×2, «Revocar la aplicación» ×2 |
+| `/panel/cuadrante` | **«Asignar» ×12** |
+
+Los doce del cuadrante **ya** están muy por encima del umbral, y la prueba no
+falla ahí por un motivo simple: `/panel/cuadrante` y `/panel/aplicaciones` **no
+están en su lista de pantallas**. Un hueco de cobertura tapando un fallo actual.
+Queda para la vuelta 96, con los botones por localizar en el DOM.
 
 ### Vuelta 94 --- Ocho horas que pasaban a cero (26/08)
 

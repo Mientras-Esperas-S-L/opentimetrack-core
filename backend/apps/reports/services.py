@@ -19,6 +19,7 @@ from django.utils.translation import gettext as _
 from apps.absences.models import Absence, AbsenceStatus
 from apps.common.csv_export import EscritorSeguro
 from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource, PunchType
+from apps.punches.services import max_open_hours
 
 
 @dataclass
@@ -212,7 +213,12 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
     # El margen cubre el tope de la empresa y no un día fijo: con guardias de
     # veinticuatro horas una jornada del día anterior al pedido puede terminar
     # dentro, y un día de margen se quedaría corto.
-    margen = timedelta(hours=rules.max_open_hours) + timedelta(days=1)
+    # Por `_max_open_hours` y no por el campo a pelo: es el mismo que usa
+    # `punches.services` para decidir qué jornada está abierta, y si los dos no
+    # resuelven igual la pantalla y el documento dejan de decir lo mismo. Pasó
+    # con un cero, que allí caía al valor por defecto y aquí se quedaba en cero.
+    tope = max_open_hours(employee, company, rules)
+    margen = timedelta(hours=tope) + timedelta(days=1)
     punches = list(
         Punch.objects.filter(
             employee=employee,
@@ -241,7 +247,7 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
     # porqué, con los artículos, en `apps.punches.workday`.
     from apps.punches.workday import assign_workdays
 
-    de_quien = assign_workdays(punches, employee, max_open_hours=rules.max_open_hours)
+    de_quien = assign_workdays(punches, employee, max_open_hours=tope)
     by_day: dict[date, list[Punch]] = {}
     #: Los días en los que algún fichaje ya no cuadra con su propio sello.
     #:

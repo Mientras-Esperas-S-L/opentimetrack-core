@@ -467,13 +467,23 @@ export default function Workplaces() {
 
                 {isAdmin && (
                   <Stack direction="row" sx={{ gap: 0.5, flexShrink: 0 }}>
-                    <Button size="small" onClick={() => setEditing(place)}>
+                    {/* Con el nombre dentro: en una lista de filas, tres botones
+                        que se llaman «Editar» suenan iguales para quien navega
+                        con lector de pantalla y no dicen de qué centro son. Con
+                        los dos centros de la semilla no se notaba; con tres, sí.
+                        Departamentos ya lo hacía así. */}
+                    <Button
+                      size="small"
+                      aria-label={`Editar ${place.name}`}
+                      onClick={() => setEditing(place)}
+                    >
                       Editar
                     </Button>
                     {place.people_count === 0 && (
                       <Button
                         size="small"
                         color="inherit"
+                        aria-label={`Eliminar el centro ${place.name}`}
                         onClick={() =>
                           setConfirming({
                             title: 'Eliminar el centro',

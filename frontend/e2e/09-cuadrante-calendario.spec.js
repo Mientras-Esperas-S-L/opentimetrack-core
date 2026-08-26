@@ -221,8 +221,20 @@ test.describe('Calendario del equipo', () => {
       .first()
       .click()
 
-    await dialogo.getByLabel('Desde *').fill('2026-12-14')
-    await dialogo.getByLabel('Hasta *').fill('2026-12-15')
+    // **Días propios de esta tanda, no dos fijos.** Con el 14 y el 15 de
+    // siempre, la ausencia que esta prueba deja adrede sin resolver choca con la
+    // de la tanda anterior en cuanto una queda aprobada: la limpieza no puede
+    // cancelar una aprobada ---el producto contesta `already_resolved` y hace
+    // bien--- así que el alta nueva se solapa y el diálogo no se cierra. Falló
+    // así, y el mismo residuo ya había roto antes la búsqueda de más abajo.
+    //
+    // El mes se queda en diciembre porque la navegación del calendario avanza
+    // hasta él a botonazos; lo que cambia es el día.
+    const dia = 3 + (Date.now() % 20)
+    const desde = `2026-12-${String(dia).padStart(2, '0')}`
+    const hasta = `2026-12-${String(dia + 1).padStart(2, '0')}`
+    await dialogo.getByLabel('Desde *').fill(desde)
+    await dialogo.getByLabel('Hasta *').fill(hasta)
     const mimarca = `Prueba calendario ${marca()}`
     await dialogo.getByLabel('Motivo (opcional)').fill(mimarca)
 

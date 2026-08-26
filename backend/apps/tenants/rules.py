@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from datetime import time
 
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -181,6 +182,12 @@ class WorkingTimeRules(BaseModel):
     max_open_hours = models.PositiveSmallIntegerField(
         _("longest a working day may stay open (hours)"),
         default=16,
+        # Cero no quiere decir nada aquí, y se aceptaba: `PositiveSmallInteger`
+        # lo admite y no había suelo. Con cero, los dos que leen este ajuste
+        # dejaban de coincidir ---fichar caía a las dieciséis de por defecto y el
+        # informe se quedaba con el cero--- así que una jornada de noche bien
+        # fichada salía en pantalla y en el documento como «entrada sin salida».
+        validators=[MinValueValidator(1)],
         help_text=_(
             "After this, an unclosed working day is read as a forgotten clock-out "
             "rather than a shift still running. Raise it for 24-hour on-call rosters."

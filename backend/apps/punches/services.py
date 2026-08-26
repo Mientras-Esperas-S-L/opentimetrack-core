@@ -151,7 +151,7 @@ def punches_of_the_day(employee, company, day: date | None = None, *, rules=None
     """
     from apps.punches.workday import current_workday, punches_of_the_workday
 
-    tope = _max_open_hours(employee, company, rules)
+    tope = max_open_hours(employee, company, rules)
     if day is None:
         day = current_workday(employee, max_open_hours=tope)
     return punches_of_the_workday(employee, day, max_open_hours=tope)
@@ -181,8 +181,13 @@ def punches_of_the_day(employee, company, day: date | None = None, *, rules=None
 DEFAULT_MAX_OPEN_HOURS = 16
 
 
-def _max_open_hours(employee, company=None, rules=None) -> int:
+def max_open_hours(employee, company=None, rules=None) -> int:
     """Cuánto aguanta abierta una jornada en esta empresa.
+
+    **Público, y hay una razón.** Lo usa también el informe: si cada uno resuelve
+    el tope por su cuenta, la pantalla y el documento dejan de decir lo mismo.
+    Pasó con un cero ---aquí caía al valor por defecto y allí se quedaba en
+    cero--- y una jornada de noche bien fichada salía como «entrada sin salida».
 
     `rules` se puede pasar hecho: quien recorre a mucha gente ya lo trae, y
     resolverlo por persona sería una consulta por cabeza. `for_company` lo
@@ -201,7 +206,7 @@ def _max_open_hours(employee, company=None, rules=None) -> int:
 def _last_open(employee, interval: str, *, rules=None):
     """El último evento de ese intervalo que aún puede pertenecer a la jornada
     en curso, sea de hoy o de anoche. Devuelve `None` si no hay ninguno."""
-    frontera = timezone.now() - timedelta(hours=_max_open_hours(employee, rules=rules))
+    frontera = timezone.now() - timedelta(hours=max_open_hours(employee, rules=rules))
     return (
         Punch.objects.filter(
             employee=employee,

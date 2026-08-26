@@ -43,9 +43,23 @@ test.describe('Alta de personas', () => {
     await irA(page, '/panel/personas', 'Personas')
     await page.getByRole('button', { name: 'Dar de alta' }).click()
     const correo = await rellenarMinimo(page, sufijo)
-    await page.getByRole('button', { name: 'Guardar' }).click()
 
-    await expect(page.getByRole('dialog')).toHaveCount(0)
+    // Qué contestó el servidor, para cuando el diálogo no se cierre. Sin esto el
+    // fallo dice «sigue habiendo un diálogo» y hay que adivinar por qué: pasó, y
+    // se fueron dos hipótesis medidas ---el correo lento y una marca repetida---
+    // antes de poder mirar el motivo de verdad.
+    const alta = page.waitForResponse(
+      (r) => r.url().includes('/employees/') && r.request().method() === 'POST',
+    )
+    await page.getByRole('button', { name: 'Guardar' }).click()
+    const respuesta = await alta
+    const motivo =
+      respuesta.status() >= 400 ? await respuesta.text().catch(() => '(sin cuerpo)') : ''
+
+    await expect(
+      page.getByRole('dialog'),
+      `el alta contestó ${respuesta.status()}: ${motivo}`,
+    ).toHaveCount(0)
     await page.getByPlaceholder('Buscar por nombre, correo o número').fill(sufijo)
     await expect(page.getByText(correo)).toBeVisible()
 

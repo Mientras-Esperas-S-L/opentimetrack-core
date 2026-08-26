@@ -2550,3 +2550,74 @@ primeros».
 lee. Un dato de sobra en el sitio equivocado del orden no es sedimento, es una
 trampa con fecha. Si se puede retirar sin perder nada ---dar de baja una cuenta de
 prueba--- se retira, aunque parezca inocuo.
+
+## 172. Dos lectores del mismo ajuste con dos resoluciones distintas divergen en el caso raro
+
+El tope de jornada abierta se resolvía con `getattr(rules, ..., None) or DEFAULT`
+al fichar y con el campo a pelo en el informe. Para cualquier valor normal dan lo
+mismo; con **cero**, uno leía 16 y el otro 0, y un turno de noche bien fichado
+aparecía en el documento como «entrada sin salida» mientras la pantalla lo daba por
+bueno.
+
+El `or DEFAULT` no era el fallo: era la pista. Un valor que un lector trata de
+forma especial y el otro no es una divergencia esperando el dato que la active.
+
+**Regla**: si dos sitios leen el mismo ajuste, uno solo lo resuelve y el otro le
+pregunta ---aunque eso obligue a hacer pública una función privada de otra app. Y
+al ver un `or DEFAULT` o un `?? valor`, buscar quién más lee ese campo sin esa red.
+
+## 173. Probar el estado imposible escribiéndolo por debajo de la validación
+
+El suelo nuevo impide poner el tope a cero, así que la prueba de la divergencia no
+podía crear el caso por la API. Escribirlo con `queryset.update()` ---que se salta
+validadores y `full_clean`--- sí, y es lo correcto aquí: **así llegaría un dato
+heredado** de antes del suelo, o de una migración a medias.
+
+**Regla**: cuando se añade una validación, la prueba del comportamiento con el
+dato malo se monta por debajo de ella. Si no, el arreglo del suelo tapa la prueba
+del otro arreglo y se pierde la cobertura del caso que de verdad va a aparecer en
+una base con años.
+
+## 174. Una prueba que escribe tampoco puede compartir las fechas
+
+Tercera vez en dos vueltas, y las tres por la misma raíz con distinta cara: una
+prueba que escribe compartía sus **sujetos** con las demás (las tres primeras
+personas de la lista) y otra compartía sus **fechas** (el 14 y el 15 de diciembre,
+fijos).
+
+Con fechas fijas, la ausencia que la prueba deja adrede sin resolver choca con la
+que dejó la tanda anterior en cuanto una queda aprobada --- y una aprobada no se
+puede cancelar, así que la limpieza no se la lleva nunca.
+
+**Regla**: lo que una prueba escribe lleva su marca en **todo** lo que la
+identifica: el nombre de los sujetos y también el día. Si un dato tiene que estar
+en un mes concreto porque la navegación depende de él, se varía el día. Y si su
+limpieza puede fallar por diseño ---aquí, porque el producto no deja cancelar lo
+resuelto, y hace bien--- entonces no basta con limpiar: hay que no chocar.
+
+## 175. Una comprobación con umbral solo ve el fallo cuando hay bastantes filas
+
+La prueba de accesibilidad avisa a partir de **tres** rótulos iguales, y con razón:
+dos «Cancelar» de dos diálogos son legítimos. La consecuencia es que un fallo real
+---botones de fila que no dicen de qué fila son--- queda invisible mientras la
+lista tenga dos elementos. La pantalla de centros lo tuvo así desde siempre, con
+los dos centros de la semilla, hasta que una prueba dejó un tercero.
+
+**Regla**: una comprobación con umbral no dice «esto está bien», dice «esto no
+tiene bastantes filas todavía». Para saber el alcance, bajar el umbral en una
+**sonda** ---no en la prueba--- y leer el inventario: ahí salen los latentes, y
+alguno resulta no ser latente sino ya roto en una pantalla que nadie mira.
+
+## 176. Antes de creer una lista de pantallas cubiertas, comprobar qué falta
+
+`/panel/cuadrante` tiene doce botones «Asignar» idénticos, muy por encima del
+umbral, y la prueba de accesibilidad no falla: esa pantalla **no está en su
+lista**. Lo mismo con `/panel/aplicaciones`.
+
+Una prueba que recorre «todas las pantallas» recorre las que alguien escribió a
+mano, y las que se añadieron después no entran solas.
+
+**Regla**: cuando una prueba itera sobre una lista literal de rutas, comparar esa
+lista con el enrutador de verdad ---como hace `test_la_matriz_de_permisos`, que
+saca las rutas de `get_resolver()`. Si la lista se escribe a mano, lo que no está
+en ella no está probado, y eso no se nota nunca.
