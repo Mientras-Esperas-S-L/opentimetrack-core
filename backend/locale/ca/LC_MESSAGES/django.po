@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-14 06:00+0000\n"
+"POT-Creation-Date: 2026-08-26 08:40+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan\n"
@@ -22,298 +22,298 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: apps/absences/models.py:27 apps/absences/models.py:93
+#: apps/absences/models.py:33 apps/absences/models.py:99
 msgid "Holiday"
 msgstr ""
 
-#: apps/absences/models.py:28 apps/absences/models.py:94
+#: apps/absences/models.py:34 apps/absences/models.py:100
 msgid "Sick leave"
 msgstr ""
 
-#: apps/absences/models.py:29 apps/absences/models.py:95
+#: apps/absences/models.py:35 apps/absences/models.py:101
 msgid "Paid leave"
 msgstr ""
 
-#: apps/absences/models.py:30 apps/absences/models.py:96
+#: apps/absences/models.py:36 apps/absences/models.py:102
 msgid "Unpaid leave"
 msgstr ""
 
-#: apps/absences/models.py:31 apps/absences/models.py:97
+#: apps/absences/models.py:37 apps/absences/models.py:103
 msgid "Contract suspended"
 msgstr ""
 
-#: apps/absences/models.py:36
+#: apps/absences/models.py:42
 msgid "Personal leave"
 msgstr ""
 
-#: apps/absences/models.py:37
+#: apps/absences/models.py:43
 msgid "Other"
 msgstr ""
 
-#: apps/absences/models.py:49 apps/tenants/agreements.py:348
+#: apps/absences/models.py:55 apps/tenants/agreements.py:348
 msgid "calendar days"
 msgstr ""
 
-#: apps/absences/models.py:50 apps/tenants/agreements.py:348
+#: apps/absences/models.py:56 apps/tenants/agreements.py:348
 msgid "working days"
 msgstr ""
 
-#: apps/absences/models.py:51
+#: apps/absences/models.py:57
 msgid "hours"
 msgstr ""
 
-#: apps/absences/models.py:52
+#: apps/absences/models.py:58
 msgid "weeks"
 msgstr ""
 
-#: apps/absences/models.py:63
+#: apps/absences/models.py:69
 msgid "each time"
 msgstr ""
 
-#: apps/absences/models.py:64
+#: apps/absences/models.py:70
 msgid "a day"
 msgstr ""
 
-#: apps/absences/models.py:65 apps/reports/services.py:142
+#: apps/absences/models.py:71 apps/reports/services.py:150
 #: apps/users/models.py:188
 msgid "a week"
 msgstr "a la setmana"
 
-#: apps/absences/models.py:66 apps/reports/services.py:142
+#: apps/absences/models.py:72 apps/reports/services.py:150
 #: apps/users/models.py:189
 msgid "a month"
 msgstr "al mes"
 
-#: apps/absences/models.py:67 apps/reports/services.py:142
+#: apps/absences/models.py:73 apps/reports/services.py:150
 #: apps/users/models.py:190
 msgid "a year"
 msgstr "a l'any"
 
-#: apps/absences/models.py:86
+#: apps/absences/models.py:92
 msgid "code"
 msgstr ""
 
-#: apps/absences/models.py:87 apps/shifts/models.py:72
+#: apps/absences/models.py:93 apps/shifts/models.py:72
 #: apps/tenants/applications.py:44 apps/tenants/holidays.py:64
 #: apps/users/models.py:33 apps/users/models.py:91
 msgid "name"
 msgstr ""
 
-#: apps/absences/models.py:90 apps/punches/corrections.py:74
+#: apps/absences/models.py:96 apps/punches/corrections.py:75
 #: apps/punches/models.py:399
 msgid "kind"
 msgstr "classe"
 
-#: apps/absences/models.py:101
+#: apps/absences/models.py:107
 msgid ""
 "What it behaves like. Holiday spends the holiday balance; sick leave never "
 "stores a certificate."
 msgstr ""
 
-#: apps/absences/models.py:107
+#: apps/absences/models.py:113
 msgid "legal basis"
 msgstr ""
 
-#: apps/absences/models.py:110
+#: apps/absences/models.py:116
 msgid "The article it comes from. Empty for one the agreement gives."
 msgstr ""
 
-#: apps/absences/models.py:116
+#: apps/absences/models.py:122
 msgid "how much"
 msgstr ""
 
-#: apps/absences/models.py:121
+#: apps/absences/models.py:127
 msgid "Empty means the indispensable time, with no fixed limit."
 msgstr ""
 
-#: apps/absences/models.py:124
+#: apps/absences/models.py:130
 msgid "in"
 msgstr ""
 
-#: apps/absences/models.py:127
+#: apps/absences/models.py:133
 msgid "per"
 msgstr ""
 
-#: apps/absences/models.py:130
+#: apps/absences/models.py:136
 msgid "extra if travelling"
 msgstr ""
 
-#: apps/absences/models.py:134
+#: apps/absences/models.py:140
 msgid "Art. 37.3.b bis adds two days when the event needs a journey."
 msgstr ""
 
-#: apps/absences/models.py:144
+#: apps/absences/models.py:150
 msgid "who records it"
 msgstr ""
 
-#: apps/absences/models.py:147
+#: apps/absences/models.py:153
 msgid "The person requests it"
 msgstr ""
 
-#: apps/absences/models.py:148
+#: apps/absences/models.py:154
 msgid "The company records it"
 msgstr ""
 
-#: apps/absences/models.py:153
+#: apps/absences/models.py:159
 msgid "paid"
 msgstr ""
 
-#: apps/absences/models.py:155
+#: apps/absences/models.py:161
 msgid "recovers holiday"
 msgstr ""
 
-#: apps/absences/models.py:159
+#: apps/absences/models.py:165
 msgid "Yes, with no deadline"
 msgstr ""
 
-#: apps/absences/models.py:160
+#: apps/absences/models.py:166
 msgid "Yes, within eighteen months"
 msgstr ""
 
-#: apps/absences/models.py:163
+#: apps/absences/models.py:169
 msgid ""
 "Whether overlapping with booked holiday gives the right to take it later, "
 "and by when. Art. 38.3 ET sets two different regimes."
 msgstr ""
 
-#: apps/absences/models.py:167
+#: apps/absences/models.py:173
 msgid "needs a supporting document"
 msgstr ""
 
-#: apps/absences/models.py:168 apps/absences/models.py:517
-#: apps/audit/models.py:145 apps/punches/models.py:449
+#: apps/absences/models.py:174 apps/absences/models.py:523
+#: apps/audit/models.py:171 apps/punches/models.py:449
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
-#: apps/tenants/rules.py:291
+#: apps/tenants/rules.py:334
 msgid "note"
 msgstr ""
 
-#: apps/absences/models.py:169 apps/shifts/models.py:84
-#: apps/tenants/applications.py:53 apps/tenants/models.py:156
-#: apps/users/models.py:35 apps/users/models.py:129 apps/users/models.py:490
+#: apps/absences/models.py:175 apps/shifts/models.py:84
+#: apps/tenants/applications.py:53 apps/tenants/models.py:168
+#: apps/users/models.py:35 apps/users/models.py:129 apps/users/models.py:493
 msgid "active"
 msgstr ""
 
-#: apps/absences/models.py:172 apps/absences/models.py:238
+#: apps/absences/models.py:178 apps/absences/models.py:244
 msgid "leave type"
 msgstr ""
 
-#: apps/absences/models.py:173
+#: apps/absences/models.py:179
 msgid "leave types"
 msgstr ""
 
-#: apps/absences/models.py:217
+#: apps/absences/models.py:223
 msgid "Pending"
 msgstr ""
 
-#: apps/absences/models.py:218
+#: apps/absences/models.py:224
 msgid "Approved"
 msgstr ""
 
-#: apps/absences/models.py:219 apps/punches/corrections.py:56
+#: apps/absences/models.py:225 apps/punches/corrections.py:57
 msgid "Rejected"
 msgstr "Rebutjada"
 
-#: apps/absences/models.py:227 apps/absences/models.py:477
-#: apps/notifications/models.py:34 apps/punches/corrections.py:72
+#: apps/absences/models.py:233 apps/absences/models.py:483
+#: apps/notifications/models.py:34 apps/punches/corrections.py:73
 #: apps/punches/models.py:149 apps/punches/models.py:396
 #: apps/punches/models.py:438 apps/reports/payroll.py:97
 #: apps/shifts/models.py:111
 msgid "employee"
 msgstr "persona treballadora"
 
-#: apps/absences/models.py:244 apps/audit/models.py:138
-#: apps/punches/corrections.py:86 apps/punches/models.py:151
+#: apps/absences/models.py:250 apps/audit/models.py:164
+#: apps/punches/corrections.py:87 apps/punches/models.py:151
 msgid "type"
 msgstr "tipus"
 
-#: apps/absences/models.py:246 apps/absences/models.py:494
+#: apps/absences/models.py:252 apps/absences/models.py:500
 #: apps/reports/payroll.py:99
 msgid "from"
 msgstr ""
 
-#: apps/absences/models.py:247 apps/absences/models.py:495
+#: apps/absences/models.py:253 apps/absences/models.py:501
 #: apps/reports/payroll.py:100
 msgid "to"
 msgstr ""
 
-#: apps/absences/models.py:257
+#: apps/absences/models.py:263
 msgid "from (time)"
 msgstr ""
 
-#: apps/absences/models.py:258
+#: apps/absences/models.py:264
 msgid "to (time)"
 msgstr ""
 
-#: apps/absences/models.py:269
+#: apps/absences/models.py:275
 msgid "share reduced (%)"
 msgstr ""
 
-#: apps/absences/models.py:275
+#: apps/absences/models.py:281
 msgid ""
 "Only for a suspension that reduces the working day instead of stopping it. "
 "Empty means the whole day. 40 means they still work 60 %."
 msgstr ""
 
-#: apps/absences/models.py:279 apps/punches/corrections.py:90
+#: apps/absences/models.py:285 apps/punches/corrections.py:91
 msgid "reason"
 msgstr "motiu"
 
-#: apps/absences/models.py:298 apps/punches/models.py:213
+#: apps/absences/models.py:304 apps/punches/models.py:213
 msgid "recorded by"
 msgstr ""
 
-#: apps/absences/models.py:302 apps/absences/models.py:506
-#: apps/punches/corrections.py:95 apps/punches/models.py:442
+#: apps/absences/models.py:308 apps/absences/models.py:512
+#: apps/punches/corrections.py:96 apps/punches/models.py:442
 msgid "status"
 msgstr "estat"
 
-#: apps/absences/models.py:310 apps/punches/corrections.py:109
+#: apps/absences/models.py:316 apps/punches/corrections.py:110
 msgid "resolved by"
 msgstr "resolta per"
 
-#: apps/absences/models.py:312 apps/punches/corrections.py:111
+#: apps/absences/models.py:318 apps/punches/corrections.py:112
 msgid "resolved at"
 msgstr "resolta el"
 
-#: apps/absences/models.py:315
+#: apps/absences/models.py:321
 msgid "supporting document"
 msgstr ""
 
-#: apps/absences/models.py:320
+#: apps/absences/models.py:326
 msgid ""
 "Not available for sick leave: the medical certificate is not stored here. "
 "Since RD 1060/2022 the worker no longer hands it to the employer --- the "
 "INSS sends the data to the company directly."
 msgstr ""
 
-#: apps/absences/models.py:327
+#: apps/absences/models.py:333
 msgid "absence"
 msgstr ""
 
-#: apps/absences/models.py:328
+#: apps/absences/models.py:334
 msgid "absences"
 msgstr ""
 
-#: apps/absences/models.py:395 apps/absences/services.py:306
-#: apps/reports/views.py:88 apps/shifts/views.py:253
+#: apps/absences/models.py:401 apps/absences/services.py:307
+#: apps/reports/views.py:89 apps/shifts/views.py:306
 msgid "The end date cannot precede the start date."
 msgstr "La data final no pot anar abans que la inicial."
 
-#: apps/absences/models.py:401 apps/absences/views.py:263
+#: apps/absences/models.py:407 apps/absences/views.py:304
 msgid "Give both times, or neither: half of a range is not one."
 msgstr "Posa les dues hores o cap: mitja franja no és una franja."
 
-#: apps/absences/models.py:404 apps/users/serializers.py:431
+#: apps/absences/models.py:410 apps/users/serializers.py:445
 msgid "It ends before it starts."
 msgstr ""
 
-#: apps/absences/models.py:409
+#: apps/absences/models.py:415
 msgid ""
 "Part of a day is one day. For several days, leave the times empty and they "
 "count whole."
 msgstr ""
 
-#: apps/absences/models.py:421
+#: apps/absences/models.py:427
 msgid ""
 "The medical certificate is not stored. Recording the absence, its dates and "
 "its status is enough for working-time purposes, and since RD 1060/2022 the "
@@ -321,143 +321,156 @@ msgid ""
 "data to the company."
 msgstr ""
 
-#: apps/absences/models.py:465
+#: apps/absences/models.py:471
 msgid "No deadline (art. 38.3, second paragraph)"
 msgstr ""
 
-#: apps/absences/models.py:466
+#: apps/absences/models.py:472
 msgid "Eighteen months (art. 38.3, third paragraph)"
 msgstr ""
 
-#: apps/absences/models.py:469
+#: apps/absences/models.py:475
 msgid "Waiting to be confirmed"
 msgstr ""
 
-#: apps/absences/models.py:470
+#: apps/absences/models.py:476
 msgid "Confirmed"
 msgstr ""
 
-#: apps/absences/models.py:471
+#: apps/absences/models.py:477
 msgid "Not applicable"
 msgstr ""
 
-#: apps/absences/models.py:485
+#: apps/absences/models.py:491
 msgid "holiday affected"
 msgstr ""
 
-#: apps/absences/models.py:491
+#: apps/absences/models.py:497
 msgid "leave that overlapped"
 msgstr ""
 
-#: apps/absences/models.py:498
+#: apps/absences/models.py:504
 msgid "days"
 msgstr ""
 
-#: apps/absences/models.py:499 apps/tenants/models.py:88
+#: apps/absences/models.py:505 apps/tenants/models.py:88
 msgid "counted in working days"
 msgstr ""
 
-#: apps/absences/models.py:501
+#: apps/absences/models.py:507
 msgid "regime"
 msgstr ""
 
-#: apps/absences/models.py:503
+#: apps/absences/models.py:509
 msgid "must be taken by"
 msgstr ""
 
-#: apps/absences/models.py:514
+#: apps/absences/models.py:520
 msgid "confirmed by"
 msgstr ""
 
-#: apps/absences/models.py:516
+#: apps/absences/models.py:522
 msgid "confirmed at"
 msgstr ""
 
-#: apps/absences/models.py:520
+#: apps/absences/models.py:526
 msgid "recovered holiday"
 msgstr ""
 
-#: apps/absences/models.py:521
+#: apps/absences/models.py:527
 msgid "recovered holidays"
 msgstr ""
 
-#: apps/absences/recovery.py:177
+#: apps/absences/recovery.py:182
 msgid "That recovery has already been decided."
 msgstr "Aquesta recuperació ja s'ha resolt."
 
-#: apps/absences/recovery.py:184
+#: apps/absences/recovery.py:189
 msgid "a holiday recovery"
 msgstr "una recuperació de vacances"
 
-#: apps/absences/services.py:301
+#: apps/absences/services.py:302
 msgid "Say what kind of leave it is."
 msgstr "Digues de quin tipus d'absència es tracta."
 
-#: apps/absences/services.py:313
+#: apps/absences/services.py:314
 msgid ""
 "The medical certificate is not stored. Recording the absence, its dates and "
 "its status is enough, and since RD 1060/2022 the worker does not hand the "
 "certificate to the employer."
-msgstr "El comunicat de baixa no s'emmagatzema. N'hi ha prou amb registrar l'absència, les seves dates i el seu estat, i des del RD 1060/2022 el treballador no lliura el comunicat a l'empresa."
+msgstr ""
+"El comunicat de baixa no s'emmagatzema. N'hi ha prou amb registrar "
+"l'absència, les seves dates i el seu estat, i des del RD 1060/2022 el "
+"treballador no lliura el comunicat a l'empresa."
 
-#: apps/absences/services.py:330
+#: apps/absences/services.py:345
 #, python-format
 msgid "There is already leave recorded between %(from)s and %(to)s."
 msgstr "Ja hi ha una absència registrada entre el %(from)s i el %(to)s."
 
-#: apps/absences/services.py:350
+#: apps/absences/services.py:365
 msgid ""
 "Say which suspension it is: they carry different articles and different "
 "consequences, and the record has to name one."
-msgstr "Digues quina suspensió és: porten articles i conseqüències diferents, i el registre n'ha d'anomenar una."
+msgstr ""
+"Digues quina suspensió és: porten articles i conseqüències diferents, i el "
+"registre n'ha d'anomenar una."
 
-#: apps/absences/services.py:359
+#: apps/absences/services.py:374
 msgid ""
 "A reduction covers whole days at a smaller share. For hours away on one day, "
 "leave the reduction empty."
-msgstr "Una reducció cobreix dies sencers amb una jornada menor. Per a hores soltes d'un dia, deixa la reducció buida."
+msgstr ""
+"Una reducció cobreix dies sencers amb una jornada menor. Per a hores soltes "
+"d'un dia, deixa la reducció buida."
 
-#: apps/absences/services.py:368
+#: apps/absences/services.py:383
 msgid ""
 "Only a suspension can reduce the working day. For fewer hours by agreement, "
 "change the contracted figure on the person."
-msgstr "Només una suspensió pot reduir la jornada. Per a menys hores per acord, canvia les hores contractades de la persona."
+msgstr ""
+"Només una suspensió pot reduir la jornada. Per a menys hores per acord, "
+"canvia les hores contractades de la persona."
 
-#: apps/absences/services.py:385
+#: apps/absences/services.py:400
 msgid ""
 "Only a suspension the company records --- an ERTE, the RED mechanism --- can "
 "reduce the working day."
-msgstr "Només una suspensió de les que registra l'empresa —un ERTO, el mecanisme XARXA— pot reduir la jornada."
+msgstr ""
+"Només una suspensió de les que registra l'empresa —un ERTO, el mecanisme "
+"XARXA— pot reduir la jornada."
 
-#: apps/absences/services.py:394
+#: apps/absences/services.py:409
 msgid ""
 "Holiday is taken in whole days. For part of a day, use the leave type that "
 "fits: a medical appointment, family emergency, an exam."
-msgstr "Les vacances es prenen per dies sencers. Per a part d'un dia fes servir el permís que correspongui: visita mèdica, força major familiar, un examen."
+msgstr ""
+"Les vacances es prenen per dies sencers. Per a part d'un dia fes servir el "
+"permís que correspongui: visita mèdica, força major familiar, un examen."
 
-#: apps/absences/services.py:557 apps/absences/services.py:594
+#: apps/absences/services.py:572 apps/absences/services.py:609
 msgid "leave"
 msgstr "una absència"
 
-#: apps/absences/services.py:567
+#: apps/absences/services.py:582
 msgid "Leave has since been approved for those dates."
 msgstr "Mentrestant s'ha aprovat una altra absència per a aquestes dates."
 
-#: apps/absences/services.py:615
+#: apps/absences/services.py:630
 msgid "That request belongs to somebody else."
 msgstr "Aquesta sol·licitud és d'una altra persona."
 
-#: apps/absences/services.py:624 apps/punches/corrections.py:466
-#: apps/punches/corrections.py:514
-msgid "This request has already been resolved."
-msgstr "Aquesta sol·licitud ja està resolta."
-
-#: apps/absences/uploads.py:39
+#: apps/absences/uploads.py:72
 #, python-format
 msgid "Only a PDF or an image: %(allowed_extensions)s."
 msgstr ""
 
-#: apps/absences/uploads.py:46
+#: apps/absences/uploads.py:98
+#, python-format
+msgid "The file does not look like a %(kind)s inside, whatever its name says."
+msgstr ""
+
+#: apps/absences/uploads.py:106
 #, python-format
 msgid "The file is %(size).1f MB and the limit is %(limit)s MB."
 msgstr ""
@@ -466,37 +479,54 @@ msgstr ""
 msgid "the time it takes"
 msgstr "el temps indispensable"
 
-#: apps/absences/views.py:187
+#: apps/absences/views.py:180 apps/shifts/views.py:203
+#: apps/tenants/views.py:181 apps/users/views.py:620 apps/users/views.py:682
+msgid "Added"
+msgstr ""
+
+#: apps/absences/views.py:208 apps/audit/trail.py:74
+msgid "Changed"
+msgstr ""
+
+#: apps/absences/views.py:226
 #, python-format
 msgid ""
 "%(count)s absences use it. Deactivate it instead: deleting would take the "
 "reason off records that have to survive four years."
-msgstr "L'utilitzen %(count)s absències. Desactiva'l en lloc d'esborrar-lo: esborrar-lo trauria el motiu a registres que han de durar quatre anys."
+msgstr ""
+"L'utilitzen %(count)s absències. Desactiva'l en lloc d'esborrar-lo: esborrar-"
+"lo trauria el motiu a registres que han de durar quatre anys."
 
-#: apps/absences/views.py:212 apps/absences/views.py:413
-#: apps/punches/correction_views.py:211 apps/reports/views.py:367
+#: apps/absences/views.py:232 apps/audit/trail.py:78
+msgid "Deleted"
+msgstr ""
+
+#: apps/absences/views.py:253 apps/absences/views.py:462
+#: apps/punches/correction_views.py:238 apps/reports/views.py:388
 msgid "That person is not in this company."
 msgstr "Aquesta persona no pertany a aquesta empresa."
 
-#: apps/absences/views.py:321
+#: apps/absences/views.py:371
 msgid "Leave can only be requested for yourself."
 msgstr "Només pots sol·licitar absències per a tu."
 
-#: apps/absences/views.py:331
+#: apps/absences/views.py:381
 msgid "That leave type does not exist or is no longer in use."
 msgstr "Aquest tipus de permís no existeix o ja no s'utilitza."
 
-#: apps/absences/views.py:342
+#: apps/absences/views.py:392
 msgid ""
 "This kind of leave is recorded by the company, not requested. Talk to "
 "whoever manages your working time."
-msgstr "Aquest tipus d'absència la registra l'empresa, no se sol·licita. Parla amb qui gestioni la teva jornada."
+msgstr ""
+"Aquest tipus d'absència la registra l'empresa, no se sol·licita. Parla amb "
+"qui gestioni la teva jornada."
 
-#: apps/absences/views.py:513
+#: apps/absences/views.py:559
 msgid "You can only see your own balance."
 msgstr "Només pots consultar el teu propi saldo."
 
-#: apps/absences/views.py:546 apps/shifts/views.py:225
+#: apps/absences/views.py:599 apps/shifts/views.py:263
 msgid "Give 'from' and 'to' as YYYY-MM-DD."
 msgstr "Indica 'from' i 'to' amb el format AAAA-MM-DD."
 
@@ -580,109 +610,121 @@ msgstr ""
 msgid "Changed a role"
 msgstr ""
 
-#: apps/audit/models.py:82
+#: apps/audit/models.py:84
+msgid "Moved a shift to somebody else"
+msgstr ""
+
+#: apps/audit/models.py:91
+msgid "Painted shifts over a period"
+msgstr ""
+
+#: apps/audit/models.py:92
+msgid "Cleared shifts over a period"
+msgstr ""
+
+#: apps/audit/models.py:96
+msgid "Changed what a leave grants"
+msgstr ""
+
+#: apps/audit/models.py:105
+msgid "Changed the structure or the calendar"
+msgstr ""
+
+#: apps/audit/models.py:108
 msgid "Sent a link to set a password"
 msgstr ""
 
-#: apps/audit/models.py:85
+#: apps/audit/models.py:111
 msgid "Changed company settings"
 msgstr ""
 
-#: apps/audit/models.py:86
+#: apps/audit/models.py:112
 msgid "Changed working time rules"
 msgstr ""
 
-#: apps/audit/models.py:89
+#: apps/audit/models.py:115
 msgid "Registered an application"
 msgstr ""
 
-#: apps/audit/models.py:90
+#: apps/audit/models.py:116
 msgid "Revoked an application credential"
 msgstr ""
 
-#: apps/audit/models.py:93
+#: apps/audit/models.py:119
 msgid "Purged security metadata"
 msgstr ""
 
-#: apps/audit/models.py:111
+#: apps/audit/models.py:137
 msgid "when"
 msgstr ""
 
-#: apps/audit/models.py:117 apps/common/models.py:97 apps/tenants/models.py:159
-#: apps/tenants/models.py:187 apps/tenants/rules.py:38
-#: apps/tenants/rules.py:268 apps/users/models.py:270
+#: apps/audit/models.py:143 apps/common/models.py:117
+#: apps/tenants/models.py:171 apps/tenants/models.py:199
+#: apps/tenants/rules.py:38 apps/tenants/rules.py:311 apps/users/models.py:270
 msgid "company"
 msgstr ""
 
-#: apps/audit/models.py:127
+#: apps/audit/models.py:153
 msgid "who"
 msgstr ""
 
-#: apps/audit/models.py:131
+#: apps/audit/models.py:157
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:133
+#: apps/audit/models.py:159
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:139
+#: apps/audit/models.py:165
 msgid "identifier"
 msgstr ""
 
-#: apps/audit/models.py:140
+#: apps/audit/models.py:166
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:144
+#: apps/audit/models.py:170
 msgid "changes"
 msgstr ""
 
-#: apps/audit/models.py:147 apps/punches/models.py:220
-msgid "IP address"
-msgstr ""
-
-#: apps/audit/models.py:150
+#: apps/audit/models.py:193
 msgid "audit entry"
 msgstr ""
 
-#: apps/audit/models.py:151
+#: apps/audit/models.py:194
 msgid "audit trail"
 msgstr ""
 
-#: apps/audit/views.py:155
+#: apps/audit/views.py:130
 msgid "When"
 msgstr "Quan"
 
-#: apps/audit/views.py:155
+#: apps/audit/views.py:130
 msgid "Who"
 msgstr "Qui"
 
-#: apps/audit/views.py:155
+#: apps/audit/views.py:130
 msgid "What"
 msgstr "Què"
 
-#: apps/audit/views.py:155
+#: apps/audit/views.py:130
 msgid "About"
 msgstr "Sobre qui"
 
-#: apps/audit/views.py:155
+#: apps/audit/views.py:130
 msgid "Detail"
 msgstr "Detall"
 
-#: apps/audit/views.py:155
+#: apps/audit/views.py:130
 msgid "Note"
 msgstr "Observacions"
 
-#: apps/audit/views.py:155
-msgid "Address"
-msgstr "Adreça IP"
-
-#: apps/audit/views.py:161
+#: apps/audit/views.py:135
 msgid "system"
 msgstr "sistema"
 
-#: apps/audit/views.py:179
+#: apps/audit/views.py:147
 msgid "Activity trail"
 msgstr "Registre d'activitat"
 
@@ -690,16 +732,16 @@ msgstr "Registre d'activitat"
 msgid "Invalid credential."
 msgstr ""
 
-#: apps/common/exceptions.py:70
+#: apps/common/exceptions.py:91
 msgid "Too many attempts. Wait a moment and try again."
 msgstr "Massa intents. Espera un moment i torna-ho a provar."
 
-#: apps/common/exceptions.py:72
+#: apps/common/exceptions.py:93
 #, python-format
 msgid "Too many attempts. Try again in %(seconds)s seconds."
 msgstr "Massa intents. Torna-ho a provar d'aquí a %(seconds)s segons."
 
-#: apps/common/exceptions.py:76
+#: apps/common/exceptions.py:97
 #, python-format
 msgid "Too many attempts. Try again in %(minutes)s minute."
 msgid_plural "Too many attempts. Try again in %(minutes)s minutes."
@@ -729,25 +771,33 @@ msgstr ""
 msgid "updated at"
 msgstr ""
 
-#: apps/common/permissions.py:22
+#: apps/common/permissions.py:23
 msgid "A valid session is required."
 msgstr ""
 
-#: apps/common/permissions.py:39
+#: apps/common/permissions.py:44
 msgid "Only an administrator may perform this operation."
 msgstr ""
 
-#: apps/common/permissions.py:46
+#: apps/common/permissions.py:51
 msgid "Manager or administrator profile required."
 msgstr ""
 
-#: apps/common/permissions.py:55
+#: apps/common/permissions.py:60
 msgid "Only an administrator may modify this resource."
 msgstr ""
 
-#: apps/common/permissions.py:101
+#: apps/common/permissions.py:106
 msgid "The application does not carry the required permission."
 msgstr ""
+
+#: apps/common/tests/test_exceptions.py:194 apps/punches/services.py:376
+msgid "You clocked a moment ago. Check the screen before clocking again."
+msgstr "Acabes de fitxar. Mira la pantalla abans de tornar a prémer."
+
+#: apps/common/transitions.py:76 apps/punches/corrections.py:568
+msgid "This request has already been resolved."
+msgstr "Aquesta sol·licitud ja està resolta."
 
 #: apps/notifications/models.py:38
 msgid "endpoint"
@@ -777,236 +827,281 @@ msgstr ""
 msgid "push subscriptions"
 msgstr ""
 
-#: apps/punches/correction_views.py:151
+#: apps/punches/correction_views.py:179
 msgid "That event does not exist."
 msgstr "Aquest fitxatge no existeix."
 
-#: apps/punches/correction_views.py:201
+#: apps/punches/correction_views.py:228
 msgid "You can only ask for corrections to your own record."
 msgstr "Només pots demanar correccions del teu propi registre."
 
-#: apps/punches/corrections.py:32
+#: apps/punches/corrections.py:33
 msgid "Add a missing event"
 msgstr "Afegir un fitxatge que falta"
 
-#: apps/punches/corrections.py:33
+#: apps/punches/corrections.py:34
 msgid "Change the time of an event"
 msgstr "Canviar l'hora d'un fitxatge"
 
-#: apps/punches/corrections.py:34
+#: apps/punches/corrections.py:35
 msgid "Void an event that should not exist"
 msgstr "Anul·lar un fitxatge que no havia d'existir"
 
-#: apps/punches/corrections.py:52
+#: apps/punches/corrections.py:53
 msgid "Waiting for the company"
 msgstr "Esperant l'empresa"
 
-#: apps/punches/corrections.py:53
+#: apps/punches/corrections.py:54
 msgid "Waiting for the person concerned"
 msgstr "Esperant la persona afectada"
 
-#: apps/punches/corrections.py:54
+#: apps/punches/corrections.py:55
 msgid "Applied with agreement"
 msgstr "Aplicada amb acord"
 
-#: apps/punches/corrections.py:55
+#: apps/punches/corrections.py:56
 msgid "Applied without agreement, with the disagreement recorded"
 msgstr "Aplicada sense acord, amb la discrepància registrada"
 
-#: apps/punches/corrections.py:83
+#: apps/punches/corrections.py:84
 msgid "event concerned"
 msgstr "fitxatge afectat"
 
-#: apps/punches/corrections.py:87
+#: apps/punches/corrections.py:88
 msgid "proposed time"
 msgstr "hora proposada"
 
-#: apps/punches/corrections.py:91
+#: apps/punches/corrections.py:92
 msgid "Why the record does not match what happened. Required."
 msgstr "Per què el registre no coincideix amb el que va passar. Obligatori."
 
-#: apps/punches/corrections.py:101
+#: apps/punches/corrections.py:102
 msgid "requested by"
 msgstr "sol·licitada per"
 
-#: apps/punches/corrections.py:112
+#: apps/punches/corrections.py:113
 msgid "resolution note"
 msgstr "nota de la resolució"
 
-#: apps/punches/corrections.py:120
+#: apps/punches/corrections.py:121
 msgid "resulting event"
 msgstr "fitxatge resultant"
 
-#: apps/punches/corrections.py:129
+#: apps/punches/corrections.py:130
 msgid "the person agrees"
 msgstr "la persona hi està conforme"
 
-#: apps/punches/corrections.py:133
+#: apps/punches/corrections.py:134
 msgid ""
 "Art. 4.b: a change needs the authorisation of the company and of the person "
 "concerned. Empty means they have not answered."
-msgstr "Art. 4.b: modificar un assentament necessita l'autorització de l'empresa i de la persona afectada. Buit significa que encara no ha respost."
+msgstr ""
+"Art. 4.b: modificar un assentament necessita l'autorització de l'empresa i "
+"de la persona afectada. Buit significa que encara no ha respost."
 
-#: apps/punches/corrections.py:137
+#: apps/punches/corrections.py:138
 msgid "answered at"
 msgstr "va respondre el"
 
-#: apps/punches/corrections.py:139
+#: apps/punches/corrections.py:140
 msgid "the person's account"
 msgstr "versió de la persona"
 
-#: apps/punches/corrections.py:142
+#: apps/punches/corrections.py:143
 msgid ""
 "Their version, kept beside the change and never instead of it. Art. 4.b lets "
 "the company record the modification and the person their disagreement, so "
 "the record holds both."
-msgstr "La seva versió, desada al costat del canvi i mai al seu lloc. L'art. 4.b permet que l'empresa reflecteixi la modificació i la persona la seva discrepància, de manera que el registre conserva totes dues."
+msgstr ""
+"La seva versió, desada al costat del canvi i mai al seu lloc. L'art. 4.b "
+"permet que l'empresa reflecteixi la modificació i la persona la seva "
+"discrepància, de manera que el registre conserva totes dues."
 
-#: apps/punches/corrections.py:149
+#: apps/punches/corrections.py:150
 msgid "workers' representatives informed at"
 msgstr "representació legal informada el"
 
-#: apps/punches/corrections.py:152
+#: apps/punches/corrections.py:153
 msgid "how they were informed"
 msgstr "com se'ls va informar"
 
-#: apps/punches/corrections.py:156
+#: apps/punches/corrections.py:157
 msgid ""
 "Art. 4.b requires informing the workers' legal representation when there is "
 "disagreement. If the company has not said who they are, that is recorded "
 "here rather than passed over in silence."
-msgstr "L'art. 4.b exigeix informar la representació legal de les persones treballadores quan hi ha discrepància. Si l'empresa no ha dit qui són, queda anotat aquí en lloc de passar-ho per alt."
+msgstr ""
+"L'art. 4.b exigeix informar la representació legal de les persones "
+"treballadores quan hi ha discrepància. Si l'empresa no ha dit qui són, queda "
+"anotat aquí en lloc de passar-ho per alt."
 
-#: apps/punches/corrections.py:163
+#: apps/punches/corrections.py:164
 msgid "applied without agreement"
 msgstr "aplicada sense acord"
 
-#: apps/punches/corrections.py:166
+#: apps/punches/corrections.py:167
 msgid ""
 "The change went in anyway, which art. 4.b allows. It travels to the "
 "inspection report: a reader has to be able to tell a correction both parties "
 "accepted from one imposed over an objection."
-msgstr "El canvi es va aplicar igualment, cosa que l'art. 4.b permet. Viatja a l'informe d'Inspecció: qui el llegeixi ha de poder distingir una correcció acceptada per les dues parts d'una imposada sobre una objecció."
+msgstr ""
+"El canvi es va aplicar igualment, cosa que l'art. 4.b permet. Viatja a "
+"l'informe d'Inspecció: qui el llegeixi ha de poder distingir una correcció "
+"acceptada per les dues parts d'una imposada sobre una objecció."
 
-#: apps/punches/corrections.py:173
+#: apps/punches/corrections.py:174
 msgid "record correction"
 msgstr "correcció del registre"
 
-#: apps/punches/corrections.py:174
+#: apps/punches/corrections.py:175
 msgid "record corrections"
 msgstr "correccions del registre"
 
-#: apps/punches/corrections.py:207
+#: apps/punches/corrections.py:208
 msgid "State why the record does not match what happened."
 msgstr "Indica per què el registre no coincideix amb el que va passar."
 
-#: apps/punches/corrections.py:213
+#: apps/punches/corrections.py:214
 msgid "Say which event is being corrected."
 msgstr "Indica quin fitxatge es corregeix."
 
-#: apps/punches/corrections.py:219
+#: apps/punches/corrections.py:220
 msgid "Give the time the event actually happened."
 msgstr "Indica l'hora real en què va passar."
 
-#: apps/punches/corrections.py:227
+#: apps/punches/corrections.py:228
 msgid "The time cannot be in the future."
 msgstr "L'hora no pot ser futura."
 
-#: apps/punches/corrections.py:233
+#: apps/punches/corrections.py:234
 msgid "That event belongs to somebody else."
 msgstr "Aquest fitxatge és d'una altra persona."
 
-#: apps/punches/corrections.py:239
+#: apps/punches/corrections.py:240
 msgid "Say whether the missing event is an entry or an exit."
 msgstr "Indica si el fitxatge que falta és una entrada o una sortida."
 
-#: apps/punches/corrections.py:304
+#: apps/punches/corrections.py:252
+msgid "An event is either an entry or an exit."
+msgstr ""
+
+#: apps/punches/corrections.py:317
 msgid "Only the person concerned can accept a change to their record."
 msgstr "Només la persona afectada pot acceptar un canvi en el seu registre."
 
-#: apps/punches/corrections.py:330
+#: apps/punches/corrections.py:343
 msgid "Only the person concerned can disagree with a change to their record."
 msgstr "Només la persona afectada pot discrepar d'un canvi en el seu registre."
 
-#: apps/punches/corrections.py:335
+#: apps/punches/corrections.py:348
 msgid "Say what you think happened. It is recorded beside the change."
 msgstr "Digues què creus que va passar. Queda registrat al costat del canvi."
 
-#: apps/punches/corrections.py:373
+#: apps/punches/corrections.py:386
 msgid "The person still has time to answer."
 msgstr "La persona encara és a temps de respondre."
 
-#: apps/punches/corrections.py:380
+#: apps/punches/corrections.py:393
 msgid "No answer within the period given. Applied without their agreement."
 msgstr "Sense resposta en el termini donat. Aplicat sense la seva conformitat."
 
-#: apps/punches/corrections.py:399
+#: apps/punches/corrections.py:434
 msgid "This change is not waiting for the person concerned."
 msgstr "Aquest canvi no està esperant la persona afectada."
 
-#: apps/punches/corrections.py:428
+#: apps/punches/corrections.py:483
+msgid "Somebody disagrees with a change to their working time record"
+msgstr ""
+
+#: apps/punches/corrections.py:509
 #, python-format
 msgid "Informed: %(names)s"
 msgstr "Informats: %(names)s"
 
-#: apps/punches/corrections.py:433
+#: apps/punches/corrections.py:514
 msgid ""
 "No workers' representatives are on record. Art. 4.b requires informing them."
-msgstr "No consta cap representació legal de les persones treballadores. L'art. 4.b exigeix informar-la."
+msgstr ""
+"No consta cap representació legal de les persones treballadores. L'art. 4.b "
+"exigeix informar-la."
 
-#: apps/punches/corrections.py:454
+#: apps/punches/corrections.py:535
 msgid ""
 "Resolved by the same person who is the subject: no other manager or "
 "administrator exists in the company."
-msgstr "Resolt per la mateixa persona a qui afecta: no hi ha cap altre responsable ni administrador a l'empresa."
+msgstr ""
+"Resolt per la mateixa persona a qui afecta: no hi ha cap altre responsable "
+"ni administrador a l'empresa."
 
-#: apps/punches/corrections.py:477
+#: apps/punches/corrections.py:561
+msgid ""
+"The person concerned has not answered yet. Wait, or apply it without "
+"agreement once the period has passed."
+msgstr ""
+
+#: apps/punches/corrections.py:598
+msgid ""
+"That entry has already been changed by another correction. Ask for a new one "
+"on the entry as it stands now."
+msgstr ""
+
+#: apps/punches/corrections.py:611 apps/punches/corrections.py:661
 msgid "a change to the working-time record"
 msgstr "un canvi en el registre de jornada"
 
-#: apps/punches/corrections.py:587
+#: apps/punches/corrections.py:765
 msgid "Your employer proposes a change to your working time record"
 msgstr "La teva empresa proposa un canvi en el teu registre de jornada"
 
-#: apps/punches/corrections.py:606
+#: apps/punches/corrections.py:784
 #, python-format
 msgid "Add an entry: %(kind)s at %(when)s."
 msgstr "Afegir un fitxatge: %(kind)s a les %(when)s."
 
-#: apps/punches/corrections.py:607
+#: apps/punches/corrections.py:785
 #, python-format
 msgid "Change the time of an entry to %(when)s."
 msgstr "Canviar l'hora d'un fitxatge a les %(when)s."
 
-#: apps/punches/corrections.py:608
+#: apps/punches/corrections.py:786
 #, python-format
 msgid "Void the entry recorded at %(when)s."
 msgstr "Anul·lar el fitxatge registrat a les %(when)s."
 
-#: apps/punches/corrections.py:660
+#: apps/punches/corrections.py:843
 #, python-format
 msgid "An entry was added: %(kind)s at %(when)s."
 msgstr "S'ha afegit un fitxatge: %(kind)s a les %(when)s."
 
-#: apps/punches/corrections.py:661
+#: apps/punches/corrections.py:844
 #, python-format
 msgid "The time of an entry was changed to %(when)s."
 msgstr "S'ha canviat l'hora d'un fitxatge a les %(when)s."
 
-#: apps/punches/corrections.py:662
+#: apps/punches/corrections.py:845
 #, python-format
 msgid "An entry recorded at %(when)s was voided."
 msgstr "S'ha anul·lat el fitxatge registrat a les %(when)s."
 
-#: apps/punches/corrections.py:686
+#: apps/punches/corrections.py:869
 msgid "Your working time record has changed"
 msgstr "El teu registre de jornada ha canviat"
 
-#: apps/punches/delegated.py:91
+#: apps/punches/delegated.py:92
 msgid "The reference matches more than one person."
 msgstr "La referència coincideix amb més d'una persona."
 
-#: apps/punches/delegated.py:127 apps/tenants/attendance_api.py:54
+#: apps/punches/delegated.py:155
+msgid ""
+"Send an Idempotency-Key header naming this operation, so a retry is not "
+"recorded as a second event."
+msgstr ""
+
+#: apps/punches/delegated.py:173 apps/punches/delegated.py:198
+msgid "That operation is still being recorded. Try again shortly."
+msgstr ""
+
+#: apps/punches/delegated.py:181 apps/tenants/attendance_api.py:91
 msgid "No active person matches that reference."
 msgstr "Cap persona activa no coincideix amb aquesta referència."
 
@@ -1181,6 +1276,10 @@ msgstr ""
 msgid "Set when somebody other than the employee created the record."
 msgstr ""
 
+#: apps/punches/models.py:220
+msgid "IP address"
+msgstr ""
+
 #: apps/punches/models.py:222
 msgid "user agent"
 msgstr ""
@@ -1287,15 +1386,37 @@ msgstr ""
 msgid "overtime decisions"
 msgstr ""
 
-#: apps/punches/overtime.py:197
+#: apps/punches/models.py:515 apps/tenants/applications.py:64
+#: apps/tenants/applications.py:90
+msgid "application"
+msgstr ""
+
+#: apps/punches/models.py:517
+msgid "idempotency key"
+msgstr ""
+
+#: apps/punches/models.py:524
+msgid "event"
+msgstr ""
+
+#: apps/punches/models.py:528
+msgid "delegated punch receipt"
+msgstr ""
+
+#: apps/punches/models.py:529
+msgid "delegated punch receipts"
+msgstr ""
+
+#: apps/punches/overtime.py:235
 msgid "That day has no overtime to rule on."
 msgstr "Aquest dia no té hores extraordinàries per resoldre."
 
-#: apps/punches/overtime.py:205 apps/punches/services.py:446
+#: apps/punches/overtime.py:243 apps/punches/services.py:480
 msgid "Say whether the overtime is paid or compensated with rest."
-msgstr "Indica si les hores extraordinàries es paguen o es compensen amb descans."
+msgstr ""
+"Indica si les hores extraordinàries es paguen o es compensen amb descans."
 
-#: apps/punches/overtime.py:209
+#: apps/punches/overtime.py:247
 msgid "overtime"
 msgstr "unes hores extraordinàries"
 
@@ -1315,36 +1436,36 @@ msgstr "Ha començat el teu torn i no has fitxat l'entrada."
 msgid "Your day is still open. Clock out when you finish."
 msgstr "Tens la jornada oberta. Fitxa la sortida quan acabis."
 
-#: apps/punches/serializers.py:72
+#: apps/punches/serializers.py:86
 #, python-format
 msgid ""
 "The evidence is too large: %(size)s characters, and the limit is %(max)s."
 msgstr ""
 
-#: apps/punches/services.py:351
-msgid "You clocked a moment ago. Check the screen before clocking again."
-msgstr "Acabes de fitxar. Mira la pantalla abans de tornar a prémer."
-
-#: apps/punches/services.py:383
+#: apps/punches/services.py:408
 msgid "This person is deactivated and cannot clock in or out."
 msgstr "Aquesta persona està donada de baixa i no pot fitxar."
 
-#: apps/punches/services.py:407
+#: apps/punches/services.py:441
 msgid "The working day has to be open first."
 msgstr "La jornada ha d'estar oberta abans."
 
-#: apps/punches/services.py:428
+#: apps/punches/services.py:462
 #, python-format
 msgid "%(basis)s: workers under eighteen may not work overtime."
-msgstr "%(basis)s: els menors de divuit anys no poden fer hores extraordinàries."
+msgstr ""
+"%(basis)s: els menors de divuit anys no poden fer hores extraordinàries."
 
-#: apps/punches/services.py:436
+#: apps/punches/services.py:470
 msgid ""
 "Art. 12.4.c ET: part-time work admits no overtime, only complementary hours "
 "--- except hours to prevent or repair urgent damage."
-msgstr "Art. 12.4.c ET: a temps parcial no hi caben hores extraordinàries, només complementàries, tret de les de força major per prevenir o reparar danys urgents."
+msgstr ""
+"Art. 12.4.c ET: a temps parcial no hi caben hores extraordinàries, només "
+"complementàries, tret de les de força major per prevenir o reparar danys "
+"urgents."
 
-#: apps/punches/services.py:507
+#: apps/punches/services.py:541
 msgid "You cannot clock in: you have approved leave for today."
 msgstr "No pots fitxar: tens una absència aprovada per a avui."
 
@@ -1384,135 +1505,194 @@ msgstr ""
 msgid "payroll summaries"
 msgstr ""
 
-#: apps/reports/pdf.py:42 apps/reports/pdf.py:59 apps/reports/services.py:351
+#: apps/reports/pdf.py:64 apps/reports/pdf.py:84 apps/reports/services.py:462
 msgid "Working time record"
 msgstr "Registre de jornada"
 
-#: apps/reports/pdf.py:61
+#: apps/reports/pdf.py:86
 msgid "Article 34.9 of the Spanish Workers' Statute (Royal Decree-Law 8/2019)"
 msgstr ""
 
-#: apps/reports/pdf.py:68 apps/reports/services.py:352
+#: apps/reports/pdf.py:93 apps/reports/services.py:463
 #: apps/tenants/holidays.py:57
 msgid "Company"
 msgstr "Empresa"
 
-#: apps/reports/pdf.py:68 apps/reports/services.py:352
+#: apps/reports/pdf.py:93 apps/reports/services.py:463
 msgid "Tax number"
 msgstr "CIF/NIF"
 
-#: apps/reports/pdf.py:70 apps/reports/services.py:354 apps/users/models.py:221
+#: apps/reports/pdf.py:95 apps/reports/services.py:465 apps/users/models.py:221
 msgid "Employee"
 msgstr "Persona treballadora"
 
-#: apps/reports/pdf.py:72 apps/reports/services.py:354
+#: apps/reports/pdf.py:97 apps/reports/services.py:465
 msgid "Staff number"
 msgstr "Núm. d'empleat"
 
-#: apps/reports/pdf.py:76 apps/reports/services.py:357
+#: apps/reports/pdf.py:101 apps/reports/services.py:468
 msgid "Period"
 msgstr "Període"
 
-#: apps/reports/pdf.py:78 apps/reports/services.py:357
+#: apps/reports/pdf.py:103 apps/reports/services.py:468
 msgid "Time zone"
 msgstr "Zona horària"
 
-#: apps/reports/pdf.py:101 apps/reports/services.py:360
+#: apps/reports/pdf.py:126 apps/reports/services.py:471
 msgid "Date"
 msgstr "Data"
 
-#: apps/reports/pdf.py:101 apps/reports/services.py:360
+#: apps/reports/pdf.py:126 apps/reports/services.py:471
 msgid "Entry"
 msgstr "Entrada"
 
-#: apps/reports/pdf.py:101 apps/reports/services.py:360
+#: apps/reports/pdf.py:126 apps/reports/services.py:471
 msgid "Exit"
 msgstr "Sortida"
 
-#: apps/reports/pdf.py:101 apps/reports/services.py:360
+#: apps/reports/pdf.py:126 apps/reports/services.py:471
 msgid "Hours"
 msgstr "Hores"
 
-#: apps/reports/pdf.py:101 apps/reports/services.py:360
+#: apps/reports/pdf.py:126 apps/reports/services.py:471
 msgid "Notes"
 msgstr "Observacions"
 
-#: apps/reports/pdf.py:124
+#: apps/reports/pdf.py:149
 msgid "No records in this period"
 msgstr ""
 
-#: apps/reports/pdf.py:145
+#: apps/reports/pdf.py:178
 msgid "Total for the period"
 msgstr ""
 
-#: apps/reports/pdf.py:163
+#: apps/reports/pdf.py:181 apps/reports/services.py:497
+msgid "Breaks, not counted as working time"
+msgstr "Pauses, que no computen com a jornada"
+
+#: apps/reports/pdf.py:186 apps/reports/services.py:502
+msgid "Waiting time, not counted as working time"
+msgstr "Temps d'espera, que no computa com a jornada"
+
+#: apps/reports/pdf.py:213
 msgid ""
 "Times are recorded by the server, never by the device that requested them, "
 "and are shown in the time zone stated above."
 msgstr ""
 
-#: apps/reports/pdf.py:169 apps/reports/services.py:381
+#: apps/reports/pdf.py:219 apps/reports/services.py:506
 msgid "Generated"
 msgstr "Generat"
 
-#: apps/reports/pdf.py:170 apps/reports/services.py:382
+#: apps/reports/pdf.py:220 apps/reports/services.py:507
 msgid "Verification hash"
 msgstr "Empremta de verificació"
 
-#: apps/reports/services.py:239
+#: apps/reports/services.py:284
 msgid "two entries with no exit in between"
 msgstr "dues entrades sense sortida enmig"
 
-#: apps/reports/services.py:246
+#: apps/reports/services.py:291
 msgid "exit with no matching entry"
 msgstr "sortida sense entrada prèvia"
 
-#: apps/reports/services.py:256
+#: apps/reports/services.py:301
 msgid "entry with no exit"
 msgstr "entrada sense sortida"
 
-#: apps/reports/services.py:259
+#: apps/reports/services.py:304
 msgid "break with no end"
 msgstr "pausa sense fi"
 
-#: apps/reports/services.py:334
-msgid "recorded by an application"
-msgstr "registrat per una aplicació"
+#: apps/reports/services.py:322
+msgid ""
+"an entry no longer matches its integrity seal: it was altered outside the app"
+msgstr ""
 
-#: apps/reports/services.py:380
+#: apps/reports/services.py:430
+msgid "recorded by an application on the person's behalf"
+msgstr ""
+
+#: apps/reports/services.py:435
+msgid "corrected by the company"
+msgstr ""
+
+#: apps/reports/services.py:437
+msgid "imported from another system"
+msgstr ""
+
+#: apps/reports/services.py:442
+msgid "changed without the person's agreement (art. 4.b)"
+msgstr "modificat sense la conformitat de la persona (art. 4.b)"
+
+#: apps/reports/services.py:491
 msgid "Total"
 msgstr "Total"
 
-#: apps/reports/views.py:39
+#: apps/reports/views.py:40
 msgid "Dates must be written as YYYY-MM-DD."
 msgstr "Les dates s'escriuen com AAAA-MM-DD."
 
-#: apps/reports/views.py:102 apps/reports/views.py:155
+#: apps/reports/views.py:103 apps/reports/views.py:159
 msgid "You may only request your own record."
 msgstr "Només pots demanar el teu propi registre."
 
-#: apps/reports/views.py:107
+#: apps/reports/views.py:108
 msgid "That person does not exist."
 msgstr "Aquesta persona no existeix."
 
-#: apps/reports/views.py:184
+#: apps/reports/views.py:188
 msgid "Nobody worked in that period."
 msgstr "Ningú no va treballar en aquest període."
 
-#: apps/reports/views.py:189
+#: apps/reports/views.py:193
 #, python-format
 msgid ""
 "%(count)s people is over the %(limit)s this can produce in one request. "
 "Narrow it down by department."
-msgstr "%(count)s persones superen les %(limit)s que es poden generar de cop. Acota per departament."
+msgstr ""
+"%(count)s persones superen les %(limit)s que es poden generar de cop. Acota "
+"per departament."
 
-#: apps/reports/views.py:309
+#: apps/reports/views.py:330
 msgid "Only a manager or an administrator generates the summaries."
 msgstr "Només un responsable o l'administració genera els resums."
 
-#: apps/reports/views.py:362
+#: apps/reports/views.py:383
 msgid "You may only ask for your own summary."
 msgstr "Només pots demanar el teu propi resum."
+
+#: apps/shifts/coverage.py:134 apps/shifts/coverage.py:206
+msgid "Their contract does not cover this day."
+msgstr ""
+
+#: apps/shifts/coverage.py:145
+#, python-format
+msgid "Approved %(kind)s."
+msgstr ""
+
+#: apps/shifts/coverage.py:208
+msgid "On approved leave that day."
+msgstr ""
+
+#: apps/shifts/coverage.py:212
+msgid "Already rostered that day."
+msgstr ""
+
+#: apps/shifts/coverage.py:228
+#, python-format
+msgid "Only %(hours)s h since their previous shift."
+msgstr ""
+
+#: apps/shifts/coverage.py:235
+#, python-format
+msgid "Only %(hours)s h before their next shift."
+msgstr ""
+
+#: apps/shifts/coverage.py:257
+#, python-format
+msgid "Would put them %(hours)s h over their contract this week."
+msgstr ""
 
 #: apps/shifts/models.py:37
 msgid "A shift needs at least one time span."
@@ -1562,165 +1742,241 @@ msgstr ""
 msgid "shifts"
 msgstr ""
 
-#: apps/shifts/services.py:86
+#: apps/shifts/services.py:87
 msgid "Choose at least one day."
 msgstr "Tria almenys un dia."
 
-#: apps/shifts/services.py:149 apps/shifts/views.py:270
-#: apps/users/serializers.py:209
+#: apps/shifts/services.py:150 apps/shifts/views.py:323
+#: apps/users/serializers.py:208
 msgid "Somebody in that list is not in this company."
 msgstr "Algú d'aquesta llista no pertany a aquesta empresa."
 
-#: apps/shifts/services.py:153 apps/shifts/views.py:259
+#: apps/shifts/services.py:154 apps/shifts/views.py:312
 msgid "That shift pattern does not exist."
 msgstr "Aquest torn no existeix."
 
-#: apps/shifts/services.py:332
+#: apps/shifts/services.py:343
 msgid "Rostered the same day."
 msgstr "Posat al quadrant el mateix dia."
 
-#: apps/shifts/services.py:335
+#: apps/shifts/services.py:346
 #, python-format
 msgid "Rostered %(days)s day ahead, under the %(floor)s the company asks for."
 msgid_plural ""
 "Rostered %(days)s days ahead, under the %(floor)s the company asks for."
-msgstr[0] "Posat amb %(days)s dia d'antelació, per sota dels %(floor)s que demana l'empresa."
-msgstr[1] "Posat amb %(days)s dies d'antelació, per sota dels %(floor)s que demana l'empresa."
+msgstr[0] ""
+"Posat amb %(days)s dia d'antelació, per sota dels %(floor)s que demana "
+"l'empresa."
+msgstr[1] ""
+"Posat amb %(days)s dies d'antelació, per sota dels %(floor)s que demana "
+"l'empresa."
 
-#: apps/shifts/services.py:382
+#: apps/shifts/services.py:397
 #, python-format
 msgid ""
 "%(hours)s h of rest at a shift changeover, which is allowed. The %(owed)s h "
 "missing from the usual %(usual)s h are owed back within %(weeks)s weeks."
-msgstr "%(hours)s h de descans en un relleu de torn, cosa permesa. Les %(owed)s h que falten fins a les %(usual)s h habituals s'han de retornar en %(weeks)s setmanes."
+msgstr ""
+"%(hours)s h de descans en un relleu de torn, cosa permesa. Les %(owed)s h "
+"que falten fins a les %(usual)s h habituals s'han de retornar en %(weeks)s "
+"setmanes."
 
-#: apps/shifts/services.py:404
+#: apps/shifts/services.py:424
+msgid "The clocks went forward that night, so the shifts are an hour closer."
+msgstr ""
+
+#: apps/shifts/services.py:436
 #, python-format
 msgid ""
 "Only %(hours)s h of rest since the previous shift, under the %(floor)s h a "
 "changeover may go down to."
-msgstr "Només %(hours)s h de descans des del torn anterior, per sota de les %(floor)s h a què pot baixar un relleu."
+msgstr ""
+"Només %(hours)s h de descans des del torn anterior, per sota de les "
+"%(floor)s h a què pot baixar un relleu."
 
-#: apps/shifts/services.py:408
+#: apps/shifts/services.py:440
 #, python-format
 msgid "Only %(hours)s h of rest since the previous shift."
 msgstr "Només %(hours)s h de descans des del torn anterior."
 
-#: apps/shifts/services.py:489
+#: apps/shifts/services.py:522
 #, python-format
 msgid "%(hours)s h rostered that week, over the %(limit)s h configured."
-msgstr "%(hours)s h planificades aquella setmana, per damunt de les %(limit)s h configurades."
+msgstr ""
+"%(hours)s h planificades aquella setmana, per damunt de les %(limit)s h "
+"configurades."
 
-#: apps/shifts/services.py:502
+#: apps/shifts/services.py:535
 #, python-format
 msgid ""
 "%(hours)s h rostered that week against %(agreed)s h contracted. The "
 "%(extra)s h over are complementary hours and count towards their own limit."
-msgstr "%(hours)s h planificades aquella setmana davant de %(agreed)s h contractades. Les %(extra)s h de més són hores complementàries i compten per al seu propi límit."
+msgstr ""
+"%(hours)s h planificades aquella setmana davant de %(agreed)s h "
+"contractades. Les %(extra)s h de més són hores complementàries i compten per "
+"al seu propi límit."
 
-#: apps/shifts/services.py:524
+#: apps/shifts/services.py:557
 msgid ""
 "No agreed weekly hours on this contract, so the weekly total is not checked. "
 "Only the legal maximum applies."
-msgstr "Aquest contracte no té hores setmanals pactades, així que no es comprova el total de la setmana. Només regeix el màxim legal."
+msgstr ""
+"Aquest contracte no té hores setmanals pactades, així que no es comprova el "
+"total de la setmana. Només regeix el màxim legal."
 
-#: apps/shifts/services.py:579
+#: apps/shifts/services.py:657
 #, python-format
 msgid "A continuous day of %(hours)s h needs a break of %(minutes)s min."
-msgstr "Una jornada continuada de %(hours)s h necessita un descans de %(minutes)s min."
+msgstr ""
+"Una jornada continuada de %(hours)s h necessita un descans de %(minutes)s "
+"min."
 
-#: apps/shifts/services.py:647
+#: apps/shifts/services.py:728
 #, python-format
 msgid ""
 "The longest break in those %(days)s days is %(hours)s h, under the "
 "%(minimum)s h configured."
-msgstr "El descans més llarg d'aquests %(days)s dies és de %(hours)s h, per sota de les %(minimum)s h configurades."
+msgstr ""
+"El descans més llarg d'aquests %(days)s dies és de %(hours)s h, per sota de "
+"les %(minimum)s h configurades."
 
-#: apps/shifts/services.py:708
+#: apps/shifts/services.py:789
 #, python-format
 msgid ""
 "%(count)s of %(total)s days with %(hours)s h or more at night. If the person "
 "holds the status of night worker, that brings a %(limit)s h average over "
 "%(days)s days, a ban on overtime and a health assessment. Nobody has "
 "recorded whether they do."
-msgstr "%(count)s de %(total)s dies amb %(hours)s h o més en horari nocturn. Si té la condició de treballador nocturn, això comporta una mitjana de %(limit)s h en %(days)s dies, la prohibició d'hores extraordinàries i una avaluació de salut. Ningú no ha deixat constància de si la té."
+msgstr ""
+"%(count)s de %(total)s dies amb %(hours)s h o més en horari nocturn. Si té "
+"la condició de treballador nocturn, això comporta una mitjana de %(limit)s h "
+"en %(days)s dies, la prohibició d'hores extraordinàries i una avaluació de "
+"salut. Ningú no ha deixat constància de si la té."
 
-#: apps/shifts/services.py:777
+#: apps/shifts/services.py:858
 #, python-format
 msgid ""
 "A night worker averaging %(average)s h a day over %(days)s days, above the "
 "%(limit)s h allowed."
-msgstr "Un treballador nocturn amb una mitjana de %(average)s h diàries en %(days)s dies, per damunt de les %(limit)s h permeses."
+msgstr ""
+"Un treballador nocturn amb una mitjana de %(average)s h diàries en %(days)s "
+"dies, per damunt de les %(limit)s h permeses."
 
-#: apps/shifts/services.py:782
+#: apps/shifts/services.py:863
 #, python-format
 msgid ""
 "Averaging %(average)s h a day over %(days)s days. The roster reads like "
 "night work, and if the status applies that is above the %(limit)s h of art. "
 "36.1 ET."
-msgstr "Mitjana de %(average)s h diàries en %(days)s dies. El quadrant es llegeix com a treball nocturn, i si li correspon aquesta condició això supera les %(limit)s h de l'art. 36.1 ET."
+msgstr ""
+"Mitjana de %(average)s h diàries en %(days)s dies. El quadrant es llegeix "
+"com a treball nocturn, i si li correspon aquesta condició això supera les "
+"%(limit)s h de l'art. 36.1 ET."
 
-#: apps/shifts/services.py:829
+#: apps/shifts/services.py:910
 #, python-format
 msgid ""
 "%(weeks)s consecutive weeks on the night shift, over the %(limit)s allowed. "
 "More needs the person to have asked for it, which is a field on their record."
-msgstr "%(weeks)s setmanes consecutives al torn de nit, per damunt de les %(limit)s permeses. Per a més cal que la persona s'hi hagi adscrit voluntàriament, i això és un camp de la seva fitxa."
+msgstr ""
+"%(weeks)s setmanes consecutives al torn de nit, per damunt de les %(limit)s "
+"permeses. Per a més cal que la persona s'hi hagi adscrit voluntàriament, i "
+"això és un camp de la seva fitxa."
 
-#: apps/shifts/services.py:870
+#: apps/shifts/services.py:951
 #, python-format
 msgid ""
 "%(hours)s h rostered for somebody under eighteen. The limit is %(limit)s h a "
 "day and no agreement can raise it."
-msgstr "%(hours)s h planificades a una persona menor de divuit anys. El límit són %(limit)s h diàries i cap conveni no el pot apujar."
+msgstr ""
+"%(hours)s h planificades a una persona menor de divuit anys. El límit són "
+"%(limit)s h diàries i cap conveni no el pot apujar."
 
-#: apps/shifts/services.py:884
+#: apps/shifts/services.py:965
 #, python-format
 msgid ""
 "A continuous day of %(hours)s h for somebody under eighteen needs a break of "
 "%(minutes)s min, from %(after)s h."
-msgstr "Una jornada continuada de %(hours)s h d'una persona menor de divuit anys necessita un descans de %(minutes)s min, a partir de %(after)s h."
+msgstr ""
+"Una jornada continuada de %(hours)s h d'una persona menor de divuit anys "
+"necessita un descans de %(minutes)s min, a partir de %(after)s h."
 
-#: apps/shifts/services.py:902
+#: apps/shifts/services.py:983
 msgid ""
 "Night shift rostered for somebody under eighteen. Art. 6.2 ET forbids it "
 "outright: there is no permitted amount."
-msgstr "Torn nocturn planificat a una persona menor de divuit anys. L'art. 6.2 ET ho prohibeix sense més: no hi ha cap quantitat permesa."
+msgstr ""
+"Torn nocturn planificat a una persona menor de divuit anys. L'art. 6.2 ET ho "
+"prohibeix sense més: no hi ha cap quantitat permesa."
 
-#: apps/shifts/services.py:987
+#: apps/shifts/services.py:1070
 #, python-format
 msgid ""
 "%(hours)s h actually worked that week, over the %(limit)s h maximum. This is "
 "the record, not the roster."
-msgstr "%(hours)s h realment treballades aquella setmana, per damunt del màxim de %(limit)s h. Això és el registre, no el quadrant."
+msgstr ""
+"%(hours)s h realment treballades aquella setmana, per damunt del màxim de "
+"%(limit)s h. Això és el registre, no el quadrant."
 
-#: apps/shifts/services.py:1000
+#: apps/shifts/services.py:1083
 #, python-format
 msgid "%(hours)s h actually worked against %(agreed)s h contracted."
-msgstr "%(hours)s h treballades de veritat davant de %(agreed)s h contractades."
+msgstr ""
+"%(hours)s h treballades de veritat davant de %(agreed)s h contractades."
 
-#: apps/shifts/services.py:1029
+#: apps/shifts/services.py:1112
 msgid "Rostered on a day outside the dates of their contract."
 msgstr "Al quadrant un dia fora de les dates del seu contracte."
 
-#: apps/shifts/services.py:1069
+#: apps/shifts/services.py:1155
 msgid ""
 "Rostered on a public holiday. It is allowed, and it earns compensation in "
 "rest or in pay under the agreement."
-msgstr "Planificat en un festiu. És permès, i genera compensació en descans o en diners segons el conveni."
+msgstr ""
+"Planificat en un festiu. És permès, i genera compensació en descans o en "
+"diners segons el conveni."
 
-#: apps/shifts/services.py:1108
+#: apps/shifts/services.py:1194
 #, python-format
 msgid "Rostered on a day of approved %(kind)s."
 msgstr "Amb torn assignat en un dia de %(kind)s aprovada."
 
-#: apps/shifts/views.py:97
+#: apps/shifts/views.py:98
 msgid "Pick at least one weekday, or leave the field out to mean every day."
-msgstr "Marca almenys un dia de la setmana, o no enviïs el camp si els vols tots."
+msgstr ""
+"Marca almenys un dia de la setmana, o no enviïs el camp si els vols tots."
 
-#: apps/shifts/views.py:138
+#: apps/shifts/views.py:145
 msgid "Give a shift or its hours, not both: they would disagree."
 msgstr "Indica un torn o les seves hores, no les dues coses: es contradirien."
+
+#: apps/shifts/views.py:476
+msgid "That person is not on the staff list."
+msgstr ""
+
+#: apps/shifts/views.py:482
+msgid "They already have a shift that day."
+msgstr ""
+
+#: apps/shifts/views.py:499
+msgid "Shift covered by somebody else."
+msgstr ""
+
+#: apps/shifts/views.py:636
+msgid ""
+"With no days to answer, a change can be applied the moment it is proposed: "
+"nobody gets the chance to agree or to disagree."
+msgstr ""
+
+#: apps/shifts/views.py:658
+#, python-format
+msgid "%(value)s is below the %(floor)s that %(basis)s sets."
+msgstr ""
+
+#: apps/shifts/views.py:669
+#, python-format
+msgid "%(value)s is above the %(ceiling)s that %(basis)s sets."
+msgstr ""
 
 #: apps/tenants/agreements.py:131
 msgid "the file does not contain a ficha"
@@ -1818,24 +2074,24 @@ msgstr "Permisos desconeguts: %(list)s."
 msgid "Grant at least one permission, or the application can do nothing."
 msgstr "Concedeix almenys un permís; si no, l'aplicació no pot fer res."
 
-#: apps/tenants/application_views.py:145
+#: apps/tenants/application_views.py:152
 msgid "Permissions changed"
 msgstr "Va canviar els permisos"
 
-#: apps/tenants/application_views.py:181
+#: apps/tenants/application_views.py:186
 msgid "Reactivate the application before issuing a credential."
 msgstr "Reactiva l'aplicació abans d'emetre una credencial."
 
-#: apps/tenants/application_views.py:197
+#: apps/tenants/application_views.py:202
 #, python-format
 msgid "Credential issued: …%(hint)s"
 msgstr "Credencial emesa: …%(hint)s"
 
-#: apps/tenants/application_views.py:232
+#: apps/tenants/application_views.py:236
 msgid "That credential does not exist or is already revoked."
 msgstr "Aquesta credencial no existeix o ja està revocada."
 
-#: apps/tenants/application_views.py:241
+#: apps/tenants/application_views.py:245
 #, python-format
 msgid "Credential revoked: …%(hint)s"
 msgstr "Credencial revocada: …%(hint)s"
@@ -1878,10 +2134,6 @@ msgstr ""
 
 #: apps/tenants/applications.py:60
 msgid "authorised by"
-msgstr ""
-
-#: apps/tenants/applications.py:64 apps/tenants/applications.py:90
-msgid "application"
 msgstr ""
 
 #: apps/tenants/applications.py:65
@@ -2048,53 +2300,42 @@ msgid ""
 "one."
 msgstr ""
 
-#: apps/tenants/models.py:137
+#: apps/tenants/models.py:147
 msgid "record retention (years)"
 msgstr ""
 
-#: apps/tenants/models.py:140
+#: apps/tenants/models.py:150
 msgid ""
 "How long clock events are kept. Four years is the floor set by art. 34.9 ET; "
 "a longer period needs its own justification, since keeping data because it "
-"might be useful is not a basis."
+"might be useful is not a basis. Note that nothing is deleted automatically "
+"yet: this states the policy, it does not enforce it."
 msgstr ""
 
-#: apps/tenants/models.py:146
+#: apps/tenants/models.py:158
 msgid "security metadata retention (days)"
 msgstr ""
 
-#: apps/tenants/models.py:149
+#: apps/tenants/models.py:161
 msgid ""
 "How long the IP address, device and user agent of each event are kept. They "
 "serve to spot anomalies, not to prove working time: purging them leaves the "
 "record intact."
 msgstr ""
 
-#: apps/tenants/models.py:155
+#: apps/tenants/models.py:167
 msgid "settings"
 msgstr ""
 
-#: apps/tenants/models.py:160
+#: apps/tenants/models.py:172
 msgid "companies"
 msgstr ""
 
-#: apps/tenants/models.py:189
-msgid "maximum employees"
-msgstr ""
-
-#: apps/tenants/models.py:190
-msgid "maximum administrators"
-msgstr ""
-
-#: apps/tenants/models.py:191
-msgid "maximum storage (MB)"
-msgstr ""
-
-#: apps/tenants/models.py:192
+#: apps/tenants/models.py:214
 msgid "enabled features"
 msgstr ""
 
-#: apps/tenants/models.py:195 apps/tenants/models.py:196
+#: apps/tenants/models.py:217 apps/tenants/models.py:218
 msgid "company limits"
 msgstr ""
 
@@ -2102,203 +2343,221 @@ msgstr ""
 msgid "`since` must be an ISO 8601 timestamp."
 msgstr ""
 
-#: apps/tenants/people_api.py:262 apps/tenants/people_api.py:340
+#: apps/tenants/people_api.py:262 apps/tenants/people_api.py:344
 msgid "No person matches that reference."
 msgstr ""
 
-#: apps/tenants/people_api.py:370
+#: apps/tenants/people_api.py:374
 msgid "Somebody else in this company already uses that address."
 msgstr ""
 
-#: apps/tenants/people_api.py:376
+#: apps/tenants/people_api.py:380
 msgid "Somebody else in this company already uses that staff number."
 msgstr ""
 
-#: apps/tenants/rules.py:42
-msgid "weekly hours"
+#: apps/tenants/people_api.py:386
+msgid "Somebody else in this company already uses that identity."
 msgstr ""
 
-#: apps/tenants/rules.py:50
-msgid "Hours a week. See the citation served with the rules."
-msgstr ""
-
-#: apps/tenants/rules.py:53
-msgid "rest between working days (hours)"
-msgstr ""
-
-#: apps/tenants/rules.py:55
-msgid "Hours between the end of a working day and the start of the next."
-msgstr ""
-
-#: apps/tenants/rules.py:58
-msgid "weekly rest (hours)"
-msgstr ""
-
-#: apps/tenants/rules.py:60
-msgid "Uninterrupted hours of weekly rest."
+#: apps/tenants/rules.py:59
+msgid "figures taken from an agreement"
 msgstr ""
 
 #: apps/tenants/rules.py:63
-msgid "a continuous day needs a break after (hours)"
-msgstr ""
-
-#: apps/tenants/rules.py:67
-msgid "A continuous day longer than this is owed a break."
-msgstr ""
-
-#: apps/tenants/rules.py:69
-msgid "break (minutes)"
+msgid "weekly hours"
 msgstr ""
 
 #: apps/tenants/rules.py:71
-msgid "the break counts as working time"
+msgid "Hours a week. See the citation served with the rules."
 msgstr ""
 
 #: apps/tenants/rules.py:74
+msgid "rest between working days (hours)"
+msgstr ""
+
+#: apps/tenants/rules.py:76
+msgid "Hours between the end of a working day and the start of the next."
+msgstr ""
+
+#: apps/tenants/rules.py:79
+msgid "weekly rest (hours)"
+msgstr ""
+
+#: apps/tenants/rules.py:81
+msgid "Uninterrupted hours of weekly rest."
+msgstr ""
+
+#: apps/tenants/rules.py:84
+msgid "a continuous day needs a break after (hours)"
+msgstr ""
+
+#: apps/tenants/rules.py:88
+msgid "A continuous day longer than this is owed a break."
+msgstr ""
+
+#: apps/tenants/rules.py:90
+msgid "break (minutes)"
+msgstr ""
+
+#: apps/tenants/rules.py:92
+msgid "the break counts as working time"
+msgstr ""
+
+#: apps/tenants/rules.py:95
 msgid ""
 "Only when the agreement or the contract says so. Assuming it would overstate "
 "the hours worked."
 msgstr ""
 
-#: apps/tenants/rules.py:79
+#: apps/tenants/rules.py:100
 msgid "overtime hours per year"
 msgstr ""
 
-#: apps/tenants/rules.py:81
+#: apps/tenants/rules.py:102
 msgid "Overtime hours allowed per year."
 msgstr ""
 
-#: apps/tenants/rules.py:84
+#: apps/tenants/rules.py:105
 msgid "night work starts at"
 msgstr ""
 
-#: apps/tenants/rules.py:86
+#: apps/tenants/rules.py:107
 msgid "Start of the night window."
 msgstr ""
 
-#: apps/tenants/rules.py:88
+#: apps/tenants/rules.py:109
 msgid "night work ends at"
 msgstr ""
 
-#: apps/tenants/rules.py:90
+#: apps/tenants/rules.py:111
 msgid "days to answer a proposed correction"
 msgstr ""
 
-#: apps/tenants/rules.py:93
+#: apps/tenants/rules.py:114
 msgid ""
 "Days to answer a proposed change before the company may apply it anyway, "
 "recorded as made without agreement."
 msgstr ""
 
-#: apps/tenants/rules.py:98
+#: apps/tenants/rules.py:119
 msgid "complementary hours, share of the contract (%)"
 msgstr ""
 
-#: apps/tenants/rules.py:101
+#: apps/tenants/rules.py:122
 msgid ""
 "Cap on hours a part-time contract may work beyond what was agreed, as a "
 "percentage of it."
 msgstr ""
 
-#: apps/tenants/rules.py:111
+#: apps/tenants/rules.py:132
 msgid "entry tolerance (minutes)"
 msgstr ""
 
-#: apps/tenants/rules.py:114
+#: apps/tenants/rules.py:135
 msgid ""
 "A punch within this many minutes of the rostered start counts as on time. 0 "
 "is strict."
 msgstr ""
 
-#: apps/tenants/rules.py:118
+#: apps/tenants/rules.py:139
 msgid "exit tolerance (minutes)"
 msgstr ""
 
-#: apps/tenants/rules.py:120
+#: apps/tenants/rules.py:141
 msgid "Leaving within this many minutes of the rostered end is not early."
 msgstr ""
 
-#: apps/tenants/rules.py:131
+#: apps/tenants/rules.py:152
 msgid "no notifications from"
 msgstr ""
 
-#: apps/tenants/rules.py:133
+#: apps/tenants/rules.py:154
 msgid "Art. 88 LOPDGDD: the right to disconnect. Nothing is sent after this."
 msgstr ""
 
-#: apps/tenants/rules.py:136
+#: apps/tenants/rules.py:157
 msgid "no notifications until"
 msgstr ""
 
-#: apps/tenants/rules.py:138
+#: apps/tenants/rules.py:159
 msgid "Nothing is sent before this either."
 msgstr ""
 
-#: apps/tenants/rules.py:142
+#: apps/tenants/rules.py:163
 msgid "notice for roster changes (days)"
 msgstr ""
 
-#: apps/tenants/rules.py:144
+#: apps/tenants/rules.py:165
 msgid "Days of notice before a roster change."
 msgstr ""
 
-#: apps/tenants/rules.py:148 apps/tenants/rules.py:149
+#: apps/tenants/rules.py:182
+msgid "longest a working day may stay open (hours)"
+msgstr ""
+
+#: apps/tenants/rules.py:185
+msgid ""
+"After this, an unclosed working day is read as a forgotten clock-out rather "
+"than a shift still running. Raise it for 24-hour on-call rosters."
+msgstr ""
+
+#: apps/tenants/rules.py:191 apps/tenants/rules.py:192
 msgid "working time rules"
 msgstr ""
 
-#: apps/tenants/rules.py:242
+#: apps/tenants/rules.py:285
 msgid "collective agreement"
 msgstr ""
 
-#: apps/tenants/rules.py:243
+#: apps/tenants/rules.py:286
 msgid "company-level agreement"
 msgstr ""
 
-#: apps/tenants/rules.py:244
+#: apps/tenants/rules.py:287
 msgid "employer decision after consulting the representatives"
 msgstr ""
 
-#: apps/tenants/rules.py:272
+#: apps/tenants/rules.py:315
 msgid "how it was organised"
 msgstr ""
 
-#: apps/tenants/rules.py:276
+#: apps/tenants/rules.py:319
 msgid "Art. 34.9 ET. Empty means it has not been declared yet."
 msgstr ""
 
-#: apps/tenants/rules.py:281
+#: apps/tenants/rules.py:324
 msgid "which one"
 msgstr ""
 
-#: apps/tenants/rules.py:286
+#: apps/tenants/rules.py:329
 msgid "in force since"
 msgstr ""
 
-#: apps/tenants/rules.py:289
+#: apps/tenants/rules.py:332
 msgid "representatives consulted on"
 msgstr ""
 
-#: apps/tenants/rules.py:297
+#: apps/tenants/rules.py:340
 msgid "record arrangement"
 msgstr ""
 
-#: apps/tenants/rules.py:298
+#: apps/tenants/rules.py:341
 msgid "record arrangements"
 msgstr ""
 
-#: apps/tenants/views.py:89
+#: apps/tenants/views.py:90
 msgid ""
 "Say which one: the agreement, or the decision and its date. A route with "
 "nothing to check it against documents nothing."
 msgstr ""
 
-#: apps/tenants/views.py:103
+#: apps/tenants/views.py:104
 msgid ""
 "A prior consultation belongs to the employer-decision route. An agreement is "
 "the negotiation."
 msgstr ""
 
-#: apps/tenants/views.py:141 apps/users/serializers.py:356
+#: apps/tenants/views.py:142 apps/users/serializers.py:370
 msgid "That workplace belongs to another company."
 msgstr "Aquest centre de treball és d'una altra empresa."
 
@@ -2579,40 +2838,40 @@ msgid ""
 "Part-time and mid-year joiners are the usual reason."
 msgstr ""
 
-#: apps/users/models.py:482
+#: apps/users/models.py:486
 msgid "identity provider subject"
 msgstr ""
 
-#: apps/users/models.py:488
+#: apps/users/models.py:491
 msgid "issuer"
 msgstr ""
 
-#: apps/users/models.py:491
+#: apps/users/models.py:494
 msgid "admin site access"
 msgstr ""
 
-#: apps/users/models.py:492
+#: apps/users/models.py:495
 msgid "date joined"
 msgstr ""
 
-#: apps/users/models.py:500
+#: apps/users/models.py:503
 msgid "person"
 msgstr ""
 
-#: apps/users/models.py:501
+#: apps/users/models.py:504
 msgid "people"
 msgstr ""
 
-#: apps/users/passwords.py:77
+#: apps/users/passwords.py:100
 msgid "the platform"
 msgstr "la plataforma"
 
-#: apps/users/passwords.py:79
+#: apps/users/passwords.py:102
 #, python-format
 msgid "Your account at %(company)s"
 msgstr "El teu compte a %(company)s"
 
-#: apps/users/passwords.py:81
+#: apps/users/passwords.py:104
 #, python-format
 msgid "Reset your password at %(company)s"
 msgstr "Restablir la teva contrasenya a %(company)s"
@@ -2622,146 +2881,151 @@ msgstr "Restablir la teva contrasenya a %(company)s"
 msgid "%(code)s is not a region of %(country)s."
 msgstr ""
 
-#: apps/users/serializers.py:214
+#: apps/users/serializers.py:213
 #, python-format
 msgid ""
 "%(name)s does not have a manager profile, so putting them in charge would "
 "grant nothing."
 msgstr ""
 
-#: apps/users/serializers.py:324
+#: apps/users/serializers.py:338
 msgid "Somebody in this company already uses it."
 msgstr ""
 
-#: apps/users/serializers.py:347
+#: apps/users/serializers.py:361
 #, python-format
 msgid "%(name)s already uses that staff number."
 msgstr ""
 
-#: apps/users/serializers.py:363
+#: apps/users/serializers.py:377
 msgid "That department belongs to another company."
 msgstr ""
 
-#: apps/users/serializers.py:379
+#: apps/users/serializers.py:393
 msgid "It cannot be today or a future date."
 msgstr ""
 
-#: apps/users/serializers.py:388
+#: apps/users/serializers.py:402
 #, python-format
 msgid "That gives an age of %(age)s, below the minimum working age. %(basis)s"
 msgstr ""
 
-#: apps/users/serializers.py:392
+#: apps/users/serializers.py:406
 msgid "That gives an age of over a hundred years."
 msgstr ""
 
-#: apps/users/serializers.py:417
+#: apps/users/serializers.py:431
 msgid ""
 "There is no agreed figure on this regime. Clear it, or choose one that has "
 "hours."
 msgstr ""
 
-#: apps/users/serializers.py:425
+#: apps/users/serializers.py:439
 msgid "Art. 3.b asks for the agreed hours on this regime."
 msgstr ""
 
-#: apps/users/serializers.py:434
+#: apps/users/serializers.py:448
 msgid "It has to be above zero."
 msgstr ""
 
-#: apps/users/serializers.py:454
+#: apps/users/serializers.py:468
 #, python-format
 msgid ""
 "%(basis)s: workers under eighteen may not work at night, so the status "
 "cannot apply to them."
 msgstr ""
 
-#: apps/users/serializers.py:473
+#: apps/users/serializers.py:487
 #, python-format
 msgid ""
 "%(hours)s h a week is above the company's %(ceiling)s h. A contract cannot "
 "agree past the legal maximum."
 msgstr ""
 
-#: apps/users/serializers.py:491
-msgid "The employee limit for this company is reached."
-msgstr ""
-
-#: apps/users/serializers.py:530
+#: apps/users/serializers.py:536
 msgid "A company with this tax number already exists."
 msgstr ""
 
-#: apps/users/serializers.py:594 apps/users/serializers.py:607
+#: apps/users/serializers.py:600 apps/users/serializers.py:613
 msgid "Wrong credentials."
 msgstr ""
 
-#: apps/users/views.py:157
+#: apps/users/views.py:199
 msgid "No session to renew."
 msgstr "No hi ha cap sessió per renovar."
 
-#: apps/users/views.py:171
+#: apps/users/views.py:213
 msgid "The session has expired. Sign in again."
 msgstr "La sessió ha caducat. Torna a entrar."
 
-#: apps/users/views.py:345
+#: apps/users/views.py:236
+msgid "Send the refresh token to close the session."
+msgstr ""
+
+#: apps/users/views.py:429
 msgid ""
 "This is the only active administrator. Appoint another one first, or the "
 "company is left with nobody able to manage it."
-msgstr "És l'únic administrador actiu. Nomena'n un altre abans, o l'empresa es queda sense ningú que la pugui gestionar."
+msgstr ""
+"És l'únic administrador actiu. Nomena'n un altre abans, o l'empresa es queda "
+"sense ningú que la pugui gestionar."
 
-#: apps/users/views.py:402
+#: apps/users/views.py:484
 msgid "This account signs in through your identity provider."
 msgstr "Aquest compte entra a través del vostre proveïdor d'identitat."
 
-#: apps/users/views.py:404
+#: apps/users/views.py:486
 msgid "Reactivate the account before inviting them."
 msgstr "Torna a donar d'alta el compte abans de convidar-lo."
 
-#: apps/users/views.py:460
+#: apps/users/views.py:553
 msgid "You cannot deactivate your own account."
 msgstr "No pots donar de baixa el teu propi compte."
 
-#: apps/users/views.py:526
+#: apps/users/views.py:599
+#, python-format
+msgid "Left on %(day)s. %(count)s shift(s) still rostered after that."
+msgstr ""
+
+#: apps/users/views.py:602
+#, python-format
+msgid "Left on %(day)s."
+msgstr ""
+
+#: apps/users/views.py:650
+#, python-format
+msgid ""
+"%(count)s people answer for this department. Move them first: leaving them "
+"in charge of nothing widens what they can read to the whole company."
+msgstr ""
+
+#: apps/users/views.py:698
 #, python-format
 msgid ""
 "%(count)s people work there. Move them first: without a workplace they lose "
 "their local holidays and their time zone."
-msgstr "Allà hi treballen %(count)s persones. Mou-les primer: sense centre perden els seus festius locals i la seva zona horària."
+msgstr ""
+"Allà hi treballen %(count)s persones. Mou-les primer: sense centre perden "
+"els seus festius locals i la seva zona horària."
 
-#: apps/users/views.py:581
+#: apps/users/views.py:753
 msgid "The link is not valid or has already been used."
 msgstr "L'enllaç no és vàlid o ja s'ha fet servir."
 
-#: config/settings/base.py:309
+#: config/settings/base.py:329
 msgid "Spanish"
 msgstr ""
 
-#: config/settings/base.py:310
-msgid "English"
-msgstr ""
-
-#: config/settings/base.py:311
+#: config/settings/base.py:330
 msgid "Catalan"
 msgstr ""
 
-#: config/settings/base.py:312
+#: config/settings/base.py:331
 msgid "Galician"
 msgstr ""
 
-#: config/settings/base.py:313
-msgid "Basque"
-msgstr ""
-
-#: config/settings/base.py:314
-msgid "French"
-msgstr ""
-
-#: config/settings/base.py:315
-msgid "Portuguese"
-msgstr ""
-
-#: config/settings/base.py:316
-msgid "German"
+#: config/settings/base.py:332
+msgid "English"
 msgstr ""
 
 #: templates/emails/account_link.txt:1
@@ -2880,14 +3144,29 @@ msgid ""
 "If this does not match what happened, tell whoever manages your working time."
 msgstr ""
 
-#: apps/reports/services.py
-msgid "changed without the person's agreement (art. 4.b)"
-msgstr "modificat sense la conformitat de la persona (art. 4.b)"
+#: templates/emails/representatives_informed.txt:1
+#, python-format
+msgid ""
+"Hello,\n"
+"\n"
+"You are recorded as a workers' representative at %(company)s."
+msgstr ""
 
-#: apps/reports/services.py
-msgid "Breaks, not counted as working time"
-msgstr "Pauses, que no computen com a jornada"
+#: templates/emails/representatives_informed.txt:5
+#, python-format
+msgid ""
+"%(employee)s disagrees with a change the company proposes to their\n"
+"working time record, dated %(day)s."
+msgstr ""
 
-#: apps/reports/services.py
-msgid "Waiting time, not counted as working time"
-msgstr "Temps d'espera, que no computa com a jornada"
+#: templates/emails/representatives_informed.txt:8
+msgid ""
+"Art. 4.b of the working-time record decree requires that you be informed\n"
+"when this happens. The company may still apply the change, and if it does, "
+"the\n"
+"record will show it was made without agreement, with their account beside "
+"it.\n"
+"\n"
+"What they wrote is not reproduced here. Art. 6.2 grants you access to the\n"
+"register, so you can consult the entry and its history in the application."
+msgstr ""
