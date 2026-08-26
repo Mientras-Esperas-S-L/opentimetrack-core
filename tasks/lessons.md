@@ -2048,3 +2048,31 @@ panel de seguridad.
 de mirar la gravedad. El número que importa es cuántas dependencias hay que tocar
 y cuántas de ellas llegan a producción; el total de avisos solo mide cuánto tiempo
 llevan sin actualizarse.
+
+## 137. Un control que consume lo que va a medir invalida la medición
+
+Para probar que cambiar la contraseña cierra las sesiones abiertas, empecé
+comprobando que la sesión valía antes: `renovar(perdido) == 200`. Y esa llamada
+**gasta** el refresco, porque la rotación lo pone en la lista negra. El 409 de
+después venía de ahí, así que la prueba pasaba en verde con el arreglo quitado.
+
+Lo peor es que mi propio helper avisaba de esto en su docstring y lo pisé en la
+línea siguiente.
+
+**Regla**: cuando un recurso es de un solo uso ---un testigo que rota, una clave
+de idempotencia, un enlace de un solo uso--- el control y la medición necesitan
+**dos ejemplares**. Si el control usa el mismo, no estás midiendo tu arreglo:
+estás midiendo el consumo.
+
+## 138. Varias sustituciones en un script y un `assert` que aborta: se pierden todas
+
+Un script con cuatro `sust()` seguidos y el `write` al final: el tercero falló el
+`assert`, el script murió, y los dos cambios anteriores ---que habían impreso
+«ok»--- **no se guardaron**. Vi el «ok» y di por hecho que estaban.
+
+Lo detectó ruff con un «imported but unused»: el import se había aplicado en una
+pasada posterior y la llamada que lo usaba se había perdido en la abortada.
+
+**Regla**: si un script hace varias sustituciones, o escribe después de cada una,
+o comprueba el resultado en el fichero y no en la salida del script. Un «ok»
+impreso dice que la cadena se encontró, no que el fichero se haya guardado.

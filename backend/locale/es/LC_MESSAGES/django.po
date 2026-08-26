@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 09:11+0000\n"
+"POT-Creation-Date: 2026-08-26 09:41+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -491,7 +491,7 @@ msgid "the time it takes"
 msgstr "el tiempo indispensable"
 
 #: apps/absences/views.py:180 apps/shifts/views.py:203
-#: apps/tenants/views.py:181 apps/users/views.py:620 apps/users/views.py:682
+#: apps/tenants/views.py:181 apps/users/views.py:630 apps/users/views.py:692
 msgid "Added"
 msgstr "Añadido"
 
@@ -3007,16 +3007,16 @@ msgstr "persona"
 msgid "people"
 msgstr "personas"
 
-#: apps/users/passwords.py:100
+#: apps/users/passwords.py:136
 msgid "the platform"
 msgstr "la plataforma"
 
-#: apps/users/passwords.py:102
+#: apps/users/passwords.py:138
 #, python-format
 msgid "Your account at %(company)s"
 msgstr "Tu cuenta en %(company)s"
 
-#: apps/users/passwords.py:104
+#: apps/users/passwords.py:140
 #, python-format
 msgid "Reset your password at %(company)s"
 msgstr "Restablecer tu contraseña en %(company)s"
@@ -3136,17 +3136,17 @@ msgstr "Vuelve a dar de alta la cuenta antes de invitarla."
 msgid "You cannot deactivate your own account."
 msgstr "No puedes dar de baja tu propia cuenta."
 
-#: apps/users/views.py:599
+#: apps/users/views.py:609
 #, python-format
 msgid "Left on %(day)s. %(count)s shift(s) still rostered after that."
 msgstr "Se fue el %(day)s. Le quedan %(count)s turno(s) planificados después."
 
-#: apps/users/views.py:602
+#: apps/users/views.py:612
 #, python-format
 msgid "Left on %(day)s."
 msgstr "Se fue el %(day)s."
 
-#: apps/users/views.py:650
+#: apps/users/views.py:660
 #, python-format
 msgid ""
 "%(count)s people answer for this department. Move them first: leaving them "
@@ -3155,7 +3155,7 @@ msgstr ""
 "De este departamento responden %(count)s personas. Muévelas primero: al "
 "mando de nada, pasan a leer los datos de toda la empresa."
 
-#: apps/users/views.py:698
+#: apps/users/views.py:708
 #, python-format
 msgid ""
 "%(count)s people work there. Move them first: without a workplace they lose "
@@ -3164,7 +3164,7 @@ msgstr ""
 "Ahí trabajan %(count)s personas. Muévelas primero: sin centro pierden sus "
 "festivos locales y su zona horaria."
 
-#: apps/users/views.py:753
+#: apps/users/views.py:763
 msgid "The link is not valid or has already been used."
 msgstr "El enlace no es válido o ya se ha usado."
 

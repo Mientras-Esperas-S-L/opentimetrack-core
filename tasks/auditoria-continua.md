@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 81 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 82 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -236,6 +236,57 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 82 --- Recuperar la cuenta no echaba a nadie (26/08)
+
+**Lente:** la sesión y los testigos. Un acceso vive quince minutos y un refresco
+**siete días**, y rota --- mientras alguien lo use, se renueva solo. Así que una
+sesión abierta no caduca por sí sola en ningún plazo útil, y la pregunta es qué la
+cierra.
+
+#### Antes, un cierre de la lente anterior
+
+Las dependencias del frontend: `npm audit` da **cero** vulnerabilidades sobre 255
+dependencias analizadas ---comprobado que mira algo, no que no mire---, así que el
+cero de Dependabot para npm era correcto y no un hueco de vigilancia.
+
+#### El hallazgo, en dos momentos y los dos fallando
+
+**Cambiar la contraseña.** Es lo que hace quien cree que le han visto la clave o ha
+perdido el móvil, y era exactamente lo que no servía: ese dispositivo seguía
+renovando la sesión (200) y leyendo datos (200) después del cambio. Recuperar la
+cuenta no echaba a nadie.
+
+**Dar de baja a una persona.** El acceso deja de valer al instante ---la
+autenticación mira `is_active`, y eso estaba bien: 401 en todo--- pero el refresco
+sobrevivía. Y lo que hace el caso concreto es que la baja es **reversible**: al
+reincorporarla, la sesión de antes volvía a funcionar sin que hubiera vuelto a
+escribir la contraseña. El móvil que llevaba cuando se fue seguía dentro el día que
+la readmitieron.
+
+**El mecanismo ya estaba puesto** ---la rotación pone en la lista negra el refresco
+usado--- y no se llamaba desde ninguno de los dos sitios. `revoke_sessions()` en
+`passwords.py`, llamada al cambiar la clave ---**antes** de emitir la nueva sesión,
+o se revocaría la que se acaba de dar--- y al dar de baja.
+
+Lo que **no** se revoca son los accesos ya emitidos: quince minutos de vida a
+propósito, y cortarlos exigiría consultar la base en cada petición. Queda dicho en
+el docstring para que nadie lo descubra creyendo que es un olvido.
+
+**Prueba.** `apps/users/tests/test_recuperar_la_cuenta_echa_a_quien_esta_dentro.py`,
+cinco casos, incluidos el de que quien cambia la clave entra sin volver a
+escribirla ---si se revocara después de emitir, se mataría la sesión nueva--- y el
+de que la sesión de otra persona no se toca.
+
+**Y las pruebas pasaban con el arreglo quitado.** El control «la sesión valía
+antes» **consume** la sesión: la rotación la pone en la lista negra, así que el
+rechazo de después venía de eso. Se abren dos sesiones, una para el control y otra
+que llega sin estrenar al momento que importa. Salió al validar contra el fallo:
+solo caía una de las tres.
+
+**Estado:** área «Sesión» limpia, con una lente más. Cerrada con **1068 pruebas
+de backend y 271 de navegador en verde**, linters limpios, castellano sin huecos,
+cero `fuzzy` y sin migraciones pendientes.
 
 ### Vuelta 81 --- La semana que no cabía en ningún mes (26/08)
 
