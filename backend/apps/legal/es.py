@@ -70,8 +70,16 @@ ESPANA = LegalFramework(
         "break_after_hours": Citation(
             "Art. 34.4 ET",
             "Quince minutos cuando la jornada continuada excede de seis horas.",
+            # Seis horas es el techo: exigir el descanso más tarde deja sin él a
+            # quien la ley se lo da.
+            ceiling=6,
         ),
-        "break_minutes": Citation("Art. 34.4 ET"),
+        "break_minutes": Citation(
+            "Art. 34.4 ET",
+            "Quince minutos como mínimo. El convenio o el contrato pueden dar más, "
+            "y también decidir que cuenten como trabajo.",
+            floor=15,
+        ),
         "break_counts_as_work": Citation(
             "Art. 34.4 ET",
             "Solo cuenta como trabajo efectivo cuando lo dice el convenio o el "
@@ -102,16 +110,22 @@ ESPANA = LegalFramework(
             "subirlo al 60 %. Es lo único que limita cuánto se puede pedir por "
             "encima de un contrato parcial, porque las horas extraordinarias las "
             "prohíbe el art. 12.4.c.",
+            # El 60 y no el 30: por encima del 30 hace falta convenio, y el
+            # producto no puede saber si lo hay. Por encima del 60 no hay
+            # convenio que lo permita.
+            ceiling=60,
         ),
         "roster_notice_days": Citation(
             "Art. 34.2 ET",
             "Cinco días de preaviso para la distribución irregular de la jornada. El "
             "art. 38.3 pide el calendario de vacaciones con dos meses.",
+            floor=5,
         ),
         "record_retention_years": Citation(
             "Art. 34.9 ET",
             "Cuatro años como mínimo. Conservar más tiempo necesita su propia "
             "justificación: no es dato del registro de jornada.",
+            floor=4,
         ),
         "annual_leave_days": Citation(
             "Art. 38.1 ET",

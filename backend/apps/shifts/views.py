@@ -605,11 +605,85 @@ def _describe(part, as_time: tuple[str, ...] = ()) -> dict | None:
     return body
 
 
+def _outside_the_law(rules, framework, changed) -> list[dict]:
+    """Los campos que se salen del límite que fija un artículo, con su cita.
+
+    Solo los que acaban de cambiar: repetir en cada respuesta lo que la empresa
+    ya sabe y decidió hace meses convierte el aviso en ruido, y un aviso que
+    siempre está no lo lee nadie.
+
+    Ni `fatal` ni nada parecido: esto informa. La validación de las fichas de
+    convenio hace lo mismo con `fatal=False` y por el mismo motivo --- el
+    RD 1561/1995 baja algunos de estos suelos para sectores concretos, así que
+    un valor por debajo puede ser correcto y quien lo sabe es la empresa.
+    """
+    avisos = []
+
+    # El plazo del art. 4.b, aparte: **el artículo no fija días**, y declarar un
+    # suelo en el marco sería atribuirle un número que no dice. Lo que sí se
+    # puede decir es qué pasa con el cero, y es que deja de haber procedimiento:
+    # la empresa propone y aplica en el mismo segundo, sin dar ocasión de
+    # responder ni de discrepar. Pedir el consentimiento y no esperarlo es no
+    # pedirlo.
+    if "correction_consent_days" in changed and not rules.correction_consent_days:
+        cita = framework.citations.get("correction_consent_days")
+        avisos.append(
+            {
+                "field": "correction_consent_days",
+                "basis": cita.basis if cita else "",
+                "message": str(
+                    _(
+                        "With no days to answer, a change can be applied the moment it is "
+                        "proposed: nobody gets the chance to agree or to disagree."
+                    )
+                ),
+            }
+        )
+
+    for campo in changed:
+        cita = framework.citations.get(campo)
+        if cita is None:
+            continue
+        valor = getattr(rules, campo, None)
+        if valor is None:
+            continue
+        valor = float(valor)
+
+        if cita.floor is not None and valor < float(cita.floor):
+            avisos.append(
+                {
+                    "field": campo,
+                    "basis": cita.basis,
+                    "message": str(
+                        _("%(value)s is below the %(floor)s that %(basis)s sets.")
+                        % {"value": valor, "floor": cita.floor, "basis": cita.basis}
+                    ),
+                }
+            )
+        elif cita.ceiling is not None and valor > float(cita.ceiling):
+            avisos.append(
+                {
+                    "field": campo,
+                    "basis": cita.basis,
+                    "message": str(
+                        _("%(value)s is above the %(ceiling)s that %(basis)s sets.")
+                        % {"value": valor, "ceiling": cita.ceiling, "basis": cita.basis}
+                    ),
+                }
+            )
+    return avisos
+
+
 class RulesSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkingTimeRules
         exclude = ["tenant", "created_at", "updated_at"]
-        read_only_fields = ["id"]
+        # `from_agreement` se lee y no se escribe: lo pone `apply_to_rules` al
+        # aplicar una ficha, y es la procedencia de cada cifra. Dejarlo
+        # escribible permitiría declarar que un número viene de un artículo que
+        # nadie ha comprobado --- y además contestaba un 500 a cualquier basura,
+        # que es lo que cazó `test_ningun_campo_de_la_api_contesta_un_500`.
+        read_only_fields = ["id", "from_agreement"]
 
 
 @extend_schema(tags=["organisation"])
@@ -644,23 +718,47 @@ class WorkingTimeRulesView(APIView):
         """
         framework = legal.for_company(request.user.tenant)
         data = RulesSerializer(rules).data
+        citas = {
+            key: {
+                "basis": c.basis,
+                "note": c.note,
+                # El límite del artículo, cuando lo hay. Va aquí y no en la
+                # pantalla porque es un dato del país: una copia en el
+                # frontend acabaría enseñando la cifra española a una
+                # empresa de fuera.
+                "floor": c.floor,
+                "ceiling": c.ceiling,
+            }
+            for key, c in framework.citations.items()
+        }
+
+        # Y si una ficha de convenio puso la cifra, **ese** es el artículo que
+        # la fija. Antes ganaba siempre el del marco del país: el convenio de
+        # jardinería fija el descanso entre jornadas por su art. 16 y la
+        # pantalla lo atribuía al art. 34.3 ET.
+        #
+        # La cifra coincidía en ese caso y el problema no es la cifra: es la
+        # procedencia. Cuando el convenio se renueve, nadie sabrá que ese valor
+        # venía de él; y ante una inspección, la empresa tiene que poder decir
+        # qué norma aplica y no una parecida.
+        #
+        # El suelo y el techo del país se quedan: son el límite que ningún
+        # convenio puede bajar, y siguen sirviendo para avisar.
+        for campo, origen in (rules.from_agreement or {}).items():
+            previa = citas.get(campo, {})
+            citas[campo] = {
+                **previa,
+                "basis": origen.get("basis") or previa.get("basis", ""),
+                "note": origen.get("note") or previa.get("note", ""),
+                "agreement": origen.get("agreement", ""),
+                "framework_basis": previa.get("basis", ""),
+            }
+
         return {
             **data,
             "country": framework.country,
             "framework": framework.name,
-            "citations": {
-                key: {
-                    "basis": c.basis,
-                    "note": c.note,
-                    # El límite del artículo, cuando lo hay. Va aquí y no en la
-                    # pantalla porque es un dato del país: una copia en el
-                    # frontend acabaría enseñando la cifra española a una
-                    # empresa de fuera.
-                    "floor": c.floor,
-                    "ceiling": c.ceiling,
-                }
-                for key, c in framework.citations.items()
-            },
+            "citations": citas,
             # Not settings and never will be: no agreement may lower them, so a
             # field to edit them would be a field whose only use is breaking the
             # law. Served so the screen can say what they are.
@@ -709,6 +807,22 @@ class WorkingTimeRulesView(APIView):
             for field, value in serializer.data.items()
             if before.get(field) != value
         }
+        # Lo que queda fuera del suelo o del techo que fija un artículo. **Se
+        # avisa y no se impide**, que es como funciona el resto de esta
+        # pantalla: la decisión es de la empresa y el producto dice con qué se
+        # compara. Lo que faltaba era decirlo **por la API**.
+        #
+        # El aviso solo existía en el frontend, que tiene las `citations` y las
+        # pinta en amarillo. Quien entra por la API ---un conector, un script de
+        # migración--- no recibía ninguna señal, y no es un valor raro y ya:
+        # medido, poner `daily_rest_hours` a cero **apaga** el aviso de descanso
+        # corto del cuadrante. Una salvaguarda del art. 34.3 se desactiva
+        # escribiendo un número.
+        #
+        # La cifra del límite sale del marco del país y no de aquí, por lo mismo
+        # que explica `Citation`: escribirla en el código sería enseñarle la
+        # española a una empresa de fuera.
+        fuera_de_la_ley = _outside_the_law(rules, legal.for_company(request.user.tenant), changed)
         if changed:
             record(
                 action=AuditAction.RULES_CHANGED,
@@ -717,5 +831,9 @@ class WorkingTimeRulesView(APIView):
                 target_type="company",
                 target_label=request.user.tenant.name,
                 changes=changed,
+                # En el rastro también: dentro de dos años, «12 → 0» no dice por
+                # sí solo que ese cero esté por debajo de un mínimo legal, y
+                # quien lo lea no tiene por qué saberse el artículo.
+                note="; ".join(a["message"] for a in fuera_de_la_ley)[:300],
             )
-        return Response(self._body(rules, request))
+        return Response({**self._body(rules, request), "warnings": fuera_de_la_ley})

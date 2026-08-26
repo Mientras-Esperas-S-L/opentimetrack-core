@@ -452,6 +452,10 @@ def apply_to_rules(ficha: Ficha, rules, *, commit: bool = True) -> Applied:
     tenant = rules.tenant
     targets = {"rules": rules, "tenant": tenant}
     touched: dict[str, list[str]] = {"rules": [], "tenant": []}
+    #: De dónde viene cada cifra que esta ficha pone. Antes se guardaba solo el
+    #: valor y el artículo se perdía: la pantalla seguía citando el del Estatuto
+    #: para una cifra que había fijado el convenio.
+    procedencia = dict(rules.from_agreement or {})
 
     for key, value in ficha.values.items():
         if key in QUALIFIERS:
@@ -470,6 +474,19 @@ def apply_to_rules(ficha: Ficha, rules, *, commit: bool = True) -> Applied:
         obj = targets[which]
         current = getattr(obj, attribute)
 
+        # La procedencia se anota aunque el valor no se mueva, y esto es el
+        # punto entero: la ficha de jardinería fija el descanso entre jornadas
+        # en doce horas, que es lo que ya decía el Estatuto. Coinciden en la
+        # cifra y no en la fuente, y quien manda para esa empresa es el
+        # convenio. Guardarla solo cuando cambia dejaba fuera justo los casos en
+        # que el convenio confirma la ley --- que son la mayoría.
+        if which == "rules" and ficha.basis_for(key):
+            procedencia[attribute] = {
+                "basis": ficha.basis_for(key),
+                "note": ficha.note_for(key),
+                "agreement": ficha.name,
+            }
+
         # DecimalField gives Decimal, the YAML gives int or float.
         if type(current)(value) == current:
             result.unchanged.append(key)
@@ -481,6 +498,9 @@ def apply_to_rules(ficha: Ficha, rules, *, commit: bool = True) -> Applied:
             touched[which].append(attribute)
 
     if commit:
+        if procedencia != (rules.from_agreement or {}):
+            rules.from_agreement = procedencia
+            touched["rules"].append("from_agreement")
         for which, fields in touched.items():
             if fields:
                 targets[which].save(update_fields=[*fields, "updated_at"])

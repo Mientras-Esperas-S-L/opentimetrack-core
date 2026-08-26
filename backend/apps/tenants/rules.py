@@ -38,6 +38,27 @@ class WorkingTimeRules(BaseModel):
         verbose_name=_("company"),
     )
 
+    #: De dónde salió cada cifra, cuando la puso una ficha de convenio.
+    #:
+    #: `{"daily_rest_hours": {"basis": "Art. 16", "note": "«Entre el final…»",
+    #: "agreement": "Convenio estatal de jardinería"}}`
+    #:
+    #: El docstring de esta clase prometía «la cifra con el artículo del que
+    #: viene» y el artículo no se guardaba: se tomaba siempre del marco del
+    #: país. Medido con la ficha de jardinería: el convenio fija el descanso
+    #: entre jornadas por su art. 16 y la pantalla lo atribuía al art. 34.3 ET.
+    #:
+    #: La cifra coincidía en ese caso ---doce horas las dos--- y el problema no
+    #: es la cifra: es la procedencia. Cuando el convenio se renueve, nadie
+    #: sabrá que ese valor venía de él; y ante una inspección, la empresa tiene
+    #: que poder decir qué norma aplica, no una parecida.
+    #:
+    #: La `note` va también porque es donde la asesoría deja la cita textual y
+    #: el razonamiento de la conversión, que era trabajo hecho y no se veía.
+    from_agreement = models.JSONField(
+        _("figures taken from an agreement"), default=dict, blank=True
+    )
+
     weekly_hours = models.DecimalField(
         _("weekly hours"),
         max_digits=4,
