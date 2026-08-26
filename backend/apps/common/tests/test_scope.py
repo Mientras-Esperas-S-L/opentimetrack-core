@@ -95,16 +95,25 @@ def test_a_worker_reads_only_themselves(company, world):
 
 
 @pytest.mark.django_db
-def test_a_manager_in_charge_of_nothing_reads_everybody(company, world):
+def test_a_manager_in_charge_of_nothing_reads_everybody_while_nobody_is(company, world):
     """The one concession in this design, and it is deliberate.
 
     A company that signs up today, adds ten people and marks one as manager has
     no departments. Narrowing that manager to nothing would show them an empty
     product on day one, and the fix people find for a default that looks broken
     is to turn it off.
+
+    The name of this test used to stop at *reads everybody*, and it passed for a
+    narrower reason than it claimed: removing `boss` here leaves **nobody** in
+    the company in charge of anything, which is the day-one state. Once somebody
+    else runs a department the concession no longer applies --- see
+    `test_reasignar_un_departamento_no_amplia_a_nadie`.
     """
     with tenant_context(company.id):
         world["garden"].managers.remove(world["boss"])
+        assert not Department.objects.filter(tenant=company, managers__isnull=False).exists(), (
+            "the concession is about a company where nobody is in charge yet"
+        )
 
     assert visible_people(world["boss"]) is None
 

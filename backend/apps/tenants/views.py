@@ -19,7 +19,7 @@ from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.audit.trail import StructureTrail
 from apps.common.permissions import IsAdmin, IsAuthenticatedInTenant, ReadForAllWriteForAdmin
-from apps.common.scope import unassigned_managers
+from apps.common.scope import department_scoping_in_use, unassigned_managers
 from apps.tenants.holidays import HolidayScope, PublicHoliday
 from apps.tenants.models import Tenant, validate_time_zone
 from apps.tenants.rules import RecordArrangement, RecordBasis
@@ -201,6 +201,10 @@ class CompanyView(APIView):
                 "managers_without_department": [
                     {"id": str(person.id), "name": person.get_full_name()} for person in loose
                 ],
+                # Cuál de las dos cosas significa esa lista. Lo sabe el
+                # servidor, así que lo dice él: si lo recalculase la pantalla
+                # habría dos copias de la regla y una se quedaría atrás.
+                "department_scoping_in_use": department_scoping_in_use(request.user.tenant),
             }
         )
 

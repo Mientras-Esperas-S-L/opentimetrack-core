@@ -2109,3 +2109,47 @@ vueltas posteriores** a la que los escribió. En la suya salieron verdes.
 
 **Regla**: si una vuelta barre algo ancho y sale limpia, el barrido se deja
 escrito como prueba antes de cerrarla. El hallazgo llega después, y llega solo.
+
+## 141. Quitarle un permiso a alguien puede ampliárselo
+
+`visible_people` respondía «sin restricción» a una responsable sin departamentos,
+para no romper el día uno de una empresa. El efecto lateral: **ceder tu
+departamento a un compañero te daba la plantilla entera**. La operación que
+parece restar permisos, sumaba.
+
+Es la segunda vez que aparece el mismo patrón en esta auditoría ---la v73 fue la
+primera, por la puerta del borrado--- y las dos veces el estado peligroso era el
+mismo: *cero elementos asignados* interpretado como *sin límite*.
+
+**Regla**: donde el alcance se calcula a partir de una lista, escribir a mano qué
+pasa cuando la lista queda vacía, y probar los dos caminos hasta el vacío: el que
+nunca tuvo nada y el que tenía y se le quitó. Casi siempre quieren respuestas
+distintas, y el segundo es el que nadie prueba.
+
+## 142. Al tapar una puerta, buscar las otras que llevan al mismo sitio
+
+La v73 encontró que borrar un departamento ampliaba a su responsable y lo tapó
+con un 409 en el `DELETE`. Correcto, y once vueltas después seguían abiertas dos
+puertas al **mismo estado**, las dos con un `PATCH` que respondía 200.
+
+Taparlo en el endpoint fue el error: el estado peligroso no lo producía el
+borrado, lo producía *quedarse sin departamentos*, y a eso se llega por varios
+caminos.
+
+**Regla**: cuando un arreglo consiste en impedir una operación, preguntarse cuál
+es el **estado** que se quería evitar y buscar todos los caminos que llevan a él.
+Si hay más de uno, el arreglo va donde se lee el estado, no en cada puerta.
+
+## 143. Un arreglo puede dejar mintiendo a un aviso que estaba bien
+
+Al cambiar la regla del alcance, el aviso de Ajustes ---«no lleva ningún
+departamento, así que ve a toda la empresa»--- pasó a decir **lo contrario** de lo
+que ocurre en el caso más frecuente, y sin romper ninguna prueba: el texto era
+una plantilla en el JSX, no una aserción.
+
+**Regla**: después de cambiar una regla de negocio, buscar los textos que la
+explican al usuario ---avisos, ayudas, `hint`, docstrings de lo que se muestra---
+y comprobar uno por uno si siguen siendo verdad. Un `grep` del concepto, no del
+código. Y si la respuesta depende de un estado que conoce el servidor, que la
+mande él: recalcularla en la pantalla crea una segunda copia de la regla que se
+quedará atrás en el siguiente cambio.

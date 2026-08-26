@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 83 · Vueltas seguidas sin hallazgos: **1**
+Vueltas dadas: 84 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -69,6 +69,7 @@ vuelve a una limpia.
 | Avisos push y correo | limpia | 13/08 v7 | — en el área; salió **una plural sin traducir que se veía en blanco** |
 | Importación de datos (festivos) | limpia | 13/08 v9 | **solo leía un país**; no comprobaba el fichero; el resumen contaba días que no escribía |
 | La matriz de permisos entera (51 rutas × 4 roles) | limpia | 26/08 v83 | — **sin hallazgo**; el barrido queda como prueba |
+| La persona que se mueve (cambios de departamento) | limpia | 26/08 v84 | **ceder un departamento ampliaba a quien lo cedía** a toda la plantilla |
 
 ### Ley
 
@@ -237,6 +238,99 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 84 --- Ceder un departamento le daba la empresa entera (26/08)
+
+**Contador de vueltas sin hallazgos: 1 → 0.**
+
+La lente: **la persona que se mueve.** Cambiar de departamento, de centro o de
+jornada a mitad de mes. El huso ya viaja con cada fichaje desde la vuelta 70, así
+que ese ángulo estaba cubierto y no se repitió; el que no lo estaba es quién
+puede leer qué después de una reorganización.
+
+#### El hallazgo: quitarle un departamento a alguien se lo ampliaba
+
+`visible_people` trataba dos estados como uno solo: *no llevas ningún
+departamento* y *aquí todavía no se ha decidido nada*. Para el segundo devolvía
+«sin restricción», que es la concesión deliberada del diseño ---una empresa que
+se da de alta hoy no puede tener una responsable que no ve a nadie--- y está
+argumentada en el docstring del módulo.
+
+El problema es que al primero le aplicaba la misma respuesta. Consecuencia:
+
+| operación | antes | después |
+|---|---|---|
+| borrar el departamento | 409 (tapado en la v73) | igual |
+| `PATCH managers=[]` | **200, y pasaba a ver 5 de 5** | 200, ve solo la suya |
+| `PATCH managers=[otra]` | **200, y pasaba a ver 5 de 5** | 200, ve solo la suya |
+
+La tercera fila es la grave, porque es la reorganización de toda la vida: «Ana ya
+no lleva Obras, ahora lo lleva Berta». El resultado era que Ana, a quien le
+acababan de **quitar** su departamento, pasaba de leer a su cuadrilla a leer a
+toda la plantilla ---incluidas las ausencias de la gente de oficina, que es donde
+se ve la enfermedad. Escalada de privilegios por sustracción.
+
+La vuelta 73 ya había cerrado una puerta a este mismo estado, la del borrado, con
+un 409. Quedaban las dos del `PATCH`, que contestaban 200.
+
+#### El arreglo: la regla ya estaba escrita en dos sitios
+
+No hizo falta inventar el criterio, porque **ya estaba escrito y sin aplicar** en
+los dos comentarios que rodean la funcionalidad:
+
+- `tenants/views.py`: «Scoping managers by department only bites once somebody is
+  put in charge of one».
+- `Settings.jsx`: «acotar por departamento no empieza a aplicar hasta que alguien
+  lleva uno».
+
+Los dos describen exactamente la regla correcta. `visible_people` no la
+implementaba. Es el patrón que más ha rendido en toda la auditoría, otra vez.
+
+`department_scoping_in_use(company)` la deja en un solo sitio: ¿lleva alguien
+algún departamento en esta empresa? Antes de ese momento nada se ha decidido y
+una responsable lee a todos; a partir de él, llevar ninguno es una respuesta y no
+un silencio. Cierra las tres puertas de golpe **sin impedir ninguna de las tres
+operaciones**: las tres siguen dando 200, y ninguna reparte permisos.
+
+#### Lo que el arreglo rompía y hubo que arreglar también
+
+El aviso de Ajustes decía «no lleva ningún departamento, **así que ve a toda la
+empresa**». Con el cambio eso solo es cierto mientras nadie lleve nada; pasado
+ese punto significa lo contrario ---no ve a nadie, y no puede hacer su trabajo---
+y le pasa justo a quien acaba de ceder el suyo. Un aviso que dice lo contrario de
+lo que ocurre es peor que no tenerlo, así que ahora el servidor manda
+`department_scoping_in_use` y la pantalla dice cuál de las dos cosas es, con
+`info` en vez de `warning` cuando es la segunda. La regla no se recalcula en el
+cliente: habría dos copias y una se quedaría atrás.
+
+#### La prueba existente que pasaba por un motivo más estrecho que su nombre
+
+`test_a_manager_in_charge_of_nothing_reads_everybody` seguía verde con el arreglo
+puesto. No por casualidad: en su fixture `boss` es la **única** responsable
+asignada, así que al quitarla no queda nadie llevando nada ---el estado del día
+uno--- y la rama nueva no se dispara. La prueba era cierta, pero decía más de lo
+que probaba. Renombrada a `..._reads_everybody_while_nobody_is`, con una
+aserción explícita de que ahí no queda nadie al mando y un puntero a la prueba
+del caso contrario.
+
+**Comprobado que las pruebas nuevas cazan el fallo**: quitando el arreglo, tres
+se ponen rojas y las tres que defienden el día uno siguen verdes.
+
+#### Y una prueba para la frase, no solo para la regla
+
+La lección de la vuelta es que **un texto puede mentir sin romper nada**: el aviso
+era una plantilla dentro del JSX, así que ninguna prueba se enteraba. Para poder
+probarlo se sacó a `avisoDeAlcance()` en su propio módulo, lo que además deja el
+componente sin la decisión metida en una expresión.
+
+La prueba de navegador ejercita el helper y no la pantalla montada: para verla en
+pie haría falta dejar sin departamento a una responsable de la semilla, y una
+prueba que reorganiza la empresa de demostración le cambia los datos a las demás.
+Cubre los dos textos, la concordancia en plural ---que aquí afecta al verbo y al
+posesivo, no solo al sustantivo--- y los dos vacíos: sin nadie suelto, y con la
+API todavía sin responder.
+
+7 pruebas nuevas en el backend (1.080) y 1 de navegador (272).
 
 ### Vuelta 83 --- La matriz entera, y esta vez no había nada (26/08)
 

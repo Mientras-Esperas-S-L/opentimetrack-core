@@ -24,6 +24,7 @@ import {
 } from '../../services/api.js'
 import { ErrorNote, Loading, PageHeader, Panel } from '../../components/common.jsx'
 import { plural } from '../../components/format.js'
+import { avisoDeAlcance } from './avisoDeAlcance.js'
 import { useAuth } from '../../hooks/useAuth.js'
 
 /** Spain spans two, and both are in daily use. The rest of the list is there
@@ -513,15 +514,26 @@ export default function Settings() {
             {/* La una concesión de este diseño, dicha en voz alta: acotar por
                 departamento no empieza a aplicar hasta que alguien lleva uno,
                 porque si no una empresa recién creada tendría un responsable
-                que no ve a nadie. */}
+                que no ve a nadie.
+
+                Pasado ese momento el aviso sigue haciendo falta, pero dice lo
+                contrario: quien no lleva ninguno no ve a nadie, y eso le pasa
+                justo a quien acaba de ceder su departamento. Cuál de los dos es
+                lo dice el servidor. */}
             {!form.managers_see_whole_company &&
-              company?.managers_without_department?.length > 0 && (
-                <Alert severity="warning" variant="outlined">
-                  {company.managers_without_department.length === 1
-                    ? `${company.managers_without_department[0].name} no lleva ningún departamento, así que ve a toda la empresa.`
-                    : `${company.managers_without_department.length} responsables no llevan ningún departamento, así que ven a toda la empresa: ${company.managers_without_department.map((m) => m.name).join(', ')}.`}
-                </Alert>
-              )}
+              (() => {
+                const aviso = avisoDeAlcance(
+                  company?.managers_without_department,
+                  company?.department_scoping_in_use,
+                )
+                return (
+                  aviso && (
+                    <Alert severity={aviso.severity} variant="outlined">
+                      {aviso.text}
+                    </Alert>
+                  )
+                )
+              })()}
           </Stack>
         </Panel>
 

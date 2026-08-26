@@ -20,14 +20,23 @@ Not the department they belong to --- somebody in the office can perfectly well
 run the gardening crew, and conflating the two would give them the office's
 records instead of the ones they answer for.
 
-**A manager in charge of nothing** sees everybody, which is what the role meant
-before any of this. That is deliberate and it is the hard call here. Narrowing
-them by default would mean a company that signs up today, creates ten people and
-marks one as manager finds a product that shows that manager nobody at all ---
-and the fix for a default that looks broken on day one is that people turn it
-off, not that they discover departments. Assigning somebody a department is the
-act of narrowing them, and the settings screen says out loud how many managers
-are still unassigned.
+**A manager in charge of nothing, in a company where nobody is in charge of
+anything** sees everybody, which is what the role meant before any of this. That
+is deliberate and it is the hard call here. Narrowing them by default would mean
+a company that signs up today, creates ten people and marks one as manager finds
+a product that shows that manager nobody at all --- and the fix for a default
+that looks broken on day one is that people turn it off, not that they discover
+departments. The settings screen says out loud how many managers are still
+unassigned.
+
+**A manager in charge of nothing, in a company where somebody is** sees only
+themselves. This is the correction to the paragraph above, and the reason is in
+its own last sentence: assigning somebody a department is the act of narrowing
+them. If assigning narrows, unassigning cannot widen --- yet it did, and by the
+most ordinary route there is. Handing Obras over from one manager to another left
+the first one reading the whole company, because *in charge of nothing* and
+*nothing has been decided yet* were the same state. They are not: the first
+manager put in charge of a department is what tells the two apart.
 
 **A manager in a company that turned scoping off** sees everybody even when they
 do run a department. Kept as a company setting: in a firm of twelve, departments
@@ -63,9 +72,15 @@ def visible_people(user):
 
     managed = Department.objects.filter(managers=user, tenant=user.tenant)
     if not managed.exists():
-        # Nothing has been said about what they answer for, so nothing narrows
-        # them. See the module docstring: the alternative is a manager who sees
-        # nobody on the day the company signs up.
+        # Nothing has been said about what they answer for --- but only while
+        # nobody in the company answers for anything. Once somebody runs a
+        # department, the mechanism is in use, and running none of them is an
+        # answer rather than a silence. Without this, taking a department away
+        # from a manager *widens* them to the whole company, which is the
+        # opposite of what the administrator just asked for. See the module
+        # docstring.
+        if department_scoping_in_use(user.tenant):
+            return User.objects.filter(pk=user.pk)
         return None
 
     # Filtered by tenant explicitly: `User.objects` is deliberately not
@@ -73,6 +88,26 @@ def visible_people(user):
     return User.objects.filter(
         Q(department__in=managed) | Q(pk=user.pk), tenant=user.tenant
     ).distinct()
+
+
+def department_scoping_in_use(company) -> bool:
+    """Whether this company has started using departments as a scope.
+
+    The whole design turns on telling two states apart that look identical from
+    a single manager's row: *nothing has been decided here yet* and *it has been
+    decided, and you run none of them*. The first manager put in charge of a
+    department is the moment one becomes the other.
+
+    Before that moment a manager reads the whole company, because a product that
+    shows a brand-new company's manager nobody at all gets its scoping switched
+    off rather than its departments discovered. After it, a manager in charge of
+    nothing reads only themselves --- otherwise handing a department over to a
+    colleague would *widen* the first manager to the entire payroll, which is
+    the opposite of what was asked for.
+    """
+    from apps.users.models import Department
+
+    return Department.objects.filter(tenant=company, managers__isnull=False).exists()
 
 
 def can_see(user, person) -> bool:
@@ -91,11 +126,17 @@ def can_see(user, person) -> bool:
 
 
 def unassigned_managers(company):
-    """Managers in charge of no department, and therefore of everybody.
+    """Managers in charge of no department.
 
-    The setting screen counts them out loud. This is the one place the design
-    trades privacy for not being broken on day one, and a trade nobody can see
-    is not a trade, it is a hole.
+    What that costs depends on `department_scoping_in_use`, and the settings
+    screen says which of the two it is:
+
+    - Nobody runs a department yet, so these managers read **everybody**. That
+      is the one place the design trades privacy for not being broken on day
+      one, and a trade nobody can see is not a trade, it is a hole.
+    - Somebody does, so these managers read **only themselves** --- they cannot
+      do the job they were given the role for, which is worth saying out loud
+      too, and is what happens to whoever just handed their department over.
     """
     from apps.users.models import Department, Role, User
 
