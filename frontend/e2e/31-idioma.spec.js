@@ -52,24 +52,31 @@ test.describe('Idioma', () => {
     })
     expect(alta.status, JSON.stringify(alta.body)).toBe(201)
 
-    const guardado = await api(page, `/employees/${alta.body.id}/`, {
-      method: 'PATCH',
-      body: { locale: 'en' },
-    })
-    expect(guardado.status).toBe(200)
-    expect(guardado.body.locale).toBe('en')
+    // La baja va en un `finally`: sin él, cualquier fallo de aquí en adelante
+    // deja a la persona activa para siempre, y como el nombre lleva la marca de
+    // la tanda se acumula una por corrida rota. Así aparecieron las que había
+    // que barrer a mano.
+    try {
+      const guardado = await api(page, `/employees/${alta.body.id}/`, {
+        method: 'PATCH',
+        body: { locale: 'en' },
+      })
+      expect(guardado.status).toBe(200)
+      expect(guardado.body.locale).toBe('en')
 
-    // Y la pantalla lo ofrece, que es lo que faltaba.
-    await page.reload()
-    await page.getByPlaceholder('Buscar por nombre, correo o número').fill(marca)
-    await page.getByRole('button', { name: `Editar Prueba ${marca}` }).click()
-    const dialogo = page.getByRole('dialog')
-    await expect(dialogo.getByRole('combobox', { name: 'Idioma' })).toBeVisible()
-    await page.keyboard.press('Escape')
-
-    await api(page, `/employees/${alta.body.id}/`, {
-      method: 'PATCH',
-      body: { is_active: false },
-    })
+      // Y la pantalla lo ofrece, que es lo que faltaba.
+      await page.reload()
+      await page.getByPlaceholder('Buscar por nombre, correo o número').fill(marca)
+      await page.getByRole('button', { name: `Editar Prueba ${marca}` }).click()
+      const dialogo = page.getByRole('dialog')
+      await expect(dialogo.getByRole('combobox', { name: 'Idioma' })).toBeVisible()
+      await page.keyboard.press('Escape')
+    } finally {
+      const baja = await api(page, `/employees/${alta.body.id}/`, {
+        method: 'PATCH',
+        body: { is_active: false },
+      })
+      expect(baja.status, 'la limpieza no dio de baja a la persona de prueba').toBe(200)
+    }
   })
 })

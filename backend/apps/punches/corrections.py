@@ -758,8 +758,11 @@ def _create(correction: PunchCorrection) -> Punch:
         # El huso del asiento que se corrige, si lo tenía: la corrección cambia
         # la hora, no el sitio donde se vivió. Y si el original venía de antes de
         # que se guardara, el de la persona, que es lo mejor que hay.
-        time_zone=(previous.time_zone if previous is not None and previous.time_zone
-                   else str(correction.employee.tzinfo)),
+        time_zone=(
+            previous.time_zone
+            if previous is not None and previous.time_zone
+            else str(correction.employee.tzinfo)
+        ),
     )
     if previous is not None:
         punch.interval = previous.interval

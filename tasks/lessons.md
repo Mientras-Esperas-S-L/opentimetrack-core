@@ -2804,3 +2804,71 @@ compartido.
 **Regla**: lo que identifica a un sujeto de prueba tiene que ser único **por
 ejecución**, no por familia. Si el nombre lleva la marca de la tanda, hay que
 usarla entera en el selector: `Masiva Zzz p8x3k 0`, no `Masiva Zzz`.
+
+## 189. Un guard que pasa a la primera todavía no es un guard
+
+La comprobación de residuos de la vuelta 101 se puso verde nada más escribirla.
+Verde era el resultado correcto ---acababa de limpiar la base a mano--- y por eso
+mismo no demostraba nada: una comprobación que mira el sitio equivocado también
+sale verde.
+
+Al plantar un centro y un departamento con marca reconocible y volver a correrla,
+falló nombrando exactamente esos dos. Eso sí lo demuestra.
+
+**Regla**: una comprobación nueva no está terminada hasta que se la ha visto
+**fallar por lo que tiene que fallar**. Planta el caso, mírala ponerse roja, lee
+el mensaje ---tiene que decir qué encontró---, retira el caso. Es la lección 143
+aplicada al código que uno mismo acaba de escribir, que es donde más cuesta
+acordarse.
+
+## 190. Una respuesta de la API es una página, no la lista
+
+La misma comprobación pedía `/employees/?is_active=true` y recorría `results`
+como si fueran todas. Con veintiuna personas activas lo eran, así que pasaba. En
+cuanto pasaran de cincuenta ---`PAGE_SIZE` es 50--- habría estado mirando las
+cincuenta primeras y **dando por limpio lo que no llegó a ver**, justo cuando el
+sedimento que busca ya se había acumulado.
+
+Peor: pedir `page_size=1000` tampoco basta. La API tope ese valor, y sobre las
+709 personas de la base la lista seguía viniendo partida. Solo se supo porque la
+comprobación miraba `next`.
+
+**Regla**: al recorrer una lista de la API en una prueba, o se filtra en el
+servidor hasta que quepa, o se pagina de verdad. Y en cualquier caso se
+comprueba `next`: si viene, la prueba tiene que fallar diciendo que no lo ha
+visto todo, nunca callarse.
+
+## 191. Lo que distingue un residuo de la semilla tiene que ser estrecho
+
+El primer patrón para reconocer lo que crean las pruebas era `p` seguida de seis
+caracteres. Cazó a `parcial@demo.local`, que es de la semilla y tiene que estar
+ahí.
+
+Un guard que señala lo que es correcto no se arregla: se ignora, y a la semana
+está desactivado. La marca real lleva doce caracteres o más ---el instante en
+base 36 más cuatro al azar---, así que el patrón pide doce.
+
+**Regla**: antes de dar por bueno un patrón que separa «lo mío» de «lo del
+producto», pásale la lista de lo que **no** debe cazar. Un falso positivo en un
+guard cuesta más que el fallo que evita.
+
+## 192. Un documento de carencias envejece al revés de lo que se teme
+
+`docs/cobertura-legal.md` enumera lo que el producto **no** cubre. El miedo
+natural es que se quede corto ---que oculte un hueco---, y resultó al revés: la
+fila de horas extraordinarias decía que el tope anual del art. 35.2 «no se
+contrasta con lo trabajado» cuando lleva tiempo contrastándose, calculado en
+`overtime_used()`, servido por la vista y avisado en pantalla citando el
+artículo.
+
+Se entiende: la vuelta que implementa algo escribe el código y las pruebas, y la
+tabla que decía «falta» se queda como estaba. Nadie la vuelve a leer porque
+nadie duda de una lista de carencias.
+
+Cuesta más de lo que parece: sobre esa tabla se decide **qué construir después**,
+y una fila desfasada manda a alguien a implementar lo que ya existe.
+
+**Regla**: una tabla de cobertura se verifica **fila a fila contra el código**,
+no se lee. Y al implementar algo que una tabla daba por ausente, la tabla entra
+en el mismo cambio que el código. De catorce filas comprobadas así en la vuelta
+101, trece eran correctas y una llevaba meses mintiendo.

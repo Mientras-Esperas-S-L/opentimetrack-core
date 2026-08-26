@@ -89,7 +89,7 @@ empresa de trabajo temporal.
 | Jornada reducida por guarda legal | art. 37.6 | **A medias.** Hay régimen; la fracción reducida y las fechas, no |
 | Distribución irregular | art. 34.2 | **A medias.** Se marca el fichaje, pero no hay saldo: el 10 % se compensa en 12 meses y nadie lleva la cuenta |
 | Adaptación de jornada | art. 34.8 | **A medias.** Se marca en el fichaje; la solicitud y su respuesta no se tramitan |
-| Horas extraordinarias | art. 35 | **A medias.** Se marcan y se dice cómo se saldan; el tope de 80 al año no se contrasta con lo trabajado |
+| Horas extraordinarias | art. 35 | **Cubierto.** Se marcan, se dice cómo se saldan y el tope anual se contrasta con lo autorizado: la pantalla de decisiones avisa al pasarse, descontando las compensadas con descanso y las de fuerza mayor |
 | Horas complementarias | art. 12.5 | **A medias.** El cuadrante avisa; el tope mensual del 30 % no se acumula |
 | Trabajo a distancia | Ley 10/2021 | **A medias.** El fichaje registra la modalidad; el acuerdo y el umbral del 30 %, no |
 | Guardias y atención continuada | RD 1561/1995 | **Falta.** Sanidad: presencia frente a trabajo efectivo |

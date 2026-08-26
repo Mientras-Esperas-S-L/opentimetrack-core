@@ -45,6 +45,14 @@ test.describe('Centros de trabajo', () => {
 
     expect(ruido()).toEqual([])
     expect(await huecosVisibles(page)).toEqual([])
+
+    // Y se retira. Sin esto quedaba uno por tanda ---llegaron a ocho--- y con
+    // tres centros la pantalla tiene tres botones «Editar», que es lo que hizo
+    // fallar a la prueba de nombres accesibles en la vuelta 96 sin que nada
+    // apuntara aquí.
+    const centros = await api(page, `/workplaces/?search=${encodeURIComponent(nombre)}`)
+    const suyo = (centros.body?.results ?? centros.body ?? [])[0]
+    if (suyo) await api(page, `/workplaces/${suyo.id}/`, { method: 'DELETE' })
   })
 
   test('sin nombre no se puede guardar', async ({ page }) => {

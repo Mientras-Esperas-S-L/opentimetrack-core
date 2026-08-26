@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 100 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 101 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -22,6 +22,15 @@ entrega. La lección de la vuelta 42 se repite: la etiqueta «limpia» de las 35
 
 Las tres últimas vueltas han ido por las **tres piezas que salen del sistema**
 ---CSV (64), nombre de fichero (65) y PDF (66)--- y las tres han encontrado algo.
+
+**Estado a 26/08/2026 (vuelta 101).** Los dos párrafos de arriba se escribieron
+hacia la vuelta 66 y describen aquel momento; se dejan como quedaron. Desde el
+25/08 se han dado diecinueve vueltas más (83-101) **con hallazgo en diecisiete**.
+El patrón que más ha rendido en esta tanda no es una lente sino una forma:
+**la pieza está hecha y desconectada** ---el servicio existe, nadie lo llama---,
+seguida de **contar lo que hay sale más barato que forzar el fallo** (la 98
+encontró 4.391 justificantes sin dueño con una consulta) y de **medir antes de
+concluir**, que ha desmontado unos ocho hallazgos propios antes de escribirlos.
 La 66 además encontró un defecto **debajo de un arreglo anterior**: la vuelta 39
 hizo que la discrepancia del art. 4.b llegara al informe, y hasta ahora se
 imprimía fuera de la hoja. La prueba de la 39 pasaba porque preguntaba si el
@@ -243,9 +252,12 @@ completo (evidencia y refutación) está en el registro del workflow.
   **Es decisión de producto, no arreglo.** Preguntarlo antes de tocar nada. El
   manual dice ya lo que pasa hoy (§2), que antes describía otra cosa.
 
-- **Los catálogos de catalán y gallego, con 31 huecos nuevos cada uno.** 460 en
-  total. Los dejó la vuelta 43 al vaciar traducciones falsas y al extraer cadenas
-  que llevaban tiempo sin recogerse. Van con las ~460 del frontend en el paquete
+- **Los catálogos de catalán y gallego, con 501 huecos cada uno** (medido en la
+  vuelta 101; eran 460 en la 43). Los dejó la vuelta 43 al vaciar traducciones
+  falsas y al extraer cadenas que llevaban tiempo sin recogerse, y **crecen solos**:
+  cada vuelta que añade texto de interfaz amplía el hueco, la 100 entre ellas.
+  Conviene medirlo al cerrar cada vuelta ---`msgfmt --statistics`--- para que no
+  se descubra el bulto de golpe. Van con las ~460 del frontend en el paquete
   del traductor nativo. **El castellano sí está completo**: cero sin traducir.
 
 - **La capa de i18n del frontend: DECIDIDO QUE SÍ (14/08), en marcha.** Las
@@ -300,6 +312,100 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 101 --- El guard del sedimento (26/08)
+
+Cuatro vueltas seguidas se habían ido en arreglar pruebas que fallaban **por lo
+que había dejado otra**: dos cuentas apellidadas «Bloque» que se colaban al
+principio del orden (94), una ausencia en fechas fijas que chocaba con la de la
+tanda anterior (95), ocho centros que ponían tres botones «Editar» en una
+pantalla (96), un tope de jornada que quedó en 26 (97). Cada vez el síntoma
+señalaba un sitio distinto del culpable, y cada vez lo arreglé caso por caso.
+
+Eso no converge. Esta vuelta pone el **guard**: `e2e/zz-sin-residuos.spec.js`,
+que corre el último de la tanda ---por el prefijo `zz`--- y falla **nombrando**
+lo que quedó.
+
+#### Qué se ha hecho
+
+- **La limpieza de lo ya acumulado**: 15 centros de prueba y 5 personas
+  retiradas. La demo baja de 26 personas activas a 21.
+- **El guard**, con cuatro comprobaciones: personas activas de prueba, centros,
+  departamentos, y que los ajustes de empresa quedan como estaban.
+- **`08-formularios-gestion`** ya retira el centro que crea.
+- **`31-idioma`** da de baja a su persona en un `finally`: estaba fuera, así que
+  cualquier fallo intermedio la dejaba activa para siempre. De ahí salieron las
+  que hubo que barrer a mano.
+- **`corrections.py`** llevaba desde la vuelta 93 sin pasar por `ruff format`, y
+  nadie lo vio porque el formateador del backend no estaba en mi comprobación de
+  cierre. Ahora sí.
+
+#### Lo que costó tres intentos, que es lo que vale la vuelta
+
+El guard **se puso verde a la primera**, y verde era el resultado correcto:
+acababa de limpiar la base a mano. Eso no demuestra nada, así que planté un
+centro y un departamento con marca y volví a correrlo. Falló nombrando
+exactamente esos dos. Tres cosas salieron de ahí:
+
+1. **El patrón cazaba a la semilla.** Pedía `p` y seis caracteres, y
+   `parcial@demo.local` encaja. Un guard que señala lo que tiene que estar ahí se
+   apaga a la semana. Ahora pide doce, que es lo que mide la marca de verdad.
+2. **La lista venía paginada.** `PAGE_SIZE` es 50; con 21 personas activas cabía
+   todo y por eso pasaba. En cuanto el sedimento creciera de 50 ---justo cuando
+   hace falta--- habría estado mirando las 50 primeras y **callándose sobre el
+   resto**. Y pedir `page_size=1000` tampoco basta: la API tope ese valor y sobre
+   las 709 personas de la base la lista seguía partida. Solo se supo porque la
+   comprobación mira `next`.
+3. **Dos personas activas eran intencionadas.** `37-cobertura` y
+   `38-datos-extremos` reutilizan un correo **fijo**: es la misma persona tanda
+   tras tanda, no crece, y la de cobertura queda activa porque su caso consiste
+   en darle de baja y hay que devolverle el alta. El guard buscaba mal: lo que
+   persigue es **lo que crece**, no lo que existe. Ahora hay una lista cerrada de
+   reutilizados ---y una comprobación de que no se dupliquen, porque si una
+   prueba deja de encontrar el suyo da de alta otro con el mismo correo y la
+   lista empieza a crecer por donde nadie mira.
+
+En la primera tanda completa el guard cazó exactamente esos dos casos legítimos,
+que es como se supo del punto 3.
+
+#### De paso: la tabla de cobertura legal
+
+Verificadas contra el código las **nueve filas incompletas** de la tabla de
+situaciones de jornada. **Ocho son correctas**; una estaba desfasada:
+
+- **Horas extraordinarias (art. 35)** decía «el tope de 80 al año no se contrasta
+  con lo trabajado». Sí se contrasta: `overtime_used()` lo calcula descontando
+  las compensadas con descanso y las de fuerza mayor, `overtime_views` lo sirve y
+  `Decisions.jsx` lo avisa en pantalla citando el 35.2. Conectado de punta a
+  punta. Fila corregida.
+
+Las otras ocho se sostienen: complementarias sin acumular el tope mensual,
+distribución irregular sin saldo, guarda legal sin fracción ni fechas de la
+reducción, adaptación del 34.8 solo como razón de fichaje, trabajo a distancia
+sin acuerdo ni umbral, y las tres del RD 1561/1995 ---guardias, tiempo de
+presencia, jornadas especiales--- que no existen como concepto.
+
+También se verificaron las **cinco filas incompletas de la tabla de modalidades
+de contrato**, y las cinco se sostienen:
+
+- **Fijo discontinuo** tiene la casilla, pero no hay llamamiento ni periodos de
+  actividad.
+- **Los dos formativos** comparten un único `WorkingTimeRegime.TRAINING`: ni se
+  distingue el 11.2 del 11.3, ni se topea el 65 % / 85 % del 11.2.b.
+- **Contrato de relevo**: lo que el código llama «relevo» es siempre el relevo de
+  turno, otra cosa.
+- **Jubilación parcial**: no aparece.
+
+**Catorce filas comprobadas contra el código, una desfasada.** La tabla es
+fiable: las carencias que enumera son reales, y la respuesta a «¿habría que
+implementar esto?» es que sí ---salvo el tope de horas extra, que ya está---.
+Queda como decisión de producto, no de auditoría, en qué orden.
+
+#### Anotado, no arreglado
+
+- **Los catálogos de catalán y gallego han pasado de 460 huecos a 501.** Cada
+  vuelta que añade cadenas de interfaz amplía el hueco; la propia vuelta 100 lo
+  hizo. Sigue en hallazgos abiertos.
 
 ### Vuelta 100 --- Un convenio nuevo ya no reescribe lo cerrado (26/08)
 
