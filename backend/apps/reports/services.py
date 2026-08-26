@@ -75,6 +75,23 @@ class ReportData:
     generated_at: datetime
     fingerprint: str = ""
 
+    #: Las reglas de cómputo con las que se calculó, impresas en el documento.
+    #:
+    #: No cambian el resultado: lo explican. Estas reglas se leen del ajuste
+    #: **de hoy**, así que cambiarlas reescribe periodos ya cerrados ---medido,
+    #: un abril pasaba de 7:00 a 8:00 al marcar que la pausa cuenta como trabajo,
+    #: y un turno de noche pasaba de `22:00;06:00;08:00` a «entrada sin salida»
+    #: con cero horas al bajar el tope de jornada abierta.
+    #:
+    #: Que las reglas puedan cambiar es legítimo ---salen del convenio--- y que
+    #: el cambio alcance al pasado es lo que no lo es. Arreglarlo de verdad pide
+    #: reglas con fechas de vigencia, que es una decisión de producto y está
+    #: anotada en el cuaderno. Mientras tanto, al menos el documento dice bajo qué
+    #: reglas se emitió, así que dos versiones del mismo mes son comparables en
+    #: vez de inexplicables.
+    computed_break_counts: bool = False
+    computed_max_open_hours: int = 0
+
     # Art. 3.b: the agreed regime, which is what the hours are measured against.
     regime: str = ""
     contracted_hours: str = ""
@@ -356,6 +373,8 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
         company_name=company.name,
         company_tax_id=company.tax_id,
         time_zone=company.time_zone,
+        computed_break_counts=rules.break_counts_as_work,
+        computed_max_open_hours=rules.max_open_hours,
         employee_name=employee.get_full_name(),
         employee_staff_number=employee.employee_id or "",
         date_from=date_from,
@@ -490,6 +509,21 @@ def to_csv(data: ReportData) -> str:
     )
     writer.writerow(
         [_("Period"), f"{data.date_from} — {data.date_to}", _("Time zone"), data.time_zone]
+    )
+    # Las reglas con las que se calculó: sin ellas, dos versiones del mismo mes
+    # con cifras distintas no se pueden explicar.
+    writer.writerow(
+        [
+            # Sin «sí/no»: una cadena de una palabra la traduce cada idioma
+            # por su cuenta y acaba prestada de otro contexto ---«no» venía
+            # traducido como «nota». La frase entera no tiene ese problema.
+            _("Break"),
+            _("counts as working time")
+            if data.computed_break_counts
+            else _("does not count as working time"),
+            _("Maximum open day (hours)"),
+            data.computed_max_open_hours,
+        ]
     )
     writer.writerow([])
     writer.writerow([_("Date"), _("Entry"), _("Exit"), _("Hours"), _("Notes")])

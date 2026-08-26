@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 93 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 94 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -79,6 +79,7 @@ vuelve a una limpia.
 | El camino de vuelta (deshacer) | limpia | 26/08 v91 | **una propuesta equivocada no se podía retirar**; la otra parte tenía que pararla |
 | Lo que se borra de verdad | limpia | 26/08 v92 | **un responsable hacía desaparecer la solicitud de otro**, sin fila y sin rastro |
 | Lo que se lleva un borrado (cascadas) | limpia | 26/08 v93 | **el registro cambiaba una hora hacia atrás** al retirar un centro |
+| Qué más se relee con las reglas de hoy | limpia | 26/08 v94 | **un turno de noche pasaba a «entrada sin salida»** al bajar un tope |
 
 ### Ley
 
@@ -136,6 +137,16 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 
 ## Hallazgos abiertos
+
+- **Las reglas de cómputo no tienen fechas de vigencia, así que un cambio de hoy
+  reescribe periodos cerrados.** (v94) Medido sobre un abril terminado: marcar que
+  la pausa cuenta como trabajo lo lleva de 7:00 a 8:00 h, y bajar el tope de
+  jornada abierta convierte un turno de noche de `22:00;06:00;08:00` en `entrada
+  sin salida` con cero horas. Que las reglas cambien es legítimo ---salen del
+  convenio---; que el cambio alcance al pasado, no. El arreglo pide reglas
+  versionadas por fecha de efecto, y con ello la decisión de **desde cuándo**
+  aplica un convenio nuevo y qué pasa con lo ya entregado. **Para Francisco.**
+  Mientras tanto el documento imprime con qué reglas se calculó.
 
 - **La demo acumula sedimento entre sesiones.** (v90) 533 personas donde la
   semilla monta catorce, 452 correcciones, 413 turnos. No es un fallo ---el
@@ -263,6 +274,89 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 94 --- Ocho horas que pasaban a cero (26/08)
+
+La lente sale de la anterior: si el huso había que congelarlo porque es un hecho,
+**qué más se consulta al presente** para interpretar un hecho pasado. En
+`reports/services.py` había tres candidatos, y los tres dan.
+
+#### Lo medido, sobre un abril ya cerrado
+
+| lo que se cambia hoy | la fila del informe pasa de | a |
+|---|---|---|
+| la pausa cuenta como trabajo | `08:00;13:00;07:00` | `08:00;13:00;`**`08:00`** |
+| el tope de jornada abierta, a 4 h | `22:00;06:00;08:00` | `22:00;;`**`00:00;entrada sin salida`** |
+
+El segundo es el peor de los dos: un turno de noche **bien fichado** pasa a cero
+horas y aparece una incidencia que no ocurrió. No desplaza el dato como el huso,
+lo destruye.
+
+#### Y aquí la lente se para, a propósito
+
+Con el huso estaba claro: es un **hecho** ---dónde se vivió esa hora--- y se
+congela. Pero «la pausa cuenta como tiempo de trabajo» es una **regla de cómputo
+que sale del convenio** (art. 34.4 ET), y las reglas cambian de verdad. Lo que no
+puede es que el cambio alcance hacia atrás.
+
+Arreglarlo bien pide **reglas con fechas de vigencia**, y con eso viene una
+pregunta que no es técnica: desde cuándo aplica un convenio nuevo, y qué pasa con
+los informes ya entregados. Eso **no se decide desde una vuelta de auditoría**, así
+que queda en hallazgos abiertos con las cifras medidas.
+
+#### Lo que sí cabía hacer hoy
+
+El documento ahora **dice bajo qué reglas se emitió**: el trato de la pausa y el
+tope de jornada abierta, en la cabecera, junto al periodo y al huso ---que ya
+estaban ahí por el mismo motivo. No cambia ninguna cifra: hace que dos versiones
+del mismo mes se puedan comparar en vez de contradecirse sin explicación.
+
+En el CSV y en el PDF, porque el PDF es el que se entrega.
+
+#### Un fallo mío que cazaron los catálogos
+
+Puse los valores como `_("yes")` y `_("no")`. Al regenerar, **`no` venía traducido
+como «nota»** y en catalán y gallego los dos valores **opuestos** heredaban la
+misma frase ---que en uno de los dos casos habría dicho lo contrario de lo que
+pasa. Una cadena de una palabra la traduce cada idioma por su cuenta y se presta
+de cualquier contexto. Cambiado a frases enteras: «Descanso | no computa como
+trabajo efectivo».
+
+4 pruebas nuevas (1.132 en el backend), una de ellas de que las cifras **no**
+cambian por esto.
+
+#### Y el rojo que costó cerrar la vuelta, que no era de la vuelta
+
+La tanda de navegador falló dos veces, y ninguna por este cambio:
+
+**La primera**, en el *setup* del login: 120 s agotados esperando el token y
+«browser has been closed». Relanzada sin tocar nada, la misma sesión pasa en
+**2,4 s**. El recargador de Django estaba reiniciando por mis ediciones cuando
+arrancó la tanda. Tercera vez en el día que pasa esto por un sitio distinto, y ya
+está escrito como regla.
+
+**La segunda** fue de verdad interesante: dos fallos en `12-acciones-masivas`, uno
+esperando 3 personas movidas y encontrando 2, y otro con un diálogo que no se
+cerraba. Aislado, el fichero da **10 verdes**. La cadena entera:
+
+1. La prueba marcaba **«las tres primeras»** casillas de la lista y las cruzaba
+   con las tres primeras de la API: frágil dos veces, porque depende de cuánta
+   gente hay y de en qué orden sale.
+2. Y el orden empezaba así: Jose Almenara, Hugo Bermejo, **«Prueba Bloque
+   p69728000»**, **«Prueba Bloque p69729721»**. Esos dos son los residuos
+   activos del 14 de agosto que **en la vuelta 90 declaré sedimento
+   inofensivo**. Por el apellido «Bloque» se colaban al principio del alfabeto.
+3. Al arrastrar a Hugo consigo, la prueba siguiente ---que lo busca por su
+   nombre--- se quedaba sin poder componer su departamento. **Un fallo, no dos.**
+
+Arreglado en el fondo: la prueba **crea sus propias tres personas** y las retira
+al terminar, así que dice exactamente sobre quién actúa. Y los seis residuos
+activos, retirados: la demo vuelve de 24 personas activas a 18.
+
+La vuelta 90 se corrige a sí misma. Dije que el sedimento no era un fallo porque
+la limpieza funcionaba y el producto no borra a propósito, y las dos cosas siguen
+siendo verdad --- pero cuatro cuentas activas de prueba, con un apellido que las
+pone primeras, sí eran un fallo esperando.
 
 ### Vuelta 93 --- El registro que cambiaba hacia atrás (26/08)
 

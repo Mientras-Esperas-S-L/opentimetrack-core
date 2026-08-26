@@ -2475,3 +2475,78 @@ centro actual, así que se movía con la empresa igual que el informe.
 columna o un método antes de contar con él para nada que tenga que durar. Un
 `SerializerMethodField` es una vista del presente; solo una columna congela el
 pasado.
+
+## 167. Distinguir el hecho de la regla antes de decidir qué se congela
+
+El huso con el que se vivió una hora es un **hecho**: se congela con el fichaje y
+listo. «La pausa cuenta como tiempo de trabajo» es una **regla de cómputo del
+convenio**: cambia de verdad, y congelarla sin más impediría aplicar un convenio
+nuevo.
+
+Los dos producían el mismo síntoma ---el informe de un mes cerrado cambiaba--- y
+piden arreglos distintos: uno es una columna, el otro son reglas con fechas de
+vigencia y una decisión sobre desde cuándo aplican.
+
+**Regla**: ante un dato que reescribe el pasado, preguntar primero si es un hecho
+o una norma. Si es un hecho, se guarda con el hecho. Si es una norma, hace falta
+vigencia temporal, y **eso no lo decide quien audita**: se mide, se escribe con
+cifras y se deja la decisión a quien lleva el producto.
+
+## 168. Nunca traducir cadenas de una palabra
+
+Puse `_("yes")` y `_("no")` como valores de una tabla. Al regenerar catálogos,
+**`no` venía traducido como «nota»**, y en catalán y gallego los dos valores
+opuestos ---«counts as working time» y «does not count»--- heredaron la **misma**
+frase: en uno de los dos casos el documento habría dicho lo contrario de lo que
+pasa.
+
+**Regla**: los `msgid` de una o dos palabras se prestan traducciones de cualquier
+otro contexto y son indistinguibles para quien traduce. Usar la frase entera
+---«no computa como trabajo efectivo»--- aunque sea más larga. En un documento que
+se entrega, una palabra mal prestada cambia lo que dice.
+
+## 169. Lanzar la suite justo después de editar el backend la hace fallar en el arranque
+
+Tercera vez hoy, y cada una por un sitio distinto: la tanda arrancó mientras el
+recargador de Django estaba reiniciando por mis últimas ediciones, y el **setup de
+la sesión** agotó sus 120 s esperando el token, con «browser has been closed».
+Parecía un fallo del cambio; relanzada sin tocar nada, la misma sesión pasa en
+**2,4 s**.
+
+Las tres veces el síntoma engañaba: la primera pareció que un cambio del backend
+rompía dos pantallas, la segunda que la suite iba cuatro veces más lenta, esta que
+el login estaba roto.
+
+**Regla**: después de tocar el backend, esperar a que responda antes de lanzar la
+tanda ---un `curl` al API sirve--- y ante un fallo en el **arranque** (sesiones,
+login, timeouts largos) relanzar limpio **antes** de investigar. Un fallo de
+arranque casi nunca es del cambio; un fallo en una prueba concreta casi siempre sí.
+
+## 170. Una prueba que actúa sobre «los primeros de la lista» falla cuando cambia la lista
+
+`12-acciones-masivas` marcaba las **tres primeras** casillas de personas y las
+cruzaba con las tres primeras de la API. Aislada pasa siempre; en la tanda
+completa esperaba 3 movidas y encontraba 2, y rompía además a la prueba siguiente
+---que buscaba a alguien por su nombre y se lo habían llevado.
+
+La causa estaba dos vueltas atrás: dos cuentas de prueba apellidadas **«Bloque»**
+se habían quedado activas y el orden alfabético las ponía primeras.
+
+**Regla**: una prueba que **escribe** no elige sus sujetos de una lista compartida.
+Crea los suyos, actúa sobre ellos por nombre propio y los retira. «El primero de
+la lista» es una dependencia oculta del estado de toda la base.
+
+## 171. Un residuo inofensivo lo es hasta que ordena primero
+
+En la vuelta 90 conté cuatro cuentas de prueba activas de un mes atrás y las
+declaré sedimento histórico sin consecuencias: la limpieza ya funcionaba y el
+producto no borra a propósito. Las dos cosas eran ciertas y la conclusión no.
+
+Cuatro vueltas después rompieron la suite, porque su apellido ---«Bloque»--- las
+colocaba al principio del orden y se colaban en las pruebas que actúan sobre «los
+primeros».
+
+**Regla**: al declarar inofensivo un residuo, mirar **por dónde ordena** y quién lo
+lee. Un dato de sobra en el sitio equivocado del orden no es sedimento, es una
+trampa con fecha. Si se puede retirar sin perder nada ---dar de baja una cuenta de
+prueba--- se retira, aunque parezca inocuo.

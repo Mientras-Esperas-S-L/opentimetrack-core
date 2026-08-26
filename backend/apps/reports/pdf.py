@@ -103,6 +103,17 @@ def render_pdf(data: ReportData) -> bytes:
                 _("Time zone"),
                 data.time_zone,
             ],
+            # Las reglas con las que se calculó. Van en el documento porque se
+            # leen del ajuste de hoy: sin ellas, dos versiones del mismo mes con
+            # cifras distintas no se pueden explicar.
+            [
+                _("Break"),
+                _("counts as working time")
+                if data.computed_break_counts
+                else _("does not count as working time"),
+                _("Maximum open day (hours)"),
+                str(data.computed_max_open_hours),
+            ],
         ],
         colWidths=[24 * mm, 68 * mm, 26 * mm, 56 * mm],
     )

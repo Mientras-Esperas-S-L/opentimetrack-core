@@ -81,22 +81,43 @@ test.describe('Personas', () => {
     expect([200, 201]).toContain(creado.status)
     await page.reload()
 
-    const marcar = page.getByRole('checkbox', { name: /^Seleccionar a/ })
-    await expect(marcar.first()).toBeVisible()
+    // **Sus propias personas, no las tres primeras de la lista.** Marcar
+    // `nth(0..2)` de la pantalla y cruzarlo con las tres primeras que devuelve
+    // la API es dos veces frágil: depende de cuánta gente hay y de en qué orden
+    // sale, y las dos cosas cambian con cada tanda. Falló así ---esperaba 3
+    // movidas y encontró 2--- porque dos residuos de prueba antiguos, apellidados
+    // «Bloque», se habían colado al principio del orden alfabético y arrastraron
+    // consigo a quien la prueba siguiente buscaba por su nombre.
+    //
+    // Creándolas aquí, la prueba dice exactamente sobre quién actúa.
     const cuantas = 3
     const antes = []
+    const mias = []
+    for (let i = 0; i < cuantas; i += 1) {
+      const sufijo = marca()
+      const alta = await api(page, '/employees/', {
+        method: 'POST',
+        body: {
+          email: `masiva.${sufijo}@demo.local`,
+          first_name: 'Masiva',
+          last_name: `Zzz ${sufijo}`,
+        },
+      })
+      expect([200, 201]).toContain(alta.status)
+      mias.push(alta.body.id)
+      antes.push([alta.body.id, null])
+    }
+    await page.reload()
+
+    // Se localizan por su nombre, que es lo que las distingue de la plantilla.
+    const marcar = page.getByRole('checkbox', { name: /^Seleccionar a Masiva Zzz/ })
+    await expect(marcar.first()).toBeVisible()
     for (let i = 0; i < cuantas; i += 1) {
       await marcar.nth(i).check()
     }
     // El rótulo lo pone la barra compartida ---la misma que «Por decidir»---
     // así que dice «3 personas», no «3 seleccionadas».
     await expect(barra(page)).toContainText('3 personas')
-
-    // De quiénes se trata, para poder devolverlas al terminar.
-    const plantilla = await api(page, '/employees/?is_active=true')
-    for (const persona of (plantilla.body?.results ?? []).slice(0, cuantas)) {
-      antes.push([persona.id, persona.department ?? null])
-    }
 
     await page.getByRole('button', { name: 'Mover a departamento…' }).click()
     await page.getByRole('menuitem', { name: nombre }).click()
@@ -120,6 +141,12 @@ test.describe('Personas', () => {
     }
 
     await devolver(page, antes)
+    // Las suyas se retiran: el producto no borra personas, las desactiva, así
+    // que dejarlas activas es sedimento que rompe a la siguiente ---que es
+    // justamente lo que pasó aquí.
+    for (const id of mias) {
+      await api(page, `/employees/${id}/`, { method: 'DELETE' })
+    }
     await api(page, `/departments/${creado.body.id}/`, { method: 'DELETE' })
 
     expect(ruido()).toEqual([])
