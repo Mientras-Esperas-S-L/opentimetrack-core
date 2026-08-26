@@ -2522,6 +2522,13 @@ tanda ---un `curl` al API sirve--- y ante un fallo en el **arranque** (sesiones,
 login, timeouts largos) relanzar limpio **antes** de investigar. Un fallo de
 arranque casi nunca es del cambio; un fallo en una prueba concreta casi siempre sí.
 
+**Y vale igual para el frontend.** Cuarta vez, ahora por Vite: lancé la tanda
+justo después de restaurar un `.jsx` y cayeron tres pruebas ---dos descargas con
+timeout de 30 s y una pantalla «not found»--- que aisladas dan 24 verdes. Lo que
+lo delató fue medir el servidor: el informe que la descarga esperaba se generaba
+en **0,41 s**, así que el timeout no era suyo. Si el backend responde rápido y aun
+así la prueba espera treinta segundos, el que está reconstruyendo es el otro lado.
+
 ## 170. Una prueba que actúa sobre «los primeros de la lista» falla cuando cambia la lista
 
 `12-acciones-masivas` marcaba las **tres primeras** casillas de personas y las
@@ -2621,3 +2628,30 @@ mano, y las que se añadieron después no entran solas.
 lista con el enrutador de verdad ---como hace `test_la_matriz_de_permisos`, que
 saca las rutas de `get_resolver()`. Si la lista se escribe a mano, lo que no está
 en ella no está probado, y eso no se nota nunca.
+
+## 177. Un nombre descriptivo no basta: tiene que ser **distinto**
+
+El primer intento de nombrar los botones del cuadrante puso el turno y a quién
+cubre --- descriptivo, correcto, y seguía fallando: cinco botones se llamaban
+«Asignar el turno de 07:00 a 15:00 que cubre a Paco Trillo», porque era el mismo
+turno de la misma persona en cinco días distintos.
+
+**Regla**: al dar nombre accesible a los mandos de una lista, el criterio no es
+«¿describe lo que hace?» sino «¿hay dos iguales?». Meter en el nombre lo que
+**varía entre filas**, que casi siempre incluye la fecha --- y suele estar ya
+pintado en la fila, así que se calcula una vez y se usa para las dos cosas.
+
+## 178. «La máquina va justa» es una explicación, y hay que comprobarla como cualquier otra
+
+Al ver que cada tanda fallaba en una prueba distinta lo atribuí a la carga de la
+máquina tras horas de corridas. Sonaba razonable y era falso: `uptime` daba **4,3
+de media con 32 núcleos**, o sea un octavo de la capacidad.
+
+Escribir «es el entorno» sin el dato es lo mismo que escribir «es flaky»: cierra
+la investigación sin haberla hecho, y en un cuaderno de auditoría queda como
+conclusión.
+
+**Regla**: una causa ambiental ---carga, memoria, red--- se mide antes de
+escribirla, con el mismo rigor que un hallazgo del producto. Si el número no la
+sostiene, lo honesto es «no sé por qué» más los datos que descartan lo que ya se
+ha mirado.

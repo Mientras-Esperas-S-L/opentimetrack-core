@@ -31,6 +31,12 @@ const PANTALLAS = [
   ['/panel/permisos', 'Permisos'],
   ['/panel/fichajes', 'Fichajes'],
   ['/panel/decisiones', 'Por decidir'],
+  // Estas dos faltaban, y no por poco: el cuadrante tenía **doce** botones
+  // «Asignar» idénticos ---uno por hueco sin cubrir--- muy por encima del umbral
+  // de tres que esta prueba vigila. No fallaba porque la lista se escribe a mano
+  // y una pantalla que no está en ella no se prueba, lo que no se nota nunca.
+  ['/panel/cuadrante', 'Cuadrante'],
+  ['/panel/aplicaciones', 'Aplicaciones'],
   ['/panel/informes', 'Informes'],
   ['/panel/ajustes', 'Ajustes de la empresa'],
   ['/mi-jornada', 'Mi jornada'],

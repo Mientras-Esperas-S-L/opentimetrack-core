@@ -29,18 +29,19 @@ function Hueco({ hueco, onCubrir, guardando }) {
   const [quien, setQuien] = useState('')
   const viables = hueco.candidates.filter((c) => c.viable)
   const elegido = hueco.candidates.find((c) => c.employee_id === quien)
+  // El día distingue estos huecos entre sí: el mismo turno de la misma persona
+  // aparece varias veces, uno por jornada sin cubrir.
+  const diaLegible = new Date(`${hueco.day}T00:00:00`).toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
 
   return (
     <Paper component="li" variant="outlined" sx={{ p: 2, listStyle: 'none' }}>
       <Stack sx={{ gap: 1.5 }}>
         <Stack direction="row" sx={{ gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Typography sx={{ fontWeight: 600 }}>
-            {new Date(`${hueco.day}T00:00:00`).toLocaleDateString('es-ES', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-            })}
-          </Typography>
+          <Typography sx={{ fontWeight: 600 }}>{diaLegible}</Typography>
           <Chip
             size="small"
             variant="outlined"
@@ -65,6 +66,13 @@ function Hueco({ hueco, onCubrir, guardando }) {
               select
               size="small"
               label="Quién lo cubre"
+              // Igual que el botón: doce desplegables con la misma etiqueta no
+              // dicen de cuál son.
+              slotProps={{
+                htmlInput: {
+                  'aria-label': `Quién cubre el ${diaLegible} el turno de ${hueco.starts_at} a ${hueco.ends_at}`,
+                },
+              }}
               value={quien}
               onChange={(event) => setQuien(event.target.value)}
               sx={{ minWidth: 260 }}
@@ -92,8 +100,14 @@ function Hueco({ hueco, onCubrir, guardando }) {
                   {aviso}
                 </Alert>
               ))}
+              {/* Con el hueco dentro del nombre. Este panel pinta un botón por
+                  hueco sin cubrir, así que en un cuadrante con doce eran doce
+                  «Asignar» que suenan idénticos para quien navega con lector de
+                  pantalla --- y aquí cada uno asigna un turno distinto a una
+                  persona distinta. */}
               <Button
                 variant="contained"
+                aria-label={`Asignar el ${diaLegible} el turno de ${hueco.starts_at} a ${hueco.ends_at} que cubre a ${hueco.employee_label}`}
                 disabled={!elegido?.viable || guardando}
                 onClick={() => onCubrir(hueco, elegido)}
               >

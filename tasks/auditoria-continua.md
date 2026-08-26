@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 95 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 96 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -81,6 +81,7 @@ vuelve a una limpia.
 | Lo que se lleva un borrado (cascadas) | limpia | 26/08 v93 | **el registro cambiaba una hora hacia atrás** al retirar un centro |
 | Qué más se relee con las reglas de hoy | limpia | 26/08 v94 | **un turno de noche pasaba a «entrada sin salida»** al bajar un tope |
 | La pantalla y el documento dicen lo mismo | limpia | 26/08 v95 | **un cero separaba los dos**: fichar leía 16 y el informe 0 |
+| Lo que la prueba de accesibilidad no miraba | limpia | 26/08 v96 | **doce «Asignar» idénticos** en una pantalla fuera de su lista |
 
 ### Ley
 
@@ -138,6 +139,15 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 
 ## Hallazgos abiertos
+
+- **La tanda de navegador falla en una prueba distinta cada vez.** (v96) Tres
+  corridas del mismo árbol, sin tocar nada: 274 de 275 pasan siempre y cae una
+  distinta ---descargas, accesibilidad, decidir en bloque---, todas verdes
+  aisladas y todas por tiempo. **No hay causa identificada.** No es carga: 4,3 de
+  media con 32 núcleos. El siguiente paso es partir la tanda en dos mitades para
+  ver si el fallo se concentra en la segunda, lo que apuntaría al navegador
+  reutilizado durante once minutos con un solo worker. **Mientras tanto, un rojo
+  suelto no se interpreta sin repetirlo aislado.**
 
 - **Las reglas de cómputo no tienen fechas de vigencia, así que un cambio de hoy
   reescribe periodos cerrados.** (v94) Medido sobre un abril terminado: marcar que
@@ -275,6 +285,72 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 96 --- Doce botones que se llamaban igual (26/08)
+
+La lente venía medida de la vuelta anterior: bajando el umbral de la prueba de
+accesibilidad a dos ---en una sonda, no en la prueba--- para ver qué pantallas
+fallarían con una fila más, salió esto:
+
+| pantalla | rótulos repetidos |
+|---|---|
+| `/panel/aplicaciones` | «Emitir token» ×2, «Revocar la aplicación» ×2 |
+| `/panel/cuadrante` | **«Asignar» ×12** |
+
+Los doce **ya** estaban cuatro veces por encima del umbral de tres que esa prueba
+vigila. No fallaba por un motivo simple: **`/panel/cuadrante` y
+`/panel/aplicaciones` no estaban en su lista de pantallas**, que se escribe a
+mano. Un hueco de cobertura tapando un fallo actual, y de los que no se notan
+nunca.
+
+#### El fallo
+
+`CoberturaPendiente.jsx` pinta un botón por hueco sin cubrir del cuadrante. En un
+mes con doce, quien navega con lector de pantalla oye «Asignar» doce veces
+seguidas sin saber cuál es cuál --- y cada uno asigna un turno distinto a una
+persona distinta. Lo mismo con el desplegable «Quién lo cubre», repetido igual.
+
+#### El arreglo, en dos intentos
+
+El primero puso el turno y a quién cubre, y **seguía fallando**: cinco «Asignar el
+turno de 07:00 a 15:00 que cubre a Paco Trillo», porque es el mismo turno de la
+misma persona en **cinco días distintos**. Lo que los distingue es el día, y la
+pantalla ya lo pintaba en el título --- ahora se calcula una vez y lo usan el
+título y los dos nombres.
+
+Y las dos pantallas entran en la lista de la prueba, que es lo que impide que
+vuelva a haber un fallo sin quien lo mire.
+
+2 arreglos de pantalla y 2 pantallas más cubiertas (275 declaradas de navegador).
+Comprobado que cae sin el arreglo.
+
+#### La tanda completa se ha vuelto inestable, y no sé por qué
+
+Tres corridas seguidas del mismo árbol, sin tocar nada entre ellas:
+
+| corrida | falla | aislada |
+|---|---|---|
+| 1ª | `13-descargas` ×2, `28-nombres-accesibles` ×2 | 24 verdes |
+| 2ª | `28-nombres-accesibles` ×2 (`/panel/informes`) | 20 verdes |
+| 3ª | `14-decidir-en-bloque` | 8 verdes |
+
+**274 de 275 pasan siempre, y la que cae es distinta cada vez.** Todas verdes al
+ejecutarlas solas, todas por tiempo agotado o por un elemento que no aparece en
+siete segundos.
+
+La primera la expliqué ---Vite recompilando, porque lancé justo tras editar--- y
+está como regla. Las otras dos no. **Atribuirlo a la máquina fue un error mío**:
+la carga estaba en 4,3 con **32 núcleos**, así que de saturación nada.
+
+Lo que queda por descartar, y no cabía en esta vuelta: la tanda corre con **un
+solo worker** y reutiliza el navegador a lo largo de once minutos y 275 pruebas,
+así que el sospechoso natural es el propio navegador acumulando estado o memoria,
+no el producto. Se comprueba partiendo la tanda en dos mitades y viendo si el
+fallo sigue apareciendo en la segunda.
+
+Queda en hallazgos abiertos: mientras esto siga así, **un rojo suelto de la tanda
+no significa nada hasta comprobarlo aislado**, y eso hace la auditoría más lenta y
+menos fiable.
 
 ### Vuelta 95 --- Un cero que separaba la pantalla del documento (26/08)
 
