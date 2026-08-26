@@ -365,3 +365,95 @@ class RecordArrangement(models.Model):
         negociación.
         """
         return self.basis == RecordBasis.EMPLOYER and self.consulted_on is None
+
+
+class ComputationRuleChange(models.Model):
+    """Desde cuándo aplica cada valor de las dos reglas que deciden el cómputo.
+
+    **Solo estas dos, y hay una razón para no versionar las dieciocho.** La
+    distinción es la misma que separó el huso del resto en la vuelta 93: hay
+    reglas que deciden **qué dice el registro** y reglas que deciden **si eso
+    cumple**.
+
+    `break_counts_as_work` y `max_open_hours` son del primer grupo: cambian
+    cuántas horas figura que se trabajó y a qué día pertenece un turno de noche.
+    Eso es un hecho, y el art. 34.9 lo quiere reproducible --- medido antes de
+    esto, marcar que la pausa cuenta convertía un abril cerrado de 7:00 en 8:00 h,
+    y bajar el tope pasaba un turno nocturno bien fichado a «entrada sin salida»
+    con cero horas.
+
+    Las otras dieciséis ---descanso diario, tope de horas extra, preaviso del
+    cuadrante--- son del segundo, y **deben** recalcularse con lo vigente hoy: si
+    un convenio nuevo mejora el descanso, se quiere ver qué días de antes no lo
+    cumplirían. Congelarlas escondería precisamente eso.
+
+    **La fecha la declara quien cambia la regla.** El sistema no puede saber
+    desde cuándo aplica un convenio, y poner «desde hoy» por su cuenta sería
+    tomar una decisión laboral que no le toca.
+
+    Sin ninguna fila, todo el pasado se lee con los valores actuales de
+    `WorkingTimeRules`, que es exactamente lo que hacía antes: esto no reescribe
+    nada al llegar.
+    """
+
+    tenant = models.ForeignKey(
+        "tenants.Tenant",
+        on_delete=models.CASCADE,
+        related_name="computation_rule_changes",
+        verbose_name=_("company"),
+    )
+    effective_from = models.DateField(
+        _("in force since"),
+        help_text=_("The day this way of counting starts to apply. Days before it keep theirs."),
+    )
+    break_counts_as_work = models.BooleanField(_("the break counts as working time"))
+    max_open_hours = models.PositiveSmallIntegerField(
+        _("longest a working day may stay open (hours)"),
+        validators=[MinValueValidator(1)],
+    )
+    #: Quién lo declaró. Un cambio que mueve las horas de un periodo cerrado no
+    #: puede ser anónimo.
+    recorded_by = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("declared by"),
+    )
+    note = models.CharField(
+        _("note"),
+        max_length=300,
+        blank=True,
+        help_text=_("What agreement or decision this comes from."),
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("change in how time is counted")
+        verbose_name_plural = _("changes in how time is counted")
+        ordering = ["-effective_from"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "effective_from"],
+                name="one_computation_change_per_day",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.tenant_id} desde {self.effective_from}"
+
+    @classmethod
+    def in_force_on(cls, company, day):
+        """Cómo se contaba ese día, o los valores de hoy si no consta.
+
+        Devuelve algo con `break_counts_as_work` y `max_open_hours`, sea una fila
+        del historial o las reglas actuales. Quien llama no tiene que saber cuál
+        de las dos le ha tocado.
+        """
+        vigente = (
+            cls.objects.filter(tenant=company, effective_from__lte=day)
+            .order_by("-effective_from")
+            .first()
+        )
+        return vigente or WorkingTimeRules.for_company(company)

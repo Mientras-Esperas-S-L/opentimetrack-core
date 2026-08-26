@@ -146,8 +146,12 @@ def test_los_dos_resuelven_el_tope_igual(mundo):
 @pytest.mark.django_db
 def test_subirlo_para_guardias_de_veinticuatro_horas_sigue_valiendo(mundo):
     """Lo que el ajuste existe para permitir, y que el suelo no puede estorbar."""
+    # Con su fecha de efecto: desde la vuelta 100, cambiar cómo se cuenta exige
+    # decir desde cuándo, porque si no reescribe periodos ya cerrados.
     respuesta = como(mundo["jefa"]).patch(
-        "/api/working-time-rules/", {"max_open_hours": 24}, format="json"
+        "/api/working-time-rules/",
+        {"max_open_hours": 24, "effective_from": "2026-01-01"},
+        format="json",
     )
     assert respuesta.status_code == 200, respuesta.content
 

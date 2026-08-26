@@ -2730,3 +2730,77 @@ quién** era la sesión y cuándo empezó.
 el mismo cambio. Y al revisar un sistema, contar las tablas que crecen y
 compararlas con la lista de trabajos programados --- lo que no aparezca en esa
 lista no se recoge nunca.
+
+## 184. Un respaldo «si no hay dato, usa el actual» no vale cuando el actual es lo que cambió
+
+El versionado de reglas leía la vigencia del día y, si no encontraba ninguna, caía
+a las reglas de hoy. Parecía razonable y no servía de nada: declarando que la
+pausa cuenta desde julio, abril seguía moviéndose, porque abril no encuentra
+vigencia y hereda justo el valor que se acababa de cambiar.
+
+El arreglo es anclar el pasado en el momento de cambiarlo: dejar constancia de
+cómo se contaba hasta entonces. Y **el ancla tiene que cubrir todo lo anterior**
+--- con la fecha de alta de la empresa no bastaba, porque una empresa puede
+haberse dado de alta después del periodo que se consulta.
+
+**Regla**: al versionar algo por fecha, el respaldo no puede ser «el valor
+vigente», porque el caso que hay que proteger es precisamente aquel en que ese
+valor acaba de cambiar. O se ancla el pasado al primer cambio, o el versionado es
+decorativo. Y se comprueba con un periodo **anterior** al primer cambio, que es
+donde falla.
+
+## 185. Validar el valor antes de exigir el trámite
+
+Al pedir la fecha de efecto antes de validar el número, poner un tope de cero
+contestaba «falta la fecha de efecto»: hacía declarar una fecha de convenio para
+un valor que se iba a rechazar igual dos líneas después.
+
+**Regla**: cuando una operación gana un requisito nuevo ---una fecha, un motivo,
+una confirmación---, ese requisito se comprueba **después** de que lo demás sea
+válido. Si no, el primer mensaje que ve alguien es el del trámite y no el del
+error que de verdad tiene.
+
+## 186. Un requisito nuevo en la API rompe la pantalla que ya existía
+
+Al exigir la fecha de efecto para cambiar cómo se cuenta el tiempo, el backend
+quedó impecable ---1.147 pruebas en verde--- y la pantalla de Ajustes dejó de
+guardar: seguía mandando el formulario sin la fecha y el servidor lo rechazaba
+con un 400 que nadie enseñaba.
+
+Lo cazó una prueba de navegador. Ninguna del backend podía: todas mandaban la
+fecha porque yo acababa de escribirlas.
+
+**Regla**: cuando una operación gana un requisito, buscar **quién la llamaba
+antes** ---pantallas, integraciones, comandos--- y actualizarlos en el mismo
+cambio. Una suite de backend en verde no dice nada sobre eso, porque sus pruebas
+se escriben ya sabiendo el requisito nuevo.
+
+## 187. Una restauración que falla en silencio es peor que no tener restauración
+
+Al exigir la fecha de efecto, el `finally` que devolvía el tope a su valor dejó de
+funcionar: mandaba el PATCH sin fecha, el servidor contestaba 400 y **nadie mira
+lo que devuelve un `finally`**. El ajuste se quedó en 26 y la corrida siguiente no
+tenía nada que cambiar, así que fallaba en un sitio que no tenía que ver.
+
+Arreglé esa misma restauración en la vuelta 97 y la volví a romper en la 100 por
+otra vía.
+
+**Regla**: una restauración se comprueba como cualquier otra llamada ---`expect`
+sobre su código de respuesta--- porque es la única parte del código que nadie mira
+cuando funciona y todos sufren cuando no. Y al añadir un requisito a una
+operación, buscar quién la llama **desde las propias pruebas**, que es donde menos
+se busca.
+
+## 188. Un prefijo de familia no es un nombre propio
+
+La vuelta 94 arregló una prueba que actuaba sobre «las tres primeras personas de
+la lista» haciendo que creara las suyas --- y las localizaba por «Masiva Zzz», el
+prefijo común a todas las que crea esa prueba **en todas las tandas**. Con
+cincuenta y una acumuladas, marcaba tres de otra corrida.
+
+El mismo fallo que vino a arreglar, con otra cara: elegir sujetos de un conjunto
+compartido.
+
+**Regla**: lo que identifica a un sujeto de prueba tiene que ser único **por
+ejecución**, no por familia. Si el nombre lleva la marca de la tanda, hay que
+usarla entera en el selector: `Masiva Zzz p8x3k 0`, no `Masiva Zzz`.

@@ -93,14 +93,20 @@ test.describe('Personas', () => {
     const cuantas = 3
     const antes = []
     const mias = []
+    // **Un apellido propio de esta tanda**, compartido por las tres. Con «Masiva
+    // Zzz» a secas la prueba marcaba «las tres primeras que se llamen así», y las
+    // de corridas anteriores que quedaron activas se colaban delante: llegó a
+    // haber cincuenta y una. Es el mismo fallo que esta prueba vino a arreglar
+    // ---no elegir sujetos de una lista compartida--- cometido otra vez con un
+    // prefijo de familia en lugar de un nombre único.
+    const tanda = marca()
     for (let i = 0; i < cuantas; i += 1) {
-      const sufijo = marca()
       const alta = await api(page, '/employees/', {
         method: 'POST',
         body: {
-          email: `masiva.${sufijo}@demo.local`,
+          email: `masiva.${tanda}-${i}@demo.local`,
           first_name: 'Masiva',
-          last_name: `Zzz ${sufijo}`,
+          last_name: `Zzz ${tanda} ${i}`,
         },
       })
       expect([200, 201]).toContain(alta.status)
@@ -109,11 +115,9 @@ test.describe('Personas', () => {
     }
     await page.reload()
 
-    // Se localizan por su nombre, que es lo que las distingue de la plantilla.
-    const marcar = page.getByRole('checkbox', { name: /^Seleccionar a Masiva Zzz/ })
-    await expect(marcar.first()).toBeVisible()
+    // Una por una y por su nombre completo, que solo existe en esta tanda.
     for (let i = 0; i < cuantas; i += 1) {
-      await marcar.nth(i).check()
+      await page.getByRole('checkbox', { name: `Seleccionar a Masiva Zzz ${tanda} ${i}` }).check()
     }
     // El rótulo lo pone la barra compartida ---la misma que «Por decidir»---
     // así que dice «3 personas», no «3 seleccionadas».

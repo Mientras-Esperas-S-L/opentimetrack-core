@@ -50,10 +50,15 @@ test.describe('Cuánto aguanta abierta una jornada', () => {
       // que cambia una regla de la empresa y no la devuelve rompe a las
       // siguientes. Por la API y no por la pantalla: si lo que falló fue la
       // pantalla, volver a pulsar «Guardar» no restauraría nada.
-      await api(page, '/working-time-rules/', {
+      // Con `effective_from`: desde la vuelta 100 el servidor exige decir desde
+      // cuándo se cuenta así, y **sin ella esta restauración fallaba en
+      // silencio** ---nadie mira lo que devuelve un `finally`--- dejando el tope
+      // cambiado y rompiendo a la corrida siguiente.
+      const restaurada = await api(page, '/working-time-rules/', {
         method: 'PATCH',
-        body: { max_open_hours: antes },
+        body: { max_open_hours: antes, effective_from: '2020-01-01' },
       })
+      expect(restaurada.status, 'la restauración no llegó a aplicarse').toBe(200)
     }
   })
 })

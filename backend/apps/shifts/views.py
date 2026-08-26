@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -37,7 +38,7 @@ from apps.shifts.services import (
     review_roster,
     weekdays_in,
 )
-from apps.tenants.rules import WorkingTimeRules
+from apps.tenants.rules import ComputationRuleChange, WorkingTimeRules
 
 
 class ShiftPatternSerializer(serializers.ModelSerializer):
@@ -792,13 +793,87 @@ class WorkingTimeRulesView(APIView):
             "time_zones": framework.time_zones,
         }
 
+    #: Las dos que deciden **qué dice el registro**, no si cumple. Cambiarlas sin
+    #: fecha reescribía periodos ya cerrados: medido, marcar que la pausa cuenta
+    #: llevaba un abril terminado de 7:00 a 8:00 h, y bajar el tope pasaba un
+    #: turno de noche bien fichado a «entrada sin salida» con cero horas.
+    #:
+    #: Las otras dieciséis no llevan fecha a propósito ---son valoración, no
+    #: registro--- y deben recalcularse con lo vigente hoy.
+    DEL_COMPUTO = ("break_counts_as_work", "max_open_hours")
+
     @extend_schema(request=RulesSerializer, responses={200: RulesSerializer})
     def patch(self, request):
         rules = WorkingTimeRules.for_company(request.user.tenant)
         before = RulesSerializer(rules).data
+
+        # Antes de guardar nada: si se toca una de las dos, hay que decir desde
+        # cuándo. La fecha la declara quien cambia la regla porque sale del
+        # convenio, y el sistema no puede saberla --- poner «desde hoy» por su
+        # cuenta sería tomar una decisión laboral que no le toca.
         serializer = RulesSerializer(rules, data=request.data, partial=True)
+        # Se valida **antes** de pedir la fecha: si el valor no vale ---un tope de
+        # cero--- lo que hay que decir es eso, no hacer que alguien declare una
+        # fecha de efecto para un número que se va a rechazar igual.
         serializer.is_valid(raise_exception=True)
+
+        del_computo = [
+            campo
+            for campo in self.DEL_COMPUTO
+            if campo in request.data and request.data[campo] != before.get(campo)
+        ]
+        desde = request.data.get("effective_from")
+        if del_computo and not desde:
+            raise ValidationError(
+                {
+                    "effective_from": _(
+                        "Changing how time is counted needs the day it starts to apply. "
+                        "Without it the change would reach periods already closed and "
+                        "reported."
+                    )
+                }
+            )
+
         serializer.save()
+
+        if del_computo:
+            # **Anclar el pasado antes de escribir el cambio.** Sin esto el
+            # arreglo no servía de nada: los días anteriores a la fecha
+            # declarada no encuentran ninguna fila y caen a las reglas de hoy,
+            # que son justamente las que se acaban de cambiar. Medido: declarando
+            # que la pausa cuenta desde julio, un abril terminado se movía igual
+            # de 7:00 a 8:00 h.
+            #
+            # Así que la primera vez se deja constancia de cómo se contaba hasta
+            # ahora, y rige **desde siempre**: lo que había antes del primer
+            # cambio declarado valía desde que existe el registro. Con la fecha
+            # de alta de la empresa no bastaba ---si el alta es posterior a los
+            # fichajes importados, o al periodo que se consulta, el ancla no los
+            # cubre y vuelven a caer en las reglas de hoy.
+            if not ComputationRuleChange.objects.filter(
+                tenant=request.user.tenant, effective_from__lt=desde
+            ).exists():
+                ComputationRuleChange.objects.update_or_create(
+                    tenant=request.user.tenant,
+                    effective_from=date.min,
+                    defaults={
+                        "break_counts_as_work": before["break_counts_as_work"],
+                        "max_open_hours": before["max_open_hours"],
+                        "recorded_by": request.user,
+                        "note": str(_("How time was counted until this change.")),
+                    },
+                )
+
+            ComputationRuleChange.objects.update_or_create(
+                tenant=request.user.tenant,
+                effective_from=desde,
+                defaults={
+                    "break_counts_as_work": rules.break_counts_as_work,
+                    "max_open_hours": rules.max_open_hours,
+                    "recorded_by": request.user,
+                    "note": str(request.data.get("effective_note", ""))[:300],
+                },
+            )
 
         # These decide what the roster is measured against, so a change to them
         # changes what "compliant" means. Only what moved is recorded.

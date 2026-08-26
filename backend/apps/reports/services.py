@@ -197,7 +197,7 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
     """Collect the working days of one person over a period."""
     from django.utils import timezone
 
-    from apps.tenants.rules import WorkingTimeRules
+    from apps.tenants.rules import ComputationRuleChange, WorkingTimeRules
 
     rules = WorkingTimeRules.for_company(company)
     # Theirs, which is their workplace's or the company's. A record for somebody
@@ -217,7 +217,9 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
     # `punches.services` para decidir qué jornada está abierta, y si los dos no
     # resuelven igual la pantalla y el documento dejan de decir lo mismo. Pasó
     # con un cero, que allí caía al valor por defecto y aquí se quedaba en cero.
-    tope = max_open_hours(employee, company, rules)
+    # El tope del **primer día del periodo**: es el que decide cómo se emparejan
+    # las jornadas que se piden, y pedir uno por día partiría el emparejamiento.
+    tope = max_open_hours(employee, company, rules, on=date_from)
     margen = timedelta(hours=tope) + timedelta(days=1)
     punches = list(
         Punch.objects.filter(
@@ -358,7 +360,12 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
         # lives in the company's rules, not here. `build_day_status` asks the
         # same question, and the two must agree: the figure on screen and the
         # figure in the document are the same day.
-        if not rules.break_counts_as_work:
+        # Y con la regla **de ese día**, no con la de hoy: cambiar el trato de la
+        # pausa reescribía periodos ya cerrados ---medido, un abril terminado
+        # pasaba de 7:00 a 8:00 h. Sin ningún cambio declarado devuelve las reglas
+        # actuales, que es exactamente lo que hacía antes.
+        de_ese_dia = ComputationRuleChange.in_force_on(company, row.day)
+        if not de_ese_dia.break_counts_as_work:
             row.seconds = max(row.seconds - row.break_seconds, 0)
 
         # Al final, y con las horas ya sumadas: la cifra es la que hay en el

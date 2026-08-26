@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 14:52+0000\n"
+"POT-Creation-Date: 2026-08-26 20:04+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -74,17 +74,17 @@ msgstr ""
 msgid "a day"
 msgstr ""
 
-#: apps/absences/models.py:72 apps/reports/services.py:167
+#: apps/absences/models.py:72 apps/reports/services.py:168
 #: apps/users/models.py:191
 msgid "a week"
 msgstr "á semana"
 
-#: apps/absences/models.py:73 apps/reports/services.py:167
+#: apps/absences/models.py:73 apps/reports/services.py:168
 #: apps/users/models.py:192
 msgid "a month"
 msgstr "ao mes"
 
-#: apps/absences/models.py:74 apps/reports/services.py:167
+#: apps/absences/models.py:74 apps/reports/services.py:168
 #: apps/users/models.py:193
 msgid "a year"
 msgstr "ao ano"
@@ -183,7 +183,7 @@ msgstr ""
 #: apps/absences/models.py:175 apps/absences/models.py:531
 #: apps/audit/models.py:173 apps/punches/models.py:467
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
-#: apps/tenants/rules.py:334
+#: apps/tenants/rules.py:341 apps/tenants/rules.py:425
 msgid "note"
 msgstr ""
 
@@ -299,7 +299,7 @@ msgid "absences"
 msgstr ""
 
 #: apps/absences/models.py:409 apps/absences/services.py:313
-#: apps/reports/views.py:91 apps/shifts/views.py:306
+#: apps/reports/views.py:91 apps/shifts/views.py:307
 msgid "The end date cannot precede the start date."
 msgstr "A data final non pode ir antes da inicial."
 
@@ -483,7 +483,7 @@ msgstr ""
 msgid "the time it takes"
 msgstr "o tempo indispensable"
 
-#: apps/absences/views.py:181 apps/shifts/views.py:203
+#: apps/absences/views.py:181 apps/shifts/views.py:204
 #: apps/tenants/views.py:181 apps/users/views.py:630 apps/users/views.py:700
 msgid "Added"
 msgstr ""
@@ -530,7 +530,7 @@ msgstr ""
 msgid "You can only see your own balance."
 msgstr "Só podes consultar o teu propio saldo."
 
-#: apps/absences/views.py:635 apps/shifts/views.py:263
+#: apps/absences/views.py:635 apps/shifts/views.py:264
 msgid "Give 'from' and 'to' as YYYY-MM-DD."
 msgstr "Indica 'from' e 'to' co formato AAAA-MM-DD."
 
@@ -672,7 +672,8 @@ msgstr ""
 
 #: apps/audit/models.py:145 apps/common/models.py:117
 #: apps/tenants/models.py:171 apps/tenants/models.py:199
-#: apps/tenants/rules.py:38 apps/tenants/rules.py:311 apps/users/models.py:273
+#: apps/tenants/rules.py:39 apps/tenants/rules.py:318 apps/tenants/rules.py:403
+#: apps/users/models.py:273
 msgid "company"
 msgstr ""
 
@@ -811,7 +812,7 @@ msgid ""
 "for."
 msgstr ""
 
-#: apps/common/tests/test_exceptions.py:194 apps/punches/services.py:376
+#: apps/common/tests/test_exceptions.py:194 apps/punches/services.py:393
 msgid "You clocked a moment ago. Check the screen before clocking again."
 msgstr "Acabas de fichar. Mira a pantalla antes de volver premer."
 
@@ -1463,7 +1464,7 @@ msgstr ""
 msgid "That day has no overtime to rule on."
 msgstr "Ese día non ten horas extraordinarias que resolver."
 
-#: apps/punches/overtime.py:243 apps/punches/services.py:480
+#: apps/punches/overtime.py:243 apps/punches/services.py:497
 msgid "Say whether the overtime is paid or compensated with rest."
 msgstr ""
 "Indica se as horas extraordinarias se pagan ou se compensan con descanso."
@@ -1494,21 +1495,21 @@ msgid ""
 "The evidence is too large: %(size)s characters, and the limit is %(max)s."
 msgstr ""
 
-#: apps/punches/services.py:408
+#: apps/punches/services.py:425
 msgid "This person is deactivated and cannot clock in or out."
 msgstr "Esta persoa está dada de baixa e non pode fichar."
 
-#: apps/punches/services.py:441
+#: apps/punches/services.py:458
 msgid "The working day has to be open first."
 msgstr "A xornada ten que estar aberta antes."
 
-#: apps/punches/services.py:462
+#: apps/punches/services.py:479
 #, python-format
 msgid "%(basis)s: workers under eighteen may not work overtime."
 msgstr ""
 "%(basis)s: os menores de dezaoito anos non poden facer horas extraordinarias."
 
-#: apps/punches/services.py:470
+#: apps/punches/services.py:487
 msgid ""
 "Art. 12.4.c ET: part-time work admits no overtime, only complementary hours "
 "--- except hours to prevent or repair urgent damage."
@@ -1517,7 +1518,7 @@ msgstr ""
 "complementarias, agás as de forza maior para previr ou reparar danos "
 "urxentes."
 
-#: apps/punches/services.py:545
+#: apps/punches/services.py:562
 msgid "You cannot clock in: you have approved leave for today."
 msgstr "Non podes fichar: tes unha ausencia aprobada para hoxe."
 
@@ -1557,7 +1558,7 @@ msgstr ""
 msgid "payroll summaries"
 msgstr ""
 
-#: apps/reports/pdf.py:64 apps/reports/pdf.py:84 apps/reports/services.py:505
+#: apps/reports/pdf.py:64 apps/reports/pdf.py:84 apps/reports/services.py:518
 msgid "Working time record"
 msgstr "Rexistro de xornada"
 
@@ -1565,64 +1566,64 @@ msgstr "Rexistro de xornada"
 msgid "Article 34.9 of the Spanish Workers' Statute (Royal Decree-Law 8/2019)"
 msgstr ""
 
-#: apps/reports/pdf.py:93 apps/reports/services.py:506
+#: apps/reports/pdf.py:93 apps/reports/services.py:519
 #: apps/tenants/holidays.py:57
 msgid "Company"
 msgstr "Empresa"
 
-#: apps/reports/pdf.py:93 apps/reports/services.py:506
+#: apps/reports/pdf.py:93 apps/reports/services.py:519
 msgid "Tax number"
 msgstr "CIF/NIF"
 
-#: apps/reports/pdf.py:95 apps/reports/services.py:508 apps/users/models.py:224
+#: apps/reports/pdf.py:95 apps/reports/services.py:521 apps/users/models.py:224
 msgid "Employee"
 msgstr "Persoa traballadora"
 
-#: apps/reports/pdf.py:97 apps/reports/services.py:508
+#: apps/reports/pdf.py:97 apps/reports/services.py:521
 msgid "Staff number"
 msgstr "Nº de empregado"
 
-#: apps/reports/pdf.py:101 apps/reports/services.py:511
+#: apps/reports/pdf.py:101 apps/reports/services.py:524
 msgid "Period"
 msgstr "Período"
 
-#: apps/reports/pdf.py:103 apps/reports/services.py:511
+#: apps/reports/pdf.py:103 apps/reports/services.py:524
 msgid "Time zone"
 msgstr "Fuso horario"
 
-#: apps/reports/pdf.py:110 apps/reports/services.py:520
+#: apps/reports/pdf.py:110 apps/reports/services.py:533
 msgid "Break"
 msgstr ""
 
-#: apps/reports/pdf.py:111 apps/reports/services.py:521
+#: apps/reports/pdf.py:111 apps/reports/services.py:534
 msgid "counts as working time"
 msgstr ""
 
-#: apps/reports/pdf.py:113 apps/reports/services.py:523
+#: apps/reports/pdf.py:113 apps/reports/services.py:536
 msgid "does not count as working time"
 msgstr ""
 
-#: apps/reports/pdf.py:114 apps/reports/services.py:524
+#: apps/reports/pdf.py:114 apps/reports/services.py:537
 msgid "Maximum open day (hours)"
 msgstr ""
 
-#: apps/reports/pdf.py:137 apps/reports/services.py:529
+#: apps/reports/pdf.py:137 apps/reports/services.py:542
 msgid "Date"
 msgstr "Data"
 
-#: apps/reports/pdf.py:137 apps/reports/services.py:529
+#: apps/reports/pdf.py:137 apps/reports/services.py:542
 msgid "Entry"
 msgstr "Entrada"
 
-#: apps/reports/pdf.py:137 apps/reports/services.py:529
+#: apps/reports/pdf.py:137 apps/reports/services.py:542
 msgid "Exit"
 msgstr "Saída"
 
-#: apps/reports/pdf.py:137 apps/reports/services.py:529
+#: apps/reports/pdf.py:137 apps/reports/services.py:542
 msgid "Hours"
 msgstr "Horas"
 
-#: apps/reports/pdf.py:137 apps/reports/services.py:529
+#: apps/reports/pdf.py:137 apps/reports/services.py:542
 msgid "Notes"
 msgstr "Observacións"
 
@@ -1634,11 +1635,11 @@ msgstr ""
 msgid "Total for the period"
 msgstr ""
 
-#: apps/reports/pdf.py:192 apps/reports/services.py:555
+#: apps/reports/pdf.py:192 apps/reports/services.py:568
 msgid "Breaks, not counted as working time"
 msgstr "Pausas, que non computan como xornada"
 
-#: apps/reports/pdf.py:197 apps/reports/services.py:560
+#: apps/reports/pdf.py:197 apps/reports/services.py:573
 msgid "Waiting time, not counted as working time"
 msgstr "Tempo de espera, que non computa como xornada"
 
@@ -1648,52 +1649,52 @@ msgid ""
 "and are shown in the time zone stated above."
 msgstr ""
 
-#: apps/reports/pdf.py:230 apps/reports/services.py:564
+#: apps/reports/pdf.py:230 apps/reports/services.py:577
 msgid "Generated"
 msgstr "Xerado"
 
-#: apps/reports/pdf.py:231 apps/reports/services.py:565
+#: apps/reports/pdf.py:231 apps/reports/services.py:578
 msgid "Verification hash"
 msgstr "Pegada de verificación"
 
-#: apps/reports/services.py:325
+#: apps/reports/services.py:333
 msgid "two entries with no exit in between"
 msgstr "dúas entradas sen saída polo medio"
 
-#: apps/reports/services.py:332
+#: apps/reports/services.py:340
 msgid "exit with no matching entry"
 msgstr "saída sen entrada previa"
 
-#: apps/reports/services.py:342
+#: apps/reports/services.py:350
 msgid "entry with no exit"
 msgstr "entrada sen saída"
 
-#: apps/reports/services.py:345
+#: apps/reports/services.py:353
 msgid "break with no end"
 msgstr "pausa sen fin"
 
-#: apps/reports/services.py:363
+#: apps/reports/services.py:376
 msgid ""
 "an entry no longer matches its integrity seal: it was altered outside the app"
 msgstr ""
 
-#: apps/reports/services.py:473
+#: apps/reports/services.py:486
 msgid "recorded by an application on the person's behalf"
 msgstr ""
 
-#: apps/reports/services.py:478
+#: apps/reports/services.py:491
 msgid "corrected by the company"
 msgstr ""
 
-#: apps/reports/services.py:480
+#: apps/reports/services.py:493
 msgid "imported from another system"
 msgstr ""
 
-#: apps/reports/services.py:485
+#: apps/reports/services.py:498
 msgid "changed without the person's agreement (art. 4.b)"
 msgstr "modificado sen a conformidade da persoa (art. 4.b)"
 
-#: apps/reports/services.py:549
+#: apps/reports/services.py:562
 msgid "Total"
 msgstr "Total"
 
@@ -1814,12 +1815,12 @@ msgstr ""
 msgid "Choose at least one day."
 msgstr "Escolle polo menos un día."
 
-#: apps/shifts/services.py:150 apps/shifts/views.py:323
+#: apps/shifts/services.py:150 apps/shifts/views.py:324
 #: apps/users/serializers.py:208
 msgid "Somebody in that list is not in this company."
 msgstr "Alguén desa lista non pertence a esta empresa."
 
-#: apps/shifts/services.py:154 apps/shifts/views.py:312
+#: apps/shifts/services.py:154 apps/shifts/views.py:313
 msgid "That shift pattern does not exist."
 msgstr "Esa quenda non existe."
 
@@ -2007,42 +2008,52 @@ msgstr ""
 msgid "Rostered on a day of approved %(kind)s."
 msgstr "Con quenda asignada nun día de %(kind)s aprobada."
 
-#: apps/shifts/views.py:98
+#: apps/shifts/views.py:99
 msgid "Pick at least one weekday, or leave the field out to mean every day."
 msgstr ""
 "Marca polo menos un día da semana, ou non mandes o campo se os queres todos."
 
-#: apps/shifts/views.py:145
+#: apps/shifts/views.py:146
 msgid "Give a shift or its hours, not both: they would disagree."
 msgstr ""
 "Indica unha quenda ou as súas horas, non as dúas cousas: contradiríanse."
 
-#: apps/shifts/views.py:476
+#: apps/shifts/views.py:477
 msgid "That person is not on the staff list."
 msgstr ""
 
-#: apps/shifts/views.py:482
+#: apps/shifts/views.py:483
 msgid "They already have a shift that day."
 msgstr ""
 
-#: apps/shifts/views.py:499
+#: apps/shifts/views.py:500
 msgid "Shift covered by somebody else."
 msgstr ""
 
-#: apps/shifts/views.py:636
+#: apps/shifts/views.py:637
 msgid ""
 "With no days to answer, a change can be applied the moment it is proposed: "
 "nobody gets the chance to agree or to disagree."
 msgstr ""
 
-#: apps/shifts/views.py:658
+#: apps/shifts/views.py:659
 #, python-format
 msgid "%(value)s is below the %(floor)s that %(basis)s sets."
 msgstr ""
 
-#: apps/shifts/views.py:669
+#: apps/shifts/views.py:670
 #, python-format
 msgid "%(value)s is above the %(ceiling)s that %(basis)s sets."
+msgstr ""
+
+#: apps/shifts/views.py:830
+msgid ""
+"Changing how time is counted needs the day it starts to apply. Without it "
+"the change would reach periods already closed and reported."
+msgstr ""
+
+#: apps/shifts/views.py:863
+msgid "How time was counted until this change."
 msgstr ""
 
 #: apps/tenants/agreements.py:131
@@ -2423,190 +2434,211 @@ msgstr ""
 msgid "Somebody else in this company already uses that identity."
 msgstr ""
 
-#: apps/tenants/rules.py:59
+#: apps/tenants/rules.py:60
 msgid "figures taken from an agreement"
 msgstr ""
 
-#: apps/tenants/rules.py:63
+#: apps/tenants/rules.py:64
 msgid "weekly hours"
 msgstr ""
 
-#: apps/tenants/rules.py:71
+#: apps/tenants/rules.py:72
 msgid "Hours a week. See the citation served with the rules."
 msgstr ""
 
-#: apps/tenants/rules.py:74
+#: apps/tenants/rules.py:75
 msgid "rest between working days (hours)"
 msgstr ""
 
-#: apps/tenants/rules.py:76
+#: apps/tenants/rules.py:77
 msgid "Hours between the end of a working day and the start of the next."
 msgstr ""
 
-#: apps/tenants/rules.py:79
+#: apps/tenants/rules.py:80
 msgid "weekly rest (hours)"
 msgstr ""
 
-#: apps/tenants/rules.py:81
+#: apps/tenants/rules.py:82
 msgid "Uninterrupted hours of weekly rest."
 msgstr ""
 
-#: apps/tenants/rules.py:84
+#: apps/tenants/rules.py:85
 msgid "a continuous day needs a break after (hours)"
 msgstr ""
 
-#: apps/tenants/rules.py:88
+#: apps/tenants/rules.py:89
 msgid "A continuous day longer than this is owed a break."
 msgstr ""
 
-#: apps/tenants/rules.py:90
+#: apps/tenants/rules.py:91
 msgid "break (minutes)"
 msgstr ""
 
-#: apps/tenants/rules.py:92
+#: apps/tenants/rules.py:93 apps/tenants/rules.py:409
 msgid "the break counts as working time"
 msgstr ""
 
-#: apps/tenants/rules.py:95
+#: apps/tenants/rules.py:96
 msgid ""
 "Only when the agreement or the contract says so. Assuming it would overstate "
 "the hours worked."
 msgstr ""
 
-#: apps/tenants/rules.py:100
+#: apps/tenants/rules.py:101
 msgid "overtime hours per year"
 msgstr ""
 
-#: apps/tenants/rules.py:102
+#: apps/tenants/rules.py:103
 msgid "Overtime hours allowed per year."
 msgstr ""
 
-#: apps/tenants/rules.py:105
+#: apps/tenants/rules.py:106
 msgid "night work starts at"
 msgstr ""
 
-#: apps/tenants/rules.py:107
+#: apps/tenants/rules.py:108
 msgid "Start of the night window."
 msgstr ""
 
-#: apps/tenants/rules.py:109
+#: apps/tenants/rules.py:110
 msgid "night work ends at"
 msgstr ""
 
-#: apps/tenants/rules.py:111
+#: apps/tenants/rules.py:112
 msgid "days to answer a proposed correction"
 msgstr ""
 
-#: apps/tenants/rules.py:114
+#: apps/tenants/rules.py:115
 msgid ""
 "Days to answer a proposed change before the company may apply it anyway, "
 "recorded as made without agreement."
 msgstr ""
 
-#: apps/tenants/rules.py:119
+#: apps/tenants/rules.py:120
 msgid "complementary hours, share of the contract (%)"
 msgstr ""
 
-#: apps/tenants/rules.py:122
+#: apps/tenants/rules.py:123
 msgid ""
 "Cap on hours a part-time contract may work beyond what was agreed, as a "
 "percentage of it."
 msgstr ""
 
-#: apps/tenants/rules.py:132
+#: apps/tenants/rules.py:133
 msgid "entry tolerance (minutes)"
 msgstr ""
 
-#: apps/tenants/rules.py:135
+#: apps/tenants/rules.py:136
 msgid ""
 "A punch within this many minutes of the rostered start counts as on time. 0 "
 "is strict."
 msgstr ""
 
-#: apps/tenants/rules.py:139
+#: apps/tenants/rules.py:140
 msgid "exit tolerance (minutes)"
 msgstr ""
 
-#: apps/tenants/rules.py:141
+#: apps/tenants/rules.py:142
 msgid "Leaving within this many minutes of the rostered end is not early."
 msgstr ""
 
-#: apps/tenants/rules.py:152
+#: apps/tenants/rules.py:153
 msgid "no notifications from"
 msgstr ""
 
-#: apps/tenants/rules.py:154
+#: apps/tenants/rules.py:155
 msgid "Art. 88 LOPDGDD: the right to disconnect. Nothing is sent after this."
 msgstr ""
 
-#: apps/tenants/rules.py:157
+#: apps/tenants/rules.py:158
 msgid "no notifications until"
 msgstr ""
 
-#: apps/tenants/rules.py:159
+#: apps/tenants/rules.py:160
 msgid "Nothing is sent before this either."
 msgstr ""
 
-#: apps/tenants/rules.py:163
+#: apps/tenants/rules.py:164
 msgid "notice for roster changes (days)"
 msgstr ""
 
-#: apps/tenants/rules.py:165
+#: apps/tenants/rules.py:166
 msgid "Days of notice before a roster change."
 msgstr ""
 
-#: apps/tenants/rules.py:182
+#: apps/tenants/rules.py:183 apps/tenants/rules.py:411
 msgid "longest a working day may stay open (hours)"
 msgstr ""
 
-#: apps/tenants/rules.py:185
+#: apps/tenants/rules.py:192
 msgid ""
 "After this, an unclosed working day is read as a forgotten clock-out rather "
 "than a shift still running. Raise it for 24-hour on-call rosters."
 msgstr ""
 
-#: apps/tenants/rules.py:191 apps/tenants/rules.py:192
+#: apps/tenants/rules.py:198 apps/tenants/rules.py:199
 msgid "working time rules"
 msgstr ""
 
-#: apps/tenants/rules.py:285
+#: apps/tenants/rules.py:292
 msgid "collective agreement"
 msgstr ""
 
-#: apps/tenants/rules.py:286
+#: apps/tenants/rules.py:293
 msgid "company-level agreement"
 msgstr ""
 
-#: apps/tenants/rules.py:287
+#: apps/tenants/rules.py:294
 msgid "employer decision after consulting the representatives"
 msgstr ""
 
-#: apps/tenants/rules.py:315
+#: apps/tenants/rules.py:322
 msgid "how it was organised"
 msgstr ""
 
-#: apps/tenants/rules.py:319
+#: apps/tenants/rules.py:326
 msgid "Art. 34.9 ET. Empty means it has not been declared yet."
 msgstr ""
 
-#: apps/tenants/rules.py:324
+#: apps/tenants/rules.py:331
 msgid "which one"
 msgstr ""
 
-#: apps/tenants/rules.py:329
+#: apps/tenants/rules.py:336 apps/tenants/rules.py:406
 msgid "in force since"
 msgstr ""
 
-#: apps/tenants/rules.py:332
+#: apps/tenants/rules.py:339
 msgid "representatives consulted on"
 msgstr ""
 
-#: apps/tenants/rules.py:340
+#: apps/tenants/rules.py:347
 msgid "record arrangement"
 msgstr ""
 
-#: apps/tenants/rules.py:341
+#: apps/tenants/rules.py:348
 msgid "record arrangements"
+msgstr ""
+
+#: apps/tenants/rules.py:407
+msgid ""
+"The day this way of counting starts to apply. Days before it keep theirs."
+msgstr ""
+
+#: apps/tenants/rules.py:422
+msgid "declared by"
+msgstr ""
+
+#: apps/tenants/rules.py:428
+msgid "What agreement or decision this comes from."
+msgstr ""
+
+#: apps/tenants/rules.py:433
+msgid "change in how time is counted"
+msgstr ""
+
+#: apps/tenants/rules.py:434
+msgid "changes in how time is counted"
 msgstr ""
 
 #: apps/tenants/views.py:90

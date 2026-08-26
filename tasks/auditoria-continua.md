@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 99 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 100 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -85,6 +85,7 @@ vuelve a una limpia.
 | Por qué la tanda falla en un sitio distinto cada vez | limpia | 26/08 v97 | **un fallo dejaba un ajuste de empresa cambiado** y rompía a los siguientes |
 | Fallos parciales (qué queda a medias) | limpia | 26/08 v98 | **4.391 justificantes huérfanos**: sustituir uno dejaba el anterior en disco |
 | Lo que crece sin techo | limpia | 26/08 v99 | **la lista negra de testigos no la purgaba nadie**: 53 % ya caducados |
+| Vigencia de las reglas de cómputo | hecha | 26/08 v100 | **decidido y aplicado**: las dos reglas del registro llevan fecha de efecto |
 
 ### Ley
 
@@ -160,8 +161,11 @@ completo (evidencia y refutación) está en el registro del workflow.
   reutilizado durante once minutos con un solo worker. **Mientras tanto, un rojo
   suelto no se interpreta sin repetirlo aislado.**
 
-- **Las reglas de cómputo no tienen fechas de vigencia, así que un cambio de hoy
-  reescribe periodos cerrados.** (v94) Medido sobre un abril terminado: marcar que
+- ~~**Las reglas de cómputo no tienen fechas de vigencia.**~~ **DECIDIDO Y HECHO
+  el 26/08 (v100):** versionadas por fecha de efecto, solo las dos del cómputo.
+  Queda el texto original abajo por lo que explica de la distinción.
+
+- **[cerrado] Las reglas de cómputo no tenían fechas de vigencia.** (v94) Medido sobre un abril terminado: marcar que
   la pausa cuenta como trabajo lo lleva de 7:00 a 8:00 h, y bajar el tope de
   jornada abierta convierte un turno de noche de `22:00;06:00;08:00` en `entrada
   sin salida` con cero horas. Que las reglas cambien es legítimo ---salen del
@@ -296,6 +300,87 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 100 --- Un convenio nuevo ya no reescribe lo cerrado (26/08)
+
+No es una lente: es la **decisión abierta de la vuelta 94**, que Francisco tomó
+hoy --- «versionar por fecha de efecto, pero solo esas dos reglas».
+
+La vuelta empezó con otra lente ---**qué sale por correo**--- y esa salió limpia en
+los seis ángulos que se midieron, así que queda hecha:
+
+- Las plantillas **no llevan el motivo** al aviso a la representación legal, que
+  sería colar un dato del art. 9 a un tercero. Llevan persona y día, que es lo que
+  el art. 4.b pide.
+- **Solo administración** marca a alguien como representante: responsable y
+  operario reciben 403, también sobre sí mismos. Importaba porque quien lleve esa
+  marca recibe avisos de discrepancias de **toda** la empresa, no solo de su
+  departamento.
+- El filtro de representantes es por empresa y activos, y **si no hay ninguno lo
+  hace constar** en vez de callarse.
+- Los recordatorios son **opt-in**, solo a quien está de alta, y respetan la
+  ventana de silencio **en la hora de cada persona** ---art. 88 LOPDGDD, con
+  Canarias contemplada.
+- El enlace de cuenta es **de un solo uso** de verdad: el testigo se deriva del
+  hash de la contraseña, así que usarlo lo invalida.
+- Y el plazo que promete ese correo **no está escrito a mano**: sale de
+  `PASSWORD_RESET_TIMEOUT`, precisamente porque el ajuste se puede cambiar. Era el
+  candidato más claro a «el texto promete lo que el código no hace», y no lo era.
+
+#### Qué se ha hecho
+
+`ComputationRuleChange`: desde cuándo aplica cada valor de las **dos** reglas que
+deciden qué dice el registro.
+
+- **Solo dos**, y la razón es la misma que separó el huso en la vuelta 93.
+  `break_counts_as_work` y `max_open_hours` deciden **cuántas horas figura que se
+  trabajó**; eso es un hecho y el art. 34.9 lo quiere reproducible. Las otras
+  dieciséis deciden **si eso cumple**, y deben recalcularse con lo vigente hoy: si
+  un convenio nuevo mejora el descanso, se quiere ver qué días de antes no lo
+  cumplirían. Hay prueba de que esas dieciséis **no** piden fecha.
+- **La fecha la declara quien cambia la regla.** Cambiar una de las dos sin
+  `effective_from` contesta 400. El sistema no puede saber desde cuándo aplica un
+  convenio, y poner «desde hoy» sería tomar una decisión laboral que no le toca.
+
+#### Dos cosas que solo aparecieron midiendo
+
+**El arreglo no servía de nada sin anclar el pasado.** Declarando que la pausa
+cuenta desde julio, abril **se movía igual** de 7:00 a 8:00: los días anteriores a
+la fecha no encuentran ninguna vigencia y caían en las reglas de hoy, que son
+justo las que se acababan de cambiar. Así que el primer cambio deja constancia de
+cómo se contaba hasta entonces.
+
+**Y el ancla tuvo que regir desde siempre.** Con la fecha de alta de la empresa no
+bastaba: si el alta es posterior al periodo que se consulta ---una empresa dada de
+alta después de importar su historial--- el ancla no lo cubre y vuelve a caer en
+las reglas de hoy. Medido las dos veces, con el mismo abril.
+
+#### Y un orden de validación que estaba del revés
+
+Al exigir la fecha **antes** de validar el valor, poner un tope de cero contestaba
+«falta la fecha de efecto» --- te hacía declarar una fecha para un número que se
+iba a rechazar igual. Ahora el valor se valida primero. Lo destaparon las dos
+pruebas de la vuelta 95, que se pusieron rojas al cambiar el comportamiento y
+tenían razón.
+
+#### Y una regresión mía, cazada por una prueba de la vuelta 97
+
+Al exigir la fecha en la API **rompí la pantalla de Ajustes**: el formulario
+seguía guardando sin ella, el servidor contestaba 400 y el tope no cambiaba. La
+cazó `35-jornada-abierta` ---la misma prueba cuya restauración se arregló en la
+vuelta 97--- con su mensaje de siempre: «la pantalla decía que guardaba y el
+backend seguía con lo de antes».
+
+Cambiar la API sin la pantalla deja el producto roto para quien lo usa, aunque las
+pruebas del backend estén todas en verde. Ahora el formulario pide la fecha, y solo
+cuando se toca una de las dos: pedir una fecha de convenio para cambiar el margen
+de entrada sería ruido.
+
+El valor por defecto es hoy, pero se puede mover, porque **un convenio se firma en
+marzo y entra en enero** más veces de las que uno cree.
+
+6 pruebas nuevas en el backend (1.147) y 2 de navegador (277), una migración y los
+textos traducidos.
 
 ### Vuelta 99 --- Lo que crece y nadie recoge (26/08)
 

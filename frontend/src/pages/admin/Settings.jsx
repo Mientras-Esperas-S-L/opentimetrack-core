@@ -161,6 +161,10 @@ export default function Settings() {
   const [saved, setSaved] = useState(false)
 
   const [rules, setRules] = useState(null)
+  // Desde cuándo aplica un cambio en cómo se cuenta el tiempo. Empieza hoy
+  // porque es lo más frecuente, pero se puede mover: un convenio se firma en
+  // marzo y entra en enero más veces de las que uno cree.
+  const [desdeCuando, setDesdeCuando] = useState(() => new Date().toLocaleDateString('sv-SE'))
 
   const { data: company, isLoading } = useQuery({ queryKey: ['company'], queryFn: getCompany })
   const representatives = useQuery({
@@ -252,6 +256,13 @@ export default function Settings() {
     setForm({ ...form, [field]: event.target.value })
   }
 
+  // Las dos que deciden **qué dice el registro**, no si cumple. Cambiarlas exige
+  // decir desde cuándo, porque si no reescriben periodos ya cerrados: marcar que
+  // la pausa cuenta llevaba un abril terminado de 7:00 a 8:00 h.
+  const DEL_COMPUTO = ['break_counts_as_work', 'max_open_hours']
+  const cambiaElComputo =
+    rules && storedRules && DEL_COMPUTO.some((campo) => rules[campo] !== storedRules[campo])
+
   const submit = (event) => {
     event.preventDefault()
     // The server refuses both anyway; dropping them here keeps the request
@@ -266,7 +277,10 @@ export default function Settings() {
       // minors --- and sending it back would be asking to change the law.
       const { id, country, framework, citations, minors, ...figures } = rules
       ;(void id, country, framework, citations, minors)
-      saveRules.mutate(figures)
+      // Y con la fecha desde la que aplica, si se ha tocado una de las dos del
+      // cómputo. El servidor la exige, y hace bien: el sistema no puede saber
+      // desde cuándo rige un convenio.
+      saveRules.mutate(cambiaElComputo ? { ...figures, effective_from: desdeCuando } : figures)
     }
     // El tercero. La pantalla ya guardaba dos sitios con un solo botón, y meter
     // aquí el suyo evita dos botones que empiezan por «Guardar» en la misma
@@ -704,6 +718,35 @@ export default function Settings() {
               <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
                 {cite('break_counts_as_work')}
               </Typography>
+
+              {/* Aparece solo cuando se toca una de las dos que deciden qué dice
+                  el registro. Sin fecha, el cambio alcanzaría a periodos ya
+                  cerrados y entregados ---medido: marcar que la pausa cuenta
+                  llevaba un abril terminado de 7:00 a 8:00 h--- y el servidor lo
+                  rechaza. La fecha la pone quien cambia la regla porque sale del
+                  convenio, y eso no lo puede saber el sistema. */}
+              {cambiaElComputo && (
+                <Alert severity="info" variant="outlined">
+                  <Stack sx={{ gap: 1.5 }}>
+                    <span>
+                      Estás cambiando cómo se cuenta el tiempo trabajado. Los días anteriores a la
+                      fecha que indiques se siguen contando como hasta ahora.
+                    </span>
+                    <TextField
+                      type="date"
+                      label="Se aplica desde *"
+                      value={desdeCuando}
+                      onChange={(event) => {
+                        setSaved(false)
+                        setDesdeCuando(event.target.value)
+                      }}
+                      slotProps={{ inputLabel: { shrink: true } }}
+                      sx={{ maxWidth: 260 }}
+                      helperText="El día en que entra en vigor el acuerdo, no el de hoy."
+                    />
+                  </Stack>
+                </Alert>
+              )}
 
               <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
                 <TextField

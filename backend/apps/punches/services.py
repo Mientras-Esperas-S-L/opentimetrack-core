@@ -181,7 +181,7 @@ def punches_of_the_day(employee, company, day: date | None = None, *, rules=None
 DEFAULT_MAX_OPEN_HOURS = 16
 
 
-def max_open_hours(employee, company=None, rules=None) -> int:
+def max_open_hours(employee, company=None, rules=None, *, on=None) -> int:
     """Cuánto aguanta abierta una jornada en esta empresa.
 
     **Público, y hay una razón.** Lo usa también el informe: si cada uno resuelve
@@ -200,6 +200,18 @@ def max_open_hours(employee, company=None, rules=None) -> int:
         if company is None:
             return DEFAULT_MAX_OPEN_HOURS
         rules = WorkingTimeRules.for_company(company)
+    # Con `on`, el que estuviera declarado **ese día**: el tope decide a qué
+    # jornada pertenece un turno de noche, así que bajarlo movía turnos ya
+    # cerrados ---medido, uno de `22:00;06:00;08:00` pasaba a «entrada sin
+    # salida» con cero horas. Sin `on`, o sin ningún cambio declarado, el valor
+    # de hoy: es lo que quiere quien pregunta por la jornada en curso.
+    if on is not None:
+        from apps.tenants.rules import ComputationRuleChange
+
+        company = company or getattr(employee, "tenant", None)
+        if company is not None:
+            rules = ComputationRuleChange.in_force_on(company, on)
+
     return getattr(rules, "max_open_hours", None) or DEFAULT_MAX_OPEN_HOURS
 
 
