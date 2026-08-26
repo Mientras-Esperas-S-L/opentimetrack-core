@@ -53,6 +53,26 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
+    def save(self, *args, update_fields=None, **kwargs):
+        """`updated_at` viaja siempre con lo que se guarde.
+
+        `auto_now` promete que la marca se pone al guardar, y con
+        `update_fields` no lo cumple: Django la fija en la instancia y **no la
+        escribe**, porque no está en la lista. La fila queda cambiada con la
+        marca de antes, en silencio y sin que nadie lo note leyendo el código ---
+        `save(update_fields=["is_active"])` parece completo.
+
+        Aquí eso no es cosmético. `/api/app/people/?since=` avanza por
+        `updated_at`, así que una baja hecha desde el panel no la veía nunca un
+        conector: seguía teniendo por activa a una persona que ya no lo está, la
+        mantenía en sus cuadrantes y le mandaba fichajes que OTT rechaza. Había
+        siete `save(update_fields=…)` sin la marca; se arregla en la raíz porque
+        el octavo se escribe igual de fácil.
+        """
+        if update_fields is not None:
+            update_fields = {*update_fields, "updated_at"}
+        return super().save(*args, update_fields=update_fields, **kwargs)
+
 
 class TenantQuerySet(models.QuerySet):
     def for_tenant(self, tenant_id):

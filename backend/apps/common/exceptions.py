@@ -53,6 +53,27 @@ class BusinessRuleError(exceptions.APIException):
         super().__init__(detail=message, code=code)
 
 
+class IncompleteRequest(exceptions.APIException):
+    """Something the request had to carry is not there. Answers 400.
+
+    The other half of the distinction `BusinessRuleError` documents: this one
+    *is* malformed. Separate from DRF's field validation because what is missing
+    need not be a field --- a required header, for instance --- and because a
+    machine on the other end deserves a code it can branch on rather than a
+    generic "invalid".
+    """
+
+    status_code = 400
+    default_code = "incomplete_request"
+    default_detail = "The request is missing something it must carry."
+
+    def __init__(self, code: str, message: str, details: dict | None = None):
+        self.code = code
+        self.message = message
+        self.details = details or {}
+        super().__init__(detail=message, code=code)
+
+
 def _mensaje_de_espera(segundos) -> str:
     """Lo que se le dice a quien ha agotado el límite de intentos.
 
@@ -96,7 +117,7 @@ def api_exception_handler(exc, context):
         logger.exception("Unhandled exception in %s", context.get("view"))
         return None
 
-    if isinstance(exc, BusinessRuleError):
+    if isinstance(exc, BusinessRuleError | IncompleteRequest):
         code, message, details = exc.code, exc.message, exc.details
     elif isinstance(exc, exceptions.Throttled):
         code, message, details = "throttled", _mensaje_de_espera(exc.wait), {}

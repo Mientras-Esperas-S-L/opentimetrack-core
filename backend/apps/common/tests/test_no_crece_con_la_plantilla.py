@@ -102,6 +102,35 @@ def _empresa_con(cuantas: int, sufijo: str):
     return empresa, jefa
 
 
+def _conector_de(empresa):
+    """Una aplicación autorizada de esa empresa, con su credencial.
+
+    La puerta de integración no se mide con la sesión de una persona: quien
+    llama es una aplicación, y su permiso es otro. Sin esto, las dos rutas de
+    `/api/app/…` contestaban 403 y la sonda las daba por planas --- que es
+    justo el falso negativo contra el que este fichero se protege más abajo.
+    """
+    from apps.tenants.models import Application, ApplicationCredential, ApplicationScope
+
+    with tenant_context(empresa.id):
+        aplicacion = Application.objects.create(
+            tenant=empresa,
+            name="Sonda",
+            scopes=[str(ApplicationScope.READ_ATTENDANCE), str(ApplicationScope.READ_PEOPLE)],
+        )
+        _credencial, secreto = ApplicationCredential.issue(aplicacion)
+    cliente = APIClient()
+    cliente.credentials(HTTP_AUTHORIZATION=f"Bearer {secreto}")
+    return cliente
+
+
+#: Lo que llama un conector, que es lo que más se repite: una aplicación
+#: integrada pregunta la asistencia del día cada pocos minutos, y lo hace con la
+#: plantilla entera. `_attendance_of` está escrita para no consultar por cabeza,
+#: y hasta ahora nadie vigilaba que siguiera así.
+RUTAS_DE_INTEGRACION = ["/api/app/attendance/", "/api/app/people/"]
+
+
 def _rutas() -> list[str]:
     ventana = f"?from={DESDE}&to={HOY}"
     return [
@@ -125,12 +154,17 @@ def _rutas() -> list[str]:
 def _consultas_de(jefa, empresa) -> dict[str, tuple[int, int]]:
     cliente = APIClient()
     cliente.credentials(HTTP_AUTHORIZATION=f"Bearer {RefreshToken.for_user(jefa).access_token}")
+    conector = _conector_de(empresa)
     medidas = {}
     with tenant_context(empresa.id):
         for ruta in _rutas():
             with CaptureQueriesContext(connection) as capturadas:
                 respuesta = cliente.get(ruta)
             medidas[ruta.split("?")[0]] = (len(capturadas), respuesta.status_code)
+        for ruta in RUTAS_DE_INTEGRACION:
+            with CaptureQueriesContext(connection) as capturadas:
+                respuesta = conector.get(ruta)
+            medidas[ruta] = (len(capturadas), respuesta.status_code)
     return medidas
 
 

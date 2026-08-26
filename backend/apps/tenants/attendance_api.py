@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
+from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -24,6 +25,42 @@ from apps.common.permissions import HasApplicationScope
 from apps.punches.delegated import resolve_employee
 from apps.punches.services import build_day_status
 from apps.tenants.applications import ApplicationScope
+
+
+class TramoSerializer(serializers.Serializer):
+    """Un tramo del día. Solo las horas: la IP y el dispositivo no salen."""
+
+    in_ = serializers.DateTimeField(
+        help_text="Cuándo empezó. En el JSON el campo se llama `in`.", source="in"
+    )
+    out = serializers.DateTimeField(
+        allow_null=True, help_text="Cuándo terminó, o `null` si sigue abierto."
+    )
+
+
+class AsistenciaDeUnaPersonaSerializer(serializers.Serializer):
+    employee = serializers.UUIDField()
+    employee_id = serializers.CharField(help_text="Su número de empleado, si lo tiene.")
+    name = serializers.CharField()
+    state = serializers.ChoiceField(
+        choices=["NOT_STARTED", "WORKING", "ON_BREAK", "OFF"],
+        help_text="Cómo está ahora mismo.",
+    )
+    worked_seconds = serializers.IntegerField(help_text="Lo trabajado hoy, en segundos.")
+    segments = TramoSerializer(many=True)
+
+
+class AsistenciaDelDiaSerializer(serializers.Serializer):
+    """Lo que responde la consulta de asistencia.
+
+    Declarado de verdad y no como objeto libre: quien escribe un conector lee el
+    esquema, y un `dict` a secas le obliga a deducir la forma probando ---o a
+    descubrirla el día que cambia.
+    """
+
+    time_zone = serializers.CharField(help_text="La de la empresa.")
+    day = serializers.DateField(help_text="El día en curso **en su zona**, no en UTC.")
+    people = AsistenciaDeUnaPersonaSerializer(many=True)
 
 
 @extend_schema(tags=["applications"])
@@ -40,7 +77,7 @@ class ApplicationAttendanceView(APIView):
             "With `employee_ref`, just that person. Requires `read:attendance`."
         ),
         parameters=[OpenApiParameter("employee_ref", str, description="Referencia externa")],
-        responses={200: dict},
+        responses={200: AsistenciaDelDiaSerializer},
     )
     def get(self, request):
         company = request.user.application.tenant

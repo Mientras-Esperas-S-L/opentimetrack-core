@@ -522,3 +522,157 @@ def test_cada_persona_cuenta_su_dia_en_su_propio_huso(company):
     # Para ella todavía es el día 8, así que su fichaje cuenta en su día.
     assert filas[0]["state"] == "WORKING"
     assert filas[0]["segments"], "el fichaje se salió de su propia ventana"
+
+
+# ------------------------------------------------------- lo que hace el conector
+
+
+@pytest.mark.django_db
+def test_lo_que_el_conector_hace_sobre_las_personas_queda_escrito(
+    connector, company, django_capture_on_commit_callbacks
+):
+    """El rastro es de lo que este producto vende, y aquí estaba vacío.
+
+    Una aplicación integrada da de alta a alguien, le cambia el correo ---que es
+    su identificador de acceso--- y la da de baja ---y a partir de ahí no puede
+    fichar---. Las tres cosas ocurrían sin dejar una sola línea en auditoría: ni
+    quién, ni cuándo, ni qué había antes. El `changes` que el código construye
+    para saber qué pisó el conector se tiraba.
+
+    La causa era que `record()` no puede deducir la empresa cuando no hay actor,
+    y aquí no lo hay a propósito: quien actúa es una aplicación, que no tiene
+    fila en `users`.
+    """
+    from apps.audit.models import AuditAction, AuditLog
+
+    cuerpo = {
+        "email": "rosa@acme.test",
+        "first_name": "Rosa",
+        "last_name": "Campos",
+        "employee_id": "EMP-0042",
+    }
+
+    with django_capture_on_commit_callbacks(execute=True):
+        alta = connector.put("/api/app/people/EMP-0042/", cuerpo, format="json")
+    with django_capture_on_commit_callbacks(execute=True):
+        cambio = connector.put(
+            "/api/app/people/EMP-0042/", {**cuerpo, "email": "rosa.campos@acme.test"}, format="json"
+        )
+    with django_capture_on_commit_callbacks(execute=True):
+        baja = connector.delete("/api/app/people/EMP-0042/")
+
+    assert (alta.status_code, cambio.status_code, baja.status_code) == (201, 200, 200)
+
+    with tenant_context(company.id):
+        entradas = list(AuditLog.objects.filter(target_type="user").order_by("at"))
+
+    assert [e.action for e in entradas] == [
+        AuditAction.PERSON_CREATED,
+        AuditAction.PERSON_UPDATED,
+        AuditAction.PERSON_DEACTIVATED,
+    ]
+    # Qué integración fue, no «sistema»: si una ficha cambia sola, lo que hay que
+    # poder mirar es cuál de las aplicaciones autorizadas lo hizo.
+    assert all(e.actor_label == "aplicación · Geosian" for e in entradas)
+    assert all(e.tenant_id == company.id for e in entradas)
+    # Y qué pisó, que es la mitad del valor de la entrada.
+    assert entradas[1].changes["before"]["email"] == "rosa@acme.test"
+    assert entradas[1].changes["after"]["email"] == "rosa.campos@acme.test"
+
+
+@pytest.mark.django_db
+def test_el_rastro_del_conector_no_se_le_sirve_a_la_empresa_de_al_lado(
+    connector, company, other_company, django_capture_on_commit_callbacks
+):
+    """Por la pantalla de auditoría, que es por donde se lee.
+
+    `AuditLog` no es un `TenantOwnedModel` a propósito ---su docstring lo
+    explica--- así que preguntarle al manager no demuestra nada sobre el
+    aislamiento: quien acota es el ViewSet. La comprobación tiene que ir por la
+    misma puerta que usa una persona.
+    """
+    from apps.users.models import Role
+
+    with django_capture_on_commit_callbacks(execute=True):
+        connector.put(
+            "/api/app/people/EMP-0042/",
+            {"email": "rosa@acme.test", "first_name": "Rosa", "employee_id": "EMP-0042"},
+            format="json",
+        )
+
+    def audit_para(empresa, correo):
+        with tenant_context(empresa.id):
+            admin = User.objects.create_user(
+                email=correo, password=PASSWORD, tenant=empresa, role=Role.ADMIN
+            )
+        cliente = APIClient()
+        cliente.force_authenticate(user=admin)
+        respuesta = cliente.get("/api/audit/?target_type=user")
+        assert respuesta.status_code == 200
+        return respuesta.json()["results"]
+
+    # Primero el caso que sí debe traer algo: sin él, un cero en el de al lado
+    # no distinguiría «bien acotado» de «la entrada nunca se escribió».
+    assert len(audit_para(company, "jefa@acme.test")) == 1
+    assert audit_para(other_company, "jefa@globex.test") == []
+
+
+@pytest.mark.django_db
+def test_la_misma_identidad_puede_estar_en_dos_empresas(company, other_company):
+    """Un grupo con dos empresas en el mismo OTT y un solo proveedor de identidad.
+
+    La cabecera de `users/models.py` dice que el correo es único **por empresa**
+    y no globalmente, «porque una persona puede trabajar para dos empresas, y en
+    un sistema pensado para integradores multiempresa eso deja de ser un caso
+    raro». `oidc_sub` llevaba `unique=True` a secas y contradecía ese diseño: la
+    segunda empresa no podía dar de alta a esa persona, y lo que recibía era un
+    500 --- justo lo que `_refuse_collisions` dice que hay que evitar, porque un
+    conector no puede reaccionar a eso.
+    """
+    primero, _a = credential(company, ApplicationScope.WRITE_PEOPLE, ApplicationScope.READ_PEOPLE)
+    segundo, _b = credential(
+        other_company, ApplicationScope.WRITE_PEOPLE, ApplicationScope.READ_PEOPLE
+    )
+
+    ficha = {"first_name": "Rosa", "last_name": "Campos", "oidc_sub": "azure|abc123"}
+
+    una = primero.put(
+        "/api/app/people/EMP-0042/",
+        {**ficha, "email": "rosa@acme.test", "employee_id": "EMP-0042"},
+        format="json",
+    )
+    otra = segundo.put(
+        "/api/app/people/G-7/",
+        {**ficha, "email": "rosa@globex.test", "employee_id": "G-7"},
+        format="json",
+    )
+
+    assert una.status_code == 201
+    assert otra.status_code == 201, f"la segunda empresa no pudo darla de alta: {otra.data}"
+
+
+@pytest.mark.django_db
+def test_dos_personas_de_la_misma_empresa_no_comparten_identidad(company):
+    """Y dentro de una empresa sigue siendo única: dos fichas con el mismo `sub`
+    son la misma persona duplicada, y el acceso acabaría entrando en cualquiera
+    de las dos. Se rechaza con código, no con un 500."""
+    conector, _app = credential(
+        company, ApplicationScope.WRITE_PEOPLE, ApplicationScope.READ_PEOPLE
+    )
+
+    primera = conector.put(
+        "/api/app/people/EMP-0042/",
+        {"email": "rosa@acme.test", "first_name": "Rosa", "oidc_sub": "azure|abc123"},
+        format="json",
+    )
+    segunda = conector.put(
+        "/api/app/people/EMP-0043/",
+        {"email": "otra@acme.test", "first_name": "Otra", "oidc_sub": "azure|abc123"},
+        format="json",
+    )
+
+    assert primera.status_code == 201
+    assert segunda.status_code == 409, (
+        f"esperaba un rechazo con código, llegó {segunda.status_code}"
+    )
+    assert segunda.data["error"]["code"] == "identity_taken"

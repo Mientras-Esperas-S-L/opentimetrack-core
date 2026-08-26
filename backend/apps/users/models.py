@@ -478,12 +478,15 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
 
     # Federated identity. `oidc_sub` is the provider-issued identifier and does
     # not change when the person changes email address or surname.
+    #
+    # Único **por empresa**, no globalmente: ver la restricción de más abajo. Un
+    # `unique=True` a secas aquí contradecía el diseño que esta misma clase
+    # declara para el correo.
     oidc_sub = models.CharField(
         _("identity provider subject"),
         max_length=255,
-        null=True,
         blank=True,
-        unique=True,
+        default="",
     )
     oidc_issuer = models.CharField(_("issuer"), max_length=255, blank=True)
 
@@ -512,6 +515,21 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
                 fields=["email"],
                 condition=models.Q(tenant__isnull=True),
                 name="unique_email_without_company",
+            ),
+            # La identidad federada, por empresa y por el mismo motivo que el
+            # correo. Un grupo con dos sociedades en el mismo OTT y un solo
+            # proveedor de identidad es el caso normal, no el raro: con la
+            # restricción global, la segunda empresa no podía dar de alta a
+            # alguien que ya estaba en la primera, y lo que recibía su conector
+            # era un 500 sin código al que reaccionar.
+            #
+            # Dentro de una empresa sí es única: dos fichas con el mismo `sub`
+            # son la misma persona duplicada, y el acceso entraría en cualquiera
+            # de las dos.
+            models.UniqueConstraint(
+                fields=["tenant", "oidc_sub"],
+                condition=~models.Q(oidc_sub=""),
+                name="unique_identity_per_company",
             ),
             # El número de empleado, único dentro de la empresa. Es el puente
             # con las aplicaciones que fichan en nombre de alguien: el conector

@@ -379,7 +379,15 @@ class UserViewSet(viewsets.ModelViewSet):
         # Users are not a TenantOwnedModel -- sign-in has to find them before the
         # company is known -- so the scoping is explicit here, and it is by what
         # the caller answers for rather than by company.
-        return people_queryset(self.request.user).select_related("department")
+        # `workplace` y `tenant` porque la ficha lleva la zona en la que se
+        # parte el día de esa persona, que sale de su centro o ---si no
+        # tiene--- de la empresa. Sin los dos se preguntaba una vez por
+        # persona: diez consultas con tres y diecinueve con doce, que es lo
+        # que cazó `test_no_crece_con_la_plantilla` en cuanto se añadió el
+        # campo.
+        return people_queryset(self.request.user).select_related(
+            "department", "workplace", "tenant"
+        )
 
     def get_serializer_class(self):
         if self.action in {"create", "update", "partial_update"}:
@@ -610,6 +618,42 @@ class DepartmentViewSet(StructureTrail, viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         self.anotar(serializer.save(tenant=self.request.user.tenant), _("Added"))
+
+    def perform_destroy(self, instance):
+        """Refused while somebody answers for it, and no `SET_NULL` will do.
+
+        For the people **in** the department, losing it is tidy: they keep
+        everything and lose a label. For the people **in charge of** it, it is
+        the opposite, and that asymmetry is what made this easy to miss.
+
+        `visible_people` narrows a manager to the departments they were put in
+        charge of, and reads "in charge of nothing" as "nothing narrows them" ---
+        deliberately, so that a manager is not left seeing nobody on the day the
+        company signs up. Retiring the only department somebody managed lands
+        them in that same state by a different road, and the effect is the
+        opposite of prudent: measured on a live company, a manager went from
+        seeing 2 people to seeing all of them, and a supporting document
+        belonging to another department went from 404 to 200. That is a medical
+        certificate, art. 9 GDPR, reachable by somebody who never answered for
+        that person.
+
+        Nobody touched their permissions, and the audit trail says "department
+        deleted", not "she can now read the whole company". So it is refused
+        here: whoever reorganises has to move the managers first, which is a
+        decision somebody takes on purpose and which leaves its own trail.
+        """
+        managers = instance.managers.filter(is_active=True).count()
+        if managers:
+            raise BusinessRuleError(
+                code="department_has_managers",
+                message=_(
+                    "%(count)s people answer for this department. Move them first: "
+                    "leaving them in charge of nothing widens what they can read to "
+                    "the whole company."
+                )
+                % {"count": managers},
+            )
+        super().perform_destroy(instance)
 
 
 @extend_schema(tags=["organisation"])

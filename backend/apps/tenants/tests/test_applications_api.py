@@ -114,7 +114,7 @@ def test_the_token_comes_back_once_and_works(as_admin, company):
     with tenant_context(company.id):
         make(company, "operario@acme.test", Role.EMPLOYEE)
     client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}", HTTP_IDEMPOTENCY_KEY="alta-terminal")
     punch = client.post(
         "/api/punches/delegated/", {"employee_ref": "operario@acme.test"}, format="json"
     )
@@ -161,10 +161,16 @@ def test_revoking_a_credential_stops_it_without_touching_the_others(as_admin, co
     with tenant_context(company.id):
         make(company, "operario@acme.test", Role.EMPLOYEE)
 
+    # Cada credencial ficha su propia operación: la cabecera es obligatoria y
+    # compartir clave haría que la segunda leyera el fichaje de la primera.
     dead = APIClient()
-    dead.credentials(HTTP_AUTHORIZATION=f"Bearer {old['token']}")
+    dead.credentials(
+        HTTP_AUTHORIZATION=f"Bearer {old['token']}", HTTP_IDEMPOTENCY_KEY="con-la-vieja"
+    )
     alive = APIClient()
-    alive.credentials(HTTP_AUTHORIZATION=f"Bearer {new['token']}")
+    alive.credentials(
+        HTTP_AUTHORIZATION=f"Bearer {new['token']}", HTTP_IDEMPOTENCY_KEY="con-la-nueva"
+    )
 
     assert (
         dead.post(
@@ -249,3 +255,61 @@ def test_the_grantable_permissions_come_from_the_server(as_admin):
     values = {row["value"] for row in body}
     assert values == set(ApplicationScope.values)
     assert all(row["label"] for row in body)
+
+
+@pytest.mark.django_db
+def test_la_recien_autorizada_sale_la_primera(as_admin, company):
+    """Quien acaba de autorizar una aplicación tiene que verla.
+
+    El listado va de cincuenta en cincuenta. Ordenado por nombre ---que era el
+    orden--- una aplicación nueva caía donde le tocase alfabéticamente, y en una
+    empresa con más de cincuenta se iba a la segunda página: quedaba autorizada,
+    invisible, y sin forma de emitirle el testigo ni de revocarla desde la
+    pantalla.
+    """
+    with tenant_context(company.id):
+        for nombre in ("Aaa terminal", "Bbb lector", "Zzz puerta"):
+            Application.objects.create(tenant=company, name=nombre)
+
+    respuesta = as_admin.post(
+        reverse("application-list"),
+        {"name": "Mmm recien autorizada", "scopes": [ApplicationScope.READ_PEOPLE]},
+        format="json",
+    )
+    assert respuesta.status_code == 201, respuesta.data
+
+    nombres = [fila["name"] for fila in as_admin.get(reverse("application-list")).data["results"]]
+    assert nombres[0] == "Mmm recien autorizada", f"la nueva no sale la primera: {nombres}"
+
+
+@pytest.mark.django_db
+def test_lo_revocado_baja_pero_no_desaparece(as_admin, company):
+    """Una aplicación revocada ya no abre nada, pero registró fichajes.
+
+    Por eso se desactiva en vez de borrarse, y por eso baja al final en vez de
+    estorbar arriba: lo que se mira a diario es lo que sigue teniendo acceso.
+    """
+    with tenant_context(company.id):
+        viva = Application.objects.create(tenant=company, name="Zzz sigue activa")
+        muerta = Application.objects.create(tenant=company, name="Aaa ya no vale")
+
+    assert as_admin.delete(reverse("application-detail", args=[muerta.pk])).status_code == 204
+
+    filas = as_admin.get(reverse("application-list")).data["results"]
+    nombres = [fila["name"] for fila in filas]
+    assert nombres.index(str(viva.name)) < nombres.index(str(muerta.name)), nombres
+    assert str(muerta.name) in nombres, "la revocada ha desaparecido del listado"
+
+
+@pytest.mark.django_db
+def test_el_listado_dice_cuantas_hay_aunque_no_quepan(as_admin, company):
+    """Con más de una página, `count` es lo que impide creer que están todas."""
+    with tenant_context(company.id):
+        Application.objects.bulk_create(
+            Application(tenant=company, name=f"App {numero:03d}") for numero in range(55)
+        )
+
+    cuerpo = as_admin.get(reverse("application-list")).data
+    assert cuerpo["count"] == 55
+    assert len(cuerpo["results"]) == 50
+    assert cuerpo["next"], "el listado no ofrece la página siguiente"

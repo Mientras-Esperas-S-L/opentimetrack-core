@@ -252,7 +252,7 @@ class ApplicationPersonView(APIView):
     @extend_schema(
         operation_id="app_people_retrieve",
         summary="Read one person by external reference",
-        responses={200: dict},
+        responses={200: PersonInTheAnswerSerializer},
     )
     def get(self, request, reference: str):
         company = request.user.application.tenant
@@ -270,7 +270,7 @@ class ApplicationPersonView(APIView):
             "duplicates. Requires `write:people`."
         ),
         request=PersonFromApplicationSerializer,
-        responses={200: dict, 201: dict},
+        responses={200: PersonInTheAnswerSerializer, 201: PersonInTheAnswerSerializer},
     )
     def put(self, request, reference: str):
         company = request.user.application.tenant
@@ -314,6 +314,11 @@ class ApplicationPersonView(APIView):
             action=AuditAction.PERSON_CREATED if creado else AuditAction.PERSON_UPDATED,
             actor=None,
             actor_label=f"aplicación · {request.user.application.name}",
+            # Sin esto la entrada se descartaba entera. `record()` deduce la
+            # empresa del actor, y aquí no hay actor a propósito: quien escribe
+            # es una aplicación, que no tiene fila en `users`. Es justo el caso
+            # para el que existe el parámetro.
+            company=company,
             target=person,
             target_type="user",
             target_label=person.get_full_name() or person.email,
@@ -329,7 +334,7 @@ class ApplicationPersonView(APIView):
             "Never deletes: clock events outlive the person who made them and are kept "
             "for four years. Requires `write:people`."
         ),
-        responses={200: dict},
+        responses={200: PersonInTheAnswerSerializer},
     )
     def delete(self, request, reference: str):
         company = request.user.application.tenant
@@ -346,6 +351,7 @@ class ApplicationPersonView(APIView):
                 action=AuditAction.PERSON_DEACTIVATED,
                 actor=None,
                 actor_label=f"aplicación · {request.user.application.name}",
+                company=company,
                 target=person,
                 target_type="user",
                 target_label=person.get_full_name() or person.email,
@@ -373,4 +379,10 @@ def _refuse_collisions(person: User, company) -> None:
             code="staff_number_taken",
             message=_("Somebody else in this company already uses that staff number."),
             details={"employee_id": person.employee_id},
+        )
+    if person.oidc_sub and otros.filter(oidc_sub=person.oidc_sub).exists():
+        raise BusinessRuleError(
+            code="identity_taken",
+            message=_("Somebody else in this company already uses that identity."),
+            details={"oidc_sub": person.oidc_sub},
         )

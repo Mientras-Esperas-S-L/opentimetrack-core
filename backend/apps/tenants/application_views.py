@@ -117,7 +117,15 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "description"]
 
     def get_queryset(self):
-        return Application.objects.prefetch_related("credentials").order_by("name")
+        # Lo vivo antes que lo revocado, y dentro de cada grupo lo más reciente
+        # arriba. Por nombre ---que era el orden--- una aplicación recién
+        # autorizada caía en cualquier sitio: con más de cincuenta, en la
+        # segunda página, y quien acababa de autorizarla no la encontraba para
+        # emitirle el testigo. Lo revocado baja porque ya no da acceso a nada,
+        # pero se queda: los fichajes que registró siguen siendo suyos.
+        return Application.objects.prefetch_related("credentials").order_by(
+            "-is_active", "-created_at"
+        )
 
     def perform_create(self, serializer):
         application = serializer.save(tenant=self.request.user.tenant, created_by=self.request.user)
