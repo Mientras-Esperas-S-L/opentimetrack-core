@@ -1,0 +1,9 @@
+# Lo que genera Playwright, no lo que se escribe.
+#
+# Sin esto, `prettier --check` nunca puede dar limpio: revisa las sesiones que
+# la suite crea en cada tanda ---y que están fuera del control de versiones---
+# así que la comprobación salía en rojo pasara lo que pasara y acababa
+# ignorándose. Una comprobación que siempre falla es una que no existe.
+e2e/.sesiones/
+e2e-report/
+test-results/

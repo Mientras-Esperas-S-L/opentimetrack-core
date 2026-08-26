@@ -17,11 +17,15 @@ import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { ErrorNote, PageHeader, Panel } from '../../components/common.jsx'
 import { save } from '../../services/download.js'
 import { useAuth } from '../../hooks/useAuth.js'
+import { today } from '../../components/format.js'
 
+// En fecha local, no en UTC: con `toISOString()` el periodo por defecto
+// empezaba y acababa un día antes durante toda la madrugada, y el informe que
+// se entrega a la Inspección salía con un periodo que nadie eligió.
 const isoDaysAgo = (days) => {
   const day = new Date()
   day.setDate(day.getDate() - days)
-  return day.toISOString().slice(0, 10)
+  return day.toLocaleDateString('sv-SE')
 }
 
 export default function Reports() {
@@ -32,7 +36,7 @@ export default function Reports() {
   // resolves, because at that point the select has no options at all.
   const [employee, setEmployee] = useState('')
   const [dateFrom, setDateFrom] = useState(isoDaysAgo(30))
-  const [dateTo, setDateTo] = useState(new Date().toISOString().slice(0, 10))
+  const [dateTo, setDateTo] = useState(today())
   // 'person' | 'company' | a department id. An inspection asks for the
   // workforce, and producing two hundred documents one at a time means it does
   // not get done.

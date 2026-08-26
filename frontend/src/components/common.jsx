@@ -121,6 +121,15 @@ export function ErrorNote({ error, onClose }) {
           ))}
         </Box>
       )}
+      {/* Cuando se agota el plazo, el cuerpo ya viajó: el servidor ha podido
+          guardarlo perfectamente y lo único que faltó fue la respuesta. Callarlo
+          hace que quien pidió un permiso con su justificante se vaya creyendo
+          que no lo pidió --- mientras su responsable lo ve en la cola. */}
+      {error.code === 'timeout' && (
+        <Box sx={{ mt: 0.5, fontWeight: 600 }}>
+          Puede que sí se haya guardado. Comprueba la lista antes de volver a enviarlo.
+        </Box>
+      )}
     </Alert>
   )
 }

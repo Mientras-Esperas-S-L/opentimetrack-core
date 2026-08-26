@@ -274,7 +274,25 @@ export default function MyLeave() {
                     <Button
                       size="small"
                       startIcon={<AttachFileIcon />}
-                      onClick={() => downloadJustification(absence.id)}
+                      // Con `catch`, y no es una precaución de manual: la
+                      // descarga puede fallar por cosas que no se ven --- en
+                      // producción el fichero lo sirve el almacén de objetos, y
+                      // si su dominio no está en la CSP el navegador corta la
+                      // redirección. Sin esto, la promesa se rechazaba sin que
+                      // nadie la recogiera: ni aviso, ni fichero, y quien lo
+                      // sufre lee «la aplicación no responde».
+                      onClick={() =>
+                        downloadJustification(absence.id).catch((fallo) =>
+                          setError(
+                            fallo?.message
+                              ? fallo
+                              : {
+                                  code: 'download_failed',
+                                  message: 'No se pudo descargar el justificante.',
+                                },
+                          ),
+                        )
+                      }
                     >
                       Justificante
                     </Button>

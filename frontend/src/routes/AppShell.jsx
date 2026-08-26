@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import AppBar from '@mui/material/AppBar'
@@ -20,6 +21,7 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
 
 import LogoutIcon from '@mui/icons-material/Logout'
+import MenuIcon from '@mui/icons-material/Menu'
 
 import ThemeToggle from '../components/ThemeToggle.jsx'
 import { useAuth } from '../hooks/useAuth.js'
@@ -64,7 +66,11 @@ function NavSection({ title, items, onNavigate }) {
           onClick={onNavigate}
           sx={{
             mx: 1,
-            borderRadius: 1.5,
+            // Discreto a propósito. El factor se multiplica por `shape.borderRadius`
+            // del tema, que son 10, así que un 1.5 daba 15 px sobre una fila de 40
+            // y salía una píldora. Además el redondeo se comía los extremos de la
+            // regla de la izquierda, que es justo lo que tiene que verse.
+            borderRadius: 0.6,
             // The active item gets a left rule as well as a tint: on a phone in
             // sunlight the tint alone is not always visible.
             '&.active': {
@@ -88,6 +94,7 @@ export default function AppShell() {
   const theme = useTheme()
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
   const location = useLocation()
+  const [menuAbierto, setMenuAbierto] = useState(false)
 
   const user = session?.user
   const company = session?.tenant
@@ -97,22 +104,37 @@ export default function AppShell() {
   // es un error de interfaz.
   const management = NAV_ADMIN.filter((item) => !item.adminOnly || user?.role === 'ADMIN')
 
-  const navigation = (
+  // `alCerrar` es lo que `NavSection` esperaba en su `onNavigate` desde el
+  // principio y nadie le pasaba: en un cajón que se superpone, elegir una
+  // pantalla tiene que cerrarlo. En el permanente no hay nada que cerrar.
+  const menu = (alCerrar) => (
     <Box sx={{ overflowY: 'auto', pb: 2 }}>
-      <NavSection title={t('Mi trabajo')} items={NAV_ME} />
+      <NavSection title={t('Mi trabajo')} items={NAV_ME} onNavigate={alCerrar} />
       {canManage && (
         <>
           <Divider sx={{ my: 1, mx: 2 }} />
-          <NavSection title={t('Gestión')} items={management} />
+          <NavSection title={t('Gestión')} items={management} onNavigate={alCerrar} />
         </>
       )}
     </Box>
   )
 
+  const navigation = menu(undefined)
+  const navigationConCierre = menu(() => setMenuAbierto(false))
+
+  // La coincidencia más específica, y respetando `end`. Con `find` a secas
+  // ganaba siempre «Resumen»: su ruta es `/panel`, que es prefijo de todas las
+  // demás, así que la cabecera decía «Resumen» estando en Informes o en el
+  // Cuadrante. Es el mismo fallo que `navigation.jsx` documenta y resuelve con
+  // `end` para el resaltado del menú --- aquí se ignoraba.
   const currentLabel =
-    [...NAV_ME, ...NAV_ADMIN].find(
-      (item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`),
-    )?.label ?? ''
+    [...NAV_ME, ...NAV_ADMIN]
+      .filter((item) =>
+        item.end
+          ? location.pathname === item.to
+          : location.pathname === item.to || location.pathname.startsWith(`${item.to}/`),
+      )
+      .sort((a, b) => b.to.length - a.to.length)[0]?.label ?? ''
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100dvh', bgcolor: 'background.default' }}>
@@ -128,6 +150,19 @@ export default function AppShell() {
         }}
       >
         <Toolbar sx={{ gap: 2 }}>
+          {/* Sin esto, diez de las doce pantallas de gestión no tenían por
+              dónde llegarse desde un móvil: la barra lateral solo existe de
+              `md` para arriba y la barra de abajo solo lleva al Resumen. Las
+              rutas funcionaban si se tecleaban. */}
+          {!isDesktop && canManage && (
+            <IconButton
+              edge="start"
+              onClick={() => setMenuAbierto(true)}
+              aria-label={t('Abrir el menú')}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
           <Stack sx={{ minWidth: 0, flexGrow: 1 }}>
             <Typography variant="h2" noWrap sx={{ fontSize: '1.05rem' }}>
               {/* El nombre del producto no se traduce: es un nombre propio. */}
@@ -165,6 +200,25 @@ export default function AppShell() {
           </Tooltip>
         </Toolbar>
       </AppBar>
+
+      {!isDesktop && (
+        <Drawer
+          open={menuAbierto}
+          onClose={() => setMenuAbierto(false)}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            '& .MuiDrawer-paper': {
+              width: DRAWER_WIDTH,
+              boxSizing: 'border-box',
+              bgcolor: 'background.paper',
+              backgroundImage: 'none',
+            },
+          }}
+        >
+          <Toolbar />
+          {navigationConCierre}
+        </Drawer>
+      )}
 
       {isDesktop && (
         <Drawer

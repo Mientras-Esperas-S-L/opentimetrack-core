@@ -57,7 +57,10 @@ function Hueco({ hueco, onCubrir, guardando }) {
             No hay nadie más en la empresa a quien ofrecérselo.
           </Alert>
         ) : (
-          <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 1.5, alignItems: 'flex-start' }}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            sx={{ gap: 1.5, alignItems: 'flex-start' }}
+          >
             <TextField
               select
               size="small"
@@ -143,8 +146,8 @@ export default function CoberturaPendiente({ from, to }) {
           Cobertura pendiente ({huecos.length})
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Turnos asignados a quien no los va a trabajar. Mientras sigan así, esa persona saldrá
-          cada día como ausencia sin justificar.
+          Turnos asignados a quien no los va a trabajar. Mientras sigan así, esa persona saldrá cada
+          día como ausencia sin justificar.
         </Typography>
 
         <ErrorNote error={error} onClose={() => setError(null)} />

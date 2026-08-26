@@ -110,7 +110,12 @@ export default function SetPassword() {
 
             {submit.isPending && <LinearProgress />}
 
-            <Button type="submit" variant="contained" size="large" disabled={!ready || submit.isPending}>
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={!ready || submit.isPending}
+            >
               Guardar y entrar
             </Button>
           </Stack>

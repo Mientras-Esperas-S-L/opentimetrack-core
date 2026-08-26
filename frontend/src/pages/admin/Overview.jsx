@@ -14,7 +14,7 @@ import Typography from '@mui/material/Typography'
 
 import { getOverview } from '../../services/api.js'
 import { Empty, Loading, PageHeader, Panel, SourceChip } from '../../components/common.jsx'
-import { dateOf, timeOf } from '../../components/format.js'
+import { dateOf, plural, timeOf } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 
 /** A number with its meaning under it, and a colour only when it wants
@@ -154,7 +154,11 @@ export default function Overview() {
           tone="attention"
           to="/panel/decisiones"
         />
-        <Figure value={data.headcount} label="personas de alta" to="/panel/personas" />
+        <Figure
+          value={data.headcount}
+          label={plural(data.headcount, 'persona de alta', 'personas de alta')}
+          to="/panel/personas"
+        />
       </Box>
 
       <Box

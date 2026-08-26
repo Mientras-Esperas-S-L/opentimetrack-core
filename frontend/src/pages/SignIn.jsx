@@ -153,7 +153,9 @@ export default function SignIn() {
                     setError(null)
                   }}
                 >
-                  {mode === 'in' ? 'He olvidado mi contraseña' : 'Volver a entrar con mi contraseña'}
+                  {mode === 'in'
+                    ? 'He olvidado mi contraseña'
+                    : 'Volver a entrar con mi contraseña'}
                 </Link>
               </Box>
             </Stack>

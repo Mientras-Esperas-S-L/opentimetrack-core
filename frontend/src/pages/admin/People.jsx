@@ -823,8 +823,8 @@ export default function People() {
           }
         >
           Le quedaban {colgando} {colgando === 1 ? 'turno asignado' : 'turnos asignados'} después de
-          hoy. No se han borrado: hay que ponerles a otra persona, o esos días saldrán como
-          ausencia sin justificar.
+          hoy. No se han borrado: hay que ponerles a otra persona, o esos días saldrán como ausencia
+          sin justificar.
         </Alert>
       )}
 

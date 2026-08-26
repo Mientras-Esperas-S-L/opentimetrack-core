@@ -18,6 +18,7 @@ import Typography from '@mui/material/Typography'
 import { getLeaveTypes, getLeaveUsage } from '../services/api.js'
 import EmployeePicker from './EmployeePicker.jsx'
 import { ErrorNote } from './common.jsx'
+import { plural, today } from './format.js'
 
 /** Pedir una ausencia, o registrarla la empresa. Un solo formulario.
  *
@@ -94,7 +95,12 @@ const requestedInUnit = (kind, startDate, endDate, days) => {
   return days
 }
 
-const today = () => new Date().toISOString().slice(0, 10)
+// `today` sale de `format.js`, que lo calcula en la fecha **local**. El que
+// había aquí usaba `toISOString()`, o sea UTC, y su propio helper compartido
+// avisa de esto en un comentario: al este de Greenwich, en las primeras horas de
+// la madrugada, proponía **el día de ayer**. En España, cada noche entre las
+// 00:00 y las 02:00 en verano, quien pedía un permiso sin fijarse lo pedía para
+// ayer.
 
 const EMPTY = {
   leave_type: null,
@@ -413,7 +419,11 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                 {kind.name} da {kind.allowance}, y se están pidiendo {formatAmount(asked)}{' '}
                 {UNITS[kind.unit]}. No se impide: el convenio puede dar más de lo que consta aquí.
                 {Number(kind.extra_when_travelling) > 0 &&
-                  ` Si hay desplazamiento, son ${Number(kind.extra_when_travelling)} días más.`}
+                  ` Si hay desplazamiento, son ${Number(kind.extra_when_travelling)} ${plural(
+                    kind.extra_when_travelling,
+                    'día',
+                    'días',
+                  )} más.`}
               </Alert>
             )}
 

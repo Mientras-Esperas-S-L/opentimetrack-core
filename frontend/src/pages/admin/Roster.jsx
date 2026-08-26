@@ -39,7 +39,7 @@ import {
 import EmployeePicker from '../../components/EmployeePicker.jsx'
 import CoberturaPendiente from '../../components/CoberturaPendiente.jsx'
 import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
-import { dateOf } from '../../components/format.js'
+import { capitalised, dateOf, monthName } from '../../components/format.js'
 
 const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 
@@ -604,11 +604,8 @@ export default function Roster() {
         <IconButton onClick={() => move(-1)} aria-label="Mes anterior">
           <ChevronLeftIcon />
         </IconButton>
-        <Typography sx={{ fontWeight: 600, minWidth: 190, textTransform: 'capitalize' }}>
-          {new Date(month.year, month.month, 1).toLocaleDateString('es-ES', {
-            month: 'long',
-            year: 'numeric',
-          })}
+        <Typography sx={{ fontWeight: 600, minWidth: 190 }}>
+          {capitalised(monthName(month))}
         </Typography>
         <IconButton onClick={() => move(1)} aria-label="Mes siguiente">
           <ChevronRightIcon />

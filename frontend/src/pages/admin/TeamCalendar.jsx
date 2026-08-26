@@ -28,7 +28,14 @@ import LeaveDialog from '../../components/LeaveDialog.jsx'
 import Alert from '@mui/material/Alert'
 
 import { Empty, Loading, PageHeader, StatusChip } from '../../components/common.jsx'
-import { dayRange, leaveLabel, leaveLength } from '../../components/format.js'
+import {
+  capitalised,
+  dayRange,
+  leaveLabel,
+  leaveLength,
+  monthName,
+  plural,
+} from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import { PickFilter } from '../../components/filters.jsx'
 
@@ -118,9 +125,6 @@ const KIND_COLOUR = {
   PERSONAL: 'success.main',
   OTHER: 'text.disabled',
 }
-
-const monthLabel = (year, month) =>
-  new Date(year, month, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
 
 const iso = (year, month, day) =>
   `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
@@ -242,9 +246,11 @@ export default function TeamCalendar() {
           sx={{ mb: 2 }}
         >
           Registradas las vacaciones de {avisoDePlazo.employee_name} con{' '}
-          <strong>{avisoDePlazo.short_notice.days} días</strong> de antelación. El{' '}
-          {avisoDePlazo.short_notice.citation} pide dos meses para que dé tiempo a organizarse.
-          Quedan registradas igual; si no estaba acordado, todavía se pueden mover.
+          <strong>
+            {avisoDePlazo.short_notice.days} {plural(avisoDePlazo.short_notice.days, 'día', 'días')}
+          </strong>{' '}
+          de antelación. El {avisoDePlazo.short_notice.citation} pide dos meses para que dé tiempo a
+          organizarse. Quedan registradas igual; si no estaba acordado, todavía se pueden mover.
         </Alert>
       )}
 
@@ -260,12 +266,17 @@ export default function TeamCalendar() {
         onSubmit={record.mutate}
       />
 
-      <Stack direction="row" sx={{ alignItems: 'center', gap: 1, mb: 2 }}>
+      {/* Se parte en varias líneas donde no cabe. Tres botones, el nombre del
+          mes con sus 190 px y dos filtros de 160 pasan de 630 px de ancho
+          mínimo, y una fila que no se parte no se encoge: en un teléfono la
+          página entera se iba 22 px a la derecha. La rejilla de abajo sí estaba
+          resuelta, con su propio desplazamiento dentro del contenedor. */}
+      <Stack direction="row" sx={{ alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
         <IconButton onClick={() => move(-1)} aria-label="Mes anterior">
           <ChevronLeftIcon />
         </IconButton>
-        <Typography sx={{ fontWeight: 600, minWidth: 190, textTransform: 'capitalize' }}>
-          {monthLabel(cursor.year, cursor.month)}
+        <Typography sx={{ fontWeight: 600, minWidth: 190 }}>
+          {capitalised(monthName(cursor))}
         </Typography>
         <IconButton onClick={() => move(1)} aria-label="Mes siguiente">
           <ChevronRightIcon />

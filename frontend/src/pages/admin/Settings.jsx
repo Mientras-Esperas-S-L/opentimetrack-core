@@ -23,6 +23,7 @@ import {
   updateWorkingTimeRules,
 } from '../../services/api.js'
 import { ErrorNote, Loading, PageHeader, Panel } from '../../components/common.jsx'
+import { plural } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 
 /** Spain spans two, and both are in daily use. The rest of the list is there
@@ -803,7 +804,7 @@ export default function Settings() {
                 ? 'Contando…'
                 : permisos === 0
                   ? 'No hay ningún permiso configurado, así que nadie puede pedir ninguno.'
-                  : `${permisos} permisos configurados.`}
+                  : `${permisos} ${plural(permisos, 'permiso configurado', 'permisos configurados')}.`}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Cargar el catálogo añade los que falten del país y no toca los que ya están: lo que tu

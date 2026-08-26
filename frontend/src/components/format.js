@@ -45,11 +45,56 @@ export function hhmmss(totalSeconds) {
   return `${pad(hours)}:${pad(minutes)}:${pad(safe % 60)}`
 }
 
+/** La palabra que toca según sean uno o varios.
+ *
+ *  «1 personas de alta» es lo que sale de escribir el plural a pelo, y solo se
+ *  ve cuando hay exactamente uno --- o sea, en una empresa recién creada, que es
+ *  la primera pantalla que ve un cliente nuevo. El número va aparte porque a
+ *  veces lleva su propio formato o su `<strong>`.
+ *
+ *      {n} {plural(n, 'día', 'días')}
+ */
+export function plural(count, one, many) {
+  return Number(count) === 1 ? one : many
+}
+
+/** La primera letra en mayúscula, y solo la primera.
+ *
+ *  `text-transform: capitalize` sube **cada** palabra, que en inglés es lo que
+ *  se quiere y en castellano no: `toLocaleDateString` devuelve «agosto de 2026»
+ *  y el CSS lo dejaba en «Agosto De 2026». Igual en catalán y gallego, donde
+ *  además la preposición cambia. Aquí se resuelve en el idioma, no en la hoja
+ *  de estilos, y los meses ingleses ya vienen capitalizados de fábrica.
+ */
+export function capitalised(text) {
+  if (!text) return text
+  return text.charAt(0).toLocaleUpperCase() + text.slice(1)
+}
+
 export function timeOf(iso, timeZone) {
   if (!iso) return '—'
   return new Date(iso).toLocaleTimeString('es-ES', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone,
+  })
+}
+
+/** La hora al segundo. Para nombrar un fichaje, no para enseñarlo.
+ *
+ *  En pantalla los segundos sobran, pero un rótulo de lector de pantalla tiene
+ *  que **distinguir**: cuatro fichajes de la misma persona dentro del mismo
+ *  minuto dan cuatro botones que se oyen idénticos, y quien navega así no puede
+ *  saber cuál está pulsando. Al segundo sí se distinguen siempre, porque la
+ *  guarda del doble toque no deja dos eventos de la misma persona a menos de
+ *  cinco segundos.
+ */
+export function timeOfWithSeconds(iso, timeZone) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
     timeZone,
   })
 }

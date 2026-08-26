@@ -160,7 +160,15 @@ export default function Clock() {
       queryClient.invalidateQueries({ queryKey: ['punches'] })
       queryClient.invalidateQueries({ queryKey: ['my-shift-today'] })
     },
-    onError: setError,
+    onError: (fallo) => {
+      setError(fallo)
+      // Con el plazo agotado no se sabe qué pasó, así que se pregunta. Si el
+      // servidor sí lo registró, el panel de abajo lo enseña en un segundo y la
+      // pregunta se contesta sola --- sin que nadie tenga que volver a pulsar.
+      if (fallo?.code === 'timeout') {
+        queryClient.invalidateQueries({ queryKey: ['today'] })
+      }
+    },
   })
 
   const working = today?.state === 'WORKING'
@@ -237,6 +245,18 @@ export default function Clock() {
                 {error.code === 'network_error' && (
                   <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 600 }}>
                     No se ha registrado nada. Vuelve a pulsar cuando tengas cobertura.
+                  </Typography>
+                )}
+                {/* Y cuando la petición sí salió, lo honesto es no afirmarlo.
+                    El plazo se agota a los diez segundos y el servidor ha
+                    podido registrarla: decir aquí «no ha quedado nada» hacía
+                    fichar otra vez, y ese segundo toque ya no lo frena la
+                    guarda de cinco segundos --- así que entraba una salida
+                    encima de la entrada. */}
+                {error.code === 'timeout' && (
+                  <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 600 }}>
+                    Puede que sí haya quedado registrado. Mira abajo antes de volver a pulsar: si
+                    aparece, está hecho.
                   </Typography>
                 )}
               </Alert>
