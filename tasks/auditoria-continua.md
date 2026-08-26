@@ -1,10 +1,31 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 42 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 80 · Vueltas seguidas sin hallazgos: 0
 
-**Parada el 14/08/2026.** La prueba de convergencia dice que NO ha convergido:
-6 lentes nuevas, 6 no vacías, 15 hallazgos de 17 sobrevivieron a la refutación.
-Dos de aislamiento entre empresas arreglados el mismo día; 13 pendientes.
+**Parada el 14/08/2026, retomada el 25/08/2026.**
+
+*Los trece hallazgos de la prueba de convergencia están cerrados* (vueltas 43 a
+55), más los dos de aislamiento que se arreglaron el mismo 14/08. La lista de
+«pendiente de arreglar» está vacía desde la vuelta 55.
+
+**Y sigue sin converger, que es lo que importa.** Desde entonces se han probado
+**ocho lentes nuevas y siete han dado hallazgos**: la empresa recién creada (56),
+el administrador único (57), la persona dada de baja (58), los formularios
+reabiertos (59), el manual contrastado contra el producto (60), el esquema de la
+puerta de integración (61) y el coste en consultas de esa puerta (62), que es la
+única que no encontró un defecto --- solo un hueco de vigilancia.
+
+El criterio propuesto ---cinco lentes seguidas sin nada alto ni medio--- volvió
+a cero en la vuelta 64, que encontró una inyección de fórmulas en el CSV que se
+entrega. La lección de la vuelta 42 se repite: la etiqueta «limpia» de las 35
+áreas mide qué lentes se pasaron, no la salud del código.
+
+Las tres últimas vueltas han ido por las **tres piezas que salen del sistema**
+---CSV (64), nombre de fichero (65) y PDF (66)--- y las tres han encontrado algo.
+La 66 además encontró un defecto **debajo de un arreglo anterior**: la vuelta 39
+hizo que la discrepancia del art. 4.b llegara al informe, y hasta ahora se
+imprimía fuera de la hoja. La prueba de la 39 pasaba porque preguntaba si el
+texto estaba en el fichero, no si caía dentro de la página.
 
 El 14/08 Francisco cerró las cinco decisiones que estaban esperándole. Cuatro
 están hechas y la quinta ---la capa de i18n del frontend--- está en marcha.
@@ -97,78 +118,53 @@ escrito. La primera versión de esa sonda tenía la exención por nombre de fich
 (`views.py`) en vez de por ruta, con lo que eximía a `shifts/views.py`: habría
 pasado en verde sin ver el fallo que la motivó.
 
-### Pendiente de arreglar --- 13 hallazgos
+### Pendiente de arreglar --- ninguno
 
 Ordenados por gravedad. Cada uno viene con su escenario reproducido; el detalle
 completo (evidencia y refutación) está en el registro del workflow.
 
-- **[alta] El informe entregado descuenta la pausa aunque el convenio diga que es tiempo de trabajo**
-  `backend/apps/reports/services.py:279` --- lente: aritmetica
-  Empresa de jardinería (el convenio estatal viene en el propio repositorio: `agreements/es/jardineria-estatal.yaml` fija `break_counts_as_work: true`, Art. 16). Ana ficha entrada 06:00, pausa 10:00-10:15, salida 14:00. `build_day_status` responde 28.800 s (8 h, la pausa cuenta) y la pantalla se lo enseña así. El mismo día, en el mismo instante, `build_report` devuelve `total_seconds = 27.900` (7 h 45) y eso es lo que sale en el PDF, en el CSV y en el resumen de nómina. La línea 279 hace `row.seconds = max(row.seconds - row.break_seconds, 0)` sin preguntar nunca por `rules.break_counts_as_work`;
-  Consecuencia: Al trabajador: quince minutos menos por jornada en el documento oficial del art. 34.9, unas 55 h al año, y en la dirección que favorece al empresario. El documento que se entrega a la Inspección y el que se adjunta al recibo de salarios dicen menos horas de las que el propio producto ha contado en pantalla. A la empresa: dos cifras distintas para el mismo día en el mismo sistema, y la que se entre
-
-- **[alta] Retirar la solicitud borra la fila y deja el justificante en el almacén para siempre, sin nada que lo apunte**
-  `backend/apps/absences/services.py:618` --- lente: ficheros
-  Ana adjunta a un permiso el justificante de una cita hospitalaria (PDF, dato de salud) y luego pulsa «Retirar». `cancel_absence` hace `absence.delete()`. Django no borra ficheros al borrar filas desde la 1.3, y en todo el proyecto no hay ni un `post_delete`, ni un `FileField` con limpieza, ni una tarea periódica que barra el almacén (`config/celery.py` solo purga metadatos de fichaje). La fila desaparece y el fichero sigue entero. Igual por cascada al borrar a la persona o la empresa. Y como la fila ya no existe, el solape deja de bloquear: se puede repetir pedir+retirar sobre la misma fecha i
-  Consecuencia: A la persona: un dato de categoría especial que ella misma retiró se queda conservado sin plazo. A la empresa: no puede atender una supresión (art. 17 RGPD) ni cumplir su propio plazo de conservación (art. 5.1.e) porque no hay ninguna fila, pantalla ni comando que sepa que ese fichero existe; solo aparecería mirando el disco o el bucket a mano. Y cualquier empleado con sesión puede, a 3000 peticio
-
-- **[alta] Aprobar una corrección de hora reconstruye el fichaje desde cero y tira los campos del art. 3: el intervalo, la naturaleza de las horas y su liquidación**
-  `backend/apps/punches/corrections.py:577` --- lente: invariantes
-  Marta ficha entrada 08:00, pausa 14:00, vuelta 14:30 y salida 18:00 (los cuatro por `POST /api/punches/`, que acepta `interval` como ChoiceField). Se equivocó: volvió a las 15:00. Pide `POST /api/corrections/` kind=MODIFY sobre el fichaje de vuelta de pausa con proposed_timestamp 15:00; la responsable aprueba. `_create` construye el sustituto con solo tenant, employee, punch_type, timestamp, source y recorded_by, así que sale con interval=WORK en vez de BREAK. Medido: el 12/08 pasa a leerse como un tramo WORK 08:00-15:00, la pausa abierta desde las 14:00 sin cerrar nunca, la salida real de las
-  Consecuencia: A la persona: una jornada de 9,5 h que consta como 0 h trabajadas y aparece eternamente «en pausa», y horas extra pagadas que se convierten en ordinarias sin que nadie lo decida ni quede rastro. A la empresa: el procedimiento del art. 4.b ---el único camino legítimo para tocar el registro--- es el que corrompe el asiento, y lo hace en silencio, con correo de conformidad incluido. Además vacía el h
-
-- **[alta] `proposed_type` entra sin validar y acaba en `punch_type`: un fichaje que no es ni entrada ni salida y que no cuenta para nada**
-  `backend/apps/punches/correction_views.py:86` --- lente: invariantes
-  `proposed_type` es un `serializers.CharField` sin choices, `request_correction` solo comprueba que no venga vacío, y `_create` hace `punch.save()` sin `full_clean()`; la columna `punch_type` es varchar(3) sin CHECK. Recorrido completo por la API con APIClient: `POST /api/corrections/` {kind: ADD, proposed_type: "in", proposed_timestamp: 2026-08-12T06:00:00Z, reason: ...} responde 201, la responsable hace `POST /api/corrections/{id}/approve/` y responde 200. El fichaje queda guardado con punch_type='in' y `get_punch_type_display()` devuelve 'in'. `build_day_status` compara con `event.punch_type
-  Consecuencia: La persona pide que le añadan la entrada que olvidó, la empresa la aprueba, ambos reciben la confirmación («An entry was added: at 12/08/2026 08:00») y el día sigue en cero horas: el asiento existe en la tabla pero ningún lector lo interpreta. Peor: `infer_type` tampoco lo reconoce como OUT, así que el siguiente fichaje real de esa persona se deduce como salida y encadena una salida sin entrada. E
-
-- **[alta] Con la red lenta, la pantalla de fichar jura que no se ha registrado nada, y la segunda pulsación que ella misma pide cae fuera de la ventana antidoble**
-  `frontend/src/pages/Clock.jsx:239` --- lente: perdida-de-trabajo
-  Una operaria en una obra pulsa «Fichar entrada». La petición llega y el servidor crea la ENTRADA, pero la respuesta tarda más de 10 s (`timeout: 10000` en api.js:48). Axios aborta, el interceptor no tiene `error.response`, así que devuelve `{code:'network_error', status:0}` y Clock.jsx pinta en negrita «No se ha registrado nada. Vuelve a pulsar cuando tengas cobertura.». Ella vuelve a pulsar, unos segundos después. La guarda `_refuse_a_double_tap` solo cubre 5 s (`DOUBLE_TAP_SECONDS = 5`, apps/punches/services.py:334) y la espera del propio cliente ya ha sido de 10, así que el segundo toque no
-  Consecuencia: El registro de esa persona —que es la prueba del art. 34.9— queda falseado justo el día que peor cobertura hubo, y arreglarlo ya no es fichar otra vez: hace falta una corrección con motivo y el acuerdo de las dos partes (art. 4.b). El aviso no es neutral: es el que provoca la segunda pulsación. La ventana de 5 s se eligió pensando en «un cliente que reintenta» (así está escrito en el cuaderno, vue
-
-- **[alta] Un tropiezo pasajero al renovar la sesión (502, 429, wifi) borra el formulario entero y tira el testigo de refresco, que seguía siendo válido**
-  `frontend/src/services/api.js:133` --- lente: perdida-de-trabajo
-  Una administradora lleva cinco minutos rellenando «Dar de alta» (más de veinte campos). Su acceso, que dura 15 minutos, caduca justo antes de pulsar Guardar. El PATCH/POST recibe 401, el interceptor llama una vez a `POST /auth/refresh/` y esa llamada se estrella por algo pasajero: un 502 del balanceador mientras se despliega, un 429 de la cubeta anónima que comparte toda la oficina detrás del mismo NAT, el wifi parpadeando, o su propio plazo de 10 s. El `catch { tokens.clear() }` de la línea 133 lo trata como «esta sesión ya no vale»: borra los dos testigos, cae al `if (status === 401)` de la 
-  Consecuencia: Se pierde el trabajo de quien estaba escribiendo, sin aviso ni forma de recuperarlo, por un fallo que no tenía nada que ver con su sesión. Y encima se destruye el refresco, que valía siete días: recargar no la devuelve dentro, tiene que volver a teclear la contraseña. Es el mismo error que el proyecto ya cazó y arregló para `/auth/me/` —AuthContext hace tres intentos y solo borra en 401 o 403, y h
-
-- **[alta] El fichaje delegado no tiene clave de idempotencia: un reintento del conector convierte la entrada en salida y borra la jornada entera**
-  `backend/apps/punches/delegated.py:131` --- lente: integraciones
-  El lector NFC ficha la entrada de Rosa a las 08:00. El servidor la graba y devuelve 201, pero la respuesta se pierde (corte de red, proceso muerto, timeout del cliente). El conector reintenta el mismo POST /api/punches/delegated/ {"employee_ref": "EMP-0042"} a los 30 s. La guarda del doble toque son 5 s (DOUBLE_TAP_SECONDS, services.py:334), así que los 30 s la esquivan; y el tipo se deduce del estado (infer_type), así que el reintento no graba otra entrada: graba una SALIDA. Ejecutado con freezegun: primera llamada 201 IN, estado WORKING; reintento 201 OUT; day_status pasa a OFF con worked_se
-  Consecuencia: La jornada legal de esa persona queda registrada como 30 segundos en lugar de nueve horas, y ese registro es el que se enseña ante una inspección. Deshacerlo obliga a pasar por el flujo del art. 4.b, que necesita el acuerdo de las dos partes. El disparador no es raro: el timeout después de que la escritura ya se confirmó es el modo de fallo más común de un conector, y register_punch es atómico per
-
-- **[alta] Todo lo que una aplicación externa hace sobre las personas se queda fuera del rastro de auditoría: la entrada se descarta y solo queda un WARNING en el log**
-  `backend/apps/tenants/people_api.py:313` --- lente: integraciones
-  El conector da de alta a alguien (PUT /api/app/people/EMP-0042/ -> 201), le cambia el correo (PUT -> 200) y lo da de baja (DELETE -> 200, is_active=False). Las tres llamadas invocan record(...) con actor=None y actor_label="aplicación · Geosian", pero NO pasan company=. En audit/services.py:47 `tenant = company or getattr(actor, "tenant", None)` da None con actor=None, y en la línea 52 la entrada se descarta con un log.warning. Ejecutado: las tres operaciones salen bien, la persona queda desactivada en la base, y AuditLog.objects.filter(target_type="user") devuelve []. Son los dos únicos recor
-  Consecuencia: Una aplicación integrada desactiva a una persona —que a partir de ese momento no puede fichar, register_punch la rechaza con employee_inactive— o le cambia el correo, que es su identificador de acceso, y en la pantalla de auditoría no hay ni una línea: ni quién, ni cuándo, ni qué había antes. El changes={"before": ..., "after": ...} que el código construye para saber qué pisó el conector se tira. 
-
-- **[media] La jornada de una persona a tiempo parcial se calcula con la semana de la empresa, y los permisos por horas salen al doble o a la mitad**
-  `backend/apps/absences/usage.py:176` --- lente: aritmetica
-  Ana, `regime=PART_TIME`, `contracted_hours=20` (20 h/semana = 4 h/día), sin cuadrante — que es justo el caso que el docstring dice cubrir. (a) Art. 37.9 ET, tal y como lo trae el catálogo (`apps/legal/es.py:302`: 4 días laborables al año, «se pide por horas»): Ana coge ocho ausencias de 4 h, o sea **ocho jornadas suyas enteras**. `leave_usage` devuelve `used=4.0`, `remaining=0.0`, `over=False`: se le han concedido ocho días de un permiso de cuatro. (b) Art. 53.2 ET, seis horas a la semana durante el preaviso: Ana se toma **un** día suyo (4 h) registrado como día completo. `leave_usage` devuelv
-  Consecuencia: Al trabajador, en el caso (b): el producto le dice que ha agotado y superado un permiso legal habiéndose ausentado 4 de las 6 horas a las que tiene derecho, y `over=True` es lo que ve quien aprueba. Le pueden denegar horas que le corresponden justo durante un preaviso, que es cuando más las necesita. A la empresa, en el caso (a): concede el doble de lo que el art. 37.9 obliga sin enterarse, y el s
-
-- **[media] Con almacén de objetos (el valor por defecto de producción) el botón «Justificante» no descarga nada y no avisa: la CSP publicada no nombra el dominio del almacén**
-  `deploy/cabeceras.md:30` --- lente: ficheros
-  Despliegue por defecto: `prod.py:78` pone `STORAGE_BACKEND` a `s3`, y `deploy/cabeceras.md:30` publica `connect-src 'self' https://API.EJEMPLO.COM`. La persona pulsa «Justificante» en Mis ausencias; `downloadJustification` (frontend/src/services/api.js:315) lanza un XHR a /api/absences/<id>/justification/; la vista responde 302 al dominio del almacén (views.py:530); el navegador bloquea la redirección porque ese tercer origen no está en `connect-src` (la CSP se vuelve a evaluar sobre el destino de la redirección). axios rechaza, y el `onClick` de MyLeave.jsx:277 llama a una función async sin `
-  Consecuencia: En la configuración de producción que documenta el propio producto, ni la persona ni quien aprueba pueden recuperar el justificante que la aplicación pidió subir — y el fallo es mudo, así que se lee como «la aplicación no responde», no como un problema de despliegue. La pareja de pruebas que cubre este camino no lo ve: `test_with_object_storage_it_redirects_instead_of_proxying` solo comprueba que 
-
-- **[media] `oidc_sub` es único a nivel global, no por empresa, y contradice el diseño multiempresa que el propio modelo declara**
-  `backend/apps/users/models.py:481` --- lente: invariantes
-  La cabecera de users/models.py dice que el correo es único por empresa y no globalmente «porque una persona puede trabajar para dos empresas, y en un sistema pensado para integradores multiempresa eso deja de ser un caso raro». Pero `oidc_sub` lleva `unique=True` a secas, sin la empresa y sin el emisor. Un grupo con dos empresas en el mismo OTT y un único proveedor de identidad: el conector de la primera hace `PUT /api/app/people/EMP-0042/` con oidc_sub="azure|abc123" y responde 201. El conector de la segunda hace `PUT /api/app/people/G-7/` con el mismo sub. `_resolve` filtra por `tenant=compa
-  Consecuencia: La segunda empresa no puede dar de alta a esa persona por el conector, y lo que recibe es un 500 sin código de error ---justo lo que el docstring de `_refuse_collisions` dice que hay que evitar: «un choque contra ellas sale como un 500 y un conector no puede reaccionar a eso»---. Quien lo sufre es una persona que existe, trabaja en las dos empresas y no puede fichar en la segunda hasta que alguien
-
-- **[media] El justificante que la pantalla promete admitir hasta 10 MB se aborta a los 10 s: la solicitud queda creada en el servidor y a la persona se le dice que no hay conexión**
-  `frontend/src/components/LeaveDialog.jsx:475` --- lente: perdida-de-trabajo
-  Alguien pide un permiso del art. 37.3 desde el móvil y adjunta la foto del justificante, 8 MB, por debajo del límite que la propia pantalla anuncia («PDF o foto, hasta 10 MB»). Con una subida de 4G razonable (5 Mb/s), el envío tarda más de los 10 s de `timeout` de api.js:48. Axios aborta la petición, pero el cuerpo ya había llegado: el servidor crea la solicitud con su justificante. En pantalla aparece «No hay conexión con el servidor.» y el diálogo sigue abierto con todo relleno, como si no se hubiera enviado nada.
-  Consecuencia: La persona se va creyendo que no ha pedido el permiso —vuelve a intentarlo, lo pide por otra vía o se queda sin pedirlo— mientras su responsable ve en la cola una solicitud de quince días que quien la mandó da por no enviada. El diagnóstico que se le da además es falso: no es la conexión, es que el cliente dejó de esperar. El aviso de 10 MB solo se cumple si la subida va a más de 8 Mb/s sostenidos
-
-- **[media] Una baja hecha desde el panel no toca updated_at, así que la lectura incremental del conector no la ve nunca**
-  `backend/apps/users/views.py:570` --- lente: integraciones
-  El conector trae la plantilla entera de GET /api/app/people/ y se guarda next_since. Después la administración da de baja a Rosa desde el panel: DELETE /api/employees/<id>/ guarda con `instance.save(update_fields=campos)` donde campos es ["is_active", "contract_end"], sin "updated_at". Django fija auto_now en la instancia pero solo escribe los campos de update_fields, así que la columna updated_at no cambia en la base. La siguiente lectura incremental, GET /api/app/people/?since=<cursor>, filtra por updated_at__gte y Rosa no entra. Ejecutado: is_active pasa a False en la base, updated_at antes
-  Consecuencia: La aplicación de gestión mantiene indefinidamente como activa a alguien que ya no está en la empresa: sigue en sus listados, sigue en los cuadrantes que pinta y sigue mandando fichajes delegados por ella, que OTT rechaza con employee_inactive sin que nadie mire esos errores. Y una integración que reconcilie —comparar su padrón contra el de OTT por incremental— no ve ninguna diferencia y no corrige
-
 
 ## Hallazgos abiertos
+
+- **`record_retention_years` no borra nada.** El ajuste existe, tiene su valor
+  por defecto de cuatro años, se valida contra el suelo del art. 34.9 ---no deja
+  bajar de cuatro--- se publica en la API y lleva un `help_text` explicando la
+  razón legal. Y **no hay ninguna tarea que lo aplique**: los fichajes se
+  conservan indefinidamente.
+
+  Su hermano de al lado, `security_metadata_retention_days`, sí tiene su purga
+  (`purge_security_metadata`, con su tarea en Celery). La diferencia no parece
+  deliberada.
+
+  Conservar de más no incumple el art. 34.9, que fija un mínimo. Choca con el
+  art. 5.1.e del RGPD, y eso lo dice el propio `help_text` del campo: «keeping
+  data because it might be useful is not a basis».
+
+  **No se ha implementado a propósito**: borrar fichajes es destructivo sobre el
+  registro legal, hay que decidir qué pasa con los informes ya emitidos y con las
+  correcciones que apuntan a un fichaje borrado, y esa decisión no se toma de
+  madrugada. El campo ahora dice en su ayuda que declara la política y no la
+  aplica, para que nadie crea que hay una purga en marcha.
+
+- **¿Quien ya no trabaja aquí puede consultar su propio registro?** Hoy no: al
+  darle de baja, su sesión deja de valer entera y no puede entrar. Los fichajes
+  se conservan cuatro años y salen en el informe que la empresa entrega, así que
+  el dato existe --- lo que no hay es forma de que lo mire quien lo generó.
+
+  El art. 34.9 obliga a tener el registro «a disposición de las personas
+  trabajadoras» y a conservarlo cuatro años, y no dice «mientras dure la
+  relación». Se defiende en los dos sentidos: la empresa custodia el registro y
+  puede entregar una copia a quien la pida, que es como funciona todo lo demás
+  del expediente laboral. Pero el producto presume de que el registro es un
+  derecho de la persona y aquí lo trata como un dato de la empresa.
+
+  **Es decisión de producto, no arreglo.** Preguntarlo antes de tocar nada. El
+  manual dice ya lo que pasa hoy (§2), que antes describía otra cosa.
+
+- **Los catálogos de catalán y gallego, con 31 huecos nuevos cada uno.** 460 en
+  total. Los dejó la vuelta 43 al vaciar traducciones falsas y al extraer cadenas
+  que llevaban tiempo sin recogerse. Van con las ~460 del frontend en el paquete
+  del traductor nativo. **El castellano sí está completo**: cero sin traducir.
 
 - **La capa de i18n del frontend: DECIDIDO QUE SÍ (14/08), en marcha.** Las
   cadenas están escritas en castellano dentro del JSX. Con catalán elegido, una
@@ -222,6 +218,1844 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 80 --- Dos peticiones donde solo cabe una (26/08)
+
+**Lente:** seguir el barrido de concurrencia por los sitios que quedaban, con el
+método ya calibrado en la 79 --- doce rondas y **el solape medido**, porque un
+verde sin solape no dice nada.
+
+#### Primer hallazgo: dos solicitudes de la misma ausencia
+
+La comprobación de solapamiento lee la cola sin bloquear, así que dos peticiones
+simultáneas ven la misma cola y las dos escriben.
+
+| | Rondas con dos solicitudes | Solape real |
+|---|---|---|
+| Antes | **12 de 12** | 37 ms |
+| Después | 0 de 12 | 34 ms |
+
+Y lo que pasa después ya estaba escrito en el docstring de `_overlapping`: «quien
+apruebe la segunda crea una contradicción que nadie caza». Si se aprueban las
+dos, el saldo de vacaciones se descuenta dos veces y el cuadrante ve el día
+doblemente ocupado.
+
+**Arreglo:** `hold()` sobre la persona antes de mirar la cola, la misma pieza que
+la vuelta 79 añadió para fichar.
+
+#### Segundo hallazgo, y **sin concurrencia de por medio**
+
+Al comprobar si dos correcciones simultáneas sobre el mismo fichaje se colaban
+---12 de 12--- resultó que **dos seguidas también**: 201 y 201. Eso no es una
+carrera, es el comportamiento normal, y es deliberado: te deniegan una corrección
+y pides otra con mejor motivo.
+
+Lo que no puede pasar es que se apliquen las dos. Y se aplicaban:
+
+| | Fichajes de esa persona |
+|---|---|
+| Antes | 3: `IN` activo, `IN` activo, `IN` anulado |
+| Después | 2: `IN` activo, `IN` anulado |
+
+**Dos entradas activas donde había una.** El registro decía que la persona entró
+dos veces sin salir: la jornada no cierra, el cuadrante no cuadra y el informe
+que se entrega lleva un asiento que no ocurrió. El motivo era mecánico --- la
+segunda aprobación anulaba un fichaje **ya anulado** ---o sea, nada--- y creaba
+otro sustituto encima.
+
+**Arreglo:** aprobar exige que el fichaje siga vigente, con 409
+`target_already_changed`. La segunda solicitud se queda **pendiente** en vez de
+resolverse sola, para que quien la pidió vea qué pasó, y la vía correcta sigue
+abierta: pedir una nueva sobre el fichaje tal y como está ahora.
+
+#### Lo que salió limpio
+
+Las correcciones no necesitan bloqueo: que haya dos pendientes sobre el mismo
+asiento es correcto, y lo que había que impedir era la aplicación, no la
+solicitud. Buscar la carrera llevó al defecto de verdad, que estaba en otro
+sitio.
+
+**Pruebas.** `apps/absences/tests/test_dos_solicitudes_a_la_vez.py` (3) y
+`apps/punches/tests/test_dos_correcciones_sobre_el_mismo_fichaje.py` (6). Las de
+concurrencia, **sin hilos** y por lo mismo que explica
+`apps/common/tests/test_dos_a_la_vez.py`: `transaction=True` vacía las tablas con
+TRUNCATE y el rastro de auditoría lo rechaza. Se comprueba que el `FOR UPDATE`
+sobre la persona va **antes** de leer la cola. **Validadas contra el fallo**:
+neutralizado cada arreglo, cae solo lo suyo y los cinco controles aguantan.
+
+**Estado:** áreas «Ausencias» y «Correcciones», limpias con una lente más.
+Cerrada con **1057 pruebas de backend y 271 de navegador en verde**, linters
+limpios, castellano sin huecos, cero `fuzzy` y sin migraciones pendientes.
+
+### Vuelta 79 --- Dos fichajes en el mismo instante (26/08)
+
+**Lente:** el barrido de transiciones de estado sin bloqueo, siguiendo el método
+que rindió en las vueltas 72 y 76.
+
+#### Lo que salió limpio
+
+- Correcciones, ausencias y recuperación de horas usan `claim`, que bloquea la
+  fila y exige el estado de partida.
+- **Las horas extra a propósito no.** Usan `update_or_create` con
+  `UniqueConstraint(employee, day)`: una decisión sobre horas extra no toca los
+  fichajes, así que rectificarla es legítimo y el rastro guarda las dos ---
+  probado, `OVERTIME_AUTHORISED` y luego `OVERTIME_REJECTED`. La carrera real con
+  dos hilos da 200 y 200, una sola fila y coherente. Y
+  `apps/common/tests/test_dos_a_la_vez.py` ya lo tenía escrito como decisión
+  tomada, así que ni hallazgo ni cambio.
+
+#### El hallazgo: fichar no bloquea nada
+
+`test_double_tap` cubre el doble toque **secuencial**, y su propio docstring
+nombra lo que quedaba fuera ---«ni dos pestañas, ni un terminal, ni un
+conector»---: todos ésos son **simultáneos**. La protección compara con el último
+fichaje leído de la base, sin bloquear, así que dos peticiones a la vez leen el
+mismo «último» y las dos pasan.
+
+Medido con dos hilos y una barrera:
+
+| | Rondas con dos fichajes | Solape real |
+|---|---|---|
+| Antes | **14 de 15** | 35 ms |
+| Después | 0 de 15 | 32 ms |
+
+Lo que deja en el registro es lo del doble toque secuencial y peor, porque no se
+detecta: una entrada y una salida en el mismo instante, un día de cero segundos
+trabajados y la persona en estado «fuera». Deshacerlo exige el procedimiento del
+art. 4.b, de uno en uno.
+
+**La primera medición fue de una sola ronda y salió limpia.** Era la ronda
+afortunada, la única de quince que no se cuela --- y parecía suficiente para
+cerrar la lente como buena.
+
+**Arreglo.** `hold()` en `apps/common/transitions.py`, junto a `claim`: bloquea
+una fila cuando no hay estado que exigir. Se bloquea **a la persona**, porque un
+fichaje no modifica al anterior y no hay fila de estado que tomar; serializa solo
+sus propias pulsaciones y funciona también en el primer fichaje del día.
+
+**Prueba.** `apps/punches/tests/test_dos_fichajes_a_la_vez.py`, y **sin hilos**
+por lo mismo que explica `test_dos_a_la_vez.py`: `transaction=True` vacía las
+tablas con TRUNCATE en el desmontaje y el rastro de auditoría lo rechaza --- es
+uno de los tres disparadores que lo hacen inmutable. Lo que se comprueba es
+determinista: que fichar emite un `FOR UPDATE` sobre la persona **antes** de leer
+su último fichaje, más el control de que el fichaje sigue saliendo bien y con su
+sello. **Validada contra el fallo**: quitado el bloqueo, cae la primera y el
+control aguanta.
+
+**Estado:** área «Fichar» limpia, con una lente más. Cerrada con **1048 pruebas
+de backend y 271 de navegador en verde**, linters limpios, castellano sin huecos,
+cero `fuzzy` y sin migraciones pendientes.
+
+### Vuelta 78 --- El aviso existía y le faltaban los suelos (26/08)
+
+**Lente:** el barrido de salvaguardas que se apagan por configuración, siguiendo
+el hilo que la 77 dejó a medias.
+
+**El cuadro completo:** de los **catorce** campos con cita legal, solo **cuatro**
+tenían `floor` o `ceiling` declarado. El aviso que añadí en la 77 lee justo esos
+dos valores, así que los otros diez pasaban sin que nadie dijera nada. Probados
+por API, ocho de ocho aceptados con cero avisos.
+
+Y no era información que hubiera que averiguar: **la nota de cada cita ya la
+explica en prosa**, al lado del campo que debía llevarla como número. «Quince
+minutos cuando la jornada continuada excede de seis horas.» «Hasta el 30 %, y el
+convenio puede subirlo al 60 %.» «Cinco días de preaviso.» «Cuatro años como
+mínimo.»
+
+**Arreglo.** Declarados los que la propia nota justifica: `break_minutes` suelo
+15, `break_after_hours` techo 6, `complementary_hours_share` techo 60,
+`roster_notice_days` suelo 5, `record_retention_years` suelo 4. El mecanismo de
+aviso ya existía --- solo le faltaban los datos.
+
+**Y el plazo del art. 4.b, aparte.** Un `correction_consent_days` de cero no es un
+plazo corto: es ninguno. La empresa propone y aplica en el mismo segundo, sin dar
+ocasión de aceptar ni de discrepar, y pedir el consentimiento sin esperarlo es no
+pedirlo. Lleva su propio aviso y **no** un `floor` en el marco: el artículo no
+fija plazo, y declararle un número sería atribuirle algo que no dice --- el mismo
+error de procedencia que arregló la vuelta 76, en la dirección contraria.
+
+**Lo que no se declara, con su motivo.** Está en el apartado de descartes.
+
+**Un falso positivo mío.** La sonda decía que `record_retention_years = 1` se
+aceptaba. Mentira: en su endpoint ---`/api/company/`--- da 400 citando el art.
+34.9 y no admite pacto a la baja. Yo lo mandaba a `/api/working-time-rules/`,
+donde ese campo no existe y DRF lo ignora devolviendo un 200 limpio. El propio
+`test_entrada_malformada` ya tiene escrito ese aviso: «lo que medía era que DRF
+ignora lo desconocido».
+
+**Prueba.** `apps/shifts/tests/test_los_suelos_que_no_estaban_declarados.py`,
+doce casos: cada suelo avisa con su artículo (cuatro parametrizados); dentro de la
+ley no se dice nada (cuatro controles); el plazo de cero días; un plazo normal
+que calla; las vacaciones sin suelo a propósito; y la conservación rechazada en
+su endpoint, para que quede dicho por qué ese campo no está con los demás.
+**Validada contra el fallo**: quitados los cuatro suelos nuevos, caen exactamente
+esos cuatro y los ocho controles aguantan.
+
+**Y una prueba mía frágil, cazada al compilar.** Comprobaba «agree» en el mensaje
+del aviso, y en cuanto se compilaron los catálogos el mensaje salió en
+castellano. Ahora comprueba el campo y el artículo, que es lo que no depende del
+idioma.
+
+**Estado:** área «Ajustes» limpia, con una lente más. Cerrada con **1046 pruebas
+de backend y 271 de navegador en verde**, linters limpios, castellano sin huecos,
+cero `fuzzy` y sin migraciones pendientes.
+
+### Vuelta 77 --- Un cero que apaga una salvaguarda (26/08)
+
+**Lente de partida:** los truncados silenciosos. Se agotó rápido y sin hallazgo:
+los `[:300]` y `[:160]` coinciden exactamente con el `max_length` de su campo, y
+la discrepancia completa vive en `PunchCorrection.employee_dissent` y viaja al
+informe --- lo que se corta es el extracto del rastro, no el documento.
+
+De ahí salió otro hilo, también sin hallazgo: el frontend no pone ningún
+`maxLength`, así que se puede escribir una discrepancia de 1562 caracteres y
+recibir el 400 al enviar. Pero el mensaje es claro ---«no tenga más de 1000
+caracteres»--- está traducido, y `ErrorNote` pinta el detalle por campo desde el
+13/08. Es una mejora de usabilidad, no un defecto, y decirlo así es más honesto
+que forzarlo.
+
+#### El hallazgo, por el otro extremo: valores absurdos que sí se aceptan
+
+`test_entrada_malformada` cubre que nada devuelva un 500 con basura. No cubre que
+un valor **del tipo correcto y fuera de toda razón** se acepte. Probado:
+
+| | Respuesta |
+|---|---|
+| Horas contratadas 999999, y 0 | 400, validado |
+| Jornada semanal de 200 h, y de 0 | **200, guardado** |
+| Descanso entre jornadas de 0 h | **200, guardado** |
+| Plazo de consentimiento de 0 días | **200, guardado** |
+
+Y lo que importa no es el número: **es lo que apaga**. Con el suelo de descanso
+en doce horas, un cuadrante con ocho horas produce `short_daily_rest`; con el
+suelo a cero, ese aviso **desaparece**. Una salvaguarda del art. 34.3 se
+desactiva escribiendo un número.
+
+**Lo que ya estaba bien**, y hay bastante: el cambio deja rastro `RULES_CHANGED`
+con `{'daily_rest_hours': [12, 0]}` y con quién; la pantalla de ajustes avisa en
+amarillo porque tiene las `citations` con su `floor`; y la validación de fichas
+de convenio también avisa. El hueco era **la API**: por ahí entran los
+conectores y los scripts de migración, y no recibían ninguna señal.
+
+**Arreglo, sin impedir.** La respuesta del PATCH lleva `warnings` con el campo,
+el artículo y el mensaje, y la cifra del límite sale del marco del país --- no del
+código, por lo mismo que explica `Citation`. No se bloquea: el RD 1561/1995 baja
+algunos de estos suelos para sectores concretos, así que un valor por debajo
+puede ser correcto y quien lo sabe es la empresa. La validación de fichas hace
+exactamente esto con `fatal=False`.
+
+Y en el rastro: «12 → 0» no dice por sí solo que ese cero esté bajo un mínimo
+legal, y quien lo lea dentro de dos años no tiene por qué saberse el artículo.
+Ahora la nota lo dice.
+
+**Un falso «está bien» que casi cuela.** La primera medición dijo que el cero
+**no** apagaba el aviso. Era la caché: `WorkingTimeRules.for_company` recuerda
+las reglas en el objeto `Tenant` mientras dure la petición ---está escrito en su
+propio comentario--- y mi sonda reutilizaba la misma instancia después del PATCH.
+Recargando la empresa, el aviso desaparece.
+
+**Prueba.** `apps/shifts/tests/test_un_cero_apaga_una_salvaguarda.py`, seis
+casos: el cuadrante avisa con el suelo legal ---el control---; un cero apaga el
+aviso y la API lo dice; el rastro dice por qué ese número importa; un valor
+dentro de la ley no avisa de nada ---un aviso que sale siempre no lo lee
+nadie---; solo se avisa de lo que acaba de cambiar; y el descanso semanal lleva
+su propio artículo, para que no sea una regla escrita para un solo campo.
+**Validada contra el fallo**: neutralizado el cálculo, caen tres y los tres
+controles aguantan.
+
+**Estado:** área «Ajustes» limpia, con una lente más. Cerrada con **1034 pruebas
+de backend y 271 de navegador en verde**, linters limpios, castellano sin huecos,
+cero `fuzzy` y sin migraciones pendientes.
+
+### Vuelta 76 --- La cifra del convenio citando el Estatuto (26/08)
+
+**Lente:** el barrido **sistemático** de piezas hechas y desconectadas. Esa
+pregunta ---«¿existe la llamada?»--- había rendido por casualidad en las vueltas
+68, 74 y 75, así que esta vez se hizo entero, con un script que recorre el árbol
+de sintaxis y busca métodos públicos sin uso fuera de su propio fichero.
+
+**La primera pasada dio treinta candidatos, y eran ruido**: los `@action` de los
+ViewSet los llama el enrutador, las propiedades se usan sin paréntesis, los
+filtros los conduce django-filter. «Muchos fallos a la vez no son muchos
+fallos.» Refinado ---excluyendo decoradores del framework y clases que este
+conduce, y buscando el uso con y sin paréntesis--- quedaron **diez**, y de esos,
+tres que no eran del framework: `Ficha.basis_for`, `Ficha.note_for` y
+`LegalFramework.citation`.
+
+#### Lo que salió limpio
+
+- `LegalFramework.citation(key)` no se llama, pero **la información sí viaja**:
+  el endpoint de reglas construye el diccionario `citations` directamente y el
+  frontend lo pinta campo por campo con `legalField`. Es un método de
+  conveniencia sin usar, no funcionalidad perdida.
+- `finding_citation` sí está conectado: los avisos del cuadrante reciben su
+  artículo.
+
+#### El hallazgo: `basis_for` y `note_for`
+
+`apply_to_rules` copiaba los **valores** de una ficha de convenio a las reglas de
+la empresa y **descartaba el artículo y la nota** de cada uno. Medido con la
+ficha de jardinería, que está en el repositorio:
+
+| | El convenio dice | La pantalla decía |
+|---|---|---|
+| Descanso entre jornadas | 12 h, **Art. 16** | 12 h, Art. 34.3 ET |
+| Descanso en jornada continuada | 15 min, **Art. 16** | 15 min, Art. 34.4 ET |
+
+La cifra coincide y el problema no es la cifra: es la **procedencia**. Cuando el
+convenio se renueve, nadie sabrá que ese valor venía de él; y ante una
+inspección, la empresa tiene que poder decir qué norma aplica, no una parecida.
+La `note` del YAML ---donde la asesoría deja la cita textual y el razonamiento de
+la conversión--- no se veía en ninguna parte, y el docstring de
+`WorkingTimeRules` prometía «la cifra con el artículo del que viene».
+
+**Arreglo.** Campo `from_agreement` en las reglas con la procedencia por campo, y
+el endpoint fusiona: **la cita del convenio gana** sobre la del marco del país, y
+se conserva `framework_basis` y el suelo legal para no perder la referencia
+---ningún convenio puede bajarlo, así que sigue sirviendo para avisar---. El
+frontend no se toca: `cite()` ya junta `basis` y `note`.
+
+**El detalle que casi se cuela.** La primera versión anotaba la procedencia solo
+de los campos que **cambiaban** de valor, y jardinería confirma lo que ya decía
+el Estatuto: los doce campos que interesan quedaban fuera. Salió al medir, no al
+razonar. Ahora se anota siempre que la ficha declare el artículo.
+
+**Y el guard de entradas malformadas hizo su trabajo**: `from_agreement` salió
+escribible por defecto y contestaba un 500 a cualquier basura.
+`test_ningun_campo_de_la_api_contesta_un_500` lo cazó en la misma tanda. De solo
+lectura: lo pone la ficha, y dejarlo escribible permitiría declarar que un número
+viene de un artículo que nadie ha comprobado.
+
+**Prueba.**
+`apps/tenants/tests/test_la_cifra_del_convenio_dice_de_donde_sale.py`, seis
+casos: sin convenio manda el marco ---el control---; con el convenio aplicado la
+cita es la suya; se anota aunque el valor no cambie; lo que el convenio no fija
+sigue citando la ley; la nota de la asesoría llega a la pantalla; y el suelo del
+país no se pierde. **Validada contra el fallo**: neutralizado el registro, caen
+cuatro y los dos controles aguantan.
+
+**Estado:** área «Convenios» limpia, con una lente más. Cerrada con **1028
+pruebas de backend y 271 de navegador en verde**, linters limpios, castellano sin
+huecos, cero `fuzzy` y sin migraciones pendientes.
+
+### Vuelta 75 --- Un sello que nadie mira (26/08)
+
+**Lente:** la integridad del registro, siguiendo la pregunta que rindió en la
+74: hay un campo que promete algo, ¿existe la llamada que lo cumple?
+
+Cada fichaje guarda un `hash_integrity` desde el principio, `verify_hash`
+funciona y detecta un cambio en la hora, en el tipo o en el origen. **No había
+una sola llamada desde el producto**: el método solo aparecía en las pruebas.
+
+#### Lo que sí estaba bien
+
+- El **rastro de auditoría** es append-only a nivel de base de datos, con tres
+  triggers, un comando que los repone y `/api/health/` devolviendo 503 si
+  faltan. Esa parte está mejor cuidada que en la mayoría de los productos.
+- La **huella del informe** hace lo suyo: certifica que el papel entregado es el
+  que se generó, y excluye la hora de generación para que dos copias del mismo
+  periodo se puedan comparar.
+
+#### El hallazgo, medido
+
+Adelantando dos horas un fichaje por SQL directo ---la API no deja editar uno:
+una corrección crea otro y anula el viejo, así que manipularlo de verdad exige
+entrar por debajo---:
+
+| | Antes | Después |
+|---|---|---|
+| Horas en el informe | 8,0 | **10,0** |
+| El sello del fichaje cuadra | sí | **no** |
+| El informe se genera | sí | **sí, sin una queja** |
+
+La huella del documento no cubre esto: certifica el papel, no que lo generado
+refleje lo que se fichó. Con el fichaje alterado, el informe sale con huella
+perfectamente válida y dos horas que nadie trabajó. **La pieza que detecta el
+fraude estaba hecha, probada y desconectada.**
+
+**Arreglo.** `build_report` comprueba el sello de cada fichaje del periodo. Es el
+momento en que el registro sale del sistema como prueba, y sale gratis: los
+fichajes ya están cargados y es un sha256 por fila ---con su prueba de que no
+añade consultas---.
+
+**Y se dice, no se enmienda.** La cifra sigue siendo la del registro y la
+jornada sigue en el informe: corregirla por nuestra cuenta sería inventar un
+dato distinto del que hay, y quien recibe el documento necesita ver el registro
+tal como está para poder actuar. El aviso entra por `row.incidents`, así que
+viaja al PDF y al CSV por el mismo sitio que la discrepancia del art. 4.b.
+
+**Prueba.** `apps/reports/tests/test_el_sello_del_registro_se_comprueba.py`, seis
+casos: un día intacto no dice nada ---el control---; uno tocado por debajo sale
+avisado; el aviso viaja a lo que se entrega; la huella cambia cuando aparece el
+aviso; la cifra no se toca; y comprobarlo no cuesta consultas.
+
+**Una prueba mía pasaba con el fallo delante.** La de la huella alteraba la hora,
+y la huella cambia por eso aunque el aviso esté desconectado. Reescrita tocando
+el **origen**, que rompe el sello del fichaje y no entra en la huella del
+documento: así la única diferencia entre las dos huellas es el aviso. Salió al
+validar contra el fallo, que es exactamente para lo que sirve ese paso.
+
+**Estado:** área «Informes» limpia, con una lente más. Cerrada con **1022
+pruebas de backend y 271 de navegador en verde**, linters limpios, castellano sin
+huecos, cero `fuzzy` y sin migraciones pendientes.
+
+### Vuelta 74 --- Anotar que se informó no es informar (26/08)
+
+**Lente:** el correo que sale. Cuatro plantillas, y nunca se había mirado qué
+lleva, a quién y qué delata.
+
+#### Lo que salió limpio
+
+- **Los asuntos no llevan datos.** «Restablecer tu contraseña en X», «Tu
+  registro de jornada ha cambiado». Nada de nombres ni de horas en lo que se ve
+  en la pantalla de bloqueo de un móvil.
+- **El «he olvidado la contraseña» no delata quién tiene cuenta**: 204 tanto si
+  la dirección existe como si no, y también para alguien dado de baja. El 400
+  solo aparece con una cadena que no es un correo, que no dice nada de nadie.
+- **La inyección de cabeceras se rechaza**: `existe@…\nBcc: espia@…` da 400.
+- **Límite de tasa de 5/min** en esa ruta.
+
+**Y un falso hallazgo mío, con moraleja.** La primera medición dio **142 ms**
+cuando la dirección existía y **2 ms** cuando no: un canal temporal de libro.
+Repitiendo con una llamada de calentamiento antes y la cubeta del límite vaciada
+entre medidas, la diferencia real es **2 ms contra 1**. Los 142 eran la primera
+petición del proceso cargando plantillas y conexiones.
+
+#### El hallazgo: la representación legal no recibía nada
+
+`_inform_representatives` guardaba la hora y una nota con nombre y apellidos
+---«Informados: Fulana»--- y **no enviaba ningún correo**. Ese texto viaja al
+informe de inspección, y el `help_text` que la empresa lee al marcar la casilla
+promete «informado cuando alguien discrepa de un cambio en su registro (art.
+4.b)».
+
+Medido en el flujo real, con control para que el cero significara algo:
+
+| Paso | Correos | A quién |
+|---|---|---|
+| La empresa propone el cambio | 1 | la persona |
+| **La persona discrepa** | **0** | --- |
+| La empresa lo aplica sin acuerdo | 1 | la persona |
+
+Es el «solo citado» en su forma peor: hay campo, hay marca de tiempo, hay nombre
+propio y viaja al documento. Todo parece cubierto y nadie recibió nada.
+
+**Arreglo.** `_mail_the_representatives`, con plantilla propia y el mismo
+`fail_silently` que el aviso a la persona --- que no salga un correo no puede
+tumbar la discrepancia, que es justo lo que el artículo protege.
+
+**Qué se manda y qué no.** Que hay una discrepancia, de quién y de qué día. El
+texto que la persona escribió **no** se reproduce: puede contar por qué faltó a
+una hora ---en la prueba, que estuvo en el médico--- y eso es suyo. Quien recibe
+el aviso tiene acceso al registro por el art. 6.2 y puede consultarlo, que es la
+diferencia entre informar y difundir.
+
+**Prueba.** `apps/punches/tests/test_a_los_representantes_se_les_avisa.py`, cinco
+casos: el representante recibe el aviso; no se le reenvía lo que la persona
+escribió; sin representantes se anota el hueco y no se manda nada; la persona
+sigue recibiendo lo suyo ---el control, porque sin él un cero no dice nada---; y
+que falle el correo no tumba la discrepancia. **Validada contra el fallo**:
+quitado el envío, caen exactamente las dos primeras.
+
+**Las traducciones, otra vez.** `makemessages` prestó traducciones a las dos
+cadenas nuevas: el asunto del aviso salía como «un cambio en el registro de
+jornada». Corregidas en castellano; en catalán y gallego se **vació** la
+prestada en vez de dejarla sin la marca `fuzzy`, porque una traducción
+equivocada sin marca es peor que un hueco.
+
+**Estado:** área «Avisos» limpia, con una lente más. Cerrada con **1016 pruebas
+de backend y 271 de navegador en verde**, linters limpios, castellano sin huecos,
+cero `fuzzy` y sin migraciones pendientes.
+
+### Vuelta 73 --- Reorganizar no es repartir permisos (26/08)
+
+**Lente:** qué se lleva por delante un borrado. El registro vive cuatro años y
+no puede perderse porque alguien retire un departamento o un centro.
+
+#### El registro aguanta todo lo que la API ofrece
+
+Probado sobre datos reales, con tres fichajes de por medio:
+
+| Borrado | Respuesta | Fichajes |
+|---|---|---|
+| Departamento donde trabaja | 204, su `department` a `None` | intactos |
+| Centro de trabajo con gente | 409 `workplace_in_use` | intactos |
+| Baja de la persona | 200, `is_active=False` | intactos |
+| La empresa entera | 404 --- esa puerta no existe | intactos |
+
+`Punch.employee` es `PROTECT` y dar de baja **desactiva** en vez de borrar. Por
+ese lado no hay nada que arreglar.
+
+#### El hallazgo: el borrado no pierde datos, reparte permisos
+
+`visible_people` estrecha a un responsable a los departamentos que le pusieron
+al mando, y lee «al mando de nada» como «nada le estrecha». Es deliberado y está
+razonado: la alternativa dejaría a un responsable sin ver a nadie el día del
+alta.
+
+Retirar el único departamento que alguien dirigía lo deja en ese mismo estado
+por otro camino, y ahí el efecto es el contrario del prudente. Medido sobre una
+empresa viva:
+
+| | Antes | Después de retirar su departamento |
+|---|---|---|
+| Alcance | 2 personas | **todas** |
+| Personas que ve | 2 | 4 |
+| Fichajes que ve | 1 | 2 |
+| Justificante de otro departamento | 404 | **200** |
+
+Ese justificante puede ser un parte médico ---art. 9 del RGPD--- de alguien de
+quien nunca respondió. **Nadie tocó sus permisos**, y el rastro de auditoría
+dice «departamento borrado», no «pasa a leer toda la empresa».
+
+**Por qué era fácil pasarlo por alto.** Para la gente **del** departamento,
+perderlo es ordenado: conservan todo y pierden una etiqueta. Para quien
+**responde** de él es lo contrario. El comentario de `WorkplaceViewSet` dice
+exactamente eso ---que para un departamento `SET_NULL` «es una respuesta
+ordenada»--- pensando en los miembros.
+
+**Arreglo.** `DepartmentViewSet.perform_destroy` lo rechaza mientras alguien
+responda de él, con el mismo patrón que ya usaba el centro de trabajo: 409
+`department_has_managers` y un mensaje que dice qué hacer. La vía correcta
+---mover primero a los responsables--- sigue abierta y es una decisión que
+alguien toma a propósito y que deja su propio rastro.
+
+**Prueba.** `apps/users/tests/test_retirar_un_departamento_no_amplia_a_nadie.py`,
+seis casos: no se retira uno que alguien dirige; su alcance sigue siendo el suyo
+---dicho en lo que puede leer, incluido el justificante ajeno en 404---; uno sin
+responsables se retira sin problema; tener miembros no lo bloquea, porque ahí
+`SET_NULL` sí vale; la vía correcta sigue abierta; y una responsable dada de baja
+no bloquea nada, porque ya no lee. **Validada contra el fallo**: neutralizada la
+comprobación, caen exactamente las dos primeras y los cuatro controles aguantan.
+
+**Y la trampa de siempre con las traducciones.** `makemessages` rellenó la
+cadena nueva copiando la del centro de trabajo por parecido y la marcó `fuzzy`:
+el mensaje del departamento decía «sin centro pierden sus festivos locales».
+Corregida a mano, y los tres catálogos vuelven a cero `fuzzy`.
+
+#### Lo que arrastró en el frontend
+
+La suite de navegador dio un rojo en `/panel/departamentos`, y detrás había dos
+cosas del producto:
+
+- **La pantalla ofrecía un borrado que el servidor va a rechazar.** El botón
+  aparecía con `people_count === 0`, que cuenta quién está **dentro** y no quién
+  **responde**: un departamento sin gente y con jefa mostraba «Eliminar» y un
+  texto que prometía que no afectaba a nadie. Ahora exige las dos condiciones, y
+  el texto lo dice.
+- **Siete botones «Eliminar» sonaban igual** con lector de pantalla. `aria-label`
+  con el nombre del departamento, como se hizo con «Revocar» en la vuelta 67.
+
+Y una prueba que probaba lo contrario de lo que ahora es correcto: la 11 se
+llamaba «alta con responsable, y no se borra si tiene gente» y comprobaba que
+**sí** se borraba teniendo responsable. Reescrita: mientras lo tenga no se
+ofrece, y tras retirarle el mando se borra. Es la lección 115 otra vez --- la
+prueba tomaba el mismo atajo que el arreglo cierra.
+
+De paso, la demo tenía tres departamentos de pruebas viejas (`Colado …`,
+`Depto p…`), todos sin gente dentro. Retirados; quedan los cuatro reales.
+
+**Estado:** área «Organización» limpia, con una lente más. Cerrada con **1011
+pruebas de backend y 271 de navegador en verde**, linters limpios, castellano sin
+huecos, cero `fuzzy` y sin migraciones pendientes.
+
+### Vuelta 72 --- No cambiar nada también es decidir (26/08)
+
+**Lente de partida:** las demás entradas de fichero, después de lo de la 71.
+Duró un `grep`: en todo el producto hay **una sola** ---el justificante--- y ya
+estaba cubierta. Sin material, cambio de eje a la separación de las cuatro
+manos, que el guion nombra expresamente.
+
+#### Lo que salió limpio
+
+Ejercitado por la API, con sesiones de verdad y sin montar estados a mano:
+
+- Quien pide una corrección **no la aprueba**: 409 `cannot_decide_your_own`,
+  para responsable y para administrador. La jefa sí aprueba la de un obrero.
+- El **consentimiento del art. 4.b solo lo da la persona**: la jefa por el
+  obrero 409, un compañero 404, el administrador 409, la propia persona 200 con
+  `employee_agreed=True`.
+- Nadie pone una **discrepancia en boca de otro**: 409.
+- No se puede aplicar sin acuerdo mientras la persona está **en plazo**
+  (`still_within_the_window`), ni resolver dos veces, ni dos responsables a la
+  vez: la segunda mano rebota con 409.
+- El camino entero del art. 4.b, por la puerta: propone → discrepa → la empresa
+  aplica igual. Queda `applied_without_agreement`, la discrepancia se conserva y
+  **los representantes quedan avisados**.
+
+Por el camino monté mal un escenario ---puse `status=DISPUTED` a mano, cuando ese
+es el estado **final** y no el intermedio--- y el 409 resultante parecía un
+defecto. Lo era de la sonda. Probado por la puerta, funciona.
+
+#### El hallazgo: la puerta estaba cerrada en un sentido y abierta en el otro
+
+Aplicando la lección 105 ---«un módulo bien escrito no protege a quien no lo
+llama»--- al mecanismo transversal `apps/common/four_eyes.py`: lo importan
+cuatro sitios, y al enumerar todas las decisiones del producto,
+**`reject_correction` no estaba entre ellos**.
+
+Medido, con el control de que sí había otra persona que podía decidir:
+
+| La misma responsable, sobre su propio fichaje | Respuesta |
+|---|---|
+| Aprobar el cambio | 409 `cannot_decide_your_own` |
+| **Rechazarlo** | **200, `REJECTED`, resuelto por ella misma** |
+
+No cambiar nada también es decidir. Si la empresa propone corregir el fichaje de
+un responsable ---quitarle una hora que no trabajó, por ejemplo--- archivar esa
+propuesta es exactamente la decisión que el art. 4.b quiere que pase por una
+segunda persona. Y `reject` cierra la corrección: quien la propuso vuelve a
+empezar, y el rastro dice que la resolvió la propia persona afectada.
+
+**Arreglo.** `reject_correction` pasa por `refuse_self_decision` igual que
+`approve_correction`, con la misma marca en la nota. Ninguna prueba existente se
+rompió, lo que confirma que nada dependía del comportamiento anterior.
+
+**La excepción se mantiene y se prueba.** En una empresa con una sola persona al
+mando no hay segunda, y negarlo dejaría a un autónomo sin poder tocar su
+registro. Va adelante, y la nota que viaja al informe dice que se resolvió a
+solas --- permitirlo en silencio borraría justo la diferencia que el
+procedimiento existe para dejar ver.
+
+**Prueba.** `apps/punches/tests/test_no_cambiar_nada_tambien_es_decidir.py`,
+cuatro casos: no archiva sola un cambio sobre su fichaje; tampoco lo aprueba
+---la simetría queda fijada, no solo el arreglo---; el administrador sigue
+rechazando la de otra persona; y quien está sola al mando sigue pudiendo y queda
+dicho en la nota. **Validada contra el fallo**: neutralizada la llamada, caen
+exactamente esas dos y los controles aguantan.
+
+#### Lo que confirmó la suite de navegador
+
+Dos rojos, y los dos por el mismo motivo: **la prueba 22 usaba justo el atajo
+que este arreglo cierra**. Entra como administradora, pide una corrección de su
+propio fichaje y al terminar la limpiaba **rechazándosela ella misma**. Ahora
+eso contesta 409 `cannot_decide_your_own`, que es lo correcto.
+
+El segundo rojo ---`/mi-jornada` en la prueba de contraste--- era colateral: con
+la limpieza rota, la 22 dejaba correcciones pendientes que cambiaban el render
+de esa pantalla. En aislado pasaba. Es la lección de «limpia antes de crear»
+vista del revés: **la limpieza rota de una prueba tumbó otra**.
+
+La limpieza la hace ahora una segunda sesión, la del responsable, que es
+exactamente lo que el procedimiento pide.
+
+**Estado:** área «Correcciones» limpia, con una lente más. Cerrada con **1005
+pruebas de backend y 271 de navegador en verde**, linters limpios, castellano sin
+huecos y sin migraciones pendientes.
+
+### Vuelta 71 --- Un justificante que dice `.pdf` y no lo es (26/08)
+
+**Lente:** los justificantes de ausencia. Son ficheros que sube la persona y a
+menudo un dato del art. 9 del RGPD, así que la pasada mira dos cosas: quién
+llega a ellos, y qué se acepta como fichero.
+
+#### Lo que salió limpio, y dos falsos hallazgos míos
+
+El control de acceso es impecable, ejercitado con seis sesiones distintas contra
+el endpoint real:
+
+| Quién | Respuesta | Rastro |
+|---|---|---|
+| La dueña del justificante | 200 | ninguno, a propósito |
+| Una compañera del mismo departamento | 404 | — |
+| Un responsable de **otro** departamento | 404 | — |
+| Su responsable | 200 | sí |
+| Un administrador | 200 | sí |
+| Un administrador de **otra empresa** | 404 | — |
+
+Por el camino me equivoqué dos veces, y las dos habrían acabado en el cuaderno
+como hallazgos si no llego a validarlas:
+
+1. **«No queda rastro de ninguna descarga.»** Filtré el registro por
+   `"document_downloaded"` y la acción es `DOCUMENT_DOWNLOADED`. El contador
+   daba cero porque contaba mal, no porque el producto callara.
+2. **«Un responsable de otro departamento entra.»** Le había puesto
+   `department=oficina`, que es **dónde trabaja**, no qué dirige. Lo que dirige
+   va en `Department.managers`, y sin departamentos al mando el alcance es todo
+   por diseño ---está razonado en `scope.py`: la alternativa es un responsable
+   que no ve a nadie el día que la empresa se da de alta---. Con los
+   responsables puestos de verdad, da 404.
+
+También sale bien lo que el RD 1060/2022 obliga: adjuntar un parte a una baja
+médica se rechaza con `no_medical_certificate`.
+
+#### El hallazgo: la extensión la elige quien sube el fichero
+
+Contra el endpoint real, antes de tocar nada:
+
+- Un **zip** llamado `parte.pdf`: **201, aceptado**.
+- Un **HTML con un `<script>`** llamado `foto.png`: **201, aceptado**.
+
+Sí se rechazaban el fichero vacío, la doble extensión `.pdf.html` y el nombre
+con comillas.
+
+Dos consecuencias, y la segunda se ve menos:
+
+- **La defensa en profundidad que el módulo creía tener no existía.** El
+  docstring de `uploads.py` dice que son dos ---la lista de extensiones y el
+  `Content-Disposition: attachment` del almacenamiento--- y que «el par es lo
+  que sobrevive a que alguien cambie la otra más tarde». Contra este caso solo
+  había una: una lista de extensiones no filtra a quien elige la extensión.
+- **Y sin nadie atacando:** un justificante que dice `.pdf` y es otra cosa llega
+  a la gestoría o a la Inspección y no se abre. El registro se queda con un
+  documento inservible y no se sabe hasta el día en que hace falta.
+
+**Arreglo.** `validate_content` en `uploads.py`: comprueba la marca de los
+primeros bytes contra el formato que anuncia el nombre. WEBP y HEIC la llevan
+dentro de un contenedor, así que la tabla guarda el desplazamiento y la cabecera
+que se lee se calcula de la propia tabla, para que añadir un formato más adentro
+no la deje corta. Conectado en el modelo y en el serializer, como los otros dos
+validadores, con su migración.
+
+**Lo que no hace, a propósito:** validar el formato entero. Un PDF roto por la
+mitad sigue pasando --- se trata de que nadie cuele un tipo distinto, no de
+rechazar el escaneo de una fotocopiadora vieja.
+
+**Prueba.** `apps/absences/tests/test_el_justificante_es_lo_que_dice.py`, siete
+casos: los dos disfraces se rechazan; un parte de verdad sigue entrando;
+**ninguna foto de móvil se queda fuera** ---PNG, JPEG y WEBP generadas de
+verdad, y la caja `ftyp` de HEIC, que es lo que sale de un iPhone---; el fichero
+queda con el puntero devuelto para quien lo guarde después; un PDF a medias
+vale; y una extensión no admitida la rechaza el otro validador, no este.
+**Validada contra el fallo**: neutralizada la comprobación, caen exactamente las
+dos de los disfraces y los cinco controles aguantan.
+
+**Estado:** área «Ausencias» limpia, con una lente más. Cerrada con **1001
+pruebas de backend y 271 de navegador en verde**, linters limpios, castellano sin
+huecos y sin migraciones pendientes.
+
+### Vuelta 70 --- El huso viaja con el fichaje (26/08)
+
+**Lente:** el hallazgo que la 69 dejó medido y marcado para esta vuelta.
+`Timesheet`, `Decisions` y `Overview` pintaban con `session.tenant.time_zone`.
+
+**Qué faltaba de verdad.** La 69 puso la zona de cada cual en su sesión, que
+arregla las pantallas donde uno mira lo suyo. Las de gestión enseñan a **varias**
+personas a la vez, y el frontend solo tenía la de la empresa: en una empresa de
+Madrid con delegación en Las Palmas, todas las filas salían en el huso de la
+central.
+
+Inventariado sobre la respuesta real, no sobre lo que yo suponía: `/api/employees/`
+**ya** traía `effective_time_zone` ---efecto de la 69--- y el fichaje **ninguna**
+clave con «zone».
+
+**Dónde ponerlo.** Se podía sacar del `EmployeePicker`, que ya recibe la persona
+entera, pero eso solo cubre el caso con filtro y se pierde al recargar. El huso
+va **en el fichaje**: un volcado mezcla delegaciones, y una hora sin su huso no
+dice a qué hora se fichó. Quien lo lee por la API ---una pantalla o un
+conector--- no tiene otra forma de saberlo.
+
+- `time_zone` en `PunchSerializer`, con lo que `target_detail` y `result_detail`
+  de una corrección lo heredan gratis.
+- `time_zone` en `CorrectionSerializer`, porque `proposed_timestamp` va suelto:
+  es la hora que se propone poner, y se leía con una hora de más.
+- En el frontend, `punch.time_zone ?? zone` y `correction.time_zone ?? zone`. La
+  de la empresa queda de respaldo, no de respuesta.
+
+`byDay` también: con la zona de la central, un fichaje de las 23:30 en Las
+Palmas caía bajo el día siguiente.
+
+**El N+1, medido antes y después.** Un campo derivado por fila es un N+1
+esperando, y la lección 108 es de la vuelta pasada. Cuarenta fichajes de veinte
+personas ---la mitad con centro propio y la mitad sin, que son los dos
+caminos--- costaban **46 consultas**; con `select_related` hasta el centro y
+hasta la empresa, **6**. La prueba de plantilla que existía no lo habría cazado:
+mide crecer con la gente, no con las filas.
+
+**Prueba.** `apps/punches/tests/test_cada_fichaje_dice_su_huso.py`, tres casos:
+el fichaje dice su huso ---y el control de que quien no tiene centro se queda con
+el de la empresa, sin el cual un arreglo que devolviera siempre lo mismo
+pasaría---; la corrección lleva el de quien la sufre, y el fichaje que cuelga
+también; y decirlo no cuesta una consulta por fila. **Validadas contra el
+fallo**, cada una por su motivo: quitando el `select_related` cae solo la del
+coste, y revirtiendo el campo caen solo las otras dos.
+
+**Estado:** área «Fichajes» y «Decisiones», limpias con una lente más. Cerrada
+con **994 pruebas de backend y 271 de navegador en verde**, linters limpios y sin
+migraciones pendientes.
+
+### Vuelta 69 --- La delegación que va una hora por detrás (26/08)
+
+**Lente:** la misma pregunta que rindió en la 68 ---«¿quién importa este
+módulo?»--- aplicada a `apps/common/clock.py`, que avisa de que la trampa de
+`date.today()` «se coló cuatro veces antes de que este módulo existiera».
+
+**Lo que salió limpio, y se comprueba porque hacía falta comprobarlo.** No queda
+ninguna `date.today()` viva: las siete apariciones son comentarios que la citan.
+Los `.date()` sueltos son todos correctos ---`agreements.py` es YAML sin husos y
+el resto ya venía convertido---. El resumen semanal del responsable coloca un
+fichaje de las 00:30 en el día que la persona vivió, no en el de UTC, y el
+informe de una persona de Las Palmas dentro de una empresa de Madrid pone su
+fichaje de las 23:30 en **su** día y no en el de la central.
+
+Es decir: **donde se cuenta, estaba bien.**
+
+**El hallazgo está donde se enseña.** La sesión (`/api/auth/me/`) daba
+`tenant.time_zone` y ninguna zona más ---comprobado sobre la respuesta real: la
+clave `user` trae `workplace` y `workplace_name`, y ni una sola clave con
+«zone»---, así que las pantallas no tenían otra cosa que usar. Y
+`/api/punches/today/` devolvía también la de la empresa.
+
+Para una delegación en Las Palmas dentro de una empresa de Madrid eso son
+sesenta minutos:
+
+- El **reloj de la pantalla de fichar** iba una hora adelantado. Quien ficha a
+  las 09:00 de su reloj leía las 10:00.
+- Quien fichaba a las **23:30** lo veía como las **00:30 del día siguiente**, y
+  su jornada aparecía empezada un día después.
+- Mientras el informe que se entrega ponía ese mismo fichaje en el día correcto.
+
+**La pantalla y el documento decían días distintos para el mismo fichaje**, y de
+eso va justo el art. 34.9: el registro que la persona consulta es el suyo.
+
+**Arreglo.** `effective_time_zone` en el usuario de la sesión ---el patrón ya
+existía en `WorkplaceSerializer`, resuelto con el mismo `get_`--- y
+`str(request.user.tzinfo)` en `/today/`. En el frontend, `MyTime` pasa a usar la
+de la persona con la de la empresa de respaldo.
+
+**Un N+1 que me pilló la casa.** El campo nuevo toca `workplace` y, para quien
+no tiene centro, `tenant`: `/api/employees/` pasó de 10 consultas con tres
+personas a 19 con doce. Lo cazó `test_no_crece_con_la_plantilla` en la misma
+tanda, sin que yo lo buscara. Resuelto con `select_related("department",
+"workplace", "tenant")` --- los dos, porque con solo `workplace` seguía en 19.
+
+**Prueba.** `apps/punches/tests/test_el_reloj_de_su_centro.py`, cuatro casos: la
+sesión dice el huso de quien la abre; **quien no tiene centro se queda con el de
+la empresa** (el control, porque un arreglo que exigiera centro dejaría sin hora
+a la mayoría de las plantillas); el reloj de fichar es el suyo; y el caso de
+punta a punta, que además comprueba que con la zona de la empresa saldría el día
+siguiente --- si eso dejara de cumplirse, el caso ya no separaría los dos husos y
+la prueba no demostraría nada. **Validada contra el fallo**: revertidos los dos
+sitios, caen tres y aguanta el control.
+
+**Estado:** área «Fichar» sigue limpia, con una lente más. Cerrada con **991
+pruebas de backend y 271 de navegador en verde**, linters limpios y sin
+migraciones pendientes.
+
+### Vuelta 68 --- Las doce horas que eran once (26/08)
+
+**Lente:** el cambio de hora, comprobado en el código que se ejecuta y no donde
+está citado. `apps/common/dst.py` existe desde hace vueltas, está bien escrito y
+tiene sus pruebas --- y **solo lo usaba `overtime.py`**. La pregunta de la vuelta
+fue cuál de las demás cuentas del producto debería saber del cambio de hora y no
+lo sabía.
+
+**El hallazgo.** Un turno guarda horas de reloj de pared: «acaba a las 22:00,
+empieza a las 10:00». `_check_daily_rest` restaba esos dos `datetime`, que son
+**naive**, así que daba doce horas los 365 días del año. La madrugada del último
+domingo de marzo, entre esas dos horas de pared solo pasan **once**.
+
+El suelo del art. 34.3 son doce horas de descanso entre jornadas. Un cuadrante
+que programe esas doce de pared la noche del cambio deja a la persona con once
+reales, **y no avisaba**: el aviso se calculaba con la misma aritmética que
+producía el error. Es un falso negativo justo en la noche en la que hace falta.
+
+La de octubre va al revés ---trece horas--- y no incumple nada. Importa porque un
+arreglo que empezara a avisar ahí sería peor que el defecto: una advertencia
+falsa cada octubre, para toda la plantilla de noche a la vez.
+
+**Cómo se confirmó, y contra qué.** `review_roster` con el fin de semana del
+cambio daba los mismos dos hallazgos que una semana normal: ninguno de descanso.
+Un vacío no es prueba, así que se validó con un caso conocido ---ocho horas de
+descanso sin cambio de hora de por medio--- y ahí sí salía `short_daily_rest`.
+La comprobación funcionaba; lo que fallaba era la aritmética.
+
+**Los tres sitios.** La lección 101 dice enumerarlos antes de tocar nada:
+
+- `services.py` `_check_daily_rest` --- el art. 34.3, con el falso negativo
+  confirmado.
+- `services.py` `_check_weekly_rest` --- las 36 horas del art. 37.1, incluidos
+  los bordes de la ventana, que se construían con `datetime.combine` naive.
+- `coverage.py` `who_can_cover` --- los avisos de descanso al cubrir una baja,
+  que es donde el responsable decide a quién llama.
+
+El cuarto sitio que resta turnos, en el cálculo de horas extra, ya localizaba la
+zona: es el que usa `change_across`.
+
+**Arreglo.** `real_gap(desde, hasta, where)` en `apps/common/dst.py`, junto al
+resto de este conocimiento. Acepta naive ---como salen de un turno--- y aware
+---como salen de la base--- y pasa por UTC antes de restar, que es la trampa
+que ese módulo ya documentaba: dos `datetime` con el **mismo** `tzinfo` se restan
+como reloj de pared.
+
+**Y la explicación, no solo la cifra.** El propio módulo lo defiende: esas horas
+son reales y la ley va por el tiempo efectivamente trabajado, así que no hay
+cifra que corregir --- hay que decir de dónde sale. Quien lee el cuadrante ve
+22:00 y 10:00 y cuenta doce; sin la frase, el aviso parece una cuenta mal hecha
+del programa y se ignora justo esa noche. El mensaje añade ahora «esa noche los
+relojes se adelantaron», traducida al castellano.
+
+**Prueba.** `apps/shifts/tests/test_el_descanso_la_noche_del_cambio.py`, cinco
+casos: la noche de marzo avisa con once horas y dice por qué; una semana normal
+con las mismas horas de pared calla; la noche de octubre no inventa un
+incumplimiento; un descanso corto de los de siempre sigue avisando; y `real_gap`
+por separado da 11, 13 y 12 donde la aritmética de pared daría doce las tres
+veces. **Validada contra el fallo**: revertida la línea, cae exactamente la
+primera y las otras cuatro aguantan.
+
+**Estado:** área «Cuadrante» sigue limpia, con una lente más. Cerrada con **987
+pruebas de backend y 271 de navegador en verde**, linters limpios, castellano sin
+huecos y sin migraciones pendientes.
+
+### Vuelta 67 --- El día que salía dos veces (26/08)
+
+**Lente:** el hallazgo que la 66 dejó anotado y medido. Se coge primero, como
+decía el cuaderno.
+
+**Lo que pasaba.** `Timesheet` pedía cincuenta fichajes por página y luego los
+agrupaba por día. Cuando el corte caía dentro de un día ---con una persona
+activa cae casi siempre--- ese día salía **dos veces**, una en cada página y con
+la mitad de sus horas cada vez. Medido en la demo: el último fichaje de la
+página 1 era una entrada y quedaban **34 fichajes de esa misma persona y ese
+mismo día** en la siguiente.
+
+Nada lo decía. Quien miraba el día 26 en la primera página creía que había visto
+el día 26.
+
+**Lo que no era.** Antes de mirar el render escribí que la pantalla mostraría
+una jornada abierta que sí se cerró. Falso: `Timesheet` no calcula jornadas ni
+saldos, solo lista eventos bajo un encabezado de día. El defecto es el día
+partido y repetido. Queda corregido arriba, en el hallazgo.
+
+**Por qué no valía ninguna de las dos salidas fáciles.** Traer el periodo entero
+como en `MyTime` no sirve para el volcado sin filtrar: el rango por defecto es
+del uno de mes a hoy y **de toda la empresa**, que en la demo son unos dos mil
+fichajes. Y paginar por día en el servidor cambia el contrato de `/punches/`,
+que también usa la puerta de integración.
+
+**Arreglo: dos vistas, porque son dos preguntas.**
+
+- **Con una persona elegida** se mira su jornada, y ahí el día es la unidad: se
+  trae el periodo entero con `getAllPunches`, sin paginador. Si no cabe ---medio
+  año, por ejemplo--- la pantalla lo dice y pide acortar las fechas.
+- **Sin persona** esto es un volcado de auditoría: se pagina por fichaje, que es
+  la unidad que se lista, y **cada fila lleva su fecha**. Agrupar por día encima
+  de una paginación por fichaje era justo lo que producía el día repetido.
+
+La tabla se extrajo a `TablaDeFichajes` para no duplicarla, con `conFecha` como
+única diferencia. Al montar la columna nueva quedó desalineada un momento ---la
+cabecera la ponía tras «Tipo» y el cuerpo tras «Hora»---; ahora la fecha va la
+primera en las dos.
+
+**Prueba.** `e2e/44-el-dia-no-se-parte.spec.js`. Busca por API la persona con
+más fichajes en un solo día, **exige que pase de cincuenta** ---si no, dice que
+no puede demostrar nada en vez de dar un verde vacío--- y comprueba que el
+encabezado de ese día aparece **una sola vez** y con todas sus filas. La segunda
+comprueba que el volcado sin persona lleva las columnas Fecha y Persona.
+**Validada contra el fallo**: forzando `porDia` a falso, se pone roja.
+
+**Estado:** área «Fichajes» limpia, con una lente más. Cerrada con **982 pruebas
+de backend y 271 de navegador en verde**, linters limpios y sin migraciones
+pendientes.
+
+### Vuelta 66 --- El PDF que se imprime fuera de la hoja (26/08)
+
+**Lente:** la tercera pieza de lo que sale del sistema. El CSV se revisó en la
+64 y el nombre del fichero en la 65; queda el PDF, que es el que se lleva en
+papel a una inspección.
+
+**Cómo se buscó.** Datos hostiles por las tres vías que llegan al PDF: marcado
+(`<b>`, `<font color=white>`), texto sin cerrar, y longitud. Las dos primeras
+salieron bien. Las de longitud descubrieron primero un **falso positivo mío**:
+un apellido de 320 caracteres no llega al PDF porque `last_name` es de 100 y lo
+rechaza PostgreSQL antes. Con los máximos reales el documento se generaba sin
+quejarse.
+
+**El hallazgo.** La discrepancia del art. 4.b admite **mil caracteres**, y va a
+una celda de `Table` como cadena suelta. ReportLab no parte las cadenas de las
+celdas: las dibuja seguidas. Medido con las posiciones del flujo de contenido,
+en un A4 de 595 puntos de ancho el texto llegaba hasta el **5102**. Nueve veces
+la hoja.
+
+Estaba en el fichero y no se leía en el documento. Y eso vacía justo lo que el
+artículo protege: que el registro lleve la versión de la persona junto a la de
+la empresa para que quien lo lee pueda comparar las dos. Afectaba igual al
+nombre de la persona (100 caracteres), al de la empresa y al motivo de una
+ausencia.
+
+**Por qué no lo vio la vuelta 39.** Esa vuelta fue la que hizo llegar la
+discrepancia al informe, y la fijó con `assert "Yo entré antes." in texto`. Un
+extractor devuelve lo que hay en el flujo de contenido, no lo que cae dentro de
+los márgenes: la comprobación pasaba con el texto colgando fuera de la página.
+
+**Arreglo.** Las celdas de longitud libre pasan por `_celda()`, que envuelve el
+texto en un `Paragraph` ---que sí ajusta líneas--- y lo **escapa**, porque
+`Paragraph` interpreta marcado: sin escapar, un `<` tumbaría el documento y
+`<font color=white>` escondería texto dentro de una prueba legal. Medido otra
+vez: 500 puntos de 595.
+
+**Prueba.** `apps/reports/tests/test_el_pdf_se_lee_en_la_hoja.py`, cinco casos.
+El primero es `test_la_medicion_sabe_ver_el_desbordamiento`: construye a mano
+una tabla con la cadena suelta y exige que el medidor diga «se sale». Sin él,
+los otros cuatro podrían estar pasando porque el medidor no mide.
+
+Al pasar las celdas por `Paragraph` el texto se parte en renglones, así que el
+helper `_texto_del_pdf` de `test_lo_que_pone_el_informe.py` colapsa los saltos
+antes de buscar: una frase corta salía cortada por la mitad y la búsqueda
+literal fallaba sin que faltara nada. Queda anotado ahí lo que ese helper mide y
+lo que no.
+
+**Estado:** área «Informes» sigue limpia, con una lente más. Cerrada con **982
+pruebas de backend y 269 de navegador en verde**, linters limpios y sin
+migraciones pendientes.
+
+#### Lo que destapó la suite al cerrar la vuelta
+
+La tanda de navegador dejó un rojo que no venía del PDF, y tiró de un hilo más
+largo. **La aplicación recién autorizada no aparecía en la pantalla.**
+
+La causa no era la prueba. El listado se sirve de cincuenta en cincuenta y
+`Applications.jsx` pintaba `rows` sin paginar: con más de cincuenta
+aplicaciones, las que sobraban no se veían **ni se podían revocar**, que es lo
+que corta el acceso de un conector a los registros. Y estaban ordenadas por
+nombre, así que una recién autorizada caía donde le tocara alfabéticamente.
+
+Al buscar el mismo patrón en el resto del panel salió una segunda pantalla, y
+peor: **`MyTime`, el registro de la propia persona.** Pide el mes entero y
+pintaba las cincuenta primeras filas. Medido con los datos de la demo:
+`operario@demo.local` tiene **209 fichajes en agosto** y la pantalla enseñaba
+50 --- las más recientes, así que los primeros días del mes salían en blanco,
+como si no se hubiera trabajado. Un mes laborable con pausas son ochenta y ocho
+fichajes: no es un caso extremo.
+
+El subtítulo de esa pantalla dice «Tu registro completo». Es el art. 34.9: la
+persona tiene derecho a consultar su registro, y enseñarle un trozo llamándolo
+completo no es consultarlo.
+
+El comentario de `api.js` ya nombraba este agujero de una vuelta anterior
+---«the clock events, the people and the audit trail all showed the first fifty
+rows»--- y se arregló en People y en el rastro de auditoría. Los fichajes de la
+persona se quedaron fuera. Segundo arreglo incompleto de la misma vuelta, con
+el del PDF.
+
+**Arreglos.**
+
+- `periodoEntero()` en `api.js`, con `getAllPunches` y `getAllCorrections`:
+  recorre las páginas del periodo. Un `Pager` no vale aquí porque los fichajes
+  se pintan agrupados por jornada, y cortar cada cincuenta filas dejaría la
+  entrada de un día en una página y su salida en la siguiente. Tope de veinte
+  páginas, y si se alcanza la pantalla **lo dice** en vez de hacer pasar por
+  completo lo que no lo está.
+- `Pager` en `Applications.jsx`, el que ya usaban People, Timesheet, Decisions,
+  AuditTrail y MyLeave.
+- Orden del listado de aplicaciones: **activas primero y las más recientes
+  arriba**, en vez de alfabético. Lo revocado baja pero no desaparece, porque
+  los fichajes que registró siguen siendo suyos.
+- Dos botones de la misma tarjeta se llamaban «Revocar» ---uno tumba la
+  aplicación entera, el otro un token---. Ahora tienen `aria-label` distinto:
+  con lector de pantalla sonaban igual y no había forma de distinguirlos.
+
+**Pruebas.** `e2e/43-el-mes-entero.spec.js` pregunta al servidor cuál es el mes
+más cargado de esa persona, exige que pase de cincuenta ---si no, dice que no
+puede demostrar nada en vez de dar un verde vacío--- y comprueba que el día más
+antiguo se ve. **Validada contra el fallo**: revertido `getAllPunches` a
+`getPunches`, la prueba se pone roja. Tres pruebas más en
+`test_applications_api.py` para el orden, para que lo revocado baje sin
+desaparecer, y para que `count` y `next` digan que hay más.
+
+La prueba de las aplicaciones no revocaba la aplicación pese a decirlo en el
+título: dejaba una activa cada vez que se corría. De ahí las 59 acumuladas que
+destaparon todo esto. Ahora revoca.
+
+### Vuelta 65 --- El nombre de un fichero es una ruta (26/08)
+
+Sigue la lente de la 64 ---lo que sale del sistema, visto por quien lo recibe---
+y da **tres hallazgos** en la misma zona: el apellido de una persona acaba en la
+cabecera `Content-Disposition` y en la entrada de un zip, y los dos lo leen como
+camino. El apellido es texto libre que escribe la administración de la empresa,
+o un conector por `/api/app/people/`.
+
+- **Zip Slip.** Con el apellido `../../../evil`, la entrada del zip sale como
+  `'../../../evil_Nombre.pdf'`. Quien lo descomprima con una herramienta que no
+  valide rutas ---`extractall` de Python, sin ir más lejos--- escribe tres
+  niveles por encima del destino. Y quien descomprime ese zip es la gestoría o
+  la Inspección.
+
+- **Dos personas que se llaman igual se pisan.** Una empresa con dos Ana García
+  producía dos entradas `García_Ana.pdf`: al descomprimir, la segunda machaca a
+  la primera. **Se entrega un informe menos de los que dice la carátula y nada
+  avisa.** El manual promete «un zip con un PDF por persona».
+
+- **Sin apellido, el separador queda colgando**: `_Jefa.pdf`. El respaldo que el
+  código tenía previsto (`or str(person.id)`) no llegaba a saltar, porque la
+  cadena no estaba vacía.
+
+Los tres se arreglan con `apps/common/descargas.py`: `nombre_seguro` quita todo
+lo que se lea como ruta y translitera los acentos ---«Garc_a» no lo reconoce
+nadie, «Garcia» sí--- y `nombre_de_persona` añade el número de empleado, o el
+principio del identificador si no lo tiene. Los cuatro sitios que componían
+nombres pasan por ahí, incluida la cabecera de descarga, que llevaba el apellido
+entre comillas sin escapar.
+
+Trece pruebas nuevas, dos rojas sin el arreglo. Y tres pruebas existentes de
+`test_quien_se_fue.py` fijaban el nombre exacto de las entradas: comprobaban
+«García_Ana.pdf» cuando lo que les importa es **quién** está en el zip. Ajustadas
+a eso, que es más robusto y dice mejor lo que buscan.
+
+974 pruebas de backend en verde.
+
+### Vuelta 64 --- El CSV que se abre en Excel (26/08)
+
+Lente nueva, y de las que cambian el color de la vuelta: **el fichero que se
+entrega, abierto por quien lo recibe**. Excel y LibreOffice evalúan como fórmula
+cualquier celda que empiece por `=`, `+`, `-` o `@`, y el informe de jornada
+salía sin neutralizar.
+
+Comprobado de punta a punta: una persona con el nombre
+`=HYPERLINK("http://…","pincha")` produce un CSV donde esa celda **es** un
+enlace ejecutable. Las comillas del CSV no protegen ---son sintaxis del fichero,
+el programa las quita al leer y evalúa lo de dentro---.
+
+Aquí pesa más que en un CSV cualquiera, por dos motivos:
+
+- **El destinatario es la Inspección o la gestoría.** No es un fichero que uno se
+  baja para sí: es el documento con el que la empresa responde.
+- **Parte del texto lo escribe la persona trabajadora.** La discrepancia del art.
+  4.b viaja al informe **por diseño**, que es el derecho que ese artículo
+  protege, así que no se puede sanear quitándola. Y la exportación de auditoría
+  lleva `actor_label`, que en una integración lo pone el conector.
+
+Los **dos** exportadores del producto pasan ahora por `EscritorSeguro`
+(`apps/common/csv_export.py`), que antepone un apóstrofo solo a las celdas que
+empiezan como una fórmula: un nombre corriente sale intacto. Nueve pruebas,
+incluida una de punta a punta con su contraste ---que el nombre llegue al
+fichero, porque si no llegara la comprobación pasaría sin mirar nada---.
+
+961 pruebas de backend en verde.
+
+### Vuelta 63 --- Una carrera en la prueba del vaciado (26/08)
+
+Segunda vuelta seguida sin defecto del producto. La suite completa falló una vez
+en «asignar un turno, verlo, y vaciar el mes»: el vaciado dejaba veintitrés
+turnos. **Aislada pasaba siempre**, que es la firma de una carrera y no de un
+defecto.
+
+El diálogo de confirmación se cierra en cuanto se pulsa «Vaciar», y el borrado
+sigue viajando. La prueba esperaba a que el diálogo desapareciera y consultaba la
+API **una vez**: en una tanda cargada, esa consulta llegaba antes que el DELETE y
+veía los turnos que estaban a punto de irse. Ahora espera a que quede vacío, como
+ya hacía el spec del Resumen por el mismo motivo.
+
+Queda dicho como matiz de la interfaz, no como arreglo: el diálogo se cierra
+antes de que la acción termine. Para «Vaciar el mes» ---que es de las pocas cosas
+que no se pueden deshacer--- no es evidente que esté bien, pero cambiarlo es
+decisión de producto y no la toma una prueba en rojo.
+
+### Vuelta 62 --- La puerta de integración, vigilada (26/08)
+
+**Primera vuelta sin un defecto del producto desde la 42.** Lo que había era un
+hueco de vigilancia.
+
+`test_no_crece_con_la_plantilla.py` mide catorce rutas del panel y comprueba una
+propiedad, no un número: que ninguna consulte más por haber más gente. Es la
+sonda que en su día cazó los dos N+1 de `/api/shifts/review/` (40 consultas con
+tres personas, 130 con doce).
+
+**No cubría `/api/app/…`**, que es justo lo que un conector golpea cada pocos
+minutos y con la plantilla entera. Y `_attendance_of` lleva un comentario largo
+explicando cómo se evitó ahí una consulta por cabeza ---«en una plantilla de
+doscientas eso eran seiscientas consultas»--- sin nada que vigilara que siguiera
+siendo verdad.
+
+Añadidas las dos, con su propia credencial de aplicación: sin ella contestaban
+403 y la sonda las habría dado por planas, que es el falso negativo contra el
+que este mismo fichero se protege más abajo. Medido: **7 consultas con tres
+personas y 7 con doce** en `/api/app/attendance/`, 5 y 5 en `/api/app/people/`.
+La optimización funciona, y ahora se entera alguien si deja de funcionar.
+
+### Vuelta 61 --- El esquema de la puerta de integración (26/08)
+
+Retoma uno de los «pendiente al parar» del 14/08: los endpoints de integración
+publicaban su respuesta como **objeto libre** ---`responses={200: dict}`--- y el
+esquema es la documentación del protocolo abierto. Quien escribe un conector
+tiene que deducir la forma probando, o descubrirla el día que cambia.
+
+- `/api/app/attendance/` no tenía serializer de respuesta y ahora lo tiene, con
+  los tramos, el estado y el aviso de que `day` es el día **en la zona de la
+  empresa** y no en UTC.
+- `/api/app/people/{ref}/` en sus tres métodos declaraba `dict` teniendo
+  `PersonInTheAnswerSerializer` escrito justo encima, sin usar. El listado sí lo
+  usaba: se quedó a medio camino.
+
+Sonda en `tenants/tests/test_el_esquema_dice_que_devuelve.py`: recorre las seis
+operaciones de la puerta ---`/api/app/…` y el fichaje delegado--- y exige que
+cada respuesta 2xx apunte a un esquema con campos. Lleva su propio contraste
+---que las rutas sigan existiendo--- y se ha comprobado que se pone roja al
+devolver una de ellas a `dict`.
+
+Solo la puerta de integración: las pantallas propias van con el frontend en el
+mismo repositorio y se enteran de un cambio al momento. Quedan otros doce
+`responses={…: dict}` en endpoints internos, anotados y sin tocar.
+
+952 pruebas de backend en verde.
+
+**Y un tropiezo propio, por reincidencia.** Edité el backend mientras corría la
+suite de navegador, que es exactamente lo que la lección de la vuelta 49 dice que
+no se haga: el recargador de Django reinició el servidor y la tanda murió a los
+tres minutos con dos fallos que no existían. Relanzada con el backend quieto.
+
+### Vuelta 60 --- El manual contra el producto (26/08)
+
+Lente nueva: coger las afirmaciones **comprobables** del manual y verificarlas
+una a una contra el código. Salió de la vuelta 58, donde una discrepancia
+apareció por casualidad.
+
+Lo que se comprobó y **está bien**: el enlace de acceso caduca a las 24 h y vale
+una vez; la contraseña pide doce caracteres (`min_length=12` en los tres sitios);
+el justificante admite hasta 10 MB y solo PDF o imagen (`MAX_BYTES`); el informe
+corta en 200 personas por petición (`MAX_PEOPLE_PER_EXPORT`); el plazo para
+contestar a un cambio propuesto son siete días por defecto
+(`correction_consent_days`).
+
+Lo que **no**: «se conserva cuatro años». Se conserva, pero porque no se borra
+nunca, no porque haya una política que se cumpla. Ver «Hallazgos abiertos».
+
+La lente rinde y es barata: el manual está escrito con cifras concretas, y cada
+cifra es una pregunta con respuesta en el código.
+
+### Vuelta 59 --- El formulario que proponía ayer (26/08)
+
+Lente: **abrir un formulario, escribir, cancelar y reabrirlo**, que es de las que
+el propio prompt pide y no se había hecho nunca. Departamentos y Personas están
+limpios: ni el borrador sobrevive al cancelar, ni «Nuevo» hereda lo que se estaba
+editando, ni editar una fila enseña la anterior.
+
+**Lo que salió fue otra cosa, y por mirar a la hora rara.** Eran la 01:28 de un
+miércoles y el diálogo de solicitar una ausencia proponía el **martes**.
+
+`new Date().toISOString().slice(0, 10)` da la fecha en **UTC**, que no es la de
+nadie salvo en Greenwich: al este devuelve el día anterior durante toda la
+madrugada, al oeste el siguiente durante la tarde. En España, cada noche entre
+las 00:00 y las 02:00 en verano, quien pedía un permiso sin fijarse lo pedía para
+ayer.
+
+Y lo llamativo: **`format.js` ya tenía el helper correcto, con un comentario que
+describe este fallo palabra por palabra** ---«anybody west of Greenwich gets
+yesterday for most of the evening and anybody east gets tomorrow in the small
+hours»---. Quedaban tres sitios con el patrón viejo: el diálogo de ausencias y
+las dos fechas del periodo de Informes, que es el documento que se entrega a la
+Inspección.
+
+Prueba en `e2e/42-la-fecha-de-hoy.spec.js`, **con el reloj movido a las 00:30**:
+a media mañana las dos formas coinciden y la prueba pasaría con el fallo delante.
+Dos de sus comprobaciones se ponen rojas con el código de antes.
+
+### Vuelta 58 --- Cuando te dan de baja (26/08)
+
+Lente: **la persona dada de baja**, ejercitada de verdad --- alta, fichaje, baja
+con la sesión abierta, y a ver qué pasa.
+
+**El manual describía algo que no ocurre.** Decía «aunque tu sesión siga abierta,
+el fichaje se rechaza», que suena a un aviso explicando tu situación. Lo que pasa
+es que **la autenticación entera deja de valer**: 401 en la siguiente petición,
+sea la que sea, y la pantalla de entrada, donde ya no se puede entrar. No es solo
+el fichaje: tampoco puede consultar su registro.
+
+Y de ahí sale una consecuencia que no estaba escrita: `register_punch` tiene su
+propio rechazo con código, `employee_inactive`, **y por esta vía no se alcanza
+nunca**. Solo lo ve un fichaje delegado, donde quien autentica es la aplicación y
+no la persona. Se descubrió porque la primera versión de la prueba usaba
+`force_authenticate` y salía 409 en vez de 401: ese helper salta justo la capa
+que rechaza, así que estaba probando un camino que ninguna persona recorre.
+
+Manual corregido, y el comportamiento fijado en
+`users/tests/test_al_darte_de_baja.py` con testigos de verdad --- para que
+cambiarlo sea una decisión y no un descuido. La pregunta de si debería conservar
+el acceso a su propio registro queda en «Hallazgos abiertos»: es de producto.
+
+### Vuelta 57 --- Lo que el informe le cuenta a la Inspección sobre el origen (26/08)
+
+Lente: **la excepción del administrador único**, ejercitada de verdad con la
+empresa que se creó en la vuelta 56. Elena, sola en su empresa, ficha, pide
+corregir su propio fichaje y lo aprueba ella misma.
+
+**La regla de las cuatro manos funciona como promete**: se aplica porque no hay
+nadie más, y la resolución lo dice con todas las letras --- «Resuelto por la
+misma persona a la que afecta: no hay ningún otro responsable ni administrador en
+la empresa». Eso está bien y no se toca.
+
+**Lo que no llegaba era al informe.** Al generar el documento que se entrega, la
+observación del día decía: «entrada sin salida; **registrado por una
+aplicación**». No lo había registrado ninguna aplicación: lo había corregido la
+administración de la empresa tras el procedimiento del art. 4.b.
+
+La causa: `day_notes` escribía una sola frase a partir de `row.delegated`, que
+sale de `Punch.was_delegated` --- y ese agrupa **tres orígenes**: `DELEGATED`,
+`ADMIN` e `IMPORT`. Para el modelo está bien agrupado, porque los tres significan
+«no lo hizo la persona». Para el informe no: una aplicación fichando en nombre de
+alguien, la empresa corrigiendo, y una importación son tres pruebas distintas, y
+la que salía era la más benigna para la empresa.
+
+El manual lo promete en dos sitios ---«los dos que no hizo la persona van
+destacados» y «quien lee el informe tiene derecho a distinguirlos»--- y el
+informe no los distinguía.
+
+Ahora dice cuál de los tres, y **un día corregido lleva marca aunque no haya
+discrepancia**, que es lo que el manual promete en «los días con eventos
+corregidos van señalados» y antes solo pasaba si además se había impuesto sin
+acuerdo. Los tres estados entran en la huella del documento.
+
+De paso, `makemessages` volvió a rellenar por parecido: «imported from another
+system» salió como «Según el cuadrante». Corregidas las cuatro en castellano y
+vaciadas las de catalán y gallego.
+
+943 pruebas de backend en verde.
+
+### Vuelta 56 --- La empresa del primer día (26/08)
+
+Primera vuelta desde que se vació la lista de pendientes, y con **lente nueva**:
+una empresa recién creada, sin nadie, sin turnos, sin permisos, sin centros. Es
+la primera pantalla que ve un cliente y la que nadie mira, porque `seed_demo`
+siempre trae datos. Se creó un inquilino aparte ---sin tocar nada de lo que ya
+había en la base--- y se recorrieron las diecisiete pantallas.
+
+**Los vacíos están cuidados, y eso también es un resultado.** Cada pantalla dice
+qué falta y dónde crearlo: «Todavía no hay turnos definidos. Créalos en Turnos
+antes de montar el cuadrante», «Esta empresa no tiene permisos configurados, así
+que nadie puede pedir ninguno» con su botón de cargar, «Sin centros no se
+puede…». Ajustes avisa por su cuenta de que no hay representante legal y cita el
+art. 4.b. Nada de pantallas en blanco.
+
+**Lo que sí salió: la concordancia con uno.** El Resumen decía «1 **personas** de
+alta». Solo se ve cuando hay exactamente una, o sea justo en una empresa nueva.
+
+El barrido del árbol encontró doce sitios con un número seguido de un sustantivo
+en plural fijo; **cinco se rompen de verdad** y siete ya condicionaban. Los cinco
+usan ahora un `plural()` compartido en `format.js`:
+
+- el recuento de personas del Resumen,
+- «N permisos configurados» en Ajustes,
+- los días de antelación del aviso del art. 38.3, en Decisiones y en el
+  Calendario ---y ahí un día de antelación no es raro, es el caso que dispara el
+  aviso---,
+- y los días de más por desplazamiento del permiso del art. 37.3.b.
+
+Prueba en `e2e/41-la-empresa-recien-creada.spec.js`: comprueba el helper y
+recorre seis pantallas buscando «1» seguido de un plural. No crea la empresa,
+porque montar un inquilino desde la suite exigiría un endpoint de alta que el
+producto no tiene; queda dicho en su cabecera.
+
+### Vuelta 55 --- La descarga que no decía nada, y el último de los trece (26/08)
+
+`deploy/cabeceras.md` y `pages/me/MyLeave.jsx`. Dos mitades del mismo hallazgo.
+
+**La CSP publicada no nombraba el almacén de objetos.** `STORAGE_BACKEND=s3` es
+el valor por defecto en producción, y con él la descarga de un justificante no la
+sirve la API: responde un 302 al almacén con una URL firmada. El navegador vuelve
+a evaluar la CSP **sobre el destino de la redirección**, así que sin ese origen en
+`connect-src` la descarga se bloquea. En la configuración que documenta el propio
+producto, ni la persona ni quien aprueba podían recuperar el fichero que la
+aplicación les pidió subir. Documentado, con el porqué y con la nota de que con
+`filesystem` no hace falta.
+
+**Y el fallo era mudo.** El `onClick` llamaba a una función `async` sin recoger
+el rechazo, así que no pasaba nada de nada: ni aviso, ni fichero. Quien lo sufre
+lee «la aplicación no responde», que apunta a cualquier sitio menos a una
+cabecera de despliegue. Ahora hay `catch` y el aviso sale por `ErrorNote`, que la
+pantalla ya tenía montado.
+
+Un barrido por el árbol de sintaxis confirmó que era **el único** `onClick` que
+llama a una función `async` exportada sin capturar, de 42 candidatas.
+
+**Sin prueba de navegador, y es el segundo caso.** Tres intentos: la sesión del
+operario no siempre tiene una ausencia con justificante ---y saltarse la prueba
+por falta de datos es peor que no tenerla---, y crear una desde el formulario no
+llegó a cuajar. El arreglo es un `.catch` sobre una llamada, así que el riesgo de
+que se rompa sin que nadie lo note es bajo; queda dicho por si alguien lo toca.
+
+---
+
+**Con esto se cierran los trece hallazgos** que la prueba de convergencia del
+14/08 dejó pendientes. La lista de «pendiente de arreglar» queda vacía por
+primera vez desde entonces.
+
+### Vuelta 54 --- Un filtro publicado que no filtraba (26/08)
+
+No salió de buscar, salió de **perseguir una prueba en rojo**. La suite del
+calendario falló con «la ausencia no llegó al servidor», y la ausencia sí había
+llegado: el POST devolvía 201 y la fila estaba en la base. Lo que fallaba era la
+comprobación siguiente.
+
+`AbsenceViewSet` no declaraba `search_fields`. El backend de búsqueda viene en
+los de por defecto, así que **el parámetro `?search=` se publica en el esquema** y
+DRF, sin campos, lo ignora y devuelve la lista entera. Un cliente que lo use se
+queda con la primera página creyendo que es su resultado --- y en una lista
+paginada, la diferencia entre «no hay» y «no cabe en la página» no se ve.
+
+La prueba llevaba un comentario largo explicando que **ya la habían arreglado
+antes** por este mismo síntoma: buscaba `search=Prueba`, se le llenaba la página
+y cambiaron a buscar por su marca propia. El arreglo no podía funcionar, porque
+la búsqueda no buscaba. Solo movió el umbral: esta noche, con 55 ausencias de
+prueba acumuladas y fecha posterior, se volvió a cruzar.
+
+Ahora busca por nombre, apellido y motivo, con el buscador sin acentos que el
+proyecto ya tenía. Dos pruebas de backend, una de ellas roja sin el arreglo.
+
+La interfaz no se veía afectada: filtra en el cliente. Quien lo sufría era quien
+leyera el esquema --- o sea, un integrador.
+
+**Y queda una deuda de la suite anotada**: `limpiarAusenciasDePrueba` no se lleva
+las que quedaron aprobadas, porque una aprobada no se puede cancelar. Por eso se
+acumulan tanda tras tanda. Con la búsqueda arreglada ya no rompe nada, pero la
+base de desarrollo sigue engordando.
+
+942 pruebas de backend en verde.
+
+### Vuelta 53 --- Una identidad, dos empresas (25/08)
+
+`users/models.py`. `oidc_sub` llevaba `unique=True` a secas, y eso contradice lo
+que la propia clase declara dos campos más arriba para el correo: único **por
+empresa**, «porque una persona puede trabajar para dos empresas, y en un sistema
+pensado para integradores multiempresa eso deja de ser un caso raro».
+
+Un grupo con dos sociedades en el mismo OTT y un solo proveedor de identidad: la
+primera da de alta a Rosa con `azure|abc123` y la segunda ya no puede. Y lo que
+recibía su conector no era un rechazo, era un **500** --- exactamente lo que el
+docstring de `_refuse_collisions` dice que hay que evitar, porque un conector no
+puede reaccionar a eso. Ahora la restricción lleva la empresa, y el choque dentro
+de una misma empresa sale como `identity_taken`, que sí se puede leer.
+
+**Y el campo pasa de `NULL` a cadena vacía**, que es la convención de esta clase
+---`employee_id` ya lo hacía--- y lo que la restricción parcial necesita para
+excluir a quien no tiene identidad federada. Ruff lo pedía en cuanto se quitó el
+`unique`, y coincidía con lo que el propio proyecto ya hacía.
+
+**La migración va en tres pasos, y el orden no es un detalle.** Vaciar los nulos
+con el índice único todavía puesto choca en la segunda fila, porque todas pasan a
+valer lo mismo. Primero se quita la unicidad global, después se rellenan, y solo
+entonces el campo pasa a NOT NULL. Comprobado contra la base de desarrollo, que
+tenía **279 filas con NULL sobre 280**: la primera versión se caía ahí.
+
+940 pruebas de backend en verde.
+
+### Vuelta 52 --- Diez segundos para diez megas (25/08)
+
+`services/api.js`. El plazo de axios era de diez segundos para todo, y la
+pantalla de ausencias anuncia «PDF o foto, hasta 10 MB». Ese límite solo se
+cumplía si la subida iba a más de 8 Mb/s sostenidos; por debajo ---o sea, en un
+móvil en la calle--- axios abortaba **con el cuerpo ya enviado**. El servidor
+creaba la solicitud con su justificante y en pantalla salía «No hay conexión con
+el servidor», con el diálogo relleno como si no se hubiera mandado nada. La
+persona se iba creyendo que no había pedido el permiso mientras su responsable lo
+veía en la cola.
+
+Ahora el plazo sale del peso: diez segundos más un segundo por cada 128 KB, que
+es una subida de 4G **mala** y no una buena, porque el plazo tiene que aguantar el
+peor caso razonable. Ocho megas dan 74 s y diez dan 90; una petición de solo
+texto sigue en diez.
+
+Y como este es el tercer sitio donde lo mismo mordía, el aviso compartido
+`ErrorNote` dice ahora, cuando el código es `timeout`, que puede haberse
+guardado y que se compruebe antes de reenviar. Es la misma idea de la vuelta 50 y
+aprovecha el código que se separó allí.
+
+**Sin prueba propia, y queda dicho.** El plazo sí la tiene ---comprueba que ocho
+megas pasan de sesenta segundos y que sin fichero no se alarga---. El añadido a
+`ErrorNote` no: todas las pantallas que lo usan exigen rellenar un formulario
+entero con la red interceptada, y tras tres intentos por caminos distintos
+---diálogo de ausencias, Ajustes, pantalla de fichar, que tiene aviso propio y no
+usa `ErrorNote`--- no compensaba seguir. Si alguien lo retoca, no hay red debajo.
+
+### Vuelta 51 --- La jornada de quien no trabaja la entera (25/08)
+
+`absences/usage.py`. Cuando no hay turno en el cuadrante, la jornada de
+referencia salía de la **semana de la empresa entre cinco**, sin preguntar qué
+tiene pactado esa persona. Para quien trabaja veinte horas a la semana ---cuatro
+al día--- eso son ocho, y el error se movía en las dos direcciones a la vez:
+
+- **Le negaba horas que le corresponden.** Seis horas de búsqueda de empleo
+  (art. 53.2): se ausenta un día suyo, cuatro horas, y el producto contaba ocho.
+  `used=8`, `allowance=6`, `over=True`. Quien aprueba ve que se ha pasado de un
+  permiso legal habiéndose ausentado 4 de las 6 horas a las que tiene derecho ---
+  durante un preaviso de despido objetivo, que es justo cuando hacen falta.
+- **Y le concedía de más a la empresa sin que se entere.** Cuatro días laborables
+  de fuerza mayor familiar (art. 37.9), que el artículo cuenta en horas: cinco
+  ausencias de cuatro horas ---cinco jornadas suyas, una de más--- salían como
+  2,5 días. El doble de lo que el artículo obliga.
+
+Ahora sale de `agreed_hours`, con el matiz que ese método ya documenta: solo una
+cifra **semanal** se convierte en día dividiendo entre cinco. Una anual no es una
+semanal por 52, así que ahí sigue valiendo la semana de la empresa como mejor
+suposición disponible, y el `estimated=True` sigue diciendo que lo es.
+
+Tres pruebas, dos rojas sin el arreglo, y la tercera es el contraste: a jornada
+completa la referencia sigue siendo la empresa.
+
+938 pruebas de backend en verde.
+
+### Vuelta 50 --- Los dos de la red, que eran el mismo error (25/08)
+
+Los dos hallazgos altos que quedaban, los dos de la lente «pérdida de trabajo», y
+al arreglarlos resultó que son la misma equivocación en dos sitios: **tratar «no
+me han contestado» como si fuera un hecho conocido.**
+
+- **El refresco que tropieza** (`services/api.js`). Un `catch { tokens.clear() }`
+  trataba cualquier fallo de la renovación como sesión caducada. Un 502 del
+  balanceador a medio desplegar, un 429 de la cubeta que comparte una oficina
+  detrás del mismo NAT o el wifi parpadeando no dicen nada sobre el refresco, que
+  dura siete días. Quien llevaba cinco minutos rellenando un alta se iba a la
+  calle con el formulario perdido, y encima se destruía un testigo bueno: ni
+  recargando volvía dentro. Ahora solo se cierra si el servidor lo rechaza.
+
+  **Y ahí saltó un detalle que solo se ve probando**: la prueba que ya existía
+  ---«una sesión rechazada de verdad sí lleva a entrar»--- se puso roja. Este
+  servidor **no contesta 401 a un refresco malo**: lo trata como regla de
+  negocio y sale con **409 `session_expired`**. Mirar solo el estado dejaba fuera
+  el caso legítimo. Se comprueba por código, que es explícito.
+
+- **El aviso de la pantalla de fichar** (`pages/Clock.jsx`). Decía en negrita «No
+  se ha registrado nada. Vuelve a pulsar cuando tengas cobertura.» ante cualquier
+  fallo sin respuesta. Pero sin respuesta hay dos casos y axios los distingue: la
+  petición que **no salió** ---y ahí la frase es verdad y hace falta--- y la que
+  salió y cuyo plazo se agotó a los diez segundos, donde el servidor ha podido
+  registrarla perfectamente.
+
+  Afirmar lo segundo era, además, lo que provocaba el daño: la persona vuelve a
+  pulsar, han pasado más de diez segundos, la guarda del doble toque cubre cinco,
+  y entra una **salida** encima de la entrada. La jornada legal queda en unos
+  segundos y deshacerlo exige el art. 4.b con el acuerdo de las dos partes.
+
+  Ahora el plazo agotado tiene código propio y su propio aviso: «Puede que sí
+  haya quedado registrado. Mira abajo antes de volver a pulsar.» Y la pantalla
+  pregunta sola por el día, así que si quedó registrado la respuesta aparece en
+  un segundo sin que nadie toque nada.
+
+Dos pruebas nuevas en los ficheros que ya cubrían cada zona, las dos contrastadas
+contra el código sin arreglar.
+
+### Vuelta 49 --- La marca que no se movía (25/08)
+
+`common/models.py`. `auto_now` promete que `updated_at` se pone al guardar, y
+con `update_fields` no lo cumple: Django la fija en la instancia y **no la
+escribe**, porque no está en la lista. La fila queda cambiada con la marca de
+antes, en silencio, y leyendo el código no se ve ---
+`save(update_fields=["is_active"])` parece completo.
+
+Aquí decide si una integración funciona. `/api/app/people/?since=` avanza por
+`updated_at`, así que una baja hecha desde el panel no la veía nunca un conector:
+seguía teniendo por activa a alguien que ya no lo está, la mantenía en sus
+cuadrantes y le mandaba fichajes que OTT rechaza con `employee_inactive` sin que
+nadie mire esos errores.
+
+**Arreglado en la raíz y no en el sitio.** El barrido encontró **siete**
+`save(update_fields=…)` sin la marca, en cinco ficheros. Parchear el del hallazgo
+habría dejado los otros seis y el octavo se escribe igual de fácil, así que
+`BaseModel.save` la añade siempre. Tres pruebas, dos de ellas rojas sin el
+arreglo, más una sonda que vigila que ese método siga existiendo.
+
+**Y una prueba que pasaba con el fallo delante.** La primera versión comprobaba
+la baja pidiendo `?since=<cursor>` y buscando a Rosa en la respuesta. Aparecía
+igual: el cursor filtra con `>=` para no perder dos cambios del mismo instante,
+así que reenvía la última tanda entera. Verde, y sin comprobar nada. Ahora mira
+la marca en la fila.
+
+**Observación, no arreglo**: la respuesta de `/api/app/people/` no trae el
+`updated_at` de cada persona, solo el `next_since` global. Basta para avanzar el
+cursor y no basta para diagnosticar por qué una persona no llega. Sin tocar.
+
+**Y la comprobación de formato, que no podía dar limpia.** No había
+`.prettierignore`, así que `prettier --check` revisaba las sesiones que genera
+Playwright ---fuera del control de versiones--- y salía en rojo pasara lo que
+pasara. Seis vueltas anotándolo como «deuda previa» sin mirar por qué. Con el
+fichero puesto, los once ficheros de código que quedaban sin formatear se
+formatean y la comprobación queda limpia de verdad.
+
+935 pruebas de backend en verde.
+
+### Vuelta 48 --- Lo que la sonda de móvil no miraba (25/08)
+
+Encadenada con la 47 y en la misma lente. Empezó buscando dónde estaba la sonda
+de desbordamiento antes de escribir otra, y ahí salió lo primero:
+`29-en-el-movil.spec.js` **ya existía**, medía a 390 px y su cabecera decía que
+«ninguna otra pantalla se sale». Miraba once de diecisiete.
+
+De las seis que faltaban, **una estaba rota**: el Calendario del equipo se salía
+22 px. La rejilla estaba bien resuelta ---`overflowX: auto` con `minWidth`, que
+es lo correcto--- y el culpable era la barra de meses: un `Stack direction="row"`
+**sin `flexWrap`** con tres botones, el nombre del mes con sus 190 px y dos
+filtros de 160. Más de 630 px de ancho mínimo en una fila que no se parte y no se
+encoge. Ahora se parte en tres líneas.
+
+Las diecisiete están en la sonda.
+
+**Y de mirar la pantalla arreglada salió otra**: el rótulo decía «Agosto **De**
+2026». `text-transform: capitalize` sube cada palabra, que en inglés es lo que se
+quiere y en castellano no. Estaba en tres pantallas (Calendario, Cuadrante y Mi
+jornada, esta última con «Lunes, 25 **Ago**»). Resuelto en el idioma y no en la
+hoja de estilos, con `capitalised()` en `format.js`: en catalán y gallego pasa lo
+mismo y los meses ingleses ya vienen en mayúscula de fábrica. Cero
+`textTransform: 'capitalize'` en el proyecto.
+
+De propina, dos pantallas reimplementaban `monthName`, que también estaba ya en
+`format.js`. Ahora lo usan.
+
+Tres pruebas nuevas en el mismo fichero, que es donde tenían que ir.
+
+### Vuelta 47 --- Con el navegador de verdad, y en un teléfono (25/08)
+
+Primera vuelta con la extensión de Chrome en vez de Playwright. La diferencia
+salta a la vista: **la suite mira el `h1`, y los dos fallos de esta vuelta
+estaban en lo que la suite no mira.**
+
+- **La cabecera decía «Resumen» en las trece pantallas de gestión.**
+  `AppShell.jsx`. `currentLabel` hacía un `find` sobre las rutas del menú, y
+  `/panel` es prefijo de todas las demás, así que ganaba siempre la primera que
+  casa. Es **el mismo fallo que `navigation.jsx` documenta y resuelve** con
+  `end: true` para el resaltado del menú; un piso más arriba se ignoraba. Ahora
+  respeta `end` y se queda con la coincidencia más larga.
+
+- **Diez de las doce pantallas de gestión no se podían alcanzar desde un
+  teléfono.** La barra lateral solo existe de `md` para arriba, la de abajo
+  lleva a las cuatro pantallas propias más «Resumen», y no había botón de menú.
+  Las rutas funcionaban tecleadas; desde el Resumen solo se enlazan dos
+  (`/panel/personas` y `/panel/decisiones`). Un responsable un lunes no podía
+  abrir «Por decidir» ni el cuadrante.
+
+  Lo llamativo: **media pieza ya estaba escrita.** `NavSection` acepta un
+  `onNavigate` que usa en el `onClick` de cada entrada, y nadie se lo pasaba
+  nunca --- solo tiene sentido en un cajón que se cierra al elegir. Faltaba el
+  cajón. Ahora hay botón de menú fuera de escritorio, cajón temporal con el
+  mismo menú, y `onNavigate` haciendo lo que esperaba.
+
+  El `BottomNav` se queda como estaba: sigue valiendo como acceso rápido. Su
+  docstring dice que gestión colapsa a una entrada «que es a donde va quien
+  gestiona desde el móvil», y eso era cierto salvo por las diez pantallas que
+  dejaba fuera.
+
+Prueba en `e2e/40-desde-el-movil.spec.js`: recorre las trece pantallas desde el
+menú en 390×844, comprueba que el cajón se cierra al elegir, que a un operario no
+se le ofrece, y que la cabecera dice el rótulo de cada pantalla. Contrastada
+contra `HEAD`: dos de sus comprobaciones se ponen rojas.
+
+**Y una petición de Francisco atendida por el camino**: la opción seleccionada
+del menú se veía como una píldora. `borderRadius: 1.5` se multiplica por el
+`shape.borderRadius: 10` del tema, o sea 15 px sobre una fila de 40. Bajado a
+0.6. De propina, el redondeo se comía los extremos de la regla izquierda, que es
+justo lo que el comentario de al lado dice que tiene que verse a pleno sol.
+
+**Lo que enseñó el método**: los rótulos del menú y los títulos de pantalla no
+coinciden en tres casos (Centros / Centros de trabajo, Calendario / Calendario
+del equipo, Ajustes / Ajustes de la empresa). Escribí la prueba dándolos por
+iguales y falló. El inventario real del DOM no es un paso opcional.
+
+252 pruebas de navegador y 932 de backend en verde.
+
+### Vuelta 46 --- Lo que hace un conector, escrito (25/08)
+
+`tenants/people_api.py`. Una aplicación integrada daba de alta a una persona, le
+cambiaba el correo ---que es su identificador de acceso--- y la daba de baja
+---y desde ese momento `register_punch` la rechaza---, y en la pantalla de
+auditoría no había ni una línea. Ni quién, ni cuándo, ni qué había antes. El
+`changes={"before": ..., "after": ...}` que el propio código construye para saber
+qué pisó el conector se tiraba a la basura.
+
+La causa no estaba en la vista sino en el encaje: `record()` deduce la empresa
+del actor, y aquí no hay actor **a propósito**, porque quien escribe es una
+aplicación y no tiene fila en `users`. Sin empresa, la entrada no se puede
+acotar, así que `record()` la descarta con un `log.warning`. Todo sale bien, la
+respuesta es 200, y el rastro se queda vacío. Es la peor forma de fallar que
+tiene esta tabla: lo que se pierde solo se echa de menos el día que alguien
+pregunta quién cambió algo.
+
+Arreglo de una línea en cada sitio ---`company=company`, que es el caso para el
+que existe el parámetro--- con dos pruebas de comportamiento. La segunda hubo
+que reescribirla: comprobaba el aislamiento preguntándole al manager, y
+`AuditLog` **no** es un `TenantOwnedModel` a propósito (su docstring lo dice: el
+acotado lo hace el ViewSet). Preguntar al manager no demostraba nada. Ahora va
+por `/api/audit/`, que es por donde se lee de verdad, y comprueba primero el caso
+que sí debe traer algo: sin eso, un cero en la empresa de al lado no distingue
+«bien acotado» de «la entrada nunca se escribió».
+
+**Y una sonda permanente**, en `audit/tests/test_toda_entrada_sabe_de_quien_es.py`.
+Lee el árbol de sintaxis de las 40 llamadas a `record()` del código de producción
+y exige que las que pasan `actor=None` lleven `company=`. Lleva su propio
+contraste ---que encuentre más de veinte llamadas--- porque una sonda que no ve
+nada pasa siempre. Validada contra la versión de `HEAD`: señala las dos líneas
+exactas, 313 y 345.
+
+El barrido dice que eran las dos únicas del proyecto.
+
+932 pruebas de backend y 249 de navegador en verde.
+
+### Vuelta 45 --- El fichero se va con su fila, y los puertos que nadie seguía (25/08)
+
+**El justificante huérfano** (`absences/models.py`). Retirar una solicitud
+borraba la fila y dejaba el fichero en el almacén para siempre, sin nada que lo
+apuntara: ni fila, ni pantalla, ni comando. Un justificante es a menudo un dato
+del art. 9 del RGPD, y quien retira su solicitud está diciendo justamente que no
+quiere que se quede; la empresa no podía atender una supresión (art. 17) ni
+cumplir su plazo de conservación (art. 5.1.e) porque no sabía que existía.
+
+Dos decisiones del arreglo, y ninguna es de estilo:
+
+- **`post_delete`, no `Absence.delete()`.** `QuerySet.delete()` no llama al
+  método del modelo, así que el borrado en masa ---una purga por retención, una
+  empresa que se va--- se saltaría la limpieza justo cuando más ficheros hay en
+  juego. La señal la reciben las dos vías, y hay prueba de las dos.
+- **Dentro de `on_commit`.** Borrar antes de confirmar deja, si algo revierte la
+  transacción, una fila viva apuntando a un fichero que ya no está: la pantalla
+  ofrece una descarga que falla y nadie sabe por qué. Eso es peor que el problema
+  que arregla.
+
+Cuatro pruebas, contrastadas con la señal neutralizada: tres se ponen rojas. El
+contraste hizo falta de verdad, porque las pruebas necesitan
+`django_capture_on_commit_callbacks` ---dentro de un test nada confirma nunca---
+y sin él habrían estado comprobando lo contrario de lo que buscan.
+
+**Y un hallazgo que salió al mover los puertos, que es como se encuentran estas
+cosas.** Francisco levantó la pila en 3010/8100 para que no chocara con Geosian,
+usando las variables que el compose declara para eso mismo. No se podía entrar.
+La pantalla decía **«No hay conexión con el servidor»**, que apunta a cualquier
+sitio menos al culpable:
+
+- `CORS_ALLOWED_ORIGINS` estaba escrito a mano con el 3000. El compose se
+  parametrizó expresamente para convivir con otra pila y CORS no seguía esa
+  parametrización, así que usar la opción documentada dejaba la aplicación
+  inservible. Ahora el valor por defecto de desarrollo sale de `OTT_PORT_WEB`, y
+  el `.env.example` documenta las cuatro variables de puerto y lo que cuelga de
+  cada una.
+- **La suite de navegador tenía la API a fuego en el 8000, en cinco sitios.**
+  `baseURL` sí era parametrizable; la API no. Y el síntoma no era «no encuentro
+  la API»: era un `null` en el almacén durante el arranque de sesión, con los 244
+  tests restantes sin correr. Ahora sale de `OTT_API_URL`, junto a `OTT_URL`.
+
+Los dos son el mismo defecto: **una opción de configuración que el propio
+repositorio ofrece y que, al usarse, rompe el sistema con un mensaje que engaña.**
+
+**Nota de entorno, no del producto.** Al recrear la API para que releyera el
+`.env` ---se lee al **crear** el contenedor, no al reiniciarlo--- desapareció
+`pypdf` y la recogida de pruebas se interrumpió entera. Estaba declarado en
+`requirements/dev.txt`; lo desfasado era la **imagen**, construida antes de esa
+línea. Con `podman compose build api` vuelve. Merece la pena saberlo porque el
+síntoma es un `ModuleNotFoundError` en un fichero que nadie ha tocado, y porque
+significa que la suite llevaba tiempo corriendo sobre dependencias que no eran
+las declaradas.
+
+249 pruebas de navegador en verde en 3010/8100, 928 de backend en verde.
+
+### Vuelta 44 --- La clave de idempotencia, obligatoria (25/08)
+
+Cierra el hallazgo abierto que dejó la 43. Se decidió mirando el dato en vez de
+sopesando: **no hay contrato que romper.** Cero llamadas a
+`/api/punches/delegated/` en todo `~/Projects/geosian` fuera del propio OTT, el
+`ott_client` es la pieza 6 del plan de integración y estamos en la fase 1, y el
+propio plan describe esa pieza como «cliente HTTP con la credencial de
+aplicación, **reintentos y cola local** para cortes». O sea que el único conector
+previsto va a reintentar por diseño contra una puerta que no lo toleraba.
+
+- `Idempotency-Key` pasa a ser obligatoria. Sin ella, `400
+  idempotency_key_required`, que es un código sobre el que una máquina puede
+  ramificar. Una cabecera en blanco cuenta como ausente: parece que el conector
+  hizo su parte y no la hizo.
+- Excepción nueva `IncompleteRequest` en `common/exceptions.py`, hermana de
+  `BusinessRuleError` y con su misma interfaz. La distinción que ya documentaba
+  aquélla pedía la otra mitad: 409 es «está bien formado y no se puede hacer»,
+  400 es «le falta algo». Y lo que falta no tiene por qué ser un campo ---aquí es
+  una cabecera---, así que la validación por campos de DRF no servía.
+- Al actualizar las pruebas, el helper `as_application` genera una clave distinta
+  por llamada. Tres pruebas hacían varios fichajes con el mismo cliente y había
+  que darles clave por evento; la de pasar la tarjeta dos veces la lleva
+  **distinta a propósito**, porque son dos pasadas y no un reintento: lo que
+  tiene que frenar la segunda es la guarda del doble toque, que es lo que esa
+  prueba comprueba.
+- Documentado donde lo va a leer quien programe: el esquema OpenAPI, el manual
+  (§14, «Lo que hay que decirle a quien programe el terminal») y la pieza 6 del
+  plan de integración, con el detalle que se olvida: **si el conector encola, la
+  clave se genera al entrar en la cola, no al desencolar**, o cada reintento
+  traería una nueva y no protegería de nada.
+
+Y de propina, el instrumento con el que la 43 dio por buenos los catálogos estaba
+roto: contaba como vacía toda traducción de varias líneas, porque un `msgstr`
+multilínea empieza siempre por `msgstr ""`. Con el detector arreglado, el
+castellano tenía 2 huecos de verdad ---no 128--- y son de la vuelta 13. Cerrados.
+
+924 pruebas de backend en verde.
+
+### Vuelta 43 --- Lo que falsea el asiento (25/08)
+
+Pasada de arreglo, no de búsqueda: con trece hallazgos abiertos, seguir mirando
+con lentes nuevas acumula en vez de converger. Los cuatro elegidos son los que
+hacen que **lo guardado no diga lo que pasó**, que es lo único que este producto
+promete.
+
+- **La pausa descontada contra el convenio** --- `reports/services.py:279`.
+  `build_day_status` preguntaba por `break_counts_as_work` y `build_report` no,
+  así que el mismo día se leía 8 h en pantalla y 7 h 45 en el PDF, el CSV y el
+  resumen de nómina. Los tres salen de `build_report`, así que el arreglo los
+  cubre a la vez. Dos pruebas: la del convenio que sí lo cuenta y la del valor
+  por defecto que no, y las dos comparan contra la cifra de la pantalla en lugar
+  de contra una constante ---que es lo que fija la promesa: **las dos lecturas
+  del mismo día tienen que coincidir**---.
+
+- **La corrección que corrompía lo que corregía** --- `punches/corrections.py`.
+  `_create` levantaba el sustituto con siete campos, así que un MODIFY perdía
+  `interval`, `work_mode`, `hours_nature`, `overtime_settlement`,
+  `force_majeure` y `flexibility_measure`. Corregir el final de una pausa la
+  convertía en trabajo: el día quedaba `ON_BREAK` para siempre y con 0 h. Ahora
+  hereda del fichaje al que sustituye. En un ADD no hereda nada, a propósito:
+  nadie declaró esos hechos nunca.
+
+- **`proposed_type` sin validar** --- `punches/correction_views.py`. `CharField`
+  sin `choices`, columna sin CHECK y `save()` sin `full_clean()`: `"in"` en
+  minúsculas entraba con 201, se aprobaba con 200, mandaba los dos correos de
+  conformidad y dejaba el día en cero, porque ningún lector reconoce ese valor.
+  Comprobado en `request_correction`, que es **la puerta única** ---
+  `propose_correction` pasa por ella---, y en el serializer para que el cliente
+  reciba un 400 con el campo señalado en vez de un rechazo genérico.
+
+- **El fichaje delegado sin clave de idempotencia** --- `punches/delegated.py`.
+  Un conector cuyo 201 se pierde reintenta, y como el tipo se deduce del estado,
+  el reintento no repetía la entrada: grababa una **salida**. Nueve horas de
+  jornada quedaban en treinta segundos, y deshacerlo exige el art. 4.b con el
+  acuerdo de las dos partes. Ahora acepta `Idempotency-Key`: el reintento
+  devuelve el mismo fichaje con 200 y no graba nada. La clave se reserva
+  **antes** de escribir, así que dos reintentos simultáneos no pasan los dos.
+  Vive en `DelegatedPunchReceipt`, fuera del fichaje: es un dato de la
+  integración, no de la jornada, y nada que invente un integrador debe llegar al
+  informe de Inspección.
+
+  **La clave es opcional, y eso es una decisión a medias que hay que cerrar.**
+  Exigirla rompería cualquier integración escrita contra el contrato de hoy ---
+  el plan de Geosian entre ellas--- y eso es decisión de producto. Pero un
+  conector que no la mande sigue expuesto al mismo fallo. Sin release publicada,
+  éste es el momento barato de hacerla obligatoria; después es incompatible.
+  **Preguntarlo antes de tocar nada.**
+
+Y tres que salieron al dejar la suite de navegador en verde, ninguno buscado:
+
+- **`06-correcciones` fallaba solo en paralelo.** El helper daba por hecho que su
+  segundo fichaje sería una salida, y otro spec dejaba al operario con la jornada
+  ya cerrada. En serie pasa. No se ha tocado: es fragilidad de la prueba ante el
+  estado compartido, anotada aquí para que la siguiente vuelta no la persiga como
+  si fuera del producto.
+- **El contador de las pestañas de «Por decidir» mentía por encima de 99.** El
+  `Badge` de MUI corta ahí por defecto, así que una cola de 125 se pintaba «99+»
+  mientras el Resumen decía 125: dos pantallas de la misma aplicación contando lo
+  mismo y diciendo cosas distintas. Es el mismo pecado que ya documentaba
+  `cuantasHay` un piso más abajo ---«redondear a la baja es peor que no
+  ponerlo»--- solo que un piso más arriba. `max={999}` en las cinco.
+- **Cuatro botones «Corregir» que se oían idénticos.** El rótulo accesible
+  llegaba hasta el minuto, y una persona puede tener cuatro fichajes dentro del
+  mismo minuto. Ahora dice si es entrada o salida y la hora al segundo, que
+  distingue siempre porque la guarda del doble toque no deja dos eventos a menos
+  de cinco segundos.
+
+**Deuda que esta pasada destapó y no cerró:** `makemessages` llevaba sin correrse
+lo suficiente como para que 21 cadenas del código no estuvieran en ningún
+catálogo. Al extraerlas, rellenó 14 por parecido y las marcó dudosas: ninguna
+decía lo que dice su original ---«Changed what a leave grants» salió como
+«Cambiar la hora de un fichaje»---. En castellano se han traducido las 16 que
+faltaban y corregido las 14; en catalán y gallego se han **vaciado** las 10 de
+cada uno, porque una traducción falsa marcada dudosa es una trampa para quien
+limpie los marcadores después, y medio idioma en un producto que explica
+obligaciones legales es la decisión que ya se tomó con el euskera. Quedan para
+traductor nativo, 31 huecos nuevos y 477 en total. El castellano quedó sin
+ninguno en la vuelta 44. Y `prettier` señala 16 ficheros del frontend sin formatear,
+quince de ellos anteriores a esta pasada.
+
+Estado al cerrar: **923 pruebas de backend y 249 de navegador en verde**, ruff,
+eslint y prettier limpios sobre lo tocado, sin migraciones pendientes, catálogos
+compilando.
 
 ### Vuelta 42 --- Lo que cambia datos sin decir quién (14/08)
 
@@ -1335,6 +3169,29 @@ Lo del 13/08/2026, antes de arrancar el bucle, está en
 `tasks/revision-ux-2026-08-13.md` y `tasks/revision-legal-2026-08-13.md`.
 
 ## Descartado a propósito
+
+- **Un suelo legal para `annual_leave_days`.** El mínimo del art. 38.1 son
+  treinta días **naturales**, que en jornada de cinco días a la semana son
+  veintidós laborables. La unidad depende de cómo lo lleve la empresa, así que un
+  suelo de treinta avisaría en falso a quien lo tenga en laborables --- y un aviso
+  falso que sale cada vez que se toca el campo vale menos que ninguno. La nota de
+  la cita explica la conversión, que es lo que sí se puede decir sin equivocarse.
+
+- **Suelos para `max_open_hours` y las tolerancias de entrada y salida.** No hay
+  artículo detrás: son decisiones de la empresa sobre su propio funcionamiento.
+  La frontera de la jornada abierta además tiene plantillas legítimas de
+  veinticuatro horas ---bomberos, residencias--- así que cualquier techo que se
+  pusiera sería nuestro y no de la ley.
+
+
+- **Los cuatro ojos en `cancel_absence`.** Salió en el barrido de decisiones de
+  la vuelta 72 como el otro sitio que no llama a `refuse_self_decision`, y ahí
+  no aplica: `_must_be_open` solo deja cancelar una solicitud **sin resolver**.
+  Retirar una petición propia que nadie ha decidido todavía no es decidir sobre
+  el registro de jornada --- es dejar de pedirlo, y no toca ningún fichaje.
+  Exigir una segunda persona para eso convertiría en trámite lo que hoy es
+  arrepentirse de pedir un día libre.
+
 
 - **El 10 % anual del art. 34.2.** «En defecto de pacto, la empresa podrá
   distribuir de manera irregular a lo largo del año el diez por ciento de la

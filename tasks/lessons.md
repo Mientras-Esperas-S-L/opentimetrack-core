@@ -1066,3 +1066,938 @@ se quedó sin cuerpo, y un contraste que falla por sintaxis no demuestra nada.
 **Regla**: para neutralizar una llamada, **sustitúyela por `pass` con su mismo
 sangrado** contando paréntesis, no la borres. Y mira el motivo del fallo: si pone
 `SyntaxError` o `IndentationError`, el contraste no ha corrido.
+
+## Un manager que filtra por empresa cuenta cero cuando no hay contexto (25/08/2026)
+
+En una prueba de aislamiento escribí `Punch.objects.filter(employee=una).count() == 1`
+fuera de `tenant_context`. Devolvió 0, y por un momento pareció que el fichaje no se
+había creado. No era eso: `objects` es el manager acotado, y sin contexto acota a nada.
+La trampa está en que la aserción **habría pasado** si la hubiera escrito al revés
+---`== 0` para las dos empresas--- y yo me habría quedado convencido de haber probado
+un aislamiento que no probé.
+
+**Regla**: en una prueba que cuenta filas de varias empresas a la vez, `objects_all_tenants`
+y un comentario diciendo por qué. Es el mismo principio que «un vacío no es prueba de
+ausencia», un piso más abajo: aquí el vacío lo produce el propio instrumento.
+
+## `makemessages` rellena por parecido, y lo que rellena suele ser mentira (25/08/2026)
+
+Al extraer 21 cadenas nuevas, gettext copió 14 traducciones de mensajes **distintos**
+por similitud de texto y las marcó `fuzzy`. «Changed what a leave grants» salió como
+«Cambiar la hora de un fichaje»; «An event is either an entry or an exit.» heredó la
+frase de otro error. Como `fuzzy` no se usa en tiempo de ejecución, nada falla hoy: la
+bomba es para quien limpie los marcadores dando por bueno lo que hay debajo.
+
+**Regla**: después de cada `makemessages`, `grep -c '#, fuzzy'` y **leer las que salgan
+una por una**. Si eran cero antes, todas las nuevas son invención. Traducirlas o
+vaciarlas, nunca dejarlas. Y en un idioma que no dominas, vaciar: el catálogo cae al
+castellano y dice la verdad, que es que está sin traducir.
+
+## Un componente de terceros puede truncar el número que tu código calculó bien (25/08/2026)
+
+`cuantasHay` estaba escrita con cuidado ---lee `count` y no las filas recibidas, con un
+comentario explicando que redondear a la baja es peor que no poner número--- y aun así
+la pestaña decía «99+» habiendo 125, porque el `Badge` de MUI corta en 99 por defecto.
+El Resumen, que pinta el número a pelo, decía 125. Dos pantallas contando lo mismo.
+
+**Regla**: cuando un dato pasa por un componente de una biblioteca antes de verse, el
+cuidado que pusiste al calcularlo no basta: mira qué hace ese componente con los valores
+del extremo. Y busca el mismo defecto un piso más arriba de donde ya lo arreglaste una
+vez ---suele estar ahí---.
+
+## Un rótulo accesible tiene que distinguir en el peor caso, no en el corriente (25/08/2026)
+
+`aria-label` decía «Corregir el fichaje de Marta Ruiz de las 13:06», que distingue de
+maravilla hasta que la misma persona tiene cuatro fichajes dentro del mismo minuto. Y
+los tiene: entrar, salir y volver caben de sobra en sesenta segundos. Cuatro botones que
+se oyen exactamente igual.
+
+**Regla**: el rótulo se diseña contra el caso más apretado que el sistema permite, y esa
+cota la fija el propio producto ---aquí, los cinco segundos de la guarda del doble
+toque---. Si dos elementos pueden compartir rótulo, comparten defecto.
+
+## Un `msgstr` de varias líneas empieza por `msgstr ""` (25/08/2026)
+
+Escribí un detector de cadenas sin traducir que buscaba `^msgstr ""$`. Toda
+traducción larga empieza exactamente así y sigue en las líneas de abajo, de modo
+que el detector las contaba como vacías: decía 128 huecos en castellano donde
+había 2. Peor todavía, me hizo «arreglar» algo que no estaba roto y me habría
+dejado dar por incompleto un catálogo que estaba bien.
+
+**Regla**: un `msgstr` está vacío si `msgstr ""` **no** tiene líneas de cadena
+detrás. Y antes de fiarse de cualquier contador escrito para la ocasión,
+contrastarlo con un caso conocido en los dos sentidos: una cadena que sabes
+traducida tiene que salir traducida, no solo una vacía salir vacía.
+
+## Dos reemplazos y un solo `assert` esconden el que falló (25/08/2026)
+
+Un script hacía dos sustituciones en el cuaderno y comprobaba `s != antes` al
+final. La primera se aplicó, la segunda no encontró su texto ---diferían los
+saltos de línea--- y el `assert` pasó igualmente. Lo dio por hecho y no lo estaba.
+
+**Regla**: una comprobación por sustitución, con el `assert` dentro y el nombre de
+lo que busca en el mensaje. Un `assert` agregado sobre varias operaciones solo
+demuestra que **alguna** funcionó.
+
+## `on_commit` no se ejecuta dentro de una prueba (25/08/2026)
+
+Puse la limpieza de ficheros en `transaction.on_commit` ---bien puesta: borrar
+antes de confirmar deja una fila viva apuntando a un fichero que ya no está--- y
+las pruebas siguieron rojas después del arreglo. Cada prueba corre en una
+transacción que se revierte, así que nada confirma nunca y el callback no llega a
+correr. Con `django_capture_on_commit_callbacks(execute=True)` pasan.
+
+**Regla**: si el código que pruebas usa `on_commit`, la prueba necesita el
+`capture`. Y el contraste vale solo si lo haces con la prueba **en su forma
+final**: el rojo que viste antes de añadir el `capture` no es el mismo escenario,
+así que hay que volver a neutralizar el arreglo y comprobar que la prueba
+definitiva también lo ve.
+
+## Una opción de configuración que el repositorio ofrece tiene que funcionar entera (25/08/2026)
+
+El `compose.yml` parametriza los puertos con `OTT_PORT_*` y lo documenta: existen
+para poder levantar la pila junto a otra en la misma máquina. Al usarlo, no se
+podía entrar. `CORS_ALLOWED_ORIGINS` seguía escrito a mano con el 3000, y la
+suite de navegador tenía la API a fuego en el 8000 en cinco sitios. Ninguno de
+los dos avisaba de lo suyo: la pantalla decía «No hay conexión con el servidor» y
+la suite fallaba con un `null` en el almacén durante el arranque de sesión.
+
+**Regla**: al añadir una variable de configuración, buscar **todos** los sitios
+que asumen su valor viejo ---`grep` del número, no solo del nombre--- incluidas
+las pruebas y los ficheros de ejemplo. Un valor por defecto que contradice a otro
+valor por defecto del mismo repositorio es peor que no tener la opción, porque
+falla lejos de donde se cambió.
+
+## Un aislamiento se comprueba por donde se sirve, no por el manager (25/08/2026)
+
+Escribí una prueba que verificaba que la empresa de al lado no ve una entrada de
+auditoría preguntando `AuditLog.objects` dentro de su `tenant_context`. Falló, y
+por un momento pareció una fuga. No lo era: `AuditLog` no es un
+`TenantOwnedModel` **a propósito** ---su propio docstring lo explica--- y quien
+acota es el ViewSet. La prueba comprobaba algo que ese modelo nunca prometió.
+
+**Regla**: antes de dar por buena una prueba de aislamiento, mirar **quién** hace
+el filtrado en ese modelo. Si es la vista, la prueba va por la vista con la
+sesión de quien no debe ver. Y siempre con el caso positivo al lado: un cero que
+no se contrasta no distingue «bien acotado» de «nunca se escribió».
+
+## La suite mira el `h1`; el usuario mira la pantalla entera (25/08/2026)
+
+Dos fallos de la vuelta 47 llevaban meses ahí con 249 pruebas en verde: la
+cabecera decía «Resumen» en las trece pantallas de gestión, y en un teléfono no
+había forma de llegar a diez de ellas. Ninguna prueba los veía porque todas
+entran por la ruta y comprueban el título de la pantalla. Aparecieron en los dos
+primeros minutos de mirar con un navegador de verdad.
+
+**Regla**: una suite verde dice que no ha vuelto lo que ya se arregló, no que la
+pantalla esté bien. Cada cierto número de vueltas, abrir la aplicación y usarla
+---y en el tamaño de un teléfono, que es donde el armazón cambia de forma---.
+
+## Media pieza escrita es una pista, no un descuido (25/08/2026)
+
+`NavSection` aceptaba un `onNavigate` y lo llamaba en cada entrada del menú.
+Nadie se lo pasaba nunca. Esa prop no tiene sentido en un cajón permanente: solo
+la necesita uno que se cierre al elegir. Era el rastro de un menú móvil previsto
+y no montado, y encontrarla convirtió el arreglo en montar lo que faltaba en vez
+de inventar un mecanismo nuevo.
+
+**Regla**: cuando algo no se usa ---una prop, una exportación, un parámetro---
+antes de borrarlo, preguntar para qué se escribió. A veces señala el hueco.
+
+## Una sonda dice la verdad sobre lo que mira, no sobre lo que hay (25/08/2026)
+
+`29-en-el-movil.spec.js` afirmaba en su cabecera que «ninguna otra pantalla se
+sale». Recorría once de las diecisiete. De las seis que no miraba, una se salía
+22 px --- y era el Calendario, una de las dos que más ancho piden. La frase era
+verdad sobre la lista, y la lista no estaba completa.
+
+**Regla**: cuando una sonda recorre una lista de pantallas, rutas o endpoints, la
+lista se genera o se contrasta contra la fuente ---aquí, `navigation.jsx`--- y no
+se escribe a mano. Y si se escribe a mano, la cabecera dice **cuántas** son, para
+que el hueco se vea al leerlo.
+
+## Buscar la sonda antes de escribirla, de verdad (25/08/2026)
+
+Escribí `40-desde-el-movil.spec.js` con su propia tabla de pantallas sin mirar
+que `29-en-el-movil.spec.js` ya tenía una. Lo mismo con `monthName`, que estaba
+en `format.js` y dos pantallas reimplementaban a mano. El prompt de la auditoría
+ya dice «antes de escribir un mecanismo transversal, busca si ya existe»: el
+fallo no fue no saberlo, fue no hacerlo.
+
+**Regla**: el `grep` va **antes** del primer renglón de código, no después de que
+algo falle. Dos minutos de búsqueda contra una tabla duplicada que va a divergir.
+
+## `update_fields` rompe la promesa de `auto_now` (25/08/2026)
+
+`save(update_fields=["is_active"])` no escribe `updated_at`, aunque el campo sea
+`auto_now`. Django lo pone en la instancia y no lo persiste, porque no está en la
+lista. No hay error, no hay aviso, y el código parece correcto. Lo que se rompe
+está lejos: una lectura incremental que avanza por esa marca deja de ver los
+cambios para siempre.
+
+**Regla**: si un modelo tiene `auto_now` y alguien lee por esa columna, la
+promesa se garantiza en `save()` del modelo base, no en cada llamada. Y al
+encontrar uno, barrer los demás: había siete en cinco ficheros.
+
+## Una prueba de lectura incremental necesita que el cursor avance de verdad (25/08/2026)
+
+Comprobé que una baja llega al conector pidiendo `?since=<cursor>` y buscando a
+la persona en la respuesta. Salía, y la prueba pasaba **con el fallo delante**:
+el cursor filtra con `>=` para no perder dos cambios del mismo instante, así que
+reenvía la última tanda entera.
+
+**Regla**: en un cursor con `>=`, aparecer en la siguiente tanda no demuestra que
+algo cambiara. Hay que mirar el dato que el cursor usa ---aquí `updated_at` en la
+fila--- o separar los instantes.
+
+## No tocar el backend mientras corre la suite de navegador (25/08/2026)
+
+Edité `common/models.py` mientras la suite de Playwright iba por la prueba 46. El
+recargador de Django reinició el servidor y esa prueba murió con `TypeError:
+Failed to fetch`. Aislada pasa. Perdí diez minutos de suite y un rato buscando un
+defecto que no existía.
+
+**Regla**: el aviso del cuaderno ---«no lances dos suites a la vez»--- vale
+igual para **editar** el backend con la suite en marcha: el recargador es el que
+comparte. Si hay que adelantar trabajo, que sea leer o escribir pruebas, no
+tocar código que el servidor vigila.
+
+**Reincidido en la vuelta 61**, doce vueltas después de escribir esto. La tanda
+murió a los tres minutos con dos fallos inventados. La regla no falla por no
+estar escrita, falla por lanzar la suite «en segundo plano» y sentir que el rato
+está libre: **no lo está**. Mientras corre, el backend es de la suite.
+
+## «No me han contestado» no es un hecho sobre lo que pasó (25/08/2026)
+
+Dos hallazgos altos de la vuelta 50, en sitios sin relación, eran la misma
+equivocación: convertir la ausencia de respuesta en una afirmación. El
+interceptor decía «esta sesión ya no vale» cuando lo que sabía era «no he podido
+renovarla». La pantalla de fichar decía «no ha quedado nada» cuando lo que sabía
+era «no me contestaron a tiempo» --- y esa frase, además, pedía el segundo toque
+que estropeaba el registro.
+
+**Regla**: antes de escribir un mensaje o de tirar un estado por un fallo de red,
+preguntarse qué se sabe **de verdad**. Sin respuesta, casi nunca se sabe si la
+escritura ocurrió. Lo honesto es decirlo y ofrecer cómo comprobarlo, no adivinar
+--- y menos adivinar en la dirección que provoca una acción destructiva.
+
+## El estado HTTP no siempre dice lo que crees sobre la sesión (25/08/2026)
+
+Escribí «solo cierro la sesión si el servidor devuelve 401 o 403», que es la
+regla correcta en general, y rompí la prueba del caso legítimo: este servidor
+trata el refresco caducado como regla de negocio y responde **409
+`session_expired`**. La regla general era buena; el mapeo, no.
+
+**Regla**: al ramificar por el estado de un error, mirar **qué contesta este
+servidor** en ese caso concreto, no lo que dicta la costumbre. Y ramificar por el
+código de error propio cuando exista, que es explícito y no se solapa con los
+otros mil motivos de un 409.
+
+## Una jornada de referencia es de la persona, no de la empresa (25/08/2026)
+
+`_whole_day_hours` caía a «la semana de la empresa entre cinco» sin preguntar qué
+tenía pactado quien se ausenta. Para media jornada eso duplica el día, y un
+permiso medido en días propios se descuadra **en las dos direcciones a la vez**:
+al trabajador le dice que agotó lo que no ha agotado, y a la empresa le concede el
+doble de lo que debe.
+
+**Regla**: cualquier cifra que diga «un día de trabajo» tiene que salir de esa
+persona ---cuadrante primero, contrato después--- y solo caer a la empresa cuando
+no haya nada suyo. Y si el dato es una suposición, decirlo: aquí ya existía
+`estimated`, y por eso el arreglo no tuvo que inventar nada nuevo.
+
+## Una migración de datos corre en el orden en que la escribes (25/08/2026)
+
+Puse el `RunPython` que vacía los nulos delante del `AlterField`, y se cayó: el
+índice único viejo seguía puesto, así que la segunda fila que pasaba a cadena
+vacía chocaba con la primera. Hacen falta tres pasos --- quitar la unicidad,
+rellenar, y solo entonces poner `NOT NULL` --- y el `AlterField` que genera
+Django hace las dos cosas a la vez.
+
+**Regla**: una migración que cambia una restricción **y** los datos se escribe
+paso a paso, preguntándose qué restricciones siguen vivas en cada momento. Y se
+prueba contra la base de desarrollo con datos, no solo contra la de pruebas, que
+está vacía: aquí eran 279 filas de 280 y la de pruebas no habría dicho nada.
+
+## Un parámetro que el esquema publica y el código ignora (26/08/2026)
+
+`?search=` salía en el esquema de las ausencias porque el backend de búsqueda
+está en los de por defecto, y no filtraba nada porque el ViewSet no declaraba
+`search_fields`. DRF no avisa: devuelve la lista entera. En una lista paginada
+eso no se distingue de «tu búsqueda no encontró nada más».
+
+**Regla**: si un filtro se hereda de la configuración global, cada ViewSet tiene
+que declarar con qué trabaja o quitárselo. Y la prueba de un buscador no puede
+ser «devuelve mi fila»: tiene que ser **«devuelve menos filas que sin buscar»**,
+que es lo único que distingue buscar de no buscar.
+
+## Una prueba que se arregló sin entender por qué fallaba vuelve (26/08/2026)
+
+La prueba del calendario ya se había arreglado por este síntoma: se le llenaba la
+página de resultados y cambiaron a buscar por una marca propia. Con la búsqueda
+rota, ese arreglo solo movió el umbral --- y volvió en cuanto se acumularon
+cincuenta y cinco ausencias de prueba. El comentario que explicaba el arreglo
+anterior fue justo lo que puso sobre la pista.
+
+**Regla**: cuando una prueba falla por «no encuentro lo que acabo de crear», la
+primera pregunta es si se creó, y la segunda si el filtro con el que se busca
+funciona. Arreglar la prueba sin contestar las dos deja el defecto en el producto
+y la prueba en rojo diferido.
+
+## La concordancia con uno solo se ve cuando hay uno (26/08/2026)
+
+«1 personas de alta» llevaba ahí desde siempre con 264 pruebas en verde: la
+semilla crea veinticuatro personas, así que el plural siempre acertaba. Apareció
+en el primer minuto de mirar una empresa recién creada --- que es, además, la
+primera pantalla que ve un cliente nuevo.
+
+**Regla**: los datos de prueba cómodos esconden los casos de borde por arriba y
+por abajo. Cada cierto tiempo, mirar el producto con **lo mínimo** ---una
+empresa, una persona, cero de todo lo demás--- y con lo máximo. Y al encontrar un
+plural mal, barrer los demás: había doce candidatos y cinco rotos.
+
+## Lo que agrupa bien un modelo puede separarlo mal un informe (26/08/2026)
+
+`Punch.was_delegated` junta `DELEGATED`, `ADMIN` e `IMPORT` con buen criterio:
+los tres significan «no lo hizo la persona». El informe reutilizó ese booleano
+para escribir una frase, y entonces una corrección hecha por la empresa se le
+contaba a la Inspección como «registrado por una aplicación» --- la lectura más
+benigna de las tres.
+
+**Regla**: una abstracción que agrupa casos vale para decidir, no para
+**describir**. Antes de reutilizar un `bool` en un texto que alguien va a leer
+como prueba, comprobar qué casos esconde. Y el sitio donde se nota es el
+documento que sale del sistema, no la pantalla.
+
+## `force_authenticate` salta la capa que quieres probar (26/08/2026)
+
+Escribí una prueba de qué pasa al dar de baja usando `force_authenticate`, y
+salió un 409 `employee_inactive`. Con un testigo real sale **401**: la
+autenticación rechaza antes de llegar a la vista. Los dos números describen
+caminos distintos, y el que ve una persona es el segundo.
+
+**Regla**: `force_authenticate` vale para probar lo que hay **detrás** de la
+autenticación. Si lo que se prueba es el acceso mismo ---sesión caducada, cuenta
+desactivada, permisos de la credencial--- hace falta el testigo de verdad. Y si
+una prueba da un código que nunca has visto en el navegador, sospecha de la
+prueba antes que del producto.
+
+## Un helper con el aviso escrito no impide que el fallo siga en tres sitios (26/08/2026)
+
+`format.js` tenía `today()` calculado en fecha local **y un comentario
+explicando** por qué `toISOString()` está mal: al este de Greenwich devuelve el
+día anterior de madrugada. Aun así, tres sitios seguían con `toISOString()`,
+incluido el diálogo que más se usa. Escribir el helper y el porqué no basta: hay
+que barrer el patrón viejo.
+
+**Regla**: al añadir un helper que corrige un error corriente, el mismo cambio
+tiene que incluir el `grep` del patrón que sustituye. Y el `grep` va del patrón
+---`toISOString().slice`--- no del nombre del helper, que es lo que no aparece
+donde falta.
+
+## Una prueba de fechas a media mañana no prueba nada (26/08/2026)
+
+El fallo de UTC solo se ve en unas horas concretas: de madrugada al este de
+Greenwich, por la tarde al oeste. Una prueba escrita con la hora del momento
+habría pasado con el defecto delante durante veintidós horas al día.
+
+**Regla**: si algo depende de la hora, la prueba **fija el reloj** en el momento
+en que se rompe ---`page.clock.setFixedTime` en Playwright, `freeze_time` en
+pytest--- y deja escrito por qué esa hora y no otra.
+
+## Un ajuste que se guarda y no se aplica parece una política (26/08/2026)
+
+`record_retention_years` tiene valor por defecto, validación contra el suelo
+legal, endpoint que lo expone y un `help_text` que explica su base jurídica. Todo
+menos lo que importa: nada lo lee para borrar. Una empresa lo configura y se
+queda tranquila creyendo que hay una purga.
+
+**Regla**: al revisar un ajuste, buscar quién lo **lee**, no solo dónde se
+guarda. `grep` del nombre del campo: si solo aparece en el modelo, el serializer
+y sus pruebas, no hace nada. Y mientras no lo haga, decirlo en su propia ayuda:
+un ajuste mudo es de los «a medias» que el proyecto considera peores que faltar.
+
+## Una optimización sin sonda es una optimización que ya se rompió una vez (26/08/2026)
+
+`_attendance_of` tiene un comentario de nueve líneas explicando cómo se evitó una
+consulta por persona, con la cifra de lo que costaba antes. Nadie vigilaba que
+siguiera así: la sonda de N+1 del proyecto medía catorce rutas y ninguna era la
+de integración, que es la que más se repite.
+
+**Regla**: cuando se arregla un N+1 y se escribe el porqué, el mismo cambio añade
+la ruta a la sonda. Un comentario explica; una sonda impide. Y al añadirla,
+comprobar que **de verdad mide** ---que la petición contesta 200 y consulta algo---
+porque un 403 sale plano y parece perfecto.
+
+## Aislada pasa, en la tanda falla: eso es una carrera (26/08/2026)
+
+La prueba del vaciado del cuadrante falló en la suite completa y pasó sola, tres
+veces seguidas. No era contaminación de datos ---nadie más toca diciembre de
+2026--- sino tiempo: el diálogo se cierra al pulsar y la petición sigue viajando,
+así que en una máquina cargada la comprobación llegaba antes que el borrado.
+
+**Regla**: «aislada pasa, en la tanda falla» tiene dos causas típicas y se
+distinguen rápido. Si otra prueba deja datos, el fallo cambia con el orden. Si es
+una carrera, el fallo va con la carga y desaparece al repetir. Para lo segundo,
+`expect.poll` sobre el estado final, nunca una consulta única después de un
+`toBeHidden`: que un diálogo se cierre no significa que el servidor haya
+terminado.
+
+## Un fichero que se entrega lo abre alguien, y ese alguien usa Excel (26/08/2026)
+
+El informe de jornada salía como CSV sin neutralizar, así que un nombre que
+empiece por `=` se convierte en fórmula al abrirlo. El entrecomillado del CSV no
+protege: es sintaxis del fichero y el programa la quita antes de evaluar.
+
+Lo que lo hizo fácil de pasar por alto es que el CSV **estaba bien formado**. La
+prueba de que un exportador funciona no es que el fichero se lea: es qué hace el
+programa que lo va a abrir.
+
+**Regla**: para cada fichero que el producto entrega, preguntarse con qué se abre
+y qué hace ese programa con el contenido. CSV en Excel evalúa fórmulas; un PDF
+con enlaces los abre; un nombre de fichero con `../` lo interpreta quien lo
+descomprime. Y mirar de dónde viene el texto: aquí una parte la escribe la
+persona trabajadora y viaja al documento por obligación legal, así que quitarla
+no era opción.
+
+## Un nombre de fichero derivado de datos es una ruta, no una etiqueta (26/08/2026)
+
+El apellido de una persona componía la entrada de un zip y la cabecera de
+descarga. Con `../../../evil` la entrada sale como ruta relativa y escapa del
+directorio al descomprimir; con una comilla rompe la cabecera. Y sin
+identificador, dos personas que se llaman igual generan la misma entrada: la
+segunda pisa a la primera y **se entrega un documento menos sin que nada avise**.
+
+**Regla**: todo nombre de fichero compuesto con datos pasa por un saneador, y si
+va dentro de un lote lleva algo que lo haga único. El caso de la colisión es el
+que más se escapa, porque no falla: produce un fichero menos, en silencio, y solo
+se nota contando.
+
+## Al cambiar cómo se nombra algo, las pruebas que fijaban el nombre viejo dicen la verdad a medias (26/08/2026)
+
+Tres pruebas comprobaban `"García_Ana.pdf" in dentro`. Lo que de verdad
+verificaban es **quién** aparece en el zip, no cómo se llama su fichero. Al
+cambiar el formato se pusieron rojas, y la tentación es actualizar la cadena y
+seguir.
+
+**Regla**: cuando una prueba se rompe por un cambio de formato, mirar qué
+pretendía comprobar antes de retocarla. Si lo que le importa es el contenido, la
+aserción debe hablar de contenido ---un prefijo, una pertenencia--- y así deja de
+romperse la próxima vez.
+
+## 98. Que el texto esté en el fichero no es que se vea en la hoja
+
+Un extractor de PDF devuelve lo que hay en el flujo de contenido, no lo que cae
+dentro de los márgenes de la página. Una celda de tabla sin ajuste de línea
+dibuja la cadena seguida, se sale por la derecha, y `extract_text()` la devuelve
+entera igual de contenta.
+
+Pasó con la discrepancia del art. 4.b: mil caracteres que llegaban al PDF y se
+imprimían nueve veces más allá del ancho del A4. La prueba de la vuelta 39
+---`assert "Yo entré antes." in texto`--- llevaba veintisiete vueltas pasando
+con el fallo delante.
+
+**Regla**: en un formato con maquetación ---PDF, imagen, impresión--- una
+comprobación de presencia no vale. Mide la **geometría**: dónde arranca el
+texto, cuánto ocupa, y compáralo con el ancho útil. Y antes de fiarte de la
+medición, pásala por un caso que se sepa malo, porque un medidor que no mide da
+verde en todo.
+
+## 99. Envolver en `Paragraph` obliga a escapar, y a rehacer las búsquedas
+
+`Paragraph` de ReportLab arregla el ajuste de línea y abre dos frentes a la vez:
+
+- **Interpreta marcado.** Sin escapar, un `<` en un apellido tumba el documento
+  entero y `<font color="white">` esconde texto dentro de una prueba legal.
+- **Parte las frases en renglones.** Cualquier prueba que buscaba una cadena
+  literal en el texto extraído empieza a fallar sin que falte nada: la frase
+  sale cortada por la mitad entre dos líneas. Colapsa los espacios
+  ---`" ".join(texto.split())`--- antes de buscar.
+
+## 100. Una prueba que deja basura acaba encontrando un fallo, pero tarde
+
+La prueba de aplicaciones se llamaba «autorizar, emitir un testigo y revocar» y
+no revocaba: dejaba una aplicación activa cada vez. Después de 59 ejecuciones la
+lista pasó de cincuenta, la nueva cayó en la segunda página, y la prueba se puso
+roja por un fallo real que llevaba ahí desde el principio.
+
+Salió bien de casualidad. Lo normal es lo contrario: la basura hace fallar
+pruebas por motivos que no son el fallo, y se pierde la tarde persiguiendo el
+ruido.
+
+**Regla**: una prueba de extremo a extremo deja el sistema como lo encontró. Si
+el producto no borra ---y a menudo no debe: aquí revocar desactiva porque los
+fichajes registrados siguen siendo suyos--- entonces la prueba ejercita el
+camino que lo retira. Y si el título dice «y revocar», que revoque.
+
+## 101. Un arreglo transversal hay que terminarlo, y la lista está en el código
+
+Dos veces en la misma vuelta: la vuelta 39 hizo llegar la discrepancia al PDF y
+no comprobó que se leyera; y el arreglo de la paginación llegó a People y al
+rastro de auditoría pero no a los fichajes de la persona --- **teniéndolo escrito
+en el comentario de `api.js`**, que decía en qué tres sitios pasaba.
+
+**Regla**: cuando un arreglo vale para varios sitios, enumera los sitios en el
+momento, arréglalos todos y deja la lista en el código. Y al leer un comentario
+que enumera sitios afectados, comprobar uno por uno que siguen arreglados: ese
+comentario es un inventario, no una anécdota.
+
+## 102. Paginar no siempre es la respuesta
+
+Cortar cada cincuenta filas vale para una tabla de personas. No vale para los
+fichajes de una jornada, que se pintan agrupados por día: la entrada quedaría en
+una página y la salida en la siguiente, y el día se leería mal.
+
+**Regla**: antes de meter un `Pager`, mira cómo se agrupa lo que se pinta. Si la
+unidad que el usuario lee es mayor que la fila, trae el periodo entero --- con un
+tope, y diciéndolo cuando el tope se alcance. Nunca dar por completo lo que no
+se ha comprobado que lo esté.
+
+## 103. Antes de describir un fallo, mira el render
+
+Escribí en el cuaderno que el cuadro de fichajes mostraba «una jornada abierta
+que en realidad se cerró», y de ahí deduje que invitaba a corregir un fichaje
+sin motivo. Al abrir el componente resultó que esa pantalla no calcula jornadas
+ni saldos: solo lista eventos bajo un encabezado de día. El defecto era otro
+---el día partido y repetido--- y seguía siendo real, pero la consecuencia que
+le había puesto era inventada.
+
+**Regla**: la medición dice qué datos llegan; solo el render dice qué ve la
+persona. Describir la consecuencia antes de leer el componente es adivinar, y
+en un cuaderno de auditoría una consecuencia adivinada se lee igual que una
+comprobada. Si ya está escrita, se corrige donde estaba, no en una nota aparte.
+
+## 104. Dos vistas distintas no son un fallo de una sola vista
+
+El cuadro de fichajes servía para dos cosas: la jornada de una persona y el
+volcado de toda la empresa. La paginación correcta no es la misma para las dos
+---día en una, fichaje en la otra--- y forzar una sola producía el día partido.
+
+**Regla**: cuando una pantalla no encaja con ninguna paginación, mira si en
+realidad son dos usos metidos en un sitio. Separarlos suele salir más barato que
+inventar un mecanismo que sirva para los dos, y deja cada uno diciendo la verdad.
+
+## 105. Un módulo bien escrito no protege a quien no lo llama
+
+`apps/common/dst.py` documenta la trampa del cambio de hora mejor que cualquier
+comentario del repositorio, tiene sus pruebas y es correcto. Y solo lo usaba uno
+de los cuatro sitios que restan turnos: los otros tres seguían haciendo
+aritmética de reloj de pared, incluido el que decide si se cumple el suelo de
+descanso del art. 34.3.
+
+Leer el módulo tranquiliza. Es exactamente el «solo citado» del que avisa el
+guion, con una vuelta de tuerca: aquí ni siquiera estaba citado en el sitio malo,
+estaba resuelto **al lado**.
+
+**Regla**: cuando encuentres un módulo que resuelve bien un problema sutil, la
+pregunta no es si está bien --- es **quién lo importa**. Un `grep` del nombre
+comparado con un `grep` de la operación que arregla (aquí, restar dos datetime de
+un turno) da la lista de los que se lo perdieron.
+
+## 106. Un arreglo de fecha se prueba en las dos direcciones
+
+Ese cambio de hora tiene dos noches y van al revés: en marzo el hueco real es
+menor que el de reloj, en octubre es mayor. Arreglar solo mirando marzo puede
+producir una advertencia falsa cada octubre --- y para toda la plantilla de noche
+a la vez, que es peor que el defecto de partida.
+
+**Regla**: toda corrección de huso, cambio de hora o fin de mes lleva tres
+pruebas, no una: el caso que falla, el caso simétrico que **no** debe cambiar, y
+un día corriente de control. Sin el tercero no sabes si el aviso salta siempre.
+
+## 107. Donde se cuenta y donde se enseña son dos sitios
+
+El producto resolvía la zona horaria por persona en todo lo que cuenta:
+`local_day_bounds`, el informe, el resumen semanal. Y la daba por la de la
+empresa en todo lo que se enseña: la sesión y la pantalla de fichar. El
+resultado es lo peor de los dos mundos --- la pantalla y el PDF entregado ponían
+el mismo fichaje en días distintos.
+
+Es fácil de pasar por alto porque revisar el cálculo deja tranquilo, y el
+cálculo estaba bien.
+
+**Regla**: cuando compruebes que una magnitud sensible al contexto ---zona
+horaria, moneda, idioma, redondeo--- se calcula bien, no cierres ahí. Sigue el
+dato hasta lo que ve la persona y hasta lo que sale en el documento, y comprueba
+que los tres coinciden. Un cálculo correcto que se enseña mal es un fallo
+completo, no medio.
+
+## 108. Añadir un campo derivado a un serializer es tocar el rendimiento
+
+`effective_time_zone` en la ficha de una persona parece gratis: es una propiedad.
+Detrás hay una FK al centro de trabajo y otra a la empresa, así que
+`/api/employees/` pasó de 10 consultas con tres personas a 19 con doce.
+
+Lo cazó `test_no_crece_con_la_plantilla` en la misma tanda, sin buscarlo. Vale la
+pena decirlo al revés de como suele contarse: **el guard funcionó**, y por eso el
+N+1 duró cinco minutos en vez de llegar a producción y aparecer como «la pantalla
+de personas va lenta en las empresas grandes».
+
+**Regla**: todo campo nuevo de serializer que llame a una propiedad del modelo se
+comprueba contra la prueba de consultas antes de darlo por hecho. Y el
+`select_related` se pone **por cada salto**: aquí `workplace` no bastaba, porque
+quien no tiene centro cae en `tenant`, y ese es el camino de la mayoría.
+
+## 109. El dato que depende del contexto viaja con el dato, no con la sesión
+
+La zona de la persona en la sesión arregla las pantallas donde uno mira lo suyo,
+y no arregla ninguna de las que enseñan a varias personas a la vez. Ahí el
+contexto cambia **por fila**, así que tiene que ir en la fila.
+
+La alternativa que parecía más barata ---sacarlo del selector de persona, que ya
+recibe la ficha entera--- solo cubre el caso con filtro y se pierde al recargar
+la página.
+
+**Regla**: si un valor depende de a quién pertenece la fila ---huso, moneda,
+convenio, idioma--- va en el serializer de la fila. La sesión sirve de respaldo,
+nunca de respuesta. Y comprueba qué expone ya la API antes de diseñar: aquí el
+listado de personas traía el campo desde la vuelta anterior y el fichaje no, y
+eso decidió dónde tocar.
+
+## 110. Una prueba de N+1 mide un eje, y hay dos
+
+`test_no_crece_con_la_plantilla` compara las consultas con tres personas y con
+doce. Es lo que cazó el N+1 de la vuelta 69. Y **no** habría cazado el de la 70:
+un listado de fichajes crece con las filas, no con la plantilla, y cuarenta
+fichajes de veinte personas pasaban de 6 consultas a 46 sin que esa prueba se
+inmutara.
+
+**Regla**: al añadir un campo derivado, pregúntate con qué crece el listado que
+lo sirve --- personas, filas, días, adjuntos --- y mide **ese** eje. Un guard verde
+en el eje equivocado es peor que no tenerlo, porque tranquiliza.
+
+## 111. Dos falsos hallazgos en una pasada, los dos por medir mal
+
+En la misma vuelta estuve a punto de anotar dos defectos que no existían:
+
+- Conté el rastro de auditoría filtrando por `"document_downloaded"` cuando la
+  acción es `DOCUMENT_DOWNLOADED`. Cero resultados leídos como «el producto no
+  deja rastro».
+- Puse `department=oficina` a un responsable creyendo que eso lo ponía al mando
+  de Oficina. `department` es **dónde trabaja**; lo que dirige va en
+  `Department.managers`. Sin departamentos al mando el alcance es todo por
+  diseño, así que mi «responsable ajeno entra» era un responsable sin
+  departamentos.
+
+Los dos tienen la misma forma: **la sonda no montaba el escenario que yo creía
+estar montando**, y el resultado era coherente con la hipótesis equivocada.
+
+**Regla**: antes de escribir un hallazgo que nace de un conteo, comprueba que el
+conteo sabe contar --- pide el total sin filtro y mira que no sea cero. Y antes de
+uno que nace de un rol, comprueba que el rol es el que crees: imprime el
+escenario montado (quién dirige qué, quién ve a quién) y léelo, en vez de darlo
+por hecho desde el nombre del campo.
+
+## 112. Una lista de extensiones no filtra a quien elige la extensión
+
+`uploads.py` documentaba una defensa en profundidad de dos capas: extensiones
+permitidas y `Content-Disposition: attachment`. Contra un HTML llamado
+`foto.png` solo funcionaba la segunda, porque `.png` está en la lista. La
+primera capa no aportaba nada al caso que decía cubrir.
+
+**Regla**: cuando un módulo afirme tener dos defensas, prueba cada una **sin la
+otra**. Si una de las dos no rechaza el ataque por sí sola, no hay dos: hay una
+y un comentario que tranquiliza. Para ficheros, eso significa mirar los bytes;
+la extensión es un dato que aporta quien ataca.
+
+## 113. Una lente que se agota en un `grep` no es una vuelta perdida
+
+La vuelta 72 empezó por «las demás entradas de fichero» después de que la 71
+encontrara lo de los bytes. Duró un `grep`: en todo el producto hay **una sola**
+`FileField` y ya estaba cubierta.
+
+Lo correcto ahí no es forzar la lente hasta sacarle algo ---eso produce hallazgos
+inventados--- ni dar la vuelta por terminada. Es cambiar de eje con lo que queda
+de pasada.
+
+**Regla**: cuando el inventario de una lente sale casi vacío, anótalo como
+cobertura confirmada en una línea y pasa a otra cosa. Un inventario vacío es
+información: dice que ese eje no tiene superficie, y eso vale para no volver.
+
+## 114. Prohibir la acción y olvidar la inacción
+
+`four_eyes` estaba en aprobar y no en rechazar. Un responsable no podía aprobar
+un cambio sobre su propio fichaje y sí podía archivarlo, él solo. La regla
+parecía puesta porque el caso que uno imagina ---«se aprueba a sí mismo un
+cambio»--- estaba cubierto.
+
+No cambiar nada también es decidir: archivar una propuesta deja el registro como
+está, que es un resultado tan elegido como el otro.
+
+**Regla**: al revisar una salvaguarda sobre decisiones, enumera **todas** las
+salidas del procedimiento, no solo la que concede. Aprobar, rechazar, archivar,
+dejar caducar. Si la regla no está en todas, alguien puede llegar al mismo
+destino por la puerta que quedó abierta.
+
+## 115. Una suite verde puede estar apoyándose en el atajo que vas a cerrar
+
+Al cerrar el hueco de los cuatro ojos en `reject`, la suite de backend siguió en
+verde ---1005 pruebas--- y la de navegador dio dos rojos. Ninguno era una
+regresión: la prueba 22 **limpiaba sus datos usando justo el atajo que el
+arreglo prohíbe**, y el segundo rojo era la basura que esa limpieza rota dejaba
+atrás, cambiando el render de otra pantalla.
+
+**Regla**: cuando un arreglo cierre una puerta, mira quién la usaba. Que las
+pruebas se rompan ahí no significa que el arreglo esté mal --- puede significar
+que la prueba tomaba el mismo atajo que la persona a la que quieres impedírselo.
+Léelas antes de tocar el arreglo, y arregla la prueba haciendo lo que el
+producto ahora exige, no rodeándolo.
+
+## 116. Un borrado puede no perder nada y aun así ser un fallo
+
+La vuelta 73 empezó buscando lo obvio: que retirar un departamento o un centro
+no se llevara fichajes por delante. No se los lleva --- `PROTECT` donde toca, baja
+en vez de borrado, y ninguna puerta para borrar la empresa.
+
+Lo que sí hacía era **ampliar permisos**. Retirar el único departamento que
+alguien dirigía lo dejaba «al mando de nada», y el código lee eso como «nada le
+estrecha»: la responsable pasó de ver 2 personas a verlas todas, y un
+justificante de otro departamento de 404 a 200.
+
+**Regla**: al auditar un borrado, no preguntes solo qué desaparece. Pregunta
+también **qué queda en un estado que significa otra cosa**. Un campo a `None`,
+una relación vacía o un contador a cero suelen tener un significado por defecto
+escrito para el día del alta, y ese significado casi nunca es el correcto para
+algo que existió y se retiró.
+
+## 117. Lo ordenado para unos es lo contrario para otros
+
+`SET_NULL` en el departamento es la respuesta correcta para quien está **en** él:
+conserva todo y pierde una etiqueta. Y es la equivocada para quien **responde**
+de él. El comentario del centro de trabajo decía en voz alta que para un
+departamento `SET_NULL` era «una respuesta ordenada» --- cierto para la población
+en la que pensó quien lo escribió, y solo para esa.
+
+**Regla**: cuando una entidad tiene dos poblaciones colgando ---miembros y
+responsables, autores y destinatarios, dueños y invitados--- decide el borrado
+para **cada una**. Una sola regla que las trate igual va a ser correcta para una
+y silenciosa para la otra.
+
+## 118. El botón que ofrece lo que el servidor va a rechazar
+
+Al cerrar el borrado de departamentos con responsables, la pantalla siguió
+ofreciendo el botón: se pintaba con `people_count === 0`, que cuenta quién está
+**dentro**, no quién **responde**. Un departamento sin gente y con jefa mostraba
+«Eliminar» y un texto que prometía que no afectaba a nadie.
+
+**Regla**: cuando añadas una condición de negocio en el servidor, busca en el
+frontend qué condición usaba para ofrecer esa acción. Casi nunca es la misma, y
+la diferencia se paga en un error que la persona recibe después de decidir.
+Mientras las dos no coincidan, la pantalla está mintiendo antes de fallar.
+
+## 119. Un campo que dice «informado» no informa a nadie
+
+El producto guardaba `representatives_notified_at`, una nota con nombre y
+apellidos ---«Informados: Fulana»--- y lo mandaba todo al informe de inspección.
+No enviaba ningún correo. El `help_text` que la empresa lee al marcar la casilla
+prometía lo contrario.
+
+Es el «solo citado» del guion en su forma peor: no es que falte el campo, es que
+el campo **está y afirma que la obligación se cumplió**.
+
+**Regla**: cuando un campo, una marca de tiempo o una nota afirmen que se hizo
+algo hacia fuera ---informar, avisar, notificar, publicar--- busca la llamada que
+lo hace. Si no la encuentras, el campo no es una prueba: es una afirmación sin
+respaldo, y en un documento legal eso es peor que el hueco.
+
+## 120. Antes de creerte un canal temporal, calienta y repite
+
+Medí el «he olvidado la contraseña» y salió 142 ms con dirección existente
+contra 2 ms sin ella: enumeración de usuarios de manual. Con una llamada de
+calentamiento previa y cinco repeticiones, la diferencia real era **2 ms contra
+1**. Los 142 eran la primera petición del proceso cargando plantillas y
+conexiones.
+
+**Regla**: una medición de tiempo sin calentamiento previo y sin repetición no
+es una medición. Y si hay límite de tasa de por medio, vacía su cubeta entre
+medidas: si no, a la segunda solo estás cronometrando el 429.
+
+## 121. Quitar el `fuzzy` sin mirar el texto convierte un aviso en una mentira
+
+`makemessages` presta traducciones por parecido y las marca `fuzzy`. La marca
+molesta, y la tentación es barrerla con una expresión regular. Al hacerlo en
+catalán y gallego, el asunto del aviso nuevo se quedaba como «un canvi en el
+registre de jornada» --- texto de otra cadena, ahora sin ninguna marca que
+avisara.
+
+**Regla**: `fuzzy` no se quita, se resuelve. Si vas a traducir, traduce; si no,
+**vacía** el `msgstr` y deja el hueco. Un hueco se ve en el recuento y en la
+pantalla; una traducción equivocada sin marca no la ve nadie hasta que un
+cliente lee algo que no viene a cuento.
+
+## 122. Validar contra el fallo también audita la prueba
+
+Al neutralizar la comprobación del sello, dos de mis tres pruebas nuevas se
+pusieron rojas y **una siguió verde**. Era la que decía «la huella del informe
+cambia cuando aparece el aviso»: yo alteraba la hora del fichaje, y la hora está
+dentro de la huella, así que cambiaba igual con el aviso desconectado. La prueba
+afirmaba una cosa y comprobaba otra.
+
+Se arregló tocando el **origen** del fichaje: rompe el sello y no entra en la
+huella del documento, así que la única diferencia que queda entre las dos huellas
+es el aviso.
+
+**Regla**: el paso de «revertir el arreglo y ver que la prueba falla» no es un
+trámite de confirmación --- es lo que distingue una prueba que mide de una que
+acompaña. Si al revertir una prueba sigue verde, esa prueba está mal, aunque el
+arreglo esté bien. Y para aislar un efecto, toca algo que **solo** cambie eso.
+
+## 123. Un barrido tosco da treinta candidatos y ninguno vale
+
+Buscar «métodos públicos que nadie llama» con un `grep` de `.nombre(` dio treinta
+resultados y todos eran ruido: los `@action` los llama el enrutador de DRF, las
+propiedades se usan sin paréntesis, los filtros los conduce django-filter, los
+comandos los invoca `manage.py`.
+
+Refinar el barrido ---excluir decoradores del framework, excluir las clases que
+el framework conduce, y buscar el uso con y sin paréntesis--- lo dejó en diez, y
+de esos tres eran de verdad.
+
+**Regla**: un detector automático de «código muerto» hay que calibrarlo antes de
+leer su salida, igual que cualquier otra medición. Si el primer resultado es una
+lista larga de cosas que resultan normales, el detector está mal, no el código --- y
+seguir mirando esa lista gasta la pasada en descartar ruido.
+
+## 124. «Solo si cambia» deja fuera el caso que confirma
+
+La primera versión del arreglo anotaba de dónde venía una cifra solo cuando el
+convenio **cambiaba** el valor. Y el convenio de jardinería fija el descanso
+entre jornadas en doce horas, que es exactamente lo que ya decía el Estatuto: el
+número no se mueve y la fuente sí. Los campos que interesaban quedaban todos
+fuera.
+
+Salió al medir el resultado, no al razonar el código: la prueba seguía diciendo
+«Art. 34.3 ET» después del arreglo.
+
+**Regla**: cuando registres la procedencia, el autor o el motivo de un dato,
+regístralo por el hecho de que alguien lo afirme, no por que el valor difiera.
+Confirmar lo que ya había es una decisión igual de real que cambiarlo, y en
+materia legal suele ser la más frecuente.
+
+## 125. La caché de una petición convierte una sonda en un «está bien»
+
+`WorkingTimeRules.for_company` recuerda las reglas en el objeto `Tenant` para no
+pedir la misma fila cuatrocientas ochenta y dos veces. Su comentario avisa: «un
+proceso largo que cambie las reglas y siga usando el mismo objeto vería las de
+antes».
+
+Mi sonda era ese proceso largo. Cambié el suelo de descanso a cero por la API y
+seguí midiendo con la misma instancia: el aviso seguía saliendo, y eso parecía
+decir que el cero no apagaba nada. Recargando la empresa, el aviso desaparece.
+
+**Regla**: en una sonda que cambia configuración y luego mide su efecto, **vuelve
+a leer** los objetos entre las dos cosas. Una petición real trae su propia
+instancia y una sonda no, así que la sonda mide un estado que en producción no
+existe --- y lo hace en la dirección optimista.
+
+## 126. «No devuelve un 500» y «acepta cualquier cosa» son dos preguntas
+
+El repositorio tenía un guard exhaustivo de entradas malformadas: saca los campos
+del propio serializador y comprueba que nada contesta un 500. Muy bueno, y
+completamente ciego a lo que encontró esta vuelta: una jornada semanal de 200
+horas, un descanso entre jornadas de cero y un plazo de consentimiento de cero
+días se guardan con un 200 impecable.
+
+**Regla**: la robustez frente a la basura y la sensatez de los valores son ejes
+distintos. Después de comprobar que nada se rompe con entradas absurdas, pregunta
+qué pasa cuando el valor **es del tipo correcto** y no tiene sentido --- y sobre
+todo, qué comprobación deja de funcionar por haberlo aceptado.
+
+## 127. El dato ya estaba escrito, en prosa, al lado del campo
+
+El aviso de «esto se sale de lo que fija el artículo» lee `floor` y `ceiling` del
+marco legal. Solo cuatro de catorce campos los tenían. Y la nota de cada cita
+—el texto que se muestra junto al campo en la pantalla— **ya decía el número**:
+«Quince minutos cuando la jornada continuada excede de seis horas», «Cuatro años
+como mínimo», «Cinco días de preaviso».
+
+O sea: la información estaba en el fichero correcto, en la línea de al lado, en
+un formato que solo lee una persona.
+
+**Regla**: cuando un mecanismo dependa de datos estructurados, mira si esos datos
+ya existen en prosa en el mismo sitio. Un comentario o una nota que enuncia una
+cifra es una cifra pendiente de declarar, y encontrarla cuesta un `grep` en vez
+de una investigación.
+
+## 128. No inventes un número para que encaje en tu mecanismo
+
+El art. 4.b **no fija plazo** para responder a una corrección. La tentación era
+declararle `floor=1` y dejar que el aviso genérico lo cubriera: encaja en el
+mecanismo, sale gratis, y sería atribuirle a un artículo un número que no dice
+—el mismo error de procedencia que la vuelta 76 acababa de arreglar, en la
+dirección contraria.
+
+Lo que sí se puede afirmar es qué pasa con el cero: que no hay procedimiento.
+Eso va como aviso propio, y con esas palabras.
+
+**Regla**: si un caso no encaja en el mecanismo general porque la ley no dice lo
+que el mecanismo necesita, escríbele su propia regla. Forzarlo produce una
+afirmación legal falsa, que es peor que un caso especial en el código.
+
+## 129. Una aserción sobre un mensaje traducible se rompe al compilar
+
+Escribí `assert "agree" in aviso["message"]`. Pasó en verde, y se puso roja en
+cuanto compilé los catálogos: el mensaje salía ya en castellano.
+
+**Regla**: no aserciones sobre el texto de un mensaje que pasa por gettext.
+Comprueba lo que no se traduce —el código del error, el campo, el artículo, un
+número— y si de verdad hace falta mirar el texto, actívale un idioma explícito.
+El mismo cuidado que con `dateOf` o los formatos de número.
+
+## 130. Una sola ronda de una carrera es una moneda al aire
+
+Probé dos fichajes simultáneos con dos hilos y una barrera: salió un fichaje y un
+409. Limpio. Repitiendo quince veces, **catorce dejaban dos fichajes**. La
+primera había sido la ronda afortunada.
+
+Y el dato que hace útil la medición no es el resultado, es el **solape**: medir
+cuánto se pisan de verdad las dos peticiones (35 ms) es lo que distingue «no se
+cuela» de «no he medido una carrera».
+
+**Regla**: una prueba de concurrencia se repite ---diez o quince rondas--- y mide
+si las peticiones solapan. Un verde de una sola ronda no dice nada, y un verde
+sin solape dice menos todavía. Con la protección quitada, el escenario tiene que
+llegar a fallar la mayoría de las veces; si no, el escenario no provoca la
+carrera.
+
+## 131. Que dos casos parecidos se traten distinto puede estar bien escrito
+
+Al barrer transiciones sin bloqueo, las horas extra salían como la excepción:
+`update_or_create` sin `claim`, decisión rehacible sin límite. Parecía el hueco.
+
+No lo era, y no hacía falta deducirlo: `apps/common/tests/test_dos_a_la_vez.py`
+tiene un apartado titulado «Lo que se dejó como estaba» que lo explica --- una
+decisión sobre horas extra no toca los fichajes, así que una segunda no es una
+carrera perdida sino una decisión nueva, y que el rastro guarde las dos es
+correcto.
+
+**Regla**: antes de tratar una asimetría como un defecto, busca si alguien la
+documentó como decisión. Un fichero de pruebas con un apartado de «lo que se dejó
+así» vale más que releer el código, y saltárselo es proponer que se deshaga algo
+que ya se pensó.
+
+## 132. Buscando una carrera se encuentra el defecto que no era una carrera
+
+Fui a comprobar si dos correcciones simultáneas sobre el mismo fichaje se
+colaban. Se colaban, doce de doce. Y al validarlo contra el caso conocido ---dos
+peticiones **seguidas**--- también pasaban las dos: 201 y 201.
+
+O sea que no había carrera: había un comportamiento normal, deliberado, y detrás
+de él un defecto peor. Aprobar las dos dejaba **dos entradas activas** en el
+registro, sin necesidad de concurrencia ninguna.
+
+**Regla**: cuando una prueba de concurrencia falla, comprueba el caso secuencial
+antes de escribir el bloqueo. Si también falla, el problema no es el bloqueo --- y
+el arreglo que ibas a hacer habría tapado el síntoma dejando el defecto entero
+en el camino normal.
+
+## 133. Un mecanismo nuevo se reutiliza en la vuelta siguiente o no valía
+
+`hold()` se escribió en la vuelta 79 para fichar. En la 80 sirvió sin tocarlo
+para las solicitudes de ausencia: el mismo patrón ---leer una cola y decidir sin
+bloquear--- en otro sitio del producto.
+
+**Regla**: cuando arregles una carrera, deja la pieza en el módulo común y con el
+porqué escrito, no en línea donde la encontraste. El segundo sitio aparece antes
+de lo que parece, y encontrarlo es más fácil si el primero dejó un nombre al que
+hacer `grep`.
