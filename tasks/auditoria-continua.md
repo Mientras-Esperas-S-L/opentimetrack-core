@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 96 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 97 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -82,6 +82,7 @@ vuelve a una limpia.
 | Qué más se relee con las reglas de hoy | limpia | 26/08 v94 | **un turno de noche pasaba a «entrada sin salida»** al bajar un tope |
 | La pantalla y el documento dicen lo mismo | limpia | 26/08 v95 | **un cero separaba los dos**: fichar leía 16 y el informe 0 |
 | Lo que la prueba de accesibilidad no miraba | limpia | 26/08 v96 | **doce «Asignar» idénticos** en una pantalla fuera de su lista |
+| Por qué la tanda falla en un sitio distinto cada vez | limpia | 26/08 v97 | **un fallo dejaba un ajuste de empresa cambiado** y rompía a los siguientes |
 
 ### Ley
 
@@ -285,6 +286,61 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 97 --- Un fallo que fabricaba los siguientes (26/08)
+
+La lente: el hallazgo abierto de la vuelta anterior, porque sin una tanda fiable
+cada vuelta cuesta el doble y ningún rojo significa nada.
+
+#### Lo que fui descartando, con su dato
+
+- **No es acumulación por posición.** Los fallos caían en los ficheros 04, 09, 12,
+  14 y 28: repartidos por toda la tanda, no al final.
+- **No es carga.** 4,3 de media con **32 núcleos**. Haberlo dicho antes de medirlo
+  fue un error mío, y está como lección.
+- **No es degradación gradual.** Una prueba normal tarda **un segundo** y el margen
+  de `expect` son siete: un fallo ahí es un salto de siete veces, o sea un evento,
+  no lentitud.
+- **No es el navegador reutilizado.** Partiendo la tanda en dos mitades, **cada
+  mitad falla una**: 142 pruebas → 1 fallo, 137 → 1 fallo, 275 → 1 fallo. No se
+  concentra en la segunda.
+
+Ese último número es el que abrió la puerta: si el fallo no crece con el número de
+pruebas, no es acumulación --- es algo ligado a la corrida.
+
+#### El hallazgo
+
+Los dos fallos de las mitades eran de **Ajustes**, y el segundo lo decía con todas
+las letras: «la pantalla decía que guardaba y el backend seguía con lo de antes».
+
+`35-jornada-abierta` cambia el tope de jornada abierta **de la empresa**, comprueba,
+y lo restaura **al final del test**. Si falla a mitad, la restauración no llega. Y
+la demo apareció con el tope en **26** en vez de 16, residuo de una corrida rota
+horas antes --- con eso, las pruebas de Ajustes de las corridas siguientes fallaban.
+
+**Un fallo suelto fabricaba los siguientes.** Eso explica por qué cada corrida caía
+en un sitio distinto: el residuo cambiaba de sitio.
+
+Y no era nuevo: `08-formularios-gestion` ya llevaba escrito el síntoma ---«si una
+tanda anterior se cortó antes de restaurar, el valor ya era 72»--- y lo habían
+parcheado eligiendo un valor distinto del actual. El síntoma esquivado, el
+mecanismo intacto.
+
+#### El arreglo
+
+Restauración en `finally`, y **por la API en vez de por la pantalla**: si lo que
+falló fue la pantalla, volver a pulsar «Guardar» no restauraría nada. En las dos
+pruebas que lo hacían al final; la tercera que toca ajustes globales
+---`21-organizacion-registro`--- ya limpiaba **al empezar**, que es aún mejor, y no
+se ha tocado. El patrón de `try/finally` tampoco es nuevo: `36-interfaz-traducida`
+ya lo usaba para el idioma de la empresa.
+
+**Comprobado forzando el fallo**: con la aserción cambiada a un valor imposible, la
+prueba cae y el ajuste **queda restaurado igualmente**.
+
+Esto no explica el fallo *original* de cada corrida ---sigue sin causa, y sigue
+abierto--- pero sí por qué se multiplicaba. Con la propagación cortada, un rojo
+vuelve a ser un dato de una prueba y no de las diez siguientes.
 
 ### Vuelta 96 --- Doce botones que se llamaban igual (26/08)
 

@@ -26,26 +26,34 @@ test.describe('Cuánto aguanta abierta una jornada', () => {
     expect(antes, 'la API no sirve el campo').toBeDefined()
     await expect(campo).toHaveValue(String(antes))
 
-    // 26: lo que necesita una guardia de veinticuatro con margen para fichar
-    // la salida con calma.
-    await campo.fill('26')
-    await expect(page.getByRole('alert').filter({ hasText: 'Sin guardar' })).toContainText(
-      'Jornada abierta como mucho',
-    )
-    await page.getByRole('button', { name: /^Guardar/ }).click()
+    // **La restauración va en `finally`, y no al terminar.** Estaba al final del
+    // test, así que un fallo a mitad la saltaba y la empresa de demostración se
+    // quedaba con el tope cambiado --- medido: apareció en 26 después de una
+    // corrida rota, y con eso rompía a las pruebas de Ajustes de las corridas
+    // siguientes. Un fallo suelto se propagaba a los demás.
+    try {
+      // 26: lo que necesita una guardia de veinticuatro con margen para fichar
+      // la salida con calma.
+      await campo.fill('26')
+      await expect(page.getByRole('alert').filter({ hasText: 'Sin guardar' })).toContainText(
+        'Jornada abierta como mucho',
+      )
+      await page.getByRole('button', { name: /^Guardar/ }).click()
 
-    await expect
-      .poll(async () => (await api(page, '/working-time-rules/')).body.max_open_hours, {
-        message: 'la pantalla decía que guardaba y el backend seguía con lo de antes',
+      await expect
+        .poll(async () => (await api(page, '/working-time-rules/')).body.max_open_hours, {
+          message: 'la pantalla decía que guardaba y el backend seguía con lo de antes',
+        })
+        .toBe(26)
+    } finally {
+      // Se deja como estaba: la base de desarrollo es compartida y una prueba
+      // que cambia una regla de la empresa y no la devuelve rompe a las
+      // siguientes. Por la API y no por la pantalla: si lo que falló fue la
+      // pantalla, volver a pulsar «Guardar» no restauraría nada.
+      await api(page, '/working-time-rules/', {
+        method: 'PATCH',
+        body: { max_open_hours: antes },
       })
-      .toBe(26)
-
-    // Se deja como estaba: la base de desarrollo es compartida y una prueba que
-    // cambia una regla de la empresa y no la devuelve rompe a las siguientes.
-    await campo.fill(String(antes))
-    await page.getByRole('button', { name: /^Guardar/ }).click()
-    await expect
-      .poll(async () => (await api(page, '/working-time-rules/')).body.max_open_hours)
-      .toBe(antes)
+    }
   })
 })

@@ -2655,3 +2655,35 @@ conclusión.
 escribirla, con el mismo rigor que un hallazgo del producto. Si el número no la
 sostiene, lo honesto es «no sé por qué» más los datos que descartan lo que ya se
 ha mirado.
+
+## 179. Restaurar al final del test no restaura cuando el test falla
+
+Dos pruebas cambiaban un ajuste **de la empresa entera** y lo devolvían a su valor
+en la última línea. Cuando fallaban a mitad, la última línea no se ejecutaba y la
+empresa de demostración se quedaba con el ajuste cambiado --- apareció con el tope
+de jornada abierta en 26 en vez de 16, residuo de una corrida rota horas antes,
+rompiendo a las pruebas de Ajustes de las corridas siguientes.
+
+Así, **un fallo suelto fabrica los siguientes**, y cada corrida parece caer en un
+sitio distinto sin motivo.
+
+**Regla**: lo que una prueba cambia fuera de sí misma se devuelve en `finally`, no
+al terminar. Y **por la API**, no repitiendo el gesto en la pantalla: si lo que
+falló fue la pantalla, volver a pulsar «Guardar» tampoco va a funcionar. Mejor aún
+si además se limpia **al empezar**, que es lo único que sobrevive a que alguien
+mate el proceso.
+
+## 180. Un comentario que describe el síntoma señala el mecanismo sin arreglarlo
+
+`08-formularios-gestion` llevaba escrito: «si una tanda anterior se cortó antes de
+restaurar, el valor ya era 72, no había nada que guardar y el botón se quedaba
+desactivado». Alguien lo sufrió, lo entendió bien, y lo resolvió **eligiendo un
+valor distinto del actual**.
+
+El síntoma desapareció de esa prueba y el mecanismo siguió: el ajuste seguía
+quedándose sucio y rompiendo a otras.
+
+**Regla**: un comentario que empieza «si una tanda anterior...» o «como a veces
+pasa que...» está describiendo un mecanismo, no una peculiaridad de esa prueba.
+Antes de esquivarlo ahí, preguntarse a quién más alcanza --- y si la respuesta es
+«a cualquiera que use este recurso compartido», el arreglo va en el mecanismo.

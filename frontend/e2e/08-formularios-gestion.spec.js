@@ -171,19 +171,28 @@ test.describe('Ajustes de la empresa', () => {
     // habilitara algo que no tenía por qué habilitarse.
     const otro = original === '72' ? '73' : '72'
 
-    await page.getByLabel('Horas extra al año').fill(otro)
-    await botonGuardar(page).click()
-    await expect(guardado(page)).toBeVisible()
+    // Y la restauración en `finally`, que es lo que faltaba: elegir un valor
+    // distinto del actual esquiva el síntoma pero deja el mecanismo intacto, y
+    // el ajuste cambiado sigue rompiendo a las demás pruebas de esta pantalla.
+    try {
+      await page.getByLabel('Horas extra al año').fill(otro)
+      await botonGuardar(page).click()
+      await expect(guardado(page)).toBeVisible()
 
-    await page.reload()
-    await expect(page.getByLabel('Horas extra al año')).toHaveValue(otro)
-
-    // Se deja como estaba. Los ajustes son de la empresa entera y esta base la
-    // comparten las demás pruebas: dejar el tope en 72 h cambia lo que ve la
-    // de horas extra, y una prueba que estropea a otra no vale.
-    await page.getByLabel('Horas extra al año').fill(original)
-    await botonGuardar(page).click()
-    await expect(guardado(page)).toBeVisible()
+      await page.reload()
+      await expect(page.getByLabel('Horas extra al año')).toHaveValue(otro)
+    } finally {
+      // Se deja como estaba. Los ajustes son de la empresa entera y esta base la
+      // comparten las demás pruebas: dejar el tope en 72 h cambia lo que ve la
+      // de horas extra, y una prueba que estropea a otra no vale.
+      //
+      // Por la API: si lo que falló fue la pantalla, volver a pulsar «Guardar»
+      // no restauraría nada.
+      await api(page, '/working-time-rules/', {
+        method: 'PATCH',
+        body: { annual_overtime_hours: Number(original) },
+      })
+    }
 
     expect(ruido()).toEqual([])
   })
