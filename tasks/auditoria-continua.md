@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 89 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 90 · Vueltas seguidas sin hallazgos: **1**
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -75,6 +75,7 @@ vuelve a una limpia.
 | El texto que escribe la persona (Unicode) | limpia | 26/08 v87 | **un motivo que en pantalla dice otra cosa** que en el registro |
 | Dos pestañas del mismo navegador | limpia | 26/08 v88 | **tener dos abiertas costaba una sesión cada cuarto de hora** |
 | El volumen (200 personas, un año) | limpia | 26/08 v89 | el tope está calibrado; **pero todo rechazo del informe salía como 5 bytes** |
+| Lo que las tandas dejan detrás | limpia | 26/08 v90 | — **sin hallazgo**; la suite limpia bien y el sedimento es histórico |
 
 ### Ley
 
@@ -132,6 +133,13 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 
 ## Hallazgos abiertos
+
+- **La demo acumula sedimento entre sesiones.** (v90) 533 personas donde la
+  semilla monta catorce, 452 correcciones, 413 turnos. No es un fallo ---el
+  producto no borra a propósito y la suite da de baja lo que crea--- pero hace que
+  dos mediciones separadas en el tiempo no sean comparables. `seed_demo --reset`
+  lo arregla; **no se ejecuta desde una vuelta de auditoría** porque borra datos
+  de la base de desarrollo. **Para Francisco**, entre sesiones.
 
 - **`DELETE` de un departamento con responsables contesta 409; `PATCH` con
   `managers` vacío llega al mismo estado y contesta 200.** (v86) Desde la vuelta
@@ -252,6 +260,64 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 90 --- Lo que las tandas dejan detrás (26/08)
+
+**Segunda vuelta sin hallazgo.** Contador: 0 → **1**.
+
+La lente salió de un dato que apareció limpiando la vuelta anterior: la empresa de
+demostración tenía **533 personas** cuando la semilla monta catorce. Si cada tanda
+deja gente detrás, ninguna medición es comparable con la siguiente ---y eso
+explicaría la lentitud y los recuentos que bailaron durante el día.
+
+#### Lo que resultó ser
+
+| | |
+|---|---|
+| personas en la demo | 533 |
+| de ellas, **activas** | 24 |
+| creadas hoy por las tandas | 209 |
+| de esas, activas al terminar | **0** |
+
+**La suite limpia bien.** Da de baja lo que crea, y las 209 de hoy quedaron todas
+retiradas. Lo que no puede hacer es borrarlas, porque el producto **no borra a
+propósito**: `perform_destroy` desactiva para que los fichajes sobrevivan, que es
+lo correcto para un registro de jornada. Así que el sedimento es inevitable, no un
+descuido.
+
+Las cuatro de prueba que sí quedaron activas son del **14 de agosto**, de antes de
+que la limpieza se arreglara. Sedimento histórico, no una fuga viva.
+
+#### Y las colas acumuladas, que parecían lo gordo
+
+452 correcciones, 193 ausencias y 413 turnos acumulados. De las correcciones,
+**209 en `AWAITING_EMPLOYEE`**: asientos esperando la conformidad de la persona.
+
+Eso llevaba a una pregunta de ley buena ---¿puede una corrección quedarse
+esperando para siempre?--- y la respuesta ya está en el producto:
+
+- El art. 4.b **no exige** que la persona conteste: «el silencio o la negativa no
+  detienen a la empresa, obligan al registro a llevar las dos versiones». El
+  camino existe y se usa: hay 87 en `DISPUTED`, aplicadas con la discrepancia
+  registrada.
+- La persona ve las suyas en su resumen, y quien administra ve el contador de las
+  que esperan, con el comentario que dice por qué cuenta: «se pueden retirar o
+  aplicar, y hasta entonces cuentan».
+
+Así que no hay limbo silencioso. Está mirado y decidido.
+
+#### Lo que sí queda dicho, y no se ha hecho
+
+`python manage.py seed_demo --reset` **ya existe** y devuelve la demo a su estado
+de catorce personas. No se ha ejecutado a propósito: borraría 509 personas y 452
+correcciones de la base de desarrollo, y eso lo decide su dueño, no una vuelta de
+auditoría.
+
+**Conviene hacerlo entre sesiones**, y anotarlo aquí es el punto: sin eso, dos
+mediciones de rendimiento separadas por unos días no son comparables, y las
+pruebas que cuentan filas se vuelven frágiles solas.
+
+Sin cambios de código en esta vuelta. Las dos suites siguen en verde.
 
 ### Vuelta 89 --- Cinco bytes que decían «error» (26/08)
 

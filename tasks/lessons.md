@@ -2369,3 +2369,29 @@ petición del proceso: conexiones, cachés y catálogos aún sin cargar.
 quedarse con la segunda. Una sola medición sobre un proceso recién arrancado
 exagera, y un número exagerado en un cuaderno se convierte después en una
 decisión mal fundada.
+
+## 159. «Da de baja» y «borra» no son lo mismo, y una suite no puede limpiar lo que el producto conserva
+
+La demo tenía 533 personas donde la semilla monta catorce, y parecía que las
+pruebas no limpiaban. Limpian: de las 209 creadas hoy, **ninguna** quedó activa.
+Lo que no pueden es borrarlas, porque `perform_destroy` **desactiva** ---para que
+los fichajes sobrevivan, que es lo correcto en un registro de jornada.
+
+Estuve a punto de anotar como fallo de la suite algo que era una decisión buena
+del producto.
+
+**Regla**: antes de acusar a la limpieza de una suite, comprobar qué hace de
+verdad el borrado de ese recurso. Si el producto conserva por diseño, el sedimento
+es el precio y lo que hace falta es un reinicio de la semilla entre sesiones, no
+más limpieza en las pruebas. Y contar **activas**, no filas.
+
+## 160. Un dato acumulado dice cuándo se arregló algo
+
+Las cuatro personas de prueba que seguían activas eran todas del **14 de agosto**;
+las 209 de hoy estaban todas retiradas. Esa fecha no era ruido: marcaba el día en
+que la limpieza empezó a funcionar.
+
+**Regla**: cuando aparece sedimento en una base de desarrollo, mirar la **fecha**
+de cada resto antes de tratarlo como un problema vivo. Un residuo antiguo con
+nada reciente detrás es la prueba de que aquello ya se arregló --- y ahorra
+arreglar dos veces lo mismo.
