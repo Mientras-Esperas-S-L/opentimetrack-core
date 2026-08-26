@@ -126,6 +126,24 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Hallazgos abiertos
 
+- **Las dependencias son la superficie que la auditoría no ha mirado en 38
+  vueltas.** Salió sola: el push del 26/08 devolvió el enlace a Dependabot del
+  repositorio, y había **34 alertas abiertas**.
+
+  Miradas, son **una**: las treinta y cuatro son el mismo paquete ---`pypdf`, de
+  ámbito `development`--- con avisos acumulados por estar en 6.1.3. Actualizado a
+  6.14.2 y suite en verde. Ni una de las 34 afecta a producción: `pypdf` no
+  aparece en ningún módulo del producto, solo en las pruebas que leen el PDF que
+  genera ReportLab.
+
+  Lo que queda abierto es el **hueco de método**, no el paquete: nadie mira las
+  alertas de dependencias, y no hay nada en el bucle que lo haga. `opentimetrack-
+  cloud` además las tiene **desactivadas** ---razonable mientras solo lleve
+  documentación, y hay que acordarse el día que lleve código---. Pendiente decidir
+  si esto entra en la auditoría como lente periódica o se resuelve con alertas
+  fuera de ella.
+
+
 - **`record_retention_years` no borra nada.** El ajuste existe, tiene su valor
   por defecto de cuatro años, se valida contra el suelo del art. 34.9 ---no deja
   bajar de cuatro--- se publica en la API y lleva un `help_text` explicando la

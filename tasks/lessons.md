@@ -2032,3 +2032,19 @@ fallo aparecerá lejos de aquí.
 consume esa ventana y comprueba que cada consumidor decide **qué reporta** por su
 cuenta. Ampliar la lectura es barato; ampliar sin comprobarlo convierte un arreglo
 en ruido en cinco sitios a la vez.
+
+## 136. Treinta y cuatro alertas de seguridad pueden ser un paquete
+
+El push devolvió el enlace de Dependabot del repositorio: 34 alertas abiertas, dos
+de gravedad alta. Agrupadas por paquete, las treinta y cuatro eran **el mismo**:
+`pypdf` en 6.1.3, y todas de ámbito `development`.
+
+Leer «34 alertas» y leer «una dependencia desactualizada» llevan a dos reacciones
+distintas, y solo la segunda es cierta. Es la misma regla que ya estaba escrita
+para las pruebas ---«muchos fallos a la vez no son muchos fallos»--- aplicada a un
+panel de seguridad.
+
+**Regla**: ante un recuento de alertas, agrúpalo por paquete y por ámbito **antes**
+de mirar la gravedad. El número que importa es cuántas dependencias hay que tocar
+y cuántas de ellas llegan a producción; el total de avisos solo mide cuánto tiempo
+llevan sin actualizarse.
