@@ -2966,3 +2966,49 @@ una sola, quedaba descartado y la causa tenía que estar dentro de esa corrida.
 **dice**. Que liste los elementos con su marca de origen, y no solo su número,
 es lo que convierte «algo dejó basura» en «esta corrida, y por tanto la causa es
 de aquí dentro».
+
+## 197. Media corrección esconde el resto mejor que el fallo original
+
+`/shifts/today/` preguntaba por `date.today()`, la fecha UTC del contenedor.
+Alguien lo vio, lo cambió por `local_today(request.user)` y dejó el porqué
+escrito: «*their today*: `date.today()` es la fecha UTC del contenedor, que es
+ayer para toda España entre medianoche y la una».
+
+Todo cierto, y la mitad del problema. El huso quedó bien; la **unidad**, no. La
+unidad no es el día natural sino la jornada, que es con lo que mide el Estatuto
+---y el propio repositorio tiene un módulo, `apps/punches/workday.py`, que lo
+explica con sus artículos---. Quien entra a las 22:00 y sale a las 06:00 sigue en
+la jornada de ayer, y a la una de la madrugada esta vista contestaba por la de
+hoy. Medido:
+
+    /punches/today/   state=WORKING       worked=6398s
+    /shifts/today/    state=NOT_STARTED   worked_minutes=0
+
+La misma persona, el mismo instante, las dos pintando la misma pantalla.
+
+Lo que hace esto difícil de encontrar no es el código: es el **comentario**. Un
+`date.today()` pelado se caza con `grep`. Un `local_today` con tres líneas
+explicando la medianoche se lee y se pasa de largo, porque parece el sitio donde
+alguien ya pensó en esto.
+
+**Regla**: al arreglar un fallo de fecha, pregunta las dos cosas por separado
+---**qué reloj** y **qué unidad**---, porque se arreglan por separado y la
+primera tapa a la segunda. Y al auditar: un comentario que explica un arreglo
+parcial es de los sitios donde más tiempo sobrevive un fallo, justo porque
+tranquiliza.
+
+## 198. Hay comprobaciones que solo se pueden hacer a cierta hora
+
+El fallo de arriba se encontró a la una de la madrugada, y no por casualidad: es
+la única franja en la que existe. Lo mismo pasó con la prueba del PDF de la
+vuelta anterior, que llevaba semanas en verde y cayó a las 00:10.
+
+**Regla**: cuando se trabaje pasada la medianoche, aprovecharlo. Correr las dos
+suites enteras dentro de la franja, y mirar el producto ---no solo las pruebas---
+preguntándose qué día dice ser. A las once de la mañana esa comprobación no se
+puede hacer, y ninguna cantidad de repasos la sustituye.
+
+**Y el corolario para las pruebas nuevas**: congelar el tiempo. `freezegun` ya
+está en el proyecto y se usa con el patrón `freeze_time("...22:30:00")  # 00:30
+en Madrid`. Una prueba que solo dice la verdad de madrugada es lo que dejó pasar
+esto durante meses.

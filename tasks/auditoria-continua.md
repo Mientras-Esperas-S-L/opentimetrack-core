@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 104 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 105 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -328,6 +328,61 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 105 --- Las dos mitades de la pantalla, a la una de la madrugada (27/08)
+
+Lente elegida por el reloj: **el producto a esta hora**. La vuelta anterior había
+dejado escrito que hay comprobaciones que solo se pueden hacer de madrugada, y a
+la una de la mañana la ocasión estaba puesta.
+
+El backend contesta bien lo básico ---`/shifts/today/` y `/overview/` decían el 27
+cuando en UTC era el 26---, así que la pregunta se afinó: **el turno de noche**,
+que en este dominio ---limpieza, seguridad, sanidad--- es de todos los días.
+
+#### Lo que se encontró
+
+`apps/punches/workday.py` existe para esto y lo explica con sus artículos: la
+unidad no es el día natural sino **la jornada**, y la jornada entera cuenta en el
+día en que empieza ---las nueve horas del art. 34.3, las doce de descanso entre
+jornadas, el día y medio del art. 37.1, todo se mide así---. Lo usan el informe,
+las horas extra y `/punches/today/`.
+
+**`/shifts/today/` no.** Preguntaba por `local_today`, el día natural. Y las dos
+pintan la misma pantalla de fichar. Medido, con una entrada real de las 23:10 y
+la sonda a la una de la madrugada:
+
+    /punches/today/   state=WORKING       worked=6398s
+    /shifts/today/    state=NOT_STARTED   worked_minutes=0
+
+La misma persona, el mismo instante: **está trabajando desde hace hora y tres
+cuartos y no ha empezado**. Es literalmente el fallo que `punches/services.py`
+dice haber arreglado ---«a las tres de la mañana un turno de noche veía "sin
+empezar" en su propia pantalla mientras estaba trabajando»--- sobreviviendo en el
+endpoint hermano.
+
+#### Por qué llevaba ahí tanto tiempo
+
+Porque **ya lo habían arreglado a medias**, y eso lo esconde mejor que el fallo
+original. La vista preguntaba antes por `date.today()`; alguien lo vio, lo cambió
+por `local_today` y dejó tres líneas explicando la medianoche. El huso quedó
+bien; la unidad, no. Un `date.today()` pelado se caza con `grep`; un `local_today`
+con un comentario sobre la medianoche se lee y se pasa de largo, porque parece el
+sitio donde alguien ya pensó en esto.
+
+#### Qué se ha hecho
+
+- `/shifts/today/` pregunta por `current_workday`. Comprobado en caliente: pasa a
+  decir `day=2026-08-26`, 107 minutos y `WORKING`, que es lo mismo que dice la
+  otra mitad.
+- `test_las_dos_pantallas_dicen_lo_mismo.py`, **con el tiempo congelado**: una
+  prueba que solo dijera la verdad entre medianoche y las dos es justamente lo
+  que dejó pasar esto. Comprueba que las dos concuerdan a la una de la madrugada
+  y que el caso corriente de las diez de la mañana sigue bien. Con el arreglo
+  revertido, falla.
+- Repasados los **siete usos de `local_today`**: los otros seis son correctos
+  ---la fecha de cabecera del conector, el fin de contrato, si una ausencia
+  bloquea hoy, el consumo de permisos y los dos que son el propio respaldo de
+  `current_workday`---. Van por día natural porque su pregunta es de día natural.
 
 ### Vuelta 104 --- El trabajo que solo corría en la mitad de los despliegues (27/08)
 

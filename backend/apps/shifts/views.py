@@ -21,7 +21,6 @@ from apps import legal
 from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.audit.trail import StructureTrail
-from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import (
     IsAuthenticatedInTenant,
@@ -541,14 +540,34 @@ class ShiftViewSet(viewsets.ModelViewSet):
     @extend_schema(responses={200: dict})
     @action(detail=False, methods=["get"], url_path="today")
     def today(self, request):
-        """Expected against recorded, for the caller, today."""
+        """Lo esperado contra lo registrado, para quien pregunta, en su jornada.
+
+        **Su jornada, no su día natural.** Esto llegó a `local_today` viniendo de
+        `date.today()`, que daba la fecha UTC del contenedor; quedaba a medio
+        camino, porque el día natural tampoco es la unidad. Quien entra a las
+        22:00 y sale a las 06:00 sigue en la jornada de ayer, y a la una de la
+        madrugada esta vista contestaba por la de hoy: **medido, decía
+        `NOT_STARTED` y cero minutos mientras `/punches/today/` decía `WORKING`
+        y una hora y tres cuartos** ---la misma persona, el mismo instante, las
+        dos pintando la misma pantalla---.
+
+        Es literalmente el fallo que `punches/services.py` dice haber arreglado
+        ---«a las tres de la mañana un turno de noche veía "sin empezar" en su
+        propia pantalla mientras estaba trabajando»--- sobreviviendo en el
+        endpoint hermano. El porqué de la jornada como unidad, con sus artículos,
+        está en `apps.punches.workday`.
+        """
+        from apps.punches.services import max_open_hours
+        from apps.punches.workday import current_workday
+
         return Response(
             expected_vs_worked(
                 employee=request.user,
                 company=request.user.tenant,
-                # Their today: date.today() is the container's UTC date, which
-                # is yesterday for all of Spain between midnight and 01:00.
-                day=local_today(request.user),
+                day=current_workday(
+                    request.user,
+                    max_open_hours=max_open_hours(request.user, request.user.tenant),
+                ),
             )
         )
 
