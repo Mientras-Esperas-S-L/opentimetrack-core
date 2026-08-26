@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 98 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 99 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -84,6 +84,7 @@ vuelve a una limpia.
 | Lo que la prueba de accesibilidad no miraba | limpia | 26/08 v96 | **doce «Asignar» idénticos** en una pantalla fuera de su lista |
 | Por qué la tanda falla en un sitio distinto cada vez | limpia | 26/08 v97 | **un fallo dejaba un ajuste de empresa cambiado** y rompía a los siguientes |
 | Fallos parciales (qué queda a medias) | limpia | 26/08 v98 | **4.391 justificantes huérfanos**: sustituir uno dejaba el anterior en disco |
+| Lo que crece sin techo | limpia | 26/08 v99 | **la lista negra de testigos no la purgaba nadie**: 53 % ya caducados |
 
 ### Ley
 
@@ -295,6 +296,48 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 99 --- Lo que crece y nadie recoge (26/08)
+
+La lente sale directa de la lección de la vuelta anterior: **contar es más rápido
+que forzar**. Aplicada en general --- ¿qué tablas crecen sin que nada las recoja?
+
+#### El recuento
+
+| tabla | filas |
+|---|---|
+| `audit_auditlog` | 19.513 |
+| `token_blacklist_outstandingtoken` | **3.322** |
+| `token_blacklist_blacklistedtoken` | **2.348** |
+| `punches_punch` | 1.410 |
+
+Y frente a eso, **una sola purga programada**: `purge_security_metadata`, a las
+3:30. El planificador tiene exactamente dos trabajos, y ninguno toca los testigos.
+
+#### El hallazgo
+
+La rotación de testigos está activada ---y con razón, es lo que impide reutilizar
+un refresco robado--- así que **cada renovación deja dos filas**: el nuevo
+registrado y el viejo en la lista negra. Con un acceso de quince minutos son unas
+treinta por persona y jornada.
+
+De los 3.322 registrados, **1.769 estaban ya caducados**: el 53 %, y el más
+antiguo de dos semanas atrás. En una empresa de doscientas personas eso son del
+orden de **dos millones de filas al año**, creciendo para siempre.
+
+Y no son filas cualesquiera: cada una dice **de quién** era la sesión y cuándo
+empezó. Guardarlas sin plazo es exactamente lo que el propio producto ya razona en
+`purge_security_metadata` para los metadatos de red --- «conservar un dato porque
+algún día pueda ser útil no es una base» (art. 5.1.e).
+
+`flushexpiredtokens` viene con simplejwt **hecho**. Lo que faltaba era llamarlo:
+es el patrón de la auditoría entera, la pieza existe y nadie la conecta.
+
+Programado a las 4:00, separado de la otra purga para que los registros se lean
+bien cuando una tarde de más. Con prueba de que **no echa a nadie de su sesión**:
+un testigo vigente sigue sirviendo para renovar después de purgar.
+
+3 pruebas nuevas (1.141 en el backend).
 
 ### Vuelta 98 --- Cuatro mil justificantes sin dueño (26/08)
 

@@ -83,6 +83,10 @@ def test_with_celery_beat_schedules_both_jobs(settings):
     assert sender.scheduled == [
         "recordatorios de fichaje",
         "purga de metadatos de seguridad",
+        # La tercera faltaba, y sin ella la lista negra de testigos crece sin
+        # techo: con la rotación activada cada renovación deja dos filas, y cada
+        # una dice de quién era la sesión.
+        "purga de testigos caducados",
     ]
 
 

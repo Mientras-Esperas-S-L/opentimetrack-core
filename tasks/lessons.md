@@ -2714,3 +2714,19 @@ equivocado.
 **Regla**: al proteger los ficheros de un modelo hay que cubrir los dos caminos, y
 el de la sustitución va en `pre_save` comparando el nombre anterior con el nuevo.
 Solo ese campo, solo cuando cambia, y en `on_commit` como el otro.
+
+## 183. Una rotación de credenciales sin purga es una tabla que crece para siempre
+
+`ROTATE_REFRESH_TOKENS` deja dos filas por renovación: la nueva registrada y la
+vieja en la lista negra. Con accesos de quince minutos son treinta por persona y
+jornada, unos dos millones al año en una empresa mediana. Nadie las recogía: el
+planificador tenía dos trabajos y ninguno era `flushexpiredtokens`, que simplejwt
+trae hecho.
+
+El detalle que lo convierte en algo más que espacio en disco: cada fila dice **de
+quién** era la sesión y cuándo empezó.
+
+**Regla**: al activar rotación o lista negra de credenciales, programar su purga en
+el mismo cambio. Y al revisar un sistema, contar las tablas que crecen y
+compararlas con la lista de trabajos programados --- lo que no aparezca en esa
+lista no se recoge nunca.

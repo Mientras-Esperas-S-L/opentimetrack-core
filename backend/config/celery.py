@@ -56,6 +56,14 @@ def register_periodic_jobs(sender, **kwargs):
         purge_security_metadata.s(),
         name="purga de metadatos de seguridad",
     )
+    # A las cuatro y no a las tres y media: dos purgas a la vez sobre la misma
+    # base no se estorban, pero repartirlas deja los registros legibles cuando
+    # una tarda de más.
+    sender.add_periodic_task(
+        crontab(hour=4, minute=0),
+        flush_expired_tokens.s(),
+        name="purga de testigos caducados",
+    )
 
 
 @app.task(name="punches.send_reminders")
@@ -65,6 +73,30 @@ def send_punch_reminders() -> int:
     from django.core.management import call_command
 
     return call_command("send_punch_reminders")
+
+
+@app.task(name="users.flush_expired_tokens")
+def flush_expired_tokens() -> None:
+    """Tira los testigos de sesión que ya caducaron.
+
+    Faltaba, y crecía sin techo. La rotación está activada, así que cada
+    renovación ---una cada cuarto de hora por persona que trabaja--- deja un
+    testigo registrado y otro en la lista negra. En la base de desarrollo eran ya
+    **3.322 registrados, 1.769 de ellos caducados**, el más antiguo de dos semanas
+    atrás; en una empresa de doscientas personas son del orden de dos millones de
+    filas al año.
+
+    Y no son filas cualesquiera: cada una dice **de quién** era la sesión y cuándo
+    empezó. Guardar eso sin plazo es lo mismo que ya razona
+    `purge_security_metadata` para los metadatos de red --- conservar un dato
+    porque algún día pueda ser útil no es una base (art. 5.1.e).
+
+    `flushexpiredtokens` lo trae simplejwt hecho: solo faltaba llamarlo. No toca
+    los vigentes, así que no echa a nadie de su sesión.
+    """
+    from django.core.management import call_command
+
+    call_command("flushexpiredtokens")
 
 
 @app.task(name="punches.purge_security_metadata")
