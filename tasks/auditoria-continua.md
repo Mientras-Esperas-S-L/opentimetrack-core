@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 87 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 88 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -73,6 +73,7 @@ vuelve a una limpia.
 | El borde del año (Nochevieja a caballo) | limpia | 26/08 v85 | **un 500 por una regla del modelo**; las vacaciones a caballo no salían en el año siguiente |
 | Lo que las vueltas anteriores dejaron desfasado | limpia | 26/08 v86 | **una corrección que no podía resolver nadie**; dos textos que decían lo contrario de lo que pasa |
 | El texto que escribe la persona (Unicode) | limpia | 26/08 v87 | **un motivo que en pantalla dice otra cosa** que en el registro |
+| Dos pestañas del mismo navegador | limpia | 26/08 v88 | **tener dos abiertas costaba una sesión cada cuarto de hora** |
 
 ### Ley
 
@@ -250,6 +251,60 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 88 --- Dos pestañas abiertas, una a la calle (26/08)
+
+La lente: **dos pestañas del mismo navegador**, que es como se trabaja de verdad
+---el cuadrante en una y los fichajes en otra.
+
+#### El hallazgo
+
+El acceso dura quince minutos y el refresco **rota**: al usarlo, el viejo va a la
+lista negra. Dentro de una pestaña eso ya estaba resuelto, y con un comentario que
+explica por qué ---cinco peticiones caducadas comparten una sola renovación,
+«refrescar cinco veces con rotación activada invalidaría los tokens de las otras
+cuatro».
+
+Pero `renewing` es una variable de módulo, y **cada pestaña tiene la suya**. Las
+dos leen el mismo refresco de `localStorage`, así que era una carrera con
+perdedor:
+
+| | |
+|---|---|
+| pestaña A refresca | **200**, y el refresco viejo a la lista negra |
+| pestaña B, con el mismo | **409 `session_expired`** |
+
+Y `session_expired` está en la lista de rechazos definitivos ---con razón, porque
+este servidor no contesta 401 a un refresco malo---, así que a B le borraba los
+tokens y la mandaba al formulario de entrada. **Tener dos pestañas abiertas
+costaba una sesión cada cuarto de hora.**
+
+#### El arreglo: el canal ya existía
+
+No hacía falta `BroadcastChannel` ni un cerrojo entre pestañas. El propio
+`localStorage` es el canal: si al fallar el refresco lo que hay guardado **ya no
+es lo que se envió**, alguien lo rotó mientras la petición estaba en vuelo. Eso
+no es una sesión caducada, es una carrera, y se reintenta una vez con el nuevo.
+
+#### La prueba pasaba sin el arreglo, y eso era el verdadero problema
+
+Primer intento: dos pestañas, invalidar el acceso en las dos, pedir a la vez.
+Verde con el arreglo... y **verde también sin él**.
+
+El motivo es justo lo que hace que el arreglo funcione: las dos pestañas comparten
+`localStorage` de verdad. Si la segunda lee el refresco *después* de que la
+primera lo haya guardado, coge el nuevo y no hay carrera que probar. `Promise.all`
+no garantiza que colisionen.
+
+Se fuerza el orden retrasando el refresco de la segunda con `page.route`: lee el
+viejo, se queda en vuelo mientras la primera lo rota, y llega con uno que ya está
+en la lista negra. Sin el arreglo falla con `token_not_valid`; con él, 200.
+
+Y antes de eso hubo otro tropiezo: la prueba usaba la sesión compartida del
+arranque, cuyo refresco **ya lo habían rotado otras pruebas**. Eso no medía la
+carrera, medía un refresco caducado. Ahora entra ella misma.
+
+1 prueba de navegador (272 → 273).
 
 ### Vuelta 87 --- Un motivo que se lee al revés (26/08)
 

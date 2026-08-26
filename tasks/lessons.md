@@ -2298,3 +2298,33 @@ modelo: `EmployeeSerializer` es un `ModelSerializer` y arrastra los
 entra ese dato. Si es un `Serializer` a mano, hay que declararlo también ahí --- y
 si el servicio crea con `objects.create()`, ese es el **único** sitio donde se va
 a ejecutar.
+
+## 154. Una prueba de carrera que no fuerza el orden no prueba nada
+
+La prueba de las dos pestañas pasaba con el arreglo **y sin él**. `Promise.all`
+sobre dos `page.evaluate` no hace que las dos peticiones colisionen: una acaba
+antes, y como las pestañas comparten `localStorage` de verdad, la segunda leía ya
+el token renovado por la primera. Es decir, la prueba montaba el caso bueno y
+nunca el malo.
+
+Se arregla haciendo el orden **determinista**, no probable: retrasar una de las
+dos con `page.route` para que lea antes y llegue después.
+
+**Regla**: en una prueba de carrera, el orden se impone, no se espera. Y la
+comprobación obligatoria es la de siempre ---quitar el arreglo y verla roja---,
+que aquí fue lo único que reveló que la prueba estaba vacía. Con quince rondas se
+cazó la carrera de los fichajes (lección de la vuelta 79); con un retraso
+explícito, esta.
+
+## 155. Las sesiones compartidas del arranque tienen el refresco ya rotado
+
+La prueba de las dos pestañas empezó fallando con `token_not_valid` en la
+**primera**, lo que no tenía sentido. El motivo: usaba `storageState` de las
+sesiones del arranque, y con la rotación activada ese refresco ya lo habían usado
+otras pruebas de la tanda. No medía la carrera, medía un refresco en la lista
+negra.
+
+**Regla**: una prueba que va a **usar** el refresco ---renovar, cerrar sesión,
+revocar--- no puede partir de una sesión compartida. Entra ella misma. Las
+compartidas sirven para llegar a una pantalla, no para ejercitar el ciclo de vida
+del testigo.

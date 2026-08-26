@@ -90,11 +90,38 @@ let renewing = null
 
 const renew = () => {
   if (!renewing) {
+    // El que había al empezar. Hace falta guardarlo para poder distinguir
+    // después «mi refresco ya no vale» de «otra pestaña lo cambió».
+    const usado = tokens.refresh
     renewing = api
-      .post('/auth/refresh/', { refresh: tokens.refresh })
+      .post('/auth/refresh/', { refresh: usado })
       .then(({ data }) => {
         tokens.save(data)
         return data.access
+      })
+      .catch((fallo) => {
+        // La promesa compartida de arriba evita que cinco peticiones de **esta**
+        // pestaña refresquen cinco veces. Entre pestañas no sirve: cada una
+        // tiene su propio módulo y su propio `renewing`, y las dos leen el mismo
+        // refresco de `localStorage`.
+        //
+        // Con la rotación activada eso es una carrera con perdedor: la primera
+        // rota el refresco y manda el viejo a la lista negra, y a la segunda le
+        // contestan que su sesión caducó ---cuando lo que ha pasado es que su
+        // compañera acaba de renovarla. Tener dos pestañas abiertas echaba de
+        // una de ellas cada vez que caducaba el acceso.
+        //
+        // El canal para enterarse ya existe y es el mismo `localStorage`: si lo
+        // que hay ahí ahora no es lo que se envió, alguien lo cambió mientras
+        // esta petición estaba en vuelo. Un solo reintento, con el nuevo.
+        const ahora = tokens.refresh
+        if (ahora && ahora !== usado) {
+          return api.post('/auth/refresh/', { refresh: ahora }).then(({ data }) => {
+            tokens.save(data)
+            return data.access
+          })
+        }
+        throw fallo
       })
       .finally(() => {
         renewing = null
