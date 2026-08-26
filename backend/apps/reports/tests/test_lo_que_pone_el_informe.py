@@ -82,9 +82,22 @@ def _informe(empresa, persona):
 
 
 def _texto_del_pdf(informe) -> str:
-    return "\n".join(
+    """El texto del informe, con los saltos de línea colapsados.
+
+    Las celdas con texto de longitud libre van en un `Paragraph`, que **parte en
+    renglones**: una frase corta puede salir cortada por la mitad y buscar la
+    cadena literal fallaría sin que falte nada.
+
+    Ojo con lo que esto mide y lo que no: que una frase aparezca aquí solo dice
+    que está en el flujo de contenido del fichero, no que caiga dentro de los
+    márgenes de la hoja. Hasta la vuelta 66 la discrepancia del art. 4.b se
+    salía de la página por la derecha y estas comprobaciones pasaban igual. La
+    geometría se mide en `test_el_pdf_se_lee_en_la_hoja.py`.
+    """
+    crudo = "\n".join(
         p.extract_text() or "" for p in PdfReader(io.BytesIO(render_pdf(informe))).pages
     )
+    return " ".join(crudo.split())
 
 
 @pytest.mark.django_db

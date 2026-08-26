@@ -9,7 +9,6 @@ Who gets to read it is the interesting part, and there are two answers.
 
 from __future__ import annotations
 
-import csv
 import io
 import json
 
@@ -22,6 +21,7 @@ from rest_framework.decorators import action
 
 from apps.audit.models import AuditAction, AuditLog
 from apps.audit.services import record
+from apps.common.csv_export import EscritorSeguro
 from apps.common.filters import LocalDayRangeFilter
 from apps.common.permissions import IsAuthenticatedInTenant
 
@@ -121,7 +121,9 @@ class AuditLogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
         #
         # Excel y LibreOffice abren las dos formas igual de bien, así que no se
         # pierde nada. Reportado el 13/08/2026.
-        writer = csv.writer(buffer, delimiter=";", lineterminator="\n")
+        # Seguro: `actor_label` lo pone el conector en una integración, y la
+        # nota y los cambios llevan texto de fuera. Ver `apps/common/csv_export.py`.
+        writer = EscritorSeguro(buffer, delimiter=";", lineterminator="\n")
         # Sin columna de dirección: el rastro ya no guarda IP. Ver el comentario
         # del modelo --- chocaba con la inmutabilidad de la tabla, que hacía
         # imposible borrarla ni para atender una solicitud del art. 17.

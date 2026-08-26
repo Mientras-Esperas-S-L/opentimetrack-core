@@ -9,7 +9,6 @@ it can be shown not to have been altered afterwards.
 
 from __future__ import annotations
 
-import csv
 import hashlib
 import io
 from dataclasses import dataclass, field
@@ -18,7 +17,8 @@ from datetime import date, datetime, time, timedelta
 from django.utils.translation import gettext as _
 
 from apps.absences.models import Absence, AbsenceStatus
-from apps.punches.models import HoursNature, Punch, PunchInterval, PunchType
+from apps.common.csv_export import EscritorSeguro
+from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource, PunchType
 
 
 @dataclass
@@ -43,6 +43,14 @@ class DayRow:
     complementary_seconds: int = 0
     remote: bool = False
     onsite: bool = False
+
+    # Quién registró, y **cuál** de los tres, no «no fue la persona». El modelo
+    # los agrupa en `was_delegated` con razón ---para él los tres significan lo
+    # mismo--- pero el informe tiene que separarlos: una aplicación fichando en
+    # nombre de alguien, la empresa corrigiendo tras el art. 4.b y una
+    # importación son tres pruebas distintas.
+    corrected: bool = False
+    imported: bool = False
     arrangements: list[str] = field(default_factory=list)
 
     # Art. 4.b. A day whose entries were changed over the person's objection,
@@ -194,10 +202,30 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
 
     de_quien = assign_workdays(punches, employee, max_open_hours=rules.max_open_hours)
     by_day: dict[date, list[Punch]] = {}
+    #: Los días en los que algún fichaje ya no cuadra con su propio sello.
+    #:
+    #: El sello se calculaba y se guardaba desde el principio, y **nadie lo
+    #: comprobaba**: `verify_hash` solo se llamaba desde las pruebas. Medido:
+    #: adelantando dos horas un fichaje por SQL directo ---la API no deja editar
+    #: uno, las correcciones crean otro y anulan el viejo--- el informe pasaba
+    #: de ocho horas a diez y se generaba sin una queja.
+    #:
+    #: Se comprueba aquí porque este es el momento en que el registro sale del
+    #: sistema como prueba. La huella del documento no sirve para esto: certifica
+    #: que el papel entregado es el que se generó, no que lo que se generó
+    #: refleje lo que se fichó. Y sale gratis: los fichajes ya están cargados y
+    #: es un sha256 por fila.
+    #:
+    #: Lo que se hace es **decirlo**, no ocultar la fila ni corregir la cifra.
+    #: Quien lee el informe tiene que poder ver que ese día no es de fiar; el
+    #: dato es el que hay en el registro y no nos toca a nosotros enmendarlo.
+    sellos_rotos: set[date] = set()
     for punch in punches:
         jornada = de_quien.get(punch.id)
         if jornada is not None and date_from <= jornada <= date_to:
             by_day.setdefault(jornada, []).append(punch)
+            if not punch.verify_hash():
+                sellos_rotos.add(jornada)
 
     rows: list[DayRow] = []
     total = 0
@@ -241,7 +269,11 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
         open_by_interval: dict = {}
 
         for event in events:
-            if event.was_delegated:
+            if event.source == PunchSource.ADMIN:
+                row.corrected = True
+            elif event.source == PunchSource.IMPORT:
+                row.imported = True
+            elif event.was_delegated:
                 row.delegated = True
             local = event.timestamp.astimezone(zone)
             kind = event.interval
@@ -273,10 +305,22 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
             else:
                 row.standby.append((start, None))
 
-        # A break happens inside the day, so its time comes off the total. Art.
-        # 34.4 ET makes it working time only when the agreement says so, and
-        # that answer lives in the company's rules, not here.
-        row.seconds = max(row.seconds - row.break_seconds, 0)
+        # A break happens inside the day, so its time comes off the total ---
+        # unless the agreement says otherwise. Art. 34.4 ET makes it working
+        # time only when the agreement or the contract says so, and that answer
+        # lives in the company's rules, not here. `build_day_status` asks the
+        # same question, and the two must agree: the figure on screen and the
+        # figure in the document are the same day.
+        if not rules.break_counts_as_work:
+            row.seconds = max(row.seconds - row.break_seconds, 0)
+
+        # Al final, y con las horas ya sumadas: la cifra es la que hay en el
+        # registro. Lo que se añade es el aviso de que ese día no cuadra con su
+        # propio sello, para que quien lo lee no lo dé por bueno.
+        if current in sellos_rotos:
+            row.incidents.append(
+                _("an entry no longer matches its integrity seal: it was altered outside the app")
+            )
 
         total += row.seconds
         month = current.strftime("%Y-%m")
@@ -348,8 +392,11 @@ def _fingerprint(data: ReportData) -> str:
             parts.append(f"{row.day}|A|{row.absence}")
         if row.disputed:
             parts.append(f"{row.day}|D|{'|'.join(row.dissent)}")
-        if row.incidents or row.delegated:
-            parts.append(f"{row.day}|N|{len(row.incidents)}|{int(row.delegated)}")
+        if row.incidents or row.delegated or row.corrected or row.imported:
+            parts.append(
+                f"{row.day}|N|{len(row.incidents)}"
+                f"|{int(row.delegated)}{int(row.corrected)}{int(row.imported)}"
+            )
 
     parts.append(str(data.total_seconds))
     parts.append(f"{data.total_break_seconds}|{data.total_standby_seconds}")
@@ -380,7 +427,14 @@ def day_notes(row: DayRow) -> str:
     """
     notes = list(row.incidents)
     if row.delegated:
-        notes.append(_("recorded by an application"))
+        notes.append(_("recorded by an application on the person's behalf"))
+    if row.corrected:
+        # Un día con una corrección aplicada lleva marca, que es lo que el manual
+        # promete ---«los días con eventos corregidos van señalados»--- y lo que
+        # antes solo pasaba si además había discrepancia.
+        notes.append(_("corrected by the company"))
+    if row.imported:
+        notes.append(_("imported from another system"))
     if row.disputed:
         # Primero la marca, y después lo que dijo la persona. Sin la marca, un
         # día sin texto de discrepancia ---puede no haberlo escrito--- se leería
@@ -401,7 +455,9 @@ def to_csv(data: ReportData) -> str:
     #
     # Excel y LibreOffice abren las dos formas igual de bien, así que no se
     # pierde nada. Reportado el 13/08/2026.
-    writer = csv.writer(buffer, delimiter=";", lineterminator="\n")
+    # Seguro: el nombre de una persona y la discrepancia del art. 4.b son texto
+    # libre, y este fichero se abre en Excel. Ver `apps/common/csv_export.py`.
+    writer = EscritorSeguro(buffer, delimiter=";", lineterminator="\n")
 
     writer.writerow([_("Working time record")])
     writer.writerow([_("Company"), data.company_name, _("Tax number"), data.company_tax_id])

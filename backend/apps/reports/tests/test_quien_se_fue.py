@@ -94,8 +94,14 @@ def test_el_zip_de_la_empresa_trae_a_quien_se_fue(empresa, gente):
     assert respuesta.status_code == 200
     dentro = zipfile.ZipFile(io.BytesIO(respuesta.content)).namelist()
 
-    assert "García_Ana.pdf" in dentro
-    assert "Peña_Bruno.pdf" in dentro, f"falta quien se fue; solo hay {dentro}"
+    # Por quién está, no por el nombre exacto: la entrada lleva además el
+    # identificador de cada persona ---dos que se llamen igual se pisaban--- y
+    # los acentos se transliteran, porque el nombre es una ruta para quien
+    # descomprime. Ver `apps/common/descargas.py`.
+    assert any(n.startswith("Garcia_Ana_") for n in dentro), dentro
+    assert any(n.startswith("Pena_Bruno_") for n in dentro), (
+        f"falta quien se fue; solo hay {dentro}"
+    )
 
 
 @pytest.mark.django_db
@@ -128,7 +134,7 @@ def test_quien_se_fue_sin_fichajes_en_el_periodo_no_se_cuela(empresa, gente):
         respuesta = descargar(gente["jefa"])
 
     dentro = zipfile.ZipFile(io.BytesIO(respuesta.content)).namelist()
-    assert "Historia_Vieja.pdf" not in dentro, dentro
+    assert not any(n.startswith("Historia_Vieja_") for n in dentro), dentro
 
 
 @pytest.mark.django_db
@@ -145,7 +151,7 @@ def test_un_periodo_anterior_a_su_entrada_no_lo_trae(empresa, gente):
 
     assert respuesta.status_code == 200
     dentro = zipfile.ZipFile(io.BytesIO(respuesta.content)).namelist()
-    assert "Peña_Bruno.pdf" not in dentro, dentro
+    assert not any(n.startswith("Pena_Bruno_") for n in dentro), dentro
 
 
 @pytest.mark.django_db
@@ -157,7 +163,8 @@ def test_el_conteo_de_personas_no_cambia_para_quien_sigue(empresa, gente):
     dentro = zipfile.ZipFile(io.BytesIO(respuesta.content)).namelist()
     assert len(dentro) == len(set(dentro))
     # La jefa está de alta y va también: administrar es trabajar.
-    assert sorted(dentro) == ["García_Ana.pdf", "Marín_Luisa.pdf", "Peña_Bruno.pdf"], dentro
+    quienes = sorted(n.rsplit("_", 1)[0] for n in dentro)
+    assert quienes == ["Garcia_Ana", "Marin_Luisa", "Pena_Bruno"], dentro
 
 
 @pytest.mark.django_db
@@ -176,4 +183,4 @@ def test_por_departamento_se_comporta_igual(empresa, gente):
 
     assert respuesta.status_code == 200
     dentro = zipfile.ZipFile(io.BytesIO(respuesta.content)).namelist()
-    assert "Peña_Bruno.pdf" in dentro, dentro
+    assert any(n.startswith("Pena_Bruno_") for n in dentro), dentro

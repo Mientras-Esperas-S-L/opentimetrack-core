@@ -8,6 +8,7 @@ verification hash on the page, and nothing that could be mistaken for decoration
 from __future__ import annotations
 
 import io
+from xml.sax.saxutils import escape
 
 from django.utils.translation import gettext as _
 from reportlab.lib import colors
@@ -28,6 +29,27 @@ INK = colors.HexColor("#1a1a1a")
 MUTED = colors.HexColor("#5f6b66")
 RULE = colors.HexColor("#c8d0cc")
 BAND = colors.HexColor("#f0f3f1")
+
+
+def _celda(texto, estilo):
+    """Texto de una celda que puede ser largo, en un párrafo que sí se parte.
+
+    Una cadena suelta dentro de una `Table` de ReportLab **no salta de línea**:
+    se dibuja seguida y sale de la hoja por la derecha. Medido con la
+    discrepancia del art. 4.b, que admite mil caracteres: en un A4 de 595 puntos
+    de ancho, el texto llegaba hasta el 5102. Estaba en el fichero ---un
+    extractor lo encuentra entero--- y no se leía en el documento, que es donde
+    tiene que leerse.
+
+    Eso vacía justamente lo que el artículo protege: el registro puede llevar la
+    versión de la persona **y la de la empresa**, y quien lo lee tiene que poder
+    compararlas.
+
+    El texto se escapa porque `Paragraph` interpreta marcado: un apellido con un
+    `<` rompería el documento entero, y `<font color=white>` escondería texto en
+    una prueba legal.
+    """
+    return Paragraph(escape(str(texto or "")), estilo)
 
 
 def render_pdf(data: ReportData) -> bytes:
@@ -54,6 +76,9 @@ def render_pdf(data: ReportData) -> bytes:
         spaceAfter=2,
     )
     small = ParagraphStyle("small", parent=sheet["Normal"], fontSize=8, leading=11, textColor=MUTED)
+    # Para las celdas que llevan texto de longitud libre: el nombre de una
+    # persona (100 caracteres), el de la empresa, y las observaciones del día.
+    celda = ParagraphStyle("celda", parent=sheet["Normal"], fontSize=8, leading=10, textColor=INK)
 
     story = [
         Paragraph(_("Working time record"), h1),
@@ -65,10 +90,10 @@ def render_pdf(data: ReportData) -> bytes:
 
     header = Table(
         [
-            [_("Company"), data.company_name, _("Tax number"), data.company_tax_id],
+            [_("Company"), _celda(data.company_name, celda), _("Tax number"), data.company_tax_id],
             [
                 _("Employee"),
-                data.employee_name,
+                _celda(data.employee_name, celda),
                 _("Staff number"),
                 data.employee_staff_number or "—",
             ],
@@ -106,7 +131,7 @@ def render_pdf(data: ReportData) -> bytes:
         notes = day_notes(row)
 
         if row.absence and not row.entries:
-            rows.append([f"{row.day:%d/%m}", "—", "—", "00:00", row.absence])
+            rows.append([f"{row.day:%d/%m}", "—", "—", "00:00", _celda(row.absence, celda)])
             continue
 
         for index, (entry, exit_) in enumerate(row.entries):
@@ -116,7 +141,7 @@ def render_pdf(data: ReportData) -> bytes:
                     entry.strftime("%H:%M"),
                     exit_.strftime("%H:%M") if exit_ else "—",
                     _format_hours(row.seconds) if index == 0 else "",
-                    notes if index == 0 else "",
+                    _celda(notes, celda) if index == 0 else "",
                 ]
             )
 

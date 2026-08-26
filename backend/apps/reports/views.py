@@ -19,6 +19,7 @@ from rest_framework.views import APIView
 
 from apps.audit.models import AuditAction
 from apps.audit.services import record
+from apps.common.descargas import nombre_de_persona, nombre_seguro
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import IsAuthenticatedInTenant
 from apps.common.scope import people_queryset, person_in_scope
@@ -110,7 +111,11 @@ class ReportView(APIView):
             employee=employee, company=company, date_from=date_from, date_to=date_to
         )
 
-        stem = f"working-time_{employee.last_name}_{date_from}_{date_to}".replace(" ", "-")
+        # Saneado: el apellido es texto libre y va dentro de unas comillas sin
+        # escapar en la cabecera. Ver `apps/common/descargas.py`.
+        stem = nombre_seguro(
+            f"working-time_{employee.last_name}_{date_from}_{date_to}", respaldo="working-time"
+        )
 
         if request.query_params.get("format", "pdf").lower() == "csv":
             response = HttpResponse(to_csv(data), content_type="text/csv; charset=utf-8")
@@ -208,7 +213,9 @@ class ReportView(APIView):
                     note=f"hash {data.fingerprint[:16]}",
                 )
 
-        stem = f"working-time_{company.tax_id}_{date_from}_{date_to}"
+        stem = nombre_seguro(
+            f"working-time_{company.tax_id}_{date_from}_{date_to}", respaldo="working-time"
+        )
 
         if request.query_params.get("format", "pdf").lower() == "csv":
             body = "\n".join(to_csv(data) for data in reports)
@@ -219,8 +226,10 @@ class ReportView(APIView):
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as bundle:
             for person, data in zip(people, reports, strict=True):
-                name = f"{person.last_name}_{person.first_name}".replace(" ", "-") or str(person.id)
-                bundle.writestr(f"{name}.pdf", render_pdf(data))
+                # El nombre de la entrada es una **ruta** para quien
+                # descomprime, y lleva su identificador para que dos personas
+                # que se llamen igual no se pisen. Ver `apps/common/descargas.py`.
+                bundle.writestr(nombre_de_persona(person, extension="pdf"), render_pdf(data))
 
         response = HttpResponse(buffer.getvalue(), content_type="application/zip")
         response["Content-Disposition"] = f'attachment; filename="{stem}.zip"'
@@ -382,7 +391,9 @@ def _employee_for(request):
 
 
 def _as_file(data, wanted, employee, period):
-    stem = f"resumen_{employee.last_name}_{period.first}_{period.last}".replace(" ", "-")
+    stem = nombre_seguro(
+        f"resumen_{employee.last_name}_{period.first}_{period.last}", respaldo="resumen"
+    )
     if wanted == "csv":
         response = HttpResponse(to_csv(data), content_type="text/csv; charset=utf-8")
         response["Content-Disposition"] = f'attachment; filename="{stem}.csv"'
