@@ -2328,3 +2328,44 @@ negra.
 revocar--- no puede partir de una sesión compartida. Entra ella misma. Las
 compartidas sirven para llegar a una pantalla, no para ejercitar el ciclo de vida
 del testigo.
+
+## 156. Un endpoint que solo declara renderers binarios no puede contar sus errores
+
+`PDFRenderer` y `CSVRenderer` devolvían `data` tal cual, que es correcto para el
+documento. Siendo los únicos declarados, también renderizaban los errores, y
+`HttpResponse` con un diccionario recorre sus claves: **cinco bytes, `error`**.
+
+Cuatro mensajes cuidadosamente escritos ---el tope de doscientas personas, el
+rango invertido, «nadie trabajó en ese periodo», el formato de fecha--- no habían
+llegado nunca a nadie. Y con `Content-Type: application/pdf`, así que el cliente
+tampoco podía parsearlos.
+
+**Regla**: en un endpoint que devuelve un fichero, probar también sus rechazos, y
+mirar los **bytes** del cuerpo, no solo el código. Un renderer binario tiene que
+distinguir el documento de un cuerpo de error y sacar el segundo como JSON,
+corrigiendo el tipo de contenido.
+
+## 157. Un parámetro que se ignora es peor que uno que se rechaza
+
+El periodo se pide como `date_from`/`date_to` en los informes y como `from`/`to`
+en las horas extra, del mismo producto. Lo desconocido se ignora, así que pedir un
+año con el nombre del vecino devolvía **200 con los últimos treinta días**. Me
+pasó a mí midiendo, y creí durante un rato que el informe anual de una empresa
+tardaba una centésima de segundo.
+
+**Regla**: cuando dos endpoints nombran distinto el mismo concepto, el que recibe
+el nombre ajeno tiene que **fallar**, no responder otra cosa. Se rechaza en el
+sitio común ---aquí el `FilterSet` del que heredan los listados--- y no endpoint
+por endpoint. Y si un docstring nombra los parámetros, comprobar que dice los que
+el código declara: este decía `from`/`to` desde antes del cambio de nombre.
+
+## 158. La primera medición incluye el calentamiento
+
+«200 personas, un mes, CSV» dio **9,69 s** la primera vez y **2,51 s** la
+siguiente, con el mismo código y los mismos datos. La diferencia era la primera
+petición del proceso: conexiones, cachés y catálogos aún sin cargar.
+
+**Regla**: para un número que se va a escribir en el cuaderno, medir dos veces y
+quedarse con la segunda. Una sola medición sobre un proceso recién arrancado
+exagera, y un número exagerado en un cuaderno se convierte después en una
+decisión mal fundada.

@@ -22,6 +22,7 @@ from apps.audit.services import record
 from apps.common.descargas import nombre_de_persona, nombre_seguro
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import IsAuthenticatedInTenant
+from apps.common.rangos import refuse_wrong_period_names
 from apps.common.scope import people_queryset, person_in_scope
 from apps.punches.models import Punch
 from apps.reports.payroll import PayrollSummary, period_containing
@@ -83,6 +84,7 @@ class ReportView(APIView):
         company = request.user.tenant
         today = timezone.localdate()
 
+        refuse_wrong_period_names(request.query_params)
         date_from = _parse_date(request.query_params.get("date_from"), today - timedelta(days=30))
         date_to = _parse_date(request.query_params.get("date_to"), today)
         if date_to < date_from:

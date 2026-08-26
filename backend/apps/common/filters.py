@@ -22,6 +22,8 @@ import django_filters
 from django.utils.translation import gettext_lazy as _
 from rest_framework.filters import SearchFilter
 
+from apps.common.rangos import refuse_wrong_period_names
+
 
 def _sin_acentos(texto: str) -> str:
     """«García» → «Garcia». La misma cuenta que hace el navegador.
@@ -34,19 +36,36 @@ def _sin_acentos(texto: str) -> str:
 
 
 class LocalDayRangeFilter(django_filters.FilterSet):
-    """Adds `from` and `to`, inclusive, read in the company's own zone.
+    """Adds `date_from` and `date_to`, inclusive, read in the company's own zone.
 
     Subclasses set `day_field` to the `DateTimeField` being sliced.
 
     Both ends are inclusive because that is what somebody typing two dates into
-    a form means. `to=2026-08-31` includes everything on the 31st, which is why
-    the upper bound is the start of the next day and the comparison is `lt`.
+    a form means. `date_to=2026-08-31` includes everything on the 31st, which is
+    why the upper bound is the start of the next day and the comparison is `lt`.
+
+    **The names, and why they are refused rather than aliased.** This docstring
+    said `from` and `to` for a long time while the fields were called
+    `date_from` and `date_to` --- and one endpoint, the overtime one, does read
+    `from`/`to` by hand. So the wrong name is not a hypothetical slip: it is what
+    another part of this same API asks for.
+
+    django-filter ignores what it does not know, so asking for a year with
+    `from`/`to` came back **200 with the default period**. On a listing that is
+    an annoyance; on the working-time report it means handing over the record of
+    a period nobody asked for, which is what art. 34.9 is about. Refused here,
+    once, for every listing that inherits this.
     """
 
     day_field = "timestamp"
 
     date_from = django_filters.DateFilter(method="filter_from", label=_("from this day, inclusive"))
     date_to = django_filters.DateFilter(method="filter_to", label=_("to this day, inclusive"))
+
+    def __init__(self, data=None, *args, **kwargs):
+        if data is not None:
+            refuse_wrong_period_names(data)
+        super().__init__(data, *args, **kwargs)
 
     @property
     def _zone(self):

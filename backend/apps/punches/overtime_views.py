@@ -171,13 +171,17 @@ class OvertimeView(APIView):
         )
 
     def _window(self, request):
-        got_from = request.query_params.get("from")
-        got_to = request.query_params.get("to")
+        # El único endpoint que leía el periodo como `from`/`to`, cuando el resto
+        # de la API lo pide como `date_from`/`date_to`. Ese desajuste es lo que
+        # hacía que pedirlo con el nombre del vecino saliera 200 con otro
+        # periodo: aquí se aceptan los dos, y el canónico es el largo.
+        got_from = request.query_params.get("date_from") or request.query_params.get("from")
+        got_to = request.query_params.get("date_to") or request.query_params.get("to")
         if got_from and got_to:
             try:
                 return date.fromisoformat(got_from), date.fromisoformat(got_to)
             except ValueError as exc:
                 raise BusinessRuleError(
-                    code="bad_window", message="Give 'from' and 'to' as YYYY-MM-DD."
+                    code="bad_window", message="Give 'date_from' and 'date_to' as YYYY-MM-DD."
                 ) from exc
         return overtime_window()

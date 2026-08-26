@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 12:32+0000\n"
+"POT-Creation-Date: 2026-08-26 13:13+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -295,7 +295,7 @@ msgid "absences"
 msgstr ""
 
 #: apps/absences/models.py:402 apps/absences/services.py:307
-#: apps/reports/views.py:89 apps/shifts/views.py:306
+#: apps/reports/views.py:91 apps/shifts/views.py:306
 msgid "The end date cannot precede the start date."
 msgstr "A data final non pode ir antes da inicial."
 
@@ -502,7 +502,7 @@ msgid "Deleted"
 msgstr ""
 
 #: apps/absences/views.py:254 apps/absences/views.py:481
-#: apps/punches/correction_views.py:245 apps/reports/views.py:388
+#: apps/punches/correction_views.py:245 apps/reports/views.py:390
 msgid "That person is not in this company."
 msgstr "Esa persoa non pertence a esta empresa."
 
@@ -748,11 +748,11 @@ msgid_plural "Too many attempts. Try again in %(minutes)s minutes."
 msgstr[0] "Demasiados intentos. Volve probar en %(minutes)s minuto."
 msgstr[1] "Demasiados intentos. Volve probar en %(minutes)s minutos."
 
-#: apps/common/filters.py:48
+#: apps/common/filters.py:62
 msgid "from this day, inclusive"
 msgstr ""
 
-#: apps/common/filters.py:49
+#: apps/common/filters.py:63
 msgid "to this day, inclusive"
 msgstr ""
 
@@ -789,6 +789,14 @@ msgstr ""
 
 #: apps/common/permissions.py:106
 msgid "The application does not carry the required permission."
+msgstr ""
+
+#: apps/common/rangos.py:41
+#, python-format
+msgid ""
+"The period is asked for as «%(good)s» here. Written like this it would be "
+"ignored, and you would get the default period instead of the one you asked "
+"for."
 msgstr ""
 
 #: apps/common/tests/test_exceptions.py:194 apps/punches/services.py:376
@@ -1641,23 +1649,23 @@ msgstr "modificado sen a conformidade da persoa (art. 4.b)"
 msgid "Total"
 msgstr "Total"
 
-#: apps/reports/views.py:40
+#: apps/reports/views.py:41
 msgid "Dates must be written as YYYY-MM-DD."
 msgstr "As datas escríbense como AAAA-MM-DD."
 
-#: apps/reports/views.py:103 apps/reports/views.py:159
+#: apps/reports/views.py:105 apps/reports/views.py:161
 msgid "You may only request your own record."
 msgstr "Só podes pedir o teu propio rexistro."
 
-#: apps/reports/views.py:108
+#: apps/reports/views.py:110
 msgid "That person does not exist."
 msgstr "Esa persoa non existe."
 
-#: apps/reports/views.py:188
+#: apps/reports/views.py:190
 msgid "Nobody worked in that period."
 msgstr "Ninguén traballou nese período."
 
-#: apps/reports/views.py:193
+#: apps/reports/views.py:195
 #, python-format
 msgid ""
 "%(count)s people is over the %(limit)s this can produce in one request. "
@@ -1666,11 +1674,11 @@ msgstr ""
 "%(count)s persoas superan as %(limit)s que se poden xerar dunha vez. Acouta "
 "por departamento."
 
-#: apps/reports/views.py:330
+#: apps/reports/views.py:332
 msgid "Only a manager or an administrator generates the summaries."
 msgstr "Só un responsable ou a administración xera os resumos."
 
-#: apps/reports/views.py:383
+#: apps/reports/views.py:385
 msgid "You may only ask for your own summary."
 msgstr "Só podes pedir o teu propio resumo."
 

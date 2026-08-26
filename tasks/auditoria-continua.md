@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 88 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 89 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -74,6 +74,7 @@ vuelve a una limpia.
 | Lo que las vueltas anteriores dejaron desfasado | limpia | 26/08 v86 | **una corrección que no podía resolver nadie**; dos textos que decían lo contrario de lo que pasa |
 | El texto que escribe la persona (Unicode) | limpia | 26/08 v87 | **un motivo que en pantalla dice otra cosa** que en el registro |
 | Dos pestañas del mismo navegador | limpia | 26/08 v88 | **tener dos abiertas costaba una sesión cada cuarto de hora** |
+| El volumen (200 personas, un año) | limpia | 26/08 v89 | el tope está calibrado; **pero todo rechazo del informe salía como 5 bytes** |
 
 ### Ley
 
@@ -251,6 +252,77 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 89 --- Cinco bytes que decían «error» (26/08)
+
+La lente: **el volumen.** La Inspección pidiendo un año de una empresa con
+plantilla, que es el cuarto perfil del cuaderno y no se había medido nunca con
+datos de verdad. Se sembraron **99.500 fichajes**: 200 personas por un año.
+
+#### El volumen sale limpio, y con números
+
+| petición | tiempo | consultas | tamaño |
+|---|---|---|---|
+| una persona, un año, CSV | 0,18 s | 11 | 29 KiB |
+| 200 personas, un mes, CSV | 2,5 s | 1005 | 0,5 MiB |
+| 200 personas, un año, CSV | 5,7 s | 1005 | 5,6 MiB |
+| 200 personas, un año, PDF | **15,7 s** | 1005 | 2,5 MiB |
+
+Hay un N+1 claro ---cinco consultas por persona, 1005 para doscientas--- pero
+**está acotado a propósito** y el comentario de `MAX_PEOPLE_PER_EXPORT = 200` da
+exactamente el razonamiento correcto: se genera de forma sincrónica y pasadas unas
+centenas la petición tarda más de lo que espera cualquier proxy inverso, así que
+negar con un número es mejor que un tiempo de espera agotado que parece que la
+función está rota.
+
+Y **el tope está calibrado**: en el peor caso que permite, 15,7 s, por debajo de
+los treinta de un proxy. No es un hallazgo, es una decisión medida.
+
+#### Pero al equivocarme con el nombre de un parámetro salió lo otro
+
+Medí «un año de la empresa» con `from`/`to` y estaba midiendo **treinta días**:
+0,3 KiB y menos consultas que el informe de una sola persona. Lo delató comparar
+con el caso conocido.
+
+Aquí el periodo se pide como `date_from`/`date_to`, y **`from`/`to` es como lo
+pide de verdad otro endpoint de este mismo producto**, el de horas extra. Así que
+no es un despiste hipotético. Lo desconocido se ignora, así que salía **200 con
+el periodo por defecto**: entregar el registro de un periodo que nadie pidió,
+cuando lo que el art. 34.9 pone a disposición de la Inspección es el del periodo
+que se pidió.
+
+Y el docstring de `LocalDayRangeFilter` llevaba escrito «Adds `from` and `to`»
+mientras sus campos se llamaban `date_from`/`date_to`, que es de dónde venía la
+confusión.
+
+Rechazado en el filtro común, así que queda cubierto de una vez para todos los
+listados que lo heredan. Y horas extra acepta ahora los dos nombres.
+
+#### Y buscando el mensaje de ese error, el hallazgo de verdad
+
+No aparecía en ninguna parte. El cuerpo del 400 eran **cinco bytes: `error`**, con
+`Content-Type: application/pdf`.
+
+`PDFRenderer` y `CSVRenderer` entregan los bytes del documento tal cual ---lo
+correcto para una respuesta buena--- pero al ser los únicos declarados también
+renderizan los cuerpos de error, y pasarle un diccionario a `HttpResponse` hace
+que Django recorra sus claves. La única clave era `error`.
+
+De modo que **ningún rechazo de este endpoint llegó nunca a nadie**:
+
+- «201 personas pasan de las 200 que se pueden generar de una vez. Acota por
+  departamento» --- el mensaje que explica qué hacer con una plantilla grande, y
+  el único camino que el producto ofrece para ella.
+- «La fecha final no puede ir antes que la inicial».
+- «Nadie trabajó en ese periodo».
+- «Las fechas se escriben como AAAA-MM-DD».
+
+Todos escritos con cuidado. Todos invisibles. Es el patrón que más ha rendido en
+esta auditoría: la pieza está hecha y no llega.
+
+10 pruebas nuevas (1.110 en el backend), y una de ellas de lo que no se puede
+romper: el documento bueno sigue saliendo como bytes con su propio tipo, y el PDF
+sigue empezando por `%PDF-`.
 
 ### Vuelta 88 --- Dos pestañas abiertas, una a la calle (26/08)
 
