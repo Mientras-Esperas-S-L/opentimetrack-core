@@ -314,9 +314,22 @@ class AbsenceFilter(django_filters.FilterSet):
     años de antigüedad quiere el suyo, no una lista de sesenta filas. Pedirlo
     con un rango obligaría a escribir dos fechas y a saber cuándo empieza el
     periodo de la empresa.
+
+    Y va por **solape**, no por la fecha de inicio. Unas vacaciones del 28 de
+    diciembre al 5 de enero son nueve días de los que cinco caen en el año
+    siguiente; filtrando por `start_date__year` no salían al pedir ese año, así
+    que quien las estaba disfrutando no las encontraba en su propia lista. Una
+    ausencia sale en los dos años que toca, que es lo que de verdad ocurre ---el
+    saldo sí reparte los días entre uno y otro.
     """
 
-    year = django_filters.NumberFilter(field_name="start_date", lookup_expr="year")
+    year = django_filters.NumberFilter(method="_del_año")
+
+    def _del_año(self, queryset, name, value):
+        año = int(value)
+        return queryset.filter(
+            start_date__lte=date(año, 12, 31), end_date__gte=date(año, 1, 1)
+        )
 
     class Meta:
         model = Absence

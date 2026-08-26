@@ -2153,3 +2153,30 @@ y comprobar uno por uno si siguen siendo verdad. Un `grep` del concepto, no del
 código. Y si la respuesta depende de un estado que conoce el servidor, que la
 mande él: recalcularla en la pantalla crea una segunda copia de la regla que se
 quedará atrás en el siguiente cambio.
+
+## 144. `objects.create()` no pasa por `full_clean`, así que una sonda puede medir lo imposible
+
+Medí un doble cargo en el saldo de horas creando la ausencia con
+`Absence.objects.create(...)`. El modelo prohíbe ese estado en `full_clean`, y
+`create()` no lo llama: estaba midiendo algo que por la API no se puede crear.
+
+**Regla**: una sonda que monta datos con el ORM está saltándose las validaciones
+del modelo. Antes de dar por bueno un hallazgo montado así, crearlo **por el
+endpoint real**. Si el endpoint lo rechaza, el hallazgo era del ORM, no del
+producto --- y lo que hay que mirar entonces es con qué código lo rechaza.
+
+## 145. Cuando un arreglo se hace «aquí también», queda un mecanismo sin arreglar
+
+El serializer de ausencias replicaba a mano los validadores del justificante, con
+un comentario diciendo por qué: sin ellos, `full_clean` lanzaba la
+`ValidationError` de Django, DRF no la traducía y un fichero grande volvía como
+**500**. Arreglaron ese caso.
+
+El resto de reglas del modelo siguieron saliendo como traza durante todo ese
+tiempo, y una de ellas era una regla con un mensaje escrito y bueno que nadie
+llegó a ver nunca.
+
+**Regla**: cuando un arreglo consiste en repetir algo en el sitio donde falló,
+preguntarse cuál era el mecanismo que falló y si tiene más clientes. Un comentario
+que empieza «los mismos validadores que lleva el modelo, porque si no...» está
+describiendo un agujero general y tapando una de sus salidas.

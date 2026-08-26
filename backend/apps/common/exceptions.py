@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 
 from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
@@ -108,6 +109,20 @@ def api_exception_handler(exc, context):
         exc = exceptions.NotFound()
     elif isinstance(exc, PermissionDenied):
         exc = exceptions.PermissionDenied()
+    elif isinstance(exc, DjangoValidationError):
+        # `full_clean` lanza la de Django, que DRF no traduce: sin esto sale un
+        # 500 y el mensaje no llega nunca ---justo el que suele ser bueno,
+        # porque las reglas que no se pueden expresar campo a campo viven en el
+        # modelo. Pedir «parte de un día» repartida en cuatro contestaba una
+        # traza, teniendo escrito «Parte de un día es un día. Para varios días
+        # deja las horas vacías y cuentan enteros».
+        #
+        # Ya había pasado con el tamaño de un justificante, y entonces se tapó
+        # replicando los validadores en el serializer. Aquí queda resuelto para
+        # todas las reglas del modelo a la vez, que es donde tenía que estar.
+        exc = exceptions.ValidationError(
+            exc.message_dict if hasattr(exc, "message_dict") else exc.messages
+        )
 
     response = drf_exception_handler(exc, context)
 

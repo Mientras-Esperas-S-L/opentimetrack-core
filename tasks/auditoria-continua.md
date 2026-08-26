@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 84 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 85 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -70,6 +70,7 @@ vuelve a una limpia.
 | Importación de datos (festivos) | limpia | 13/08 v9 | **solo leía un país**; no comprobaba el fichero; el resumen contaba días que no escribía |
 | La matriz de permisos entera (51 rutas × 4 roles) | limpia | 26/08 v83 | — **sin hallazgo**; el barrido queda como prueba |
 | La persona que se mueve (cambios de departamento) | limpia | 26/08 v84 | **ceder un departamento ampliaba a quien lo cedía** a toda la plantilla |
+| El borde del año (Nochevieja a caballo) | limpia | 26/08 v85 | **un 500 por una regla del modelo**; las vacaciones a caballo no salían en el año siguiente |
 
 ### Ley
 
@@ -238,6 +239,74 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 85 --- La Nochevieja partida en dos (26/08)
+
+La lente: **el borde del año.** La vuelta 81 hizo la semana del borde del mes y el
+año es el hermano mayor: el saldo de vacaciones, el tope anual de horas extra
+(art. 35.2), el periodo de devengo y la semana ISO 53 viven todos ahí.
+
+#### Lo que salió limpio, y es la mitad del trabajo
+
+- **El saldo reparte bien.** Nueve días del 28/12 al 5/1 se cargan 4 contra un
+  año y 5 contra el otro, no nueve contra cada uno. `_days_within` recorta al
+  periodo.
+- **El tope anual de horas extra** va por año natural a propósito, y el
+  comentario lo dice: el periodo de las vacaciones puede ser otro y no se
+  mezclan.
+- **El periodo del saldo** es el año natural incluso cuando la empresa mueve su
+  año de vacaciones, y está argumentado: el art. 38 deja mover el año de
+  vacaciones y no dice nada del resto, así que aplicar el de abril-a-marzo a una
+  urgencia familiar sería inventárselo.
+
+#### Un hallazgo mío que era falso, y cómo se cayó
+
+Midiendo el saldo en horas salió **doble cargo**: 4 h de consulta médica se
+cobraban 4 en un año y 4 en el otro, 8 de un saldo de 20. En días recortaba y en
+horas no.
+
+Era falso: lo había montado con `Absence.objects.create`, que **no pasa por
+`full_clean`**, y el modelo prohíbe exactamente eso ---«Parte de un día es un día.
+Para varios días deja las horas vacías y cuentan enteros»---. Por la API no se
+puede crear. La sonda estaba midiendo un estado que el producto no permite.
+
+Es el sexto falso hallazgo de la auditoría y todos han caído por lo mismo:
+repetirlo por el camino real.
+
+#### Pero al repetirlo por el camino real apareció uno de verdad: un 500
+
+Pedir esa ausencia por la API no daba 400 con ese mensaje. Daba **500**.
+
+`full_clean` lanza la `ValidationError` de Django y DRF solo entiende la suya, así
+que la regla se perdía y salía una traza. El mensaje ---que es el bueno, porque
+explica qué hacer en su lugar--- no llegaba nunca.
+
+Lo llamativo es que **ya estaba avisado en el propio código**. El serializer
+lleva escrito que replicó a mano los validadores del justificante porque «un
+fichero demasiado grande volvía como un 500 en vez de un mensaje». Se arregló
+aquel caso y se dejó el mecanismo: cualquier otra regla del modelo seguía saliendo
+como traza.
+
+Arreglado donde ya se traducen `Http404` y `PermissionDenied`, en
+`api_exception_handler`. Vale para todas las reglas del modelo a la vez, las de
+hoy y las que se escriban.
+
+#### Y el segundo: las vacaciones que no salían en el año que se disfrutan
+
+`?year=` filtraba por `start_date__year`. Unas vacaciones del 28/12/2026 al
+5/1/2027 ---201, perfectamente normales--- **no aparecían al pedir 2027**, que es
+justo cuando la persona las está disfrutando y las busca.
+
+El docstring del filtro lo llama «el corte natural de las vacaciones», lo que
+hace peor que se le escape la única ausencia que cruza el corte. Ahora filtra por
+solape y sale en los dos años, con una prueba de que no se convierte en «sale
+siempre»: 2025 y 2028 siguen vacíos.
+
+Mismo patrón que la vuelta 81: un periodo se filtra por solape, nunca por uno de
+sus dos extremos.
+
+5 pruebas nuevas (1.085 en el backend). Comprobado que las dos que deben caer
+caen sin el arreglo.
 
 ### Vuelta 84 --- Ceder un departamento le daba la empresa entera (26/08)
 
