@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 102 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 103 · Vueltas seguidas sin hallazgos: 1
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -312,6 +312,55 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 103 --- Las advertencias del propio código, comprobadas (27/08) --- LIMPIA
+
+La lente sale de la 102, que salió de la 101: **si un comentario avisa de un mal
+uso, ese mal uso está en alguna parte**. Fue así como se encontraron los cinco
+catálogos cortados. La pregunta era si el filón seguía dando.
+
+Hay 76 advertencias en comentarios ---53 en el backend, 23 en el frontend---, así
+que se acotó a las verificables: las que dicen «esto solo vale para X» y las que
+narran un fallo pasado. Cinco ángulos, **los cinco limpios**:
+
+1. **Diez `queryFn` pasados «pelados»** a React Query, que los llama con su
+   propio contexto ---`{client, queryKey, signal}`--- y lo manda como parámetros
+   de consulta. El comentario que lo cuenta dice que «rompería el día que exista
+   un filtro que se llame como una de esas tres claves». Los diez apuntan a
+   getters con firma **sin parámetros**, así que el contexto se ignora. Sin caso.
+2. **Las protecciones de menores.** El aviso dice que sin `date_of_birth` no se
+   aplica ninguna. Las dos mitades están: el campo, en el formulario de personas;
+   y del otro lado `_check_under_eighteen`, el descanso semanal propio y la
+   prohibición de horas extra del art. 6.3.
+3. **Los diecisiete sitios que decidían quién ve a quién**, unificados en
+   `common/scope.py`. Cuatro vistas no lo usan, y las cuatro tienen su propia
+   regla y es la correcta: el rastro da la vista de empresa **solo** a
+   administración ---y deja fuera al responsable a propósito, porque es de quien
+   el rastro suele tener algo que decir---, las aplicaciones piden `IsAdmin`, las
+   suscripciones filtran por la propia persona y la clave pública es pública.
+4. **Los dos avisos que hablan de «la primera página»** ---la plantilla en
+   Informes y el nombre en los avisos del cuadrante--- describen fallos ya
+   arreglados, no vigentes.
+5. **`updated_at` con `update_fields`.** Se arregló en la raíz, en el `save()` de
+   la base. Queda el hueco de `queryset.update()`, que no pasa por ahí: hay
+   cuatro usos y ninguno toca campos que el conector sincronice
+   ---`last_used_at`, `last_sent_at` y la purga de IP---. Y los cuatro modelos
+   que no heredan de la base no los expone el conector.
+
+#### Por qué esta vuelta cuenta como limpia y no como floja
+
+Porque la lente está **calibrada**: el barrido de advertencias incluye el
+comentario de `rows()`, que es el que dio el hallazgo de la vuelta anterior. Una
+comprobación que no encuentra nada solo vale si se ha visto encontrar algo, y
+esta lo encontró ---ayer---.
+
+#### Anotado
+
+El aviso del punto 1 describe una bomba con la espoleta puesta: el día que
+alguien añada un parámetro a uno de esos ocho getters, la petición se irá con el
+contexto de React Query dentro y DRF lo ignorará en silencio. Se puede cerrar
+haciendo que `get()` rechace `client`, `queryKey` y `signal`. **No se hace ahora**
+---no hay ningún caso y el comentario ya lo advierte--- pero queda dicho.
 
 ### Vuelta 102 --- Los cinco catálogos que venían cortados a cincuenta (27/08)
 
