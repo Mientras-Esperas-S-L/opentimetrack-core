@@ -269,10 +269,15 @@ class AbsenceRequestSerializer(serializers.Serializer):
     start_date = serializers.DateField()
     end_date = serializers.DateField()
     reason = serializers.CharField(required=False, allow_blank=True, default="")
-    # The same two validators the model carries. Without them here the model's
-    # `full_clean` still refuses --- but as a Django ValidationError, which DRF
-    # does not translate, so a file that was too big came back as a 500 instead
-    # of a message saying how big the limit is.
+    # The same two validators the model carries. They went in when a file that
+    # was too big came back as a **500**: `full_clean` refused with a Django
+    # `ValidationError` and DRF did not translate it.
+    #
+    # That hole is closed at the source now --- `api_exception_handler` turns
+    # any of them into a 400 --- so these are no longer what stands between a
+    # big file and a traceback. They stay because validating here names the
+    # field, `justification`, and fails before the upload is read into a model
+    # at all.
     justification = serializers.FileField(
         required=False,
         allow_null=True,

@@ -636,21 +636,29 @@ class DepartmentViewSet(StructureTrail, viewsets.ModelViewSet):
         everything and lose a label. For the people **in charge of** it, it is
         the opposite, and that asymmetry is what made this easy to miss.
 
-        `visible_people` narrows a manager to the departments they were put in
-        charge of, and reads "in charge of nothing" as "nothing narrows them" ---
-        deliberately, so that a manager is not left seeing nobody on the day the
-        company signs up. Retiring the only department somebody managed lands
-        them in that same state by a different road, and the effect is the
-        opposite of prudent: measured on a live company, a manager went from
-        seeing 2 people to seeing all of them, and a supporting document
-        belonging to another department went from 404 to 200. That is a medical
-        certificate, art. 9 GDPR, reachable by somebody who never answered for
-        that person.
+        **The reason changed, and the refusal stayed.** When this was written,
+        `visible_people` read "in charge of nothing" as "nothing narrows them",
+        so retiring somebody's only department did the opposite of prudent:
+        measured on a live company, a manager went from seeing 2 people to
+        seeing all of them, and a medical certificate from another department
+        went from 404 to 200 --- art. 9 GDPR, reachable by somebody who never
+        answered for that person. Nobody had touched their permissions, and the
+        trail said "department deleted", not "she can now read the whole
+        company".
 
-        Nobody touched their permissions, and the audit trail says "department
-        deleted", not "she can now read the whole company". So it is refused
-        here: whoever reorganises has to move the managers first, which is a
-        decision somebody takes on purpose and which leaves its own trail.
+        That widening is closed at the source now: `visible_people` tells apart
+        *nothing has been decided here yet* from *it has been decided and you
+        run none of them*, so this road no longer leads anywhere dangerous.
+
+        What is left is the opposite consequence, and it is still worth
+        refusing over: those managers stop being able to read **anybody but
+        themselves**, which is not what somebody deleting a department is
+        trying to do to them. Moving them first is a decision taken on purpose
+        and leaves its own trail.
+
+        Note the asymmetry: `PATCH` with an empty `managers` list reaches the
+        same state and answers 200. Whether that should refuse too is a product
+        question, written down in the notebook rather than decided here.
         """
         managers = instance.managers.filter(is_active=True).count()
         if managers:
@@ -658,8 +666,8 @@ class DepartmentViewSet(StructureTrail, viewsets.ModelViewSet):
                 code="department_has_managers",
                 message=_(
                     "%(count)s people answer for this department. Move them first: "
-                    "leaving them in charge of nothing widens what they can read to "
-                    "the whole company."
+                    "leaving them in charge of nothing means they can no longer read "
+                    "anybody's record but their own."
                 )
                 % {"count": managers},
             )

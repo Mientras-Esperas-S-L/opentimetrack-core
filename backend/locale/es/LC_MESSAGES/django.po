@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 09:41+0000\n"
+"POT-Creation-Date: 2026-08-26 11:29+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -305,7 +305,7 @@ msgstr "ausencias"
 msgid "The end date cannot precede the start date."
 msgstr "La fecha final no puede ir antes que la inicial."
 
-#: apps/absences/models.py:407 apps/absences/views.py:304
+#: apps/absences/models.py:407 apps/absences/views.py:309
 msgid "Give both times, or neither: half of a range is not one."
 msgstr "Pon las dos horas o ninguna: media franja no es una franja."
 
@@ -491,7 +491,7 @@ msgid "the time it takes"
 msgstr "el tiempo indispensable"
 
 #: apps/absences/views.py:180 apps/shifts/views.py:203
-#: apps/tenants/views.py:181 apps/users/views.py:630 apps/users/views.py:692
+#: apps/tenants/views.py:181 apps/users/views.py:630 apps/users/views.py:700
 msgid "Added"
 msgstr "Añadido"
 
@@ -512,20 +512,20 @@ msgstr ""
 msgid "Deleted"
 msgstr "Eliminado"
 
-#: apps/absences/views.py:253 apps/absences/views.py:462
+#: apps/absences/views.py:253 apps/absences/views.py:480
 #: apps/punches/correction_views.py:238 apps/reports/views.py:388
 msgid "That person is not in this company."
 msgstr "Esa persona no pertenece a esta empresa."
 
-#: apps/absences/views.py:371
+#: apps/absences/views.py:389
 msgid "Leave can only be requested for yourself."
 msgstr "Solo puedes solicitar ausencias para ti."
 
-#: apps/absences/views.py:381
+#: apps/absences/views.py:399
 msgid "That leave type does not exist or is no longer in use."
 msgstr "Ese tipo de permiso no existe o ya no está en uso."
 
-#: apps/absences/views.py:392
+#: apps/absences/views.py:410
 msgid ""
 "This kind of leave is recorded by the company, not requested. Talk to "
 "whoever manages your working time."
@@ -533,11 +533,11 @@ msgstr ""
 "Este tipo de ausencia la registra la empresa, no se solicita. Habla con "
 "quien gestione tu jornada."
 
-#: apps/absences/views.py:559
+#: apps/absences/views.py:577
 msgid "You can only see your own balance."
 msgstr "Solo puedes consultar tu propio saldo."
 
-#: apps/absences/views.py:599 apps/shifts/views.py:263
+#: apps/absences/views.py:617 apps/shifts/views.py:263
 msgid "Give 'from' and 'to' as YYYY-MM-DD."
 msgstr "Indica 'from' y 'to' con el formato AAAA-MM-DD."
 
@@ -743,16 +743,16 @@ msgstr "Registro de actividad"
 msgid "Invalid credential."
 msgstr "Credencial no válida."
 
-#: apps/common/exceptions.py:91
+#: apps/common/exceptions.py:92
 msgid "Too many attempts. Wait a moment and try again."
 msgstr "Demasiados intentos. Espera un momento y vuelve a probar."
 
-#: apps/common/exceptions.py:93
+#: apps/common/exceptions.py:94
 #, python-format
 msgid "Too many attempts. Try again in %(seconds)s seconds."
 msgstr "Demasiados intentos. Vuelve a probar en %(seconds)s segundos."
 
-#: apps/common/exceptions.py:97
+#: apps/common/exceptions.py:98
 #, python-format
 msgid "Too many attempts. Try again in %(minutes)s minute."
 msgid_plural "Too many attempts. Try again in %(minutes)s minutes."
@@ -768,7 +768,7 @@ msgstr "desde este día, incluido"
 msgid "to this day, inclusive"
 msgstr "hasta este día, incluido"
 
-#: apps/common/four_eyes.py:65
+#: apps/common/four_eyes.py:100
 #, python-format
 msgid ""
 "You cannot resolve %(what)s of your own. Another manager or administrator "
@@ -3146,16 +3146,17 @@ msgstr "Se fue el %(day)s. Le quedan %(count)s turno(s) planificados después."
 msgid "Left on %(day)s."
 msgstr "Se fue el %(day)s."
 
-#: apps/users/views.py:660
+#: apps/users/views.py:668
 #, python-format
 msgid ""
 "%(count)s people answer for this department. Move them first: leaving them "
-"in charge of nothing widens what they can read to the whole company."
+"in charge of nothing means they can no longer read anybody's record but "
+"their own."
 msgstr ""
 "De este departamento responden %(count)s personas. Muévelas primero: al "
-"mando de nada, pasan a leer los datos de toda la empresa."
+"mando de nada, dejan de poder leer los datos de nadie más que los suyos."
 
-#: apps/users/views.py:708
+#: apps/users/views.py:716
 #, python-format
 msgid ""
 "%(count)s people work there. Move them first: without a workplace they lose "
@@ -3164,7 +3165,7 @@ msgstr ""
 "Ahí trabajan %(count)s personas. Muévelas primero: sin centro pierden sus "
 "festivos locales y su zona horaria."
 
-#: apps/users/views.py:763
+#: apps/users/views.py:771
 msgid "The link is not valid or has already been used."
 msgstr "El enlace no es válido o ya se ha usado."
 

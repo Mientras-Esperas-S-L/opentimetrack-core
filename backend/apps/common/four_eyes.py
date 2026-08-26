@@ -32,21 +32,56 @@ from django.utils.translation import gettext_lazy as _
 from apps.common.exceptions import BusinessRuleError
 
 
-def someone_else_could_decide(*, company, decider) -> bool:
-    """Is there another active manager or administrator in the company?
+def someone_else_could_decide(*, company, decider, subject=None) -> bool:
+    """Is there somebody else who could decide **this** case?
+
+    Not merely somebody else with the role. The question this answers is what
+    stands between a person and deciding their own case, so an affirmative that
+    names nobody able to act leaves the case with no way out at all.
+
+    That is what happened. The only administrator asked to correct one of her
+    own entries: refused, because a manager existed. The manager answered for
+    one department, the administrator belonged to none, so the correction came
+    back **404** to her --- 409 to the one person who could see it and 404 to
+    the one who was supposed to decide. An entry of the working-time record left
+    wrong with no way to fix it, which is art. 34.9, and a correction that could
+    not be processed at all, which is art. 4.b.
+
+    So the question is asked with the scope in hand:
+
+    - **An administrator** reads the whole company, so any other active one
+      counts.
+    - **A manager** counts only if `subject` is inside a department they answer
+      for --- or if the company turned scoping off, which puts every manager
+      back in reach of everybody.
+
+    `subject` is optional so older callers keep their meaning: without it the
+    question falls back to the decider themselves, who is the subject in every
+    self-decision this guards.
 
     `User.objects` spans every company --- people are not a TenantOwnedModel,
     because sign-in has to find them before the company is known --- so the
     filter by tenant here is not belt and braces: without it, somebody else's
     manager would count as a second pair of eyes.
     """
+    from apps.common.scope import can_see
     from apps.users.models import Role, User
 
-    return (
-        User.objects.filter(tenant=company, is_active=True, role__in=[Role.MANAGER, Role.ADMIN])
-        .exclude(pk=decider.pk)
-        .exists()
-    )
+    subject = subject if subject is not None else decider
+
+    others = User.objects.filter(tenant=company, is_active=True).exclude(pk=decider.pk)
+
+    # Cualquier otra administradora sirve: leen la empresa entera.
+    if others.filter(role=Role.ADMIN).exists():
+        return True
+
+    # Para las responsables la pregunta se le hace a `can_see`, y no se rehace
+    # aquí. Ya sabe de la empresa que apagó el acotado, del departamento que se
+    # dirige frente al que se pertenece, y de que mientras nadie lleve ninguno
+    # toda responsable lee a todo el mundo. Escribir esa regla por segunda vez
+    # fue el primer intento de arreglar esto, y se dejó fuera precisamente el
+    # último caso.
+    return any(can_see(otra, subject) for otra in others.filter(role=Role.MANAGER))
 
 
 def refuse_self_decision(*, subject, decider, company, what: str) -> bool:
@@ -58,7 +93,7 @@ def refuse_self_decision(*, subject, decider, company, what: str) -> bool:
     if subject.id != decider.id:
         return False
 
-    if someone_else_could_decide(company=company, decider=decider):
+    if someone_else_could_decide(company=company, decider=decider, subject=subject):
         raise BusinessRuleError(
             code="cannot_decide_your_own",
             message=_(

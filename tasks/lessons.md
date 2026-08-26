@@ -2180,3 +2180,108 @@ llegó a ver nunca.
 preguntarse cuál era el mecanismo que falló y si tiene más clientes. Un comentario
 que empieza «los mismos validadores que lleva el modelo, porque si no...» está
 describiendo un agujero general y tapando una de sus salidas.
+
+## 146. Antes de reimplementar una regla, mirar si la que existe ya la sabe entera
+
+Para arreglar los cuatro ojos escribí dentro de `four_eyes` la regla de quién
+alcanza a quién: administradora sí, responsable si dirige el departamento. Se me
+quedó fuera un caso ---la empresa donde nadie lleva ningún departamento y por eso
+toda responsable ve a todos--- que **yo mismo había escrito dos vueltas antes**.
+
+Lo cazó una prueba de las líneas rojas al ponerse roja. Delegando en `can_see` el
+caso entra solo, y la regla vuelve a vivir en un sitio.
+
+**Regla**: cuando una función necesita saber algo que otra ya decide, llamarla.
+Una copia de una regla no nace mal, nace **incompleta**, y se queda atrás en el
+siguiente cambio de la original. Si la copia parece necesaria por rendimiento,
+medir primero: casi siempre son unas pocas filas.
+
+## 147. Una prueba que se pone roja puede tener razón
+
+Al romperse `test_an_administrator_cannot_either` la primera reacción fue leerla
+como una prueba desfasada que había que reescribir ---que es lo que había hecho
+con acierto en cuatro vueltas anteriores.
+
+No lo era: defendía una línea que no se cruza y estaba señalando que mi arreglo
+la aflojaba en un escenario. El hábito de reescribir la prueba se había vuelto
+automático.
+
+**Regla**: cuando una prueba se pone roja, leer su docstring **antes** de decidir
+si sobra. Si describe un principio en vez de un detalle ---quién puede reescribir
+el registro, qué no puede hacerse en masa---, la carga de la prueba está en el
+cambio, no en ella.
+
+## 148. Al cambiar un `msgid`, mirar de qué mensaje presta la traducción
+
+Cambiar el texto del 409 de departamentos dejó tres catálogos marcados `fuzzy`, y
+las tres traducciones prestadas eran inservibles de dos maneras distintas:
+
+- **es** prestó la del mismo mensaje antes del cambio, que decía **lo contrario**
+  de lo que ahora ocurre.
+- **ca** y **gl** prestaron la de un mensaje **completamente distinto** --- el de
+  retirar un centro de trabajo, hablando de festivos locales y husos horarios.
+
+Compilar sin mirar habría dejado un aviso mintiendo en tres idiomas.
+
+**Regla**: después de `makemessages`, leer cada `#, fuzzy` con su `#| msgid`
+delante. Si la prestada es del mismo mensaje, se retraduce; si es de otro, se
+**vacía**. Nunca quitar solo la marca.
+
+## 149. Las sondas comparten base de datos con la suite de navegador
+
+Mientras la tanda de Playwright corría, aproveché la espera para medir la vuelta
+siguiente con `podman compose exec`. Evité escribir en `backend/` para no
+despertar al recargador --- pasando el script por stdin--- y me quedé tan
+tranquilo.
+
+Pero las sondas **escriben en la misma base de datos**. La tanda pasó de once
+minutos a más de cuarenta y ocho, y la corté sin resultado. El aviso del cuaderno
+dice «no lances dos suites a la vez, comparten servidor y base de datos»: una
+sonda no es una suite, y comparte exactamente lo mismo.
+
+**Regla**: mientras corra una suite, la espera es espera. Leer código, escribir el
+cuaderno y preparar la vuelta siguiente sí; ejecutar cualquier cosa contra la API
+o la base, no. Si la espera se hace larga, es que hay que lanzar la suite antes,
+no llenarla de compañía.
+
+## 150. `pkill -f` alcanza a quien nombra el proceso, no solo al proceso
+
+`pkill -f "playwright test"` mató la tanda **y** los tres vigilantes que la
+esperaban, porque su línea de órdenes contenía esa misma cadena. Tres tareas de
+fondo cayeron con 144 a la vez, y por un momento pareció que se había roto algo
+más grande.
+
+**Regla**: antes de un `pkill -f`, listar con `pgrep -fa` el mismo patrón y mirar
+la lista. Y elegir un patrón que solo case con el proceso de verdad ---aquí
+`node_modules/.bin/playwright test`--- en vez de la frase que también escribieron
+quienes lo vigilan.
+
+## 151. El código de salida es del último comando de la línea, no del que importa
+
+Lancé la suite así:
+
+    npx playwright test > log 2>&1; echo "salida: $?"; tail -3 log
+
+y leí «exit code 0». Ese cero era del `tail`. La tanda tenía **dos pruebas
+fallando**, y estuve un buen rato dando por bueno un verde que no existía ---y
+diciéndoselo a Francisco.
+
+**Regla**: nada detrás del comando cuyo resultado importa. Si hace falta algo más
+en la misma línea, el código se guarda antes: `cmd > log 2>&1; echo "EXIT=$?" >>
+log`. Y para juzgar una tanda, contar los estados del log ---`✓`, `failed`--- en
+vez de fiarse del resumen o del código.
+
+## 152. Cortar una tanda a mitad deja la empresa de demostración a medias
+
+Las pruebas que guardan algo lo **restauran al final**: cambian «Horas extra al
+año», comprueban, y lo devuelven a su valor. Al matar una tanda por la mitad, esa
+restauración no llega a ocurrir.
+
+La siguiente tanda encontró dos de esas pruebas rojas, y parecían un fallo de mis
+cambios ---incluso pareció que un cambio del backend rompía dos pantallas. Con el
+mismo árbol y el estado ya recolocado, las 26 del fichero pasan.
+
+**Regla**: después de interrumpir una tanda, la siguiente no es fiable. Correr
+primero los ficheros que tocan datos de la demo y verlos verdes antes de leer
+nada como hallazgo. Y si dos pruebas de guardar-y-recargar caen a la vez, mirar el
+estado de la demo antes que el diff.

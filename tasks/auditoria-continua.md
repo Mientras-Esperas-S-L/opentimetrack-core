@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 85 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 86 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -71,6 +71,7 @@ vuelve a una limpia.
 | La matriz de permisos entera (51 rutas × 4 roles) | limpia | 26/08 v83 | — **sin hallazgo**; el barrido queda como prueba |
 | La persona que se mueve (cambios de departamento) | limpia | 26/08 v84 | **ceder un departamento ampliaba a quien lo cedía** a toda la plantilla |
 | El borde del año (Nochevieja a caballo) | limpia | 26/08 v85 | **un 500 por una regla del modelo**; las vacaciones a caballo no salían en el año siguiente |
+| Lo que las vueltas anteriores dejaron desfasado | limpia | 26/08 v86 | **una corrección que no podía resolver nadie**; dos textos que decían lo contrario de lo que pasa |
 
 ### Ley
 
@@ -128,6 +129,15 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 
 ## Hallazgos abiertos
+
+- **`DELETE` de un departamento con responsables contesta 409; `PATCH` con
+  `managers` vacío llega al mismo estado y contesta 200.** (v86) Desde la vuelta
+  84 ese estado ya no es peligroso ---quien se queda sin departamento lee solo lo
+  suyo---, así que la refusal protege de un estorbo, no de una fuga. Que las dos
+  vías respondan distinto es incoherente, pero decidir cuál gana es cuestión de
+  producto: o el `PATCH` avisa también, o el `DELETE` deja de impedir y avisa.
+  **Para Francisco.**
+
 
 - **Las dependencias son la superficie que la auditoría no ha mirado en 38
   vueltas.** Salió sola: el push del 26/08 devolvió el enlace a Dependabot del
@@ -239,6 +249,76 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 86 --- «Que lo decida otra», y esa otra no la ve (26/08)
+
+La lente: **lo que mis propias vueltas dejaron desfasado.** Cambiar una regla deja
+detrás los textos que la explicaban, y eso no lo caza ninguna prueba: un
+comentario o un mensaje son plantillas, no aserciones. La lección 143, escrita
+dos vueltas antes, decía justo esto ---y aun así se me había escapado uno.
+
+#### Empezó por dos textos que mentían
+
+**El mensaje del 409 de departamentos.** La vuelta 73 lo puso porque quedarse sin
+departamento *ampliaba* el alcance a toda la empresa. La vuelta 84 cerró esa
+puerta, y el mensaje siguió prometiendo lo contrario de lo que ocurre: «leaving
+them in charge of nothing widens what they can read to the whole company».
+Estaba en el código, en el docstring que lo justifica y en **tres catálogos de
+traducción**.
+
+Corregido a lo que pasa de verdad: quedan sin poder leer a nadie más que a sí
+mismas. La refusal se queda ---sigue siendo una consecuencia que nadie busca al
+retirar un departamento--- pero por su motivo nuevo. **Anotado como pregunta de
+diseño**: `PATCH` con `managers` vacío llega al mismo estado y contesta 200. La
+asimetría no se decide aquí.
+
+**El comentario del serializer de ausencias.** Decía que sin replicar los
+validadores del justificante un fichero grande volvía como 500. La vuelta 85 cerró
+eso en el manejador, así que ya no es lo que separa un fichero grande de una
+traza. Se quedan, pero por otra razón: validar ahí nombra el campo.
+
+#### Y tirando de ahí salió el hallazgo de verdad
+
+`someone_else_could_decide` contestaba a la pregunta «¿hay otra responsable o
+administradora activa?». Contar no es poder. Desde que una responsable lee solo
+sus departamentos, la que existe puede no alcanzar a la persona del caso.
+
+Medido por la API, con la única administradora pidiendo corregir un fichaje suyo:
+
+| quién lo intenta | respuesta |
+|---|---|
+| ella misma | **409** `cannot_decide_your_own` --- «existe otra» |
+| esa otra | **404** --- no la ve |
+
+**No la podía resolver nadie.** Un asiento del registro mal y sin manera de
+arreglarlo: el art. 34.9 lo quiere fiable y el art. 4.b quiere que la corrección
+se pueda tramitar. La excepción de la administradora en solitario existe
+exactamente para esto y no llegaba a aplicarse, porque preguntaba por la
+existencia y no por el alcance.
+
+#### El primer arreglo estaba mal, y lo dijo una prueba de las líneas rojas
+
+Reescribí la regla del alcance dentro de `four_eyes`: administradora sí,
+responsable solo si dirige el departamento de la persona. Con eso
+`test_an_administrator_cannot_either` se puso **roja**, y esa prueba defiende una
+de las líneas que no se cruzan ---si el registro lo puede reescribir una sola
+persona, su valor como prueba depende de confiar en ella.
+
+Tenía razón la prueba. En su empresa no hay ningún departamento, y desde la
+vuelta 84 eso significa que toda responsable lee a todo el mundo: sí había una
+segunda persona capaz. Mi copia de la regla se había dejado fuera precisamente el
+caso que yo mismo había escrito dos vueltas antes.
+
+Rehecho delegando en `can_see`, que ya sabe de la empresa con el acotado apagado,
+del departamento que se dirige frente al que se pertenece, y del que todavía no
+lleva nadie. La regla vive en un sitio.
+
+**Comprobado que no afloja las cuatro manos**: con dos administradoras se sigue
+negando, con una responsable que sí dirige el departamento también, y solo cede
+cuando de verdad no queda nadie que pueda.
+
+7 pruebas nuevas (1.092 en el backend). Comprobado que las tres que deben caer
+caen sin el arreglo.
 
 ### Vuelta 85 --- La Nochevieja partida en dos (26/08)
 
