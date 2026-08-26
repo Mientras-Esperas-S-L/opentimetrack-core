@@ -2001,3 +2001,34 @@ bloquear--- en otro sitio del producto.
 porqué escrito, no en línea donde la encontraste. El segundo sitio aparece antes
 de lo que parece, y encontrarlo es más fácil si el primero dejó un nombre al que
 hacer `grep`.
+
+## 134. Entre «contar mal» y «no contar» suele haber una tercera opción
+
+El cómputo semanal descartaba las semanas que no cabían enteras en el periodo, y
+su docstring lo razonaba bien: contar media semana y avisar de un exceso es peor
+que callar, porque quien lo lee va a buscar horas que no están.
+
+Las dos opciones que estaban sobre la mesa eran contar mal o no contar. La tercera
+---**contar bien**, cargando los días que faltan--- no aparecía, y era la buena:
+esos turnos estaban en la base, solo fuera del rango pedido. El resultado del
+descarte era que la semana de cada borde de mes no se revisaba nunca.
+
+**Regla**: cuando encuentres un caso descartado «porque los datos están
+incompletos», comprueba si de verdad faltan o solo están fuera del filtro. Un
+docstring que justifica una omisión suele estar defendiendo la decisión correcta
+entre dos malas, y merece que se le ofrezca una tercera.
+
+## 135. Ampliar lo que se lee es seguro solo si todos filtran al reportar
+
+Para contar la semana entera hubo que leer más días de los pedidos. Eso podía
+hacer que los otros cinco chequeos empezaran a avisar de días que nadie pidió.
+
+Se comprobó **antes** de tocar la carga: los cinco filtran por `first`/`last`
+antes de emitir el hallazgo, así que leer más solo les da contexto. Y quedó una
+prueba que lo fija, porque el día que alguien añada un chequeo sin ese filtro, el
+fallo aparecerá lejos de aquí.
+
+**Regla**: si amplías la ventana de datos que un proceso lee, enumera todo lo que
+consume esa ventana y comprueba que cada consumidor decide **qué reporta** por su
+cuenta. Ampliar la lectura es barato; ampliar sin comprobarlo convierte un arreglo
+en ruido en cinco sitios a la vez.

@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 80 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 81 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -218,6 +218,63 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 81 --- La semana que no cabía en ningún mes (26/08)
+
+**Lente:** el calendario en los bordes --- semanas que cruzan el año, semana 53,
+cambios de mes.
+
+#### Lo que salió limpio
+
+El agrupado del cómputo semanal va por **año ISO** y eso es lo correcto: el 29 de
+diciembre de 2025 es la semana 1 de 2026, así que la semana del cambio de año se
+cuenta como una. Comprobado con datos: 45 horas en un solo aviso, no dos mitades
+de 27 y 18 que no llegarían al tope. Y 2026 tiene 53 semanas ISO, que también
+maneja bien porque `fromisocalendar` es la inversa exacta.
+
+#### El hallazgo: la semana del borde no se revisaba nunca
+
+El chequeo exigía que la semana **cupiera entera** dentro del periodo pedido y la
+descartaba si no. Y un cuadrante se revisa mes a mes:
+
+| Quien revisa | Antes | Después |
+|---|---|---|
+| Junio | nada | avisa |
+| Julio | nada | avisa |
+| Los dos meses juntos | avisa | avisa |
+
+Cuarenta y cinco horas planificadas del 29 de junio al 5 de julio de 2026, por
+encima de las cuarenta del art. 34.1, y quien revisa el cuadrante mes a mes no las
+veía en ninguno de los dos.
+
+**El razonamiento de descartarla era bueno** y está escrito en su docstring:
+contar media semana y avisar es peor que callar, porque quien lo lee va a buscar
+horas que no están. Lo que no se consideró es la tercera opción --- contar la
+semana **completa**. Esos turnos están en la base; solo estaban fuera del rango
+pedido.
+
+**Arreglo.** `review_roster` ya leía un día a cada lado por el descanso entre
+jornadas; ahora lee hasta el lunes y el domingo de las semanas de los bordes, y el
+cómputo semanal juzga las que **solapan** en vez de las que caben. Los demás
+chequeos no se enteran: los cinco filtran por `first`/`last` antes de reportar, así
+que leer más días les da contexto y no les hace hablar de días que nadie pidió ---
+comprobado antes de tocar la carga, y con una prueba propia.
+
+**Prueba.** `apps/shifts/tests/test_la_semana_del_borde_del_mes.py`, seis casos.
+El que distingue las tres conductas posibles es el de las horas: 45 es la semana
+entera, 18 serían los dos días de junio y «nada» era el descarte. **Validada
+contra el fallo**: revertida la condición, caen tres y los tres controles
+aguantan.
+
+**Y una prueba existente que fijaba el descarte.** `test_a_week_only_half_inside_
+the_window_is_not_reported` afirmaba que no se reportaba nada, con el razonamiento
+correcto para lo que el código podía hacer entonces. Reescrita con su misma
+intención ---no contar medias semanas--- y el comportamiento nuevo: siete mañanas
+son 56 horas, y la cifra dice cuál de las tres conductas está puesta.
+
+**Estado:** área «Cuadrante» limpia, con una lente más. Cerrada con **1063
+pruebas de backend y 271 de navegador en verde**, linters limpios, castellano sin
+huecos, cero `fuzzy` y sin migraciones pendientes.
 
 ### Vuelta 80 --- Dos peticiones donde solo cabe una (26/08)
 
