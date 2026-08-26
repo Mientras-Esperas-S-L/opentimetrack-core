@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 103 · Vueltas seguidas sin hallazgos: 1
+Vueltas dadas: 104 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -252,6 +252,22 @@ completo (evidencia y refutación) está en el registro del workflow.
   **Es decisión de producto, no arreglo.** Preguntarlo antes de tocar nada. El
   manual dice ya lo que pasa hoy (§2), que antes describía otra cosa.
 
+- **Cuarenta y dos esperas por reloj en la suite de Playwright**, repartidas en
+  veintiún ficheros. Una de ellas ---`waitForTimeout(2500)`--- rompía la tanda
+  entera al final de una corrida larga, y el mensaje del fallo no se parecía a la
+  causa. Se arregló esa; las otras 41 siguen. Entre una acción y su comprobación
+  va la condición, no un número de milisegundos: `expect.poll` es más rápido
+  cuando todo va bien y no miente cuando la máquina va cargada.
+
+- **Veintisiete `date.today()` sin arreglar en las pruebas.** El producto barrió
+  esa llamada de su propio código y dejó `common/clock.py` explicando por qué; las
+  pruebas se quedaron con ella. Nueve ficheros la mezclan con datos creados en
+  hora local, que es la combinación que rompe entre medianoche y las dos de la
+  madrugada en verano. Hoy no rompe ninguna ---medido con la suite corrida dentro
+  de la franja---, pero cada prueba nueva que la copie es una bomba con retardo.
+  El plan: prohibirla con ruff (`flake8-tidy-imports.banned-api`) y barrer las
+  veintisiete en la misma pasada, que es como se arregló en el producto.
+
 - **Los catálogos de catalán y gallego, con 501 huecos cada uno** (medido en la
   vuelta 101; eran 460 en la 43). Los dejó la vuelta 43 al vaciar traducciones
   falsas y al extraer cadenas que llevaban tiempo sin recogerse, y **crecen solos**:
@@ -312,6 +328,100 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 104 --- El trabajo que solo corría en la mitad de los despliegues (27/08)
+
+Lente nueva: **los trabajos periódicos**, que tienen estado propio y nadie mira
+hasta que fallan. Dos hallazgos, y el segundo salió de rebote y vale más que el
+primero.
+
+#### Uno: la purga de testigos no corre en la instalación por defecto
+
+Hay dos formas de programar los trabajos y `docs/trabajos-periodicos.md` las
+documenta las dos: **cron, que es la de por defecto**, y Celery. La vuelta 99
+añadió la purga de testigos de sesión caducados ---la que impedía que una tabla
+creciera «del orden de dos millones de filas al año en una empresa de doscientas
+personas»--- y la añadió **solo al `beat_schedule` de Celery**. La crontab del
+documento seguía con dos líneas.
+
+Es decir: el trabajo que existía para que algo no creciera sin techo no corría en
+la instalación normal. La pieza hecha y desconectada otra vez, en su variante
+«hecha para una de las dos vías».
+
+Arreglado: la línea en la crontab, la fila en la tabla, y el apartado «qué pasa
+si no configuras ninguno» ---que hablaba de una sola purga--- ahora habla de las
+dos, con el art. 5.1.e para la segunda.
+
+**La prueba que lo ata**: `test_los_trabajos_periodicos.py` registra los trabajos
+de Celery con un sender espía y los cuenta contra los `manage.py` de la crontab
+del documento. Se cuentan en vez de compararse por nombre porque los nombres no
+coinciden a propósito ---la tarea es `flush_expired_tokens` y el comando
+`flushexpiredtokens`, que lo trae simplejwt---. Comprueba además que cada comando
+de la crontab **existe**: una errata ahí no falla, cron la ejecuta y el error se
+va al correo de root que nadie lee.
+
+Para que la prueba pudiera leer el documento hubo que montarlo: el contenedor
+solo monta `backend/`. Va como `/docs` en solo lectura, igual que ya iban
+`agreements` y `holidays`, y la prueba busca en los dos sitios y **falla diciendo
+dónde buscó** en vez de saltarse a sí misma.
+
+#### Dos: la suite entera miente según la hora a la que se corra
+
+Al correr la tanda de backend a las 00:10 falló una prueba del PDF que llevaba
+semanas en verde. No era fragilidad: fallaba tres de tres, aislada, y también con
+el árbol limpio del commit anterior.
+
+Dos husos. El contenedor va en UTC; la empresa de la prueba, en `Europe/Madrid`.
+El fixture fichaba con `register_punch()` ---que guarda el día en la hora de la
+empresa, el 27--- y pedía el informe de `date.today()` ---la fecha del
+contenedor, el 26---. **Entre medianoche y las dos de la madrugada en verano son
+días distintos.**
+
+Y lo llamativo: **el producto ya lo tenía resuelto**. `apps/common/clock.py`
+existe para esto, dice que `date.today()` es la trampa, que «se coló cuatro veces
+antes de que este módulo existiera», y un comentario de `attendance_api` celebra
+haber quitado «el último que quedaba en todo el código». Las pruebas se quedaron
+con la trampa: **28 usos**, y nueve ficheros la mezclan con hora local.
+
+**Esto explica el misterio que llevaba abierto desde la vuelta 97**: por qué la
+tanda completa fallaba en una prueba distinta cada vez. Las vueltas se dan de
+madrugada.
+
+Arreglada la que rompía. Las otras se dejan medidas, no tocadas: con la suite
+corrida **dentro de la franja** ---22:14 UTC, que son las 00:14 en Madrid--- las
+1.150 pasan, así que ninguna de las otras 27 rompe hoy. Queda como hallazgo
+abierto con su plan.
+
+#### Tres: dos segundos y medio que dejaron de bastar
+
+La tanda de frontend, corrida también dentro de la franja, dio **cuatro rojos**.
+Eran dos, y sus consecuencias: dos pruebas de acciones masivas fallaron a mitad,
+y el guard de la vuelta 101 cazó lo que dejaron puesto ---tres personas y dos
+departamentos---.
+
+Y ahí el guard hizo más que avisar: **los cinco residuos llevaban la marca de la
+misma tanda**. Eso descartó de un vistazo la hipótesis con la que empecé
+---sedimento acumulado de corridas anteriores--- y dejó la causa dentro de esa
+misma corrida.
+
+Medido antes de concluir: la prueba **pasa aislada**, y **pasa también con los
+doce primeros ficheros** ---124 pruebas---. Solo cae dentro de las 283. La causa
+estaba escrita a la vista: `await page.waitForTimeout(2500)` entre pulsar «mover»
+y preguntar por el resultado. Dos segundos y medio bastan casi siempre; al final
+de una tanda larga, no. Y el fallo no se parecía a su causa ---decía «esperaba 3,
+encontré 0», que suena a que no se movió nadie, cuando lo que pasaba es que
+todavía no se había movido---.
+
+Arreglado con `expect.poll`, que pregunta hasta que la respuesta llega y falla
+con tope. Además:
+
+- La segunda prueba **no retiraba su departamento si fallaba antes de llegar al
+  final**: ahora lo busca por nombre y lo borra en un `finally`, porque cuando
+  esto falla lo hace antes de que la prueba sepa el id.
+- Cuando el diálogo no se cierra, el fallo ahora **dice lo que el diálogo pone**
+  en vez de limitarse a «seguía visible».
+
+Quedan **42 esperas por reloj** en veintiún ficheros. Anotado, no tocado.
 
 ### Vuelta 103 --- Las advertencias del propio código, comprobadas (27/08) --- LIMPIA
 

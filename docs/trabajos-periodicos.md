@@ -6,6 +6,7 @@ OpenTimeTrack tiene dos trabajos que se repiten solos:
 |---|---|---|
 | `send_punch_reminders` | Cada pocos minutos | Avisa a quien empezó su turno y no ha fichado, o dejó la jornada abierta. Nunca ficha por nadie |
 | `purge_security_metadata` | Una vez al día | Borra la IP y el dispositivo de los fichajes que ya cumplieron su plazo de conservación |
+| `flushexpiredtokens` | Una vez al día | Tira los testigos de sesión caducados. Con la rotación activada se acumulan del orden de dos millones de filas al año en una empresa de doscientas personas, y cada una dice de quién era la sesión (art. 5.1.e RGPD) |
 
 Puedes ejecutarlos de dos maneras, y **eliges tú**. Se configura con una
 variable:
@@ -32,7 +33,11 @@ que vigilarlo y toda la configuración son dos líneas.
 ```cron
 */5 * * * *  cd /srv/opentimetrack/backend && /srv/venv/bin/python manage.py send_punch_reminders
 30 3 * * *   cd /srv/opentimetrack/backend && /srv/venv/bin/python manage.py purge_security_metadata
+0 4 * * *    cd /srv/opentimetrack/backend && /srv/venv/bin/python manage.py flushexpiredtokens
 ```
+
+Las dos purgas van a horas distintas a propósito: no se estorban sobre la misma
+base, pero repartirlas deja los registros legibles cuando una tarda de más.
 
 Con contenedores, lo mismo desde el anfitrión:
 
@@ -77,7 +82,11 @@ acabe en dos programadores compitiendo.
 ## Qué pasa si no configuras ninguno
 
 Nada se rompe y no se pierde ni un fichaje: el registro no depende de esto. Lo
-que no ocurre es que nadie reciba recordatorios, y que los metadatos de
-seguridad se queden más tiempo del que deberían —lo segundo sí es un
-incumplimiento de tu propia política de conservación, así que la purga conviene
-programarla aunque no quieras los avisos.
+que no ocurre es que nadie reciba recordatorios, y que **las dos purgas no se
+hagan**: los metadatos de seguridad se quedan más tiempo del que deberían, y la
+tabla de testigos de sesión crece sin techo ---cada renovación deja dos filas, y
+hay una por persona cada cuarto de hora---.
+
+Las dos purgas conviene programarlas aunque no quieras los avisos: lo primero es
+un incumplimiento de tu propia política de conservación, y lo segundo, guardar
+sin plazo un dato que dice de quién era cada sesión (art. 5.1.e RGPD).

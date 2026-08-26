@@ -17,7 +17,6 @@ caracteres, que es lo que admite el formulario de discrepancia.
 from __future__ import annotations
 
 import io
-from datetime import date
 
 import pytest
 from pypdf import PdfReader
@@ -25,6 +24,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Table
 
+from apps.common.clock import local_today
 from apps.common.models import tenant_context
 from apps.punches.services import register_punch
 from apps.reports.pdf import render_pdf
@@ -95,9 +95,14 @@ def informe(db):
             last_name="Discrepa",
         )
         register_punch(employee=quien, company=empresa)
-        yield build_report(
-            employee=quien, company=empresa, date_from=date.today(), date_to=date.today()
-        )
+        # El hoy de la empresa, no el del contenedor. `register_punch` guarda el
+        # fichaje en la hora de Madrid, y `date.today()` da la fecha UTC: entre
+        # medianoche y las dos de la madrugada en verano son días distintos, el
+        # informe pedía un día sin fichajes y la fila que estas pruebas marcan
+        # como discrepada no llegaba a la hoja. Es la trampa que `common/clock.py`
+        # documenta y que el producto ya barrió de su propio código.
+        hoy = local_today(empresa)
+        yield build_report(employee=quien, company=empresa, date_from=hoy, date_to=hoy)
 
 
 def test_la_discrepasion_entera_cabe_en_la_hoja(informe):

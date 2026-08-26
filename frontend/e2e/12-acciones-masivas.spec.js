@@ -125,11 +125,21 @@ test.describe('Personas', () => {
 
     await page.getByRole('button', { name: 'Mover a departamento…' }).click()
     await page.getByRole('menuitem', { name: nombre }).click()
-    await page.waitForTimeout(2500)
 
-    // Movidas de verdad, no solo en la pantalla.
-    const dentro = await api(page, `/employees/?department=${creado.body.id}`)
-    expect((dentro.body?.results ?? []).length).toBe(cuantas)
+    // Movidas de verdad, no solo en la pantalla. Se pregunta hasta que la
+    // respuesta llegue, en vez de esperar dos segundos y medio y dar por hecho
+    // que han bastado: en una tanda de doscientas ochenta pruebas no bastaban, y
+    // la prueba fallaba diciendo «esperaba 3, encontré 0» ---que suena a que no
+    // se movió nadie, cuando lo que pasaba es que aún no se había movido---.
+    await expect
+      .poll(
+        async () => {
+          const dentro = await api(page, `/employees/?department=${creado.body.id}`)
+          return (dentro.body?.results ?? []).length
+        },
+        { timeout: 15_000, message: 'las personas marcadas no llegaron al departamento' },
+      )
+      .toBe(cuantas)
 
     // Y con su apunte cada una. Un solo apunte para tres personas sería un
     // registro que no sirve para lo que existe.
@@ -200,11 +210,36 @@ test.describe('Personas', () => {
 })
 
 test.describe('Departamentos', () => {
+  /** Lo que el diálogo tenga escrito, para que un «seguía abierto» diga por qué. */
+  const mensajeDelDialogo = async (dialogo) => {
+    try {
+      const texto = (await dialogo.innerText({ timeout: 1000 })).replace(/\s+/g, ' ').slice(0, 200)
+      return `el diálogo no se cerró; dice: «${texto}»`
+    } catch {
+      return 'el diálogo no se cerró'
+    }
+  }
+
   test('los miembros se ponen desde el propio departamento', async ({ page }) => {
     const ruido = vigilarConsola(page)
     const nombre = `Depto ${marca()}`
 
     await irA(page, '/panel/departamentos', 'Departamentos')
+
+    try {
+      await componerElDepartamento(page, nombre, ruido)
+    } finally {
+      // Por nombre y no por el id, porque cuando esto falla lo hace **antes** de
+      // que la prueba llegue a saber el id: el departamento ya está creado en el
+      // servidor y el diálogo sigue abierto. Sin esto quedaba puesto, y quien lo
+      // veía era el guard de la tanda siguiente.
+      const suyo = (await api(page, `/departments/?search=${encodeURIComponent(nombre)}`)).body
+      const id = (suyo?.results ?? suyo ?? [])[0]?.id
+      if (id) await api(page, `/departments/${id}/`, { method: 'DELETE' })
+    }
+  })
+
+  const componerElDepartamento = async (page, nombre, ruido) => {
     await page.getByRole('button', { name: 'Nuevo' }).click()
 
     const dialogo = page.getByRole('dialog')
@@ -214,7 +249,10 @@ test.describe('Departamentos', () => {
     await dialogo.getByRole('combobox', { name: /Quién está dentro/ }).fill('Hugo')
     await page.getByRole('option', { name: /Hugo Bermejo/ }).click()
     await dialogo.getByRole('button', { name: 'Guardar' }).click()
-    await expect(dialogo).toBeHidden()
+    // Si no se cierra es que el guardado falló, y lo que hay que leer es lo que
+    // el diálogo dice; sin esto el fallo era «seguía visible» y había que
+    // adivinar por qué.
+    await expect(dialogo, await mensajeDelDialogo(dialogo)).toBeHidden()
 
     await page.reload()
     const fila = page.getByRole('listitem').filter({ hasText: nombre })
@@ -235,9 +273,8 @@ test.describe('Departamentos', () => {
     expect(hugo.is_active, 'quitarlo del departamento lo dio de baja').toBe(true)
     expect(hugo.department).toBeFalsy()
 
-    await api(page, `/departments/${id}/`, { method: 'DELETE' })
     expect(ruido()).toEqual([])
-  })
+  }
 
   test('renombrar sin tocar los miembros no vacía el departamento', async ({ page }) => {
     await irA(page, '/panel/departamentos', 'Departamentos')

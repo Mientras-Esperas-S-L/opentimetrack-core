@@ -2895,3 +2895,74 @@ los que faltan en el mismo cambio**. Un comentario que dice «no uses esto así�
 es una lista de deberes pendiente, no una protección: `grep` de quién llama al
 ayudante y decidir uno por uno. Y al revés, al auditar: **los comentarios que
 avisan de un mal uso son el mejor sitio donde buscar ese mal uso**.
+
+## 194. La suite miente según la hora a la que se corra
+
+La tanda de backend llevaba semanas en verde y a las 00:10 falló una prueba del
+PDF. No era frágil: fallaba **siempre**, aislada, tres de tres. Y con el árbol
+limpio en el commit anterior, también.
+
+La causa es de dos husos. El contenedor va en UTC; la empresa de la prueba, en
+`Europe/Madrid`. El fixture fichaba con `register_punch()` ---que guarda el día en
+la hora de la empresa, el 27--- y pedía el informe de `date.today()` ---la fecha
+del contenedor, el 26---. Entre medianoche y las dos de la madrugada en verano
+son días distintos: el informe salía de un día sin fichajes y la fila que la
+prueba marcaba como discrepada no llegaba a la hoja.
+
+Lo llamativo es que **el producto ya lo tenía resuelto**. `apps/common/clock.py`
+existe precisamente para esto, dice que `date.today()` es la trampa y que «se
+coló cuatro veces antes de que este módulo existiera», y un comentario de
+`attendance_api` celebra haber quitado «el último que quedaba en todo el código».
+Las pruebas, que no son código de producción, se quedaron con la trampa: **28
+usos**, nueve ficheros de los cuales la mezclan con hora local.
+
+**Regla**: una prueba que crea datos con la hora de la empresa y los consulta con
+la del servidor solo funciona diecinueve horas de cada veinticuatro. Si un
+fixture ficha, el «hoy» que consulte tiene que ser `local_today(empresa)`. Y
+cuando un módulo del producto documenta una trampa, **las pruebas no están
+exentas**: son el sitio donde más fácil sobrevive, porque nadie las lee buscando
+eso.
+
+**Corolario que vale su peso**: pasada la medianoche es cuando esta clase de
+fallo se puede ver. Correr las dos suites enteras dentro de esa franja es una
+comprobación que a las once de la mañana no se puede hacer.
+
+## 195. Una espera por reloj es una prueba que solo pasa cuando la máquina va sobrada
+
+Dos pruebas de acciones masivas fallaron en la tanda completa. Aisladas pasaban.
+Con los doce primeros ficheros ---ciento veinticuatro pruebas--- también pasaban.
+Solo caían dentro de las doscientas ochenta y tres.
+
+La causa estaba escrita a la vista: `await page.waitForTimeout(2500)` entre
+pulsar «mover» y preguntar por el resultado. Dos segundos y medio bastan casi
+siempre; al final de una tanda larga, no. Y el fallo no se parece en nada a su
+causa: decía «esperaba 3, encontré 0», que suena a que no se movió nadie, cuando
+lo que pasaba es que **todavía** no se había movido.
+
+Hay **42 esperas así** repartidas en veintiún ficheros de la suite.
+
+**Regla**: entre una acción y su comprobación no va un número de milisegundos, va
+la condición. `expect.poll` pregunta hasta que la respuesta llegue y falla con
+tope: es más rápido cuando todo va bien y no miente cuando la máquina va cargada.
+
+**Y el diagnóstico**: si una prueba pasa aislada y falla en tanda, la primera
+sospecha es la espera fija, no el estado compartido. El estado compartido suele
+reproducirse también con un subconjunto; la espera fija necesita la tanda entera
+para manifestarse.
+
+## 196. Un guard convierte cuatro fallos en dos, y el resto en un diagnóstico
+
+La tanda dio cuatro rojos: dos pruebas de acciones masivas y dos del guard de
+residuos. No eran cuatro problemas: eran dos, y sus consecuencias. Las pruebas
+fallaron a mitad y dejaron puestas tres personas y dos departamentos; el guard
+los nombró.
+
+Nombrarlos es lo que resolvió el diagnóstico en un minuto: **los cinco residuos
+llevaban la marca de la misma tanda**. Si hubieran sido de tandas distintas,
+habría sido sedimento acumulado ---la hipótesis con la que empecé---. Al ser de
+una sola, quedaba descartado y la causa tenía que estar dentro de esa corrida.
+
+**Regla**: un guard de estado no vale solo por lo que impide, sino por lo que
+**dice**. Que liste los elementos con su marca de origen, y no solo su número,
+es lo que convierte «algo dejó basura» en «esta corrida, y por tanto la causa es
+de aquí dentro».

@@ -22,6 +22,11 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend:/app:z
+      # La documentacion, de solo lectura, porque hay pruebas que la contrastan
+      # contra el codigo: la crontab que trae `trabajos-periodicos.md` es la
+      # unica atadura entre las dos formas de programar los trabajos, y cuando
+      # se anadio uno solo a Celery, en la instalacion por defecto no corria.
+      - ./docs:/docs:ro,z
       # Fichas de convenio. Van aparte del codigo porque se publican con otra
       # licencia y porque un despliegue puede apuntar AGREEMENTS_DIR a las de su
       # asesoria laboral en vez de a las nuestras.
