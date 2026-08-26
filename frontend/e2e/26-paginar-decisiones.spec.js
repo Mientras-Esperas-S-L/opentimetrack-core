@@ -52,9 +52,7 @@ test.describe('Por decidir · paginar', () => {
       return ruta.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(
-          pagina === 1 ? paginaDe(50, 137) : paginaDe(50, 137, 50),
-        ),
+        body: JSON.stringify(pagina === 1 ? paginaDe(50, 137) : paginaDe(50, 137, 50)),
       })
     })
 

@@ -66,16 +66,14 @@ test.describe('Con el teclado', () => {
 
     // El foco entra solo. Sin esto, quien abre con el teclado se queda con el
     // foco fuera y tabula por detrás de un diálogo que no puede ver.
-    expect(
-      await page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]')),
-    ).toBe(true)
+    expect(await page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'))).toBe(
+      true,
+    )
 
     // Y no se escapa: veinte tabulaciones sin salir.
     for (let i = 0; i < 20; i += 1) {
       await page.keyboard.press('Tab')
-      const dentro = await page.evaluate(
-        () => !!document.activeElement?.closest('[role="dialog"]'),
-      )
+      const dentro = await page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'))
       expect(dentro, `el foco se escapó del diálogo en la tabulación ${i + 1}`).toBe(true)
     }
 
@@ -85,7 +83,9 @@ test.describe('Con el teclado', () => {
     // Vuelve a donde estaba. Perder el foco al cerrar deja a quien navega con
     // teclado al principio de la página, y hay que rehacer el camino entero.
     expect(
-      await page.evaluate(() => (document.activeElement?.textContent || '').includes('Dar de alta')),
+      await page.evaluate(() =>
+        (document.activeElement?.textContent || '').includes('Dar de alta'),
+      ),
     ).toBe(true)
   })
 })

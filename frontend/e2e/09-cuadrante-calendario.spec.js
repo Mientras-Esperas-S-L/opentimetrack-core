@@ -167,8 +167,17 @@ test.describe('Cuadrante', () => {
     await confirmacion.getByRole('button', { name: 'Vaciar' }).click()
     await expect(confirmacion).toBeHidden()
 
-    const despues = await api(page, `/shifts/roster/?from=${MES.desde}&to=${MES.hasta}`)
-    expect(despues.body?.results ?? despues.body ?? []).toHaveLength(0)
+    // Esperando a que quede vacío, no preguntando una vez. El diálogo se cierra
+    // en cuanto se pulsa, y el borrado sigue viajando: en una tanda cargada la
+    // consulta llegaba antes que el DELETE y la prueba fallaba enseñando los
+    // veintitrés turnos que estaban a punto de irse. Aislada pasaba siempre, que
+    // es la firma de una carrera y no de un defecto.
+    await expect
+      .poll(async () => {
+        const despues = await api(page, `/shifts/roster/?from=${MES.desde}&to=${MES.hasta}`)
+        return (despues.body?.results ?? despues.body ?? []).length
+      })
+      .toBe(0)
   })
 
   test('cancelar el vaciado no borra nada', async ({ page }) => {

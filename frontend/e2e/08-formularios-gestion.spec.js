@@ -257,6 +257,20 @@ test.describe('Aplicaciones', () => {
     await expect(page.getByText(completo, { exact: true })).toHaveCount(0)
     await expect(page.getByRole('listitem').filter({ hasText: nombre })).toContainText('…')
 
+    // Revocar de verdad, que es la mitad del título de esta prueba y no se
+    // estaba haciendo: dejaba una aplicación activa cada vez que se corría. En
+    // la pantalla no se notaba hasta pasar de cincuenta, y entonces la lista
+    // ---ordenada por nombre--- escondía la recién autorizada en la página dos.
+    const viva = page.getByRole('listitem').filter({ hasText: nombre })
+    await viva.getByRole('button', { name: 'Revocar la aplicación' }).click()
+    const confirmar = page.getByRole('dialog').filter({ hasText: 'Revocar la aplicación' })
+    await confirmar.getByRole('button', { name: 'Revocar' }).click()
+    await expect(confirmar).toBeHidden()
+
+    // No se borra: lo que registró sigue siendo suyo. Deja de estar activa.
+    await expect(viva).toBeVisible()
+    await expect(viva).toContainText('Revocada')
+
     expect(ruido()).toEqual([])
   })
 })

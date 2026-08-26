@@ -45,7 +45,9 @@ test.describe('Ajustes · el catálogo de permisos', () => {
     const filas = respuesta.body.results ?? respuesta.body
 
     const porBase = Object.fromEntries(filas.map((f) => [f.basis, f]))
-    expect(Object.keys(porBase)).toEqual(expect.arrayContaining(['Art. 37.3.a ET', 'Art. 37.3.b ET']))
+    expect(Object.keys(porBase)).toEqual(
+      expect.arrayContaining(['Art. 37.3.a ET', 'Art. 37.3.b ET']),
+    )
     expect(porBase['Art. 37.3.b bis ET'], 'falta el fallecimiento, o cita otra letra').toBeTruthy()
   })
 

@@ -19,22 +19,22 @@
 
 import { expect, test } from '@playwright/test'
 
-import { vigilarConsola } from './apoyo.js'
+import { API, vigilarConsola } from './apoyo.js'
 
 test.use({ storageState: { cookies: [], origins: [] } })
 
 /** Una petición desnuda, sin la sesión de nadie. */
 async function pedir(page, ruta, cuerpo) {
   return page.evaluate(
-    async ([ruta, cuerpo]) => {
-      const respuesta = await fetch(`http://localhost:8000/api${ruta}`, {
+    async ([ruta, cuerpo, api]) => {
+      const respuesta = await fetch(`${api}${ruta}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cuerpo),
       })
       return { status: respuesta.status, cuerpo: await respuesta.text() }
     },
-    [ruta, cuerpo],
+    [ruta, cuerpo, API],
   )
 }
 

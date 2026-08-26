@@ -51,7 +51,9 @@ test.describe('Mi jornada · un operario', () => {
 
     const antes = await page.getByRole('button', { name: /^Descargar \w+ de \d{4}$/ }).textContent()
     await page.getByRole('button', { name: 'Mes anterior' }).click()
-    const despues = await page.getByRole('button', { name: /^Descargar \w+ de \d{4}$/ }).textContent()
+    const despues = await page
+      .getByRole('button', { name: /^Descargar \w+ de \d{4}$/ })
+      .textContent()
 
     expect(despues).not.toBe(antes)
   })

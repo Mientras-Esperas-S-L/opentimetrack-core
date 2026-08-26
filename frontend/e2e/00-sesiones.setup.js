@@ -19,7 +19,7 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 
 import { expect, test as setup } from '@playwright/test'
 
-import { CLAVE, EMPRESA } from './apoyo.js'
+import { API, CLAVE, EMPRESA } from './apoyo.js'
 
 const CARPETA = 'e2e/.sesiones'
 
@@ -58,18 +58,21 @@ async function siguenValiendo(page, fichero) {
 
   // Por el refresco y no por el acceso: el acceso dura quince minutos, así que
   // preguntar por él daría «no vale» casi siempre y volveríamos a entrar.
-  const renovado = await page.evaluate(async (r) => {
-    const respuesta = await fetch('http://localhost:8000/api/auth/refresh/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh: r }),
-    })
-    if (!respuesta.ok) return null
-    const datos = await respuesta.json()
-    localStorage.setItem('ott.access', datos.access)
-    localStorage.setItem('ott.refresh', datos.refresh)
-    return datos.access
-  }, refresco)
+  const renovado = await page.evaluate(
+    async ([r, api]) => {
+      const respuesta = await fetch(`${api}/auth/refresh/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh: r }),
+      })
+      if (!respuesta.ok) return null
+      const datos = await respuesta.json()
+      localStorage.setItem('ott.access', datos.access)
+      localStorage.setItem('ott.refresh', datos.refresh)
+      return datos.access
+    },
+    [refresco, API],
+  )
 
   return Boolean(renovado)
 }

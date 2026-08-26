@@ -21,6 +21,9 @@ import { irA } from './apoyo.js'
 
 const TELEFONO = { width: 390, height: 844 }
 
+// Las diecisiete, no una selección. Faltaban seis ---y entre ellas las dos que
+// más ancho piden, Calendario y Turnos--- así que «ninguna otra pantalla se
+// sale» era una afirmación sobre las que se miraron.
 const PANTALLAS = [
   ['/', 'Hola'],
   ['/mi-jornada', 'Mi jornada'],
@@ -28,10 +31,16 @@ const PANTALLAS = [
   ['/actividad', 'Registro de actividad'],
   ['/panel', 'Resumen'],
   ['/panel/personas', 'Personas'],
+  ['/panel/departamentos', 'Departamentos'],
+  ['/panel/centros', 'Centros de trabajo'],
+  ['/panel/calendario', 'Calendario del equipo'],
+  ['/panel/cuadrante', 'Cuadrante'],
+  ['/panel/turnos', 'Turnos'],
+  ['/panel/permisos', 'Permisos'],
   ['/panel/fichajes', 'Fichajes'],
   ['/panel/decisiones', 'Por decidir'],
-  ['/panel/cuadrante', 'Cuadrante'],
-  ['/panel/permisos', 'Permisos'],
+  ['/panel/informes', 'Informes'],
+  ['/panel/aplicaciones', 'Aplicaciones'],
   ['/panel/ajustes', 'Ajustes de la empresa'],
 ]
 
@@ -109,5 +118,36 @@ test.describe('Fichar, en la mano', () => {
     expect(caja.width).toBeGreaterThanOrEqual(180)
     // En la mitad de abajo, que es hasta donde llega el pulgar con una mano.
     expect(caja.y).toBeGreaterThan(TELEFONO.height * 0.35)
+  })
+})
+
+test.describe('Los meses y los días, escritos como en castellano', () => {
+  test.use({ storageState: 'e2e/.sesiones/admin.json', viewport: { width: 1280, height: 900 } })
+
+  /** `text-transform: capitalize` sube cada palabra. `toLocaleDateString`
+   *  devuelve «agosto de 2026» y en pantalla salía «Agosto De 2026», con la
+   *  preposición en mayúscula. Estaba en tres pantallas. */
+  for (const [ruta, titulo] of [
+    ['/panel/calendario', 'Calendario del equipo'],
+    ['/panel/cuadrante', 'Cuadrante'],
+  ]) {
+    test(`${ruta} no dice «De»`, async ({ page }) => {
+      await irA(page, ruta, titulo)
+      const mes = page.getByText(/^[A-ZÁÉÍÓÚ][a-záéíóú]+ (de|De) \d{4}$/).first()
+      await expect(mes).toBeVisible()
+      await expect(mes).toHaveText(/ de \d{4}$/)
+    })
+  }
+
+  test('/mi-jornada tampoco, en el día de cada tarjeta', async ({ browser }) => {
+    const suyo = await browser.newContext({ storageState: 'e2e/.sesiones/operario.json' })
+    const suPagina = await suyo.newPage()
+    await irA(suPagina, '/mi-jornada', 'Mi jornada')
+    // «Lunes, 25 Ago» era lo que salía; la primera en mayúscula y el resto no.
+    const dias = suPagina.getByText(/^[A-ZÁÉÍÓÚ][a-záéíóú]+, \d{1,2} [a-zA-Z]{3}/)
+    if (await dias.count()) {
+      await expect(dias.first()).not.toHaveText(/ [A-ZÁÉÍÓÚ][a-z]{2}$/)
+    }
+    await suyo.close()
   })
 })

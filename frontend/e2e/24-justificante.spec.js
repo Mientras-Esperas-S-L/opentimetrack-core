@@ -89,3 +89,35 @@ test.describe('Mis ausencias · el justificante', () => {
     await expect(dialogo.getByRole('button', { name: /Adjuntar el justificante/ })).toHaveCount(0)
   })
 })
+
+test.describe('Cuando la subida tarda', () => {
+  test.use({ storageState: 'e2e/.sesiones/operario.json' })
+
+  /** La pantalla anuncia «PDF o foto, hasta 10 MB». Con los diez segundos fijos
+   *  de siempre, ese límite solo se cumplía si la subida iba a más de 8 Mb/s
+   *  sostenidos; por debajo, axios abortaba **con el cuerpo ya enviado**. El
+   *  servidor creaba la solicitud y a la persona se le decía que no había
+   *  conexión: se iba creyendo que no había pedido el permiso mientras su
+   *  responsable lo veía en la cola.
+   */
+  test('el plazo lo pone el peso del fichero, no un número fijo', async ({ page }) => {
+    await irA(page, '/mis-ausencias', 'Mis ausencias')
+
+    const plazos = await page.evaluate(async () => {
+      const { plazoParaSubir } = await import('/src/services/api.js')
+      const mb = (n) => n * 1024 * 1024
+      return {
+        sinFichero: plazoParaSubir(0),
+        ochoMegas: plazoParaSubir(mb(8)),
+        diezMegas: plazoParaSubir(mb(10)),
+      }
+    })
+
+    // Ocho megas por 4G malo no caben en diez segundos ni de lejos.
+    expect(plazos.ochoMegas).toBeGreaterThan(60_000)
+    // Y el máximo que la pantalla promete tiene que caber en el plazo.
+    expect(plazos.diezMegas).toBeGreaterThanOrEqual(plazos.ochoMegas)
+    // Sin fichero no se alarga nada: una petición de texto sigue siendo corta.
+    expect(plazos.sinFichero).toBeLessThanOrEqual(10_000 + 1_000)
+  })
+})

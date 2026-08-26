@@ -16,22 +16,40 @@ import { api, irA, vigilarConsola } from './apoyo.js'
 
 const MARCA = 'Prueba corrección 22'
 
-async function limpiar(page) {
+/** Retira lo que esta prueba dejó pedido, y lo retira **otra persona**.
+ *
+ *  Esta prueba entra como administradora y pide una corrección de su propio
+ *  fichaje, así que la limpieza no puede ir por su misma sesión: quien pide un
+ *  cambio en el registro no lo resuelve, y eso vale también para archivarlo
+ *  ---no cambiar nada también es decidir---. Con la sesión de la propia
+ *  administradora el servidor contesta 409 `cannot_decide_your_own`, que es lo
+ *  correcto y lo que hacía fallar esta prueba por la consola.
+ */
+async function limpiar(page, browser) {
   const mias = await api(page, '/corrections/?status=PENDING')
-  for (const fila of mias.body?.results ?? mias.body ?? []) {
-    if ((fila.reason ?? '').startsWith(MARCA)) {
-      await api(page, `/corrections/${fila.id}/reject/`, {
-        method: 'POST',
-        body: { note: 'limpieza de la prueba' },
-      })
-    }
+  const suyas = (mias.body?.results ?? mias.body ?? []).filter((fila) =>
+    (fila.reason ?? '').startsWith(MARCA),
+  )
+  if (suyas.length === 0) return
+
+  const contexto = await browser.newContext({ storageState: 'e2e/.sesiones/responsable.json' })
+  const otra = await contexto.newPage()
+  // Cualquier pantalla suya vale: solo hace falta estar en el origen para que
+  // `api` encuentre el testigo en el `localStorage`.
+  await irA(otra, '/mi-jornada', 'Mi jornada')
+  for (const fila of suyas) {
+    await api(otra, `/corrections/${fila.id}/reject/`, {
+      method: 'POST',
+      body: { note: 'limpieza de la prueba' },
+    })
   }
+  await contexto.close()
 }
 
 test.describe('Mi jornada · pedir una corrección', () => {
   test.use({ storageState: 'e2e/.sesiones/admin.json' })
 
-  test('cambiar la hora de un fichaje concreto llega al servidor', async ({ page }) => {
+  test('cambiar la hora de un fichaje concreto llega al servidor', async ({ page, browser }) => {
     const ruido = vigilarConsola(page)
     await irA(page, '/mi-jornada', 'Mi jornada')
 
@@ -81,7 +99,7 @@ test.describe('Mi jornada · pedir una corrección', () => {
     // Lo que hace que el consentimiento signifique algo: qué fichaje se toca.
     expect(mia.target).toBeTruthy()
 
-    await limpiar(page)
+    await limpiar(page, browser)
     expect(ruido()).toEqual([])
   })
 

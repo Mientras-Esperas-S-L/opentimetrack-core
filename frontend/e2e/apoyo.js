@@ -15,6 +15,20 @@ import { expect } from '@playwright/test'
 
 export const CLAVE = 'demo-password-2026'
 
+/** Dónde está la API, para las llamadas que estas pruebas hacen a pelo.
+ *
+ *  Parametrizada como `baseURL` en la configuración, y por el mismo motivo: los
+ *  puertos del compose se pueden mover para convivir con otra pila, y una suite
+ *  que solo sabe hablar con el 8000 deja de servir justo cuando alguien usa esa
+ *  posibilidad. Peor: no falla diciendo «no encuentro la API», falla en el
+ *  arranque de sesión con un `null` en el almacén, que no señala a ninguna
+ *  parte.
+ *
+ *      OTT_URL=http://localhost:3010 OTT_API_URL=http://localhost:8100/api \
+ *          npx playwright test
+ */
+export const API = process.env.OTT_API_URL ?? 'http://localhost:8000/api'
+
 /** Las dos empresas de la semilla. La vecina existe para una sola cosa: que se
  *  pueda intentar entrar en ella con identificadores suyos. */
 export const EMPRESA = {
@@ -69,9 +83,9 @@ export const testigo = (page) => page.evaluate(() => localStorage.getItem('ott.a
  */
 export async function api(page, ruta, opciones = {}) {
   return page.evaluate(
-    async ([ruta, opciones]) => {
+    async ([ruta, opciones, api]) => {
       const token = localStorage.getItem('ott.access')
-      const respuesta = await fetch(`http://localhost:8000/api${ruta}`, {
+      const respuesta = await fetch(`${api}${ruta}`, {
         method: opciones.method ?? 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -87,7 +101,7 @@ export async function api(page, ruta, opciones = {}) {
       }
       return { status: respuesta.status, body }
     },
-    [ruta, opciones],
+    [ruta, opciones, API],
   )
 }
 
@@ -112,10 +126,13 @@ export const errorVisible = (page) => page.getByRole('alert').filter({ hasText: 
  *  Lo que prueba algo aquí es la petición desnuda.
  */
 export async function apiSinSesion(page, ruta) {
-  return page.evaluate(async (ruta) => {
-    const respuesta = await fetch(`http://localhost:8000/api${ruta}`)
-    return { status: respuesta.status }
-  }, ruta)
+  return page.evaluate(
+    async ([ruta, api]) => {
+      const respuesta = await fetch(`${api}${ruta}`)
+      return { status: respuesta.status }
+    },
+    [ruta, API],
+  )
 }
 
 /** Da de baja a las personas que una prueba creó.

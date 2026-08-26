@@ -22,7 +22,10 @@ test.describe('Cuando no se puede comprobar la sesión', () => {
         status: 429,
         contentType: 'application/json',
         body: JSON.stringify({
-          error: { code: 'throttled', message: 'Demasiados intentos. Vuelve a probar en 30 segundos.' },
+          error: {
+            code: 'throttled',
+            message: 'Demasiados intentos. Vuelve a probar en 30 segundos.',
+          },
         }),
       }),
     )
@@ -51,5 +54,45 @@ test.describe('Cuando no se puede comprobar la sesión', () => {
     await page.goto('/panel/personas')
 
     await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible()
+  })
+})
+
+test.describe('Cuando el refresco tropieza con algo pasajero', () => {
+  test.use({ storageState: 'e2e/.sesiones/admin.json' })
+
+  /** El acceso dura quince minutos y caduca a media faena. El interceptor lo
+   *  renueva solo y nadie se entera --- salvo que esa renovación se estrelle
+   *  con un 502 del balanceador, un 429 de la cubeta que comparte la oficina o
+   *  el wifi parpadeando. Eso no dice nada sobre el refresco, que dura siete
+   *  días, y se trataba como sesión caducada: fuera a la calle, formulario
+   *  perdido y el testigo bueno destruido de paso.
+   */
+  test('no tira la sesión ni el trabajo de quien está escribiendo', async ({ page }) => {
+    await page.goto('/panel/personas')
+    await expect(page.getByRole('heading', { name: 'Personas', level: 1 })).toBeVisible()
+
+    // El acceso deja de valer, como si hubiera caducado.
+    await page.evaluate(() => localStorage.setItem('ott.access', 'ya-no-vale'))
+
+    // Y la renovación se encuentra el balanceador a medio desplegar.
+    await page.route('**/api/auth/refresh/', (ruta) =>
+      ruta.fulfill({
+        status: 502,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: { code: 'bad_gateway', message: 'Puerta de enlace' } }),
+      }),
+    )
+
+    // Otra pantalla, que pide sus datos con el testigo muerto y dispara la
+    // renovación.
+    await page.getByRole('link', { name: 'Fichajes', exact: true }).click()
+    await page.waitForTimeout(2000)
+
+    // El refresco sigue guardado: es lo que permite volver sin teclear nada.
+    const refresco = await page.evaluate(() => localStorage.getItem('ott.refresh'))
+    expect(refresco, 'se tiró un refresco que seguía siendo válido').toBeTruthy()
+
+    // Y no se le pide la contraseña a quien tiene la sesión buena.
+    await expect(page.getByLabel('Contraseña')).toHaveCount(0)
   })
 })

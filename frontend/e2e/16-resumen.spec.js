@@ -75,7 +75,11 @@ test.describe('Resumen', () => {
     const numeroDe = async (cola) => {
       const pestaña = page.getByRole('tab', { name: new RegExp(`^${cola}`) })
       await expect(pestaña).toContainText(/\d/)
-      return Number((await pestaña.innerText()).match(/(\d+)\s*$/)?.[1] ?? -1)
+      // `\+?` porque el Badge trunca por encima de su tope. Si lo hace, el
+      // número leído es el truncado y **no** coincidirá con el de la portada,
+      // que es exactamente el fallo que esta prueba busca: dos pantallas
+      // contando lo mismo y diciendo cosas distintas.
+      return Number((await pestaña.innerText()).match(/(\d+)\+?\s*$/)?.[1] ?? -1)
     }
 
     // Se vuelven a leer las dos cifras juntas hasta que coincidan, en vez de

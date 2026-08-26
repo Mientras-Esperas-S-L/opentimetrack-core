@@ -127,10 +127,7 @@ test.describe('Cobertura de turnos', () => {
     /** El contraste, y hace falta: sin él, todo lo de arriba pasaría igual si
      *  el panel saliera siempre y listara todos los turnos del mes. */
     await irA(page, '/panel/cuadrante', 'Cuadrante')
-    const limpio = await api(
-      page,
-      `/shifts/coverage/?from=${DENTRO_DE(200)}&to=${DENTRO_DE(201)}`,
-    )
+    const limpio = await api(page, `/shifts/coverage/?from=${DENTRO_DE(200)}&to=${DENTRO_DE(201)}`)
 
     expect(limpio.status).toBe(200)
     expect(limpio.body.uncovered).toEqual([])

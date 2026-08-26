@@ -69,3 +69,38 @@ test.describe('Fichar sin cobertura', () => {
     await expect(page.getByText(/No se ha registrado nada/)).toHaveCount(0)
   })
 })
+
+test.describe('Fichar y no recibir la respuesta', () => {
+  test.use({ storageState: 'e2e/.sesiones/operario.json', viewport: { width: 390, height: 844 } })
+
+  /** El otro modo de fallo, y el peligroso: la petición **sí** llega, el
+   *  servidor **sí** registra el fichaje, y la respuesta se pierde por el
+   *  camino. Con el plazo agotado el navegador no sabe distinguirlo de no haber
+   *  salido, pero la aplicación sí puede: axios lo dice.
+   *
+   *  Decir ahí «no se ha registrado nada» es afirmar algo que no se sabe, y
+   *  además invita a pulsar otra vez. Ese segundo toque llega pasados más de
+   *  diez segundos, así que la guarda de cinco no lo frena: entra una salida
+   *  encima de la entrada y la jornada queda en cero.
+   */
+  test('no jura que no ha quedado nada, porque no lo sabe', async ({ page }) => {
+    await irA(page, '/', 'Hola')
+
+    // La petición viaja y nunca vuelve: es un plazo agotado, no una red caída.
+    await page.route('**/api/punches/', async (ruta) => {
+      if (ruta.request().method() !== 'POST') return ruta.continue()
+      await new Promise((listo) => setTimeout(listo, 12_000))
+      return ruta.abort()
+    })
+
+    await page.getByRole('button', { name: /Fichar (entrada|salida)/ }).click()
+
+    // Por texto y no por rol: la pantalla ya tiene otro `alert` ---el aviso del
+    // turno de hoy--- y `getByRole('alert')` cogía ese.
+    await expect(page.getByText('El servidor tarda en contestar.')).toBeVisible({
+      timeout: 20_000,
+    })
+    await expect(page.getByText(/Puede que sí haya quedado registrado/)).toBeVisible()
+    await expect(page.getByText(/No se ha registrado nada/)).toHaveCount(0)
+  })
+})

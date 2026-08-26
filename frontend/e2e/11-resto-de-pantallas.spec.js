@@ -97,8 +97,12 @@ test.describe('Por decidir', () => {
       // El número del rótulo es el que hay que creerse: es lo que decide si
       // alguien entra a mirar. Una cola que dice 22 y enseña 0 es peor que no
       // tener el número.
+      //
+      // El `\+?` no es adorno: el contador es un Badge de MUI y por encima de
+      // su tope pinta «125+». Sin contemplarlo, el número no casaba, salía -1 y
+      // la prueba decía «no lleva contador» de una pestaña que sí lo llevaba.
       const rotulo = await pestaña.innerText()
-      const cuantas = Number(rotulo.match(/(\d+)\s*$/)?.[1] ?? -1)
+      const cuantas = Number(rotulo.match(/(\d+)\+?\s*$/)?.[1] ?? -1)
       expect(cuantas, `la cola de ${cola} no lleva su contador`).toBeGreaterThanOrEqual(0)
 
       await pestaña.click()
@@ -117,7 +121,7 @@ test.describe('Por decidir', () => {
 test.describe('Departamentos', () => {
   test.use({ storageState: 'e2e/.sesiones/admin.json' })
 
-  test('alta con responsable, y no se borra si tiene gente', async ({ page }) => {
+  test('alta con responsable, y mientras lo tenga no se ofrece borrarlo', async ({ page }) => {
     const ruido = vigilarConsola(page)
     const nombre = `Depto ${marca()}`
 
@@ -136,7 +140,29 @@ test.describe('Departamentos', () => {
     await expect(fila).toBeVisible()
     await expect(fila).toContainText('0 personas')
 
-    await fila.getByRole('button', { name: 'Eliminar' }).click()
+    // Vacío de gente pero no de mando, y eso basta para no ofrecerlo: retirar
+    // el departamento de quien lo dirige la deja «al mando de nada», y eso
+    // **amplía** lo que puede leer a toda la empresa. El servidor lo rechaza
+    // con 409, así que un botón aquí sería proponer algo que va a fallar.
+    await expect(
+      fila.getByRole('button', { name: new RegExp(`Eliminar el departamento ${nombre}`) }),
+    ).toHaveCount(0)
+
+    // La vía correcta: primero se le quita el mando, y entonces sí.
+    const creado = (await api(page, `/departments/?search=${encodeURIComponent(nombre)}`)).body
+    const id = (creado?.results ?? creado ?? [])[0]?.id
+    expect(id, 'no se encontró el departamento recién creado').toBeTruthy()
+    const sinMando = await api(page, `/departments/${id}/`, {
+      method: 'PATCH',
+      body: { managers: [] },
+    })
+    expect(sinMando.status).toBe(200)
+
+    await page.reload()
+    const otraVez = page.getByRole('listitem').filter({ hasText: nombre })
+    await otraVez
+      .getByRole('button', { name: new RegExp(`Eliminar el departamento ${nombre}`) })
+      .click()
     const confirmacion = page.getByRole('dialog')
     if (await confirmacion.isVisible().catch(() => false)) {
       await confirmacion.getByRole('button', { name: /Eliminar|Confirmar/ }).click()

@@ -126,7 +126,8 @@ test.describe('Resolver ausencias', () => {
 
     const permisos = await api(page, '/leave-types/')
     const conTope = (permisos.body?.results ?? permisos.body ?? []).find(
-      (t) => t.amount && Number(t.amount) > 0 && t.unit?.startsWith('DAYS') && t.is_active !== false,
+      (t) =>
+        t.amount && Number(t.amount) > 0 && t.unit?.startsWith('DAYS') && t.is_active !== false,
     )
     expect(conTope, 'hace falta un permiso con tope en el catálogo').toBeTruthy()
 
