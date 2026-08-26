@@ -29,7 +29,7 @@ from apps.absences.services import (
     short_holiday_notice,
     vacation_balance,
 )
-from apps.absences.uploads import validate_extension, validate_size
+from apps.absences.uploads import validate_content, validate_extension, validate_size
 from apps.absences.usage import usage_summary
 from apps.audit.models import AuditAction
 from apps.audit.services import record
@@ -276,7 +276,7 @@ class AbsenceRequestSerializer(serializers.Serializer):
     justification = serializers.FileField(
         required=False,
         allow_null=True,
-        validators=[validate_extension, validate_size],
+        validators=[validate_extension, validate_content, validate_size],
     )
     # Managers may file leave on somebody's behalf; an employee may not.
     employee = serializers.UUIDField(required=False, allow_null=True)
@@ -335,6 +335,15 @@ class AbsenceViewSet(
     serializer_class = AbsenceSerializer
     permission_classes = [IsAuthenticatedInTenant]
     filterset_class = AbsenceFilter
+    # Sin esto, `?search=` **no filtraba nada**: el backend de búsqueda está en
+    # los de por defecto, así que el parámetro se publica en el esquema y un
+    # cliente que lo use recibe la lista entera creyendo que va acotada. Peor que
+    # no ofrecerlo, y en una lista paginada de sesenta filas la diferencia entre
+    # «no hay» y «no cabe en la página» no se ve.
+    #
+    # Por la persona y por el motivo, que es como se busca una ausencia: «las de
+    # García» o «lo del juzgado». `BusquedaSinAcentos` iguala los dos lados.
+    search_fields = ["employee__first_name", "employee__last_name", "reason"]
     ordering_fields = ["start_date", "created_at"]
     ordering = ["-start_date"]
 

@@ -161,19 +161,42 @@ def leave_usage(employee, leave_type, company, on: date | None = None) -> LeaveU
 
 
 def _whole_day_hours(absence, company) -> tuple[float, bool]:
-    """How long that person's day was, and whether it had to be assumed.
+    """How long **that person's** day was, and whether it had to be assumed.
 
     The roster knows exactly when there is one. When there is not --- which is
-    what a flexible arrangement looks like here --- the company's ordinary week
-    over five days is the best available guess, and the caller is told it is one.
+    what a flexible arrangement looks like here --- the guess comes from what
+    that person agreed, not from the company's ordinary week.
+
+    The difference is not cosmetic. Somebody on twenty hours a week works a
+    four-hour day, and measuring their absences against eight got both directions
+    wrong at once. Six hours of job-search leave (art. 53.2) read as if one day
+    of theirs had eaten eight, so the product told them they had overshot a legal
+    entitlement after using four of the six hours they are owed --- during a
+    dismissal notice period, which is exactly when they need them. And four
+    working days of force majeure (art. 37.9) measured in eight-hour days granted
+    them eight of their own, twice what the article obliges, without the company
+    noticing.
+
+    `agreed_hours` returns the period because an annual figure is not a weekly
+    one divided by 52; only a weekly figure converts to a day by dividing by
+    five. For anything else the company's week is still the best available guess.
     """
     from apps.shifts.models import Shift
     from apps.tenants.rules import WorkingTimeRules
+    from apps.users.models import HoursPeriod
 
     shift = Shift.objects.filter(employee=absence.employee, day=absence.start_date).first()
     if shift is not None:
         return shift.minutes / 60, False
-    return float(WorkingTimeRules.for_company(company).weekly_hours) / 5, True
+
+    rules = WorkingTimeRules.for_company(company)
+    agreed = absence.employee.agreed_hours(rules)
+    if agreed is not None:
+        hours, period = agreed
+        if period == HoursPeriod.WEEK and hours:
+            return hours / 5, True
+
+    return float(rules.weekly_hours) / 5, True
 
 
 def event_request_amount(absence, leave_type) -> float | None:

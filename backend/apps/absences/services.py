@@ -28,7 +28,7 @@ from apps.absences.models import REDUCES_THE_DAY, Absence, AbsenceStatus, Absenc
 from apps.common.clock import local_date_of
 from apps.common.exceptions import BusinessRuleError
 from apps.common.four_eyes import refuse_self_decision
-from apps.common.transitions import claim
+from apps.common.transitions import claim, hold
 
 # ------------------------------------------------------------------- the period
 
@@ -316,6 +316,20 @@ def request_absence(
                 "hand the certificate to the employer."
             ),
         )
+
+    # Antes de mirar si algo se solapa, y por lo mismo que en `register_punch`:
+    # esta comprobación lee la cola sin bloquear nada, así que dos peticiones a
+    # la vez ven la misma cola vacía y las dos escriben. Medido con dos hilos,
+    # **doce de doce rondas** dejaban dos solicitudes para el mismo día.
+    #
+    # Lo que pasa después está escrito en el docstring de `_overlapping`: «quien
+    # apruebe la segunda crea una contradicción que nadie caza». Y si se aprueban
+    # las dos, el saldo de vacaciones se descuenta dos veces y el cuadrante ve el
+    # día doblemente ocupado.
+    #
+    # Se bloquea a la persona, no las filas de sus ausencias: las que hay que
+    # impedir todavía no existen, así que no hay nada que bloquear ahí.
+    hold(type(employee), employee.pk)
 
     clash = _overlapping(
         employee,

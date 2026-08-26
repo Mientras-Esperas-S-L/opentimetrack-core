@@ -410,3 +410,100 @@ def test_the_travelling_extra_is_not_an_excess(company, world):
     assert result is not None
     assert result["used"] == 5
     assert result["travel_extra"] == 2
+
+
+# ------------------------------------- la jornada de quien no trabaja la entera
+
+
+@pytest.fixture
+def a_tiempo_parcial(company):
+    """Veinte horas a la semana: su día son cuatro, no ocho."""
+    from apps.users.models import HoursPeriod, WorkingTimeRegime
+
+    with tenant_context(company.id):
+        seed_leave_types(company)
+        yield User.objects.create_user(
+            email="parcial@example.com",
+            password=PASSWORD,
+            tenant=company,
+            first_name="Ana",
+            regime=WorkingTimeRegime.PART_TIME,
+            contracted_hours=20,
+            contracted_period=HoursPeriod.WEEK,
+        )
+
+
+@pytest.mark.django_db
+def test_un_dia_entero_suyo_son_sus_horas_no_las_de_la_empresa(company, a_tiempo_parcial):
+    """El caso (b) del hallazgo: seis horas de búsqueda de empleo (art. 53.2).
+
+    Ana se ausenta **un día suyo**, que son cuatro horas. Contarlo con la semana
+    de la empresa lo convierte en ocho, y el producto le dice que ha agotado y
+    superado un permiso legal habiéndose ausentado 4 de las 6 horas a las que
+    tiene derecho. `over=True` es lo que ve quien aprueba, justo durante un
+    preaviso, que es cuando más falta le hacen.
+    """
+    with tenant_context(company.id):
+        tipo = LeaveType.objects.get(tenant=company, code="es.job_search")
+        request_absence(
+            employee=a_tiempo_parcial,
+            company=company,
+            leave_type=tipo,
+            start_date=date(2026, 9, 7),
+            end_date=date(2026, 9, 7),
+        )
+        consumo = leave_usage(
+            employee=a_tiempo_parcial, company=company, leave_type=tipo, on=date(2026, 9, 7)
+        )
+
+    assert consumo.used == 4.0, "su día son cuatro horas, no la semana de la empresa entre cinco"
+    assert consumo.over is False
+
+
+@pytest.mark.django_db
+def test_lo_que_concede_el_permiso_se_mide_en_su_jornada(company, a_tiempo_parcial):
+    """El caso (a): cuatro días al año de fuerza mayor (art. 37.9), pedidos por horas.
+
+    Cuatro jornadas suyas son dieciséis horas. Medirlas contra días de ocho le
+    concedía ocho jornadas: el doble de lo que el artículo obliga, sin que la
+    empresa se entere.
+    """
+    with tenant_context(company.id):
+        tipo = LeaveType.objects.get(tenant=company, code="es.force_majeure")
+        for dia in (1, 2, 3, 4, 7):
+            request_absence(
+                employee=a_tiempo_parcial,
+                company=company,
+                leave_type=tipo,
+                start_date=date(2026, 9, dia),
+                end_date=date(2026, 9, dia),
+                start_time=time(9, 0),
+                end_time=time(13, 0),
+            )
+        consumo = leave_usage(
+            employee=a_tiempo_parcial, company=company, leave_type=tipo, on=date(2026, 9, 7)
+        )
+
+    # Cinco ausencias de cuatro horas son cinco jornadas suyas: se ha pasado.
+    assert consumo.used == 5.0
+    assert consumo.over is True
+
+
+@pytest.mark.django_db
+def test_a_jornada_completa_sigue_saliendo_la_semana_de_la_empresa(company, world):
+    """El contraste. Sin horas pactadas propias, la referencia sigue siendo la
+    empresa, y eso no debe cambiar."""
+    with tenant_context(company.id):
+        tipo = LeaveType.objects.get(tenant=company, code="es.job_search")
+        request_absence(
+            employee=world["worker"],
+            company=company,
+            leave_type=tipo,
+            start_date=date(2026, 9, 7),
+            end_date=date(2026, 9, 7),
+        )
+        consumo = leave_usage(
+            employee=world["worker"], company=company, leave_type=tipo, on=date(2026, 9, 7)
+        )
+
+    assert consumo.used == 8.0

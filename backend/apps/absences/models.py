@@ -6,12 +6,18 @@ in, so this is part of the legal record too.
 
 from __future__ import annotations
 
+import logging
+
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
-from apps.absences.uploads import validate_extension, validate_size
+from apps.absences.uploads import validate_content, validate_extension, validate_size
 from apps.common.models import TenantOwnedModel
+
+logger = logging.getLogger(__name__)
 
 
 class AbsenceType(models.TextChoices):
@@ -315,7 +321,7 @@ class Absence(TenantOwnedModel):
         _("supporting document"),
         upload_to="justifications/%Y/%m/",
         blank=True,
-        validators=[validate_extension, validate_size],
+        validators=[validate_extension, validate_content, validate_size],
         help_text=_(
             "Not available for sick leave: the medical certificate is not stored "
             "here. Since RD 1060/2022 the worker no longer hands it to the "
@@ -530,3 +536,45 @@ class RecoveredHoliday(TenantOwnedModel):
 
     def __str__(self) -> str:
         return f"{self.days} d · {self.employee_id} · {self.first_day}"
+
+
+@receiver(post_delete, sender=Absence)
+def _borrar_el_justificante_al_borrar_la_fila(sender, instance, **kwargs):
+    """El fichero se va con su fila. Siempre, y solo si la fila se fue de verdad.
+
+    Django dejó de borrar ficheros al borrar filas en la 1.3, y tiene razones:
+    dos filas pueden apuntar al mismo fichero, y una transacción que se revierte
+    no devuelve lo borrado. Pero aquí no hacerlo tiene un coste concreto. Un
+    justificante es a menudo un dato del art. 9 del RGPD, y quien retira su
+    solicitud está diciendo exactamente que no quiere que se quede. Sin esto, el
+    fichero sobrevive sin que nada lo apunte: ni fila, ni pantalla, ni comando.
+    La empresa no podría atender una supresión (art. 17) ni cumplir su propio
+    plazo de conservación (art. 5.1.e), porque no sabría que existe.
+
+    **`post_delete` y no `Absence.delete()`**, porque `QuerySet.delete()` no
+    llama al método del modelo: el borrado en masa ---una purga por retención,
+    una empresa que se va--- se saltaría la limpieza justo cuando más ficheros
+    hay en juego. La señal la reciben las dos vías.
+
+    **Y dentro de `on_commit`**, que es la parte que no se puede omitir: borrar
+    el fichero antes de que la transacción confirme deja, si algo la revierte,
+    una fila viva apuntando a un fichero que ya no está. Eso es peor que el
+    problema que arregla, porque la pantalla ofrece una descarga que falla y
+    nadie sabe por qué.
+    """
+    fichero = instance.justification
+    if not fichero:
+        return
+
+    nombre = fichero.name
+
+    def quitarlo():
+        try:
+            fichero.storage.delete(nombre)
+        except Exception:
+            # El almacén puede estar caído o el fichero ya no estar. La fila ya
+            # se ha ido y la respuesta ya ha salido, así que tumbar aquí no
+            # arregla nada: queda anotado para que alguien lo barra.
+            logger.warning("No se pudo borrar el justificante %s", nombre, exc_info=True)
+
+    transaction.on_commit(quitarlo)

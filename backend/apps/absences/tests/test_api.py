@@ -188,3 +188,76 @@ def test_somebody_who_clocked_out_is_not_working_now(company, people):
     body = client_for(people["jefa"]).get("/api/overview/").json()
 
     assert body["working_now"] == []
+
+
+@pytest.mark.django_db
+def test_la_busqueda_de_ausencias_busca(company, people):
+    """`?search=` estaba publicado y no filtraba nada.
+
+    El backend de búsqueda viene en los de por defecto, así que el parámetro
+    aparecía en el esquema; sin `search_fields`, DRF lo ignora y devuelve la
+    lista entera. Un cliente que lo use se queda con la primera página creyendo
+    que es el resultado de su búsqueda --- y en una lista paginada la diferencia
+    entre «no hay» y «no cabe en la página» no se ve.
+
+    Salió al caza de por qué fallaba una prueba de navegador que buscaba por su
+    propia marca: había cincuenta y cinco ausencias con fecha posterior y la
+    suya, recién creada, se caía de la página.
+    """
+    with tenant_context(company.id):
+        request_absence(
+            employee=people["ana"],
+            company=company,
+            absence_type=AbsenceType.PERSONAL,
+            start_date=date(2026, 10, 1),
+            end_date=date(2026, 10, 1),
+            reason="Cita en el juzgado",
+        )
+        request_absence(
+            employee=people["ana"],
+            company=company,
+            absence_type=AbsenceType.PERSONAL,
+            start_date=date(2026, 10, 5),
+            end_date=date(2026, 10, 5),
+            reason="Mudanza",
+        )
+
+    client = APIClient()
+    client.force_authenticate(user=people["jefa"])
+
+    todas = client.get("/api/absences/")
+    juzgado = client.get("/api/absences/?search=juzgado")
+
+    assert todas.status_code == 200
+    assert juzgado.status_code == 200
+    assert juzgado.data["count"] < todas.data["count"], "la búsqueda no acotó nada"
+    assert [a["reason"] for a in juzgado.data["results"]] == ["Cita en el juzgado"]
+
+
+@pytest.mark.django_db
+def test_y_busca_tambien_por_la_persona_sin_acentos(company, people):
+    """Que es como se busca una ausencia de verdad: «las de García»."""
+    with tenant_context(company.id):
+        garcia = User.objects.create_user(
+            email="garcia@example.com",
+            password=PASSWORD,
+            tenant=company,
+            first_name="Lucía",
+            last_name="García",
+        )
+        request_absence(
+            employee=garcia,
+            company=company,
+            absence_type=AbsenceType.PERSONAL,
+            start_date=date(2026, 11, 3),
+            end_date=date(2026, 11, 3),
+            reason="Suya",
+        )
+
+    client = APIClient()
+    client.force_authenticate(user=people["jefa"])
+
+    sin_tilde = client.get("/api/absences/?search=garcia")
+
+    assert sin_tilde.status_code == 200
+    assert [a["employee_name"] for a in sin_tilde.data["results"]] == ["Lucía García"]
