@@ -36,6 +36,28 @@ from django.utils.translation import gettext_lazy as _
 from apps.common.exceptions import BusinessRuleError
 
 
+def hold(modelo, pk):
+    """Bloquea una fila para que dos peticiones de la misma persona no se pisen.
+
+    `claim` sirve cuando hay un estado que exigir. Esto es para lo que no lo
+    tiene: **fichar**. El tipo de un fichaje se deduce del estado ---si el
+    último fue una entrada, el siguiente es una salida--- y la protección contra
+    el doble toque compara con el último fichaje leído. Dos peticiones a la vez
+    leen el mismo «último» y las dos pasan.
+
+    Medido con dos hilos y una barrera: **catorce de quince rondas** dejaban dos
+    fichajes en el registro, con treinta y cinco milisegundos de solape real.
+    Una sola ronda salía bien y parecía suficiente, que es la trampa: la primera
+    medición fue la ronda afortunada.
+
+    No hay fila de estado que bloquear ---un fichaje no modifica al anterior---
+    así que se bloquea a **la persona**. Serializa solo sus propias pulsaciones,
+    y funciona también en el primer fichaje del día, cuando todavía no hay
+    ninguno que bloquear.
+    """
+    return modelo.objects.select_for_update().get(pk=pk)
+
+
 def claim(
     modelo, pk, *, desde, code: str = "already_resolved", message=None, campo: str = "status"
 ):

@@ -485,6 +485,58 @@ class OvertimeDecision(TenantOwnedModel):
         }
 
 
+class DelegatedPunchReceipt(TenantOwnedModel):
+    """What an application already recorded under a key it chose.
+
+    The commonest way a connector fails is not losing the write, it is losing
+    the **answer**: the punch is stored, the response times out, and the client
+    retries. Here that retry is not harmless --- the type is inferred from the
+    state, so a repeated "clock Rosa in" records a clock *out*, and a nine-hour
+    day reads as thirty seconds. The double-tap guard does not reach it either:
+    five seconds is a finger, not a connector's backoff.
+
+    So the application sends `Idempotency-Key` and this remembers what that key
+    produced. A second request carrying it gets the same event back instead of a
+    new one.
+
+    The key is a fact of the integration, not of the working day, so it lives
+    here and not on the punch: the record of what happened stays exactly as it
+    was, and nothing an integrator invents reaches the inspection report.
+
+    Scoped to the application, not to the company: two connectors numbering
+    their own operations must not collide, and one must never read back an event
+    the other recorded.
+    """
+
+    application = models.ForeignKey(
+        "tenants.Application",
+        on_delete=models.CASCADE,
+        related_name="punch_receipts",
+        verbose_name=_("application"),
+    )
+    key = models.CharField(_("idempotency key"), max_length=200)
+    punch = models.ForeignKey(
+        Punch,
+        on_delete=models.CASCADE,
+        related_name="receipts",
+        null=True,
+        blank=True,
+        verbose_name=_("event"),
+    )
+
+    class Meta:
+        verbose_name = _("delegated punch receipt")
+        verbose_name_plural = _("delegated punch receipts")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["application", "key"], name="one_receipt_per_application_key"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.application_id} {self.key}"
+
+
 # Corrections live in their own module for readability; Django needs them
 # imported here to discover the model.
 from apps.punches.corrections import (  # noqa: E402
@@ -496,6 +548,7 @@ from apps.punches.corrections import (  # noqa: E402
 __all__ = [
     "CorrectionKind",
     "CorrectionStatus",
+    "DelegatedPunchReceipt",
     "OvertimeDecision",
     "Punch",
     "PunchCorrection",

@@ -8,6 +8,8 @@ around isolation, and that the resulting record still says what it is.
 
 from __future__ import annotations
 
+import itertools
+
 import pytest
 from django.urls import reverse
 from freezegun import freeze_time
@@ -56,8 +58,17 @@ def authorise(company, scopes, name="GreenCity"):
     return application, raw
 
 
-def as_application(client, token):
-    client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+#: Una clave distinta por llamada. La cabecera es obligatoria, y ponerle la
+#: misma a todas las pruebas convertiría el segundo fichaje de cada una en el
+#: primero repetido ---que es justo lo que la cabecera existe para hacer---.
+_llamadas = itertools.count()
+
+
+def as_application(client, token, key=None):
+    client.credentials(
+        HTTP_AUTHORIZATION=f"Bearer {token}",
+        HTTP_IDEMPOTENCY_KEY=key or f"prueba-{next(_llamadas)}",
+    )
     return client
 
 
@@ -90,6 +101,9 @@ def test_the_employee_can_be_named_by_staff_number_email_or_id(client, company, 
     for reference, cuando in zip(
         ("EMP-0003", "marta@example.com", str(employee.id)), momentos, strict=True
     ):
+        # Cada fichaje es una operación distinta, así que lleva su clave. La
+        # misma para los tres los convertiría en uno solo repetido.
+        as_application(client, token, key=f"referencia-{reference}")
         with freeze_time(cuando):
             response = caller.post(reverse("punch-delegated"), {"employee_ref": reference})
         assert response.status_code == 201, reference
@@ -308,9 +322,14 @@ def test_pasar_la_tarjeta_dos_veces_no_cierra_la_jornada(client, company, employ
     caller = as_application(client, token)
 
     with freeze_time("2026-08-13 07:00:00"):
+        as_application(client, token, key="tarjeta-pase-1")
         primera = caller.post(
             reverse("punch-delegated"), {"employee_ref": "EMP-0003", "terminal": True}
         )
+        # Clave distinta a propósito: son dos pasadas de tarjeta, no un reintento
+        # de la misma. Lo que tiene que frenar la segunda es la guarda del doble
+        # toque, y esta prueba comprueba justo eso.
+        as_application(client, token, key="tarjeta-pase-2")
         segunda = caller.post(
             reverse("punch-delegated"), {"employee_ref": "EMP-0003", "terminal": True}
         )
@@ -336,7 +355,6 @@ def test_el_turno_entero_ficha_en_el_mismo_minuto(client, company, employee):
     segundo en llegar no podría fichar --- que es peor que el fallo que evita.
     """
     _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
-    caller = as_application(client, token)
 
     with tenant_context(company.id):
         for numero in range(4):
@@ -349,8 +367,10 @@ def test_el_turno_entero_ficha_en_el_mismo_minuto(client, company, employee):
             )
 
     with freeze_time("2026-08-13 07:00:00"):
+        # Una clave por persona: cuatro entradas distintas en el mismo minuto,
+        # que es exactamente lo que este terminal recibe todas las mañanas.
         respuestas = [
-            caller.post(
+            as_application(client, token, key=f"puerta-EMP-100{n}").post(
                 reverse("punch-delegated"), {"employee_ref": f"EMP-100{n}", "terminal": True}
             )
             for n in range(4)
@@ -481,3 +501,129 @@ def test_una_evidencia_normal_pasa(client, company, employee):
     )
 
     assert respuesta.status_code == 201
+
+
+# ------------------------------------------------------------------ the retry
+
+
+@pytest.mark.django_db
+def test_a_retry_with_the_same_key_returns_the_same_punch(client, company, employee):
+    """The commonest way a connector fails: the write landed, the answer did not.
+
+    Without a key the retry does not record a second entry --- it records an
+    **exit**, because the type is inferred from the state. Rosa's nine-hour day
+    then reads as thirty seconds, and undoing it needs the art. 4.b procedure
+    and both parties' agreement.
+    """
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+    caller = as_application(client, token)
+    caller.credentials(
+        HTTP_AUTHORIZATION=f"Bearer {token}", HTTP_IDEMPOTENCY_KEY="nfc-gate-7-2026-08-13-0800"
+    )
+
+    with freeze_time("2026-08-13 08:00:00"):
+        first = caller.post(reverse("punch-delegated"), {"employee_ref": "EMP-0003"})
+    with freeze_time("2026-08-13 08:00:30"):
+        retry = caller.post(reverse("punch-delegated"), {"employee_ref": "EMP-0003"})
+
+    assert first.status_code == 201
+    assert retry.status_code == 200
+    assert retry.data["id"] == first.data["id"]
+    assert Punch.objects.filter(employee=employee).count() == 1
+    assert retry.data["day_status"]["state"] == "WORKING"
+
+
+@pytest.mark.django_db
+def test_a_different_key_records_a_different_event(client, company, employee):
+    """The key protects the retry, it must not block the real exit."""
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+    caller = as_application(client, token)
+
+    caller.credentials(HTTP_AUTHORIZATION=f"Bearer {token}", HTTP_IDEMPOTENCY_KEY="entrada")
+    with freeze_time("2026-08-13 08:00:00"):
+        entrada = caller.post(reverse("punch-delegated"), {"employee_ref": "EMP-0003"})
+
+    caller.credentials(HTTP_AUTHORIZATION=f"Bearer {token}", HTTP_IDEMPOTENCY_KEY="salida")
+    with freeze_time("2026-08-13 17:00:00"):
+        salida = caller.post(reverse("punch-delegated"), {"employee_ref": "EMP-0003"})
+
+    assert entrada.status_code == 201
+    assert salida.status_code == 201
+    assert salida.data["punch_type"] == PunchType.OUT
+    assert Punch.objects.filter(employee=employee).count() == 2
+
+
+@pytest.mark.django_db
+def test_the_key_belongs_to_the_application_that_sent_it(client, company, other_company):
+    """Two connectors picking the same key must not read each other's events."""
+    with tenant_context(company.id):
+        una = User.objects.create_user(
+            email="marta@example.com",
+            password="a-sufficiently-long-password",
+            tenant=company,
+            employee_id="EMP-0003",
+        )
+    with tenant_context(other_company.id):
+        otra = User.objects.create_user(
+            email="rosa@globex.example",
+            password="a-sufficiently-long-password",
+            tenant=other_company,
+            employee_id="EMP-0003",
+        )
+
+    _app_a, token_a = authorise(company, [ApplicationScope.PUNCH_DELEGATED], name="Geosian")
+    _app_b, token_b = authorise(
+        other_company, [ApplicationScope.PUNCH_DELEGATED], name="Otro producto"
+    )
+
+    primero = APIClient()
+    primero.credentials(HTTP_AUTHORIZATION=f"Bearer {token_a}", HTTP_IDEMPOTENCY_KEY="turno-1")
+    segundo = APIClient()
+    segundo.credentials(HTTP_AUTHORIZATION=f"Bearer {token_b}", HTTP_IDEMPOTENCY_KEY="turno-1")
+
+    a = primero.post(reverse("punch-delegated"), {"employee_ref": "EMP-0003"})
+    b = segundo.post(reverse("punch-delegated"), {"employee_ref": "EMP-0003"})
+
+    assert a.status_code == 201
+    assert b.status_code == 201
+    assert a.data["id"] != b.data["id"]
+    # Sin filtro por empresa a propósito: `Punch.objects` se acota al contexto y
+    # aquí no hay ninguno, así que contaría cero para las dos y la prueba pasaría
+    # sin comprobar nada.
+    assert Punch.objects_all_tenants.filter(employee=una).count() == 1
+    assert Punch.objects_all_tenants.filter(employee=otra).count() == 1
+
+
+@pytest.mark.django_db
+def test_without_a_key_it_is_refused(client, company, employee):
+    """Demanded, not offered.
+
+    A connector without a key is a connector one lost answer away from turning
+    somebody's nine-hour day into thirty seconds, and it finds out in
+    production. Refusing on the first call moves that discovery to the
+    developer's screen, which is the only place it is cheap. The refusal is a
+    400 with a code of its own so a machine can branch on it.
+    """
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+    caller = APIClient()
+    caller.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+    response = caller.post(reverse("punch-delegated"), {"employee_ref": "EMP-0003"})
+
+    assert response.status_code == 400
+    assert response.data["error"]["code"] == "idempotency_key_required"
+    assert Punch.objects_all_tenants.filter(employee=employee).count() == 0
+
+
+@pytest.mark.django_db
+def test_a_blank_key_is_no_key(client, company, employee):
+    """Sending the header empty is the same as not sending it, and worse: it
+    looks like the connector did its part."""
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+    caller = APIClient()
+    caller.credentials(HTTP_AUTHORIZATION=f"Bearer {token}", HTTP_IDEMPOTENCY_KEY="   ")
+
+    response = caller.post(reverse("punch-delegated"), {"employee_ref": "EMP-0003"})
+
+    assert response.status_code == 400
+    assert response.data["error"]["code"] == "idempotency_key_required"

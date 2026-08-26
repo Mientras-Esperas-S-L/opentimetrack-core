@@ -17,6 +17,7 @@ from django.utils.translation import gettext_lazy as _
 from apps import legal
 from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError
+from apps.common.transitions import hold
 from apps.punches.models import (
     HoursNature,
     Punch,
@@ -406,6 +407,15 @@ def register_punch(
             code="employee_inactive",
             message=_("This person is deactivated and cannot clock in or out."),
         )
+
+    # Antes de leer el último fichaje, y esto es lo que hace que la comprobación
+    # de abajo sirva de algo: sin el bloqueo, dos peticiones simultáneas de la
+    # misma persona leen el mismo «último» y las dos pasan. Medido con dos hilos,
+    # catorce de quince rondas dejaban **dos fichajes en el registro**.
+    #
+    # Se bloquea a la persona porque no hay fila de estado que bloquear: un
+    # fichaje no modifica al anterior. Serializa solo sus propias pulsaciones.
+    hold(type(employee), employee.pk)
 
     _refuse_a_double_tap(employee, company, interval)
 
