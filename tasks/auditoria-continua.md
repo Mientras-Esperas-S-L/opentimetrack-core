@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 105 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 106 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -161,14 +161,26 @@ completo (evidencia y refutación) está en el registro del workflow.
   se contaron; no se ha hecho porque borrar ficheros de la base de desarrollo lo
   decide su dueño. **Para Francisco.**
 
-- **La tanda de navegador falla en una prueba distinta cada vez.** (v96) Tres
-  corridas del mismo árbol, sin tocar nada: 274 de 275 pasan siempre y cae una
-  distinta ---descargas, accesibilidad, decidir en bloque---, todas verdes
-  aisladas y todas por tiempo. **No hay causa identificada.** No es carga: 4,3 de
-  media con 32 núcleos. El siguiente paso es partir la tanda en dos mitades para
-  ver si el fallo se concentra en la segunda, lo que apuntaría al navegador
-  reutilizado durante once minutos con un solo worker. **Mientras tanto, un rojo
-  suelto no se interpreta sin repetirlo aislado.**
+- ~~**La tanda de navegador falla en una prueba distinta cada vez.**~~ (v96)
+  **CAUSA ENCONTRADA Y CERRADO el 27/08 (v104).** Eran dos cosas, y la sospecha
+  de entonces ---el navegador reutilizado once minutos--- no era ninguna de las
+  dos:
+
+  1. **Esperas por reloj.** `waitForTimeout(2500)` entre una acción y su
+     comprobación. Dos segundos y medio bastan casi siempre; al final de una
+     tanda larga, no. Encaja con el síntoma exacto: pasa aislada, pasa con los
+     doce primeros ficheros ---124 pruebas--- y cae dentro de las 283. Y el
+     mensaje no se parece a la causa: decía «esperaba 3, encontré 0», que suena
+     a que no se movió nadie, cuando aún no se había movido. Quedan **41 más**
+     repartidas en veinte ficheros, con su propia entrada abajo.
+  2. **La hora a la que se corre.** Un fixture que ficha en hora de empresa y
+     consulta con la fecha del contenedor solo funciona diecinueve horas de cada
+     veinticuatro; las vueltas se dan de madrugada. Su entrada propia también
+     está abajo.
+
+  Lo que despistó fue medir la carga y descartarla con razón ---4,3 de media con
+  32 núcleos--- y quedarse ahí: la máquina no iba cargada **de media**, pero una
+  espera fija no necesita que lo vaya, solo que ese instante lo esté.
 
 - ~~**Las reglas de cómputo no tienen fechas de vigencia.**~~ **DECIDIDO Y HECHO
   el 26/08 (v100):** versionadas por fecha de efecto, solo las dos del cómputo.
@@ -328,6 +340,61 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 106 --- El informe declaraba ocho horas donde se trabajaron nueve (27/08)
+
+Lente: **la noche del cambio de hora**. `apps/common/dst.py` ya existía, con las
+dos fechas de 2026 y el razonamiento entero: quien entra a las 22:00 y sale a las
+06:00 trabaja siete horas en marzo y nueve en octubre, y «los números que da el
+producto ya son correctos» ---eso dice el módulo--- porque los fichajes guardan
+instantes reales.
+
+Se comprobó, que es de lo que va esto. **Los números eran correctos en la
+pantalla y no en el documento:**
+
+| Noche | Trabajado real | Pantalla | Informe |
+|---|---|---|---|
+| 25 de octubre (25 h) | 9 h | 9 h | **8 h** |
+| 29 de marzo (23 h) | 7 h | 7 h | **8 h** |
+| una corriente | 8 h | 8 h | 8 h |
+
+La noche corriente es el contraste, y es lo que descarta que fuera un error del
+montaje.
+
+#### La causa
+
+Python resta dos `datetime` que comparten `tzinfo` **como reloj de pared**:
+ignora el `tzinfo` común y hace la cuenta ingenua. De 22:00 a 06:00 salen ocho
+horas los 365 días del año. `build_report` convertía cada fichaje a la hora local
+---para pintarlo--- y restaba esas horas ya convertidas.
+
+`build_day_status`, que es lo que ve la pantalla, resta los instantes tal como
+salen de la base, en UTC, que no cambia de offset. De ahí que una cifra fuera
+bien y la otra no: **dos caminos para el mismo dato, y solo uno pasaba por el
+módulo que sabía de esto**. `dst.py` lo tenía resuelto en `real_gap()`, importado
+por las horas extra, el cuadrante y la cobertura. Por el informe, no.
+
+#### Lo que esto significa
+
+Es el documento del art. 34.9, el que se entrega. La ley va por el tiempo
+efectivamente trabajado: en octubre le quitaba una hora a quien la había
+trabajado ---y esa hora es la que la cola de horas extra sí registraba, con lo
+que el papel y la cola tampoco cuadraban---; en marzo le atribuía una que no.
+Dos noches al año, toda la plantilla que hace noches.
+
+#### El comentario que era una prueba sin escribir
+
+Tres líneas encima del fallo, el propio fichero decía: «`build_day_status` asks
+the same question, and the two must agree: the figure on screen and the figure in
+the document are the same day». Lo decía y no se cumplía. Ahora hay siete
+pruebas ---las tres noches por las dos vías, más el CSV que se entrega--- y con
+el arreglo revertido fallan las dos noches del cambio y la corriente pasa.
+
+#### Repasado, no supuesto
+
+Las **siete restas de tiempo** que hay en el producto: cinco operan sobre
+instantes en UTC ---y UTC no cambia de offset, así que son correctas---, una es
+la del propio `dst.py`, y la séptima era esta.
 
 ### Vuelta 105 --- Las dos mitades de la pantalla, a la una de la madrugada (27/08)
 

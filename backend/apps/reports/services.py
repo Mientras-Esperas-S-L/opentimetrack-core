@@ -18,6 +18,7 @@ from django.utils.translation import gettext as _
 
 from apps.absences.models import Absence, AbsenceStatus
 from apps.common.csv_export import EscritorSeguro
+from apps.common.dst import real_gap
 from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource, PunchType
 from apps.punches.services import max_open_hours
 
@@ -341,7 +342,19 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
                 continue
 
             start, opening = open_by_interval.pop(kind)
-            seconds = int((local - start).total_seconds())
+            # `real_gap` y no una resta: dos datetime con el **mismo** `tzinfo` se
+            # restan como reloj de pared, así que una jornada de 22:00 a 06:00
+            # daba ocho horas también las dos noches del año que no duran
+            # veinticuatro. Medido: la del 25 de octubre son nueve horas reales y
+            # este documento declaraba ocho; la del 29 de marzo son siete y
+            # declaraba ocho igual. La pantalla decía la cifra correcta en las
+            # dos, porque `build_day_status` resta instantes de la base ---en UTC,
+            # que no cambia de offset--- y aquí se restaban horas ya convertidas.
+            #
+            # Es el documento del art. 34.9: la ley va por el tiempo efectivamente
+            # trabajado, y en octubre esto le quitaba una hora a quien la había
+            # trabajado. El porqué de la trampa está en `apps.common.dst`.
+            seconds = int(real_gap(start, local, zone).total_seconds())
             _add_span(row, opening, start, local, seconds)
 
         for kind, (start, _opening) in open_by_interval.items():

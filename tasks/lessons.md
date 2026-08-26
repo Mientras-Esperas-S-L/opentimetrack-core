@@ -3012,3 +3012,52 @@ puede hacer, y ninguna cantidad de repasos la sustituye.
 está en el proyecto y se usa con el patrón `freeze_time("...22:30:00")  # 00:30
 en Madrid`. Una prueba que solo dice la verdad de madrugada es lo que dejó pasar
 esto durante meses.
+
+## 199. Dos `datetime` de la misma zona se restan como reloj de pared
+
+Python lo hace a propósito y está documentado: si los dos operandos comparten
+`tzinfo`, se ignora y la resta es ingenua. Con `zoneinfo` eso significa que
+
+    datetime(2026, 10, 24, 22, 0, tz=Madrid) → 06:00 del día siguiente
+
+da ocho horas **también** la noche en que los relojes se atrasan, cuando de
+verdad pasaron nueve. La única forma de que la cuenta sea real es convertir a
+UTC antes de restar.
+
+El proyecto ya lo sabía. `apps/common/dst.py` existe para esto, lo explica con
+esas palabras y trae `real_gap()` resuelto. Lo importaban `overtime.py`,
+`shifts/services.py` y `coverage.py`.
+
+**No lo importaba `reports/services.py`**, que es el que genera el documento del
+art. 34.9. Restaba dos horas ya convertidas a la zona local, así que las dos
+noches del año que no duran veinticuatro el informe declaraba ocho horas: una
+menos de las trabajadas en octubre, una más en marzo. La pantalla daba la cifra
+correcta porque `build_day_status` resta instantes tal como salen de la base
+---en UTC, que no cambia de offset---. **Dos caminos para el mismo dato, y solo
+uno pasaba por el módulo que sabía de esto.**
+
+**Regla**: una resta de fechas solo es de fiar si los dos lados están en UTC.
+Cuando el código convierte a hora local para *mostrar*, esa conversión no puede
+alimentar además la aritmética: se muestra lo local y se resta lo absoluto.
+
+**Y el corolario que vale para auditar**: un módulo que documenta una trampa
+protege únicamente a quien lo importa. La lista de quién lo importa es corta y
+se saca con un `grep`; la lista de quién **debería** importarlo es la que hay que
+escribir a mano, y es donde estaba el fallo.
+
+## 200. Cuando el código afirma algo de sí mismo, compruébalo
+
+En `reports/services.py`, tres líneas encima del fallo, había escrito esto:
+
+> `build_day_status` asks the same question, and the two must agree: the figure
+> on screen and the figure in the document are the same day.
+
+Lo decía y no se cumplía: en la noche del cambio de hora una decía nueve y la
+otra ocho. El comentario no era mentira cuando se escribió --- describía una
+intención --- pero nadie había puesto una prueba que la sostuviera, así que
+quedó como afirmación.
+
+**Regla**: cuando un comentario afirme que dos cosas concuerdan, **esa frase es
+una prueba sin escribir**. Escríbela. Y al auditar, esas frases son la mejor
+lista de candidatos que hay: dicen exactamente qué comprobar y dónde, y nadie
+las ha verificado precisamente porque suenan a que ya lo están.
