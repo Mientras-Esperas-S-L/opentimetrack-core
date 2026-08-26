@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 13:13+0000\n"
+"POT-Creation-Date: 2026-08-26 13:51+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -99,7 +99,7 @@ msgstr ""
 msgid "name"
 msgstr ""
 
-#: apps/absences/models.py:97 apps/punches/corrections.py:76
+#: apps/absences/models.py:97 apps/punches/corrections.py:82
 #: apps/punches/models.py:399
 msgid "kind"
 msgstr "clase"
@@ -181,7 +181,7 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:175 apps/absences/models.py:524
-#: apps/audit/models.py:171 apps/punches/models.py:449
+#: apps/audit/models.py:172 apps/punches/models.py:449
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:334
 msgid "note"
@@ -214,15 +214,15 @@ msgid "Rejected"
 msgstr "Rexeitada"
 
 #: apps/absences/models.py:234 apps/absences/models.py:484
-#: apps/notifications/models.py:34 apps/punches/corrections.py:74
+#: apps/notifications/models.py:34 apps/punches/corrections.py:80
 #: apps/punches/models.py:149 apps/punches/models.py:396
 #: apps/punches/models.py:438 apps/reports/payroll.py:97
 #: apps/shifts/models.py:111
 msgid "employee"
 msgstr "persoa traballadora"
 
-#: apps/absences/models.py:251 apps/audit/models.py:164
-#: apps/punches/corrections.py:88 apps/punches/models.py:151
+#: apps/absences/models.py:251 apps/audit/models.py:165
+#: apps/punches/corrections.py:94 apps/punches/models.py:151
 msgid "type"
 msgstr "tipo"
 
@@ -254,7 +254,7 @@ msgid ""
 "Empty means the whole day. 40 means they still work 60 %."
 msgstr ""
 
-#: apps/absences/models.py:286 apps/punches/corrections.py:92
+#: apps/absences/models.py:286 apps/punches/corrections.py:98
 msgid "reason"
 msgstr "motivo"
 
@@ -263,15 +263,15 @@ msgid "recorded by"
 msgstr ""
 
 #: apps/absences/models.py:309 apps/absences/models.py:513
-#: apps/punches/corrections.py:98 apps/punches/models.py:442
+#: apps/punches/corrections.py:104 apps/punches/models.py:442
 msgid "status"
 msgstr "estado"
 
-#: apps/absences/models.py:317 apps/punches/corrections.py:112
+#: apps/absences/models.py:317 apps/punches/corrections.py:118
 msgid "resolved by"
 msgstr "resolta por"
 
-#: apps/absences/models.py:319 apps/punches/corrections.py:114
+#: apps/absences/models.py:319 apps/punches/corrections.py:120
 msgid "resolved at"
 msgstr "resolta o"
 
@@ -502,7 +502,7 @@ msgid "Deleted"
 msgstr ""
 
 #: apps/absences/views.py:254 apps/absences/views.py:481
-#: apps/punches/correction_views.py:245 apps/reports/views.py:390
+#: apps/punches/correction_views.py:246 apps/reports/views.py:390
 msgid "That person is not in this company."
 msgstr "Esa persoa non pertence a esta empresa."
 
@@ -566,133 +566,137 @@ msgstr ""
 msgid "Applied a change without agreement"
 msgstr ""
 
-#: apps/audit/models.py:61
-msgid "Approved leave"
+#: apps/audit/models.py:59
+msgid "Withdrew a proposed change"
 msgstr ""
 
 #: apps/audit/models.py:62
-msgid "Rejected leave"
+msgid "Approved leave"
 msgstr ""
 
 #: apps/audit/models.py:63
-msgid "Authorised overtime"
+msgid "Rejected leave"
 msgstr ""
 
 #: apps/audit/models.py:64
+msgid "Authorised overtime"
+msgstr ""
+
+#: apps/audit/models.py:65
 msgid "Did not authorise overtime"
 msgstr ""
 
-#: apps/audit/models.py:67
+#: apps/audit/models.py:68
 msgid "Confirmed holiday recovered from sick leave"
 msgstr ""
 
-#: apps/audit/models.py:71
+#: apps/audit/models.py:72
 msgid "Dismissed a holiday recovery"
 msgstr ""
 
-#: apps/audit/models.py:75
+#: apps/audit/models.py:76
 msgid "Added a person"
 msgstr ""
 
-#: apps/audit/models.py:76
+#: apps/audit/models.py:77
 msgid "Changed a person"
 msgstr ""
 
-#: apps/audit/models.py:77
+#: apps/audit/models.py:78
 msgid "Deactivated a person"
 msgstr ""
 
-#: apps/audit/models.py:78
+#: apps/audit/models.py:79
 msgid "Reactivated a person"
 msgstr ""
 
-#: apps/audit/models.py:79
+#: apps/audit/models.py:80
 msgid "Changed a role"
 msgstr ""
 
-#: apps/audit/models.py:84
+#: apps/audit/models.py:85
 msgid "Moved a shift to somebody else"
 msgstr ""
 
-#: apps/audit/models.py:91
+#: apps/audit/models.py:92
 msgid "Painted shifts over a period"
 msgstr ""
 
-#: apps/audit/models.py:92
+#: apps/audit/models.py:93
 msgid "Cleared shifts over a period"
 msgstr ""
 
-#: apps/audit/models.py:96
+#: apps/audit/models.py:97
 msgid "Changed what a leave grants"
 msgstr ""
 
-#: apps/audit/models.py:105
+#: apps/audit/models.py:106
 msgid "Changed the structure or the calendar"
 msgstr ""
 
-#: apps/audit/models.py:108
+#: apps/audit/models.py:109
 msgid "Sent a link to set a password"
 msgstr ""
 
-#: apps/audit/models.py:111
+#: apps/audit/models.py:112
 msgid "Changed company settings"
 msgstr ""
 
-#: apps/audit/models.py:112
+#: apps/audit/models.py:113
 msgid "Changed working time rules"
 msgstr ""
 
-#: apps/audit/models.py:115
+#: apps/audit/models.py:116
 msgid "Registered an application"
 msgstr ""
 
-#: apps/audit/models.py:116
+#: apps/audit/models.py:117
 msgid "Revoked an application credential"
 msgstr ""
 
-#: apps/audit/models.py:119
+#: apps/audit/models.py:120
 msgid "Purged security metadata"
 msgstr ""
 
-#: apps/audit/models.py:137
+#: apps/audit/models.py:138
 msgid "when"
 msgstr ""
 
-#: apps/audit/models.py:143 apps/common/models.py:117
+#: apps/audit/models.py:144 apps/common/models.py:117
 #: apps/tenants/models.py:171 apps/tenants/models.py:199
 #: apps/tenants/rules.py:38 apps/tenants/rules.py:311 apps/users/models.py:273
 msgid "company"
 msgstr ""
 
-#: apps/audit/models.py:153
+#: apps/audit/models.py:154
 msgid "who"
 msgstr ""
 
-#: apps/audit/models.py:157
+#: apps/audit/models.py:158
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:159
+#: apps/audit/models.py:160
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:165
+#: apps/audit/models.py:166
 msgid "identifier"
 msgstr ""
 
-#: apps/audit/models.py:166
+#: apps/audit/models.py:167
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:170
+#: apps/audit/models.py:171
 msgid "changes"
 msgstr ""
 
-#: apps/audit/models.py:193
+#: apps/audit/models.py:194
 msgid "audit entry"
 msgstr ""
 
-#: apps/audit/models.py:194
+#: apps/audit/models.py:195
 msgid "audit trail"
 msgstr ""
 
@@ -815,7 +819,7 @@ msgid ""
 "same as what is on screen."
 msgstr ""
 
-#: apps/common/transitions.py:76 apps/punches/corrections.py:573
+#: apps/common/transitions.py:76 apps/punches/corrections.py:628
 msgid "This request has already been resolved."
 msgstr "Esta solicitude xa está resolta."
 
@@ -847,11 +851,11 @@ msgstr ""
 msgid "push subscriptions"
 msgstr ""
 
-#: apps/punches/correction_views.py:186
+#: apps/punches/correction_views.py:187
 msgid "That event does not exist."
 msgstr "Esa fichaxe non existe."
 
-#: apps/punches/correction_views.py:235
+#: apps/punches/correction_views.py:236
 msgid "You can only ask for corrections to your own record."
 msgstr "Só podes pedir correccións do teu propio rexistro."
 
@@ -883,35 +887,39 @@ msgstr "Aplicada con acordo"
 msgid "Applied without agreement, with the disagreement recorded"
 msgstr "Aplicada sen acordo, coa discrepancia rexistrada"
 
-#: apps/punches/corrections.py:85
+#: apps/punches/corrections.py:64
+msgid "Withdrawn by the company"
+msgstr ""
+
+#: apps/punches/corrections.py:91
 msgid "event concerned"
 msgstr "fichaxe afectada"
 
-#: apps/punches/corrections.py:89
+#: apps/punches/corrections.py:95
 msgid "proposed time"
 msgstr "hora proposta"
 
-#: apps/punches/corrections.py:93
+#: apps/punches/corrections.py:99
 msgid "Why the record does not match what happened. Required."
 msgstr "Por que o rexistro non coincide co ocorrido. Obrigatorio."
 
-#: apps/punches/corrections.py:104
+#: apps/punches/corrections.py:110
 msgid "requested by"
 msgstr "solicitada por"
 
-#: apps/punches/corrections.py:116
+#: apps/punches/corrections.py:122
 msgid "resolution note"
 msgstr "nota da resolución"
 
-#: apps/punches/corrections.py:125
+#: apps/punches/corrections.py:131
 msgid "resulting event"
 msgstr "fichaxe resultante"
 
-#: apps/punches/corrections.py:134
+#: apps/punches/corrections.py:140
 msgid "the person agrees"
 msgstr "a persoa está conforme"
 
-#: apps/punches/corrections.py:138
+#: apps/punches/corrections.py:144
 msgid ""
 "Art. 4.b: a change needs the authorisation of the company and of the person "
 "concerned. Empty means they have not answered."
@@ -919,15 +927,15 @@ msgstr ""
 "Art. 4.b: modificar un asento necesita a autorización da empresa e da persoa "
 "afectada. Baleiro significa que aínda non respondeu."
 
-#: apps/punches/corrections.py:142
+#: apps/punches/corrections.py:148
 msgid "answered at"
 msgstr "respondeu o"
 
-#: apps/punches/corrections.py:144
+#: apps/punches/corrections.py:150
 msgid "the person's account"
 msgstr "versión da persoa"
 
-#: apps/punches/corrections.py:148
+#: apps/punches/corrections.py:154
 msgid ""
 "Their version, kept beside the change and never instead of it. Art. 4.b lets "
 "the company record the modification and the person their disagreement, so "
@@ -937,15 +945,15 @@ msgstr ""
 "permite que a empresa reflicta a modificación e a persoa a súa discrepancia, "
 "de xeito que o rexistro conserva as dúas."
 
-#: apps/punches/corrections.py:155
+#: apps/punches/corrections.py:161
 msgid "workers' representatives informed at"
 msgstr "representación legal informada o"
 
-#: apps/punches/corrections.py:158
+#: apps/punches/corrections.py:164
 msgid "how they were informed"
 msgstr "como se lles informou"
 
-#: apps/punches/corrections.py:162
+#: apps/punches/corrections.py:168
 msgid ""
 "Art. 4.b requires informing the workers' legal representation when there is "
 "disagreement. If the company has not said who they are, that is recorded "
@@ -955,11 +963,11 @@ msgstr ""
 "cando hai discrepancia. Se a empresa non dixo quen son, queda anotado aquí "
 "en vez de pasalo por alto."
 
-#: apps/punches/corrections.py:169
+#: apps/punches/corrections.py:175
 msgid "applied without agreement"
 msgstr "aplicada sen acordo"
 
-#: apps/punches/corrections.py:172
+#: apps/punches/corrections.py:178
 msgid ""
 "The change went in anyway, which art. 4.b allows. It travels to the "
 "inspection report: a reader has to be able to tell a correction both parties "
@@ -969,83 +977,94 @@ msgstr ""
 "informe de Inspección: quen o lea ten que poder distinguir unha corrección "
 "aceptada polas dúas partes dunha imposta sobre unha obxección."
 
-#: apps/punches/corrections.py:179
+#: apps/punches/corrections.py:185
 msgid "record correction"
 msgstr "corrección do rexistro"
 
-#: apps/punches/corrections.py:180
+#: apps/punches/corrections.py:186
 msgid "record corrections"
 msgstr "correccións do rexistro"
 
-#: apps/punches/corrections.py:213
+#: apps/punches/corrections.py:219
 msgid "State why the record does not match what happened."
 msgstr "Indica por que o rexistro non coincide co ocorrido."
 
-#: apps/punches/corrections.py:219
+#: apps/punches/corrections.py:225
 msgid "Say which event is being corrected."
 msgstr "Indica que fichaxe se corrixe."
 
-#: apps/punches/corrections.py:225
+#: apps/punches/corrections.py:231
 msgid "Give the time the event actually happened."
 msgstr "Indica a hora real á que ocorreu."
 
-#: apps/punches/corrections.py:233
+#: apps/punches/corrections.py:239
 msgid "The time cannot be in the future."
 msgstr "A hora non pode ser futura."
 
-#: apps/punches/corrections.py:239
+#: apps/punches/corrections.py:245
 msgid "That event belongs to somebody else."
 msgstr "Esa fichaxe é doutra persoa."
 
-#: apps/punches/corrections.py:245
+#: apps/punches/corrections.py:251
 msgid "Say whether the missing event is an entry or an exit."
 msgstr "Indica se a fichaxe que falta é unha entrada ou unha saída."
 
-#: apps/punches/corrections.py:257
+#: apps/punches/corrections.py:263
 msgid "An event is either an entry or an exit."
 msgstr ""
 
-#: apps/punches/corrections.py:322
+#: apps/punches/corrections.py:328
 msgid "Only the person concerned can accept a change to their record."
 msgstr "Só a persoa afectada pode aceptar un cambio no seu rexistro."
 
-#: apps/punches/corrections.py:348
+#: apps/punches/corrections.py:354
 msgid "Only the person concerned can disagree with a change to their record."
 msgstr "Só a persoa afectada pode discrepar dun cambio no seu rexistro."
 
-#: apps/punches/corrections.py:353
+#: apps/punches/corrections.py:359
 msgid "Say what you think happened. It is recorded beside the change."
 msgstr "Di que cres que pasou. Queda rexistrado xunto ao cambio."
 
-#: apps/punches/corrections.py:391
+#: apps/punches/corrections.py:397
 msgid "The person still has time to answer."
 msgstr "A persoa aínda está en prazo para responder."
 
-#: apps/punches/corrections.py:398
+#: apps/punches/corrections.py:404
 msgid "No answer within the period given. Applied without their agreement."
 msgstr "Sen resposta no prazo dado. Aplicado sen a súa conformidade."
 
-#: apps/punches/corrections.py:439
+#: apps/punches/corrections.py:457
+msgid ""
+"Only a proposal still waiting for the person concerned can be withdrawn. "
+"This one is no longer waiting."
+msgstr ""
+
+#: apps/punches/corrections.py:466 apps/punches/corrections.py:671
+#: apps/punches/corrections.py:721
+msgid "a change to the working-time record"
+msgstr "un cambio no rexistro de xornada"
+
+#: apps/punches/corrections.py:494
 msgid "This change is not waiting for the person concerned."
 msgstr "Este cambio non está agardando pola persoa afectada."
 
-#: apps/punches/corrections.py:488
+#: apps/punches/corrections.py:543
 msgid "Somebody disagrees with a change to their working time record"
 msgstr ""
 
-#: apps/punches/corrections.py:514
+#: apps/punches/corrections.py:569
 #, python-format
 msgid "Informed: %(names)s"
 msgstr "Informados: %(names)s"
 
-#: apps/punches/corrections.py:519
+#: apps/punches/corrections.py:574
 msgid ""
 "No workers' representatives are on record. Art. 4.b requires informing them."
 msgstr ""
 "Non consta ningunha representación legal das persoas traballadoras. O art. "
 "4.b esixe informala."
 
-#: apps/punches/corrections.py:540
+#: apps/punches/corrections.py:595
 msgid ""
 "Resolved by the same person who is the subject: no other manager or "
 "administrator exists in the company."
@@ -1053,57 +1072,57 @@ msgstr ""
 "Resolto pola mesma persoa á que afecta: non hai ningún outro responsable nin "
 "administrador na empresa."
 
-#: apps/punches/corrections.py:566
+#: apps/punches/corrections.py:621
 msgid ""
 "The person concerned has not answered yet. Wait, or apply it without "
 "agreement once the period has passed."
 msgstr ""
 
-#: apps/punches/corrections.py:603
+#: apps/punches/corrections.py:658
 msgid ""
 "That entry has already been changed by another correction. Ask for a new one "
 "on the entry as it stands now."
 msgstr ""
 
-#: apps/punches/corrections.py:616 apps/punches/corrections.py:666
-msgid "a change to the working-time record"
-msgstr "un cambio no rexistro de xornada"
+#: apps/punches/corrections.py:817
+msgid "Your employer has withdrawn the proposed change to your record"
+msgstr ""
 
-#: apps/punches/corrections.py:770
+#: apps/punches/corrections.py:876
 msgid "Your employer proposes a change to your working time record"
 msgstr "A túa empresa propón un cambio no teu rexistro de xornada"
 
-#: apps/punches/corrections.py:789
+#: apps/punches/corrections.py:895
 #, python-format
 msgid "Add an entry: %(kind)s at %(when)s."
 msgstr "Engadir unha fichaxe: %(kind)s ás %(when)s."
 
-#: apps/punches/corrections.py:790
+#: apps/punches/corrections.py:896
 #, python-format
 msgid "Change the time of an entry to %(when)s."
 msgstr "Cambiar a hora dunha fichaxe ás %(when)s."
 
-#: apps/punches/corrections.py:791
+#: apps/punches/corrections.py:897
 #, python-format
 msgid "Void the entry recorded at %(when)s."
 msgstr "Anular a fichaxe rexistrada ás %(when)s."
 
-#: apps/punches/corrections.py:848
+#: apps/punches/corrections.py:954
 #, python-format
 msgid "An entry was added: %(kind)s at %(when)s."
 msgstr "Engadiuse unha fichaxe: %(kind)s ás %(when)s."
 
-#: apps/punches/corrections.py:849
+#: apps/punches/corrections.py:955
 #, python-format
 msgid "The time of an entry was changed to %(when)s."
 msgstr "Cambiouse a hora dunha fichaxe ás %(when)s."
 
-#: apps/punches/corrections.py:850
+#: apps/punches/corrections.py:956
 #, python-format
 msgid "An entry recorded at %(when)s was voided."
 msgstr "Anulouse a fichaxe rexistrada ás %(when)s."
 
-#: apps/punches/corrections.py:874
+#: apps/punches/corrections.py:980
 msgid "Your working time record has changed"
 msgstr "O teu rexistro de xornada cambiou"
 
@@ -3140,6 +3159,31 @@ msgid ""
 "You have %(days)s days to answer. After that the company may apply the "
 "change,\n"
 "and it will be recorded as made without your agreement."
+msgstr ""
+
+#: templates/emails/record_change_withdrawn.txt:1
+#, python-format
+msgid ""
+"Hello %(first_name)s,\n"
+"\n"
+"Your employer, %(company)s, has withdrawn the change it proposed to your\n"
+"working time record."
+msgstr ""
+
+#: templates/emails/record_change_withdrawn.txt:8
+#, python-format
+msgid "Withdrawn by: %(withdrawn_by)s"
+msgstr ""
+
+#: templates/emails/record_change_withdrawn.txt:9
+#, python-format
+msgid "Reason given: %(note)s"
+msgstr ""
+
+#: templates/emails/record_change_withdrawn.txt:11
+msgid ""
+"Your record has not changed, and there is nothing for you to\n"
+"answer any more. The entry stayed exactly as it was."
 msgstr ""
 
 #: templates/emails/record_changed.txt:1

@@ -2395,3 +2395,31 @@ que la limpieza empezó a funcionar.
 de cada resto antes de tratarlo como un problema vivo. Un residuo antiguo con
 nada reciente detrás es la prueba de que aquello ya se arregló --- y ahorra
 arreglar dos veces lo mismo.
+
+## 161. `re.sub` reinterpreta los escapes de la cadena de reemplazo
+
+Traduciendo catálogos, escapé los saltos de línea a `\n` literal y luego usé
+`re.sub(patron, f'msgstr "{escapado}"', ...)`. `re.sub` volvió a convertir esos
+`\n` en saltos reales, así que los `msgstr` quedaron partidos en varias líneas
+sin comillas y **`msgfmt` dejó de compilar los tres catálogos**.
+
+Se arregla pasando el reemplazo como función ---`lambda _m: nuevo`---, que no
+interpreta nada.
+
+**Regla**: en `re.sub`, todo reemplazo que pueda contener `\\` va como función.
+Y después de tocar un `.po` a mano, **compilar antes de seguir**: un catálogo roto
+no da error hasta que alguien lo compila, y mientras tanto todo parece bien.
+
+## 162. Antes de concluir de un `grep`, mirar si lo has truncado
+
+Concluí que `propose_correction` no tenía ningún endpoint ---una pieza entera
+escrita y desconectada, que es el patrón que más ha rendido en esta auditoría---
+porque el `grep` solo la mostraba en `seed_demo.py`. La llamada real estaba en la
+línea 195 de las vistas: la había cortado con `head -4`.
+
+Estuve a punto de escribir en el cuaderno un hallazgo grande que no existía.
+
+**Regla**: un `head` sobre un `grep` sirve para orientarse, no para concluir.
+Antes de afirmar «esto no se llama desde ningún sitio», repetir sin truncar y
+contar las apariciones. Lo mismo vale para `count()` en un script: `assert
+count == 1` falló por haber **dos** sitios, y ese assert evitó un cambio a medias.

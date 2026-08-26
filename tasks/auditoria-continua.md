@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 90 · Vueltas seguidas sin hallazgos: **1**
+Vueltas dadas: 91 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -76,6 +76,7 @@ vuelve a una limpia.
 | Dos pestañas del mismo navegador | limpia | 26/08 v88 | **tener dos abiertas costaba una sesión cada cuarto de hora** |
 | El volumen (200 personas, un año) | limpia | 26/08 v89 | el tope está calibrado; **pero todo rechazo del informe salía como 5 bytes** |
 | Lo que las tandas dejan detrás | limpia | 26/08 v90 | — **sin hallazgo**; la suite limpia bien y el sedimento es histórico |
+| El camino de vuelta (deshacer) | limpia | 26/08 v91 | **una propuesta equivocada no se podía retirar**; la otra parte tenía que pararla |
 
 ### Ley
 
@@ -260,6 +261,77 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 91 --- Una propuesta sin marcha atrás (26/08)
+
+**Contador: 1 → 0.**
+
+La lente: **el camino de vuelta.** Cada acción del producto que se puede deshacer,
+y sobre todo las que no. Empezó de la vuelta anterior, donde vi que el resumen
+dice de las propuestas de la empresa que «se pueden retirar o aplicar» y no
+encontré por ninguna parte el retirar.
+
+#### El hallazgo, medido por la API antes de tocar nada
+
+Cuando la empresa propone cambiar un asiento, queda esperando la conformidad de
+la persona (art. 4.b). Desde ahí:
+
+| intento | respuesta |
+|---|---|
+| rechazarla, la propia jefa | 409 `awaiting_the_employee` |
+| rechazarla, otra jefa | 409 `awaiting_the_employee` |
+| aprobarla | 409 `awaiting_the_employee` |
+| borrarla | 405 |
+| retirarla / cancelarla | **404, no existían** |
+
+**No había marcha atrás.** Las únicas salidas eran que la persona acepte, que la
+discuta, o que la empresa la aplique al vencer el plazo.
+
+Lo que eso deja es una propuesta errónea que **obliga a actuar a la otra parte**:
+la persona ha recibido un aviso de un cambio que la empresa ya sabe que está mal,
+y tiene que discutirlo para pararlo. El art. 4.b pide el acuerdo de las dos partes
+para tocar un asiento; hacer que la persona gestione el error de la empresa es lo
+contrario de eso. Y mientras, el asiento sigue en el aire.
+
+#### El arreglo, y las dos decisiones que lleva dentro
+
+`withdraw_correction` y `POST /api/corrections/{id}/withdraw/`.
+
+**Estado propio, `WITHDRAWN`, y no `REJECTED`.** En el historial de un registro con
+valor probatorio no es lo mismo «te lo negamos» que «nos equivocamos al
+proponerlo»: la primera es una decisión sobre lo que pidió la persona, la segunda
+no lo es. Reutilizar `REJECTED` habría ahorrado una migración y ensuciado el
+historial.
+
+**Pasa por los cuatro ojos**, por lo mismo que rechazar desde la vuelta 72: si la
+propuesta es sobre el fichaje de quien la retira, retirarla en solitario es
+decidir sobre su propio registro. Hay prueba de que la interesada sola recibe
+`cannot_decide_your_own` y otra persona sí puede.
+
+Y **se avisa a quien esperaba**: se le pidió una respuesta y esa petición ha
+dejado de existir. Callarse dejaría a alguien pendiente de un plazo, y con la idea
+de que su registro sigue en discusión, por un error que no era suyo.
+
+#### Un falso hallazgo mío, y de los feos
+
+Antes de esto creí que `propose_correction` **no tenía endpoint**: el grep solo la
+encontraba en `seed_demo.py`, así que parecía una pieza entera ---flujo, avisos,
+ventana de consentimiento--- escrita y desconectada.
+
+Era mentira. La línea 195 de las vistas dice
+`maker = propose_correction if employee.id != request.user.id else request_correction`.
+Lo que pasó es que corté el grep con `head -4` y la llamada estaba más abajo.
+
+#### El guard de aislamiento hizo su trabajo
+
+Al añadir la ruta, `test_every_route_is_covered_by_this_sweep` se puso roja: una
+ruta nueva sin cobertura de aislamiento. Cubierta en las dos pruebas que barren
+---la empresa de al lado y el operario--- y en la lista. Es el mismo tipo de guard
+que dejó la vuelta 83, y esta vez avisó a los diez minutos de escribir el
+endpoint.
+
+8 pruebas nuevas (1.117 en el backend), migraciones, y el correo traducido al
+castellano.
 
 ### Vuelta 90 --- Lo que las tandas dejan detrás (26/08)
 

@@ -318,6 +318,7 @@ def test_they_cannot_change_or_resolve_anything_of_ours(ours, theirs):
         ("post", f"/api/corrections/{ours['correction'].id}/accept/", {}),
         ("post", f"/api/corrections/{ours['correction'].id}/dispute/", {"account": "no fue así"}),
         ("post", f"/api/corrections/{ours['correction'].id}/apply-anyway/", {}),
+        ("post", f"/api/corrections/{ours['correction'].id}/withdraw/", {}),
         ("patch", f"/api/employees/{ours['worker'].id}/", {"role": "ADMIN"}),
         ("delete", f"/api/employees/{ours['worker'].id}/", None),
         ("post", f"/api/employees/{ours['worker'].id}/invite/", {}),
@@ -424,6 +425,7 @@ def test_a_worker_cannot_do_a_managers_job(ours):
         ("post", f"/api/corrections/{ours['correction'].id}/approve/", {}),
         # A worker may accept or dispute their *own*, never impose one.
         ("post", f"/api/corrections/{ours['correction'].id}/apply-anyway/", {}),
+        ("post", f"/api/corrections/{ours['correction'].id}/withdraw/", {}),
         ("post", "/api/employees/", {"email": "nuevo@nuestra.test", "first_name": "Nuevo"}),
         ("patch", f"/api/employees/{ours['worker'].id}/", {"role": "ADMIN"}),
         ("post", f"/api/employees/{ours['worker'].id}/invite/", {}),
@@ -577,6 +579,7 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^corrections/(?P<pk>[^/.]+)/dispute/$",
         "api/^corrections/(?P<pk>[^/.]+)/apply-anyway/$",
         "api/^corrections/(?P<pk>[^/.]+)/reject/$",
+        "api/^corrections/(?P<pk>[^/.]+)/withdraw/$",
         "api/^employees/$",
         "api/^employees/(?P<pk>[^/.]+)/$",
         "api/^employees/(?P<pk>[^/.]+)/invite/$",

@@ -56,6 +56,12 @@ class CorrectionStatus(models.TextChoices):
     APPROVED = "APPROVED", _("Applied with agreement")
     DISPUTED = "DISPUTED", _("Applied without agreement, with the disagreement recorded")
     REJECTED = "REJECTED", _("Rejected")
+    #: La empresa se desdice de su propia propuesta, y el asiento se queda como
+    #: estaba. Estado propio y no `REJECTED` porque en el historial de un
+    #: registro con valor probatorio no es lo mismo «te lo negamos» que «nos
+    #: equivocamos al proponerlo»: la primera es una decisión sobre lo que pidió
+    #: la persona, la segunda no lo es.
+    WITHDRAWN = "WITHDRAWN", _("Withdrawn by the company")
 
 
 class PunchCorrection(TenantOwnedModel):
@@ -422,6 +428,55 @@ def apply_without_agreement(correction: PunchCorrection, *, resolved_by) -> Punc
     return result
 
 
+@transaction.atomic
+def withdraw_correction(correction: PunchCorrection, *, withdrawn_by, note: str = "") -> None:
+    """La empresa retira su propia propuesta. El asiento se queda como estaba.
+
+    Faltaba, y era el único camino que no había. Una propuesta enviada a la
+    persona solo podía acabar de tres maneras ---que la acepte, que la discuta, o
+    que la empresa la aplique al vencer el plazo--- y ninguna era «nos hemos
+    equivocado». Medido: rechazarla y aprobarla contestaban 409, borrarla 405, y
+    retirarla no existía.
+
+    Lo que dejaba eso es una propuesta errónea que **obliga a actuar a la otra
+    parte**: la persona ha recibido un aviso de un cambio que la empresa ya sabe
+    que está mal, y tiene que discutirlo para pararlo. El art. 4.b pide el
+    acuerdo de las dos partes para tocar un asiento; hacer que la persona
+    gestione el error de la empresa es lo contrario de eso.
+
+    **Pasa por los cuatro ojos**, por lo mismo que rechazar desde la vuelta 72:
+    si la propuesta es sobre el fichaje de quien la retira, retirarla en
+    solitario es decidir sobre su propio registro. No cambiar nada también es
+    decidir.
+    """
+    fresca = PunchCorrection.objects.select_for_update().get(pk=correction.pk)
+    if fresca.status != CorrectionStatus.AWAITING_EMPLOYEE:
+        raise BusinessRuleError(
+            code="not_awaiting",
+            message=_(
+                "Only a proposal still waiting for the person concerned can be "
+                "withdrawn. This one is no longer waiting."
+            ),
+        )
+
+    alone = refuse_self_decision(
+        subject=fresca.employee,
+        decider=withdrawn_by,
+        company=fresca.tenant,
+        what=_("a change to the working-time record"),
+    )
+
+    fresca.status = CorrectionStatus.WITHDRAWN
+    fresca.resolved_by = withdrawn_by
+    fresca.resolved_at = timezone.now()
+    fresca.resolution_note = _note_alone(note) if alone else note
+    fresca.save()
+
+    # A quien se avisó de la propuesta hay que avisarle de que ya no está: se le
+    # pidió una respuesta que ha dejado de hacer falta.
+    transaction.on_commit(lambda: notify_employee_of_withdrawal(fresca))
+
+
 def _must_be_awaiting(correction: PunchCorrection) -> PunchCorrection:
     """Bloquea y exige que siga esperando a la persona. Devuelve la fila fresca.
 
@@ -720,6 +775,57 @@ def _void(punch: Punch, replaced_by: Punch | None = None) -> None:
     if replaced_by is not None:
         punch.replaced_by = replaced_by
     punch.save(update_fields=["is_active", "voided_at", "replaced_by"])
+
+
+def notify_employee_of_withdrawal(correction: PunchCorrection) -> None:
+    """Le dice que ya no tiene que contestar.
+
+    Se le pidió una respuesta y esa petición ha dejado de existir. Callarse aquí
+    dejaría a alguien pendiente de un plazo ---y con la idea de que su registro
+    sigue en discusión--- por un error que no era suyo.
+
+    Mismo trato que el aviso de la propuesta: en el idioma de quien lo recibe, y
+    sin tumbar la operación si el correo falla. La retirada ya está guardada; el
+    aviso es su consecuencia, no su condición.
+    """
+    import logging
+
+    from django.conf import settings
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+
+    log = logging.getLogger(__name__)
+    if not correction.employee.email:
+        return
+
+    idioma = correction.employee.locale or correction.tenant.language
+    try:
+        with translation.override(idioma or None):
+            body = render_to_string(
+                "emails/record_change_withdrawn.txt",
+                {
+                    "first_name": correction.employee.first_name,
+                    "company": correction.tenant.name,
+                    "summary": _summarise(correction),
+                    "withdrawn_by": (
+                        correction.resolved_by.get_full_name() if correction.resolved_by else ""
+                    ),
+                    "note": correction.resolution_note,
+                },
+            )
+            send_mail(
+                subject=_("Your employer has withdrawn the proposed change to your record"),
+                message=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[correction.employee.email],
+                fail_silently=True,
+            )
+    except Exception:
+        log.exception(
+            "Could not tell %s that correction %s was withdrawn",
+            correction.employee_id,
+            correction.pk,
+        )
 
 
 def notify_employee_of_proposal(correction: PunchCorrection) -> None:

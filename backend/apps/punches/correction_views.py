@@ -24,6 +24,7 @@ from apps.punches.corrections import (
     propose_correction,
     reject_correction,
     request_correction,
+    withdraw_correction,
 )
 from apps.punches.models import Punch, PunchType
 from apps.punches.serializers import PunchSerializer
@@ -352,6 +353,35 @@ class CorrectionViewSet(
         request=ResolutionSerializer,
         responses={200: CorrectionSerializer},
     )
+    @action(detail=True, methods=["post"], permission_classes=[IsManagerOrAdmin])
+    def withdraw(self, request, pk=None):
+        """La empresa se desdice de su propia propuesta.
+
+        Era el único camino que no había: una propuesta ya enviada a la persona
+        solo podía acabar aceptada, discutida o aplicada al vencer el plazo.
+        Sin esto, una propuesta equivocada obligaba a la otra parte a discutirla
+        para pararla ---gestionar el error de la empresa--- y el asiento seguía
+        en el aire mientras tanto.
+        """
+        correction = self.get_object()
+        form = ResolutionSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+
+        withdraw_correction(
+            correction, withdrawn_by=request.user, note=form.validated_data.get("note", "")
+        )
+        correction.refresh_from_db()
+        record(
+            action=AuditAction.CORRECTION_WITHDRAWN,
+            actor=request.user,
+            target=correction.employee,
+            target_type="user",
+            target_label=correction.employee.get_full_name(),
+            changes={"correction": str(correction.pk)},
+            note=form.validated_data.get("note", "")[:300],
+        )
+        return Response(CorrectionSerializer(correction).data)
+
     @action(detail=True, methods=["post"], permission_classes=[IsManagerOrAdmin])
     def reject(self, request, pk=None):
         correction = self.get_object()

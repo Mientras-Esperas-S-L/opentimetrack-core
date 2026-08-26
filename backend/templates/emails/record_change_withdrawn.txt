@@ -1,0 +1,12 @@
+{% load i18n %}{% blocktranslate %}Hello {{ first_name }},
+
+Your employer, {{ company }}, has withdrawn the change it proposed to your
+working time record.{% endblocktranslate %}
+
+{{ summary }}
+
+{% blocktranslate %}Withdrawn by: {{ withdrawn_by }}{% endblocktranslate %}
+{% if note %}{% blocktranslate %}Reason given: {{ note }}{% endblocktranslate %}
+{% endif %}
+{% blocktranslate %}Your record has not changed, and there is nothing for you to
+answer any more. The entry stayed exactly as it was.{% endblocktranslate %}
