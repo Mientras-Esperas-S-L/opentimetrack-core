@@ -2423,3 +2423,31 @@ Estuve a punto de escribir en el cuaderno un hallazgo grande que no existía.
 Antes de afirmar «esto no se llama desde ningún sitio», repetir sin truncar y
 contar las apariciones. Lo mismo vale para `count()` en un script: `assert
 count == 1` falló por haber **dos** sitios, y ese assert evitó un cambio a medias.
+
+## 163. Conservar una fila y conservar su fichero son dos decisiones distintas
+
+Al cambiar el borrado de una solicitud por un estado `CANCELLED`, se rompieron las
+pruebas de la vuelta 45 ---el justificante quedaba huérfano en el almacén. La
+tentación era ajustar esas pruebas: la fila ahora se queda, luego el fichero
+también.
+
+Su docstring decía lo contrario y tenía razón: un justificante suele ser un dato
+del art. 9, y quien retira su solicitud está diciendo que no quiere que siga ahí.
+Las dos cosas se pueden cumplir a la vez, y hay que cumplirlas: **queda la
+solicitud, no queda el documento**.
+
+**Regla**: al pasar de borrar a marcar, separar qué se conserva por trazabilidad
+de qué se borraba por minimización. Casi nunca es lo mismo, y la prueba que se
+rompe suele estar defendiendo la segunda.
+
+## 164. El mismo `save(update_fields=[...])` aparece en varias transiciones
+
+Un `assert count == 1` falló al insertar código tras
+`absence.save(update_fields=["status", "approved_by", "resolved_at", "updated_at"])`:
+la línea es **idéntica** en rechazar y en cancelar, porque las transiciones se
+escriben igual.
+
+**Regla**: para editar dentro de una función concreta, acotar primero al bloque
+---de `def esa` a `def la_siguiente`--- y sustituir ahí. Buscar la línea en todo el
+fichero encuentra a sus hermanas, y en el mejor caso aborta; en el peor, cambia la
+transición equivocada.

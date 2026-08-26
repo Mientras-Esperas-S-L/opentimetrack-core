@@ -20,7 +20,7 @@ import pytest
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from apps.absences.models import AbsenceType
+from apps.absences.models import AbsenceStatus, AbsenceType
 from apps.absences.services import cancel_absence, request_absence
 from apps.common.models import tenant_context
 from apps.tenants.models import Tenant
@@ -92,8 +92,14 @@ def test_borrar_a_la_persona_se_lleva_sus_justificantes(
 
 
 @pytest.mark.django_db
-def test_una_ausencia_sin_justificante_se_borra_sin_ruido(company, ana):
-    """La mayoría no llevan fichero. Borrarlas no puede fallar por eso."""
+def test_una_ausencia_sin_justificante_se_cancela_sin_ruido(company, ana):
+    """La mayoría no llevan fichero. Cancelarlas no puede fallar por eso.
+
+    Antes comprobaba además que la fila desaparecía. Desde la vuelta 92 se
+    conserva marcada como cancelada ---cancelar la solicitud de otra persona está
+    permitido, y una petición que se borra no deja saber que existió--- así que lo
+    que aquí se defiende es lo otro: que no haya fichero no rompe nada.
+    """
     with tenant_context(company.id):
         absence = request_absence(
             employee=ana,
@@ -106,7 +112,9 @@ def test_una_ausencia_sin_justificante_se_borra_sin_ruido(company, ana):
     cancel_absence(absence, cancelled_by=ana)
 
     with tenant_context(company.id):
-        assert not ana.absences.filter(pk=absence.pk).exists()
+        quedo = ana.absences.get(pk=absence.pk)
+    assert quedo.status == AbsenceStatus.CANCELLED
+    assert not quedo.justification
 
 
 @pytest.mark.django_db

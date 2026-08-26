@@ -224,6 +224,13 @@ class AbsenceStatus(models.TextChoices):
     PENDING = "PENDING", _("Pending")
     APPROVED = "APPROVED", _("Approved")
     REJECTED = "REJECTED", _("Rejected")
+    #: Retirada antes de que nadie la resolviera. Se conserva en vez de
+    #: borrarse: cancelar **la solicitud de otra persona** está permitido, y una
+    #: petición que desaparece de la base no deja manera de saber que existió, ni
+    #: con qué fechas, ni quién la quitó. En las correcciones esto ya estaba
+    #: decidido así ---«una petición rechazada también es historia»--- y aquí
+    #: faltaba.
+    CANCELLED = "CANCELLED", _("Cancelled")
 
 
 class Absence(TenantOwnedModel):
@@ -539,6 +546,32 @@ class RecoveredHoliday(TenantOwnedModel):
         return f"{self.days} d · {self.employee_id} · {self.first_day}"
 
 
+def descartar_justificante(instance) -> None:
+    """Quita el fichero del almacén, en cuanto la transacción confirme.
+
+    Sale de la señal de borrado para poder llamarse también al **cancelar** una
+    solicitud, que desde la vuelta 92 conserva la fila. La razón del art. 17 no
+    cambia porque la fila se quede: quien retira su solicitud está diciendo que
+    no quiere que ese justificante siga ahí, y un parte médico es del art. 9.
+
+    Lo que queda es la solicitud ---fechas, autor, quién la canceló--- sin el
+    documento. Trazabilidad sin retener un dato de salud que ya no sostiene nada.
+    """
+    fichero = instance.justification
+    if not fichero:
+        return
+
+    nombre = fichero.name
+
+    def quitarlo():
+        try:
+            fichero.storage.delete(nombre)
+        except Exception:
+            logger.warning("No se pudo borrar el justificante %s", nombre, exc_info=True)
+
+    transaction.on_commit(quitarlo)
+
+
 @receiver(post_delete, sender=Absence)
 def _borrar_el_justificante_al_borrar_la_fila(sender, instance, **kwargs):
     """El fichero se va con su fila. Siempre, y solo si la fila se fue de verdad.
@@ -563,19 +596,6 @@ def _borrar_el_justificante_al_borrar_la_fila(sender, instance, **kwargs):
     problema que arregla, porque la pantalla ofrece una descarga que falla y
     nadie sabe por qué.
     """
-    fichero = instance.justification
-    if not fichero:
-        return
-
-    nombre = fichero.name
-
-    def quitarlo():
-        try:
-            fichero.storage.delete(nombre)
-        except Exception:
-            # El almacén puede estar caído o el fichero ya no estar. La fila ya
-            # se ha ido y la respuesta ya ha salido, así que tumbar aquí no
-            # arregla nada: queda anotado para que alguien lo barra.
-            logger.warning("No se pudo borrar el justificante %s", nombre, exc_info=True)
-
-    transaction.on_commit(quitarlo)
+    # El almacén puede estar caído o el fichero ya no estar; queda anotado y no
+    # se tumba la operación, porque la fila ya se ha ido.
+    descartar_justificante(instance)

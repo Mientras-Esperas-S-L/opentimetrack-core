@@ -24,7 +24,13 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from apps.absences.models import REDUCES_THE_DAY, Absence, AbsenceStatus, AbsenceType
+from apps.absences.models import (
+    REDUCES_THE_DAY,
+    Absence,
+    AbsenceStatus,
+    AbsenceType,
+    descartar_justificante,
+)
 from apps.common.clock import local_date_of
 from apps.common.exceptions import BusinessRuleError
 from apps.common.four_eyes import refuse_self_decision
@@ -619,9 +625,21 @@ def reject_absence(absence: Absence, *, resolved_by) -> Absence:
 def cancel_absence(absence: Absence, *, cancelled_by) -> None:
     """Withdraws a request that has not been resolved yet.
 
-    Only the person concerned, and only while it is pending: once approved it
-    has blocked days and possibly other people's plans, so undoing it is a
-    decision for whoever approved it.
+    Only the person concerned or somebody who manages them, and only while it is
+    pending: once approved it has blocked days and possibly other people's plans,
+    so undoing it is a decision for whoever approved it.
+
+    **Se marca, no se borra.** Antes hacía `delete()`, y como cancelar la
+    solicitud de otra persona está permitido, eso dejaba que un responsable
+    hiciera desaparecer de la base la petición de alguien: medido, la fila no
+    quedaba ni en `objects_all_tenants` y el rastro no registraba nada. Quien
+    pidió sus vacaciones no tenía forma de demostrar que las pidió, ni con qué
+    fechas, ni quién quitó la petición.
+
+    En las correcciones esto ya estaba resuelto en el otro sentido ---«una
+    petición rechazada también es historia»--- y aquí faltaba. Cancelada sigue
+    sin consumir saldo y sin bloquear días, porque tanto el saldo como el
+    solapamiento cuentan solo lo aprobado y lo pendiente.
     """
     absence = _must_be_open(absence)
     if absence.employee_id != cancelled_by.id and not cancelled_by.can_manage:
@@ -629,7 +647,19 @@ def cancel_absence(absence: Absence, *, cancelled_by) -> None:
             code="not_your_request",
             message=_("That request belongs to somebody else."),
         )
-    absence.delete()
+    absence.status = AbsenceStatus.CANCELLED
+    # El campo se llama `approved_by` por historia, y su `verbose_name` ya dice
+    # lo que de verdad guarda: quien lo resolvió. Es el que usa el rechazo.
+    absence.approved_by = cancelled_by
+    absence.resolved_at = timezone.now()
+    absence.save(update_fields=["status", "approved_by", "resolved_at", "updated_at"])
+
+    # El justificante sí se va, aunque la fila se quede: es la razón de la vuelta
+    # 45 y no cambia ---quien retira su solicitud está diciendo que no quiere que
+    # ese documento siga ahí, y a menudo es un dato del art. 9.
+    descartar_justificante(absence)
+    absence.justification = None
+    absence.save(update_fields=["justification", "updated_at"])
 
 
 def _must_be_open(absence: Absence) -> Absence:

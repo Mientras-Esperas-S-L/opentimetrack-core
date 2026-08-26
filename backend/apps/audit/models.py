@@ -61,6 +61,7 @@ class AuditAction(models.TextChoices):
     # Somebody decided about time off.
     ABSENCE_APPROVED = "ABSENCE_APPROVED", _("Approved leave")
     ABSENCE_REJECTED = "ABSENCE_REJECTED", _("Rejected leave")
+    ABSENCE_CANCELLED = "ABSENCE_CANCELLED", _("Cancelled a leave request")
     OVERTIME_AUTHORISED = "OVERTIME_AUTHORISED", _("Authorised overtime")
     OVERTIME_REJECTED = "OVERTIME_REJECTED", _("Did not authorise overtime")
     HOLIDAY_RECOVERY_CONFIRMED = (

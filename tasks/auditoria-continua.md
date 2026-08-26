@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 91 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 92 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -77,6 +77,7 @@ vuelve a una limpia.
 | El volumen (200 personas, un año) | limpia | 26/08 v89 | el tope está calibrado; **pero todo rechazo del informe salía como 5 bytes** |
 | Lo que las tandas dejan detrás | limpia | 26/08 v90 | — **sin hallazgo**; la suite limpia bien y el sedimento es histórico |
 | El camino de vuelta (deshacer) | limpia | 26/08 v91 | **una propuesta equivocada no se podía retirar**; la otra parte tenía que pararla |
+| Lo que se borra de verdad | limpia | 26/08 v92 | **un responsable hacía desaparecer la solicitud de otro**, sin fila y sin rastro |
 
 ### Ley
 
@@ -261,6 +262,66 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 92 --- La solicitud que desaparecía (26/08)
+
+La lente: **lo que se borra de verdad.** Qué desaparece de la base y qué se
+conserva, y si lo que desaparece deja constancia de haber existido. Salió de leer
+`cancel_absence` mientras esperaba la tanda anterior: hacía `delete()`.
+
+#### El hallazgo
+
+Cancelar una solicitud de ausencia **borraba la fila**. Y cancelar la solicitud de
+**otra persona** está permitido: la comprobación es
+`absence.employee_id != cancelled_by.id and not cancelled_by.can_manage`.
+
+Medido: la responsable cancela la petición de vacaciones del obrero, y la fila no
+queda **ni en `objects_all_tenants`**. Cero entradas nuevas en el rastro.
+
+Así que quien pidió sus vacaciones no tenía manera de demostrar que las pidió, ni
+con qué fechas, ni quién quitó la petición. En las correcciones esto ya estaba
+decidido en el otro sentido y escrito: «una petición rechazada también es
+historia». Aquí faltaba.
+
+#### El arreglo, y la parte que **no** se conserva
+
+Estado `CANCELLED` con quién la canceló y cuándo, más su asiento en el rastro con
+nombre, apellidos y las fechas que se retiraron ---sin las fechas el asiento no
+dice qué se quitó.
+
+Pero el **justificante sí se borra**, y eso es lo que hizo pensar la vuelta. Al
+conservar la fila se rompieron dos pruebas de la vuelta 45, la que arregló «el
+fichero se va con su fila», y su docstring dice exactamente por qué:
+
+> Un justificante es a menudo un dato del art. 9 del RGPD ---una citación, un
+> informe de un familiar hospitalizado--- y la persona que retira su solicitud
+> está diciendo justamente que no quiere que se quede.
+
+Eso sigue siendo verdad aunque la fila se quede. Así que el borrado del fichero se
+sacó de la señal de `post_delete` a `descartar_justificante()`, y cancelar lo
+llama: **queda la solicitud, no queda el documento**. Trazabilidad sin retener un
+dato de salud que ya no sostiene nada.
+
+#### Las tres pruebas existentes, leídas antes de tocarlas
+
+Las tres fijaban el borrado, y ninguna sobraba:
+
+- La del justificante huérfano defendía el art. 17 y el 5.1.e. **Sigue verde sin
+  cambiarla**, porque el fichero se sigue borrando.
+- «Una ausencia sin justificante se borra sin ruido» defendía que la falta de
+  fichero no rompa nada. Renombrada a `..._se_cancela_sin_ruido`, con la misma
+  intención y la aserción puesta al día.
+- «Puedes retirar la tuya» defendía el permiso, no el borrado. Ahora comprueba
+  que queda cancelada y a nombre de quien la retiró.
+
+#### Lo que no podía romperse, y se probó
+
+Una cancelada **no consume saldo** y **no bloquea sus días**: se pueden volver a
+pedir los mismos y sale 201. Sale gratis porque el saldo y el solapamiento cuentan
+solo lo aprobado y lo pendiente, pero conservar una fila que antes desaparecía es
+justo el cambio que puede crear un solapamiento fantasma, así que va con prueba.
+
+6 pruebas nuevas (1.123 en el backend), dos migraciones y el estado traducido.
 
 ### Vuelta 91 --- Una propuesta sin marcha atrás (26/08)
 

@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 13:51+0000\n"
+"POT-Creation-Date: 2026-08-26 14:16+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -180,8 +180,8 @@ msgstr ""
 msgid "needs a supporting document"
 msgstr ""
 
-#: apps/absences/models.py:175 apps/absences/models.py:524
-#: apps/audit/models.py:172 apps/punches/models.py:449
+#: apps/absences/models.py:175 apps/absences/models.py:531
+#: apps/audit/models.py:173 apps/punches/models.py:449
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:334
 msgid "note"
@@ -193,7 +193,7 @@ msgstr ""
 msgid "active"
 msgstr ""
 
-#: apps/absences/models.py:179 apps/absences/models.py:245
+#: apps/absences/models.py:179 apps/absences/models.py:252
 msgid "leave type"
 msgstr ""
 
@@ -213,7 +213,11 @@ msgstr ""
 msgid "Rejected"
 msgstr "Rexeitada"
 
-#: apps/absences/models.py:234 apps/absences/models.py:484
+#: apps/absences/models.py:233
+msgid "Cancelled"
+msgstr ""
+
+#: apps/absences/models.py:241 apps/absences/models.py:491
 #: apps/notifications/models.py:34 apps/punches/corrections.py:80
 #: apps/punches/models.py:149 apps/punches/models.py:396
 #: apps/punches/models.py:438 apps/reports/payroll.py:97
@@ -221,99 +225,99 @@ msgstr "Rexeitada"
 msgid "employee"
 msgstr "persoa traballadora"
 
-#: apps/absences/models.py:251 apps/audit/models.py:165
+#: apps/absences/models.py:258 apps/audit/models.py:166
 #: apps/punches/corrections.py:94 apps/punches/models.py:151
 msgid "type"
 msgstr "tipo"
 
-#: apps/absences/models.py:253 apps/absences/models.py:501
+#: apps/absences/models.py:260 apps/absences/models.py:508
 #: apps/reports/payroll.py:99
 msgid "from"
 msgstr ""
 
-#: apps/absences/models.py:254 apps/absences/models.py:502
+#: apps/absences/models.py:261 apps/absences/models.py:509
 #: apps/reports/payroll.py:100
 msgid "to"
 msgstr ""
 
-#: apps/absences/models.py:264
+#: apps/absences/models.py:271
 msgid "from (time)"
 msgstr ""
 
-#: apps/absences/models.py:265
+#: apps/absences/models.py:272
 msgid "to (time)"
 msgstr ""
 
-#: apps/absences/models.py:276
+#: apps/absences/models.py:283
 msgid "share reduced (%)"
 msgstr ""
 
-#: apps/absences/models.py:282
+#: apps/absences/models.py:289
 msgid ""
 "Only for a suspension that reduces the working day instead of stopping it. "
 "Empty means the whole day. 40 means they still work 60 %."
 msgstr ""
 
-#: apps/absences/models.py:286 apps/punches/corrections.py:98
+#: apps/absences/models.py:293 apps/punches/corrections.py:98
 msgid "reason"
 msgstr "motivo"
 
-#: apps/absences/models.py:305 apps/punches/models.py:213
+#: apps/absences/models.py:312 apps/punches/models.py:213
 msgid "recorded by"
 msgstr ""
 
-#: apps/absences/models.py:309 apps/absences/models.py:513
+#: apps/absences/models.py:316 apps/absences/models.py:520
 #: apps/punches/corrections.py:104 apps/punches/models.py:442
 msgid "status"
 msgstr "estado"
 
-#: apps/absences/models.py:317 apps/punches/corrections.py:118
+#: apps/absences/models.py:324 apps/punches/corrections.py:118
 msgid "resolved by"
 msgstr "resolta por"
 
-#: apps/absences/models.py:319 apps/punches/corrections.py:120
+#: apps/absences/models.py:326 apps/punches/corrections.py:120
 msgid "resolved at"
 msgstr "resolta o"
 
-#: apps/absences/models.py:322
+#: apps/absences/models.py:329
 msgid "supporting document"
 msgstr ""
 
-#: apps/absences/models.py:327
+#: apps/absences/models.py:334
 msgid ""
 "Not available for sick leave: the medical certificate is not stored here. "
 "Since RD 1060/2022 the worker no longer hands it to the employer --- the "
 "INSS sends the data to the company directly."
 msgstr ""
 
-#: apps/absences/models.py:334
+#: apps/absences/models.py:341
 msgid "absence"
 msgstr ""
 
-#: apps/absences/models.py:335
+#: apps/absences/models.py:342
 msgid "absences"
 msgstr ""
 
-#: apps/absences/models.py:402 apps/absences/services.py:307
+#: apps/absences/models.py:409 apps/absences/services.py:313
 #: apps/reports/views.py:91 apps/shifts/views.py:306
 msgid "The end date cannot precede the start date."
 msgstr "A data final non pode ir antes da inicial."
 
-#: apps/absences/models.py:408 apps/absences/views.py:312
+#: apps/absences/models.py:415 apps/absences/views.py:312
 msgid "Give both times, or neither: half of a range is not one."
 msgstr "Pon as dúas horas ou ningunha: media franxa non é unha franxa."
 
-#: apps/absences/models.py:411 apps/users/serializers.py:445
+#: apps/absences/models.py:418 apps/users/serializers.py:445
 msgid "It ends before it starts."
 msgstr ""
 
-#: apps/absences/models.py:416
+#: apps/absences/models.py:423
 msgid ""
 "Part of a day is one day. For several days, leave the times empty and they "
 "count whole."
 msgstr ""
 
-#: apps/absences/models.py:428
+#: apps/absences/models.py:435
 msgid ""
 "The medical certificate is not stored. Recording the absence, its dates and "
 "its status is enough for working-time purposes, and since RD 1060/2022 the "
@@ -321,63 +325,63 @@ msgid ""
 "data to the company."
 msgstr ""
 
-#: apps/absences/models.py:472
+#: apps/absences/models.py:479
 msgid "No deadline (art. 38.3, second paragraph)"
 msgstr ""
 
-#: apps/absences/models.py:473
+#: apps/absences/models.py:480
 msgid "Eighteen months (art. 38.3, third paragraph)"
 msgstr ""
 
-#: apps/absences/models.py:476
+#: apps/absences/models.py:483
 msgid "Waiting to be confirmed"
 msgstr ""
 
-#: apps/absences/models.py:477
+#: apps/absences/models.py:484
 msgid "Confirmed"
 msgstr ""
 
-#: apps/absences/models.py:478
+#: apps/absences/models.py:485
 msgid "Not applicable"
 msgstr ""
 
-#: apps/absences/models.py:492
+#: apps/absences/models.py:499
 msgid "holiday affected"
 msgstr ""
 
-#: apps/absences/models.py:498
+#: apps/absences/models.py:505
 msgid "leave that overlapped"
 msgstr ""
 
-#: apps/absences/models.py:505
+#: apps/absences/models.py:512
 msgid "days"
 msgstr ""
 
-#: apps/absences/models.py:506 apps/tenants/models.py:88
+#: apps/absences/models.py:513 apps/tenants/models.py:88
 msgid "counted in working days"
 msgstr ""
 
-#: apps/absences/models.py:508
+#: apps/absences/models.py:515
 msgid "regime"
 msgstr ""
 
-#: apps/absences/models.py:510
+#: apps/absences/models.py:517
 msgid "must be taken by"
 msgstr ""
 
-#: apps/absences/models.py:521
+#: apps/absences/models.py:528
 msgid "confirmed by"
 msgstr ""
 
-#: apps/absences/models.py:523
+#: apps/absences/models.py:530
 msgid "confirmed at"
 msgstr ""
 
-#: apps/absences/models.py:527
+#: apps/absences/models.py:534
 msgid "recovered holiday"
 msgstr ""
 
-#: apps/absences/models.py:528
+#: apps/absences/models.py:535
 msgid "recovered holidays"
 msgstr ""
 
@@ -389,11 +393,11 @@ msgstr "Esa recuperación xa se resolveu."
 msgid "a holiday recovery"
 msgstr "unha recuperación de vacacións"
 
-#: apps/absences/services.py:302
+#: apps/absences/services.py:308
 msgid "Say what kind of leave it is."
 msgstr "Di de que tipo de ausencia se trata."
 
-#: apps/absences/services.py:314
+#: apps/absences/services.py:320
 msgid ""
 "The medical certificate is not stored. Recording the absence, its dates and "
 "its status is enough, and since RD 1060/2022 the worker does not hand the "
@@ -403,12 +407,12 @@ msgstr ""
 "datas e o seu estado, e desde o RD 1060/2022 o traballador non entrega o "
 "parte á empresa."
 
-#: apps/absences/services.py:345
+#: apps/absences/services.py:351
 #, python-format
 msgid "There is already leave recorded between %(from)s and %(to)s."
 msgstr "Xa hai unha ausencia rexistrada entre o %(from)s e o %(to)s."
 
-#: apps/absences/services.py:365
+#: apps/absences/services.py:371
 msgid ""
 "Say which suspension it is: they carry different articles and different "
 "consequences, and the record has to name one."
@@ -416,7 +420,7 @@ msgstr ""
 "Di que suspensión é: levan artigos e consecuencias distintas, e o rexistro "
 "ten que nomear unha."
 
-#: apps/absences/services.py:374
+#: apps/absences/services.py:380
 msgid ""
 "A reduction covers whole days at a smaller share. For hours away on one day, "
 "leave the reduction empty."
@@ -424,7 +428,7 @@ msgstr ""
 "Unha redución cobre días enteiros cunha xornada menor. Para horas soltas dun "
 "día, deixa a redución baleira."
 
-#: apps/absences/services.py:383
+#: apps/absences/services.py:389
 msgid ""
 "Only a suspension can reduce the working day. For fewer hours by agreement, "
 "change the contracted figure on the person."
@@ -432,7 +436,7 @@ msgstr ""
 "Só unha suspensión pode reducir a xornada. Para menos horas por acordo, "
 "cambia as horas contratadas da persoa."
 
-#: apps/absences/services.py:400
+#: apps/absences/services.py:406
 msgid ""
 "Only a suspension the company records --- an ERTE, the RED mechanism --- can "
 "reduce the working day."
@@ -440,7 +444,7 @@ msgstr ""
 "Só unha suspensión das que rexistra a empresa —un ERTE, o mecanismo REDE— "
 "pode reducir a xornada."
 
-#: apps/absences/services.py:409
+#: apps/absences/services.py:415
 msgid ""
 "Holiday is taken in whole days. For part of a day, use the leave type that "
 "fits: a medical appointment, family emergency, an exam."
@@ -448,15 +452,15 @@ msgstr ""
 "As vacacións collense por días completos. Para parte dun día usa o permiso "
 "que corresponda: visita médica, forza maior familiar, un exame."
 
-#: apps/absences/services.py:572 apps/absences/services.py:609
+#: apps/absences/services.py:578 apps/absences/services.py:615
 msgid "leave"
 msgstr "unha ausencia"
 
-#: apps/absences/services.py:582
+#: apps/absences/services.py:588
 msgid "Leave has since been approved for those dates."
 msgstr "Mentres tanto aprobouse outra ausencia para esas datas."
 
-#: apps/absences/services.py:630
+#: apps/absences/services.py:648
 msgid "That request belongs to somebody else."
 msgstr "Esa solicitude é doutra persoa."
 
@@ -522,11 +526,11 @@ msgstr ""
 "Este tipo de ausencia rexístraa a empresa, non se solicita. Fala con quen "
 "xestione a túa xornada."
 
-#: apps/absences/views.py:578
+#: apps/absences/views.py:595
 msgid "You can only see your own balance."
 msgstr "Só podes consultar o teu propio saldo."
 
-#: apps/absences/views.py:618 apps/shifts/views.py:263
+#: apps/absences/views.py:635 apps/shifts/views.py:263
 msgid "Give 'from' and 'to' as YYYY-MM-DD."
 msgstr "Indica 'from' e 'to' co formato AAAA-MM-DD."
 
@@ -579,124 +583,128 @@ msgid "Rejected leave"
 msgstr ""
 
 #: apps/audit/models.py:64
-msgid "Authorised overtime"
+msgid "Cancelled a leave request"
 msgstr ""
 
 #: apps/audit/models.py:65
+msgid "Authorised overtime"
+msgstr ""
+
+#: apps/audit/models.py:66
 msgid "Did not authorise overtime"
 msgstr ""
 
-#: apps/audit/models.py:68
+#: apps/audit/models.py:69
 msgid "Confirmed holiday recovered from sick leave"
 msgstr ""
 
-#: apps/audit/models.py:72
+#: apps/audit/models.py:73
 msgid "Dismissed a holiday recovery"
 msgstr ""
 
-#: apps/audit/models.py:76
+#: apps/audit/models.py:77
 msgid "Added a person"
 msgstr ""
 
-#: apps/audit/models.py:77
+#: apps/audit/models.py:78
 msgid "Changed a person"
 msgstr ""
 
-#: apps/audit/models.py:78
+#: apps/audit/models.py:79
 msgid "Deactivated a person"
 msgstr ""
 
-#: apps/audit/models.py:79
+#: apps/audit/models.py:80
 msgid "Reactivated a person"
 msgstr ""
 
-#: apps/audit/models.py:80
+#: apps/audit/models.py:81
 msgid "Changed a role"
 msgstr ""
 
-#: apps/audit/models.py:85
+#: apps/audit/models.py:86
 msgid "Moved a shift to somebody else"
 msgstr ""
 
-#: apps/audit/models.py:92
+#: apps/audit/models.py:93
 msgid "Painted shifts over a period"
 msgstr ""
 
-#: apps/audit/models.py:93
+#: apps/audit/models.py:94
 msgid "Cleared shifts over a period"
 msgstr ""
 
-#: apps/audit/models.py:97
+#: apps/audit/models.py:98
 msgid "Changed what a leave grants"
 msgstr ""
 
-#: apps/audit/models.py:106
+#: apps/audit/models.py:107
 msgid "Changed the structure or the calendar"
 msgstr ""
 
-#: apps/audit/models.py:109
+#: apps/audit/models.py:110
 msgid "Sent a link to set a password"
 msgstr ""
 
-#: apps/audit/models.py:112
+#: apps/audit/models.py:113
 msgid "Changed company settings"
 msgstr ""
 
-#: apps/audit/models.py:113
+#: apps/audit/models.py:114
 msgid "Changed working time rules"
 msgstr ""
 
-#: apps/audit/models.py:116
+#: apps/audit/models.py:117
 msgid "Registered an application"
 msgstr ""
 
-#: apps/audit/models.py:117
+#: apps/audit/models.py:118
 msgid "Revoked an application credential"
 msgstr ""
 
-#: apps/audit/models.py:120
+#: apps/audit/models.py:121
 msgid "Purged security metadata"
 msgstr ""
 
-#: apps/audit/models.py:138
+#: apps/audit/models.py:139
 msgid "when"
 msgstr ""
 
-#: apps/audit/models.py:144 apps/common/models.py:117
+#: apps/audit/models.py:145 apps/common/models.py:117
 #: apps/tenants/models.py:171 apps/tenants/models.py:199
 #: apps/tenants/rules.py:38 apps/tenants/rules.py:311 apps/users/models.py:273
 msgid "company"
 msgstr ""
 
-#: apps/audit/models.py:154
+#: apps/audit/models.py:155
 msgid "who"
 msgstr ""
 
-#: apps/audit/models.py:158
+#: apps/audit/models.py:159
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:160
+#: apps/audit/models.py:161
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:166
+#: apps/audit/models.py:167
 msgid "identifier"
 msgstr ""
 
-#: apps/audit/models.py:167
+#: apps/audit/models.py:168
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:171
+#: apps/audit/models.py:172
 msgid "changes"
 msgstr ""
 
-#: apps/audit/models.py:194
+#: apps/audit/models.py:195
 msgid "audit entry"
 msgstr ""
 
-#: apps/audit/models.py:195
+#: apps/audit/models.py:196
 msgid "audit trail"
 msgstr ""
 

@@ -562,7 +562,24 @@ class AbsenceViewSet(
     @extend_schema(request=None, responses={204: None})
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
-        cancel_absence(self.get_object(), cancelled_by=request.user)
+        absence = self.get_object()
+        cancel_absence(absence, cancelled_by=request.user)
+        # Cancelar la solicitud de otra persona está permitido, así que tiene que
+        # constar. Antes no quedaba nada: la fila se borraba y el rastro callaba,
+        # de modo que quien había pedido sus vacaciones no podía demostrar ni que
+        # las pidió. Las fechas van en el asiento porque son lo que se retiró.
+        record(
+            action=AuditAction.ABSENCE_CANCELLED,
+            actor=request.user,
+            target=absence.employee,
+            target_type="user",
+            target_label=absence.employee.get_full_name(),
+            changes={
+                "absence": str(absence.pk),
+                "from": str(absence.start_date),
+                "to": str(absence.end_date),
+            },
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(responses={200: dict})

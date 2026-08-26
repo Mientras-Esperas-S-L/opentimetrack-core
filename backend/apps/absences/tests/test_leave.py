@@ -237,10 +237,20 @@ def test_a_rejected_request_is_kept(company, employee, manager):
 
 @pytest.mark.django_db
 def test_you_can_withdraw_your_own_pending_request(company, employee):
+    """Retirarla la deja cancelada, no la hace desaparecer.
+
+    Comprobaba que la fila se iba. Se conserva desde la vuelta 92: cancelar la
+    solicitud de **otra** persona está permitido, y una petición borrada no deja
+    manera de saber que existió ni quién la quitó. Lo que se defiende aquí sigue
+    siendo lo mismo ---puedes retirar la tuya--- y que después no cuente para
+    nada.
+    """
     absence = _ask(company, employee, date(2026, 7, 1), date(2026, 7, 5))
     cancel_absence(absence, cancelled_by=employee)
 
-    assert not Absence.objects_all_tenants.filter(pk=absence.pk).exists()
+    retirada = Absence.objects_all_tenants.get(pk=absence.pk)
+    assert retirada.status == AbsenceStatus.CANCELLED
+    assert retirada.approved_by_id == employee.pk
 
 
 @pytest.mark.django_db
