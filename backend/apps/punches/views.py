@@ -105,7 +105,13 @@ class PunchViewSet(
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        qs = Punch.objects.select_related("employee").all()
+        # `employee__workplace` y `employee__tenant` porque cada fichaje dice
+        # en qué huso se vivió, y ese sale del centro de la persona o ---si no
+        # tiene--- de la empresa. Sin los dos saltos se pregunta una vez por
+        # fila: son cincuenta por página.
+        qs = Punch.objects.select_related(
+            "employee", "employee__workplace", "employee__tenant"
+        ).all()
 
         # A worker sees their own history, which the law grants them, and only
         # their own. A manager sees the departments they answer for.
@@ -173,7 +179,13 @@ class PunchViewSet(
         return Response(
             {
                 "employee": str(request.user.id),
-                "time_zone": request.user.tenant.time_zone,
+                # La de la persona, no la de la empresa. Esta zona es la del
+                # reloj de pared que la pantalla de fichar enseña, y la que
+                # decide qué día es «hoy»: para una delegación en Las Palmas
+                # dentro de una empresa de Madrid iba sesenta minutos
+                # adelantada, así que quien fichaba a las 23:30 veía las 00:30
+                # y su jornada empezaba, en pantalla, al día siguiente.
+                "time_zone": str(request.user.tzinfo),
                 **estado.as_dict(),
             }
         )

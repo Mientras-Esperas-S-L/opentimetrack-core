@@ -26,6 +26,7 @@ from django.utils.translation import ngettext
 from apps import legal
 from apps.absences.models import STOPS_THE_WHOLE_DAY, Absence, AbsenceStatus
 from apps.common.clock import local_date_of
+from apps.common.dst import change_across, real_gap
 from apps.common.exceptions import BusinessRuleError
 from apps.shifts.models import Shift, ShiftPattern, working_days_between
 from apps.tenants.rules import WorkingTimeRules
@@ -241,12 +242,19 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
 
     findings: list[Finding] = []
     for employee_id, roster in by_person.items():
-        findings.extend(_check_daily_rest(roster, rules, framework.shifts, first, last))
+        findings.extend(_check_daily_rest(roster, rules, framework.shifts, first, last, company))
         findings.extend(_check_weekly_hours(employee_id, roster, rules, first, last, reducciones))
         findings.extend(_check_breaks(roster, rules, first, last))
         findings.extend(
             _check_weekly_rest(
-                employee_id, roster, rules, framework.minors, framework.shifts, first, last
+                employee_id,
+                roster,
+                rules,
+                framework.minors,
+                framework.shifts,
+                first,
+                last,
+                company,
             )
         )
         findings.extend(
@@ -348,7 +356,7 @@ def _check_notice(company, by_person, rules, first, last) -> list[Finding]:
     return found
 
 
-def _check_daily_rest(roster, rules, shifts_law, first, last) -> list[Finding]:
+def _check_daily_rest(roster, rules, shifts_law, first, last, company) -> list[Finding]:
     """Rest between one day and the next, against the floor that applies.
 
     Two floors, not one. The ordinary twelve hours, and --- for somebody on
@@ -366,7 +374,11 @@ def _check_daily_rest(roster, rules, shifts_law, first, last) -> list[Finding]:
     rotating = bool(person and person.rotating_shifts and shifts_law)
 
     for previous, current in pairwise(roster):
-        gap = (current.starts_at - previous.ends_at).total_seconds() / 3600
+        # En tiempo real, no de reloj. Un turno guarda horas de pared, y las
+        # doce que van de las 22:00 a las 10:00 son **once** la madrugada del
+        # último domingo de marzo: el cuadrante cumplía el suelo del art. 34.3
+        # sobre el papel y dejaba a la persona con once horas sin avisar.
+        gap = real_gap(previous.ends_at, current.starts_at, company).total_seconds() / 3600
         if gap >= rules.daily_rest_hours or not (first <= current.day <= last):
             continue
 
@@ -397,6 +409,23 @@ def _check_daily_rest(roster, rules, shifts_law, first, last) -> list[Finding]:
             continue
 
         floor = float(shifts_law.changeover_rest_hours) if moved else float(rules.daily_rest_hours)
+
+        # Y de dónde sale la cifra, si sale de ahí. Quien lee el cuadrante ve
+        # 22:00 y 10:00 y cuenta doce: sin esta frase, el aviso parece una
+        # cuenta mal hecha del programa y se ignora justo la noche en que no
+        # hay que ignorarlo. La cifra no se toca ---esas horas son las que la
+        # persona descansó--- solo se explica.
+        movio = change_across(
+            previous.ends_at.replace(tzinfo=company.tzinfo),
+            current.starts_at.replace(tzinfo=company.tzinfo),
+            company,
+        )
+        porque = (
+            " " + _("The clocks went forward that night, so the shifts are an hour closer.")
+            if movio > 0
+            else ""
+        )
+
         found.append(
             Finding(
                 day=current.day,
@@ -410,7 +439,8 @@ def _check_daily_rest(roster, rules, shifts_law, first, last) -> list[Finding]:
                     if moved
                     else _("Only %(hours)s h of rest since the previous shift.")
                 )
-                % {"hours": f"{gap:.1f}", "floor": f"{floor:g}"},
+                % {"hours": f"{gap:.1f}", "floor": f"{floor:g}"}
+                + porque,
             )
         )
     return found
@@ -632,7 +662,7 @@ def _check_breaks(roster, rules, first, last) -> list[Finding]:
 
 
 def _check_weekly_rest(
-    employee_id, roster, rules, minors, shifts_law, first, last
+    employee_id, roster, rules, minors, shifts_law, first, last, company
 ) -> list[Finding]:
     """Art. 37.1 ET: a day and a half uninterrupted, accumulable.
 
@@ -674,15 +704,18 @@ def _check_weekly_rest(
             continue
 
         ordered = sorted(inside, key=lambda s: s.day)
-        gaps = [b.starts_at - a.ends_at for a, b in pairwise(ordered)]
+        # Tiempo real por lo mismo que el descanso diario: las treinta y seis
+        # horas del art. 37.1 son treinta y cinco si el reloj se adelanta
+        # dentro de ellas.
+        gaps = [real_gap(a.ends_at, b.starts_at, company) for a, b in pairwise(ordered)]
 
         # The edges count too. A fortnight of ten days on followed by four off
         # has its rest at the end, and looking only between shifts would miss
         # it and report a pattern that is perfectly lawful.
         window_opens = datetime.combine(anchor, dt_time.min)
         window_closes = datetime.combine(window_end + timedelta(days=1), dt_time.min)
-        gaps.append(ordered[0].starts_at - window_opens)
-        gaps.append(window_closes - ordered[-1].ends_at)
+        gaps.append(real_gap(window_opens, ordered[0].starts_at, company))
+        gaps.append(real_gap(ordered[-1].ends_at, window_closes, company))
 
         longest = max(gaps, default=timedelta(0))
         if longest < minimum:

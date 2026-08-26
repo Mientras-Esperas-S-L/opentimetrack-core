@@ -56,6 +56,34 @@ def clock_change_minutes(day: date, where) -> int:
     return round((local_day_hours(day, where) - 24) * 60)
 
 
+def real_gap(desde: datetime, hasta: datetime, where) -> timedelta:
+    """Lo que de verdad pasa entre dos horas de reloj de pared.
+
+    Un cuadrante guarda horas de pared: «acaba a las 22:00, empieza a las
+    10:00». Restar esos dos datetime da doce horas los 365 días del año, porque
+    son naive y la resta no sabe de husos --- y la madrugada del último domingo
+    de marzo, entre esas dos horas de pared solo pasan **once**.
+
+    Ahí es donde importa: el suelo del art. 34.3 son doce horas de descanso
+    entre jornadas, y un cuadrante que programe esas doce de pared la noche del
+    cambio deja a la persona con once reales sin que nada avise. La de octubre
+    va al revés ---trece--- y no incumple nada, pero conviene que la cuenta sea
+    la misma en los dos sentidos.
+
+    Acepta datetime naive, que es como salen de un turno, y también aware, que
+    es como salen de la base. `where` puede ser la empresa, la persona o la
+    propia zona.
+    """
+    aqui = getattr(where, "tzinfo", where)
+    if desde.tzinfo is None:
+        desde = desde.replace(tzinfo=aqui)
+    if hasta.tzinfo is None:
+        hasta = hasta.replace(tzinfo=aqui)
+    # A UTC antes de restar, por lo mismo que explica `local_day_hours`: dos
+    # datetime con el mismo `tzinfo` se restan como reloj de pared.
+    return hasta.astimezone(UTC) - desde.astimezone(UTC)
+
+
 def change_across(start, end, where) -> int:
     """Los minutos que el reloj se movió **entre esos dos instantes**.
 

@@ -33,6 +33,7 @@ from datetime import date, timedelta
 from django.utils.translation import gettext_lazy as _
 
 from apps.absences.models import STOPS_THE_WHOLE_DAY, Absence, AbsenceStatus
+from apps.common.dst import real_gap
 from apps.shifts.models import Shift
 
 #: Por qué un turno se ha quedado sin nadie.
@@ -213,19 +214,27 @@ def who_can_cover(*, shift: Shift, company, rules=None) -> list[Candidato]:
         # Las doce horas del art. 34.3, por los dos lados: el turno de antes
         # tiene que haber acabado hace doce horas y el de después no puede
         # empezar antes de doce.
+        # El hueco, en tiempo real y no de reloj: un turno guarda horas de
+        # pared, y las doce que van de las 22:00 a las 10:00 son once la
+        # madrugada del último domingo de marzo. Quien cubre una baja tiene que
+        # ver ese aviso justo esa noche, que es cuando hace falta.
         for otro in suyos:
             if otro.day == shift.day:
                 continue
-            if otro.ends_at <= shift.starts_at and shift.starts_at - otro.ends_at < descanso:
-                avisos.append(
-                    _("Only %(hours)s h since their previous shift.")
-                    % {"hours": f"{(shift.starts_at - otro.ends_at).total_seconds() / 3600:.0f}"}
-                )
-            if otro.starts_at >= shift.ends_at and otro.starts_at - shift.ends_at < descanso:
-                avisos.append(
-                    _("Only %(hours)s h before their next shift.")
-                    % {"hours": f"{(otro.starts_at - shift.ends_at).total_seconds() / 3600:.0f}"}
-                )
+            if otro.ends_at <= shift.starts_at:
+                hueco = real_gap(otro.ends_at, shift.starts_at, company)
+                if hueco < descanso:
+                    avisos.append(
+                        _("Only %(hours)s h since their previous shift.")
+                        % {"hours": f"{hueco.total_seconds() / 3600:.0f}"}
+                    )
+            if otro.starts_at >= shift.ends_at:
+                hueco = real_gap(shift.ends_at, otro.starts_at, company)
+                if hueco < descanso:
+                    avisos.append(
+                        _("Only %(hours)s h before their next shift.")
+                        % {"hours": f"{hueco.total_seconds() / 3600:.0f}"}
+                    )
 
         # Lo que ya lleva esa semana más lo que este turno añade. Aviso y no
         # veto: pasarse de lo contratado genera horas complementarias (art.

@@ -222,6 +222,16 @@ class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source="get_full_name", read_only=True)
     department_name = serializers.CharField(source="department.name", read_only=True, default=None)
     workplace_name = serializers.CharField(source="workplace.name", read_only=True, default=None)
+    #: En la que se parte **su** día, resuelta: la de su centro de trabajo si lo
+    #: tiene, y si no la de la empresa.
+    #:
+    #: Salía solo la de la empresa, y las pantallas no tenían otra cosa que
+    #: usar. Para una delegación en Las Palmas eso son sesenta minutos: quien
+    #: fichaba a las 23:30 lo veía en su pantalla como las 00:30 **del día
+    #: siguiente**, mientras el informe que se entrega ---que sí resuelve por
+    #: persona--- lo ponía en el día correcto. El registro que uno consulta y el
+    #: que se entrega tienen que ser el mismo (art. 34.9).
+    effective_time_zone = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -237,6 +247,7 @@ class UserSerializer(serializers.ModelSerializer):
             "department_name",
             "workplace",
             "workplace_name",
+            "effective_time_zone",
             "locale",
             "annual_leave_days",
             # Art. 3.b and 3.e of the pending decree: the regime the person
@@ -274,9 +285,13 @@ class UserSerializer(serializers.ModelSerializer):
             "full_name",
             "department_name",
             "workplace_name",
+            "effective_time_zone",
             "is_federated",
             "date_joined",
         ]
+
+    def get_effective_time_zone(self, obj) -> str:
+        return str(obj.tzinfo)
 
 
 class UserWriteSerializer(serializers.ModelSerializer):

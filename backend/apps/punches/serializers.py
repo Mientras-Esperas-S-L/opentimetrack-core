@@ -18,6 +18,16 @@ from apps.punches.models import (
 
 class PunchSerializer(serializers.ModelSerializer):
     employee_name = serializers.CharField(source="employee.get_full_name", read_only=True)
+    #: El huso en el que esa persona vivió este instante: el de su centro de
+    #: trabajo, o el de la empresa si no tiene.
+    #:
+    #: Va en el fichaje y no solo en la ficha de la persona porque un listado
+    #: mezcla gente de varias delegaciones, y una hora sin su huso no dice a qué
+    #: hora se fichó. Con una empresa en Madrid y una delegación en Las Palmas
+    #: son sesenta minutos, y sesenta minutos cambian el día de un fichaje de
+    #: las 23:30. Quien lee esto por la API ---una pantalla o un conector---
+    #: no tiene otra forma de saberlo.
+    time_zone = serializers.SerializerMethodField()
     source_display = serializers.CharField(source="get_source_display", read_only=True)
 
     class Meta:
@@ -26,6 +36,7 @@ class PunchSerializer(serializers.ModelSerializer):
             "id",
             "employee",
             "employee_name",
+            "time_zone",
             "punch_type",
             "interval",
             "work_mode",
@@ -45,6 +56,9 @@ class PunchSerializer(serializers.ModelSerializer):
             "voided_at",
         ]
         read_only_fields = fields
+
+    def get_time_zone(self, obj) -> str:
+        return str(obj.employee.tzinfo)
 
 
 #: Lo que cabe en la evidencia de un fichaje, en caracteres del JSON serializado.
