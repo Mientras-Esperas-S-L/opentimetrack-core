@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 119 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 120 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -276,6 +276,15 @@ completo (evidencia y refutación) está en el registro del workflow.
   va la condición, no un número de milisegundos: `expect.poll` es más rápido
   cuando todo va bien y no miente cuando la máquina va cargada.
 
+- **El dossier de producto va por la vuelta 83.** (v120) Vive en el repo privado
+  ---`opentimetrack-cloud/docs/08-comercial/01-dossier-producto.md`, versión 1.4---
+  y no lo toca la auditoría. Dos filas suyas se han vuelto ciertas **por lo que se
+  arregló estas vueltas**: los descansos «también las noches del cambio de hora»
+  (lo era en pantalla y no en el documento, v106) y la huella de los PDF (cierta,
+  pero con 577 fichajes saliendo acusados de alterados, v109). Revisarlo fila a
+  fila contra el código es una vuelta; **no se hace sin que Francisco lo pida**,
+  porque es material comercial y de otro repositorio.
+
 - **Veintisiete `date.today()` sin arreglar en las pruebas.** El producto barrió
   esa llamada de su propio código y dejó `common/clock.py` explicando por qué; las
   pruebas se quedaron con ella. Nueve ficheros la mezclan con datos creados en
@@ -353,6 +362,53 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 120 --- Diecinueve avisos sin base legal para cualquier país que no sea España (27/08)
+
+Lente: **leer en columna las comprobaciones hermanas**, que es la técnica que dio
+los tres hallazgos anteriores. Aquí, los diecinueve avisos del cuadrante contra el
+mapa que les pone el artículo.
+
+#### Lo que se encontró
+
+`finding_citations={}` en el marco de la directiva. Doce caracteres, **sin
+comentario**, en un fichero donde cada hueco deliberado lleva su explicación: el
+marco español tiene tres vacíos y los tres dicen por qué ---«sin cita a
+propósito», «es un error de planificación»---.
+
+Con él vacío, una empresa de un país no reconocido recibía **los diecinueve avisos
+sin ninguna base legal**, cuando ese marco existe precisamente para «degradar a
+algo defendible en vez de a las cifras de España bajo otra bandera». Y
+`shifts/services.py` dice de sí mismo que «`basis` no es decoración: un aviso que
+nadie puede rastrear a un artículo» no sirve.
+
+Los artículos estaban escritos **diez líneas más arriba**, en las citas de las
+cifras: art. 3 el descanso diario, art. 5 el semanal, art. 4 la pausa, art. 6.b
+las cuarenta y ocho horas. El aviso y la cifra que lo produce salen del mismo
+sitio y solo una de las dos citaba.
+
+#### Qué se ha hecho
+
+Los **siete** que la directiva sí fundamenta, citados. Los **doce** que no,
+declarados con su motivo, cada uno por lo suyo: el preaviso de la distribución
+irregular es nacional, las horas complementarias no existen en la directiva
+---eso ya lo decía `complementary=None`--- y **los tres de menores los regula la
+Directiva 94/33/CE, no esta**: citar la 2003/88 ahí sería apuntar a la ley
+equivocada, que es peor que no citar.
+
+De 19 mudos a 12 declarados. España no cambia: sus tres vacíos ya eran
+deliberados.
+
+#### La prueba no comprueba una lista
+
+Lo fácil era comprobar los siete que cité. Eso protege siete y no impide que el
+aviso número veinte salga mudo.
+
+La prueba lee **los `code=` del propio fichero del cuadrante** y exige que de cada
+uno haya una decisión: o cita un artículo, o está en una tabla de exentos **con el
+motivo escrito**. Añadir un aviso obliga a pasar por ahí. Y la mitad contraria:
+que los declarados sin cita **sigan sin ella**, porque rellenar por rellenar es
+lo que un inspector desmonta en la primera pregunta.
 
 ### Vuelta 119 --- La identidad federada se podía duplicar cambiando una mayúscula (27/08)
 

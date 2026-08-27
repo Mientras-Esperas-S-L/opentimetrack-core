@@ -3531,3 +3531,41 @@ cadena de traducción.
 **Regla**: antes de escribir un `validate_x`, comprueba que `x` está en los
 `fields`. Y en general, después de escribir una protección, **haz que falle una
 vez**: si no consigues verla saltar, no está puesta.
+
+## 222. Un mapa vacío no se lee como una decisión, pero se comporta como una
+
+`finding_citations={}` en el marco de la directiva. Doce caracteres, sin
+comentario, en un fichero donde **cada** hueco deliberado lleva su explicación
+---el marco español tiene tres y los tres dicen por qué---. Y con él vacío, un
+país no reconocido recibía los diecinueve avisos del cuadrante **sin ninguna base
+legal**, cuando ese marco existe precisamente para «degradar a algo defendible».
+
+Los artículos estaban escritos diez líneas más arriba, en las citas de las
+cifras: art. 3 el descanso diario, art. 5 el semanal, art. 4 la pausa, art. 6.b
+las cuarenta y ocho horas. El aviso y la cifra que lo produce salían del mismo
+sitio y solo una de las dos citaba.
+
+**Regla**: un contenedor vacío ---`{}`, `[]`, `None`, una lista de exenciones sin
+entradas--- necesita comentario igual que uno lleno. Vacío por decisión y vacío
+por olvido se escriben idénticos, y solo el comentario los distingue. Al auditar,
+un vacío sin comentario rodeado de vacíos comentados es de las señales más
+baratas que hay.
+
+## 223. Una prueba que exige decidir vale más que una que comprueba una lista
+
+Lo fácil era comprobar que los siete avisos que cité tienen su artículo. Eso
+protege esos siete y no impide que el aviso número veinte salga mudo.
+
+La prueba lee **los `code=` del propio fichero del cuadrante** y exige que de
+cada uno haya una decisión: o cita un artículo, o está declarado en una tabla de
+exentos **con el motivo escrito**. Añadir un aviso nuevo obliga a pasar por ahí.
+
+Y la mitad que menos se piensa: la prueba contraria, que los declarados sin cita
+**siguen sin ella**. Rellenar por rellenar es peor que no citar, porque apuntar a
+un artículo que no dice lo que el aviso dice es lo que un inspector desmonta en
+la primera pregunta. Citar la Directiva 2003/88 para un aviso sobre menores
+---que regula la 94/33--- habría sido exactamente eso.
+
+**Regla**: cuando el fallo sea «faltaba una entrada en una tabla», la prueba no
+va sobre las entradas: va sobre **la fuente que las genera**, y obliga a que cada
+elemento nuevo tenga decisión. Lo demás es arreglar el caso de hoy.

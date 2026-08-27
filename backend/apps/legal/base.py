@@ -352,7 +352,39 @@ DIRECTIVE = LegalFramework(
         "weekly_rest_hours": Citation("Art. 5 Dir. 2003/88/CE"),
         "break_after_hours": Citation("Art. 4 Dir. 2003/88/CE"),
     },
-    finding_citations={},
+    # Los avisos que la directiva **sí** fundamenta. Estaba vacío, y con él
+    # vacío un país no reconocido recibía los diecinueve avisos sin ninguna base
+    # --- lo contrario de lo que este marco existe para hacer, y de lo que dice
+    # `shifts/services.py`: «un aviso que nadie puede rastrear a un artículo» no
+    # sirve. Los artículos ya estaban escritos justo encima, en `citations`.
+    finding_citations={
+        "short_daily_rest": Citation("Art. 3 Dir. 2003/88/CE"),
+        "short_weekly_rest": Citation("Art. 5 Dir. 2003/88/CE"),
+        "break_owed": Citation("Art. 4 Dir. 2003/88/CE"),
+        "weekly_hours_exceeded": Citation("Art. 6.b Dir. 2003/88/CE"),
+        # Sobre lo fichado en vez de lo planificado, pero el tope es el mismo.
+        "worked_over_the_maximum": Citation("Art. 6.b Dir. 2003/88/CE"),
+        # La definición de trabajador nocturno, que es lo que este aviso dice
+        # que parece cumplirse sin estar declarado.
+        "looks_like_night_work": Citation("Art. 2.4 Dir. 2003/88/CE"),
+        "night_worker_average": Citation("Art. 8.a Dir. 2003/88/CE"),
+        #
+        # Y los que se quedan **sin cita a propósito**, cada uno por su motivo,
+        # que es la misma disciplina que sigue el marco español:
+        #
+        # - `short_roster_notice`: el preaviso de la distribución irregular es
+        #   una construcción nacional; la directiva no la conoce.
+        # - `over_contracted_hours` y `worked_over_the_contract`: horas
+        #   complementarias, que es lo que dice `complementary=None` más abajo.
+        # - `consecutive_night_weeks` y `changeover_rest_owed`: adiciones
+        #   nacionales, una del ET y otra del RD de jornadas especiales.
+        # - `minor_over_daily_limit`, `minor_break_owed` y `minor_night_work`:
+        #   los regula la Directiva 94/33/CE, que no es esta. Citar la 2003/88
+        #   aquí sería apuntar a la ley equivocada, que es peor que no citar.
+        # - `rostered_on_leave`, `rostered_on_a_holiday`, `outside_the_contract`
+        #   y `no_agreed_weekly_hours`: errores de planificación o datos que
+        #   faltan, no incumplimientos. España los deja igual.
+    },
     # Nothing here: complementary hours are a national construction and the
     # directive does not know them. A country without them checks nothing.
     complementary=None,
