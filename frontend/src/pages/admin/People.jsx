@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -188,6 +189,7 @@ const fromPerson = (person) => ({
 })
 
 function PersonDialog({ open, person, departments, workplaces, onClose, onSave, saving, error }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState(EMPTY_FORM)
   const [loaded, setLoaded] = useState(null)
 
@@ -233,14 +235,14 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                 autoFocus
                 required
                 fullWidth
-                label="Nombre"
+                label={t('Nombre')}
                 value={form.first_name}
                 onChange={set('first_name')}
               />
               <TextField
                 required
                 fullWidth
-                label="Apellidos"
+                label={t('Apellidos')}
                 value={form.last_name}
                 onChange={set('last_name')}
               />
@@ -249,20 +251,26 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
               required
               fullWidth
               type="email"
-              label="Correo"
+              label={t('Correo')}
               value={form.email}
               onChange={set('email')}
-              helperText="Con él inicia sesión. Único dentro de la empresa."
+              helperText={t('Con él inicia sesión. Único dentro de la empresa.')}
             />
             <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
               <TextField
                 fullWidth
-                label="Número de empleado"
+                label={t('Número de empleado')}
                 value={form.employee_id}
                 onChange={set('employee_id')}
-                helperText="Su identificador en vuestros sistemas."
+                helperText={t('Su identificador en vuestros sistemas.')}
               />
-              <TextField select fullWidth label="Perfil" value={form.role} onChange={set('role')}>
+              <TextField
+                select
+                fullWidth
+                label={t('Perfil')}
+                value={form.role}
+                onChange={set('role')}
+              >
                 {ROLES.map((role) => (
                   <MenuItem key={role.value} value={role.value}>
                     {role.label}
@@ -274,11 +282,11 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
               <TextField
                 select
                 fullWidth
-                label="Departamento"
+                label={t('Departamento')}
                 value={form.department}
                 onChange={set('department')}
               >
-                <MenuItem value="">Sin asignar</MenuItem>
+                <MenuItem value="">{t('Sin asignar')}</MenuItem>
                 {departments.map((department) => (
                   <MenuItem key={department.id} value={department.id}>
                     {department.name}
@@ -288,10 +296,10 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
               <TextField
                 fullWidth
                 type="number"
-                label="Días de vacaciones"
+                label={t('Días de vacaciones')}
                 value={form.annual_leave_days}
                 onChange={set('annual_leave_days')}
-                helperText="Vacío = los de la empresa."
+                helperText={t('Vacío = los de la empresa.')}
               />
               {/* El idioma de esta persona. Los ajustes de la empresa decían
                   «cada persona puede usar otro distinto» y no había dónde
@@ -302,12 +310,12 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
               <TextField
                 select
                 fullWidth
-                label="Idioma"
+                label={t('Idioma')}
                 value={form.locale ?? ''}
                 onChange={set('locale')}
-                helperText="Vacío = el de la empresa."
+                helperText={t('Vacío = el de la empresa.')}
               >
-                <MenuItem value="">El de la empresa</MenuItem>
+                <MenuItem value="">{t('El de la empresa')}</MenuItem>
                 {IDIOMAS.map(([codigo, nombre]) => (
                   <MenuItem key={codigo} value={codigo}>
                     {nombre}
@@ -323,7 +331,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
             <TextField
               select
               fullWidth
-              label="Centro de trabajo"
+              label={t('Centro de trabajo')}
               value={form.workplace}
               onChange={set('workplace')}
               helperText={
@@ -332,7 +340,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                   : 'Decide sus festivos locales y la zona horaria de su jornada.'
               }
             >
-              <MenuItem value="">Sin asignar</MenuItem>
+              <MenuItem value="">{t('Sin asignar')}</MenuItem>
               {workplaces.map((place) => (
                 <MenuItem key={place.id} value={place.id}>
                   {place.name}
@@ -344,7 +352,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
 
             <Divider textAlign="left" sx={{ mt: 1 }}>
               <Typography variant="caption" color="text.secondary">
-                Contrato
+                {t('Contrato')}
               </Typography>
             </Divider>
 
@@ -352,25 +360,27 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
               <TextField
                 fullWidth
                 type="date"
-                label="Fecha de nacimiento"
+                label={t('Fecha de nacimiento')}
                 value={form.date_of_birth}
                 onChange={set('date_of_birth')}
                 slotProps={{ inputLabel: { shrink: true } }}
                 // Not a nicety: this is the only thing that turns the
                 // under-eighteen protections on. Empty means they are not being
                 // applied, and somebody should know that rather than assume.
-                helperText="Solo para aplicar las protecciones de menores de 18. Sin ella no se aplican."
+                helperText={t(
+                  'Solo para aplicar las protecciones de menores de 18. Sin ella no se aplican.',
+                )}
               />
               <TextField
                 select
                 fullWidth
-                label="Modalidad habitual"
+                label={t('Modalidad habitual')}
                 value={form.default_work_mode}
                 onChange={set('default_work_mode')}
-                helperText="Cada fichaje puede registrar la otra."
+                helperText={t('Cada fichaje puede registrar la otra.')}
               >
-                <MenuItem value="ONSITE">Presencial</MenuItem>
-                <MenuItem value="REMOTE">A distancia</MenuItem>
+                <MenuItem value="ONSITE">{t('Presencial')}</MenuItem>
+                <MenuItem value="REMOTE">{t('A distancia')}</MenuItem>
               </TextField>
             </Stack>
 
@@ -378,7 +388,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
               <TextField
                 select
                 fullWidth
-                label="Régimen de jornada"
+                label={t('Régimen de jornada')}
                 value={form.regime}
                 onChange={(event) =>
                   setForm({
@@ -403,7 +413,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                     required={needsHours(form.regime)}
                     fullWidth
                     type="number"
-                    label="Horas contratadas"
+                    label={t('Horas contratadas')}
                     value={form.contracted_hours}
                     onChange={set('contracted_hours')}
                     slotProps={{ htmlInput: { min: 0.5, step: 0.5 } }}
@@ -415,7 +425,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                   />
                   <TextField
                     select
-                    label="Período"
+                    label={t('Período')}
                     value={form.contracted_period}
                     onChange={set('contracted_period')}
                     sx={{ minWidth: 130 }}
@@ -432,31 +442,33 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
 
             <TextField
               fullWidth
-              label="Horario contratado"
-              placeholder="L-V 09:00-17:00"
+              label={t('Horario contratado')}
+              placeholder={t('L-V 09:00-17:00')}
               value={form.contracted_schedule}
               onChange={set('contracted_schedule')}
-              helperText="Va en el informe de Inspección: es contenido obligatorio del registro."
+              helperText={t(
+                'Va en el informe de Inspección: es contenido obligatorio del registro.',
+              )}
             />
 
             <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
               <TextField
                 fullWidth
                 type="date"
-                label="Inicio del contrato"
+                label={t('Inicio del contrato')}
                 value={form.contract_start}
                 onChange={set('contract_start')}
                 slotProps={{ inputLabel: { shrink: true } }}
-                helperText="Vacío = ya estaba en marcha."
+                helperText={t('Vacío = ya estaba en marcha.')}
               />
               <TextField
                 fullWidth
                 type="date"
-                label="Fin del contrato"
+                label={t('Fin del contrato')}
                 value={form.contract_end}
                 onChange={set('contract_end')}
                 slotProps={{ inputLabel: { shrink: true } }}
-                helperText="Vacío = indefinido."
+                helperText={t('Vacío = indefinido.')}
               />
             </Stack>
 
@@ -467,15 +479,17 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                   onChange={(event) => setForm({ ...form, seasonal: event.target.checked })}
                 />
               }
-              label="Fijo discontinuo"
+              label={t('Fijo discontinuo')}
             />
             <Typography variant="caption" color="text.secondary" sx={{ mt: -1.5 }}>
-              Art. 16 ET: el trabajo viene por temporadas. Fuera de ellas no se espera jornada.
+              {t(
+                'Art. 16 ET: el trabajo viene por temporadas. Fuera de ellas no se espera jornada.',
+              )}
             </Typography>
 
             <Divider textAlign="left" sx={{ mt: 1 }}>
               <Typography variant="caption" color="text.secondary">
-                Nocturnidad y turnos
+                {t('Nocturnidad y turnos')}
               </Typography>
             </Divider>
 
@@ -483,10 +497,10 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
               <TextField
                 select
                 fullWidth
-                label="Trabajador nocturno"
+                label={t('Trabajador nocturno')}
                 value={form.night_worker}
                 onChange={set('night_worker')}
-                helperText="Art. 36.1 ET. Es una condición de la persona, no del turno."
+                helperText={t('Art. 36.1 ET. Es una condición de la persona, no del turno.')}
               >
                 {NIGHT_STATUS.map((status) => (
                   <MenuItem key={status.value} value={status.value}>
@@ -513,7 +527,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                       }
                     />
                   }
-                  label="Turnos rotativos"
+                  label={t('Turnos rotativos')}
                 />
                 {form.rotating_shifts && (
                   <FormControlLabel
@@ -525,16 +539,15 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                         }
                       />
                     }
-                    label="Se ofreció para las noches"
+                    label={t('Se ofreció para las noches')}
                   />
                 )}
               </Stack>
             </Stack>
             <Typography variant="caption" color="text.secondary" sx={{ mt: -1.5 }}>
-              Con turnos rotativos, el relevo puede bajar de doce horas de descanso hasta siete
-              (art. 19.a RD 1561/1995) y la diferencia se devuelve en cuatro semanas. Sin
-              adscripción voluntaria, nadie está más de dos semanas seguidas de noche (art. 36.3
-              ET).
+              {t(
+                'Con turnos rotativos, el relevo puede bajar de doce horas de descanso hasta siete (art. 19.a RD 1561/1995) y la diferencia se devuelve en cuatro semanas. Sin adscripción voluntaria, nadie está más de dos semanas seguidas de noche (art. 36.3 ET).',
+              )}
             </Typography>
 
             <Divider sx={{ mt: 1 }} />
@@ -548,7 +561,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                   }
                 />
               }
-              label="Representante legal de las personas trabajadoras"
+              label={t('Representante legal de las personas trabajadoras')}
             />
 
             <FormControlLabel
@@ -560,24 +573,26 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                   }
                 />
               }
-              label="Recordatorios de fichaje"
+              label={t('Recordatorios de fichaje')}
             />
             <Typography variant="caption" color="text.secondary" sx={{ mt: -1.5 }}>
-              Aviso si empieza el turno y no ha fichado, o si deja la jornada abierta. Empuja al
-              fichaje real, nunca lo registra. Cada persona puede desactivarlo en su perfil.
+              {t(
+                'Aviso si empieza el turno y no ha fichado, o si deja la jornada abierta. Empuja al fichaje real, nunca lo registra. Cada persona puede desactivarlo en su perfil.',
+              )}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mt: -1.5 }}>
-              Se le informa cuando alguien discrepa de un cambio en su registro (art. 4.b) y puede
-              consultar el registro de la empresa (art. 6.2).
+              {t(
+                'Se le informa cuando alguien discrepa de un cambio en su registro (art. 4.b) y puede consultar el registro de la empresa (art. 6.2).',
+              )}
             </Typography>
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="inherit">
-            Cancelar
+            {t('Cancelar')}
           </Button>
           <Button type="submit" variant="contained" disabled={saving}>
-            Guardar
+            {t('Guardar')}
           </Button>
         </DialogActions>
       </form>
@@ -603,6 +618,7 @@ function RowActions({
   onDeactivate,
   onErase,
 }) {
+  const { t } = useTranslation()
   // Una sola vez: se usa en cuatro rótulos accesibles de esta fila y estaba
   // escrito a mano en tres sitios distintos.
   const quien = `${person.first_name} ${person.last_name}`.trim() || person.email
@@ -620,11 +636,11 @@ function RowActions({
         // botones «Editar» no le dice a nadie cuál es cuál, y quien navega con
         // lector de pantalla oye exactamente eso.
         <Button size="small" aria-label={`Editar ${quien}`} onClick={onEdit}>
-          Editar
+          {t('Editar')}
         </Button>
       ) : (
         <Button size="small" aria-label={`Volver a dar de alta a ${quien}`} onClick={onReactivate}>
-          Volver a dar de alta
+          {t('Volver a dar de alta')}
         </Button>
       )}
 
@@ -637,14 +653,14 @@ function RowActions({
       </IconButton>
 
       <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={close}>
-        {!person.is_active && <MenuItem onClick={pick(onEdit)}>Editar</MenuItem>}
+        {!person.is_active && <MenuItem onClick={pick(onEdit)}>{t('Editar')}</MenuItem>}
         {/* Their account exists but they may never have had a way into it: the
             link expires, and accounts created before invitations existed never
             got one. Pointless for a federated account, whose credentials belong
             to the identity provider. */}
         {person.is_active && !person.is_federated && (
           <MenuItem onClick={pick(onInvite)} disabled={busy}>
-            Enviar enlace de acceso
+            {t('Enviar enlace de acceso')}
           </MenuItem>
         )}
         {/* Para quien ya no trabaja aquí es la única salida: su registro se
@@ -652,16 +668,16 @@ function RowActions({
             (art. 15 RGPD), y reactivarle la cuenta para que lo vea le daría
             acceso a todo lo demás. El enlace no abre sesión. */}
         <MenuItem onClick={pick(onDeliver)} disabled={busy || !person.email}>
-          Enviarle su registro
+          {t('Enviarle su registro')}
         </MenuItem>
-        {person.is_active && <MenuItem onClick={pick(onDeactivate)}>Dar de baja</MenuItem>}
+        {person.is_active && <MenuItem onClick={pick(onDeactivate)}>{t('Dar de baja')}</MenuItem>}
         {/* Un alta equivocada: el correo mal escrito, la persona duplicada, la
             que se creó en la empresa que no era. Solo se ofrece con la cuenta ya
             de baja, que es como se llega a darse cuenta. Si dejó cualquier
             rastro el servidor se niega y dice qué encontró. */}
         {!person.is_active && (
           <MenuItem onClick={pick(onErase)} disabled={busy}>
-            Borrar definitivamente
+            {t('Borrar definitivamente')}
           </MenuItem>
         )}
       </Menu>
@@ -670,6 +686,7 @@ function RowActions({
 }
 
 export default function People() {
+  const { t } = useTranslation()
   const { session } = useAuth()
   const isAdmin = session?.user?.role === 'ADMIN'
   const queryClient = useQueryClient()
@@ -841,8 +858,10 @@ export default function People() {
   return (
     <>
       <PageHeader
-        title="Personas"
-        subtitle="Quien está de alta puede fichar. Dar de baja no borra nada: sus registros se conservan."
+        title={t('Personas')}
+        subtitle={t(
+          'Quien está de alta puede fichar. Dar de baja no borra nada: sus registros se conservan.',
+        )}
         action={
           isAdmin && (
             <Button
@@ -850,7 +869,7 @@ export default function People() {
               startIcon={<PersonAddIcon />}
               onClick={() => setEditing(null)}
             >
-              Dar de alta
+              {t('Dar de alta')}
             </Button>
           )
         }
@@ -866,7 +885,7 @@ export default function People() {
           onClose={() => setColgando(0)}
           action={
             <Button size="small" component={RouterLink} to="/panel/cuadrante">
-              Ir al cuadrante
+              {t('Ir al cuadrante')}
             </Button>
           }
         >
@@ -898,7 +917,7 @@ export default function People() {
             setSearch(texto)
             setPage(1)
           }}
-          placeholder="Buscar por nombre, correo o número"
+          placeholder={t('Buscar por nombre, correo o número')}
           width={380}
         />
         {/* Los tres que separan de verdad a la plantilla. «Sin departamento»
@@ -908,7 +927,7 @@ export default function People() {
         <TextField
           select
           size="small"
-          label="Departamento"
+          label={t('Departamento')}
           value={dept}
           onChange={(event) => {
             setDept(event.target.value)
@@ -916,8 +935,8 @@ export default function People() {
           }}
           sx={{ minWidth: 190 }}
         >
-          <MenuItem value="">Todos</MenuItem>
-          <MenuItem value="ninguno">Sin departamento</MenuItem>
+          <MenuItem value="">{t('Todos')}</MenuItem>
+          <MenuItem value="ninguno">{t('Sin departamento')}</MenuItem>
           {departments.map((department) => (
             <MenuItem key={department.id} value={department.id}>
               {department.name}
@@ -928,7 +947,7 @@ export default function People() {
         <TextField
           select
           size="small"
-          label="Centro"
+          label={t('Centro')}
           value={place}
           onChange={(event) => {
             setPlace(event.target.value)
@@ -936,7 +955,7 @@ export default function People() {
           }}
           sx={{ minWidth: 170 }}
         >
-          <MenuItem value="">Todos</MenuItem>
+          <MenuItem value="">{t('Todos')}</MenuItem>
           {workplaces.map((workplace) => (
             <MenuItem key={workplace.id} value={workplace.id}>
               {workplace.name}
@@ -947,7 +966,7 @@ export default function People() {
         <TextField
           select
           size="small"
-          label="Perfil"
+          label={t('Perfil')}
           value={role}
           onChange={(event) => {
             setRole(event.target.value)
@@ -955,10 +974,10 @@ export default function People() {
           }}
           sx={{ minWidth: 150 }}
         >
-          <MenuItem value="">Todos</MenuItem>
-          <MenuItem value="EMPLOYEE">Operario</MenuItem>
-          <MenuItem value="MANAGER">Responsable</MenuItem>
-          <MenuItem value="ADMIN">Administración</MenuItem>
+          <MenuItem value="">{t('Todos')}</MenuItem>
+          <MenuItem value="EMPLOYEE">{t('Operario')}</MenuItem>
+          <MenuItem value="MANAGER">{t('Responsable')}</MenuItem>
+          <MenuItem value="ADMIN">{t('Administración')}</MenuItem>
         </TextField>
 
         <FormControlLabel
@@ -971,7 +990,7 @@ export default function People() {
               }}
             />
           }
-          label="Ver también las bajas"
+          label={t('Ver también las bajas')}
         />
       </FilterBar>
 
@@ -1001,14 +1020,17 @@ export default function People() {
                 setConfirming({
                   title:
                     marcadasAqui.length === 1
-                      ? 'Dar de baja'
-                      : `Dar de baja a ${marcadasAqui.length} personas`,
+                      ? t('Dar de baja')
+                      : t('Dar de baja a {{cuantas}} personas', {
+                          cuantas: marcadasAqui.length,
+                        }),
                   body: marcadasAqui
                     .map((p) => `${p.first_name} ${p.last_name}`.trim() || p.email)
                     .join(', '),
-                  detail:
+                  detail: t(
                     'Dejan de poder fichar. No se borra nada: sus registros se conservan los años que diga la empresa, y volver a darles de alta es inmediato.',
-                  verb: 'Dar de baja',
+                  ),
+                  verb: t('Dar de baja'),
                   run: () => enLote('Dando de baja', { is_active: false }),
                 }),
             },
@@ -1043,11 +1065,13 @@ export default function People() {
                     />
                   </TableCell>
                 )}
-                <TableCell>Nombre</TableCell>
-                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Correo</TableCell>
+                <TableCell>{t('Nombre')}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
+                  {t('Correo')}
+                </TableCell>
                 <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Nº</TableCell>
-                <TableCell>Perfil</TableCell>
-                {isAdmin && <TableCell align="right">Acciones</TableCell>}
+                <TableCell>{t('Perfil')}</TableCell>
+                {isAdmin && <TableCell align="right">{t('Acciones')}</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -1077,7 +1101,7 @@ export default function People() {
                       {`${person.first_name} ${person.last_name}`.trim() || person.email}
                     </Typography>
                     {!person.is_active && (
-                      <Chip size="small" label="De baja" sx={{ mt: 0.5, height: 20 }} />
+                      <Chip size="small" label={t('De baja')} sx={{ mt: 0.5, height: 20 }} />
                     )}
                   </TableCell>
                   <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
@@ -1114,22 +1138,22 @@ export default function People() {
                         onDeliver={() => deliver.mutate(person.id)}
                         onErase={() =>
                           setConfirming({
-                            title: 'Borrar definitivamente',
+                            title: t('Borrar definitivamente'),
                             body: `${person.first_name} ${person.last_name}`.trim() || person.email,
                             detail:
                               'Se retira de la lista y no se puede deshacer. Solo funciona si no dejó nada que explicar: ni fichajes, ni ausencias, ni decisiones sobre otras personas. Si dejó algo, no se borra y se te dice qué.',
-                            verb: 'Borrar',
+                            verb: t('Borrar'),
                             run: () => erase.mutate(person.id),
                           })
                         }
                         onReactivate={() => reactivate.mutate(person.id)}
                         onDeactivate={() =>
                           setConfirming({
-                            title: 'Dar de baja',
+                            title: t('Dar de baja'),
                             body: `${person.first_name} ${person.last_name}`.trim() || person.email,
                             detail:
                               'Deja de poder fichar y de entrar. Sus registros se conservan y puede volver a darse de alta cuando haga falta.',
-                            verb: 'Dar de baja',
+                            verb: t('Dar de baja'),
                             run: () => deactivate.mutate(person.id),
                           })
                         }

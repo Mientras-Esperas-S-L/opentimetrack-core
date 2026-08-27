@@ -12,8 +12,13 @@
  *  API y nadie lo notó porque el navegador mandaba la cabecera por su cuenta.
  *
  *  Se comprueba con el menú porque es lo que se ve sin hacer nada y porque está
- *  traducido de verdad. **Lo demás de la aplicación sigue en castellano**: la
- *  conversión de las ~460 cadenas está a medias y esto solo cubre el armazón.
+ *  traducido de verdad. **Parte de la aplicación sigue en castellano**: la
+ *  conversión de las cadenas va por pantallas y esto solo cubre el armazón.
+ *
+ *  Complementa a `53-la-pantalla-en-tres-idiomas`, que no la repite: aquélla
+ *  entra por el idioma **de la persona** y recorre lo ya traducido; ésta entra
+ *  por el idioma **de la empresa** y comprueba la cadena entera hasta el
+ *  atributo `lang` del documento.
  */
 import { expect, test } from '@playwright/test'
 
@@ -57,6 +62,27 @@ test.describe('El idioma de la interfaz', () => {
     })
   })
 
+  /** Una pantalla que todavía no se ha traducido, para ver que cae al castellano.
+   *
+   *  **Esta constante va a romper la prueba**, y está bien que lo haga: el día
+   *  que se traduzca Informes, aquí saldrá catalán y habrá que traerse la
+   *  muestra de otra pantalla que siga sin traducir. Es un rojo que significa
+   *  «se ha avanzado», no «se ha roto algo».
+   *
+   *  Y cuando no quede ninguna sin traducir, **esta prueba se borra**: su
+   *  condición habrá dejado de existir, y lo que la sustituye es el guard que
+   *  exige el catálogo completo. Una prueba que se queda sin caso y sigue en
+   *  verde es peor que no tenerla.
+   *
+   *  Historial de muestras: «Ver también las bajas» (Personas), traducida el
+   *  27/08/2026.
+   */
+  const SIN_TRADUCIR = {
+    ruta: '/panel/informes',
+    titulo: 'Informes',
+    texto: 'Qué contiene y qué no',
+  }
+
   test('y lo que todavía no está traducido sale en castellano, no en inglés', async ({ page }) => {
     /** La condición que hace utilizable un catálogo a medias.
      *
@@ -65,14 +91,15 @@ test.describe('El idioma de la interfaz', () => {
      *  dos idiomas extranjeros a la vez. Aquí cae al castellano solo, sin
      *  configurar nada, porque la clave **es** la cadena castellana.
      */
-    await irA(page, '/panel/personas', 'Personas')
+    await irA(page, SIN_TRADUCIR.ruta, SIN_TRADUCIR.titulo)
 
     await conIdioma(page, 'ca', async () => {
       await page.reload()
-      await expect(page.getByRole('link', { name: 'Persones', exact: true })).toBeVisible()
+      // El menú sí está traducido: es el contraste de que el idioma ha entrado.
+      await expect(page.getByRole('link', { name: 'Fitxar', exact: true })).toBeVisible()
 
-      // Sin traducir todavía, y por eso vale como muestra.
-      await expect(page.getByText('Ver también las bajas')).toBeVisible()
+      // Y esto no, así que sale en castellano y no en inglés.
+      await expect(page.getByText(SIN_TRADUCIR.texto)).toBeVisible()
     })
   })
 })

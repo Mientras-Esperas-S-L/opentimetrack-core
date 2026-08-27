@@ -4285,3 +4285,108 @@ diluía las 360 marcas de catalán y gallego, que sí la piden---.
 **La regla**: una marca de calidad se pone donde la condición se cumple, no en todo
 lo que pasa por la misma función. Cuando una herramienta trata igual a casos
 distintos, el que sobra no es inofensivo: gasta la señal.
+
+## 261. Antes de montar un mecanismo, comprueba si el proyecto ya lo tiene a medio usar
+
+La tarea era «montar el multiidioma de la interfaz». Estaba montado: i18next,
+`ConIdioma` resolviendo el idioma desde la sesión, la empresa y el navegador, y una
+decisión de diseño mejor que la que yo habría tomado ---la clave es la cadena
+castellana, así que lo que falta cae al castellano igual que en el backend---.
+
+Lo que engañaba era la cifra: **23 claves** en el catálogo. Parecía «no hay nada» y
+era «hay todo y se usa en dos pantallas de treinta y ocho».
+
+**La regla**: cuando algo parece no existir, busca el mecanismo antes que el hueco.
+`grep -rl useTranslation src/` costaba dos segundos y cambiaba la estimación de
+«montar más traducir» a «solo traducir» ---y, más importante, evitó traer una
+segunda librería de i18n al proyecto por no haber mirado.
+
+**Y respeta la decisión que encuentres, o discútela explícitamente.** Aquí la clave
+castellana tiene su razonamiento escrito en el módulo. Cambiarla a claves con punto
+habría destruido esa propiedad sin que nada avisara.
+
+## 262. Una prueba de traducción tiene que comprobar que el original ya NO está
+
+Con la cadena castellana como clave, `t('Ver también las bajas')` devuelve
+exactamente eso cuando no hay traducción. Así que una prueba que solo compruebe
+«en catalán se ve *Veure també les baixes*» falla si falta la traducción... pero una
+que compruebe el título de la pantalla, o cualquier cosa que también esté en el
+menú ya traducido, **pasa con el catálogo vacío**.
+
+Lo que la hace valer es la comprobación negativa: **en catalán, el texto castellano
+no puede seguir en pantalla**. Verificado vaciando el catálogo y viendo la prueba
+ponerse roja.
+
+Es la misma familia que la 250: cuando hay una caída elegante ---aquí, la clave que
+es su propia traducción de reserva--- hay que comprobar explícitamente que no se
+está usando.
+
+## 263. `set(` acaba en `t(`
+
+Mi extractor de claves contaba `set('email')` como una llamada a `t('email')`, y
+salieron diecisiete claves inventadas ---`first_name`, `role`, `contract_end`---
+que no existen en el código. El patrón era `t\(\s*'...'` sin límite por la
+izquierda.
+
+`(?<![A-Za-z_$.])t\(` lo arregla. Y la comprobación que lo delató en un segundo:
+**mirar si las claves raras existen en el fichero**. Diecisiete nombres en inglés
+minúsculas entre sesenta y seis frases en castellano cantaban solos.
+
+Va con la 224 y la 247: **un detector con resultados que no encajan con el resto es
+un detector mal hecho**, y el patrón corto es el que más se equivoca.
+
+## 264. Antes de escribir una prueba, busca la que ya comprueba eso
+
+Escribí `53-la-pantalla-en-tres-idiomas` sin mirar si existía algo parecido.
+Existía: `36-interfaz-traducida`, desde antes, comprobando la misma cadena por otro
+camino. Y me enteré porque **la rompí**: usaba como muestra de «algo sin traducir»
+justo el texto que yo acababa de traducir.
+
+`ls e2e/ | grep -i traduc` costaba dos segundos. Es la gemela de la 261 ---busca el
+mecanismo antes que el hueco--- aplicada a las pruebas.
+
+Las dos se han quedado porque de verdad no se solapan, y **eso hay que escribirlo
+en las dos**: si no, la siguiente persona borrará una creyendo que sobra.
+
+## 265. Una prueba que necesita que algo siga roto lleva fecha de caducidad: pónsela por escrito
+
+«Lo que todavía no está traducido sale en castellano» necesita, por definición,
+**algo sin traducir**. Es una comprobación legítima ---es la condición que hace
+utilizable un catálogo a medias--- pero su caso desaparece según avanza el trabajo.
+
+Dejarla apuntando a una muestra concreta sin decir nada la convierte en una mina:
+rompe sin motivo aparente, y quien la encuentre puede «arreglarla» debilitándola.
+
+**Lo que hay que dejar escrito, en la propia prueba**: que va a romperse, que ese
+rojo significa avance, de dónde traer la siguiente muestra, el historial de las
+anteriores, y **qué hacer el día que no quede ninguna** ---aquí, borrarla, porque el
+guard del catálogo completo la sustituye---. Una prueba que se queda sin caso y
+sigue en verde es peor que no tenerla.
+
+## 266. Una prueba que opera sobre «su» fila tiene que buscarla, no confiar en verla
+
+La prueba del borrado creaba una persona y buscaba su fila con
+`getByRole('row').filter({ hasText: correo })`. Pasaba sola y fallaba en la tanda
+completa: con decenas de filas ---las que dejan las demás pruebas--- la recién
+creada no estaba en la parte visible ni en la primera página.
+
+**La regla**: si la pantalla tiene buscador o filtro, **úsalo**. Es lo que haría
+una persona, y hace la prueba independiente de cuántas filas haya. Fiarse de que
+«acabo de crearla, estará arriba» funciona en una base vacía y falla en cuanto el
+proyecto crece, que es justo cuando la prueba hace falta.
+
+## 267. Cuando construyas la función que faltaba, ve a buscar quién la estaba echando de menos
+
+Al terminar el borrado de altas equivocadas, lo que quedaba pendiente no era
+código: era **usarlo donde el problema aparecía**. `darDeBajaLasDePrueba` solo
+podía dar de baja, y por eso el sedimento crecía tres personas por tanda y el guard
+saltaba cada pocas vueltas.
+
+Añadir una línea allí resolvió de raíz lo que el guard venía avisando desde la
+vuelta 128 ---y el aviso ya lo decía: «o una prueba está creando personas que no
+necesita, o hace falta poder borrar de verdad»---.
+
+**La regla**: una función nueva no está terminada cuando pasa sus pruebas. Está
+terminada cuando **los sitios que la necesitaban la usan**. Busca en el cuaderno y
+en los mensajes de los guards quién pedía exactamente esto: normalmente está
+escrito, con nombre y fecha.

@@ -37,9 +37,16 @@ test.describe('Borrar un alta equivocada', () => {
     const id = alta.body.id
 
     try {
+      // Se busca por su correo en vez de fiarse de que salga en la primera
+      // página: en una tanda completa la lista tiene decenas de filas ---las que
+      // van dejando las demás pruebas--- y la recién creada no estaba a la
+      // vista. Buscar es además lo que haría cualquiera.
+      await page.reload()
+      const buscador = page.getByRole('textbox', { name: /Buscar por nombre/ })
+      await buscador.fill(correo)
+
       // De alta no se ofrece: lo que toca con alguien que trabaja aquí es darle
       // de baja, no borrarle el rastro.
-      await page.reload()
       const suya = page.getByRole('row').filter({ hasText: correo })
       await expect(suya).toHaveCount(1)
       await suya.getByRole('button', { name: /Más acciones/ }).click()
@@ -55,6 +62,7 @@ test.describe('Borrar un alta equivocada', () => {
       // alta, que es lo correcto ---y es también donde vive esta opción---.
       // Es un `Switch` de MUI, así que su rol es `switch` y no `checkbox`.
       await page.getByRole('switch', { name: /Ver también las bajas/ }).check()
+      await buscador.fill(correo)
 
       // Y ahora sí.
       await suya.getByRole('button', { name: /Más acciones/ }).click()

@@ -161,6 +161,17 @@ export async function darDeBajaLasDePrueba(page, sufijo) {
   const encontradas = await api(page, `/employees/?search=${sufijo}&is_active=true`)
   for (const persona of encontradas.body?.results ?? []) {
     await api(page, `/employees/${persona.id}/`, { method: 'DELETE' })
+    // Y retirarla del todo, si no dejó nada que explicar. `DELETE` da de baja
+    // ---y hace bien: los fichajes de quien trabajó viven cuatro años--- pero
+    // una persona creada por una prueba y dada de baja se quedaba en la lista
+    // para siempre. El 27/08 eran **946 de 969** en esta misma base, y el guard
+    // del sedimento saltaba cada pocas tandas.
+    //
+    // El servidor decide: se niega si tiene fichajes, ausencias o decisiones
+    // sobre otras personas, y entonces la baja es lo correcto y aquí no hay nada
+    // más que hacer. Por eso no se comprueba la respuesta: las dos salidas están
+    // bien.
+    await api(page, `/employees/${persona.id}/erase/`, { method: 'POST' })
   }
 }
 

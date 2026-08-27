@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 134 · La lista aprobada el 27/08 está terminada; sigue **lo que quedó propuesto**, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 135 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas**, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,121 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 135 --- La interfaz en tres idiomas: Personas (27/08)
+
+Primera tanda del multiidioma, que Francisco pidió montar «más que nada porque
+queremos que sea multiidioma». Y lo primero que salió al abrirlo es que **no hay
+que montar nada**.
+
+#### El mecanismo ya estaba, y bien
+
+`src/i18n/index.js`: i18next con `react-i18next`, y una decisión que es
+exactamente la correcta ---**la clave es la cadena en castellano**---. Así lo que
+falta cae al castellano solo, sin configurar nada, igual que en el backend, donde
+lo no traducido cae a `LANGUAGE_CODE` y no al inglés de los `msgid`. Su propio
+comentario lo dice: que las dos mitades del producto se degraden igual «no es
+casualidad, es la condición para que un catálogo a medias sea utilizable».
+
+`ConIdioma.jsx` ya resuelve el idioma de la persona, de su empresa y del
+navegador, en el mismo orden que la cabecera `Accept-Language` ---si se calcularan
+por separado, una pantalla en catalán enseñaría un error en castellano---.
+
+Lo que faltaba era **poblarlo**: lo usaban **2 de 38 pantallas**, y el catálogo
+tenía 23 claves que eran las del menú.
+
+**Se descartó traer `react-intl`**, que es lo que usa Geosian con ~2.900 claves y
+un componente `T` propio. Funciona bien allí, pero aquí obligaría a reescribir el
+menú y a cambiar de librería para conseguir con `defaultMessage` lo que la clave
+castellana ya da. Y se perdería la simetría con el backend, que es lo que hace
+utilizable un catálogo a medias.
+
+#### Personas: 66 claves nuevas
+
+El fichero con más texto de todo el frontend. Envueltas las props y los textos de
+una línea con un script, y a mano los tres párrafos largos ---que van en una sola
+línea en la clave: partida no coincidiría con el catálogo--- y los cinco textos que
+viven dentro de objetos (`title:`, `detail:`, `verb:` de los diálogos de
+confirmación), donde no hay JSX que envolver.
+
+El catálogo de catalán y gallego pasa de 23 a 89 claves.
+
+**Un falso positivo de mi propio extractor**, que merece quedar escrito: contaba
+`set('email')` como una llamada a `t('email')`, porque `set(` acaba en `t(`. Salían
+diecisiete claves inventadas ---`first_name`, `contract_end`, `role`...--- que no
+existían en el código. Con `(?<![A-Za-z_$.])t\(` desaparecen. El código nunca se
+tocó; lo que estaba mal era la cuenta.
+
+#### La prueba, y por qué esta no puede pasar en falso
+
+`53-la-pantalla-en-tres-idiomas.spec.js` recorre la pantalla en catalán, gallego y
+castellano, pidiendo el idioma desde la sesión ---que es de donde lo saca el
+producto--- y devolviéndolo en un `finally`.
+
+Y lo que la hace valer: **en catalán y gallego comprueba que el texto castellano ya
+no está en pantalla**. Sin eso pasaría con el catálogo vacío, porque la clave *es*
+el castellano y `t()` devuelve la clave cuando no encuentra traducción. Comprobado
+vaciando `ca.json`: se pone roja.
+
+También comprueba un rótulo de control además del texto largo, y elige texto **de
+la propia pantalla** y no del menú: el menú ya estaba traducido y comprobarlo daría
+verde sin haber traducido nada.
+
+#### Terminología
+
+Alineada con la traducción oficial del Estatuto: «conveni col·lectiu», «jornada»,
+«treball a distància», «treballador nocturn»; «convenio colectivo», «xornada»,
+«traballo a distancia», «traballador nocturno». Los avisos que citan artículos
+llevan su cita intacta.
+
+#### Y rompí una prueba que ya existía, por no buscarla
+
+La tanda salió con un rojo en `36-interfaz-traducida`, que **existía desde antes** y
+yo no había mirado. Comprueba lo mismo que acababa de escribir yo por otro lado, y
+usaba como muestra de «algo sin traducir» exactamente el texto que acababa de
+traducir: «Ver también las bajas», con el comentario «sin traducir todavía, y por
+eso vale como muestra».
+
+Es el patrón de la vuelta 128 al revés: una prueba que **depende de que algo siga
+sin hacer**. La muestra se ha movido a Informes, y ahora lleva escrito que va a
+volver a romperse cuando se traduzca esa pantalla ---y que eso significa «se ha
+avanzado», no «se ha roto algo»---, con el historial de muestras y qué hacer el día
+que no quede ninguna: **borrar la prueba**, porque su condición habrá dejado de
+existir y lo que la sustituye es el guard del catálogo completo.
+
+Las dos pruebas se quedan porque no se solapan, y así queda dicho en las dos: la
+36 entra por el idioma **de la empresa** y recorre la cadena entera hasta el
+atributo `lang` del documento; la 53 entra por el de **la persona** y recorre lo ya
+traducido.
+
+#### Y el sedimento, resuelto de raíz con lo de la vuelta anterior
+
+La tanda completa también sacó en rojo la prueba del borrado, que sola pasaba: en
+una tanda entera la lista de Personas tiene decenas de filas ---las que van dejando
+las demás pruebas--- y la recién creada no estaba a la vista. Ahora **se busca por
+su correo** antes de operar, que es además lo que haría cualquiera.
+
+Y de ahí salió el cierre: `darDeBajaLasDePrueba`, que es lo que usan las pruebas
+para limpiar, **solo podía dar de baja**. Por eso el sedimento crecía tres personas
+por tanda y el guard saltaba cada pocas vueltas. Ahora, después de dar de baja,
+**intenta retirar del todo**, y el servidor decide: si esa persona tiene fichajes,
+ausencias o decisiones sobre otras, se niega y la baja es lo correcto.
+
+Limpiados los 46 que quedaban con el propio endpoint: **36 retiradas y 10 negadas
+por el servidor**, que son las que tienen rastro. Que negara diez es la prueba de
+que discrimina, no de que falle.
+
+Así se cierra lo que el guard venía avisando desde la vuelta 128: **no era el tope,
+era que no se podía borrar**.
+
+#### Verde al cerrar
+
+`1.310` pruebas de backend, `eslint` y `prettier` limpios, tres pruebas de
+navegador nuevas.
+
+**Quedan 27 ficheros** y unas 264 cadenas. Los siguientes por tamaño:
+`Settings.jsx` (54), `MyTime.jsx` (33), `Workplaces.jsx` (27), `Decisions.jsx` y
+`Timesheet.jsx` (24 cada uno).
 
 ### Vuelta 134 --- Retirar un alta equivocada (27/08)
 
