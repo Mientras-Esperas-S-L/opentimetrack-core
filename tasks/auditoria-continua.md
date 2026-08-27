@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 120 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 121 · Vueltas seguidas sin hallazgos: 1
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -362,6 +362,38 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 121 --- Los contenedores vacíos, uno a uno (27/08) --- LIMPIA
+
+Lente: **los vacíos sin comentario**, que la vuelta anterior señaló como «una de
+las señales más baratas que hay». Sin cambios de código: todo estaba en su sitio.
+
+#### Lo que se comprobó
+
+- **Los contenedores vacíos** declarados a nivel de módulo o de clase: nueve, de
+  los cuales ocho llevan su explicación. El noveno es el `authentication_classes`
+  del login, y **tiene que estar vacío**: si no, un token caducado en la cabecera
+  daría 401 antes de poder entrar.
+- **Las siete vistas abiertas a cualquiera**, leídas en columna: salud, la clave
+  pública de avisos, alta, entrada, refresco, petición de contraseña y fijarla.
+  **Las siete vacían la autenticación.** La columna está alineada.
+- **Los ceros de los marcos legales**: `extra_when_travelling` y
+  `qualifying_annual_share`, los dos documentados en su declaración.
+
+#### Dos falsos positivos míos, y lo que enseñan
+
+**El primer barrido dio 39 sospechosos.** Treinta y nueve en un producto con
+veinte vueltas encima era demasiado bueno para ser cierto: casi todos eran
+parámetros con `None` por defecto en firmas de varias líneas, y el resto tenían la
+explicación en el docstring de la clase, seis líneas por encima de donde miraba.
+Rehecho el detector con `ast` en vez de expresiones sobre texto, quedó **uno**.
+
+**Y `qualifying_annual_share=0` parecía la pieza desconectada número veintiuno.**
+Se rellena con el dato del art. 36.1 ---un tercio de la jornada anual--- y no lo
+lee nadie. Pero la razón estaba escrita en los dos sitios donde tenía que estar,
+y yo había leído uno: «el tercio anual no es algo que un mes de calendario pueda
+ver, y por eso la empresa puede declararlo». El criterio se cubre por
+declaración; la cifra está para que conste.
 
 ### Vuelta 120 --- Diecinueve avisos sin base legal para cualquier país que no sea España (27/08)
 

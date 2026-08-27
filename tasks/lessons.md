@@ -3569,3 +3569,46 @@ la primera pregunta. Citar la Directiva 2003/88 para un aviso sobre menores
 **Regla**: cuando el fallo sea «faltaba una entrada en una tabla», la prueba no
 va sobre las entradas: va sobre **la fuente que las genera**, y obliga a que cada
 elemento nuevo tenga decisión. Lo demás es arreglar el caso de hoy.
+
+## 224. Un detector con demasiados resultados no es un hallazgo: es un detector mal hecho
+
+El primer barrido de contenedores vacíos sin comentario dio **39**. Treinta y
+nueve sitios sospechosos en un producto que llevo veinte vueltas auditando era
+demasiado bueno para ser cierto, y no lo era: casi todos eran **parámetros con
+`None` por defecto** en firmas de varias líneas, que no necesitan comentario
+ninguno, y el resto tenían la explicación en el docstring de la clase, seis
+líneas más arriba de donde yo miraba.
+
+Con el detector rehecho ---leyendo el árbol sintáctico en vez de líneas, solo
+asignaciones de módulo y de clase, y buscando el comentario también en el
+docstring del bloque--- quedó **uno**. Y era correcto: el login vacía
+`authentication_classes` porque si no, un token caducado en la cabecera daría 401
+antes de poder entrar.
+
+**Regla**: la regla de «muchos fallos a la vez no son muchos fallos» vale también
+para las herramientas de auditoría, no solo para las pruebas. Antes de leer una
+lista de treinta sospechosos, coge tres al azar y compruébalos a mano: si los
+tres son falsos positivos, arregla el detector antes de seguir leyendo.
+
+**Y el criterio para afinarlo**: un detector de texto sobre código casi siempre
+sobra ruido. Si lo que buscas es estructura ---qué es una asignación de clase, qué
+es un parámetro--- usa `ast`, que cuesta veinte líneas más y quita el noventa y
+siete por ciento de los falsos positivos.
+
+## 225. Antes de decir que algo no está explicado, mira donde se define
+
+Vi `qualifying_annual_share=0` en el marco de la directiva y ningún consumidor en
+todo el código: un campo que se rellena con el dato legal correcto ---un tercio de
+la jornada anual, art. 36.1--- y que nadie lee. Con veinte vueltas de «la pieza
+está hecha y desconectada» a la espalda, parecía el siguiente.
+
+La razón estaba escrita en dos sitios distintos, y yo había leído solo uno. En
+`holds_night_worker_status`: «el tercio anual no es algo que un mes de calendario
+pueda ver, y por eso la empresa puede declararlo». Y en la **declaración del
+campo**, que es donde se me ocurrió mirar al final: «se conserva como cifra aunque
+el cuadrante no pueda ver un año entero».
+
+**Regla**: cuando un campo parezca huérfano, lee su declaración antes de contar
+sus usos. Un dato que existe solo para que conste la cifra es una decisión
+legítima ---el marco legal es también documentación--- y en este proyecto suele
+venir con el porqué al lado. Contar `grep` de usos dice si se ejecuta, no si debe.
