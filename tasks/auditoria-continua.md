@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 132 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
+Vueltas dadas: 133 · **La lista aprobada el 27/08 está terminada, y el bucle parado.** El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,137 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 133 --- Las dependencias, y la lista se agota (27/08)
+
+Tarea **10 de la lista**, la última. Francisco la dejó abierta: «mira las
+dependencias (que no sé a qué te refieres, pero ponte con ello)». Lo que había que
+mirar eran seis cosas, y cinco dieron algo.
+
+#### Las dos vulnerabilidades, con veredicto
+
+`pypdf` por debajo de 6.15.0 puede consumir memoria sin techo con un PDF preparado
+a mano. Suena a que un justificante subido tumba el servidor, y **no era el caso**:
+
+- `pypdf` es de **desarrollo**. La usan cuatro pruebas para leer los PDF que
+  genera el propio proyecto.
+- El PDF que sube una persona **no se parsea**: la validación mira los bytes de la
+  cabecera (`%PDF-`) y el tamaño. Y el informe se **escribe** con `reportlab`, que
+  no lee.
+
+Actualizada igual, a 6.16.2: el arreglo es gratis y quita el aviso de cada `push`.
+
+#### Dos que venían de prestado
+
+Importadas y no declaradas, funcionando porque otro paquete las arrastraba:
+**`cryptography`** ---que importa `vapid_keys`, un comando **de producción**, y
+traían `pywebpush`, `py-vapid` y `http_ece`--- y **`pillow`**, que importa una
+prueba y traía `reportlab`.
+
+Eso aguanta hasta que el otro paquete cambia su árbol, y entonces **se rompe en el
+despliegue y no en desarrollo**, donde ya estaba instalada.
+
+#### Una que sobraba, y comprobado de la única forma que vale
+
+`factory-boy`: cero importaciones. Las pruebas construyen sus objetos a mano.
+Retirada del fichero **y desinstalada del contenedor** antes de correr la suite:
+quitarla del fichero y no probar habría dejado la duda para el día del despliegue.
+1.299 pruebas sin ella.
+
+#### Y un error mío que la lección se merece
+
+Declaré `cryptography==46.0.5` **de memoria**, y la instalación entera falló con un
+conflicto de resolución: `pywebpush 2.4.0` pide una más nueva y la que había puesta
+era la **50.0.0**. Igual con `pillow`: puse 12.1.0 y era la 12.3.0.
+
+El número de una versión no se supone. Se lee.
+
+#### Lo que queda vigilado
+
+`test_las_dependencias_estan_declaradas`, con dos comprobaciones y tres contrastes:
+
+- **Todo lo que se importa está declarado**, por `ast` ---este mismo fichero nombra
+  media docena de paquetes en comentarios sin importar ninguno, y un `grep` los
+  contaría---.
+- **Todo lo declarado se usa**, contra el código y la configuración, porque la
+  mitad no se importa nunca: `gunicorn` es un ejecutable, `whitenoise` y
+  `django-redis` se nombran en los ajustes.
+- Y los dos que se usan **por su efecto y no por su nombre** ---`pytest-cov`, que
+  invoca el CI, e `ipython`, que usa `manage.py shell` si está--- van exentos **con
+  el motivo escrito**, y la exención de la cobertura **se valida** contra la
+  configuración de `pyproject.toml`. Una exención que nadie comprueba se queda
+  muerta y acaba justificando lo que ya no se usa.
+
+Comprobado rompiéndolo tres veces: sin declarar `cryptography`, con un paquete
+declarado que nadie usa, y quitando la configuración de cobertura.
+
+#### Lo que no se ha mirado, dicho
+
+Si una dependencia está **abandonada** ---que exista versión nueva no dice si hay
+alguien detrás--- y las licencias del árbol de npm, que es mucho mayor. Las dos en
+`docs/dependencias.md`, que además explica cómo repetir la revisión.
+
+#### Y el guard de la vuelta 128 saltó, que es para lo que estaba
+
+La tanda de navegador de esta vuelta salió con **un rojo**: «el sedimento de
+personas de prueba dadas de baja no crece sin techo». Había **57**, con el tope en
+60 ---la cuenta del guard incluye alguna que la mía no---. Ninguna con un solo
+fichaje.
+
+El desglose dice de dónde salen: **tres por tanda** de la prueba de acciones
+masivas, más doce de otra. Hoy se han corrido ocho tandas completas.
+
+Retiradas con el mismo procedimiento de tres pasos, cinturones a cero y cuadre
+exacto: 80 personas antes, 57 borradas, 23 ahora.
+
+**Pero el arreglo de verdad no es este.** Lo dice el propio mensaje del guard: «no
+se arregla subiendo el tope: o una prueba está creando personas que no necesita, o
+hace falta poder borrar de verdad a quien no tiene ni un fichaje». Es lo segundo:
+la prueba **retira** lo que crea, y retirar es todo lo que se puede hacer, porque
+la API no borra personas. Así que el sedimento vuelve a crecer con cada tanda y
+volverá a saltar en unas veinte.
+
+Eso ya estaba propuesto en «Por dónde seguir» de `docs/cobertura-legal.md`, y esta
+es la segunda vez en el día que aparece por su cuenta. **Es trabajo nuevo y no
+estaba en la lista aprobada**, así que se deja propuesto y no se hace.
+
+#### Verde al cerrar
+
+`1.299` pruebas de backend (cinco nuevas), `ruff` 0.16.4 limpio ---su aviso nuevo
+sobre supresiones mal formadas cazó un texto mío de la vuelta 130---, sin
+migraciones pendientes, `npm audit` a cero.
+
+---
+
+## La lista aprobada el 27/08 está terminada
+
+Diez tareas, nueve vueltas (125 a 133). Ninguna quedó a medias y ninguna se cerró
+sin las dos suites en verde.
+
+| | Tarea | Vuelta | Cómo salió |
+|---|---|---|---|
+| 1 | Los justificantes huérfanos | 125 | 4.917 retirados, en tres pasos y con copia |
+| 2 | Unicidad del número de empleado | 126 | Índice funcional, migración que se niega antes de tocar |
+| 3 | `record_retention_years` | 127 | Borra de verdad, con el suelo del art. 34.9 aplicado dos veces |
+| 4 | Acceso de quien ya no trabaja allí | 128 | Enlace de entrega; **no** una cuenta que sigue abierta |
+| 5 | El dossier | 128 | Los tres documentos, y uno estaba dos semanas atrasado |
+| 6 | Las esperas por reloj | 129 | Eran **tres** defectos, no 41 |
+| 7 | Los `date.today()` | 130 | 25, ninguno en producción, con guard |
+| 8 | Catalán y gallego | 131 | 354 por idioma; 147 estaban mal clasificadas |
+| 9 | Pausa y modo de trabajo | 132 | Estaba hecho y desconectado |
+| 10 | Dependencias | 133 | 2 avisos sin riesgo real, 2 de prestado, 1 que sobraba |
+
+**Cuatro de los diez enunciados contaban mal**, y en todos los casos el número
+venía de un recuento sin clasificar: 41 esperas eran 3, 27 fechas eran 25, 501
+huecos de traducción eran 354 por idioma con 147 escondidas en el grupo
+equivocado, y 4.917 ficheros huérfanos eran exactamente 4.917 pero doce de ellos
+sí estaban referenciados. **Clasificar antes de arreglar fue lo que más ahorró y
+lo que más encontró.**
+
+Lo que queda propuesto y no hecho está en «Por dónde seguir» de
+`docs/cobertura-legal.md`, y lo más concreto es **poder borrar de verdad a quien
+no tiene ni un fichaje**: hoy un alta equivocada solo se puede dar de baja y se
+queda en la lista para siempre.
 
 ### Vuelta 132 --- La pausa y el modo de trabajo, que estaban hechos y desconectados (27/08)
 

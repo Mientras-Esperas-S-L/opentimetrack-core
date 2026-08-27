@@ -17,7 +17,7 @@ celery==5.6.3
 
 # Almacenamiento: disco o S3 compatible (SeaweedFS en desarrollo)
 django-storages==1.14.6
-boto3==1.43.68
+boto3==1.43.81
 
 # Fichas de convenio: se leen en YAML y se validan contra agreements/schema.json
 # antes de aplicarse. Una ficha mal escrita configuraría mal una jornada.
@@ -30,11 +30,19 @@ argon2-cffi==25.1.0
 # Avisos en el navegador (Web Push, VAPID). Habla el estándar directamente con
 # el servicio de push del navegador: no hay servicio de terceros que contratar
 # ni cuenta que abrir, que es lo que hace que un despliegue propio pueda usarlo.
-pywebpush==2.0.3
+pywebpush==2.4.0
+# Declarada aunque `pywebpush` la arrastre: `vapid_keys` la **importa
+# directamente** para generar el par de claves del despliegue. Sin esta línea el
+# comando depende de que otro paquete siga trayéndola, y eso no es una promesa
+# que nadie nos haya hecho.
+cryptography==50.0.0
 
 # Reports
-reportlab==5.0.0
+reportlab==5.0.1
+# Ídem: la arrastra `reportlab`, y una prueba la importa para abrir la imagen de
+# un justificante y comprobar que es lo que dice ser.
+pillow==12.3.0
 
 # Servidor
-gunicorn==26.0.0
+gunicorn==26.2.0
 whitenoise==6.12.0

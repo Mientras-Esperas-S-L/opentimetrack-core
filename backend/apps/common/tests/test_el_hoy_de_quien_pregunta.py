@@ -32,7 +32,11 @@ import pytest
 from django.conf import settings
 
 #: Vacía, y así debería seguir. Si algún día hace falta una excepción, va aquí con
-#: el motivo escrito al lado, no como un `# noqa` en la línea.
+#: el motivo escrito al lado, y no como una supresión suelta en la línea ---que
+#: no dice por qué y nadie vuelve a mirar---.
+#:
+#: Escrito así y no con el nombre de la directiva: `ruff` 0.16.4 la lee **dentro
+#: de este comentario** y avisa de que está mal formada, en cada ejecución.
 PERMITIDOS: dict[str, str] = {}
 
 

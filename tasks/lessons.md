@@ -4195,3 +4195,53 @@ pantalla en castellano.
 ---servidor, pantalla, correos, informes, exportaciones--- y comprueba cada uno.
 Documentar la parte que se acaba de tocar es lo natural, y es justo lo que produce
 un documento que exagera sin mentir en ningún dato concreto.
+
+## 255. El número de una versión se lee, no se recuerda
+
+Declaré `cryptography==46.0.5` de memoria y la instalación entera falló con un
+conflicto de resolución: `pywebpush 2.4.0` pide una más nueva, y la que estaba
+puesta y funcionando era la **50.0.0**. Lo mismo con `pillow`: escribí 12.1.0 y era
+la 12.3.0.
+
+**Al declarar una dependencia que ya está instalada ---y en una auditoría son
+todas--- la versión correcta es la que hay puesta.** `pip show` o `pip freeze`
+cuestan un segundo. Inventarla no da un aviso: rompe la instalación completa, y con
+ella el entorno de quien venga detrás a reconstruir la imagen.
+
+Va con la 253, que es la misma con nombres de símbolos: **lo que existe se
+comprueba contra lo instalado, no contra lo que uno recuerda**.
+
+## 256. Un aviso de seguridad se lee hasta el vector, no hasta la severidad
+
+Dos avisos «moderados» sobre `pypdf`: consumo de memoria sin techo con un PDF
+preparado a mano. Con un producto que **acepta justificantes en PDF**, la lectura
+rápida es «alguien sube un fichero y tumba el servidor».
+
+No lo era, por dos cosas que solo se ven mirando el código:
+
+- `pypdf` estaba en `requirements/dev.txt`: la usan **cuatro pruebas**, para leer
+  los PDF que genera el propio proyecto.
+- Lo que sube una persona **no se parsea**. La validación mira los bytes de la
+  cabecera y el tamaño. Y el informe se **escribe** con `reportlab`, que no lee.
+
+**La regla**: de un aviso, lo que importa no es la severidad sino **quién puede
+llegar a ese código con datos suyos**. Grep de la biblioteca, mira si el camino
+sale de una petición, y decide con eso. Se actualiza igual ---es gratis--- pero la
+diferencia entre «hay que parar todo» y «entra en la siguiente tanda» es esa
+comprobación.
+
+## 257. Una exención sin forma de comprobarla acaba justificando lo que ya no se usa
+
+Al exigir que todo lo declarado se use, dos paquetes no aparecían en ningún fichero
+porque se usan **por su efecto**: `pytest-cov` (lo invoca el CI con `--cov`) e
+`ipython` (`manage.py shell` lo usa si está instalado).
+
+Los dos son legítimos, así que van exentos. Pero una lista de exentos es una lista
+de cosas que la comprobación deja de mirar, y con el tiempo justifica dependencias
+que ya nadie usa. Así que cada una lleva **el motivo escrito**, y la que se puede
+comprobar **se comprueba**: si desaparece la configuración de cobertura, la
+exención de `pytest-cov` falla y dice que la quites de los dos sitios.
+
+**Y la que no se puede comprobar, dicho**: la de `ipython` se sostiene solo en su
+propio texto. Eso hay que escribirlo, no dejarlo intuir: la próxima persona tiene
+que saber cuál de las dos exenciones tiene apoyo y cuál es una promesa.

@@ -7,6 +7,7 @@
 | [Trabajos periódicos](trabajos-periodicos.md) | Recordatorios y purga: ejecutarlos por cron o por Celery, y cómo se elige |
 | [Avisos en el navegador](avisos-navegador.md) | Web Push: generar las claves del despliegue, y qué pasa si no las generas |
 | [Idiomas](traducciones.md) | Qué está traducido, qué se deja sin traducir a propósito, y qué pide revisión de un hablante nativo |
+| [Dependencias](dependencias.md) | Qué se instala y por qué, las licencias, y cómo se revisa la próxima vez |
 
 La documentación de diseño y las decisiones de arquitectura no están aquí: viven
 en el repositorio privado `opentimetrack-cloud`.

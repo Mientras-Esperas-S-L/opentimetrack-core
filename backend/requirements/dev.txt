@@ -1,19 +1,25 @@
 -r base.txt
 
 # Calidad
-ruff==0.16.2
+ruff==0.16.4
 
 # Pruebas
 pytest==9.1.1
 pytest-django==4.14.0
 pytest-cov==7.1.0
-factory-boy==3.3.3
 freezegun==1.5.5
 # Para leer los PDF que genera el producto. Solo en pruebas: el informe de
 # jornada es lo que se le entrega a una inspección y no había forma de
 # comprobar qué pone dentro ---la prueba que había miraba que empezara por
 # «%PDF-» y que pesara más de mil bytes---.
-pypdf==6.14.2
+#
+# 6.15.0 como suelo: por debajo, un PDF preparado a mano puede hacerle consumir
+# memoria sin techo con un `/ToUnicode` enorme o con rangos de anchura de fuente
+# CID muy grandes (dos avisos de agosto de 2026). **Aquí no era explotable** ---
+# solo abre los PDF que genera el propio proyecto en las pruebas, y lo que sube
+# una persona se valida por los bytes de la cabecera sin parsearlo--- pero el
+# arreglo es gratis y quita el aviso de cada `push`.
+pypdf==6.16.2
 
 # Utilidades
 django-extensions==4.1
