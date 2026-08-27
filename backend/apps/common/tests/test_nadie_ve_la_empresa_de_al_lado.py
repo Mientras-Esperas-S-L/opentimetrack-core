@@ -142,6 +142,10 @@ SIN_EMPRESA_A_PROPOSITO = {
     ("users/views.py", "email__iexact"): "recuperar contraseña va por correo, sin empresa",
     ("common/scope.py", "pk=user.pk"): "uno mismo, no hay nada que fugar",
     ("common/management/commands/seed_demo.py", ""): "comando de demostración, no una petición",
+    (
+        "users/management/commands/purge_test_people.py",
+        "",
+    ): "barre el entorno de demostración entero, y no hay petición de la que sacar la empresa",
 }
 
 

@@ -8,7 +8,7 @@ enseñárselo a un cliente.
 | Qué | Catalán y gallego |
 |---|---|
 | Lo que responde el servidor: correos, errores, avisos legales, tipos y estados | **Traducido** ---558 de 711 mensajes; el resto son etiquetas de campo que se dejan a propósito--- |
-| La pantalla: botones, rótulos, textos de cada página | **En curso** ---362 de 971 cadenas al 28/08/2026. Enteras: Personas, Ajustes, Mi jornada, Centros de trabajo, Fichajes, Por decidir y todo lo compartido (menú, paginadores, filtros, estados, fechas)--- |
+| La pantalla: botones, rótulos, textos de cada página | **En curso** ---464 de 953 cadenas al 28/08/2026. Enteras: Personas, Ajustes, Mi jornada, Centros de trabajo, Fichajes, Por decidir, Cuadrante, Permisos, Aplicaciones y todo lo compartido (menú, paginadores, filtros, estados, fechas)--- |
 
 Así que una empresa catalana ve hoy el menú, los correos y los errores en
 catalán, seis pantallas en catalán y el resto en castellano. **Hasta que esté
@@ -22,6 +22,11 @@ cd frontend
 npm run i18n:falta     # cuántas cadenas visibles no pasan por t(), por fichero
 npm run i18n:check     # y que ninguna traducción se haya quedado huérfana
 ```
+
+El espacio de separación **va fuera de la clave**: `` `${t('· sin sueldo')} ` ``
+y nunca `t(' · sin sueldo')`. Dentro se pierde en cuanto la clave pasa por algo
+que recorte, y entonces el código pide una cosa y el catálogo guarda otra: se lee
+en castellano y nada avisa. Lo comprueba `i18n:check`.
 
 Los dos scripts miran direcciones contrarias y hacen falta los dos.
 `comprobar-catalogos.mjs` comprueba que **toda traducción le corresponde a una

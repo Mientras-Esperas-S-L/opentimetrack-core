@@ -73,10 +73,23 @@ const CLAVES = new Set([
 const ACENTO = /[áéíóúñüÁÉÍÓÚÑÜ¿¡]/
 const LETRA = /[A-Za-zÁÉÍÓÚÑáéíóúñ]/
 
+/** CSS, que también son cadenas y nadie lee. Un valor de `sx`, un selector, una
+ *  consulta de medios, una pila de fuentes. Se descarta por la forma y no por
+ *  una lista de nombres, que es lo que hace que sirva mañana. */
+const ES_CSS = [
+  /^&/, // un selector anidado de emotion
+  /\.Mui[A-Z]/, // ...y el que apunta a una pieza de MUI
+  /^\(\s*(prefers|min-width|max-width|hover|pointer)/, // una consulta de medios
+  /\d+(px|rem|em|vh|vw|ch|%)\b/, // cualquier medida
+  /\b(repeat|calc|rgba?|hsla?|var|linear-gradient|repeating-linear-gradient|translate|scale)\(/,
+  /\b(solid|dashed|dotted|inset|ease-in-out|sans-serif|system-ui)\b/,
+]
+
 /** Prosa, no identificador. Descarta `success`, `PENDING`, `es-ES`, `2xl`. */
 function pareceTexto(s) {
   const limpia = s.trim()
   if (limpia.length < 3 || !LETRA.test(limpia)) return false
+  if (ES_CSS.some((patron) => patron.test(limpia))) return false
   if (/^[a-z][a-zA-Z0-9]*$/.test(limpia)) return false // camelCase suelto
   if (/^[A-Z0-9_]+$/.test(limpia)) return false // CONSTANTE
   if (/^[\w.-]+\/[\w./-]*$/.test(limpia)) return false // rutas y tipos MIME

@@ -110,6 +110,41 @@ const PANTALLAS = [
     control: { es: 'Sin acuerdo', ca: 'Sense acord', gl: 'Sen acordo' },
     rol: 'tab',
   },
+  {
+    ruta: '/panel/cuadrante',
+    titulo: { es: 'Cuadrante', ca: 'Quadrant', gl: 'Cadro de quendas' },
+    propio: {
+      es: 'lo fichado se guarda aparte',
+      ca: 'el que es fitxa es desa a part',
+      gl: 'o fichado gárdase á parte',
+    },
+    control: { es: 'Asignar turno', ca: 'Assignar un torn', gl: 'Asignar unha quenda' },
+    rol: 'button',
+  },
+  {
+    ruta: '/panel/permisos',
+    titulo: { es: 'Permisos', ca: 'Permisos', gl: 'Permisos' },
+    propio: {
+      es: 'La ley es el suelo',
+      ca: 'La llei és el sòl',
+      gl: 'A lei é o piso',
+    },
+    control: {
+      es: 'Buscar por nombre o artículo',
+      ca: 'Cerca per nom o article',
+      gl: 'Buscar por nome ou artigo',
+    },
+    rol: 'textbox',
+  },
+  {
+    ruta: '/panel/aplicaciones',
+    titulo: { es: 'Aplicaciones', ca: 'Aplicacions', gl: 'Aplicacións' },
+    propio: {
+      es: 'revocable sin tocar la cuenta de nadie',
+      ca: 'revocable sense tocar el compte de ningú',
+      gl: 'revogable sen tocar a conta de ninguén',
+    },
+  },
 ]
 
 test.describe('La pantalla, en los tres idiomas', () => {
@@ -129,9 +164,14 @@ test.describe('La pantalla, en los tres idiomas', () => {
         expect(propio[idioma], `${ruta}: el texto de muestra es igual en es y ${idioma}`).not.toBe(
           propio.es,
         )
-        expect(control[idioma], `${ruta}: el control es igual en es y ${idioma}`).not.toBe(
-          control.es,
-        )
+        // `control` es opcional: hay pantallas cuyos rótulos de control se
+        // escriben igual en los tres idiomas ---«Autorizar»--- y forzar uno
+        // sería inventarse una traducción para que la prueba tenga qué mirar.
+        if (control) {
+          expect(control[idioma], `${ruta}: el control es igual en es y ${idioma}`).not.toBe(
+            control.es,
+          )
+        }
       }
     }
   })
@@ -155,14 +195,18 @@ test.describe('La pantalla, en los tres idiomas', () => {
         for (const { ruta, titulo, propio, control, rol = 'switch' } of PANTALLAS) {
           await irA(page, ruta, titulo[idioma])
           await expect(page.getByText(new RegExp(propio[idioma], 'i')).first()).toBeVisible()
-          await expect(page.getByRole(rol, { name: control[idioma] }).first()).toBeVisible()
+          if (control) {
+            await expect(page.getByRole(rol, { name: control[idioma] }).first()).toBeVisible()
+          }
 
           // Y que de verdad ha cambiado: en catalán o gallego, el texto
           // castellano no puede seguir en pantalla. Sin esto la prueba pasaría
           // con el catálogo vacío, porque la clave **es** el castellano.
           if (idioma !== 'es') {
             await expect(page.getByText(propio.es, { exact: false })).toHaveCount(0)
-            await expect(page.getByRole(rol, { name: control.es })).toHaveCount(0)
+            if (control) {
+              await expect(page.getByRole(rol, { name: control.es })).toHaveCount(0)
+            }
           }
         }
       } finally {
@@ -228,11 +272,7 @@ test.describe('La pantalla, en los tres idiomas', () => {
     const antes = (await api(page, '/auth/me/')).body?.locale ?? ''
     try {
       await api(page, '/auth/me/', { method: 'PATCH', body: { locale: 'ca' } })
-      // El título va en castellano a propósito: el cuadrante todavía no está
-      // traducido, y esta prueba mira sus **fechas**, que sí lo están porque
-      // salen de `format.js`. Al traducir `Roster.jsx` habrá que cambiarlo por
-      // «Quadrant», y la prueba se pondrá roja para recordarlo.
-      await irA(page, '/panel/cuadrante', 'Cuadrante')
+      await irA(page, '/panel/cuadrante', 'Quadrant')
 
       const leer = async () => (await page.locator('main').innerText()).replace(/\s+/g, ' ')
       if (AMBIGUOS.test(await leer())) {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import AlertTitle from '@mui/material/AlertTitle'
@@ -39,7 +40,7 @@ import {
 import EmployeePicker from '../../components/EmployeePicker.jsx'
 import CoberturaPendiente from '../../components/CoberturaPendiente.jsx'
 import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
-import { capitalised, dateOf, monthName } from '../../components/format.js'
+import { capitalised, dateOf, monthName, plural } from '../../components/format.js'
 
 const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 
@@ -53,6 +54,7 @@ const weekdayOf = (year, month, day) => (new Date(year, month, day).getDay() + 6
 const hhmm = (minutes) => `${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}m` : ''}`
 
 function AssignDialog({ open, patterns, month, onClose, onSubmit, saving, error }) {
+  const { t } = useTranslation()
   const first = iso(month.year, month.month, 1)
   const last = iso(month.year, month.month, daysIn(month.year, month.month))
 
@@ -74,7 +76,7 @@ function AssignDialog({ open, patterns, month, onClose, onSubmit, saving, error 
           onSubmit(form)
         }}
       >
-        <DialogTitle>Asignar turno</DialogTitle>
+        <DialogTitle>{t('Asignar turno')}</DialogTitle>
         <DialogContent>
           <ErrorNote error={error} />
           <Stack sx={{ gap: 2, pt: 1 }}>
@@ -82,7 +84,7 @@ function AssignDialog({ open, patterns, month, onClose, onSubmit, saving, error 
               select
               required
               fullWidth
-              label="Turno"
+              label={t('Turno')}
               value={form.pattern}
               onChange={set('pattern')}
             >
@@ -101,17 +103,17 @@ function AssignDialog({ open, patterns, month, onClose, onSubmit, saving, error 
             <EmployeePicker
               multiple
               required
-              label="A quién"
+              label={t('A quién')}
               value={form.employees}
               onChange={(ids) => setForm({ ...form, employees: ids })}
-              helperText="Escribe para buscar. Se puede asignar a varias personas a la vez."
+              helperText={t('Escribe para buscar. Se puede asignar a varias personas a la vez.')}
             />
 
             <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
               <TextField
                 fullWidth
                 type="date"
-                label="Desde"
+                label={t('Desde')}
                 value={form.date_from}
                 onChange={set('date_from')}
                 slotProps={{ inputLabel: { shrink: true } }}
@@ -119,7 +121,7 @@ function AssignDialog({ open, patterns, month, onClose, onSubmit, saving, error 
               <TextField
                 fullWidth
                 type="date"
-                label="Hasta"
+                label={t('Hasta')}
                 value={form.date_to}
                 onChange={set('date_to')}
                 slotProps={{ inputLabel: { shrink: true } }}
@@ -128,7 +130,7 @@ function AssignDialog({ open, patterns, month, onClose, onSubmit, saving, error 
 
             <Box>
               <Typography variant="caption" color="text.secondary">
-                Solo estos días
+                {t('Solo estos días')}
               </Typography>
               <ToggleButtonGroup
                 size="small"
@@ -145,14 +147,15 @@ function AssignDialog({ open, patterns, month, onClose, onSubmit, saving, error 
             </Box>
 
             <Alert severity="info" variant="outlined">
-              Si ya había turno esos días, se sustituye. El turno dice cuándo se puede trabajar; no
-              es un fichaje ni lo genera.
+              {t(
+                'Si ya había turno esos días, se sustituye. El turno dice cuándo se puede trabajar; no es un fichaje ni lo genera.',
+              )}
             </Alert>
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="inherit">
-            Cancelar
+            {t('Cancelar')}
           </Button>
           {/* Sin días marcados no hay nada que asignar, y decirlo aquí es
               mejor que dejar pulsar y devolver un error. Vienen puestos de
@@ -163,7 +166,7 @@ function AssignDialog({ open, patterns, month, onClose, onSubmit, saving, error 
             variant="contained"
             disabled={saving || !form.pattern || form.weekdays.length === 0}
           >
-            Asignar
+            {t('Asignar')}
           </Button>
         </DialogActions>
       </form>
@@ -182,12 +185,13 @@ function AssignDialog({ open, patterns, month, onClose, onSubmit, saving, error 
  *  change a roster by accident. Picking a tool is the consent.
  */
 function Palette({ patterns, tool, onPick }) {
+  const { t } = useTranslation()
   if (!patterns.length) return null
 
   return (
     <Stack direction="row" sx={{ gap: 1, flexWrap: 'wrap', alignItems: 'center', mb: 2 }}>
       <Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>
-        Pinta arrastrando:
+        {t('Pinta arrastrando:')}
       </Typography>
       {patterns.map((pattern) => {
         const picked = tool?.kind === 'paint' && tool.pattern.id === pattern.id
@@ -210,7 +214,7 @@ function Palette({ patterns, tool, onPick }) {
       })}
       <Chip
         icon={<BackspaceOutlinedIcon />}
-        label="Borrar"
+        label={t('Borrar')}
         onClick={() => onPick(tool?.kind === 'erase' ? null : { kind: 'erase' })}
         variant={tool?.kind === 'erase' ? 'filled' : 'outlined'}
         color={tool?.kind === 'erase' ? 'error' : 'default'}
@@ -218,8 +222,8 @@ function Palette({ patterns, tool, onPick }) {
       />
       <Typography variant="caption" color="text.secondary">
         {tool
-          ? 'Arrastra sobre el cuadrante. Esc para soltar la herramienta.'
-          : 'Sin herramienta, arrastra un turno para moverlo de día o de persona.'}
+          ? t('Arrastra sobre el cuadrante. Esc para soltar la herramienta.')
+          : t('Sin herramienta, arrastra un turno para moverlo de día o de persona.')}
       </Typography>
     </Stack>
   )
@@ -235,6 +239,7 @@ function Palette({ patterns, tool, onPick }) {
 const FINDINGS_VISIBLE = 8
 
 function Findings({ findings }) {
+  const { t } = useTranslation()
   //: Plegado de entrada y desplegable a mano. Hasta el 14/08/2026 el resto no
   //: era un enlace sino un «y 39 más.» muerto, así que con cuarenta y siete
   //: avisos había treinta y nueve que no se podían leer de ninguna manera.
@@ -248,12 +253,15 @@ function Findings({ findings }) {
   return (
     <Alert severity="warning" sx={{ mb: 2 }}>
       <AlertTitle>
-        El cuadrante se aparta de las reglas configuradas en {findings.length}{' '}
-        {findings.length === 1 ? 'punto' : 'puntos'}
+        {t('El cuadrante se aparta de las reglas configuradas en {{cuantos}} {{unidad}}', {
+          cuantos: findings.length,
+          unidad: findings.length === 1 ? t('punto') : t('puntos'),
+        })}
       </AlertTitle>
       <Typography variant="body2" sx={{ mb: 1 }}>
-        No se impide guardarlo: hay sectores con jornadas especiales donde esto es legal. La
-        decisión es de la empresa.
+        {t(
+          'No se impide guardarlo: hay sectores con jornadas especiales donde esto es legal. La decisión es de la empresa.',
+        )}
       </Typography>
       <Stack component="ul" sx={{ m: 0, pl: 2.5, gap: 0.5 }}>
         {visibles.map((finding, i) => (
@@ -264,7 +272,10 @@ function Findings({ findings }) {
                 twenty-one identical lines bury the three that were about
                 something else. */}
             {finding.count > 1
-              ? `, ${finding.count} días desde el ${dateOf(finding.day)}: `
+              ? `${t(', {{cuantos}} días desde el {{desde}}:', {
+                  cuantos: finding.count,
+                  desde: dateOf(finding.day),
+                })} `
               : `, ${dateOf(finding.day)}: `}
             {finding.message}{' '}
             {finding.basis && (
@@ -282,7 +293,9 @@ function Findings({ findings }) {
               onClick={() => setTodos((antes) => !antes)}
               sx={{ textTransform: 'none' }}
             >
-              {todos ? `Ver solo los ${FINDINGS_VISIBLE} primeros` : `Ver los ${ocultos} restantes`}
+              {todos
+                ? t('Ver solo los {{cuantos}} primeros', { cuantos: FINDINGS_VISIBLE })
+                : t('Ver los {{cuantos}} restantes', { cuantos: ocultos })}
             </Button>
           </Box>
         )}
@@ -292,6 +305,7 @@ function Findings({ findings }) {
 }
 
 export default function Roster() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const today = new Date()
   const [month, setMonth] = useState({ year: today.getFullYear(), month: today.getMonth() })
@@ -570,8 +584,10 @@ export default function Roster() {
   return (
     <>
       <PageHeader
-        title="Cuadrante"
-        subtitle="Cuándo se espera que trabaje cada persona. El turno no es el registro: lo fichado se guarda aparte y es lo que vale como prueba."
+        title={t('Cuadrante')}
+        subtitle={t(
+          'Cuándo se espera que trabaje cada persona. El turno no es el registro: lo fichado se guarda aparte y es lo que vale como prueba.',
+        )}
         action={
           <Button
             variant="contained"
@@ -579,7 +595,7 @@ export default function Roster() {
             onClick={() => setAssigning(true)}
             disabled={patterns.length === 0}
           >
-            Asignar turno
+            {t('Asignar turno')}
           </Button>
         }
       />
@@ -595,25 +611,33 @@ export default function Roster() {
 
       {patterns.length === 0 && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          Todavía no hay turnos definidos. Créalos en <strong>Turnos</strong> antes de montar el
-          cuadrante.
+          <Trans
+            i18nKey="Todavía no hay turnos definidos. Créalos en <donde>Turnos</donde> antes de montar el cuadrante."
+            components={{ donde: <strong /> }}
+          />
         </Alert>
       )}
 
       <Stack direction="row" sx={{ alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-        <IconButton onClick={() => move(-1)} aria-label="Mes anterior">
+        <IconButton onClick={() => move(-1)} aria-label={t('Mes anterior')}>
           <ChevronLeftIcon />
         </IconButton>
         <Typography sx={{ fontWeight: 600, minWidth: 190 }}>
           {capitalised(monthName(month))}
         </Typography>
-        <IconButton onClick={() => move(1)} aria-label="Mes siguiente">
+        <IconButton onClick={() => move(1)} aria-label={t('Mes siguiente')}>
           <ChevronRightIcon />
         </IconButton>
         <Box sx={{ flexGrow: 1 }} />
-        {painting && <Chip size="small" variant="outlined" color="primary" label="Guardando…" />}
+        {painting && (
+          <Chip size="small" variant="outlined" color="primary" label={t('Guardando…')} />
+        )}
         {rows.length > 0 && (
-          <Chip size="small" variant="outlined" label={`${totalHours.toFixed(0)} h planificadas`} />
+          <Chip
+            size="small"
+            variant="outlined"
+            label={t('{{horas}} h planificadas', { horas: totalHours.toFixed(0) })}
+          />
         )}
         {/* Somebody with no shifts has no row, so there is nothing to draw on.
             Adding them here rather than listing the whole company keeps the
@@ -621,7 +645,7 @@ export default function Roster() {
             pages at fifty. */}
         <EmployeePicker
           size="small"
-          label="Añadir al cuadrante"
+          label={t('Añadir al cuadrante')}
           value=""
           sx={{ minWidth: 240 }}
           onChange={(id, person) => {
@@ -641,7 +665,7 @@ export default function Roster() {
       {isLoading ? (
         <Loading rows={4} />
       ) : rostered.length === 0 ? (
-        <Empty>No hay turnos asignados este mes.</Empty>
+        <Empty>{t('No hay turnos asignados este mes.')}</Empty>
       ) : (
         <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
           <Box sx={{ minWidth: 34 * total + 190 }}>
@@ -783,9 +807,9 @@ export default function Roster() {
                         title={
                           drag || !shift
                             ? ''
-                            : `${shift.pattern_name || 'Turno'} · ${shift.segments
+                            : `${shift.pattern_name || t('Turno')} · ${shift.segments
                                 .map((s) => `${s.start}–${s.end}`)
-                                .join(' y ')}${huerfano ? ' · sin cubrir' : ''}`
+                                .join(` ${t('y')} `)}${huerfano ? ` ${t('· sin cubrir')}` : ''}`
                         }
                       >
                         <Box
@@ -832,13 +856,19 @@ export default function Roster() {
           disabled={wipe.isPending}
           onClick={() =>
             setConfirming({
-              title: 'Vaciar el mes',
+              title: t('Vaciar el mes'),
               body: dateOf(from, { month: 'long', year: 'numeric', day: undefined }),
               // The one action here that cannot be undone, and it used to
               // happen on the first click. Saying how much it removes is the
               // difference between a warning and a formality.
-              detail: `Se borran ${rows.length} ${rows.length === 1 ? 'turno' : 'turnos'} de ${rostered.length} ${rostered.length === 1 ? 'persona' : 'personas'}. Los fichajes ya registrados no se tocan: el cuadrante es lo previsto, no lo trabajado.`,
-              verb: 'Vaciar',
+              detail: t(
+                'Se borran {{turnos}} de {{personas}}. Los fichajes ya registrados no se tocan: el cuadrante es lo previsto, no lo trabajado.',
+                {
+                  turnos: `${rows.length} ${plural(rows.length, t('turno'), t('turnos'))}`,
+                  personas: `${rostered.length} ${plural(rostered.length, t('persona'), t('personas'))}`,
+                },
+              ),
+              verb: t('Vaciar'),
               run: () =>
                 // Sin `weekdays`: omitirlo es lo que significa «todos los días
                 // del mes», que es de lo que va este botón. Mandarlo vacío
@@ -853,7 +883,7 @@ export default function Roster() {
             })
           }
         >
-          Vaciar el mes
+          {t('Vaciar el mes')}
         </Button>
       )}
 
@@ -879,11 +909,14 @@ export default function Roster() {
                 setUndo(null)
               }}
             >
-              Deshacer
+              {t('Deshacer')}
             </Button>
           }
         >
-          Cuadrante actualizado en {undo?.length} {undo?.length === 1 ? 'día' : 'días'}.
+          {t('Cuadrante actualizado en {{cuantos}} {{unidad}}.', {
+            cuantos: undo?.length,
+            unidad: plural(undo?.length, t('día'), t('días')),
+          })}
         </Alert>
       </Snackbar>
 

@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
+
+import { alCatalogo } from '../../i18n/index.js'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
@@ -22,18 +25,18 @@ import { FilterBar, SearchField } from '../../components/filters.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
 const UNIDADES = {
-  DAYS_CALENDAR: 'días naturales',
-  DAYS_WORKING: 'días laborables',
-  HOURS: 'horas',
-  WEEKS: 'semanas',
+  DAYS_CALENDAR: alCatalogo('días naturales'),
+  DAYS_WORKING: alCatalogo('días laborables'),
+  HOURS: alCatalogo('horas'),
+  WEEKS: alCatalogo('semanas'),
 }
 
 const PERIODOS = {
-  EVENT: 'cada vez',
-  DAY: 'al día',
-  WEEK: 'a la semana',
-  MONTH: 'al mes',
-  YEAR: 'al año',
+  EVENT: alCatalogo('cada vez'),
+  DAY: alCatalogo('al día'),
+  WEEK: alCatalogo('a la semana'),
+  MONTH: alCatalogo('al mes'),
+  YEAR: alCatalogo('al año'),
 }
 
 /** Lo que se puede cambiar de un permiso, y lo que no.
@@ -50,6 +53,7 @@ const PERIODOS = {
  *  como duplicado.
  */
 function LeaveTypeDialog({ open, kind, onClose, onSave, saving, error }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState(null)
 
   if (open && kind && (form === null || form.id !== kind.id)) {
@@ -97,45 +101,53 @@ function LeaveTypeDialog({ open, kind, onClose, onSave, saving, error }) {
           <ErrorNote error={error} />
           {kind.basis && (
             <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
-              {kind.basis}. Lo que dice la ley es el suelo: el convenio puede dar más, nunca menos.
-              El artículo no se cambia aquí.
+              {kind.basis}
+              {t(
+                '. Lo que dice la ley es el suelo: el convenio puede dar más, nunca menos. El artículo no se cambia aquí.',
+              )}
             </Alert>
           )}
           <Stack sx={{ gap: 2, pt: 0.5 }}>
-            <TextField fullWidth label="Nombre" value={form.name} onChange={set('name')} required />
+            <TextField
+              fullWidth
+              label={t('Nombre')}
+              value={form.name}
+              onChange={set('name')}
+              required
+            />
 
             <Stack direction="row" sx={{ gap: 2, flexWrap: 'wrap' }}>
               <TextField
                 type="number"
-                label="Cuánto da"
+                label={t('Cuánto da')}
                 value={form.amount}
                 onChange={set('amount')}
-                helperText="Vacío: el tiempo indispensable, sin tope."
+                helperText={t('Vacío: el tiempo indispensable, sin tope.')}
                 sx={{ minWidth: 140 }}
               />
               <TextField
                 select
-                label="Contado en"
+                label={t('Contado en')}
                 value={form.unit}
                 onChange={set('unit')}
                 sx={{ minWidth: 170 }}
               >
                 {Object.entries(UNIDADES).map(([valor, texto]) => (
                   <MenuItem key={valor} value={valor}>
-                    {texto}
+                    {t(texto)}
                   </MenuItem>
                 ))}
               </TextField>
               <TextField
                 select
-                label="Cada"
+                label={t('Cada')}
                 value={form.period}
                 onChange={set('period')}
                 sx={{ minWidth: 150 }}
               >
                 {Object.entries(PERIODOS).map(([valor, texto]) => (
                   <MenuItem key={valor} value={valor}>
-                    {texto}
+                    {t(texto)}
                   </MenuItem>
                 ))}
               </TextField>
@@ -143,10 +155,12 @@ function LeaveTypeDialog({ open, kind, onClose, onSave, saving, error }) {
 
             <TextField
               type="number"
-              label="Días de más si hay desplazamiento"
+              label={t('Días de más si hay desplazamiento')}
               value={form.extra_when_travelling}
               onChange={set('extra_when_travelling')}
-              helperText="Se guarda como el extra, no como el total: quien no se desplaza tiene el de arriba."
+              helperText={t(
+                'Se guarda como el extra, no como el total: quien no se desplaza tiene el de arriba.',
+              )}
             />
 
             <FormControlLabel
@@ -158,17 +172,17 @@ function LeaveTypeDialog({ open, kind, onClose, onSave, saving, error }) {
                   }
                 />
               }
-              label="Pide justificante"
+              label={t('Pide justificante')}
             />
 
             <TextField
               fullWidth
               multiline
               minRows={2}
-              label="Nota"
+              label={t('Nota')}
               value={form.note}
               onChange={set('note')}
-              helperText="Se ve al pedirlo. Aquí van las condiciones que el convenio añada."
+              helperText={t('Se ve al pedirlo. Aquí van las condiciones que el convenio añada.')}
             />
 
             <FormControlLabel
@@ -178,22 +192,23 @@ function LeaveTypeDialog({ open, kind, onClose, onSave, saving, error }) {
                   onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
                 />
               }
-              label="Se puede pedir"
+              label={t('Se puede pedir')}
             />
             {!form.is_active && (
               <Typography variant="caption" color="text.secondary">
-                Deja de ofrecerse en las solicitudes nuevas. Las que ya existen se siguen leyendo:
-                un permiso cuyo motivo deja de renderizarse es un registro que perdió algo.
+                {t(
+                  'Deja de ofrecerse en las solicitudes nuevas. Las que ya existen se siguen leyendo: un permiso cuyo motivo deja de renderizarse es un registro que perdió algo.',
+                )}
               </Typography>
             )}
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="inherit">
-            Cancelar
+            {t('Cancelar')}
           </Button>
           <Button type="submit" variant="contained" disabled={saving}>
-            Guardar
+            {t('Guardar')}
           </Button>
         </DialogActions>
       </form>
@@ -210,6 +225,7 @@ function LeaveTypeDialog({ open, kind, onClose, onSave, saving, error }) {
  *  que se tomó justo para permitir esa mejora, no servía para nada.
  */
 export default function LeaveTypes() {
+  const { t } = useTranslation()
   const { session } = useAuth()
   const queryClient = useQueryClient()
   const [editando, setEditando] = useState(null)
@@ -252,7 +268,7 @@ export default function LeaveTypes() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title="Permisos" />
+        <PageHeader title={t('Permisos')} />
         <Loading rows={6} />
       </>
     )
@@ -261,12 +277,14 @@ export default function LeaveTypes() {
   return (
     <>
       <PageHeader
-        title="Permisos"
-        subtitle="Lo que la empresa concede, y de qué artículo sale. La ley es el suelo: el convenio puede dar más."
+        title={t('Permisos')}
+        subtitle={t(
+          'Lo que la empresa concede, y de qué artículo sale. La ley es el suelo: el convenio puede dar más.',
+        )}
         action={
           esAdmin && (
             <Button variant="outlined" disabled={cargar.isPending} onClick={() => cargar.mutate()}>
-              Cargar los que falten
+              {t('Cargar los que falten')}
             </Button>
           )
         }
@@ -276,20 +294,24 @@ export default function LeaveTypes() {
       {cargar.isSuccess && (
         <Alert severity="success" variant="outlined" sx={{ mb: 2 }}>
           {cargar.data?.added
-            ? `Añadidos ${cargar.data.added}.`
-            : 'No faltaba ninguno: no se ha tocado nada.'}
+            ? t('Añadidos {{cuantos}}.', { cuantos: cargar.data.added })
+            : t('No faltaba ninguno: no se ha tocado nada.')}
         </Alert>
       )}
 
       <FilterBar>
-        <SearchField value={busca} onChange={setBusca} placeholder="Buscar por nombre o artículo" />
+        <SearchField
+          value={busca}
+          onChange={setBusca}
+          placeholder={t('Buscar por nombre o artículo')}
+        />
       </FilterBar>
 
       {filas.length === 0 ? (
         <Empty>
           {tipos.length === 0
-            ? 'Esta empresa no tiene permisos configurados, así que nadie puede pedir ninguno.'
-            : 'Ningún permiso coincide con esa búsqueda.'}
+            ? t('Esta empresa no tiene permisos configurados, así que nadie puede pedir ninguno.')
+            : t('Ningún permiso coincide con esa búsqueda.')}
         </Empty>
       ) : (
         <Stack component="ul" sx={{ gap: 1.5, listStyle: 'none', m: 0, p: 0 }}>
@@ -309,13 +331,13 @@ export default function LeaveTypes() {
                     <Typography sx={{ fontWeight: 600 }}>{tipo.name}</Typography>
                     {tipo.basis && <Chip size="small" variant="outlined" label={tipo.basis} />}
                     {tipo.is_active === false && (
-                      <Chip size="small" color="default" label="Retirado" />
+                      <Chip size="small" color="default" label={t('Retirado')} />
                     )}
                   </Stack>
                   <Typography variant="body2" color="text.secondary">
-                    {tipo.allowance || 'El tiempo indispensable'}
-                    {tipo.needs_justification && ' · pide justificante'}
-                    {tipo.paid === false && ' · sin sueldo'}
+                    {tipo.allowance || t('El tiempo indispensable')}
+                    {tipo.needs_justification && ` ${t('· pide justificante')}`}
+                    {tipo.paid === false && ` ${t('· sin sueldo')}`}
                   </Typography>
                   {tipo.note && (
                     <Typography variant="caption" color="text.secondary">
@@ -330,10 +352,10 @@ export default function LeaveTypes() {
                   // chocar con el «Cambiar entre claro y oscuro» de la cabecera.
                   <Button
                     size="small"
-                    aria-label={`Cambiar ${tipo.name}`}
+                    aria-label={t('Cambiar {{cual}}', { cual: tipo.name })}
                     onClick={() => setEditando(tipo)}
                   >
-                    Cambiar
+                    {t('Cambiar')}
                   </Button>
                 )}
               </Stack>

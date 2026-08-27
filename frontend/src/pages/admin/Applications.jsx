@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
+
+import { alCatalogo } from '../../i18n/index.js'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
@@ -41,15 +44,17 @@ import { dateOf } from '../../components/format.js'
 /** Shown once, right after issuing. There is no second chance and the box says
  *  so before somebody closes it. */
 function TokenDialog({ token, onClose }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
 
   return (
     <Dialog open={Boolean(token)} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Copia el token ahora</DialogTitle>
+      <DialogTitle>{t('Copia el token ahora')}</DialogTitle>
       <DialogContent>
         <Alert severity="warning" variant="outlined" sx={{ mb: 2 }}>
-          Es la única vez que se muestra. Se guarda cifrado, así que no se puede recuperar: si lo
-          pierdes, hay que emitir otro.
+          {t(
+            'Es la única vez que se muestra. Se guarda cifrado, así que no se puede recuperar: si lo pierdes, hay que emitir otro.',
+          )}
         </Alert>
         <Paper
           variant="outlined"
@@ -67,7 +72,7 @@ function TokenDialog({ token, onClose }) {
           </Typography>
           <IconButton
             size="small"
-            aria-label="Copiar el token"
+            aria-label={t('Copiar el token')}
             onClick={() => {
               navigator.clipboard?.writeText(token)
               setCopied(true)
@@ -78,16 +83,21 @@ function TokenDialog({ token, onClose }) {
         </Paper>
         {copied && (
           <Typography variant="caption" color="success.main" sx={{ display: 'block', mt: 1 }}>
-            Copiado al portapapeles.
+            {t('Copiado al portapapeles.')}
           </Typography>
         )}
         <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-          Va en la cabecera <code>Authorization: Bearer …</code> de cada petición.
+          {/* La cabecera va literal dentro de la frase: es lo que hay que
+              escribir en la petición, y traducirla la rompería. */}
+          <Trans
+            i18nKey="Va en la cabecera <cabecera>Authorization: Bearer …</cabecera> de cada petición."
+            components={{ cabecera: <code /> }}
+          />
         </Typography>
       </DialogContent>
       <DialogActions>
         <Button variant="contained" onClick={onClose}>
-          Ya lo tengo
+          {t('Ya lo tengo')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -95,6 +105,7 @@ function TokenDialog({ token, onClose }) {
 }
 
 function ApplicationDialog({ open, scopes, onClose, onSave, saving, error }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState({ name: '', description: '', scopes: [] })
 
   const toggle = (value) =>
@@ -113,37 +124,37 @@ function ApplicationDialog({ open, scopes, onClose, onSave, saving, error }) {
           onSave(form)
         }}
       >
-        <DialogTitle>Autorizar una aplicación</DialogTitle>
+        <DialogTitle>{t('Autorizar una aplicación')}</DialogTitle>
         <DialogContent>
           <ErrorNote error={error} />
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Un terminal en la entrada, un lector NFC, una tableta en obra. Lo que registre irá
-            marcado como hecho en nombre de la persona, no por ella: son pruebas distintas y quien
-            lea el registro tiene derecho a distinguirlas.
+            {t(
+              'Un terminal en la entrada, un lector NFC, una tableta en obra. Lo que registre irá marcado como hecho en nombre de la persona, no por ella: son pruebas distintas y quien lea el registro tiene derecho a distinguirlas.',
+            )}
           </Typography>
           <Stack sx={{ gap: 2, pt: 0.5 }}>
             <TextField
               autoFocus
               required
               fullWidth
-              label="Nombre"
-              placeholder="Terminal de la nave"
+              label={t('Nombre')}
+              placeholder={t('Terminal de la nave')}
               value={form.name}
               onChange={(event) => setForm({ ...form, name: event.target.value })}
-              helperText="Aparece en cada fichaje que registre."
+              helperText={t('Aparece en cada fichaje que registre.')}
             />
             <TextField
               fullWidth
               multiline
               minRows={2}
-              label="Para qué es"
+              label={t('Para qué es')}
               value={form.description}
               onChange={(event) => setForm({ ...form, description: event.target.value })}
             />
 
             <Box>
               <Typography variant="caption" color="text.secondary">
-                Qué puede hacer
+                {t('Qué puede hacer')}
               </Typography>
               {/* One by one, never in bulk. An application with everything is
                   a key to the whole company, and the list is short enough that
@@ -168,14 +179,14 @@ function ApplicationDialog({ open, scopes, onClose, onSave, saving, error }) {
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="inherit">
-            Cancelar
+            {t('Cancelar')}
           </Button>
           <Button
             type="submit"
             variant="contained"
             disabled={saving || !form.name.trim() || form.scopes.length === 0}
           >
-            Autorizar
+            {t('Autorizar')}
           </Button>
         </DialogActions>
       </form>
@@ -184,6 +195,7 @@ function ApplicationDialog({ open, scopes, onClose, onSave, saving, error }) {
 }
 
 export default function Applications() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [creating, setCreating] = useState(false)
   const [token, setToken] = useState(null)
@@ -250,11 +262,13 @@ export default function Applications() {
   return (
     <>
       <PageHeader
-        title="Aplicaciones"
-        subtitle="Terminales, lectores y sistemas que fichan en nombre de alguien. Cada uno con sus permisos y su propia llave, revocable sin tocar la cuenta de nadie."
+        title={t('Aplicaciones')}
+        subtitle={t(
+          'Terminales, lectores y sistemas que fichan en nombre de alguien. Cada uno con sus permisos y su propia llave, revocable sin tocar la cuenta de nadie.',
+        )}
         action={
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreating(true)}>
-            Autorizar
+            {t('Autorizar')}
           </Button>
         }
       />
@@ -267,8 +281,9 @@ export default function Applications() {
         <ErrorNote error={loadError} />
       ) : rows.length === 0 ? (
         <Empty>
-          Todavía no hay ninguna. Se autoriza una cuando un terminal o un lector tiene que fichar
-          por la gente que no puede hacerlo con su propia sesión.
+          {t(
+            'Todavía no hay ninguna. Se autoriza una cuando un terminal o un lector tiene que fichar por la gente que no puede hacerlo con su propia sesión.',
+          )}
         </Empty>
       ) : (
         <Stack component="ul" sx={{ gap: 2, listStyle: 'none', m: 0, p: 0 }}>
@@ -286,7 +301,7 @@ export default function Applications() {
                 <Box sx={{ minWidth: 0 }}>
                   <Stack direction="row" sx={{ gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
                     <Typography sx={{ fontWeight: 600 }}>{application.name}</Typography>
-                    {!application.is_active && <Chip size="small" label="Revocada" />}
+                    {!application.is_active && <Chip size="small" label={t('Revocada')} />}
                   </Stack>
                   {application.description && (
                     <Typography variant="body2" color="text.secondary">
@@ -308,7 +323,7 @@ export default function Applications() {
                       disabled={issue.isPending}
                       onClick={() => issue.mutate(application.id)}
                     >
-                      Emitir token
+                      {t('Emitir token')}
                     </Button>
                     <Button
                       size="small"
@@ -317,19 +332,20 @@ export default function Applications() {
                       // este tumba la aplicación entera y el de abajo un solo
                       // token. Quien navega con lector de pantalla oía el mismo
                       // rótulo para las dos cosas y no tenía cómo distinguirlas.
-                      aria-label="Revocar la aplicación"
+                      aria-label={t('Revocar la aplicación')}
                       onClick={() =>
                         setConfirming({
-                          title: 'Revocar la aplicación',
+                          title: t('Revocar la aplicación'),
                           body: application.name,
-                          detail:
+                          detail: t(
                             'Deja de funcionar de inmediato, con todos sus tokens. No se borra: lo que registró sigue siendo suyo, y quitarla dejaría esos fichajes sin autor.',
-                          verb: 'Revocar',
+                          ),
+                          verb: t('Revocar'),
                           run: () => revoke.mutate({ application: application.id }),
                         })
                       }
                     >
-                      Revocar
+                      {t('Revocar')}
                     </Button>
                   </Stack>
                 )}
@@ -354,21 +370,26 @@ export default function Applications() {
                       <Stack direction="row" sx={{ gap: 1, alignItems: 'center' }}>
                         <Typography variant="caption" color="text.secondary">
                           {credential.last_used_at
-                            ? `Usado el ${dateOf(credential.last_used_at)}`
-                            : 'Sin usar'}
+                            ? t('Usado el {{fecha}}', {
+                                fecha: dateOf(credential.last_used_at),
+                              })
+                            : t('Sin usar')}
                         </Typography>
                         {credential.is_valid ? (
                           <Button
                             size="small"
                             color="inherit"
-                            aria-label={`Revocar el token ${credential.label ?? ''}`.trim()}
+                            aria-label={t('Revocar el token {{cual}}', {
+                              cual: credential.label ?? '',
+                            }).trim()}
                             onClick={() =>
                               setConfirming({
-                                title: 'Revocar el token',
+                                title: t('Revocar el token'),
                                 body: `…${credential.token_hint}`,
-                                detail:
+                                detail: t(
                                   'Deja de valer de inmediato. Los demás tokens de esta aplicación siguen funcionando, que es lo que permite cambiarlos sin cortar el servicio.',
-                                verb: 'Revocar',
+                                ),
+                                verb: t('Revocar'),
                                 run: () =>
                                   revoke.mutate({
                                     application: application.id,
@@ -377,10 +398,10 @@ export default function Applications() {
                               })
                             }
                           >
-                            Revocar
+                            {t('Revocar')}
                           </Button>
                         ) : (
-                          <Chip size="small" label="Revocado" sx={{ height: 20 }} />
+                          <Chip size="small" label={t('Revocado')} sx={{ height: 20 }} />
                         )}
                       </Stack>
                     </Stack>
@@ -397,7 +418,7 @@ export default function Applications() {
         page={page}
         pageSize={PAGE_SIZE}
         onChange={setPage}
-        noun={{ singular: 'aplicación', plural: 'aplicaciones' }}
+        noun={{ singular: alCatalogo('aplicación'), plural: alCatalogo('aplicaciones') }}
       />
 
       <ApplicationDialog

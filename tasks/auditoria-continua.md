@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 139 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---362 de 971 cadenas, medidas con el árbol y no con grep---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 140 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---464 de 953 cadenas, nueve pantallas enteras---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,67 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 140 --- Cuadrante, Permisos y Aplicaciones, y un hueco que me había hecho yo (28/08)
+
+**Traducido:** las tres pantallas enteras, 84 claves nuevas. El catálogo: 351 →
+**435**. Con ellas van nueve pantallas de treinta y ocho y la mitad de las
+cadenas: 464 de 953.
+
+**El hallazgo:** seis claves llevaban un espacio en el borde ---`t(' · sin
+sueldo')`--- y **una era de la vuelta 138**, hecha por mí. El espacio ahí es
+separación, no texto: al pasar por la lista de pendientes se recorta, se traduce
+sin él, y entonces el código pide « · sin sueldo» mientras el catálogo guarda «·
+sin sueldo». i18next no encuentra nada y devuelve la clave, que se lee
+perfectamente en castellano.
+
+Lo grave es que `comprobar-catalogos.mjs` **no podía verlo**: busca la clave en
+el código con `includes`, y la versión recortada sí es una subcadena de la
+entera. La comprobación estaba en verde y el hueco llevaba ahí un día.
+
+Ahora lo mira, con su contraste ---se vuelve a meter una clave con espacio y se
+comprueba que salta--- y con un segundo contraste sobre sí misma: si el patrón
+dejara de reconocer las llamadas a `t()`, cero claves con espacio parecería un
+producto limpio en vez de una comprobación rota.
+
+**Y la tabla de la prueba de idiomas estrena un hueco a propósito:** `control`
+pasa a ser opcional. Aplicaciones no tiene ningún control cuyo rótulo cambie en
+gallego ---«Autorizar» se escribe igual--- y forzar uno habría sido inventarse
+una traducción para que la prueba tuviera qué mirar.
+
+**Y saltó el guard del sedimento**, que llevaba avisando desde la vuelta 128 y
+esta vez no por el tope: `/employees/?is_active=false` pasó de sesenta y ya no
+cabía en una página, así que la comprobación se negó a dar por limpio lo que no
+había visto. Bien hecha.
+
+De las sesenta, cincuenta y dos llevaban marca de prueba: **treinta se
+retiraron** y **veintidós no**, porque cada una tiene una ausencia. Ninguna era
+de hoy, o sea que el `erase` de la vuelta 134 hace su trabajo y esto es
+sedimento de antes.
+
+Las veintidós son de `14-decidir-en-bloque`, y **no es un descuido suyo**: crea
+gente nueva cada pasada porque **aprueba** lo que pide, y una ausencia aprobada
+ya no se puede cancelar. Con gente de la casa iría llenando el calendario hasta
+que una pasada tropieza con lo que dejó otra. Deja dos irrecuperables por tanda,
+y la regla que lo impide es correcta: quien tiene una ausencia aprobada no es un
+alta equivocada.
+
+Así que se escribió la escoba: **`python manage.py purge_test_people`**, con
+ensayo en seco, que se niega fuera de `DEBUG` y aplica la misma regla que la API.
+Seis pruebas, y la que sostiene a las demás es la del contraste: si el patrón
+encajara con cualquiera, las otras cinco pasarían igual y esto sería una escoba
+que se lleva la plantilla. Comprobado sustituyendo la marca por `.` --- se pone
+roja.
+
+De paso me pilló **el guard de aislamiento**: el comando consulta `User.objects`
+sin empresa. Es a propósito ---barre el entorno entero y no hay petición de la
+que sacarla--- y ahora está declarado con su motivo.
+
+**Lo que queda por decidir**, anotado y no hecho: esas dos personas por tanda
+siguen acumulándose, así que el guard volverá a saltar en unas quince tandas. La
+salida sería que la prueba reutilice dos personas fijas y **derive las fechas**
+del instante de la tanda en vez de estrenar gente --- lo que buscaba con las
+altas era un calendario libre, y eso también se consigue moviéndose de fechas.
 
 ### Vuelta 139 --- Lo que sale en todas las pantallas a la vez (28/08)
 

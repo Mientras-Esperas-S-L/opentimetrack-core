@@ -4550,3 +4550,71 @@ Al cambiar la firma ---`noun={{ singular, plural }}`--- salió otra: nombrar las
 claves con género (`una`/`varias`) se lee bien en el punto de llamada y **no
 generaliza**, porque el mismo componente cuenta cosas de los dos géneros. El
 nombre neutro es peor de leer una vez y correcto siempre.
+
+## 277. El espacio de separación no es parte de la clave
+
+`t(' · sin sueldo')`, con el espacio dentro. Seis veces, y una me la había hecho yo
+la vuelta anterior.
+
+El espacio ahí es maquetación: separa este trozo del anterior. Pero viaja dentro de
+la clave, y en cuanto la clave pasa por cualquier sitio que recorte ---mi lista de
+pendientes, un editor de catálogos, una hoja de cálculo--- la traducción se guarda
+sin él. Entonces el código pide « · sin sueldo» y el catálogo tiene «· sin sueldo»:
+i18next no encuentra nada y devuelve la clave, **que se lee perfectamente en
+castellano**. Un hueco que no parece un hueco.
+
+Lo que lo hizo durar fue el punto ciego de la comprobación: `comprobar-catalogos`
+busca cada clave en el código con `includes`, y la versión recortada **sí** es una
+subcadena de la entera. Verde con el agujero dentro.
+
+**La regla**: el espacio va fuera. `` `${t('· sin sueldo')} ` `` y no `t(' · sin
+sueldo')`. Y cuando una comprobación use `includes` o `in`, preguntarse qué pareja
+de valores distintos pasaría por igual --- ahí es donde se esconden estos.
+
+## 278. La prueba no puede pedirle al producto que le dé de qué hablar
+
+La tabla de la prueba de idiomas exigía, por pantalla, un texto y un **control** que
+cambiaran de idioma. Al llegar a Aplicaciones no había ninguno: su único botón
+siempre visible es «Autorizar», que se escribe igual en castellano y en gallego.
+
+La tentación fue retocar la traducción gallega para que difiriera. Habría sido
+escribir peor gallego para que una prueba tuviera qué mirar --- y el gallego lo lee
+gente y la prueba no.
+
+Se hizo al revés: `control` pasó a ser opcional, con el motivo escrito al lado. Una
+prueba que no puede comprobar algo debe decirlo y seguir comprobando el resto, no
+empujar al producto a encajar en ella.
+
+## 279. Cuando un guard salta, la primera pregunta es qué está midiendo
+
+El guard del sedimento saltó, y no por lo que vigila. Vigila que no se acumulen
+personas de prueba por encima de sesenta; lo que dijo fue que **la lista ya no cabía
+en una página** y se negaba a dar por limpio lo que no había visto.
+
+Si hubiera leído «sedimento» y subido el tope, habría tapado las dos cosas a la vez:
+la que avisaba y la que ni siquiera había mirado. Y la comprobación que se niega a
+mirar media lista es la parte buena del guard, no la que estorba.
+
+**La regla**: leer el mensaje, no el nombre de la prueba. Y cuando un guard tiene una
+salvaguarda propia ---«esto no es todo lo que hay»--- esa salvaguarda salta antes que
+lo que vigila, y dice algo distinto.
+
+El diagnóstico después cambió el plan entero: ninguna de las sesenta era de hoy, o
+sea que el arreglo de hace seis vueltas funciona y esto era sedimento viejo. Sin
+mirar las fechas habría ido a buscar una regresión que no existía.
+
+## 280. Una regla correcta puede dejar una tarea recurrente, y eso no la invalida
+
+Veintidós de las personas de prueba no se pueden borrar porque cada una tiene una
+ausencia aprobada, y la regla dice que quien tiene una ausencia aprobada no es un
+alta equivocada. La regla es correcta. La prueba que las crea también tiene razón:
+aprueba lo que pide, y una aprobada no se cancela.
+
+Las dos partes bien y el resultado es basura que se acumula. La tentación era mover
+una de las dos ---relajar la regla, o hacer que la prueba no apruebe--- y las dos
+habrían empeorado algo real para arreglar algo de laboratorio.
+
+Lo que faltaba era una tercera pieza que no existía: **la escoba**. Un comando de
+mantenimiento del entorno, fuera del producto, que se niega en producción y aplica la
+misma regla que la API. Cuando dos decisiones correctas producen residuo, el residuo
+es una tarea de mantenimiento, no una prueba de que una de las dos esté mal.

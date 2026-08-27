@@ -842,9 +842,9 @@ export default function Decisions() {
                           permiso: fmt(absence.over_the_limit.allowance),
                           extra:
                             absence.over_the_limit.travel_extra > 0
-                              ? t(' (+{{cuanto}} si hay desplazamiento)', {
+                              ? ` ${t('(+{{cuanto}} si hay desplazamiento)', {
                                   cuanto: fmt(absence.over_the_limit.travel_extra),
-                                })
+                                })}`
                               : '',
                         }}
                         components={{ destacado: <strong /> }}
