@@ -33,7 +33,8 @@ from __future__ import annotations
 
 import collections
 import json
-from datetime import date, timedelta
+import zoneinfo
+from datetime import timedelta
 
 import pytest
 from django.urls import get_resolver
@@ -41,6 +42,7 @@ from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.absences.models import LeaveType
+from apps.common.clock import local_today
 from apps.common.models import tenant_context
 from apps.shifts.models import Shift, ShiftPattern
 from apps.tenants.models import Tenant
@@ -75,7 +77,7 @@ def mundo(db):
             "turno": Shift.objects.create(
                 tenant=empresa,
                 employee=User.objects.get(email="curro@example.com"),
-                day=date.today() + timedelta(days=5),
+                day=local_today(empresa) + timedelta(days=5),
                 segments=[{"start": "08:00", "end": "16:00"}],
             ),
             "permiso": LeaveType.objects.filter(tenant=empresa).first(),
@@ -127,7 +129,7 @@ def _solo_administracion(m):
 def _lo_suyo(m):
     """Lo que un responsable SÍ tiene que poder: organizar y decidir."""
     curro, turno = str(m["curro"].id), m["turno"].id
-    manana = (date.today() + timedelta(days=20)).isoformat()
+    manana = (local_today(m["curro"]) + timedelta(days=20)).isoformat()
     return [
         ("GET", "/api/employees/", None),
         ("GET", "/api/company/", None),
@@ -263,7 +265,10 @@ def test_ninguna_ruta_con_control_de_rol_se_queda_sin_barrer():
     assert len(con_control) > 15, f"la introspección no encuentra las vistas: {con_control}"
 
     mundo_falso = {
-        "curro": type("X", (), {"id": "1"})(),
+        # Con zona, porque `_lo_suyo` construye una fecha con `local_today` y
+        # esta prueba solo quiere las **rutas**: el doble tiene que fingir lo
+        # justo para que la lista se pueda montar.
+        "curro": type("X", (), {"id": "1", "tzinfo": zoneinfo.ZoneInfo("Europe/Madrid")})(),
         "departamento": type("X", (), {"id": "1"})(),
         "centro": type("X", (), {"id": "1"})(),
         "patron": type("X", (), {"id": "1"})(),

@@ -22,12 +22,13 @@ from __future__ import annotations
 
 import ast
 import pathlib
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.common.clock import local_today
 from apps.common.models import tenant_context
 from apps.shifts.coverage import who_can_cover
 from apps.shifts.models import Shift, ShiftPattern
@@ -54,7 +55,7 @@ def dos_empresas(db):
         turno = Shift.objects.create(
             tenant=acme,
             employee=chelo,
-            day=date.today() + timedelta(days=20),
+            day=local_today(acme) + timedelta(days=20),
             pattern=patron,
             segments=patron.segments,
         )

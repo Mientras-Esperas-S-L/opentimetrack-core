@@ -20,6 +20,7 @@ from datetime import date, time, timedelta
 import pytest
 from rest_framework.test import APIClient
 
+from apps.common.clock import local_today
 from apps.common.models import tenant_context
 from apps.legal import DIRECTIVE, FRAMEWORKS, for_country
 from apps.legal.base import Citation, LegalFramework, MinorProtections
@@ -199,7 +200,7 @@ def test_a_refusal_quotes_the_local_article(elsewhere):
 
     young = admin_of(elsewhere, "joven@ruritania.test")
     with tenant_context(elsewhere.id):
-        young.date_of_birth = date.today() - timedelta(days=365 * 17)
+        young.date_of_birth = local_today(elsewhere) - timedelta(days=365 * 17)
         young.save(update_fields=["date_of_birth"])
 
         with pytest.raises(BusinessRuleError) as caught:

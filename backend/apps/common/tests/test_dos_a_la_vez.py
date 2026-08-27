@@ -38,12 +38,13 @@ que el rastro guarde las dos es correcto.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 
 from apps.absences.models import Absence, AbsenceStatus
 from apps.absences.services import approve_absence, cancel_absence, reject_absence
+from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError
 from apps.common.models import tenant_context
 from apps.tenants.models import Tenant
@@ -84,7 +85,7 @@ def gente(db):
 
 
 def _solicitud(gente) -> Absence:
-    hoy = date.today()
+    hoy = local_today(gente["empresa"])
     return Absence.objects.create(
         tenant=gente["empresa"],
         employee=gente["curro"],
@@ -170,7 +171,7 @@ def test_y_una_recuperacion_tampoco_se_decide_dos_veces(gente):
     from apps.absences.recovery import confirm_recovery
 
     with tenant_context(gente["empresa"].id):
-        hoy = date.today()
+        hoy = local_today(gente["empresa"])
         # Unas vacaciones aprobadas y la baja que se las comió: es lo que
         # `detect_recoveries` anota, y la anotación apunta a las dos.
         vacaciones = Absence.objects.create(

@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 129 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
+Vueltas dadas: 130 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,79 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 130 --- El hoy de quien pregunta, y un guard para que no vuelva (27/08)
+
+Tarea **7 de la lista**. Eran **25**, no 27, y ninguna estaba donde el enunciado
+temía: **cero en el código de producción**.
+
+#### El detector que me engañó primero
+
+El primer barrido dijo **36 usos, cinco de ellos en producción**, y eso encendió
+todas las luces: `attendance_api.py`, `shifts/views.py`, `agreements.py`,
+`clock.py`. Los cinco eran **comentarios explicando por qué no se usa
+`date.today()`**. Cuanto mejor documentado está un antipatrón, más falsos
+positivos da buscarlo por texto ---y este está documentado con esmero, porque ya
+se había colado cinco veces---.
+
+Rehecho con `ast`: **25 llamadas reales, todas en pruebas**.
+
+#### Por qué no eran inocuas
+
+Una prueba que siembra un rango con `date.today()` y luego pregunta al producto
+---que responde con `local_today(empresa)`--- compara **dos días distintos** entre
+medianoche y las dos de la madrugada en España. El fallo sale de madrugada, en una
+máquina y no en otra, y se lee como un defecto del producto. Es la misma familia
+que los rojos intermitentes de la vuelta 129, con otro reloj.
+
+#### Cómo se cambiaron
+
+`local_today(X)` responde con la zona de quien pregunta: una persona contesta con
+la de su centro de trabajo, cayendo a la de su empresa. Así que la sustitución no
+es mecánica, hay que decidir **de quién es el día**:
+
+- **12** se hicieron con un script sobre `ast`, que sabe en qué función está cada
+  llamada y qué nombres tiene a mano ---empresa, centro, persona---.
+- **10** tenían el sujeto dentro de un diccionario (`mundo["empresa"]`,
+  `ours["worker"]`) o con otro nombre (`acme`, `elsewhere`), donde el script no
+  llega. A mano, mirando cada contexto.
+- **1** era un helper compartido, `ask_absence(client, **extra)`, sin nada a mano:
+  ahora recibe de quién es el calendario y sus cuatro llamadas lo dicen.
+- **2** estaban a **nivel de módulo**, donde todavía no existe ninguna empresa.
+  Ahí se ancla la zona a mano ---todas las empresas de ese fichero son de
+  Madrid--- y queda dicho por qué, que es lo único honesto: `timezone.localdate()`
+  no habría servido, porque `TIME_ZONE` es `UTC` y devuelve exactamente lo mismo
+  que `date.today()`.
+
+Y un doble de pruebas que se rompió por el camino: el `mundo_falso` del barrido de
+permisos solo finge tener `.id`, porque esa prueba solo quiere las rutas. Ahora
+finge también la zona, que es lo justo para que la lista se pueda montar.
+
+#### El guard, que es la mitad del trabajo
+
+Nada en el lenguaje señala `date.today()` como sospechoso: es la llamada obvia, y
+la correcta pide un argumento que hay que ir a buscar. Sin un guard vuelve ---ya
+volvió cinco veces---.
+
+`test_el_hoy_de_quien_pregunta.py` recorre `apps/` con `ast` y exige cero. Con
+cuatro pruebas de contraste, porque un guard que da cero no prueba nada por sí
+solo:
+
+1. **Encuentra** `datetime.date.today()` y `date.today()`.
+2. **No cuenta** lo que solo lo menciona: un comentario, un docstring, una cadena.
+   Es la que de verdad importa, y la que me habría ahorrado la hora de antes.
+3. **Deja pasar** `algo.today(empresa)`: lo que la trampa tiene de trampa es que no
+   pregunta de quién es el día.
+4. **`local_today` sigue existiendo**, porque si alguien lo retirase el guard
+   seguiría en verde sin haber con qué sustituir lo que prohíbe.
+
+Comprobado en las dos direcciones: metiendo una llamada real en `apps/legal/base.py`
+se pone rojo y la nombra; metiendo solo la mención en un comentario, sigue verde.
+
+#### Verde al cerrar
+
+`1.289` pruebas de backend (cinco nuevas), `ruff` limpio, sin migraciones
+pendientes.
 
 ### Vuelta 129 --- Las esperas por reloj: eran tres defectos, no cuarenta y una (27/08)
 

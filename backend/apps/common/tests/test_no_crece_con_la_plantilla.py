@@ -32,7 +32,8 @@ vería lo mismo y la suite entera dejaría de correrse.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+import zoneinfo
+from datetime import timedelta
 
 import pytest
 from django.db import connection
@@ -49,7 +50,16 @@ from apps.tenants.models import Tenant
 from apps.users.models import Role, User
 
 PASSWORD = "a-sufficiently-long-password"
-HOY = date.today()
+
+#: El día en la zona de las empresas que monta este módulo, todas de Madrid.
+#:
+#: No `date.today()`, que es la fecha **UTC del contenedor**: entre medianoche y
+#: las dos de la madrugada el módulo sembraría un día distinto del que mide el
+#: producto, que pregunta con `local_today(empresa)`. Y no `local_today` aquí
+#: mismo porque a nivel de módulo todavía no hay ninguna empresa: se ancla a la
+#: zona que van a tener, y queda dicho.
+ZONA_DE_LAS_EMPRESAS = zoneinfo.ZoneInfo("Europe/Madrid")
+HOY = timezone.now().astimezone(ZONA_DE_LAS_EMPRESAS).date()
 #: Cuarenta días a propósito: tiene que caber alguna semana completa o la
 #: comprobación de horas semanales se salta entera y con ella su N+1.
 DESDE = HOY - timedelta(days=40)

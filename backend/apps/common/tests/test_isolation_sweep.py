@@ -27,6 +27,7 @@ from rest_framework.test import APIClient
 from apps.absences.models import AbsenceType, LeaveType
 from apps.absences.services import request_absence
 from apps.audit.models import AuditAction, AuditLog
+from apps.common.clock import local_today
 from apps.common.models import tenant_context
 from apps.punches.corrections import CorrectionKind, request_correction
 from apps.punches.services import register_punch
@@ -343,7 +344,7 @@ def test_they_cannot_change_or_resolve_anything_of_ours(ours, theirs):
             "/api/overtime/",
             {
                 "employee": str(ours["worker"].id),
-                "day": date.today().isoformat(),
+                "day": local_today(ours["worker"]).isoformat(),
                 "authorise": True,
                 "settlement": "PAID",
             },
@@ -466,7 +467,7 @@ def test_a_worker_cannot_do_a_managers_job(ours):
             "/api/overtime/",
             {
                 "employee": str(ours["other"].id),
-                "day": date.today().isoformat(),
+                "day": local_today(ours["other"]).isoformat(),
                 "authorise": True,
                 "settlement": "PAID",
             },

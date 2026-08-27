@@ -144,8 +144,8 @@ def test_a_partial_absence_does_not_block_clocking(company, worker):
             employee=worker,
             company=company,
             leave_type=LeaveType.objects.get(code="es.medical"),
-            start_date=date.today(),
-            end_date=date.today(),
+            start_date=local_today(company),
+            end_date=local_today(company),
             start_time=time(11, 0),
             end_time=time(14, 0),
         )

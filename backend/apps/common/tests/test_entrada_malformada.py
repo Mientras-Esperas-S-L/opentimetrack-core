@@ -42,7 +42,7 @@ from __future__ import annotations
 # transacción normal de pytest-django deshace por rollback y no toca la tabla.
 import collections
 import json
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 from django.core.cache import cache
@@ -50,6 +50,7 @@ from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.absences.models import Absence
+from apps.common.clock import local_today
 from apps.common.models import tenant_context
 from apps.shifts.models import Shift, ShiftPattern
 from apps.tenants.models import Tenant
@@ -87,7 +88,7 @@ def mundo(db):
         otro = User.objects.create_user(
             email="otro@example.com", password=PASSWORD, tenant=empresa, first_name="Curro"
         )
-        hoy = date.today()
+        hoy = local_today(empresa)
         yield {
             "empresa": empresa,
             "jefa": jefa,

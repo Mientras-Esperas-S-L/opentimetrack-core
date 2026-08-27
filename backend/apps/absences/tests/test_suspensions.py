@@ -20,6 +20,7 @@ import pytest
 from apps.absences.catalogue import seed_leave_types
 from apps.absences.models import AbsenceStatus, LeaveType
 from apps.absences.services import request_absence
+from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError
 from apps.common.models import tenant_context
 from apps.punches.services import register_punch
@@ -87,7 +88,7 @@ def test_none_of_them_is_paid_by_the_company(company, worker):
 
 @pytest.mark.django_db
 def test_a_suspension_blocks_clocking(company, worker):
-    today = date.today()
+    today = local_today(company)
     suspend(
         company, worker, "es.unpaid_leave", today - timedelta(days=30), today + timedelta(days=300)
     )
@@ -120,7 +121,7 @@ def test_and_the_roster_reports_anybody_planned_during_one(company, worker):
 def test_a_partial_erte_does_not_block_clocking(company, worker):
     """Quien tiene la jornada reducida un cuarenta por ciento sigue viniendo
     por el otro sesenta."""
-    today = date.today()
+    today = local_today(company)
     suspend(
         company, worker, "es.erte", today - timedelta(days=10), today + timedelta(days=80), share=40
     )
@@ -207,7 +208,7 @@ def test_a_suspension_spends_no_holiday(company, worker):
 def test_a_pending_suspension_does_not_block_anything(company, worker):
     """Sólo lo aprobado para el registro. Una solicitud sin resolver es una
     intención, y el registro no se mide contra intenciones."""
-    today = date.today()
+    today = local_today(company)
     suspend(
         company,
         worker,
@@ -230,7 +231,7 @@ def test_a_pending_suspension_does_not_block_anything(company, worker):
 
 @pytest.mark.django_db
 def test_holiday_can_be_booked_during_a_partial_erte(company, worker):
-    today = date.today()
+    today = local_today(company)
     suspend(company, worker, "es.erte", today, today + timedelta(days=90), share=40)
 
     with tenant_context(company.id):
@@ -249,7 +250,7 @@ def test_holiday_can_be_booked_during_a_partial_erte(company, worker):
 def test_and_so_can_a_medical_appointment(company, worker):
     from datetime import time
 
-    today = date.today()
+    today = local_today(company)
     suspend(company, worker, "es.erte", today, today + timedelta(days=90), share=40)
 
     with tenant_context(company.id):
@@ -270,7 +271,7 @@ def test_and_so_can_a_medical_appointment(company, worker):
 def test_two_reductions_at_once_are_a_contradiction(company, worker):
     """El único choque que una reducción sí tiene: la jornada de nadie puede
     estar reducida dos veces a la vez."""
-    today = date.today()
+    today = local_today(company)
     suspend(company, worker, "es.erte", today, today + timedelta(days=90), share=40)
 
     with tenant_context(company.id), pytest.raises(BusinessRuleError) as caught:

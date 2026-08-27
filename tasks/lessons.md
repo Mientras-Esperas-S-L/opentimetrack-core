@@ -4048,3 +4048,46 @@ de números---.
 **Corolario**: cuando escribas una prueba que localiza por rol sobre una pantalla
 que no es una tabla de HTML, comprueba primero que el conteo sin filtros es el que
 esperas. Si es cero, el trabajo no es la prueba: es el producto.
+
+## 247. Cuanto mejor documentado está un antipatrón, más falsos positivos da buscarlo por texto
+
+Un grep de `date.today()` dio **36 resultados, cinco en código de producción**, y
+esos cinco eran **comentarios avisando de que no se use**. El módulo que resuelve
+el problema ---`apps/common/clock.py`--- lo explica en su primera línea, y cada
+sitio que lo evitó dejó dicho por qué. Todo ese cuidado es exactamente lo que
+ensucia la búsqueda.
+
+Con `ast`: 25 llamadas reales, ninguna en producción. Una hora perdida.
+
+**La regla**: para buscar una llamada, usa `ast`; para buscar una cadena, grep. Y
+si el patrón que buscas es un antipatrón conocido del proyecto, **da por hecho que
+sus menciones superan a sus usos**.
+
+**Y en el guard, pruébalo**: una prueba que confirme que el detector no cuenta
+comentarios vale más que la que confirma que encuentra el caso obvio. Esta segunda
+la escribe cualquiera; la primera es la que se rompe.
+
+## 248. Sustituir «hoy» no es mecánico: hay que decidir de quién es el día
+
+`local_today(X)` responde con la zona de quien pregunta: una persona con la de su
+centro de trabajo, cayendo a la de su empresa. Así que cambiar `date.today()` por
+él **obliga a elegir un sujeto**, y ahí está el trabajo:
+
+- La mayoría lo tienen en un parámetro de la función: se puede automatizar con
+  `ast`, que sabe qué nombres hay a mano.
+- Muchos lo tienen **dentro de un diccionario** ---`mundo["empresa"]`,
+  `ours["worker"]`--- donde el script no llega.
+- Un **helper compartido** no tiene ninguno: hay que pasárselo, y entonces cada
+  llamada tiene que decir de quién es el día. Eso mejora la prueba, no solo la
+  arregla.
+- A **nivel de módulo** no existe todavía ninguna empresa. Ahí lo honesto es
+  anclar la zona a mano y dejar dicho por qué.
+
+**Y el atajo que no funciona**: `timezone.localdate()` parece la respuesta y con
+`TIME_ZONE = "UTC"` devuelve exactamente lo mismo que `date.today()`. Comprobar el
+ajuste antes de dar por bueno un reemplazo que solo suena mejor.
+
+**Corolario para los dobles**: un stub que finge `.id` porque la prueba solo quiere
+rutas tendrá que fingir también la zona. Que un doble crezca al arreglar esto es
+señal de que el código pide un dato que antes no pedía --- correcto ---, no de que
+el arreglo esté mal.

@@ -23,6 +23,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.absences.models import Absence, AbsenceStatus, AbsenceType
+from apps.common.clock import local_today
 from apps.common.models import tenant_context
 from apps.punches.models import Punch, PunchType
 from apps.punches.services import register_punch
@@ -316,13 +317,21 @@ def test_a_manager_cannot_dispute_on_behalf_of_the_worker(people, company):
 # ==========================================================================
 
 
-def ask_absence(client, **extra):
+def ask_absence(client, quien=None, **extra):
+    """Pide unas vacaciones dentro de un mes.
+
+    `quien` es de quién es el calendario: `local_today` responde con la zona de
+    su centro de trabajo, cayendo a la de su empresa. Sin él la fecha saldría de
+    `date.today()`, que es la del contenedor en UTC ---y entre medianoche y las
+    dos de la madrugada en España no es la de nadie de aquí---.
+    """
+    desde = local_today(quien) if quien is not None else timezone.localdate()
     return client.post(
         "/api/absences/",
         {
             "absence_type": AbsenceType.VACATION,
-            "start_date": (date.today() + timedelta(days=30)).isoformat(),
-            "end_date": (date.today() + timedelta(days=32)).isoformat(),
+            "start_date": (desde + timedelta(days=30)).isoformat(),
+            "end_date": (desde + timedelta(days=32)).isoformat(),
             "reason": "Vacaciones",
             **extra,
         },
@@ -332,7 +341,7 @@ def ask_absence(client, **extra):
 
 @pytest.mark.django_db
 def test_a_worker_cannot_approve_their_own_leave(people):
-    absence = ask_absence(client_for(people["worker"])).data
+    absence = ask_absence(client_for(people["worker"]), people["worker"]).data
 
     response = client_for(people["worker"]).post(
         f"/api/absences/{absence['id']}/approve/", {}, format="json"
@@ -343,14 +352,16 @@ def test_a_worker_cannot_approve_their_own_leave(people):
 
 @pytest.mark.django_db
 def test_a_worker_cannot_file_leave_for_a_colleague(people):
-    response = ask_absence(client_for(people["worker"]), employee=str(people["other"].id))
+    response = ask_absence(
+        client_for(people["worker"]), people["worker"], employee=str(people["other"].id)
+    )
 
     assert response.status_code in {400, 403, 409}
 
 
 @pytest.mark.django_db
 def test_a_worker_cannot_cancel_a_colleagues_leave(people):
-    absence = ask_absence(client_for(people["other"])).data
+    absence = ask_absence(client_for(people["other"]), people["other"]).data
 
     response = client_for(people["worker"]).post(
         f"/api/absences/{absence['id']}/cancel/", {}, format="json"
@@ -361,7 +372,7 @@ def test_a_worker_cannot_cancel_a_colleagues_leave(people):
 
 @pytest.mark.django_db
 def test_approved_leave_cannot_be_approved_again(people):
-    absence = ask_absence(client_for(people["worker"])).data
+    absence = ask_absence(client_for(people["worker"]), people["worker"]).data
     boss = client_for(people["manager"])
 
     boss.post(f"/api/absences/{absence['id']}/approve/", {}, format="json")
@@ -654,7 +665,7 @@ def test_a_manager_cannot_approve_their_own_leave(people):
     """Less grave than the hours --- leave is the company's to grant --- but it is
     the same principle and an auditor asks the same question."""
     boss = client_for(people["manager"])
-    absence = ask_absence(boss).data
+    absence = ask_absence(boss, people["manager"]).data
 
     response = boss.post(f"/api/absences/{absence['id']}/approve/", {}, format="json")
 

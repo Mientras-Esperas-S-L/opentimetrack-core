@@ -14,10 +14,10 @@ integración lo pone el conector.
 from __future__ import annotations
 
 import io
-from datetime import date
 
 import pytest
 
+from apps.common.clock import local_today
 from apps.common.csv_export import ARRANQUES_PELIGROSOS, EscritorSeguro, celda_segura
 from apps.common.models import tenant_context
 from apps.punches.services import register_punch
@@ -63,8 +63,9 @@ def test_el_informe_que_se_entrega_no_lleva_formulas(company):
             last_name="García",
         )
         register_punch(employee=quien, company=company)
+        hoy = local_today(company)
         informe = build_report(
-            employee=quien, company=company, date_from=date.today(), date_to=date.today()
+            employee=quien, company=company, date_from=hoy, date_to=hoy
         )
         salida = to_csv(informe)
 

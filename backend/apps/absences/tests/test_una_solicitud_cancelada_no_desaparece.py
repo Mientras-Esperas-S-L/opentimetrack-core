@@ -17,7 +17,7 @@ días, porque el saldo y el solapamiento cuentan solo lo aprobado y lo pendiente
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 from rest_framework.test import APIClient
@@ -25,6 +25,7 @@ from rest_framework.test import APIClient
 from apps.absences.models import Absence, AbsenceStatus, LeavePeriod, LeaveType, LeaveUnit
 from apps.absences.usage import leave_usage
 from apps.audit.models import AuditAction, AuditLog
+from apps.common.clock import local_today
 from apps.common.models import tenant_context
 from apps.tenants.models import Tenant
 from apps.users.models import Department, Role, User
@@ -80,7 +81,7 @@ def como(quien):
 
 
 def pedir(mundo, dias=60):
-    desde = date.today() + timedelta(days=dias)
+    desde = local_today(mundo["empresa"]) + timedelta(days=dias)
     respuesta = como(mundo["obrero"]).post(
         "/api/absences/",
         {

@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import ast
 import pathlib
-from datetime import date, timedelta
+from datetime import timedelta
 
 import pytest
 from rest_framework.test import APIClient
@@ -41,6 +41,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.absences.models import LeaveType
 from apps.audit.models import AuditAction, AuditLog
+from apps.common.clock import local_today
 from apps.common.models import tenant_context
 from apps.shifts.models import Shift, ShiftPattern
 from apps.tenants.models import Tenant
@@ -79,7 +80,7 @@ def _como(quien):
 
 @pytest.mark.django_db
 def test_pintar_el_cuadrante_deja_constancia(mundo, django_capture_on_commit_callbacks):
-    desde = date.today() + timedelta(days=30)
+    desde = local_today(mundo["empresa"]) + timedelta(days=30)
     hasta = desde + timedelta(days=6)
 
     with tenant_context(mundo["empresa"].id):
@@ -106,7 +107,7 @@ def test_pintar_el_cuadrante_deja_constancia(mundo, django_capture_on_commit_cal
 @pytest.mark.django_db
 def test_vaciar_el_cuadrante_dice_cuántos_se_llevó(mundo, django_capture_on_commit_callbacks):
     """De las tres del cuadrante, la que más falta hace: borra."""
-    desde = date.today() + timedelta(days=30)
+    desde = local_today(mundo["empresa"]) + timedelta(days=30)
     hasta = desde + timedelta(days=6)
 
     with tenant_context(mundo["empresa"].id):
