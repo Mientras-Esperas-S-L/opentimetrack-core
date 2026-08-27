@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Badge from '@mui/material/Badge'
@@ -59,12 +59,13 @@ import { SelectAllBox, SelectBox, SelectionBar } from '../../components/selectio
 import { bulkSummary, runBulk } from '../../services/bulk.js'
 import { alFallar } from '../../services/stale.js'
 import { useAuth } from '../../hooks/useAuth.js'
+import { alCatalogo } from '../../i18n/index.js'
 import { useSelection } from '../../hooks/useSelection.js'
 
 const KIND_LABELS = {
-  ADD: 'Añadir un fichaje que falta',
-  MODIFY: 'Cambiar la hora',
-  VOID: 'Anular un fichaje',
+  ADD: alCatalogo('Añadir un fichaje que falta'),
+  MODIFY: alCatalogo('Cambiar la hora'),
+  VOID: alCatalogo('Anular un fichaje'),
 }
 
 /** Las horas extra de una persona, resueltas de una vez o día a día.
@@ -109,16 +110,26 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
           <Typography sx={{ fontWeight: 600 }}>{group.name}</Typography>
           <Typography variant="body2" color="text.secondary">
             {single ? (
-              <>
-                {dateOf(rows[0].day)} · <strong>{durationOf(rows[0].minutes)}</strong> de más (
-                {durationOf(rows[0].worked_minutes)} trabajadas de{' '}
-                {durationOf(rows[0].expected_minutes)} previstas)
-              </>
+              <Trans
+                i18nKey="{{dia}} · <destacado>{{exceso}}</destacado> de más ({{trabajadas}} trabajadas de {{previstas}} previstas)"
+                values={{
+                  dia: dateOf(rows[0].day),
+                  exceso: durationOf(rows[0].minutes),
+                  trabajadas: durationOf(rows[0].worked_minutes),
+                  previstas: durationOf(rows[0].expected_minutes),
+                }}
+                components={{ destacado: <strong /> }}
+              />
             ) : (
-              <>
-                {rows.length} días · <strong>{durationOf(total)}</strong> de más en total ·{' '}
-                {dayRange(rows[0].day, rows[rows.length - 1].day)}
-              </>
+              <Trans
+                i18nKey="{{cuantos}} días · <destacado>{{exceso}}</destacado> de más en total · {{periodo}}"
+                values={{
+                  cuantos: rows.length,
+                  exceso: durationOf(total),
+                  periodo: dayRange(rows[0].day, rows[rows.length - 1].day),
+                }}
+                components={{ destacado: <strong /> }}
+              />
             )}
           </Typography>
           {nocturno && (
@@ -130,12 +141,13 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
           )}
           {cambioDeHora !== 0 && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-              Esa noche los relojes se {cambioDeHora < 0 ? 'atrasaron' : 'adelantaron'} una hora,
-              así que el turno duró {cambioDeHora < 0 ? 'una hora más' : 'una hora menos'} de lo
-              previsto.{' '}
               {cambioDeHora < 0
-                ? 'La hora se trabajó de verdad y por eso aparece aquí; qué se hace con ella lo dice el convenio.'
-                : ''}
+                ? t(
+                    'Esa noche los relojes se atrasaron una hora, así que el turno duró una hora más de lo previsto. La hora se trabajó de verdad y por eso aparece aquí; qué se hace con ella lo dice el convenio.',
+                  )
+                : t(
+                    'Esa noche los relojes se adelantaron una hora, así que el turno duró una hora menos de lo previsto.',
+                  )}
             </Typography>
           )}
           {/* El tope del art. 35.2. Autorizar sin saber que esta persona va
@@ -148,15 +160,26 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
               sx={{ display: 'block' }}
             >
               {used.over_the_cap
-                ? `Ya lleva ${fmt(used.hours)} h autorizadas este año, por encima del tope de ${used.cap_hours} h (art. 35.2 ET).`
-                : `Lleva ${fmt(used.hours)} h de ${used.cap_hours} este año. Las compensadas con descanso no cuentan.`}
+                ? t(
+                    'Ya lleva {{horas}} h autorizadas este año, por encima del tope de {{tope}} h (art. 35.2 ET).',
+                    { horas: fmt(used.hours), tope: used.cap_hours },
+                  )
+                : t(
+                    'Lleva {{horas}} h de {{tope}} este año. Las compensadas con descanso no cuentan.',
+                    {
+                      horas: fmt(used.hours),
+                      tope: used.cap_hours,
+                    },
+                  )}
             </Typography>
           )}
           {reopened > 0 && (
             <Typography variant="caption" color="warning.main">
               {reopened === 1
-                ? 'Un día ya resuelto vuelve a revisión: la cifra ha cambiado.'
-                : `${reopened} días ya resueltos vuelven a revisión: la cifra ha cambiado.`}
+                ? t('Un día ya resuelto vuelve a revisión: la cifra ha cambiado.')
+                : t('{{cuantos}} días ya resueltos vuelven a revisión: la cifra ha cambiado.', {
+                    cuantos: reopened,
+                  })}
             </Typography>
           )}
         </Box>
@@ -180,14 +203,14 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
               onDecide({ days: rows.map((row) => row.day), authorise: true, settlement })
             }
           >
-            {single ? 'Autorizar' : 'Autorizar todo'}
+            {single ? t('Autorizar') : t('Autorizar todo')}
           </Button>
           <Button
             color="inherit"
             disabled={busy}
             onClick={() => onDecide({ days: rows.map((row) => row.day), authorise: false })}
           >
-            {single ? 'No autorizar' : 'No autorizar nada'}
+            {single ? t('No autorizar') : t('No autorizar nada')}
           </Button>
         </Stack>
       </Stack>
@@ -200,7 +223,9 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
             sx={{ mt: 1, ml: -1 }}
             onClick={() => setShowDays((open) => !open)}
           >
-            {showDays ? 'Ocultar los días' : `Ver los ${rows.length} días`}
+            {showDays
+              ? t('Ocultar los días')
+              : t('Ver los {{cuantos}} días', { cuantos: rows.length })}
           </Button>
           <Collapse in={showDays} unmountOnExit>
             <Stack divider={<Divider flexItem />} sx={{ mt: 1 }}>
@@ -211,13 +236,22 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
                   sx={{ gap: 2, py: 1, alignItems: 'center', justifyContent: 'space-between' }}
                 >
                   <Typography variant="body2" color="text.secondary">
-                    {dateOf(row.day)} · <strong>{durationOf(row.minutes)}</strong> de más (
-                    {durationOf(row.worked_minutes)} de {durationOf(row.expected_minutes)}{' '}
-                    previstas)
+                    <Trans
+                      i18nKey="{{dia}} · <destacado>{{exceso}}</destacado> de más ({{trabajadas}} de {{previstas}} previstas)"
+                      values={{
+                        dia: dateOf(row.day),
+                        exceso: durationOf(row.minutes),
+                        trabajadas: durationOf(row.worked_minutes),
+                        previstas: durationOf(row.expected_minutes),
+                      }}
+                      components={{ destacado: <strong /> }}
+                    />
                     {row.previous && (
                       <Typography component="span" variant="caption" color="warning.main">
                         {' '}
-                        · resuelto antes con {durationOf(row.previous.minutes)}
+                        {t('· resuelto antes con {{antes}}', {
+                          antes: durationOf(row.previous.minutes),
+                        })}
                       </Typography>
                     )}
                   </Typography>
@@ -357,23 +391,31 @@ function RejectDialog({ open, onClose, onConfirm, needsNote, count = 1, busy }) 
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{many ? `Rechazar ${count} solicitudes` : 'Rechazar la solicitud'}</DialogTitle>
+      <DialogTitle>
+        {many
+          ? t('Rechazar {{cuantas}} solicitudes', { cuantas: count })
+          : t('Rechazar la solicitud')}
+      </DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {many
-            ? 'El mismo motivo se enviará a todas. Se conservan rechazadas: que alguien lo pidiera y se le dijera que no también es parte del historial.'
-            : 'La solicitud se conserva rechazada: que alguien lo pidiera y se le dijera que no también es parte del historial.'}
+            ? t(
+                'El mismo motivo se enviará a todas. Se conservan rechazadas: que alguien lo pidiera y se le dijera que no también es parte del historial.',
+              )
+            : t(
+                'La solicitud se conserva rechazada: que alguien lo pidiera y se le dijera que no también es parte del historial.',
+              )}
         </Typography>
         <TextField
           autoFocus
           fullWidth
           multiline
           minRows={3}
-          label={needsNote ? 'Motivo del rechazo' : 'Motivo del rechazo (opcional)'}
+          label={needsNote ? t('Motivo del rechazo') : t('Motivo del rechazo (opcional)')}
           placeholder={
             many
-              ? 'Lo leerán todas las personas afectadas.'
-              : 'Lo leerá la persona que lo solicitó.'
+              ? t('Lo leerán todas las personas afectadas.')
+              : t('Lo leerá la persona que lo solicitó.')
           }
           value={note}
           onChange={(event) => setNote(event.target.value)}
@@ -389,7 +431,7 @@ function RejectDialog({ open, onClose, onConfirm, needsNote, count = 1, busy }) 
           color="secondary"
           disabled={busy || (needsNote && !note.trim())}
         >
-          {many ? `Rechazar las ${count}` : 'Rechazar'}
+          {many ? t('Rechazar las {{cuantas}}', { cuantas: count }) : t('Rechazar')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -622,10 +664,10 @@ export default function Decisions() {
     (row) => mine(row) && matches(search, row.employee_name, leaveLabel(row), row.reason),
   )
   const shownCorrections = correctionRows.filter(
-    (row) => mine(row) && matches(search, row.employee_name, KIND_LABELS[row.kind], row.reason),
+    (row) => mine(row) && matches(search, row.employee_name, t(KIND_LABELS[row.kind]), row.reason),
   )
   const shownOpen = openRows.filter(
-    (row) => mine(row) && matches(search, row.employee_name, KIND_LABELS[row.kind], row.reason),
+    (row) => mine(row) && matches(search, row.employee_name, t(KIND_LABELS[row.kind]), row.reason),
   )
   const shownOvertime = overtimeGroups.filter((group) => mine(group) && matches(search, group.name))
 
@@ -754,7 +796,7 @@ export default function Decisions() {
           value={forWhom}
           onChange={setWho}
           options={peopleHere}
-          all="Todas las personas"
+          all={t('Todas las personas')}
           width={220}
         />
         {filtering && (
@@ -770,8 +812,8 @@ export default function Decisions() {
         ) : shownAbsences.length === 0 ? (
           <Empty>
             {filtering
-              ? 'Ninguna ausencia coincide con el filtro.'
-              : 'No hay ausencias esperando respuesta.'}
+              ? t('Ninguna ausencia coincide con el filtro.')
+              : t('No hay ausencias esperando respuesta.')}
           </Empty>
         ) : (
           <Stack sx={{ gap: 1.5 }}>
@@ -793,19 +835,29 @@ export default function Decisions() {
                 {absence.over_the_limit && (
                   <Alert severity="warning" variant="outlined" sx={{ mt: 1.5 }}>
                     {absence.over_the_limit.period === 'EVENT' ? (
-                      <>
-                        Pide <strong>{fmt(absence.over_the_limit.used)}</strong> y el permiso da{' '}
-                        {fmt(absence.over_the_limit.allowance)}
-                        {absence.over_the_limit.travel_extra > 0 &&
-                          ` (+${fmt(absence.over_the_limit.travel_extra)} si hay desplazamiento)`}
-                        .
-                      </>
+                      <Trans
+                        i18nKey="Pide <destacado>{{pedido}}</destacado> y el permiso da {{permiso}}{{extra}}."
+                        values={{
+                          pedido: fmt(absence.over_the_limit.used),
+                          permiso: fmt(absence.over_the_limit.allowance),
+                          extra:
+                            absence.over_the_limit.travel_extra > 0
+                              ? t(' (+{{cuanto}} si hay desplazamiento)', {
+                                  cuanto: fmt(absence.over_the_limit.travel_extra),
+                                })
+                              : '',
+                        }}
+                        components={{ destacado: <strong /> }}
+                      />
                     ) : (
-                      <>
-                        Con esto se pasaría del tope: lleva{' '}
-                        <strong>{fmt(absence.over_the_limit.used)}</strong> de{' '}
-                        {fmt(absence.over_the_limit.allowance)} en este periodo.
-                      </>
+                      <Trans
+                        i18nKey="Con esto se pasaría del tope: lleva <destacado>{{lleva}}</destacado> de {{tope}} en este periodo."
+                        values={{
+                          lleva: fmt(absence.over_the_limit.used),
+                          tope: fmt(absence.over_the_limit.allowance),
+                        }}
+                        components={{ destacado: <strong /> }}
+                      />
                     )}{' '}
                     {t(
                       'Se puede aprobar igual —el convenio puede dar más de lo que consta en el catálogo—, pero conviene saberlo.',
@@ -822,13 +874,14 @@ export default function Decisions() {
                     unas vacaciones que se van a disfrutar igual. */}
                 {absence.short_notice && (
                   <Alert severity="info" variant="outlined" sx={{ mt: 1.5 }}>
-                    Las fechas se pusieron con{' '}
-                    <strong>
-                      {absence.short_notice.days} {plural(absence.short_notice.days, 'día', 'días')}
-                    </strong>{' '}
-                    de antelación, y el {absence.short_notice.citation} pide dos meses. El plazo
-                    existe para que dé tiempo a organizarse; se puede aprobar si la persona está de
-                    acuerdo.
+                    <Trans
+                      i18nKey="Las fechas se pusieron con <destacado>{{plazo}}</destacado> de antelación, y el {{articulo}} pide dos meses. El plazo existe para que dé tiempo a organizarse; se puede aprobar si la persona está de acuerdo."
+                      values={{
+                        plazo: `${absence.short_notice.days} ${t(plural(absence.short_notice.days, 'día', 'días'))}`,
+                        articulo: absence.short_notice.citation,
+                      }}
+                      components={{ destacado: <strong /> }}
+                    />
                   </Alert>
                 )}
               </RequestCard>
@@ -840,7 +893,7 @@ export default function Decisions() {
               busy={bulking}
               actions={[
                 {
-                  label: 'Aprobar',
+                  label: t('Aprobar'),
                   onClick: () =>
                     decideMany(
                       shownAbsences.filter((row) => absencePick.isSelected(row)),
@@ -852,7 +905,7 @@ export default function Decisions() {
                   // Rechazar en bloque abre el mismo cuadro de motivo que
                   // rechazar una: el «no» que se lee es el mismo, y sin motivo
                   // no se distingue de un despiste.
-                  label: 'Rechazar',
+                  label: t('Rechazar'),
                   variant: 'text',
                   color: 'inherit',
                   onClick: () =>
@@ -874,8 +927,8 @@ export default function Decisions() {
         ) : shownCorrections.length === 0 ? (
           <Empty>
             {filtering
-              ? 'Ninguna corrección coincide con el filtro.'
-              : 'No hay correcciones esperando respuesta.'}
+              ? t('Ninguna corrección coincide con el filtro.')
+              : t('No hay correcciones esperando respuesta.')}
           </Empty>
         ) : (
           <Stack sx={{ gap: 1.5 }}>
@@ -885,7 +938,7 @@ export default function Decisions() {
                 busy={decide.isPending || bulking}
                 select={<SelectBox selection={correctionPick} item={correction} />}
                 title={correction.employee_name}
-                meta={KIND_LABELS[correction.kind] ?? correction.kind_display}
+                meta={t(KIND_LABELS[correction.kind] ?? correction.kind_display)}
                 reason={correction.reason}
                 onApprove={() => decide.mutate({ action: approveCorrection, id: correction.id })}
                 onReject={() => openReject(rejectCorrection, correction.id, true)}
@@ -928,7 +981,7 @@ export default function Decisions() {
               busy={bulking}
               actions={[
                 {
-                  label: 'Aprobar',
+                  label: t('Aprobar'),
                   onClick: () =>
                     decideMany(
                       shownCorrections.filter((row) => correctionPick.isSelected(row)),
@@ -937,7 +990,7 @@ export default function Decisions() {
                     ).then(correctionPick.clear),
                 },
                 {
-                  label: 'Rechazar',
+                  label: t('Rechazar'),
                   variant: 'text',
                   color: 'inherit',
                   onClick: () =>
@@ -959,8 +1012,8 @@ export default function Decisions() {
         ) : shownOpen.length === 0 ? (
           <Empty>
             {filtering
-              ? 'Ningún cambio coincide con el filtro.'
-              : 'Ningún cambio propuesto por la empresa espera respuesta.'}
+              ? t('Ningún cambio coincide con el filtro.')
+              : t('Ningún cambio propuesto por la empresa espera respuesta.')}
           </Empty>
         ) : (
           <Stack sx={{ gap: 1.5 }}>
@@ -979,7 +1032,9 @@ export default function Decisions() {
                   <SelectBox
                     selection={openPick}
                     item={correction}
-                    label={`Seleccionar la propuesta de ${correction.employee_name}`}
+                    label={t('Seleccionar la propuesta de {{quien}}', {
+                      quien: correction.employee_name,
+                    })}
                   />
                   <Box sx={{ minWidth: 0, flexGrow: 1 }}>
                     <Stack direction="row" sx={{ gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -988,13 +1043,13 @@ export default function Decisions() {
                         status={correction.status}
                         label={
                           correction.employee_responded_at
-                            ? 'No está de acuerdo'
-                            : 'Sin contestar todavía'
+                            ? t('No está de acuerdo')
+                            : t('Sin contestar todavía')
                         }
                       />
                     </Stack>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                      {KIND_LABELS[correction.kind] ?? correction.kind_display}
+                      {t(KIND_LABELS[correction.kind] ?? correction.kind_display)}
                       {correction.proposed_timestamp && (
                         <>
                           {' · '}
@@ -1107,7 +1162,7 @@ export default function Decisions() {
               busy={bulking}
               actions={[
                 {
-                  label: 'Retirar la propuesta',
+                  label: t('Retirar la propuesta'),
                   variant: 'outlined',
                   color: 'inherit',
                   onClick: () =>
@@ -1129,8 +1184,8 @@ export default function Decisions() {
         ) : shownOvertime.length === 0 ? (
           <Empty>
             {filtering
-              ? 'Ninguna hora extra coincide con el filtro.'
-              : 'No hay horas extra por resolver.'}
+              ? t('Ninguna hora extra coincide con el filtro.')
+              : t('No hay horas extra por resolver.')}
           </Empty>
         ) : (
           <Stack sx={{ gap: 1.5 }}>
@@ -1149,7 +1204,7 @@ export default function Decisions() {
                   <SelectBox
                     selection={overtimePick}
                     item={group}
-                    label={`Seleccionar las horas de ${group.name}`}
+                    label={t('Seleccionar las horas de {{quien}}', { quien: group.name })}
                   />
                 }
                 onDecide={(payload) =>
@@ -1174,7 +1229,7 @@ export default function Decisions() {
               busy={bulking}
               actions={[
                 {
-                  label: 'Autorizar con descanso',
+                  label: t('Autorizar con descanso'),
                   onClick: () =>
                     decidirHorasExtra(
                       seleccionadas(shownOvertime, overtimePick),
@@ -1183,7 +1238,7 @@ export default function Decisions() {
                     ).then(overtimePick.clear),
                 },
                 {
-                  label: 'Autorizar pagadas',
+                  label: t('Autorizar pagadas'),
                   variant: 'outlined',
                   onClick: () =>
                     decidirHorasExtra(
@@ -1193,7 +1248,7 @@ export default function Decisions() {
                     ).then(overtimePick.clear),
                 },
                 {
-                  label: 'No autorizar',
+                  label: t('No autorizar'),
                   variant: 'text',
                   color: 'inherit',
                   onClick: () =>
@@ -1228,20 +1283,26 @@ export default function Decisions() {
                   <SelectBox
                     selection={recoveryPick}
                     item={row}
-                    label={`Seleccionar los días de ${row.employee_name}`}
+                    label={t('Seleccionar los días de {{quien}}', {
+                      quien: row.employee_name,
+                    })}
                   />
                   <Box sx={{ minWidth: 0 }}>
                     <Typography sx={{ fontWeight: 600 }}>{row.employee_name}</Typography>
                     <Typography variant="body2" color="text.secondary">
                       <strong>
-                        {row.days} {row.days === 1 ? 'día' : 'días'}
+                        {row.days} {row.days === 1 ? t('día') : t('días')}
                       </strong>{' '}
                       del {dayRange(row.first_day, row.last_day)} · {row.because_of}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       {row.expires_on
-                        ? `Se pueden disfrutar hasta el ${dateOf(row.expires_on, { year: 'numeric' })}.`
-                        : 'Sin plazo: se disfrutan al terminar la suspensión, aunque acabe el año.'}
+                        ? t('Se pueden disfrutar hasta el {{fecha}}.', {
+                            fecha: dateOf(row.expires_on, { year: 'numeric' }),
+                          })
+                        : t(
+                            'Sin plazo: se disfrutan al terminar la suspensión, aunque acabe el año.',
+                          )}
                     </Typography>
                   </Box>
                   <Stack direction="row" sx={{ gap: 1, flexShrink: 0 }}>
@@ -1275,14 +1336,14 @@ export default function Decisions() {
               busy={bulking}
               actions={[
                 {
-                  label: 'Devolver al saldo',
+                  label: t('Devolver al saldo'),
                   onClick: () =>
                     decidirRecuperaciones(seleccionadas(recoveryRows, recoveryPick), true).then(
                       recoveryPick.clear,
                     ),
                 },
                 {
-                  label: 'No procede',
+                  label: t('No procede'),
                   variant: 'text',
                   color: 'inherit',
                   onClick: () =>

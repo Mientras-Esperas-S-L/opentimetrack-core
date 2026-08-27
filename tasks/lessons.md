@@ -4453,3 +4453,61 @@ ejecutarse y ya había hecho su trabajo.
 las veces que se pone roja, sino por las decisiones que cambia mientras está en
 verde. Eso también es una razón para que su mensaje explique **por qué** falla y no
 solo que falla.
+
+## 272. Una medida que no ve la mitad es peor que no medir
+
+Llevaba tres vueltas diciendo «quedan 160 cadenas en 23 ficheros». Eran **719 en
+41**. La diferencia no era un margen de error: mi extractor de traducciones estaba
+hecho con expresiones regulares y se dejaba dos familias enteras.
+
+- Los **párrafos partidos** por un `<strong>` o un `<code>`: el patrón no cruzaba
+  el salto de línea, así que una frase de tres líneas con la cifra en negrita en
+  medio, sencillamente, no existía.
+- Los **rótulos dentro de un objeto** ---`{label: 'Pendiente'}`---, que es donde
+  viven todos los estados de `common.jsx`, o sea los que salen en todas las
+  pantallas a la vez.
+
+Lo caro no fue el número. Fue que **di por terminadas tres pantallas que no lo
+estaban**, y las cerré con su commit y su entrada en el cuaderno. Un hueco que
+nadie ha medido sigue estando a la vista de quien abra esa pantalla; un hueco que
+una medida declara inexistente ya no lo va a mirar nadie.
+
+**La regla**: antes de dejar que una medida gobierne el trabajo, comprobar contra
+un caso conocido **que la medida encuentra lo que ya sabes que está ahí**. Aquí el
+aviso llegó solo y por casualidad ---tres cadenas que había traducido «de más»
+resultaron estar en el fichero y no en mi lista---. Esa discrepancia era el
+contraste que no había hecho. Cuando aparezca una así, no es ruido: es la medida
+diciendo que está mal.
+
+Y el corolario de herramienta: para leer código, el árbol de sintaxis. `grep` sirve
+para encontrar dónde mirar, no para contar cuánto falta.
+
+## 273. Un mapa de constantes no se traduce donde se escribe
+
+`const KIND_LABELS = { ADD: 'Añadir un fichaje que falta' }` se evalúa **una vez, al
+cargar el módulo**, cuando todavía no se sabe en qué idioma va a mirarlo nadie.
+Poner `t()` ahí lo congela en el idioma del arranque, y encima con un `t` que a esa
+altura no existe.
+
+La solución no es dejarlo sin marcar: eso lo vuelve invisible para la comprobación
+de catálogos, que busca la cadena literal en el código. Es marcarlo con una función
+identidad ---`alCatalogo()` aquí, `gettext_noop` en gettext--- y traducir en el
+punto de uso.
+
+Y el detalle que casi se me escapa: ese mismo mapa alimentaba el **buscador**. Si
+solo se traduce donde se lee, el filtro sigue comparando contra el castellano y
+escribir «Canviar l'hora» en catalán no encuentra nada. **Un rótulo traducido tiene
+que estar traducido en los dos sitios: donde se pinta y donde se busca.**
+
+## 274. Un mecanismo nuevo entra con la prueba que lo mira
+
+`<Trans>` se estrenó en esta vuelta para las frases que llevan la cifra en negrita
+en medio. Las cinco pruebas de idioma que ya existían habrían seguido en verde con
+`<Trans>` completamente roto: ninguna miraba esas frases, y en pantalla se leería
+`<destacado>3 días</destacado>` tal cual sin que nada lo dijera.
+
+Lo barato fue no montar una prueba nueva: `05-ausencias` **ya fabricaba** el exceso
+de tope para comprobar el aviso, así que el dato estaba sembrado y solo había que
+mirar dos cosas más. Buscar la prueba que ya tiene el escenario montado sale más a
+cuenta que escribir una desde cero ---y la deja cubriendo algo más, en vez de
+sumar otro fichero a la tanda---.

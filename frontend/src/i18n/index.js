@@ -84,4 +84,21 @@ i18next.use(initReactI18next).init({
   // de caer a nada: gettext con una forma vacía no cae al original.
 })
 
+/** Mete una cadena en el catálogo sin traducirla todavía.
+ *
+ *  Los rótulos que viven en un mapa de constantes ---`{ADD: 'Añadir un fichaje
+ *  que falta'}`--- se escriben lejos de donde se pintan, y ahí arriba no hay
+ *  `t()` que valga: el mapa se evalúa una vez, al cargar el módulo, cuando
+ *  todavía no se sabe en qué idioma va a mirarlo nadie. Traducirlo ahí lo
+ *  congelaría en el idioma del arranque.
+ *
+ *  Así que la cadena se marca aquí y se traduce en el punto de uso, con `t()`.
+ *  Esto no hace nada ---devuelve lo que le dan--- y aun así es necesario: es lo
+ *  que hace que la comprobación de catálogos encuentre la cadena en el código,
+ *  y lo que distingue «pendiente de traducir» de «traducida en otro sitio».
+ *
+ *  Es `gettext_noop` del backend, con otro nombre.
+ */
+export const alCatalogo = (cadena) => cadena
+
 export default i18next

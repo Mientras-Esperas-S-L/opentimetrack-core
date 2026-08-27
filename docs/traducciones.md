@@ -1,18 +1,65 @@
 # Idiomas: qué está traducido y qué pide revisión
 
 El producto habla **castellano** entero. Del catalán y del gallego hay **el
-servidor traducido y la pantalla no**, y las traducciones que hay se hicieron
-**sin hablante nativo**. Las dos cosas hay que saberlas antes de enseñárselo a un
-cliente.
+servidor traducido y la pantalla a medias**, y las traducciones que hay se
+hicieron **sin hablante nativo**. Las dos cosas hay que saberlas antes de
+enseñárselo a un cliente.
 
 | Qué | Catalán y gallego |
 |---|---|
 | Lo que responde el servidor: correos, errores, avisos legales, tipos y estados | **Traducido** ---558 de 711 mensajes; el resto son etiquetas de campo que se dejan a propósito--- |
-| La pantalla: botones, rótulos, textos de cada página | **Solo el menú.** El catálogo del frontend tiene 23 claves y son las de la navegación; todo lo demás está en castellano fijo en el código |
+| La pantalla: botones, rótulos, textos de cada página | **En curso** ---313 de 966 cadenas al 28/08/2026. Enteras: Personas, Ajustes, Mi jornada, Centros de trabajo, Fichajes y Por decidir--- |
 
-Así que una empresa catalana vería hoy el menú en catalán, los correos y los
-errores en catalán, y el resto de la interfaz en castellano. **No se puede
-anunciar como «disponible en catalán»**, y así lo dice el dossier.
+Así que una empresa catalana ve hoy el menú, los correos y los errores en
+catalán, seis pantallas en catalán y el resto en castellano. **Hasta que esté
+entera no se puede anunciar como «disponible en catalán»**, y así lo dice el
+dossier.
+
+## Cómo se cuenta lo que falta
+
+```bash
+cd frontend
+npm run i18n:falta     # cuántas cadenas visibles no pasan por t(), por fichero
+npm run i18n:check     # y que ninguna traducción se haya quedado huérfana
+```
+
+Los dos scripts miran direcciones contrarias y hacen falta los dos.
+`comprobar-catalogos.mjs` comprueba que **toda traducción le corresponde a una
+cadena del código**; `lo-que-se-ve.mjs`, que **toda cadena visible del código
+pasa por el catálogo**.
+
+El segundo lee el **árbol de sintaxis**, no expresiones regulares, y no por
+gusto: la medida hecha con grep decía 160 cadenas cuando eran 719. Se dejaba los
+párrafos partidos por un `<strong>` ---el patrón no cruzaba el salto de línea---
+y los rótulos que viven dentro de un objeto, que es donde están los estados
+compartidos de `common.jsx`. Con esa cuenta se dieron por terminadas tres
+pantallas que no lo estaban.
+
+## Cómo se traduce una pantalla
+
+La clave **es la cadena en castellano**, no un identificador: `t('Ver también
+las bajas')`. El razonamiento entero está en `src/i18n/index.js` y se resume en
+que lo no traducido cae al castellano solo, igual que en el backend, y en que
+estas pantallas se revisan leyéndolas.
+
+Tres formas, según dónde esté la cadena:
+
+| Dónde | Cómo |
+|---|---|
+| Un texto o un rótulo | `t('Rechazar la solicitud')` |
+| Una frase con un dato o una etiqueta en medio | `<Trans i18nKey="… <destacado>{{exceso}}</destacado> …" values={…} components={{ destacado: <strong /> }} />` |
+| Un mapa de constantes, fuera de todo componente | `alCatalogo('Anular un fichaje')` al declararlo, y `t(MAPA[clave])` al pintarlo |
+
+`<Trans>` es para lo que no se puede partir. Envolver los trozos de «Las fechas
+se pusieron con **3 días** de antelación» por separado obligaría a traducir «de
+antelación, y el» suelto, que no es una frase en ningún idioma y en catalán ni
+siquiera va ahí.
+
+`alCatalogo()` es `gettext_noop` con otro nombre: el mapa se evalúa al cargar el
+módulo, cuando todavía no se sabe en qué idioma va a mirarlo nadie, así que la
+cadena se marca ahí y se traduce en el punto de uso. Y ojo con los mapas que
+además **alimentan un buscador**: si solo se traduce donde se pinta, el filtro
+sigue comparando contra el castellano y escribir en catalán no encuentra nada.
 
 ## Qué se traduce y qué no
 
@@ -40,8 +87,8 @@ no se notaba porque cada uno caía al castellano.
 
 ## Lo que pide revisión
 
-Las traducciones al catalán y al gallego las hizo Claude el **27/08/2026**, sin
-hablante nativo. Francisco lo aprobó así: «no vamos a disponer de nativos que lo
+Las traducciones al catalán y al gallego las hizo Claude desde el **27/08/2026**,
+sin hablante nativo. Francisco lo aprobó así: «no vamos a disponer de nativos que lo
 supervisen; haz lo que puedas. Si en un futuro tenemos que corregir traducciones,
 se hace».
 
@@ -52,6 +99,10 @@ Cada una lleva su marca en el catálogo:
 msgid "Sick leave"
 msgstr "Baixa mèdica"
 ```
+
+En el frontend no hay dónde poner esa marca ---el catálogo es un JSON, sin
+comentarios---, así que vale para todo el fichero: **`ca.json` y `gl.json` están
+sin revisar enteros**.
 
 Para verlas todas, o contarlas:
 

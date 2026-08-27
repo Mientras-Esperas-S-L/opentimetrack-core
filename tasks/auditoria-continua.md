@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 137 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas**, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 138 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---313 de 966 cadenas, medidas con el árbol y no con grep---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,66 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 138 --- La medida estaba mal, y con ella tres pantallas dadas por hechas (28/08)
+
+**Lo que se buscaba:** seguir con la tanda de Aplicaciones, Cuadrante y
+Permisos, que ya venía extraída y traducida de la vuelta anterior.
+
+**Lo que salió:** al contrastar las cadenas contra el catálogo, tres de las que
+había traducido «de más» resultaron estar en el fichero y no en mi lista. Mi
+extractor no las veía. Al mirar por qué, no era un caso raro: se dejaba dos
+familias enteras.
+
+- **Los párrafos partidos por un `<strong>` o un `<code>`.** El patrón no
+  cruzaba el salto de línea, así que una frase de tres líneas con la cifra en
+  negrita en medio no existía para él.
+- **Los rótulos dentro de un objeto** ---`{label: 'Pendiente'}`---. Ahí viven
+  todos los estados de `components/common.jsx`, o sea los que salen en **todas**
+  las pantallas a la vez.
+
+Con esa medida venía diciendo «quedan 160 cadenas en 23 ficheros». Rehecha con
+el árbol de sintaxis: **719 en 41 ficheros**. Y tres pantallas que había dado
+por terminadas ---Decisiones con 66 huecos, Ajustes con 51, Personas con 49---
+no lo estaban.
+
+Contar de menos no deja un hueco: deja un hueco **y** la impresión de que no lo
+hay. Es el mismo patrón que ya salió cuatro veces en la lista de agosto ---41
+esperas que eran 3, 27 fechas que eran 25, 501 huecos que eran 354, 4.917
+ficheros de los que 12 sí se usaban--- solo que aquí el recuento sin clasificar
+era mío y llevaba tres vueltas gobernando el trabajo.
+
+**Lo hecho:**
+
+- **`frontend/scripts/lo-que-se-ve.mjs`**, la medida de verdad, junto al
+  `comprobar-catalogos.mjs` que ya existía. Aquel mira que ninguna traducción se
+  haya quedado huérfana; este, que ninguna cadena visible se haya quedado fuera.
+  Es la base del guard que falta. `npm run i18n:falta`.
+- **`alCatalogo()`** en `src/i18n/index.js`, que es `gettext_noop` con otro
+  nombre: marca una cadena de un mapa de constantes para el catálogo sin
+  traducirla ahí ---el mapa se evalúa al cargar el módulo, cuando todavía no se
+  sabe en qué idioma va a mirarlo nadie--- y deja que `t()` la traduzca en el
+  punto de uso.
+- **Decisiones al 100 %**: 84 de 84 cadenas. Estrena `<Trans>` para las cuatro
+  frases que llevan la cifra en negrita en medio. Partirlas para poder
+  envolverlas obligaría a traducir «de antelación, y el» suelto, que no es una
+  frase en ningún idioma.
+- **Los rótulos que además se buscan.** `KIND_LABELS` alimenta el buscador y la
+  pantalla. Traducirlo solo donde se lee dejaría el filtro mirando el
+  castellano: escribir «Canviar l'hora» en catalán no habría encontrado nada.
+- **El catálogo**: 259 → **306 claves** por idioma.
+
+**La comprobación, y su contraste.** `<Trans>` es nuevo aquí y ninguna de las
+cinco pruebas de idioma lo miraba: si estuviera mal montado, todas seguirían en
+verde y en pantalla se leería `<destacado>3 días</destacado>`. La cobertura fue
+a `05-ausencias`, que es la prueba que ya fabrica el exceso de tope y por tanto
+ya tiene el dato sembrado --- se le añadió que la frase aparece en catalán y
+que la castellana ya no está. Contrastada quitando las dos claves catalanas a
+propósito: se pone roja.
+
+**Lo que queda:** 653 cadenas. Las de `components/common.jsx` y
+`components/punches.js` van primero aunque sean pocas, porque salen en todas las
+pantallas a la vez.
 
 ### Vuelta 137 --- Centros, Por decidir y Fichajes (27/08)
 

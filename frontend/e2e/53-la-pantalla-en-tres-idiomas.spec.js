@@ -97,6 +97,19 @@ const PANTALLAS = [
     control: { es: 'Hasta', ca: 'Fins a', gl: 'Ata' },
     rol: 'textbox',
   },
+  {
+    // El título no sirve de muestra aquí: «Por decidir» se escribe igual en
+    // castellano y en gallego. La muestra es el subtítulo, que sí cambia.
+    ruta: '/panel/decisiones',
+    titulo: { es: 'Por decidir', ca: 'Per decidir', gl: 'Por decidir' },
+    propio: {
+      es: 'Toda decisión queda registrada con su autor',
+      ca: 'Tota decisió queda registrada amb el seu autor',
+      gl: 'Toda decisión queda rexistrada co seu autor',
+    },
+    control: { es: 'Sin acuerdo', ca: 'Sense acord', gl: 'Sen acordo' },
+    rol: 'tab',
+  },
 ]
 
 test.describe('La pantalla, en los tres idiomas', () => {

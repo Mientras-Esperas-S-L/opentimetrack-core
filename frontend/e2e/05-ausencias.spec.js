@@ -163,6 +163,29 @@ test.describe('Resolver ausencias', () => {
 
       await page.reload()
       await expect(page.getByText(/se pasaría del tope|y el permiso da/).first()).toBeVisible()
+
+      // La frase lleva la cifra en negrita en medio, así que se arma con
+      // `Trans` y no con `t()`: es la única forma de que viaje entera al
+      // catálogo sin partirla en trozos que no son frases en ningún idioma.
+      // Si las etiquetas de `components` no encajaran con las de la clave, en
+      // pantalla se leería «<destacado>3 días</destacado>» tal cual.
+      await expect(page.getByText('<destacado>')).toHaveCount(0)
+      await expect(page.locator('[role="alert"] strong').first()).toBeVisible()
+
+      // Y en catalán entera. Sin esto, una clave que `Trans` no encontrara
+      // caería al castellano y no lo delataría nada: es el precio de que la
+      // clave **sea** el castellano, y aquí es donde se paga.
+      const idiomaAntes = (await api(page, '/auth/me/')).body?.locale ?? ''
+      try {
+        await api(page, '/auth/me/', { method: 'PATCH', body: { locale: 'ca' } })
+        await page.reload()
+        await expect(
+          page.getByText(/es passaria del límit|el permís en dona/).first(),
+        ).toBeVisible()
+        await expect(page.getByText(/se pasaría del tope|y el permiso da/)).toHaveCount(0)
+      } finally {
+        await api(page, '/auth/me/', { method: 'PATCH', body: { locale: idiomaAntes } })
+      }
     } finally {
       const fuera = await api(page, `/absences/${alta.body.id}/cancel/`, { method: 'POST' })
       expect([200, 204], 'la limpieza no retiró la solicitud').toContain(fuera.status)
