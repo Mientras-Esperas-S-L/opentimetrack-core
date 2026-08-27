@@ -48,6 +48,24 @@ export const buildTheme = (mode = 'light', idioma = 'es') =>
         primary: { main: mode === 'light' ? '#1b5e4a' : '#4db6a0' },
         secondary: { main: mode === 'light' ? '#b0533a' : '#e08a70' },
         success: { main: mode === 'light' ? '#2e7d52' : '#57c48c' },
+        // El `warning` de MUI ---#ed6c02--- da **3,11** con el texto blanco que
+        // el propio MUI le pone encima en un chip relleno, y el mínimo para
+        // texto normal es 4,5. Lo llevan dos estados de una corrección:
+        // «esperando a la empresa» y «esperando tu respuesta», o sea los dos
+        // que piden que alguien haga algo. Este ámbar da **5,26** y se
+        // distingue del terracota del `secondary`, que es lo otro que hay que
+        // cuidar: los dos estados no pueden parecer el mismo de un vistazo.
+        //
+        // En oscuro se queda el de MUI: ahí el chip pone texto casi negro
+        // encima y sale a 8,29.
+        warning: { main: mode === 'light' ? '#8f6400' : '#ffa726' },
+        // Lo mismo les pasaba a estos dos, y no lo vio ninguna pantalla: MUI
+        // les pone texto blanco encima ---su regla es ponerlo cuando el blanco
+        // llega a 3--- y se quedaban en **3,68** el rojo y **3,86** el azul.
+        // Estos llegan a 5,62 y 5,80. En oscuro los de MUI van bien, porque ahí
+        // el texto que ponen encima es casi negro.
+        error: { main: mode === 'light' ? '#c62828' : '#e57373' },
+        info: { main: mode === 'light' ? '#026aa7' : '#4fc3f7' },
         background:
           mode === 'light'
             ? { default: '#f6f7f5', paper: '#ffffff' }

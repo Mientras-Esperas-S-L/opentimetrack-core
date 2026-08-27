@@ -3694,3 +3694,104 @@ limpio se repite con la suite entera antes de escribirlo en ningún sitio**.
 
 Es el reverso de la lección 224: allí el detector tenía demasiado ruido, aquí
 tenía poco alcance. Las dos veces el error fue creerme el primer número.
+
+## 230. Un borrado masivo se hace en tres pasos, y ninguno es un `rm`
+
+Cuatro mil novecientos diecisiete ficheros aprobados para borrar, con el encargo
+explícito de tener cuidado con las comillas y las rutas. Lo que se hizo:
+
+1. **Copia primero.** Ocho megas comprimidos a 111 KB, y **leída** después para
+   comprobar que tenía dentro lo que decía. Una copia que no se ha abierto no es
+   una copia.
+2. **Simulacro que no escribe.** Cuenta, y sobre todo comprueba las dos cosas que
+   convierten un borrado en un desastre: **cuántos candidatos caen fuera de la
+   raíz** y **cuántos son enlaces simbólicos**. Las dos tienen que dar cero, y si
+   no dan cero no se sigue.
+3. **La purga en Python, nunca en shell.** No por gusto: un `find … -delete` con
+   una ruta mal entrecomillada o una variable vacía borra otra cosa, y no hay
+   forma de expresar «solo si además no está referenciado» sin salirse del shell
+   igualmente.
+
+Y los cinturones se repiten **dentro** del script que borra, no solo en el
+simulacro: entre una cosa y otra pueden pasar minutos, y lo que se comprobó
+entonces no es lo que hay ahora.
+
+**Regla**: para borrar en masa, la ruta se resuelve a absoluta y se comprueba que
+cuelga de donde debe (`RAIZ in p.resolve().parents`), cada elemento pasa las tres
+condiciones ---dentro, sin referencia, no enlace--- y al terminar se cuenta lo que
+queda **y lo que tenía que sobrevivir**. Contar solo lo borrado no dice si se
+llevó por delante algo más.
+
+## 231. La regla de contraste de MUI no es la de manual, y la diferencia cambia el veredicto
+
+Al escribir la prueba que cuenta el contraste de la paleta, decidí el color del
+texto con la regla clásica: claro si el fondo es oscuro, oscuro si es claro,
+partiendo por luminancia 0,179.
+
+MUI no hace eso. `getContrastText` pone **blanco siempre que el blanco llegue a 3**
+sobre ese fondo, y solo recurre al casi negro cuando no llega. Con el rojo de
+error la diferencia era: mi regla decía «texto oscuro, 4,18» ---casi bien--- y la
+de verdad dice «texto blanco, 3,68» ---claramente mal---.
+
+O sea que la aproximación de manual **daba por bueno un color que no se lee**, y
+además por un camino que parecía más exigente.
+
+**Regla**: al medir contraste de una paleta, el color del texto lo decide la
+librería, no la teoría. Copia su regla ---son tres líneas--- o pregúntale al tema
+ya construido. Y esto vale para cualquier comprobación sobre una librería: lo que
+importa es lo que **hace**, no lo que uno haría en su lugar.
+
+## 232. Un barrido de pantallas solo ve los estados que hoy están en pantalla
+
+Ya había una prueba que recorre pantallas midiendo contraste. No cazó que el
+ámbar de aviso estuviera a 3,11 durante meses, porque el estado que lo lleva
+---una corrección «esperando a la empresa»--- no aparecía en ninguna de las
+pantallas que recorre. Saltó el día que la demo tuvo una por casualidad.
+
+El propio tema ya lo decía de un color anterior: «no lo vio el barrido ---su
+estado no aparecía en ninguna de las pantallas recorridas--- sino la cuenta».
+Estaba escrito y se repitió igual.
+
+**Regla**: una comprobación que recorre lo que se ve depende de que ese día se
+vea. Cuando exista una **fuente** de la que sale lo que se ve ---una paleta, un
+catálogo de estados, una tabla de mensajes--- la comprobación va sobre la fuente,
+y el recorrido de pantallas se queda para lo que solo existe al montarlo. Las dos,
+no una.
+
+Y se nota en lo que encuentran: la del recorrido cazó **un** color; la de la
+paleta, al escribirla, cazó **tres**.
+
+## 233. Un residuo no solo estorba: puede cambiar una regla de negocio de toda la empresa
+
+La prueba de las cuatro manos ---quien registra una ausencia no puede
+aprobarla--- fallaba a ratos con **200 donde espera 409**. Parecía la separación
+de funciones rota, que sería gravísimo.
+
+No lo era, y la cadena merece contarse entera:
+
+1. Otra prueba fallaba por una espera por reloj y dejaba **un departamento con
+   responsable**.
+2. Que exista un departamento con responsable activa el **alcance por
+   departamentos** en toda la empresa.
+3. Con el alcance activo, el único responsable de la demo pasa a ver solo su
+   departamento, y deja de alcanzar a la administradora.
+4. Sin nadie más que pueda decidir sobre ella, el producto **la deja aprobar** ---y
+   hace bien: lo contrario deja un asiento del registro mal con ninguna forma de
+   arreglarlo, que es lo que documenta `someone_else_could_decide` con un caso
+   real---.
+5. La prueba se para ahí y deja **la ausencia aprobada**. Una aprobada no se
+   puede cancelar, así que la limpieza del principio, que solo cancela
+   pendientes, no la recoge nunca. **A partir de ahí no vuelve a pasar jamás**:
+   las siguientes corridas chocan por solapamiento antes de llegar a lo que
+   querían probar. Medido: 43 ausencias apiladas en las mismas dos fechas, 42
+   canceladas y una aprobada bloqueando al resto.
+
+**Regla**: cuando una prueba falle con un veredicto de negocio inesperado, antes
+de acusar al producto pregunta **qué hay en la base que cambie la regla**. Aquí un
+departamento de usar y tirar movía el alcance de toda la empresa, y el producto
+contestaba correctamente a un estado que nadie había querido montar.
+
+**Y la lección de diseño**: una prueba que usa fechas fijas y limpia solo un
+estado se rompe **de forma permanente** en cuanto falla una vez. La de al lado, en
+el mismo fichero, ya usaba días propios de cada corrida y explicaba por qué. La
+regla estaba escrita a diez líneas de distancia.

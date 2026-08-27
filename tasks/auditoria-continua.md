@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 124 · Vueltas seguidas sin hallazgos: 2
+Vueltas dadas: 125 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -153,13 +153,11 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Hallazgos abiertos
 
-- **4.917 justificantes huérfanos en el disco de desarrollo.** (v98, **causa
-  encontrada en la v122**) Eran 4.391 el 26/08, 4.625 unas horas después y 4.936
-  al medir hoy: no era un resto antiguo, era un flujo. Las pruebas escribían en el
-  almacén de desarrollo y su borrado va en `on_commit`, que en una prueba no se
-  ejecuta nunca. **Ya no crecen** ---`MEDIA_ROOT` temporal de sesión--- pero los
-  que hay siguen ahí: borrarlos es un `rm` de casi cinco mil ficheros y esa
-  decisión no es de auditoría.
+- ~~**4.917 justificantes huérfanos en el disco de desarrollo.**~~ (v98) **CERRADO
+  el 27/08.** La causa se arregló en la v122 ---las pruebas escribían en el almacén
+  de desarrollo y su borrado va en `on_commit`, que en una prueba no corre--- y los
+  que ya estaban se retiraron en la v125 con el visto bueno de Francisco: 4.917
+  ficheros, 8,1 MiB, cero fallos, quedan los 12 que alguna ausencia referencia.
 
 - ~~**4.391 justificantes huérfanos en el disco de desarrollo.**~~ (v98) 8,1 MiB de
   ficheros sin ninguna fila que los apunte, acumulados a razón de mil por tanda
@@ -370,6 +368,91 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 125 --- Retirados los huérfanos, y tres colores que no se leían (27/08)
+
+**El bucle cambia de naturaleza aquí.** Francisco revisó los hallazgos abiertos el
+27/08 y aprobó una lista de diez tareas; a partir de esta vuelta el `/loop` no
+busca lentes nuevas, **ejecuta esa lista**. El contador de vueltas en blanco
+---que iba por 2 de 3--- queda en suspenso: no aplica a un bucle que no está
+buscando.
+
+#### Lo hecho: la tarea 1
+
+Retirados **4.917 ficheros** de `media/justifications`, 8,1 MiB. Quedan los **12**
+que alguna ausencia referencia, y los doce siguen en disco.
+
+El encargo venía con un aviso ---«cuidado con las comillas y las rutas»--- así que
+se hizo en tres pasos y sin shell:
+
+1. **Copia de seguridad** completa antes de tocar nada: 4.932 entradas en 111 KB,
+   comprobada leyéndola. Está en el directorio de trabajo de la sesión.
+2. **Simulacro** que no escribe: contó 4.929 ficheros, 12 referenciados, 4.917
+   candidatos, y comprobó lo que de verdad importa ---**cero candidatos fuera de
+   la raíz y cero enlaces simbólicos**---.
+3. **La purga**, en Python y no en shell, repitiendo los mismos cinturones ---la
+   raíz existe, se llama `justifications`, cuelga de `MEDIA_ROOT`--- y exigiendo
+   las tres condiciones por fichero: dentro de la raíz, sin referencia, y fichero
+   de verdad y no enlace.
+
+Resultado: 4.917 borrados, **cero fallos**, y el resto de `media/` intacto. La
+suite de backend en verde después, y el almacén sigue en 12 tras correrla ---que
+es lo que arregló la vuelta 122---.
+
+#### Y de camino, tres colores de la paleta
+
+La tanda de navegador que cerraba la vuelta salió con cinco rojos. Cuatro eran
+esperas por reloj con los contenedores recién levantados ---pasan aislados--- y el
+quinto no: **«esperando a la empresa» estaba a 3,11 de contraste** sobre el blanco
+que MUI le pone encima, cuando el mínimo para texto normal es 4,5.
+
+Ese estado no aparecía en ninguna de las pantallas que recorre el barrido de
+contraste, y saltó porque la demo tenía hoy una corrección en él. El tema ya
+avisaba de esto mismo sobre un color anterior: «no lo vio el barrido ---su estado
+no aparecía en ninguna de las pantallas recorridas--- sino la cuenta».
+
+Así que la prueba nueva **cuenta la paleta** en vez de recorrer pantallas. Y al
+escribirla aparecieron dos más: el rojo de error a **3,68** y el azul de
+información a **3,86**, ninguno de los dos declarado en el tema ---venían de MUI---
+y ninguno visto nunca por el recorrido.
+
+Los tres declarados ahora con tonos propios: 5,26 el ámbar, 5,62 el rojo y 5,80 el
+azul. En oscuro los de MUI ya iban bien, porque ahí el texto que llevan encima es
+casi negro.
+
+**Un tropiezo que casi lo estropea**: la primera versión de la prueba decidía el
+color del texto por luminancia, que es la regla de manual. MUI usa otra ---blanco
+siempre que el blanco llegue a 3--- y con la mía el rojo salía a 4,18, casi
+aprobado. Con la de verdad, 3,68.
+
+#### Y la cadena que llevaba desde la vuelta 96
+
+La tanda de cierre volvió con dos rojos, **distintos** de los anteriores: la
+prueba de las cuatro manos con **200 donde espera 409**, y el guard cazando un
+departamento. Perseguirlo hasta el final dio la explicación de los rojos
+intermitentes que arrastraba el proyecto:
+
+1. Una prueba falla por espera por reloj y deja **un departamento con
+   responsable**.
+2. Eso activa el **alcance por departamentos** en toda la empresa.
+3. Con el alcance activo, el único responsable de la demo deja de alcanzar a la
+   administradora.
+4. Sin nadie más que pueda decidir sobre ella, **el producto la deja aprobar** ---y
+   hace bien: lo contrario deja un asiento mal sin forma de arreglarlo---.
+5. La prueba se para ahí y deja la ausencia **aprobada**. Una aprobada no se puede
+   cancelar, así que su propia limpieza no la recoge. **A partir de ahí no vuelve a
+   pasar nunca**: choca por solapamiento antes de llegar a lo que quiere probar.
+
+Medido al desenredarlo: **43 ausencias apiladas** en las mismas dos fechas, 42
+canceladas y una aprobada bloqueando a las demás.
+
+Arreglado dando a esa prueba **días propios de cada corrida**, que es lo que ya
+hacía la prueba de al lado en el mismo fichero, con el porqué escrito a diez
+líneas de distancia. Tres corridas seguidas en verde, donde antes la segunda ya
+fallaba.
+
+**Esto confirma que la tarea 6 ---las esperas por reloj--- es la raíz**, y pasa a
+ser la siguiente.
 
 ### Vuelta 124 --- Las trece comprobaciones del cuadrante, rotas una a una (27/08) --- LIMPIA
 

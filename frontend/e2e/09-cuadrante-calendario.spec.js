@@ -263,6 +263,14 @@ test.describe('Calendario del equipo', () => {
     expect(ruido()).toEqual([])
   })
 
+  const DIAS_PROPIOS = (() => {
+    const dia = 24 + (Date.now() % 4)
+    return {
+      desde: `2026-12-${dia}`,
+      hasta: `2026-12-${dia + 1}`,
+    }
+  })()
+
   test('quien registra una ausencia no puede aprobarla', async ({ page }) => {
     await irA(page, '/panel/calendario', 'Calendario del equipo')
     await limpiarAusenciasDePrueba(page)
@@ -284,8 +292,19 @@ test.describe('Calendario del equipo', () => {
       body: {
         employee: yo.body.user?.id ?? yo.body.id,
         leave_type: vacaciones.id,
-        start_date: '2026-12-21',
-        end_date: '2026-12-22',
+        // Días propios de cada corrida, como ya hace la prueba de más arriba y
+        // por lo mismo. Con fechas fijas esto se rompía **para siempre**: si el
+        // `approve` de abajo contesta 200 en vez de 409, la prueba se para ahí y
+        // deja la ausencia **aprobada** --- y una aprobada no se puede cancelar,
+        // así que la limpieza del principio, que solo cancela pendientes, no la
+        // recoge nunca. La siguiente corrida choca por solapamiento y falla
+        // antes incluso de llegar a lo que quiere probar. Medido: 43 ausencias
+        // apiladas en el 21 y 22 de diciembre, 42 canceladas y una aprobada
+        // bloqueando a todas las demás.
+        //
+        // El rango es 24-27 para no pisar el 3-23 que usa la de arriba.
+        start_date: DIAS_PROPIOS.desde,
+        end_date: DIAS_PROPIOS.hasta,
         reason: `Prueba ${marca()}`,
       },
     })
