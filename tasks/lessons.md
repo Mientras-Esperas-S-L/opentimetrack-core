@@ -3612,3 +3612,30 @@ el cuadrante no pueda ver un año entero».
 sus usos. Un dato que existe solo para que conste la cifra es una decisión
 legítima ---el marco legal es también documentación--- y en este proyecto suele
 venir con el porqué al lado. Contar `grep` de usos dice si se ejecuta, no si debe.
+
+## 226. Una limpieza en `on_commit` no limpia nada en una prueba
+
+El almacén de desarrollo tenía **4.936 ficheros y 12 referenciados por una
+ausencia**: 8,1 MiB de justificantes huérfanos. Y crecían de forma medible tanda a
+tanda ---4.391 por la mañana, 4.625 unas horas después, 4.936 al medir hoy---, lo
+que descartaba que fueran restos antiguos de algo.
+
+El producto los borra bien: `descartar_justificante` lo hace en
+`transaction.on_commit`, que es lo correcto ---no se tira un fichero hasta que la
+fila que lo suelta está confirmada---. Pero una prueba con `django_db` **nunca
+confirma su transacción**, así que ese `on_commit` no se ejecuta jamás. La
+limpieza del producto es correcta y en pruebas no llega a correr.
+
+Y como `pytest` corría con los ajustes de desarrollo, escribía en el almacén de
+desarrollo. Dos cosas correctas por separado ---la limpieza diferida y reutilizar
+los ajustes de dev--- que juntas hacen un almacén que solo crece.
+
+**Regla**: si algo se borra en `on_commit`, en pruebas **no se borra**. Cuando eso
+toque disco, el arreglo no es limpiar en cada prueba: es que las pruebas escriban
+en otro sitio ---un `MEDIA_ROOT` temporal de sesión--- para que da igual que no se
+limpie.
+
+**Y la señal que lo delató**: el ratio. Cuatro mil novecientos huérfanos frente a
+doce vivos no es un descuido acumulado, es un flujo que nadie cierra. Cuando la
+proporción entre basura y datos buenos es de cientos a uno, lo que hay que buscar
+es quién escribe, no quién olvidó borrar.

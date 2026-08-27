@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 121 · Vueltas seguidas sin hallazgos: 1
+Vueltas dadas: 122 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -153,7 +153,15 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Hallazgos abiertos
 
-- **4.391 justificantes huérfanos en el disco de desarrollo.** (v98) 8,1 MiB de
+- **4.917 justificantes huérfanos en el disco de desarrollo.** (v98, **causa
+  encontrada en la v122**) Eran 4.391 el 26/08, 4.625 unas horas después y 4.936
+  al medir hoy: no era un resto antiguo, era un flujo. Las pruebas escribían en el
+  almacén de desarrollo y su borrado va en `on_commit`, que en una prueba no se
+  ejecuta nunca. **Ya no crecen** ---`MEDIA_ROOT` temporal de sesión--- pero los
+  que hay siguen ahí: borrarlos es un `rm` de casi cinco mil ficheros y esa
+  decisión no es de auditoría.
+
+- ~~**4.391 justificantes huérfanos en el disco de desarrollo.**~~ (v98) 8,1 MiB de
   ficheros sin ninguna fila que los apunte, acumulados a razón de mil por tanda
   desde el 12/08. La causa está arreglada ---sustituir un justificante ya borra el
   anterior--- pero **lo ya acumulado sigue ahí**, y son datos del art. 9. Se
@@ -362,6 +370,55 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 122 --- Las pruebas escribían en el almacén de desarrollo (27/08)
+
+Lente: **los ficheros que entran**, los justificantes de una ausencia.
+
+#### Lo que aguantó, y es mucho
+
+- **La descarga, con los cuatro roles.** El interesado la obtiene y **no** deja
+  apunte ---leer lo propio no deja rastro---; administración la obtiene y **sí**
+  deja apunte; un colega y otra empresa reciben **404**, no 403, para no
+  confirmar que la ausencia existe.
+- **Las firmas de bytes**, que el módulo ya comprobaba: un PNG llamado
+  `parte.pdf` y un HTML llamado `foto.png` se rechazan. También el fichero vacío.
+- **Los nombres torcidos**, saneados o rechazados: `../../../etc/passwd.pdf` acabó
+  guardado como `passwd_PRPASzA.pdf` ---la ruta se descarta---, la comilla y el
+  salto de línea desaparecen, el nombre de trescientos caracteres se trunca y
+  `...pdf` da 400.
+
+#### Lo que no
+
+Al retirar los ficheros de mi propia sonda apareció el número: **4.936 ficheros
+en el almacén y 12 referenciados por una ausencia**. 8,1 MiB de huérfanos. Y
+creciendo de forma medible: **4.391** el 26/08 por la mañana (v98), **4.625** unas
+horas después (v108), **4.936** hoy.
+
+La causa no es el producto. `descartar_justificante` borra el fichero en
+`transaction.on_commit`, que es lo correcto ---no se tira un fichero hasta que la
+fila que lo suelta está confirmada---. Pero **una prueba con `django_db` nunca
+confirma su transacción**, así que ese borrado no se ejecuta jamás. Y como pytest
+corre con los ajustes de desarrollo, escribía en `media/` de desarrollo.
+
+Dos cosas correctas por separado que juntas hacen un almacén que solo crece.
+
+#### Qué se ha hecho
+
+`MEDIA_ROOT` a un temporal de sesión en `conftest.py`. Comprobado: la suite
+entera ---1.252 pruebas--- deja el almacén en los mismos 4.929 ficheros, donde
+antes cada tanda añadía cientos.
+
+Dos pruebas, y la segunda es el contraste: que el almacén siga siendo escribible,
+porque un `MEDIA_ROOT` apuntando a un sitio inválido pasaría la primera y rompería
+el producto.
+
+#### Pendiente de una decisión
+
+**Los 4.917 huérfanos que ya están** siguen ahí. Son 8,1 MiB de ficheros de
+prueba en `media/justifications/` y borrarlos es un `rm` de casi cinco mil
+ficheros en la máquina: **no se hace sin que Francisco lo diga**. Lo que sí está
+hecho es que dejen de aparecer.
 
 ### Vuelta 121 --- Los contenedores vacíos, uno a uno (27/08) --- LIMPIA
 
