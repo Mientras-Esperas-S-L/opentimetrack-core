@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 122 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 123 · Vueltas seguidas sin hallazgos: 1
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -370,6 +370,37 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 123 --- Los efectos diferidos, y cuáles prueba alguien (27/08) --- LIMPIA
+
+Lente: **todo lo que va en `on_commit`**, que sale de la vuelta anterior: si algo
+se hace ahí, en una prueba **no se hace**, y eso puede dejar comprobaciones que
+pasan siempre.
+
+Seis efectos diferidos: el apunte del rastro, tres avisos de corrección y el
+borrado del justificante.
+
+#### Primer ángulo: las aserciones que podrían no comprobar nada
+
+Una prueba que afirme «no se mandó correo» sin capturar los callbacks pasa
+siempre. Salieron **ocho candidatas** y **las ocho son válidas**: los correos de
+invitación, de contraseña y de recordatorio se mandan **directamente** con
+`send_mail`. Solo los de corrección son diferidos, y sus pruebas sí capturan.
+
+La comprobación que las descartó cuesta un `grep`: no es «¿captura?», es «¿este
+efecto es diferido?».
+
+#### Segundo ángulo: qué efecto diferido no prueba nadie
+
+Los tres avisos de corrección ---al proponer, al retirar y al resolver--- **no
+aparecen por su nombre en ninguna prueba**. Parecía el hallazgo.
+
+La medición buena no es buscar el nombre: es **silenciar la línea y ver qué se
+rompe**. Silenciando cada uno de los tres, cada vez falló exactamente una prueba.
+Los tres están cubiertos, por pruebas que los ejercitan por el endpoint y miran el
+buzón sin nombrar la función. Y el borrado del justificante tiene la suya.
+
+`grep` del nombre mide cómo están escritas las pruebas, no qué cubren.
 
 ### Vuelta 122 --- Las pruebas escribían en el almacén de desarrollo (27/08)
 

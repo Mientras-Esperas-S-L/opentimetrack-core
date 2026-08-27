@@ -3639,3 +3639,37 @@ limpie.
 doce vivos no es un descuido acumulado, es un flujo que nadie cierra. Cuando la
 proporción entre basura y datos buenos es de cientos a uno, lo que hay que buscar
 es quién escribe, no quién olvidó borrar.
+
+## 227. Para saber si algo está probado, rómpelo
+
+Los tres avisos que el producto manda en `on_commit` ---al proponer una
+corrección, al retirarla y al resolverla--- **no aparecían por su nombre en
+ninguna prueba**. Con veintidós vueltas de «la pieza está hecha y desconectada»
+detrás, eso olía a que el aviso del art. 4.b no lo verificaba nadie.
+
+La medición correcta no es buscar el nombre: es **silenciar la línea y ver qué se
+pone rojo**. Silenciando cada uno de los tres, cada vez falló exactamente una
+prueba. Los tres estaban cubiertos, por pruebas que los ejercitan a través del
+endpoint y miran el buzón, sin nombrar la función.
+
+**Regla**: `grep` del nombre de una función en las pruebas mide **cómo están
+escritas**, no qué cubren. Una prueba de extremo a extremo bien hecha no nombra
+casi nada de lo que ejercita. Cuando quieras saber si algo está protegido,
+quítalo y corre la suite; si no se rompe nada, ahí tienes la respuesta, y si se
+rompe sabes además **cuál** es la prueba que lo vigila.
+
+## 228. Una aserción negativa solo vale si el efecto podía ocurrir
+
+Buscando pruebas que afirmen que **no** se manda un correo sin capturar los
+callbacks ---que serían pruebas que pasan siempre, porque en una prueba
+`on_commit` no corre--- salieron ocho candidatas.
+
+Las ocho eran válidas: los correos de invitación, de contraseña y de
+recordatorio se mandan **directamente** con `send_mail`, no en `on_commit`. Solo
+los tres avisos de corrección son diferidos, y sus pruebas sí capturan.
+
+**Regla**: antes de acusar a un `assert not X` de no comprobar nada, mira si `X`
+podía llegar a ocurrir en ese contexto. La pregunta no es «¿captura los
+callbacks?» sino «¿este efecto es diferido?». Ocho de quince candidatos se caen
+con esa sola comprobación, y hacerla cuesta un `grep` por el sitio donde se
+manda.
