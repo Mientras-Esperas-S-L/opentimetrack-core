@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 108 · Vueltas seguidas sin hallazgos: 1
+Vueltas dadas: 109 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -264,6 +264,11 @@ completo (evidencia y refutación) está en el registro del workflow.
   **Es decisión de producto, no arreglo.** Preguntarlo antes de tocar nada. El
   manual dice ya lo que pasa hoy (§2), que antes describía otra cosa.
 
+- **El lote de informes de toda la plantilla, sin comprobar.** (v109) El botón
+  existe y la sonda no llegó a ver qué produce ---esperaba sesenta segundos y el
+  tope de una prueba son treinta---. Falta abrir esa salida y mirarle los bytes,
+  que es justo lo que destapó el fallo del sello en las otras dos.
+
 - **Cuarenta y dos esperas por reloj en la suite de Playwright**, repartidas en
   veintiún ficheros. Una de ellas ---`waitForTimeout(2500)`--- rompía la tanda
   entera al final de una corrida larga, y el mensaje del fallo no se parecía a la
@@ -340,6 +345,73 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 109 --- El informe acusaba de manipulación a 577 fichajes intactos (27/08)
+
+Lente: **Inspección pidiendo un periodo**, uno de los cuatro perfiles, haciendo
+su tarea entera y ---esto es lo que la hizo rendir--- **abriendo lo que se
+descarga**.
+
+El PDF empieza por `%PDF-1.4` y el CSV por `Registro`; los nombres llevan
+apellido y periodo. Todo bien hasta abrir el CSV y leerlo:
+
+    2026-08-03;07:53;12:53;05:00;un fichaje ya no cuadra con su sello de
+    integridad: se alteró fuera de la aplicación
+
+**Las siete filas con fichajes, todas.** Es la acusación más grave que ese
+documento puede hacer, y la hacía sobre registros que nadie había tocado.
+
+#### La causa
+
+`compute_hash` sellaba `timestamp.isoformat()`, y esa cadena no depende solo del
+instante sino del huso en que esté el objeto que lo lleva:
+
+    2026-07-02T06:58:00+02:00   <- construido en la hora de la empresa
+    2026-07-02T04:58:00+00:00   <- releído de la base, que devuelve UTC
+
+Mismo momento, dos huellas. Todo lo escrito con hora local ---la semilla, una
+importación, cualquier integración que arme el instante en el huso del centro---
+se sellaba con una cadena y se verificaba con la otra.
+
+Medido antes de tocar nada: **577 de 1.185 fichajes de la empresa de
+demostración daban el sello por roto** ---el 100 % de los `MOBILE`, el 100 % de
+los `TERMINAL` y el 28 % de los `WEB`--- y **los 577 cuadraban en hora local**.
+Ninguno quedaba sin explicar, que es lo que convierte una hipótesis en una causa.
+
+De paso, otra afirmación del código que no se cumplía: `seed_demo._history` dice
+«the hash still comes out correct: it is computed on save from the fields». No
+salía correcto.
+
+#### El arreglo, sin reescribir un solo sello
+
+El módulo lo prohíbe por escrito ---«reescribir un sello guardado es exactamente
+la manipulación que el sello existe para hacer visible»---, así que:
+
+- **`hash v4`**: igual que la v3 con el instante en UTC. Lo que se grabe desde
+  ahora tiene una sola escritura posible.
+- **Las anteriores** sellaron una representación, así que se prueban las
+  escrituras válidas del mismo instante ---la de la persona y la de la empresa---.
+  No afloja nada: todas describen el mismo momento.
+
+De 577 rotos a **cero en toda la base**.
+
+#### Y la mitad del trabajo fue comprobar que no se afloja
+
+Porque un arreglo así puede convertirse en un permiso. Comprobado en caliente,
+por SQL directo contra la base: adelantar el fichaje **dos horas justas** ---el
+desfase de Madrid en verano, el caso que más de cerca pasa--- sigue dando el
+sello por roto, y cambiar el origen también. El desfase va dentro de la cadena,
+así que la misma hora escrita en otro huso no se confunde con otra hora.
+
+Ocho pruebas, cuatro de ellas alteraciones de verdad que tienen que seguir
+cazándose.
+
+#### Lo que queda de esta lente
+
+El botón **«Generar los de toda la plantilla»** no se llegó a comprobar: la sonda
+esperaba la descarga sesenta segundos y el tope de una prueba son treinta, así
+que se cortó sin decir si produce un ZIP, un fichero o nada. Queda para la
+siguiente, y con ello «comprobar los bytes» de esa tercera salida.
 
 ### Vuelta 108 --- Las salvaguardas de la base, por su estado real (27/08) --- LIMPIA
 

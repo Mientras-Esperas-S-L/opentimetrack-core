@@ -15,6 +15,7 @@ Three rules govern this module, and none of them is negotiable:
 from __future__ import annotations
 
 import hashlib
+from datetime import UTC
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -26,7 +27,7 @@ from apps.common.models import TenantOwnedModel
 #: Never rewrite a stored hash to match a new payload: that is exactly the
 #: manipulation the hash exists to make visible. Add a version instead, and let
 #: old events keep verifying under the rules they were recorded with.
-CURRENT_HASH_VERSION = 3
+CURRENT_HASH_VERSION = 4
 
 
 class PunchType(models.TextChoices):
@@ -311,7 +312,9 @@ class Punch(TenantOwnedModel):
             return self._hash_v1()
         if self.hash_version == 2:
             return self._hash_v2()
-        return self._hash_v3()
+        if self.hash_version == 3:
+            return self._hash_v3()
+        return self._hash_v4()
 
     def _hash_v1(self) -> str:
         """Original payload. Included the IP, which turned out to be a mistake.
@@ -373,12 +376,80 @@ class Punch(TenantOwnedModel):
             self.flexibility_measure,
         )
 
+    def _hash_v4(self) -> str:
+        """Igual que la v3, con el instante **en UTC**.
+
+        Las tres anteriores sellaban `timestamp.isoformat()` tal cual, y esa
+        cadena no depende solo del instante sino de en qué huso esté el objeto
+        que lo lleva. El mismo fichaje da dos cadenas distintas:
+
+            2026-07-02T06:58:00+02:00   <- construido en la hora de la empresa
+            2026-07-02T04:58:00+00:00   <- releído de la base, que devuelve UTC
+
+        Así que un fichaje escrito con la hora local ---una importación, la
+        semilla, cualquier integración que arme el instante en el huso del
+        centro--- se sellaba con una cadena y se verificaba con la otra. Medido
+        sobre la base de desarrollo: **577 de 1.185 fichajes daban el sello por
+        roto, y los 577 cuadraban en hora local**. El informe del art. 34.9 los
+        acusaba de haberse «alterado fuera de la aplicación» sin que nadie los
+        hubiera tocado.
+
+        Un sello tiene que sellar el hecho, no cómo se escribió el hecho.
+        """
+        return self._digest(
+            str(self.employee_id),
+            str(self.tenant_id),
+            self.timestamp.astimezone(UTC).isoformat(),
+            self.punch_type,
+            self.source,
+            self.source_application,
+            str(self.recorded_by_id or ""),
+            self.interval,
+            self.work_mode,
+            self.hours_nature,
+            self.overtime_settlement,
+            "1" if self.force_majeure else "0",
+            self.flexibility_measure,
+        )
+
     @staticmethod
     def _digest(*parts: str) -> str:
         return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
 
+    #: Los husos con los que se pudo haber escrito un instante antes de la v4.
+    def _husos_posibles(self):
+        for donde in (self.employee, self.tenant):
+            zona = getattr(donde, "tzinfo", None)
+            if zona is not None:
+                yield zona
+
     def verify_hash(self) -> bool:
-        return self.hash_integrity == self.compute_hash()
+        """Si el fichaje sigue siendo el que se grabó.
+
+        Para la v4 es una comparación y ya está: el instante va en UTC, que es
+        una sola cadena.
+
+        Las anteriores sellaron la **representación**, así que el mismo instante
+        tiene más de una escritura válida y hay que probarlas. Esto no afloja
+        nada: todas describen el mismo momento, así que cambiar la hora ---o el
+        tipo, el origen o la naturaleza--- sigue rompiendo el sello igual. Lo
+        único que deja de ocurrir es acusar de manipulación a un fichaje que
+        nadie tocó.
+        """
+        if self.hash_integrity == self.compute_hash():
+            return True
+        if self.hash_version >= 4:
+            return False
+
+        original = self.timestamp
+        try:
+            for zona in self._husos_posibles():
+                self.timestamp = original.astimezone(zona)
+                if self.hash_integrity == self.compute_hash():
+                    return True
+        finally:
+            self.timestamp = original
+        return False
 
     def save(self, *args, **kwargs):
         if not self.hash_integrity:

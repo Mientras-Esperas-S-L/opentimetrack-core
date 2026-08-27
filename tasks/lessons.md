@@ -3128,3 +3128,52 @@ para las constraints ---una `NOT VALID` no se comprobó sobre lo que ya había--
 Cuando una comprobación acuse a muchas cosas a la vez, sospecha de la
 comprobación antes que del código --- que es la misma regla que ya vale para las
 pruebas.
+
+## 204. Un sello tiene que sellar el hecho, no cómo se escribió el hecho
+
+`compute_hash` metía en la huella `timestamp.isoformat()`. Esa cadena no depende
+solo del instante: depende del huso en que esté el objeto que lo lleva.
+
+    2026-07-02T06:58:00+02:00   <- construido en la hora de la empresa
+    2026-07-02T04:58:00+00:00   <- releído de la base, que devuelve UTC
+
+Es el mismo momento y son dos huellas distintas. Todo lo que se escribiera con
+hora local ---una importación, la semilla, cualquier integración que arme el
+instante en el huso del centro--- se sellaba con una cadena y se verificaba con
+la otra. **577 de 1.185 fichajes de la base de desarrollo daban el sello por
+roto, y los 577 cuadraban en hora local.** Cero quedaban sin explicar.
+
+Lo caro no era el número: el informe del art. 34.9 los sacaba con la observación
+«un fichaje ya no cuadra con su sello de integridad: se alteró fuera de la
+aplicación». Un producto cuya razón de ser es dar fe acusaba de manipulación a
+registros que nadie había tocado, en el documento que se entrega a la Inspección.
+
+**Regla**: lo que entra en una huella va **normalizado**. Un instante, en UTC;
+un decimal, con su escala fija; un texto, con su forma Unicode decidida. Si dos
+escrituras del mismo dato dan huellas distintas, lo que se está sellando es la
+escritura.
+
+**Y el corolario, que es lo que hace esto peligroso**: este fallo se manifiesta
+como *acusación*, no como error. Nada peta, ningún registro falla, ninguna
+prueba se pone roja; solo aparece una frase en un documento diciendo que alguien
+manipuló algo. Un fallo que se disfraza de hallazgo es de los que más tardan en
+mirarse, porque la primera reacción ante «el sello no cuadra» es creérselo.
+
+## 205. Arreglar una comprobación no puede aflojarla
+
+Para que los 577 volvieran a verificar había dos caminos: reescribir los sellos
+guardados ---que es exactamente la manipulación que el sello existe para hacer
+visible, y el propio módulo lo prohíbe por escrito--- o aceptar que las versiones
+antiguas sellaron una *representación* y probar las escrituras válidas del mismo
+instante.
+
+Se hizo lo segundo, y por eso la mitad de la prueba nueva son alteraciones de
+verdad: mover el fichaje **dos horas justas** ---el desfase de Madrid en verano,
+que es el caso que más de cerca pasa---, cambiar el tipo, el origen, el intervalo
+o la naturaleza de las horas. Todas siguen rompiendo el sello. Comprobado además
+en caliente, adelantando un fichaje por SQL directo contra la base de desarrollo.
+
+**Regla**: cuando arregles un falso positivo de una comprobación de integridad,
+la prueba que lo acompaña tiene que incluir el **verdadero positivo más
+parecido** al caso que acabas de perdonar. Si no, lo que has escrito no es un
+arreglo: es un permiso.
