@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 135 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas**, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 136 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas**, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,44 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 136 --- Ajustes y Mi jornada, y una muestra que no comprobaba nada (27/08)
+
+Segunda tanda: `Settings.jsx` (59 cadenas) y `MyTime.jsx` (39). El catálogo pasa de
+89 a **182 claves**, y con estas tres pantallas está traducido el 44 % de lo que
+hay: la de gestión de plantilla, la de configuración de la empresa y la que usa la
+persona trabajadora para ver su jornada y pedir correcciones.
+
+Los párrafos partidos en varias líneas se envuelven con la clave **en una sola**:
+partida no coincidiría con el catálogo, y como la clave es el castellano eso
+significa que la traducción no se encontraría nunca ---saldría el original y nadie
+lo notaría---.
+
+#### Una muestra que no podía comprobar nada
+
+Al ampliar la prueba de los tres idiomas elegí «Mes anterior» como control de Mi
+jornada. **Se escribe igual en castellano, catalán y gallego**, así que la
+comprobación que da valor a esta prueba ---que el texto castellano ya no está en
+pantalla--- no podía cumplirse: fallaba en catalán y en gallego, y pasaba en
+castellano.
+
+El fallo era claro pero el motivo no, así que ahora hay una comprobación previa que
+lo dice en un rojo directo: **una muestra que no cambia entre idiomas no distingue
+«traducido» de «sin traducir»**. Recorre la tabla y exige que cada texto elegido
+sea distinto del castellano en los dos idiomas.
+
+#### Dos roles de MUI que no son los que parecen
+
+`type="number"` en un `TextField` expone rol **`spinbutton`**, no `textbox`. Y
+«Pedir una corrección» existe dos veces ---como título de diálogo y como botón---,
+así que localizarlo pide decir cuál.
+
+#### Verde al cerrar
+
+`1.310` pruebas de backend, linters limpios, la prueba de los tres idiomas ampliada
+a tres pantallas y con su salvaguarda.
+
+**Quedan 25 ficheros** y unas 166 cadenas.
 
 ### Vuelta 135 --- La interfaz en tres idiomas: Personas (27/08)
 

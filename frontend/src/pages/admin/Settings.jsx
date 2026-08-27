@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
@@ -154,6 +155,7 @@ function cambiosPendientes(editado, guardado) {
 }
 
 export default function Settings() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { session, setSession } = useAuth()
   const [form, setForm] = useState(null)
@@ -245,7 +247,7 @@ export default function Settings() {
   if (isLoading || !form) {
     return (
       <>
-        <PageHeader title="Ajustes de la empresa" />
+        <PageHeader title={t('Ajustes de la empresa')} />
         <Loading rows={4} />
       </>
     )
@@ -366,7 +368,7 @@ export default function Settings() {
   return (
     <form onSubmit={submit}>
       <PageHeader
-        title="Ajustes de la empresa"
+        title={t('Ajustes de la empresa')}
         subtitle={`${form.name} · ${form.tax_id}`}
         action={
           <Button
@@ -392,7 +394,7 @@ export default function Settings() {
       {cambios.length > 0 && (
         <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
           <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-            Sin guardar
+            {t('Sin guardar')}
           </Typography>
           <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
             {cambios.map((cambio) => (
@@ -415,31 +417,39 @@ export default function Settings() {
         <Alert severity="warning" sx={{ mb: 2 }}>
           No hay ninguna persona marcada como representante legal. El art. 4.b obliga a informarla
           cuando alguien discrepa de un cambio en su registro, y sin nadie marcado ese aviso no
-          llega a ninguna parte. Se marca en la ficha de cada persona, en <strong>Personas</strong>.
+          llega a ninguna parte. Se marca en la ficha de cada persona, en{' '}
+          <strong>{t('Personas')}</strong>.
         </Alert>
       )}
       {saved && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSaved(false)}>
-          Ajustes guardados.
+          {t('Ajustes guardados.')}
         </Alert>
       )}
 
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
-        <Panel title="Identificación">
+        <Panel title={t('Identificación')}>
           <Stack sx={{ gap: 2 }}>
-            <TextField fullWidth label="Razón social" value={form.name} onChange={set('name')} />
+            <TextField
+              fullWidth
+              label={t('Razón social')}
+              value={form.name}
+              onChange={set('name')}
+            />
             <TextField
               fullWidth
               disabled
-              label="CIF/NIF"
+              label={t('CIF/NIF')}
               value={form.tax_id}
-              helperText="No se puede cambiar: identifica a la empresa en cada informe ya emitido."
+              helperText={t(
+                'No se puede cambiar: identifica a la empresa en cada informe ya emitido.',
+              )}
             />
           </Stack>
         </Panel>
 
         <Panel
-          title="Zona horaria e idioma"
+          title={t('Zona horaria e idioma')}
           hint="Las horas se guardan siempre en UTC. La zona solo decide cómo se muestran."
         >
           <Stack sx={{ gap: 2 }}>
@@ -472,7 +482,7 @@ export default function Settings() {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Zona horaria"
+                  label={t('Zona horaria')}
                   helperText={`Ahora mismo, ${offsetOf(form.time_zone || 'Europe/Madrid')}.`}
                 />
               )}
@@ -480,10 +490,10 @@ export default function Settings() {
             <TextField
               select
               fullWidth
-              label="Idioma"
+              label={t('Idioma')}
               value={form.language}
               onChange={set('language')}
-              helperText="Cada persona puede usar otro distinto."
+              helperText={t('Cada persona puede usar otro distinto.')}
             >
               {LANGUAGES.map(([code, label]) => (
                 <MenuItem key={code} value={code}>
@@ -504,7 +514,7 @@ export default function Settings() {
         </Panel>
 
         <Panel
-          title="Quién ve a quién"
+          title={t('Quién ve a quién')}
           hint="Un responsable lee y resuelve por su gente. Administración ve toda la empresa."
         >
           <Stack sx={{ gap: 2 }}>
@@ -517,7 +527,7 @@ export default function Settings() {
                   }
                 />
               }
-              label="Los responsables ven toda la empresa"
+              label={t('Los responsables ven toda la empresa')}
             />
             <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
               {form.managers_see_whole_company
@@ -552,7 +562,7 @@ export default function Settings() {
         </Panel>
 
         <Panel
-          title="Vacaciones"
+          title={t('Vacaciones')}
           hint="Estos valores salen del convenio. El sistema no los conoce: los aplica."
         >
           <Stack sx={{ gap: 2 }}>
@@ -577,7 +587,7 @@ export default function Settings() {
                   }
                 />
               }
-              label="Contar en días laborables"
+              label={t('Contar en días laborables')}
             />
             <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
               {form.leave_days_are_working_days
@@ -588,10 +598,10 @@ export default function Settings() {
             <TextField
               select
               fullWidth
-              label="El periodo de cómputo empieza en"
+              label={t('El periodo de cómputo empieza en')}
               value={form.leave_year_start_month}
               onChange={set('leave_year_start_month')}
-              helperText="Enero = año natural. El convenio puede fijar otro periodo."
+              helperText={t('Enero = año natural. El convenio puede fijar otro periodo.')}
             >
               {MONTHS.map((month, index) => (
                 <MenuItem key={month} value={index + 1}>
@@ -603,7 +613,7 @@ export default function Settings() {
         </Panel>
 
         <Panel
-          title="Reglas de jornada"
+          title={t('Reglas de jornada')}
           hint="Con qué se compara el cuadrante. Cada valor lleva el artículo del que sale, y ninguno bloquea: se avisa y decide la empresa."
         >
           {rules ? (
@@ -612,7 +622,7 @@ export default function Settings() {
                 <TextField
                   fullWidth
                   type="number"
-                  label="Horas semanales"
+                  label={t('Horas semanales')}
                   value={rules.weekly_hours}
                   onChange={setRule('weekly_hours')}
                   {...legalField('weekly_hours')}
@@ -620,7 +630,7 @@ export default function Settings() {
                 <TextField
                   fullWidth
                   type="number"
-                  label="Descanso entre jornadas (h)"
+                  label={t('Descanso entre jornadas (h)')}
                   value={rules.daily_rest_hours}
                   onChange={setRule('daily_rest_hours')}
                   {...legalField('daily_rest_hours')}
@@ -631,7 +641,7 @@ export default function Settings() {
                 <TextField
                   fullWidth
                   type="number"
-                  label="Descanso semanal (h)"
+                  label={t('Descanso semanal (h)')}
                   value={rules.weekly_rest_hours}
                   onChange={setRule('weekly_rest_hours')}
                   {...legalField('weekly_rest_hours')}
@@ -639,7 +649,7 @@ export default function Settings() {
                 <TextField
                   fullWidth
                   type="number"
-                  label="Horas extra al año"
+                  label={t('Horas extra al año')}
                   value={rules.annual_overtime_hours}
                   onChange={setRule('annual_overtime_hours')}
                   {...legalField('annual_overtime_hours')}
@@ -654,20 +664,22 @@ export default function Settings() {
                 <TextField
                   fullWidth
                   type="number"
-                  label="Margen de entrada (min)"
+                  label={t('Margen de entrada (min)')}
                   value={rules.entry_tolerance_minutes}
                   onChange={setRule('entry_tolerance_minutes')}
                   slotProps={{ htmlInput: { min: 0, step: 5 } }}
-                  helperText="Fichar dentro de este margen del inicio cuenta como puntual. 0 = estricto."
+                  helperText={t(
+                    'Fichar dentro de este margen del inicio cuenta como puntual. 0 = estricto.',
+                  )}
                 />
                 <TextField
                   fullWidth
                   type="number"
-                  label="Margen de salida (min)"
+                  label={t('Margen de salida (min)')}
                   value={rules.exit_tolerance_minutes}
                   onChange={setRule('exit_tolerance_minutes')}
                   slotProps={{ htmlInput: { min: 0, step: 5 } }}
-                  helperText="Irse dentro de este margen del fin no es salir antes."
+                  helperText={t('Irse dentro de este margen del fin no es salir antes.')}
                 />
               </Stack>
 
@@ -679,18 +691,20 @@ export default function Settings() {
               <TextField
                 fullWidth
                 type="number"
-                label="Una jornada puede seguir abierta (h)"
+                label={t('Una jornada puede seguir abierta (h)')}
                 value={rules.max_open_hours}
                 onChange={setRule('max_open_hours')}
                 slotProps={{ htmlInput: { min: 1, step: 1 } }}
-                helperText="Pasado este rato, una jornada sin cerrar se lee como un olvido de fichar y no como un turno en marcha. Súbelo si hay guardias de 24 h; cuanto más alto, más tarda en detectarse un olvido."
+                helperText={t(
+                  'Pasado este rato, una jornada sin cerrar se lee como un olvido de fichar y no como un turno en marcha. Súbelo si hay guardias de 24 h; cuanto más alto, más tarda en detectarse un olvido.',
+                )}
               />
 
               <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
                 <TextField
                   fullWidth
                   type="number"
-                  label="Descanso a partir de (h)"
+                  label={t('Descanso a partir de (h)')}
                   value={rules.break_after_hours}
                   onChange={setRule('break_after_hours')}
                   helperText={cite('break_after_hours')}
@@ -698,7 +712,7 @@ export default function Settings() {
                 <TextField
                   fullWidth
                   type="number"
-                  label="Minutos de descanso"
+                  label={t('Minutos de descanso')}
                   value={rules.break_minutes}
                   onChange={setRule('break_minutes')}
                 />
@@ -713,7 +727,7 @@ export default function Settings() {
                     }
                   />
                 }
-                label="El descanso computa como trabajo efectivo"
+                label={t('El descanso computa como trabajo efectivo')}
               />
               <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
                 {cite('break_counts_as_work')}
@@ -729,12 +743,13 @@ export default function Settings() {
                 <Alert severity="info" variant="outlined">
                   <Stack sx={{ gap: 1.5 }}>
                     <span>
-                      Estás cambiando cómo se cuenta el tiempo trabajado. Los días anteriores a la
-                      fecha que indiques se siguen contando como hasta ahora.
+                      {t(
+                        'Estás cambiando cómo se cuenta el tiempo trabajado. Los días anteriores a la fecha que indiques se siguen contando como hasta ahora.',
+                      )}
                     </span>
                     <TextField
                       type="date"
-                      label="Se aplica desde *"
+                      label={t('Se aplica desde *')}
                       value={desdeCuando}
                       onChange={(event) => {
                         setSaved(false)
@@ -742,7 +757,7 @@ export default function Settings() {
                       }}
                       slotProps={{ inputLabel: { shrink: true } }}
                       sx={{ maxWidth: 260 }}
-                      helperText="El día en que entra en vigor el acuerdo, no el de hoy."
+                      helperText={t('El día en que entra en vigor el acuerdo, no el de hoy.')}
                     />
                   </Stack>
                 </Alert>
@@ -752,7 +767,7 @@ export default function Settings() {
                 <TextField
                   fullWidth
                   type="time"
-                  label="El trabajo nocturno empieza"
+                  label={t('El trabajo nocturno empieza')}
                   value={String(rules.night_starts_at).slice(0, 5)}
                   onChange={setRule('night_starts_at')}
                   slotProps={{ inputLabel: { shrink: true } }}
@@ -760,7 +775,7 @@ export default function Settings() {
                 <TextField
                   fullWidth
                   type="time"
-                  label="y acaba"
+                  label={t('y acaba')}
                   value={String(rules.night_ends_at).slice(0, 5)}
                   onChange={setRule('night_ends_at')}
                   slotProps={{ inputLabel: { shrink: true } }}
@@ -789,58 +804,63 @@ export default function Settings() {
             Se guarda la constancia, no el acta: que exista un documento, de qué
             fecha y con qué referencia es el hecho comprobable. El acta la
             custodia la empresa con sus otros papeles. */}
-        <Panel title="Cómo se organizó el registro">
+        <Panel title={t('Cómo se organizó el registro')}>
           <Stack sx={{ gap: 2 }}>
             <Typography variant="body2" color="text.secondary">
-              El art. 34.9 ET pide dos cosas: llevar el registro y documentar cómo se organizó. Esto
-              es lo segundo, y es lo primero que se pide en una inspección.
+              {t(
+                'El art. 34.9 ET pide dos cosas: llevar el registro y documentar cómo se organizó. Esto es lo segundo, y es lo primero que se pide en una inspección.',
+              )}
             </Typography>
 
             {organizacion?.missing_consultation && (
               <Alert severity="warning" variant="outlined">
-                Por decisión de la empresa hace falta consulta previa a la representación de los
-                trabajadores, y no consta su fecha. Es el único de los tres caminos que la exige: un
-                convenio o un acuerdo ya son la negociación.
+                {t(
+                  'Por decisión de la empresa hace falta consulta previa a la representación de los trabajadores, y no consta su fecha. Es el único de los tres caminos que la exige: un convenio o un acuerdo ya son la negociación.',
+                )}
               </Alert>
             )}
 
             <TextField
               select
               fullWidth
-              label="Con qué amparo"
+              label={t('Con qué amparo')}
               value={organizacion?.basis ?? ''}
               onChange={campoAmparo('basis')}
-              helperText="Art. 34.9 ET. Vacío significa que todavía no se ha declarado."
+              helperText={t('Art. 34.9 ET. Vacío significa que todavía no se ha declarado.')}
             >
-              <MenuItem value="">Sin declarar</MenuItem>
-              <MenuItem value="COLLECTIVE">Convenio colectivo</MenuItem>
-              <MenuItem value="COMPANY">Acuerdo de empresa</MenuItem>
+              <MenuItem value="">{t('Sin declarar')}</MenuItem>
+              <MenuItem value="COLLECTIVE">{t('Convenio colectivo')}</MenuItem>
+              <MenuItem value="COMPANY">{t('Acuerdo de empresa')}</MenuItem>
               <MenuItem value="EMPLOYER">
-                Decisión de la empresa, previa consulta a la representación
+                {t('Decisión de la empresa, previa consulta a la representación')}
               </MenuItem>
             </TextField>
 
             <TextField
               fullWidth
-              label="Cuál"
+              label={t('Cuál')}
               value={organizacion?.reference ?? ''}
               onChange={campoAmparo('reference')}
-              helperText="«Convenio del metal de Sevilla, art. 22», «acuerdo de 3 de marzo con el comité». Sin esto no hay contra qué comprobarlo."
+              helperText={t(
+                '«Convenio del metal de Sevilla, art. 22», «acuerdo de 3 de marzo con el comité». Sin esto no hay contra qué comprobarlo.',
+              )}
             />
 
             <Stack direction="row" sx={{ gap: 2, flexWrap: 'wrap' }}>
               <TextField
                 type="date"
-                label="En vigor desde"
+                label={t('En vigor desde')}
                 slotProps={{ inputLabel: { shrink: true } }}
                 value={organizacion?.in_force_since ?? ''}
                 onChange={campoAmparo('in_force_since')}
-                helperText="No es la fecha de hoy: un sistema en marcha desde 2023 rige desde 2023."
+                helperText={t(
+                  'No es la fecha de hoy: un sistema en marcha desde 2023 rige desde 2023.',
+                )}
               />
               {organizacion?.basis === 'EMPLOYER' && (
                 <TextField
                   type="date"
-                  label="Consulta a la representación"
+                  label={t('Consulta a la representación')}
                   slotProps={{ inputLabel: { shrink: true } }}
                   value={organizacion?.consulted_on ?? ''}
                   onChange={campoAmparo('consulted_on')}
@@ -852,7 +872,7 @@ export default function Settings() {
           </Stack>
         </Panel>
 
-        <Panel title="Permisos y ausencias">
+        <Panel title={t('Permisos y ausencias')}>
           <Stack sx={{ gap: 1.5 }}>
             <Typography variant="body2">
               {permisos === undefined
@@ -862,8 +882,9 @@ export default function Settings() {
                   : `${permisos} ${plural(permisos, 'permiso configurado', 'permisos configurados')}.`}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Cargar el catálogo añade los que falten del país y no toca los que ya están: lo que tu
-              convenio mejore se queda como lo tengas.
+              {t(
+                'Cargar el catálogo añade los que falten del país y no toca los que ya están: lo que tu convenio mejore se queda como lo tengas.',
+              )}
             </Typography>
             {cargar.isSuccess && (
               <Alert severity="success" variant="outlined">
@@ -879,18 +900,18 @@ export default function Settings() {
                 disabled={cargar.isPending}
                 onClick={() => cargar.mutate()}
               >
-                Cargar el catálogo del país
+                {t('Cargar el catálogo del país')}
               </Button>
             </Box>
           </Stack>
         </Panel>
 
-        <Panel title="Conservación de datos">
+        <Panel title={t('Conservación de datos')}>
           <Stack sx={{ gap: 2 }}>
             <TextField
               fullWidth
               type="number"
-              label="Registro de jornada (años)"
+              label={t('Registro de jornada (años)')}
               value={form.record_retention_years}
               onChange={set('record_retention_years')}
               helperText={cite('record_retention_years')}
@@ -898,14 +919,17 @@ export default function Settings() {
             <TextField
               fullWidth
               type="number"
-              label="Metadatos de seguridad (días)"
+              label={t('Metadatos de seguridad (días)')}
               value={form.security_metadata_retention_days}
               onChange={set('security_metadata_retention_days')}
-              helperText="IP, dispositivo y agente de usuario. Sirven para detectar anomalías, no para acreditar la jornada."
+              helperText={t(
+                'IP, dispositivo y agente de usuario. Sirven para detectar anomalías, no para acreditar la jornada.',
+              )}
             />
             <Typography variant="caption" color="text.secondary">
-              Borrar los metadatos no toca el fichaje: conserva su hora, su tipo, su origen y su
-              huella válida.
+              {t(
+                'Borrar los metadatos no toca el fichaje: conserva su hora, su tipo, su origen y su huella válida.',
+              )}
             </Typography>
           </Stack>
         </Panel>

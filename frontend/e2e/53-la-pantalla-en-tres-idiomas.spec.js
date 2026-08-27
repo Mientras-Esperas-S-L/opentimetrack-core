@@ -36,10 +36,66 @@ const PANTALLAS = [
       gl: 'Ver tamén as baixas',
     },
   },
+  {
+    ruta: '/panel/ajustes',
+    titulo: {
+      es: 'Ajustes de la empresa',
+      ca: "Configuració de l'empresa",
+      gl: 'Axustes da empresa',
+    },
+    propio: {
+      es: 'identifica a la empresa en cada informe',
+      ca: "identifica l'empresa a cada informe",
+      gl: 'identifica a empresa en cada informe',
+    },
+    control: {
+      es: 'Registro de jornada (años)',
+      ca: 'Registre de jornada (anys)',
+      gl: 'Rexistro de xornada (anos)',
+    },
+    // `type="number"` de MUI expone rol `spinbutton`, no `textbox`.
+    rol: 'spinbutton',
+  },
+  {
+    ruta: '/mi-jornada',
+    titulo: { es: 'Mi jornada', ca: 'La meva jornada', gl: 'A miña xornada' },
+    propio: {
+      es: 'Tienes derecho a consultarlo',
+      ca: 'Tens dret a consultar-lo',
+      gl: 'Tes dereito a consultalo',
+    },
+    control: {
+      es: 'Pedir una corrección',
+      ca: 'Demanar una correcció',
+      gl: 'Pedir unha corrección',
+    },
+    rol: 'button',
+  },
 ]
 
 test.describe('La pantalla, en los tres idiomas', () => {
   test.use({ storageState: 'e2e/.sesiones/admin.json' })
+
+  test('las muestras elegidas sirven para comprobar algo', () => {
+    /** Se cayó en esto al ampliar la tabla: «Mes anterior» se escribe igual en
+     *  castellano, catalán y gallego, así que la comprobación de que el texto
+     *  castellano **ya no está** no podía cumplirse nunca.
+     *
+     *  Una muestra que no cambia entre idiomas no distingue «traducido» de «sin
+     *  traducir». Esto lo dice en un rojo claro en vez de en uno confuso a
+     *  cuatro pantallas de distancia.
+     */
+    for (const { ruta, propio, control } of PANTALLAS) {
+      for (const idioma of ['ca', 'gl']) {
+        expect(propio[idioma], `${ruta}: el texto de muestra es igual en es y ${idioma}`).not.toBe(
+          propio.es,
+        )
+        expect(control[idioma], `${ruta}: el control es igual en es y ${idioma}`).not.toBe(
+          control.es,
+        )
+      }
+    }
+  })
 
   for (const idioma of ['ca', 'gl', 'es']) {
     test(`en ${idioma}`, async ({ page }) => {
@@ -57,16 +113,17 @@ test.describe('La pantalla, en los tres idiomas', () => {
         })
         expect(puesto.status, 'no se pudo cambiar el idioma').toBe(200)
 
-        for (const { ruta, titulo, propio, control } of PANTALLAS) {
+        for (const { ruta, titulo, propio, control, rol = 'switch' } of PANTALLAS) {
           await irA(page, ruta, titulo[idioma])
-          await expect(page.getByText(new RegExp(propio[idioma], 'i'))).toBeVisible()
-          await expect(page.getByRole('switch', { name: control[idioma] })).toBeVisible()
+          await expect(page.getByText(new RegExp(propio[idioma], 'i')).first()).toBeVisible()
+          await expect(page.getByRole(rol, { name: control[idioma] }).first()).toBeVisible()
 
           // Y que de verdad ha cambiado: en catalán o gallego, el texto
           // castellano no puede seguir en pantalla. Sin esto la prueba pasaría
           // con el catálogo vacío, porque la clave **es** el castellano.
           if (idioma !== 'es') {
             await expect(page.getByText(propio.es, { exact: false })).toHaveCount(0)
+            await expect(page.getByRole(rol, { name: control.es })).toHaveCount(0)
           }
         }
       } finally {

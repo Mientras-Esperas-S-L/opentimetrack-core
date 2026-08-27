@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -95,6 +96,7 @@ const nombreDelFichaje = (punch, zone) =>
   `${dateOf(punch.timestamp)} · ${punch.punch_type === 'IN' ? 'entrada' : 'salida'} ${timeOf(punch.timestamp, zone)}`
 
 function CorrectionDialog({ open, onClose, onSubmit, saving, error, punches = [], zone }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState({
     kind: 'ADD',
     proposed_type: 'OUT',
@@ -125,47 +127,57 @@ function CorrectionDialog({ open, onClose, onSubmit, saving, error, punches = []
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <form onSubmit={submit}>
-        <DialogTitle>Pedir una corrección</DialogTitle>
+        <DialogTitle>{t('Pedir una corrección')}</DialogTitle>
         <DialogContent>
           <ErrorNote error={error} />
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Tu registro no se cambia ahora: se envía la petición y la resuelve un responsable. El
-            fichaje original nunca se borra.
+            {t(
+              'Tu registro no se cambia ahora: se envía la petición y la resuelve un responsable. El fichaje original nunca se borra.',
+            )}
           </Typography>
           <Stack sx={{ gap: 2, pt: 0.5 }}>
-            <TextField select label="Qué pasó" value={form.kind} onChange={set('kind')} fullWidth>
-              <MenuItem value="ADD">Olvidé fichar</MenuItem>
-              <MenuItem value="MODIFY">La hora registrada no es la real</MenuItem>
+            <TextField
+              select
+              label={t('Qué pasó')}
+              value={form.kind}
+              onChange={set('kind')}
+              fullWidth
+            >
+              <MenuItem value="ADD">{t('Olvidé fichar')}</MenuItem>
+              <MenuItem value="MODIFY">{t('La hora registrada no es la real')}</MenuItem>
             </TextField>
 
             {form.kind === 'ADD' && (
               <TextField
                 select
-                label="Qué falta"
+                label={t('Qué falta')}
                 value={form.proposed_type}
                 onChange={set('proposed_type')}
                 fullWidth
               >
-                <MenuItem value="IN">La entrada</MenuItem>
-                <MenuItem value="OUT">La salida</MenuItem>
+                <MenuItem value="IN">{t('La entrada')}</MenuItem>
+                <MenuItem value="OUT">{t('La salida')}</MenuItem>
               </TextField>
             )}
 
             {form.kind === 'MODIFY' &&
               (punches.length === 0 ? (
                 <Alert severity="info" variant="outlined">
-                  No hay fichajes en el mes que estás viendo. Cambia de mes para elegir cuál
-                  corregir.
+                  {t(
+                    'No hay fichajes en el mes que estás viendo. Cambia de mes para elegir cuál corregir.',
+                  )}
                 </Alert>
               ) : (
                 <TextField
                   select
                   required
                   fullWidth
-                  label="Cuál"
+                  label={t('Cuál')}
                   value={form.target}
                   onChange={set('target')}
-                  helperText="El que tiene la hora mal. El original no se borra: queda al lado del cambio."
+                  helperText={t(
+                    'El que tiene la hora mal. El original no se borra: queda al lado del cambio.',
+                  )}
                 >
                   {punches.map((punch) => (
                     <MenuItem key={punch.id} value={punch.id}>
@@ -179,11 +191,11 @@ function CorrectionDialog({ open, onClose, onSubmit, saving, error, punches = []
               required
               fullWidth
               type="datetime-local"
-              label="Hora real"
+              label={t('Hora real')}
               value={form.proposed_timestamp}
               onChange={set('proposed_timestamp')}
               slotProps={{ inputLabel: { shrink: true } }}
-              helperText="No puede ser una hora futura."
+              helperText={t('No puede ser una hora futura.')}
             />
 
             <TextField
@@ -191,20 +203,22 @@ function CorrectionDialog({ open, onClose, onSubmit, saving, error, punches = []
               fullWidth
               multiline
               minRows={3}
-              label="Motivo"
-              placeholder="Por ejemplo: me quedé sin batería y no pude fichar la salida."
+              label={t('Motivo')}
+              placeholder={t('Por ejemplo: me quedé sin batería y no pude fichar la salida.')}
               value={form.reason}
               onChange={set('reason')}
-              helperText="Obligatorio. Una corrección sin motivo no se distingue de una manipulación."
+              helperText={t(
+                'Obligatorio. Una corrección sin motivo no se distingue de una manipulación.',
+              )}
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="inherit">
-            Cancelar
+            {t('Cancelar')}
           </Button>
           <Button type="submit" variant="contained" disabled={saving}>
-            Enviar solicitud
+            {t('Enviar solicitud')}
           </Button>
         </DialogActions>
       </form>
@@ -221,6 +235,7 @@ function CorrectionDialog({ open, onClose, onSubmit, saving, error, punches = []
  *  side is the one that would be missing.
  */
 function DisputeDialog({ open, correction, onClose, onConfirm, busy }) {
+  const { t } = useTranslation()
   const [account, setAccount] = useState('')
 
   return (
@@ -232,12 +247,12 @@ function DisputeDialog({ open, correction, onClose, onConfirm, busy }) {
           setAccount('')
         }}
       >
-        <DialogTitle>No estoy de acuerdo</DialogTitle>
+        <DialogTitle>{t('No estoy de acuerdo')}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Tu versión queda guardada junto a la de la empresa y se informa a la representación
-            legal. La empresa puede seguir adelante, y si lo hace el registro dirá que se aplicó sin
-            tu conformidad y llevará esto al lado.
+            {t(
+              'Tu versión queda guardada junto a la de la empresa y se informa a la representación legal. La empresa puede seguir adelante, y si lo hace el registro dirá que se aplicó sin tu conformidad y llevará esto al lado.',
+            )}
           </Typography>
           {correction?.reason && (
             <Typography
@@ -253,16 +268,18 @@ function DisputeDialog({ open, correction, onClose, onConfirm, busy }) {
             fullWidth
             multiline
             minRows={3}
-            label="Qué pasó según tú"
-            placeholder="Por ejemplo: salí a las 18:15, no a las 17:00. Estuve cerrando el riego del parque."
+            label={t('Qué pasó según tú')}
+            placeholder={t(
+              'Por ejemplo: salí a las 18:15, no a las 17:00. Estuve cerrando el riego del parque.',
+            )}
             value={account}
             onChange={(event) => setAccount(event.target.value)}
-            helperText="Obligatorio. Es tu versión de ese día."
+            helperText={t('Obligatorio. Es tu versión de ese día.')}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="inherit">
-            Volver
+            {t('Volver')}
           </Button>
           <Button
             type="submit"
@@ -270,7 +287,7 @@ function DisputeDialog({ open, correction, onClose, onConfirm, busy }) {
             color="secondary"
             disabled={busy || account.trim().length < 5}
           >
-            Enviar mi versión
+            {t('Enviar mi versión')}
           </Button>
         </DialogActions>
       </form>
@@ -286,6 +303,7 @@ function DisputeDialog({ open, correction, onClose, onConfirm, busy }) {
  *  they were asked.
  */
 function CorrectionRow({ correction, zone, onAccept, onDispute, busy }) {
+  const { t } = useTranslation()
   const waiting = correction.status === 'AWAITING_EMPLOYEE'
   // Having said no keeps it waiting --- the company still has to decide --- but it
   // is not the same as not having answered, and offering "no estoy de acuerdo"
@@ -319,19 +337,21 @@ function CorrectionRow({ correction, zone, onAccept, onDispute, busy }) {
           )}
           {correction.employee_dissent && (
             <Typography variant="body2" sx={{ mt: 1 }}>
-              <strong>Tu versión:</strong> {correction.employee_dissent}
+              <strong>{t('Tu versión:')}</strong> {correction.employee_dissent}
             </Typography>
           )}
           {saidNo && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-              Se ha informado a la representación legal. La empresa decide ahora si aplica el
-              cambio; si lo hace, constará que fue sin tu conformidad.
+              {t(
+                'Se ha informado a la representación legal. La empresa decide ahora si aplica el cambio; si lo hace, constará que fue sin tu conformidad.',
+              )}
             </Typography>
           )}
           {correction.applied_without_agreement && (
             <Typography variant="caption" color="secondary.main" sx={{ display: 'block', mt: 1 }}>
-              Aplicada sin tu conformidad. Tu versión consta en el registro y va al informe de
-              Inspección.
+              {t(
+                'Aplicada sin tu conformidad. Tu versión consta en el registro y va al informe de Inspección.',
+              )}
             </Typography>
           )}
         </Box>
@@ -358,11 +378,11 @@ function CorrectionRow({ correction, zone, onAccept, onDispute, busy }) {
             <Stack direction="row" sx={{ gap: 1 }}>
               {!saidNo && (
                 <Button size="small" color="inherit" disabled={busy} onClick={onDispute}>
-                  No estoy de acuerdo
+                  {t('No estoy de acuerdo')}
                 </Button>
               )}
               <Button size="small" variant="contained" disabled={busy} onClick={onAccept}>
-                Aceptar
+                {t('Aceptar')}
               </Button>
             </Stack>
           )}
@@ -378,6 +398,7 @@ const thisMonth = () => {
 }
 
 export default function MyTime() {
+  const { t } = useTranslation()
   const { session } = useAuth()
   // La suya, no la de la empresa. Para una delegación en Las Palmas son sesenta
   // minutos: quien fichaba a las 23:30 lo veía aquí como las 00:30 **del día
@@ -503,8 +524,10 @@ export default function MyTime() {
   return (
     <>
       <PageHeader
-        title="Mi jornada"
-        subtitle="Tu registro completo. Tienes derecho a consultarlo, y se conserva cuatro años."
+        title={t('Mi jornada')}
+        subtitle={t(
+          'Tu registro completo. Tienes derecho a consultarlo, y se conserva cuatro años.',
+        )}
         action={
           <Stack direction="row" sx={{ gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
             <RemindersControl />
@@ -517,7 +540,7 @@ export default function MyTime() {
               Descargar {monthName(month)}
             </Button>
             <Button variant="outlined" startIcon={<EditNoteIcon />} onClick={() => setAsking(true)}>
-              Pedir una corrección
+              {t('Pedir una corrección')}
             </Button>
           </Stack>
         }
@@ -536,7 +559,7 @@ export default function MyTime() {
           natural, que casi nunca coinciden. */}
       {resumen && (
         <Panel
-          title="Lo que va del periodo de nómina"
+          title={t('Lo que va del periodo de nómina')}
           hint={`${resumen.period?.label ?? ''}. Es el resumen que acompaña a tu nómina: el periodo lo fija la empresa, no esta pantalla.`}
           sx={{ mb: 3 }}
         >
@@ -566,7 +589,7 @@ export default function MyTime() {
               onClick={() => bajarResumen.mutate()}
               sx={{ ml: 'auto' }}
             >
-              Descargar el resumen
+              {t('Descargar el resumen')}
             </Button>
           </Stack>
         </Panel>
@@ -594,7 +617,7 @@ export default function MyTime() {
       )}
 
       {history.length > 0 && (
-        <Panel title="Mis solicitudes de corrección" sx={{ mb: 3 }}>
+        <Panel title={t('Mis solicitudes de corrección')} sx={{ mb: 3 }}>
           <Stack sx={{ gap: 1 }}>
             {history.slice(0, 5).map((correction) => (
               <CorrectionRow key={correction.id} correction={correction} zone={zone} />
@@ -608,7 +631,7 @@ export default function MyTime() {
         sx={{ alignItems: 'center', gap: 1, mb: 2, justifyContent: 'space-between' }}
       >
         <Stack direction="row" sx={{ alignItems: 'center', gap: 1 }}>
-          <IconButton size="small" onClick={() => moveMonth(-1)} aria-label="Mes anterior">
+          <IconButton size="small" onClick={() => moveMonth(-1)} aria-label={t('Mes anterior')}>
             <ChevronLeftIcon />
           </IconButton>
           <Typography sx={{ fontWeight: 600, minWidth: 170, textAlign: 'center' }}>
@@ -617,7 +640,7 @@ export default function MyTime() {
           <IconButton
             size="small"
             onClick={() => moveMonth(1)}
-            aria-label="Mes siguiente"
+            aria-label={t('Mes siguiente')}
             // Nothing to see ahead: a future month is always empty, and an
             // arrow that leads to an empty screen reads like a fault.
             disabled={isThisMonth}
@@ -627,15 +650,16 @@ export default function MyTime() {
         </Stack>
         {!isThisMonth && (
           <Button size="small" onClick={() => setMonth(thisMonth())}>
-            Volver a este mes
+            {t('Volver a este mes')}
           </Button>
         )}
       </Stack>
 
       {faltanFichajes && (
         <Alert severity="warning" variant="outlined" sx={{ mb: 1.5 }}>
-          Este mes tiene más fichajes de los que caben aquí, así que no los estás viendo todos.
-          Descarga el informe del periodo para tenerlo completo.
+          {t(
+            'Este mes tiene más fichajes de los que caben aquí, así que no los estás viendo todos. Descarga el informe del periodo para tenerlo completo.',
+          )}
         </Alert>
       )}
 
@@ -667,7 +691,7 @@ export default function MyTime() {
                       <Chip
                         size="small"
                         color="success"
-                        label="abierto"
+                        label={t('abierto')}
                         sx={{ ml: 1, height: 20, fontSize: '0.68rem' }}
                       />
                     )}

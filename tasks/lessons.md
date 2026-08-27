@@ -4390,3 +4390,35 @@ necesita, o hace falta poder borrar de verdad»---.
 terminada cuando **los sitios que la necesitaban la usan**. Busca en el cuaderno y
 en los mensajes de los guards quién pedía exactamente esto: normalmente está
 escrito, con nombre y fecha.
+
+## 268. Una muestra que no cambia entre idiomas no comprueba una traducción
+
+Elegí «Mes anterior» como texto de control para comprobar la pantalla en catalán.
+Se escribe igual en los tres idiomas, así que la aserción que da valor a esa prueba
+---que el texto castellano **ya no está**--- no podía cumplirse nunca.
+
+Y el rojo era desconcertante: fallaba en catalán y gallego, pasaba en castellano, y
+apuntaba a una línea que parecía correcta.
+
+**La regla**: al elegir texto para comprobar una traducción, **comprueba primero
+que el texto cambia**. Es una aserción de dos líneas sobre la propia tabla de datos
+de la prueba, y convierte un fallo confuso en uno que dice exactamente qué pasa.
+
+Es la familia de la 245 y la 258: **una aserción puede fallar (o pasar) por una
+razón que no es la que crees**, y el sitio barato para descubrirlo es validar los
+datos de entrada de la propia prueba.
+
+## 269. Los roles de MUI no son los que se suponen
+
+Dos en la misma vuelta:
+
+- `<TextField type="number">` expone rol **`spinbutton`**, no `textbox`.
+- `<Switch>` expone **`switch`**, no `checkbox`.
+
+Y ya salió antes que una rejilla de `Box` con `display: grid` **no expone nada**.
+
+**La regla**: antes de escribir `getByRole('x')` sobre un componente de una
+biblioteca, compruébalo ---la propia página en modo depuración lo dice, o un
+`page.getByRole('...').count()` en una prueba de usar y tirar---. Suponer el rol
+da un locator que devuelve cero, y cero es exactamente lo que muchas aserciones
+aceptan sin protestar.
