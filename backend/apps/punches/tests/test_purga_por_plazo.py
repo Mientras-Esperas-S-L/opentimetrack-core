@@ -45,25 +45,29 @@ AHORA = "2026-08-27 10:00:00"
 
 @pytest.fixture
 def company(db):
-    return Tenant.objects.create(
-        name="Plazos SL", tax_id="B21212121", time_zone="Europe/Madrid"
-    )
+    return Tenant.objects.create(name="Plazos SL", tax_id="B21212121", time_zone="Europe/Madrid")
 
 
 @pytest.fixture
 def employee(company):
     with tenant_context(company.id):
         yield User.objects.create_user(
-            email="pau@example.com", password=PASSWORD, tenant=company,
-            first_name="Pau", last_name="Serra",
+            email="pau@example.com",
+            password=PASSWORD,
+            tenant=company,
+            first_name="Pau",
+            last_name="Serra",
         )
 
 
 def _punch(company, employee, *, when, kind="IN"):
     """Un fichaje escrito como se habría escrito ese día."""
     punch = Punch(
-        tenant=company, employee=employee, punch_type=kind,
-        timestamp=when, source=PunchSource.WEB,
+        tenant=company,
+        employee=employee,
+        punch_type=kind,
+        timestamp=when,
+        source=PunchSource.WEB,
     )
     punch.hash_version = CURRENT_HASH_VERSION
     punch.hash_integrity = punch.compute_hash()
@@ -198,9 +202,7 @@ def test_el_dia_es_el_de_la_empresa_no_el_del_servidor(db):
     Canarias (+01). El corte se mueve con el calendario de cada empresa, que es
     el que aparece en sus documentos ---y de paso esto es lo que `date.today()`
     contesta mal para todos, porque contesta en UTC."""
-    madrid = Tenant.objects.create(
-        name="Madrid SL", tax_id="B31313131", time_zone="Europe/Madrid"
-    )
+    madrid = Tenant.objects.create(name="Madrid SL", tax_id="B31313131", time_zone="Europe/Madrid")
     canarias = Tenant.objects.create(
         name="Canarias SL", tax_id="B41414141", time_zone="Atlantic/Canary"
     )
@@ -234,8 +236,11 @@ def test_no_toca_ausencias_ni_personas(company, employee):
     """
     with tenant_context(company.id):
         vieja = Absence.objects.create(
-            tenant=company, employee=employee, absence_type=AbsenceType.VACATION,
-            start_date=date(2021, 5, 10), end_date=date(2021, 5, 20),
+            tenant=company,
+            employee=employee,
+            absence_type=AbsenceType.VACATION,
+            start_date=date(2021, 5, 10),
+            end_date=date(2021, 5, 20),
             status=AbsenceStatus.APPROVED,
         )
     _punch(company, employee, when=_madrid(2021, 5, 10))
@@ -255,9 +260,13 @@ def test_una_correccion_sin_resolver_retiene_su_fichaje_y_lo_dice(company, emplo
     viejo = _punch(company, employee, when=_madrid(2021, 5, 10))
     with tenant_context(company.id):
         PunchCorrection.objects.create(
-            tenant=company, employee=employee, target=viejo,
-            kind=CorrectionKind.MODIFY, reason="La hora de salida no es la que fue",
-            requested_by=employee, status=CorrectionStatus.PENDING,
+            tenant=company,
+            employee=employee,
+            target=viejo,
+            kind=CorrectionKind.MODIFY,
+            reason="La hora de salida no es la que fue",
+            requested_by=employee,
+            status=CorrectionStatus.PENDING,
         )
 
     salida = _purgar(tenant=company.tax_id)
@@ -275,9 +284,13 @@ def test_una_correccion_ya_resuelta_no_bloquea_el_borrado(company, employee):
     viejo = _punch(company, employee, when=_madrid(2021, 5, 10))
     with tenant_context(company.id):
         cerrada = PunchCorrection.objects.create(
-            tenant=company, employee=employee, target=viejo,
-            kind=CorrectionKind.MODIFY, reason="Se resolvió hace tres años",
-            requested_by=employee, status=CorrectionStatus.REJECTED,
+            tenant=company,
+            employee=employee,
+            target=viejo,
+            kind=CorrectionKind.MODIFY,
+            reason="Se resolvió hace tres años",
+            requested_by=employee,
+            status=CorrectionStatus.REJECTED,
         )
 
     _purgar(tenant=company.tax_id)

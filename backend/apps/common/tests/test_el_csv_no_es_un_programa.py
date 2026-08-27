@@ -64,9 +64,7 @@ def test_el_informe_que_se_entrega_no_lleva_formulas(company):
         )
         register_punch(employee=quien, company=company)
         hoy = local_today(company)
-        informe = build_report(
-            employee=quien, company=company, date_from=hoy, date_to=hoy
-        )
+        informe = build_report(employee=quien, company=company, date_from=hoy, date_to=hoy)
         salida = to_csv(informe)
 
     for numero, linea in enumerate(salida.split("\n"), start=1):

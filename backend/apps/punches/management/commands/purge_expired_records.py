@@ -180,6 +180,4 @@ class Command(BaseCommand):
         if not total_deleted and not total_kept:
             # Y esto también, porque «Deleted 0 events» es indistinguible de un
             # comando que no encontró la tabla, o la empresa, o nada.
-            self.stdout.write(
-                f"Nothing past its period, across {companies.count()} companies."
-            )
+            self.stdout.write(f"Nothing past its period, across {companies.count()} companies.")

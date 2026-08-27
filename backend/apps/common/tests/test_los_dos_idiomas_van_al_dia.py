@@ -103,8 +103,10 @@ def _sin_traducir(idioma: str) -> set[str]:
         cola = re.search(r"^msgstr (.*)$", bloque, re.M | re.S)
         if not cabeza or not cola:
             continue
+
         def junta(trozo: str) -> str:
             return "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', trozo))
+
         if not junta(cola.group(1)):
             faltan.add(junta(cabeza.group(1)).replace("\\n", "\n").replace('\\"', '"'))
     return faltan

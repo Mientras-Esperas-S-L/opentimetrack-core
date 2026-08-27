@@ -37,8 +37,12 @@ def empresa(db):
 
 def _persona(empresa, correo, numero):
     return User.objects.create_user(
-        email=correo, password=PASSWORD, tenant=empresa,
-        first_name="N", last_name="N", employee_id=numero,
+        email=correo,
+        password=PASSWORD,
+        tenant=empresa,
+        first_name="N",
+        last_name="N",
+        employee_id=numero,
     )
 
 
@@ -79,9 +83,7 @@ def test_varias_personas_sin_numero_no_chocan(empresa):
 def test_dos_empresas_pueden_usar_el_mismo_numero(empresa):
     """La otra mitad de la condición: el número es único **dentro** de la
     empresa. Dos clientes distintos numeran desde el uno."""
-    otra = Tenant.objects.create(
-        name="Otra SL", tax_id="B14141414", time_zone="Europe/Madrid"
-    )
+    otra = Tenant.objects.create(name="Otra SL", tax_id="B14141414", time_zone="Europe/Madrid")
     with tenant_context(empresa.id):
         _persona(empresa, "aqui@example.com", "EMP-1")
     with tenant_context(otra.id):

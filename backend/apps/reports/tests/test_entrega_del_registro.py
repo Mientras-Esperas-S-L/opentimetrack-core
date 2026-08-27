@@ -42,17 +42,19 @@ AHORA = "2026-08-27 10:00:00"
 
 @pytest.fixture
 def company(db):
-    return Tenant.objects.create(
-        name="Entrega SL", tax_id="B51515151", time_zone="Europe/Madrid"
-    )
+    return Tenant.objects.create(name="Entrega SL", tax_id="B51515151", time_zone="Europe/Madrid")
 
 
 @pytest.fixture
 def admin(company):
     with tenant_context(company.id):
         yield User.objects.create_user(
-            email="jefa@example.com", password=PASSWORD, tenant=company,
-            first_name="Jefa", last_name="Uno", role=Role.ADMIN,
+            email="jefa@example.com",
+            password=PASSWORD,
+            tenant=company,
+            first_name="Jefa",
+            last_name="Uno",
+            role=Role.ADMIN,
         )
 
 
@@ -61,13 +63,18 @@ def se_fue(company):
     """Alguien que trabajó allí y ya no. Con fichajes, que es lo que va a pedir."""
     with tenant_context(company.id):
         persona = User.objects.create_user(
-            email="sefue@example.com", password=PASSWORD, tenant=company,
-            first_name="Pau", last_name="Serra",
+            email="sefue@example.com",
+            password=PASSWORD,
+            tenant=company,
+            first_name="Pau",
+            last_name="Serra",
         )
         for dia in (10, 11, 12):
             for hora, tipo in ((8, "IN"), (16, "OUT")):
                 p = Punch(
-                    tenant=company, employee=persona, punch_type=tipo,
+                    tenant=company,
+                    employee=persona,
+                    punch_type=tipo,
                     timestamp=dt.datetime(2026, 6, dia, hora, tzinfo=dt.UTC),
                     source=PunchSource.WEB,
                 )
@@ -231,9 +238,7 @@ def test_la_administracion_lo_manda_por_correo(
     assert "/api/record-delivery/" in mail.outbox[0].body
     assert mail.outbox[0].to == ["sefue@example.com"]
 
-    asiento = AuditLog.objects.filter(
-        tenant=company, action=AuditAction.RECORD_DELIVERED
-    ).get()
+    asiento = AuditLog.objects.filter(tenant=company, action=AuditAction.RECORD_DELIVERED).get()
     assert asiento.changes["picked_up"] is False
     assert asiento.note == "cuenta de baja"
     assert asiento.actor_id == admin.id
@@ -246,9 +251,7 @@ def test_cada_descarga_deja_asiento(company, se_fue, django_capture_on_commit_ca
     with django_capture_on_commit_callbacks(execute=True):
         APIClient().get(_url(se_fue))
 
-    asiento = AuditLog.objects.filter(
-        tenant=company, action=AuditAction.RECORD_DELIVERED
-    ).get()
+    asiento = AuditLog.objects.filter(tenant=company, action=AuditAction.RECORD_DELIVERED).get()
     assert asiento.changes["picked_up"] is True
     assert asiento.actor_id is None
     assert asiento.actor_label
@@ -262,8 +265,11 @@ def test_una_persona_normal_no_puede_mandar_entregas(company, se_fue):
     alguien a una dirección de correo."""
     with tenant_context(company.id):
         cualquiera = User.objects.create_user(
-            email="peon@example.com", password=PASSWORD, tenant=company,
-            first_name="Peón", last_name="Dos",
+            email="peon@example.com",
+            password=PASSWORD,
+            tenant=company,
+            first_name="Peón",
+            last_name="Dos",
         )
     cliente = APIClient()
     cliente.force_authenticate(cualquiera)

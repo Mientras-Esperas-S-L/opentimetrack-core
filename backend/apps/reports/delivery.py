@@ -106,6 +106,7 @@ def resolve_delivery_token(uid: str, token: str):
         return None
     return user
 
+
 def send_delivery_email(person, *, base_url: str) -> str:
     """Manda el enlace, en el idioma de quien lo recibe. Devuelve el enlace.
 
@@ -167,9 +168,7 @@ class RecordDeliveryView(APIView):
         if person is None or person.tenant_id is None:
             # Caducado, invalidado o inventado: los tres son lo mismo desde fuera.
             # Distinguirlos diría si esa dirección existe en el producto.
-            raise NotFound(
-                _("This link is no longer valid. Ask the company for a new one.")
-            )
+            raise NotFound(_("This link is no longer valid. Ask the company for a new one."))
 
         company = person.tenant
         # Fuera de toda petición con empresa en contexto: la activa el enlace, y
