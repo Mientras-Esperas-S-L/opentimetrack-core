@@ -3227,3 +3227,31 @@ verdadera.
 antes de seguir. Si aparece dos veces, la pregunta no es si está bien puesta,
 sino **dónde falta la tercera** --- y el sitio donde tiene que vivir suele ser
 uno que ya rechaza algo parecido por el mismo motivo.
+
+## 208. Lo que el documento dice de un caso simple tiene que seguir diciéndolo cuando el caso se complica
+
+Un día de vacaciones sin fichajes salía en el registro con «Vacaciones» en su
+columna. Un día de vacaciones **en el que además se trabajó** salía idéntico a un
+día ordinario: las horas, y observaciones en blanco. El dato estaba
+---`build_report` rellena `row.absence`--- y los dos renderizadores lo pintaban
+solo en la rama en que no había fichajes.
+
+Es fácil de escribir sin darse cuenta, porque el código lo dice literalmente:
+
+    if row.absence and not row.entries:      # aquí sí
+        ...
+    for entry, exit_ in row.entries:         # y aquí se olvidó
+
+Y el caso que se pierde es justo el interesante. Un día de vacaciones sin
+trabajar no le hace falta a nadie explicarlo; uno en el que a alguien lo llamaron
+y vino, sí --- a la persona, para reclamar si le descuentan el día, y a quien lee
+el registro, para preguntar por qué se trabajó un día dado por libre.
+
+**Regla**: cuando un renderizador tenga una rama para «solo A» y otra para «solo
+B», mira qué pasa con **A y B a la vez**. Suele caer en la segunda rama, que fue
+escrita pensando solo en B, y el resultado es un documento que se calla lo que ya
+sabía decir en el caso fácil.
+
+**Y el olfato**: si un dato viaja a la huella de verificación pero no aparece en
+el papel, algo está mal en el papel. La ausencia ya entraba en el `fingerprint`,
+o sea que el producto la consideraba parte del registro; solo faltaba enseñarla.

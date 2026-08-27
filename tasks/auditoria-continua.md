@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 111 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 112 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -345,6 +345,49 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 112 --- El día de vacaciones en el que se trabajó salía como un día normal (27/08)
+
+Lente: **cuando dos cosas legítimas coinciden**. Una ausencia aprobada y fichajes
+el mismo día: pasa, y no es raro ---a alguien de vacaciones lo llaman y viene---.
+
+El sistema lo sabía. `build_report` rellena `row.absence`, y la ausencia **ya
+entraba en la huella de verificación**, o sea que el producto la considera parte
+del registro. El documento salía así:
+
+    2026-08-12;08:00;13:00;05:00;
+
+Las horas, y observaciones en blanco. Indistinguible de un día ordinario, en el
+CSV y en el PDF.
+
+#### Por qué es un fallo y no una cuestión de alcance
+
+Porque **el documento ya había decidido que las ausencias constan en él**: un día
+de vacaciones sin fichajes sale con «Vacaciones» en su columna. Dejaba de decirlo
+justo cuando coincide con trabajo, que es el caso que hay que poder ver. Un día
+libre sin trabajar no le hace falta explicarlo a nadie; uno en el que se vino, sí
+---a la persona, si le descuentan el día y además trabajó, y a quien lee el
+registro, para preguntar por qué---.
+
+Y el código lo dice literalmente:
+
+    if row.absence and not row.entries:      # aquí sí
+    for entry, exit_ in row.entries:         # y aquí se olvidó
+
+Es el mismo patrón que este fichero ya arregló una vez con la discrepancia del
+art. 4.b: un dato calculado que los dos renderizadores ignoraban.
+
+#### Qué se ha hecho
+
+La nota va en `day_notes`, que es donde el proyecto decidió que vivan «para que
+los dos renderizadores no se separen ---lo que ya pasó una vez, con el PDF
+diciéndolo y el CSV callado»---. Una cadena nueva, traducida: **700 mensajes,
+cero sin traducir**.
+
+Cuatro pruebas, y tres son contraste: que un día de vacaciones **sin** fichar no
+lo diga dos veces, que un día corriente no lleve ninguna nota ---o dejaría de
+leerse--- y que dos días iguales en horas, uno con ausencia detrás y otro sin
+ella, no compartan huella.
 
 ### Vuelta 111 --- El rastro contestaba «cero» a un periodo al revés (27/08)
 

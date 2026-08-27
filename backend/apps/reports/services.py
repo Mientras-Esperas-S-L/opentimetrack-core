@@ -495,6 +495,18 @@ def day_notes(row: DayRow) -> str:
     together»--- y no viajaba.
     """
     notes = list(row.incidents)
+    if row.absence and row.entries:
+        # El día constaba como ausencia **y** se trabajó. Lo primero ya se dice
+        # solo cuando no hay fichajes ---esa fila lleva «Vacaciones» en su
+        # columna---, así que el documento ya había decidido que las ausencias
+        # constan aquí; lo que pasaba es que dejaba de decirlo justo cuando
+        # coinciden con trabajo, que es el caso que hay que poder ver: a alguien
+        # de vacaciones lo llamaron y vino.
+        #
+        # Sin esto el día sale idéntico a uno ordinario, y ni la persona ni quien
+        # lee el registro tienen de dónde agarrarse para preguntar por qué se
+        # trabajó un día que estaba dado por libre.
+        notes.append(_("this day was also recorded as: %(absence)s") % {"absence": row.absence})
     if row.delegated:
         notes.append(_("recorded by an application on the person's behalf"))
     if row.corrected:

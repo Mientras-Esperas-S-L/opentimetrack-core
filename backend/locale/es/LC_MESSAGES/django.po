@@ -3532,3 +3532,6 @@ msgstr "Jornada pactada"
 
 msgid "Days with activity"
 msgstr "Días con actividad"
+
+msgid "this day was also recorded as: %(absence)s"
+msgstr "este día constaba además como: %(absence)s"
