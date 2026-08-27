@@ -574,6 +574,11 @@ def test_every_route_is_covered_by_this_sweep():
         # propia comprueba que una persona sin permisos de gestión no puede
         # lanzarla ---sería una forma de sacar el registro de un compañero---.
         "api/^employees/(?P<pk>[^/.]+)/deliver-record/$",
+        # Borra de verdad a quien no dejó rastro. Su barrido propio está en
+        # apps/users/tests/test_borrar_un_alta_equivocada.py, e incluye que una
+        # persona de otra empresa responda como una que no existe y que sin
+        # permisos de gestión no se pueda lanzar.
+        "api/^employees/(?P<pk>[^/.]+)/erase/$",
         "api/^punches/$",
         "api/^punches/(?P<pk>[^/.]+)/$",
         "api/^punches/today/$",

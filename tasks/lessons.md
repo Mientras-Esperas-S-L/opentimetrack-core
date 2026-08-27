@@ -4245,3 +4245,43 @@ exención de `pytest-cov` falla y dice que la quites de los dos sitios.
 **Y la que no se puede comprobar, dicho**: la de `ipython` se sostiene solo en su
 propio texto. Eso hay que escribirlo, no dejarlo intuir: la próxima persona tiene
 que saber cuál de las dos exenciones tiene apoyo y cuál es una promesa.
+
+## 258. Un modal deja el resto de la página invisible para los locators por rol
+
+`await expect(page.getByRole('row').filter({ hasText: correo })).toHaveCount(0)`
+justo después de confirmar un borrado pasaba **sin que se hubiera borrado nada**:
+MUI marca el resto del documento con `aria-hidden` mientras hay un diálogo
+abierto, y `getByRole` no ve lo que está oculto para accesibilidad. Cero filas, y
+la aserción contenta.
+
+**La regla**: después de pulsar dentro de un modal, **espera a que el modal se
+vaya** ---`await expect(page.getByRole('dialog')).toHaveCount(0)`--- antes de
+comprobar cualquier cosa de la página de debajo. Y para lo que de verdad importa,
+pregunta al servidor: la pantalla puede tardar en enterarse, el servidor no.
+
+Es la familia de la 245 y la 246: **un conteo que da cero puede darlo por una
+razón que no es la tuya**. Antes de confiar en un `toHaveCount(0)`, pregúntate qué
+más lo haría cierto.
+
+## 259. Una prueba que comprueba con la API se ensucia su propia consola
+
+La prueba pedía `GET /employees/<id>/` esperando un 404 para confirmar el borrado,
+y **el navegador apunta ese 404 como error de red**. La vigilancia de la consola,
+que estaba al final, lo recogía y la prueba fallaba por su propia comprobación.
+
+**La regla**: `vigilarConsola` mira lo que hace **la pantalla**, así que su
+comprobación va **antes** de cualquier llamada que haga la prueba por su cuenta.
+Si tienen que convivir, filtra por lo que tú provocas ---y entonces escribe por
+qué, porque un filtro en la vigilancia de errores es justo donde se esconde el
+siguiente.
+
+## 260. La marca de «sin revisar» tiene que ser verdad en cada idioma
+
+El aplicador de traducciones ponía `# revisar: traducido sin hablante nativo` en
+los tres catálogos, castellano incluido. En castellano eso **es falso**: se escribe
+con conocimiento, y marcarlo pedía una revisión que nadie necesita hacer ---y
+diluía las 360 marcas de catalán y gallego, que sí la piden---.
+
+**La regla**: una marca de calidad se pone donde la condición se cumple, no en todo
+lo que pasa por la misma función. Cuando una herramienta trata igual a casos
+distintos, el que sobra no es inofensivo: gasta la señal.

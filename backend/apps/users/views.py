@@ -32,6 +32,7 @@ from apps.common.permissions import (
 )
 from apps.common.scope import people_queryset
 from apps.reports.delivery import send_delivery_email
+from apps.users.erase import rastro_de
 from apps.users.models import Department, Role, Workplace
 from apps.users.passwords import resolve_token, revoke_sessions, send_account_email
 from apps.users.serializers import (
@@ -564,6 +565,68 @@ class UserViewSet(viewsets.ModelViewSet):
                 target=person,
                 target_label=person.get_full_name() or person.email,
             )
+
+    @extend_schema(request=None, responses={200: dict})
+    @action(detail=True, methods=["post"])
+    def erase(self, request, pk=None):
+        """Borra de verdad, y solo a quien no dejó nada que explicar.
+
+        Distinto de `DELETE`, que da de baja y hace bien: los fichajes de quien
+        trabajó aquí viven cuatro años y su ficha tiene que seguir
+        explicándolos. Esto es para el otro caso, que hasta ahora no tenía
+        salida: **el alta equivocada**. El correo mal escrito, la persona
+        duplicada, la que se creó en la empresa que no era.
+
+        Se niega en cuanto haya algo, y dice **qué** y **cuántos**: un «no se
+        puede» sin motivo obliga a mirar la base para saber por qué. Ver
+        `apps.users.erase` para lo que se cuenta y por qué.
+        """
+        person = self.get_object()
+
+        if person.id == request.user.id:
+            raise BusinessRuleError(
+                code="cannot_erase_yourself",
+                message=_("You cannot erase your own account."),
+            )
+        self._refuse_if_it_leaves_no_admin(person, deactivating=True)
+
+        rastro = rastro_de(person)
+        if rastro.hay:
+            def enumera(cuenta):
+                return ", ".join(f"{n} {k!s}" for k, n in cuenta.items())
+
+            partes = []
+            if rastro.suyo:
+                partes.append(
+                    _("what is theirs: %(cosas)s") % {"cosas": enumera(rastro.suyo)}
+                )
+            if rastro.decidido:
+                partes.append(
+                    _("what they decided about other people: %(cosas)s")
+                    % {"cosas": enumera(rastro.decidido)}
+                )
+            raise BusinessRuleError(
+                code="left_a_record",
+                message=_(
+                    "%(quien)s left a record, so their file has to stay and explain "
+                    "it --- %(que)s. Deactivate them instead."
+                )
+                % {"quien": person.get_full_name() or person.email, "que": "; ".join(partes)},
+            )
+
+        # El asiento va **antes** del borrado y con los datos dentro: después no
+        # habrá fila de la que sacarlos, y este apunte es lo único que quedará de
+        # que esa persona existió.
+        record(
+            action=AuditAction.PERSON_ERASED,
+            actor=request.user,
+            company=person.tenant,
+            target_type="user",
+            target_label=person.get_full_name() or person.email,
+            changes={"email": person.email, "role": person.role, "was_active": person.is_active},
+        )
+        person.delete()
+        return Response({"erased": True})
 
     @extend_schema(responses={200: DeactivationSerializer})
     def destroy(self, request, *args, **kwargs):

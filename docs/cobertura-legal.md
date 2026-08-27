@@ -311,6 +311,7 @@ trabaja**. Un modelo de organización completo es otra herramienta.
 | Representación legal de las personas trabajadoras | **Cubierto.** Es a quien se avisa en el art. 4.b |
 | Centro de trabajo | **Cubierto.** Con municipio, comunidad y zona horaria propia: una delegación en Canarias mide su jornada una hora antes que la central |
 | Historia de la adscripción | **Falta.** Si alguien cambia de departamento en septiembre, el informe de julio dirá el de ahora |
+| Retirar un alta equivocada | **Cubierto desde el 27/08/2026.** Se puede borrar de verdad a quien no dejó nada que explicar: ni trabajo suyo ni decisiones sobre el de otras personas. Con cualquiera de las dos cosas se niega y dice qué encontró, y hay que dar de baja |
 | Jerarquía de departamentos | **Falta**, y probablemente deba seguir faltando: acotar la lectura no la necesita |
 
 ---
@@ -356,21 +357,22 @@ es un dato incompleto: se lee como una jornada de cuatro horas.
 
 ## Por dónde seguir
 
-Ordenado por lo que más se nota en un cliente real, no por dificultad.
+Ordenado por lo que más se nota en un cliente real, no por dificultad. El tamaño
+es una estimación en días de trabajo, contando la prueba que impida la regresión:
+sirve para comparar entre líneas, no para prometer una fecha.
 
-1. **Transcribir la resolución del BOE de 2026**, que es lo único que le falta
-   al calendario para estar completo.
-2. **Saldos de devolución**: horas extra compensadas, relevo de turno,
-   distribución irregular. Convertir los avisos en una cuenta.
-3. **Vacaciones**: devengo proporcional y traslado por IT.
-4. **Llamamiento del fijo discontinuo** (art. 16), ya señalado en el código.
-5. **Topes que se guardan y no se comprueban**: 30 % de complementarias al mes y
-   65/85 % del contrato formativo. El de 80 horas extra al año ya se contrasta.
-6. **Historia de la adscripción a departamento**, cuando el informe empiece a
-   mentir.
-7. **Borrar de verdad a quien no tiene ni un fichaje.** Un alta equivocada no se
-   puede quitar: solo darse de baja, y se queda en la lista para siempre. Con
-   fichajes es correcto que no se pueda; sin ellos, no.
+| | Qué | Tamaño |
+|---|---|---|
+| 1 | **Transcribir la resolución del BOE de 2026**, que es lo único que le falta al calendario para estar completo | **½ día.** Es copiar un boletín a un YAML versionado y verificarlo |
+| 2 | **Saldos de devolución**: horas extra compensadas, relevo de turno, distribución irregular. Convertir los avisos en una cuenta | **5-8 días.** Es una pieza, no tres: un saldo con su plazo por concepto ---4 meses el art. 35.1, 4 semanas el relevo, 12 meses la distribución irregular---, su pantalla y su columna en el informe. Arregla **tres filas del inventario de golpe** |
+| 3 | **Vacaciones**: devengo proporcional y traslado por IT | **3-4 días.** El devengo por fecha de alta y el traslado con el tope de 18 meses del art. 38.3 |
+| 4 | **Llamamiento del fijo discontinuo** (art. 16), ya señalado en el código | **2-3 días.** Periodos de actividad, y que fuera de ellos el cuadrante no espere jornada |
+| 5 | **Topes que se guardan y no se comprueban**: 30 % de complementarias al mes y 65/85 % del contrato formativo | **2 días.** El patrón ya existe: el de 80 horas extra al año se contrasta desde agosto y esto es acumular y avisar igual |
+| 6 | **Historia de la adscripción a departamento**, cuando el informe empiece a mentir | **2-3 días.** Una tabla de vigencias y los informes leyendo de ella |
+| 7 | **La interfaz en catalán y gallego.** El mecanismo está montado ---i18next, con la cadena castellana como clave--- y lo usan **2 de 38 pantallas**: el catálogo tiene 23 claves y son las del menú | **4-6 días.** Unas **330 cadenas** en 28 ficheros, más 660 traducciones y un guard que exija el catálogo completo. Lo caro es envolverlas sin destrozar la legibilidad del código, que es una propiedad que este proyecto cuida |
+| 8 | **Reducciones de jornada por cuidados** (arts. 37.4, 37.5, 37.6 y 37.8). El permiso está catalogado; falta la mecánica de la fracción ---de ⅛ a ½ de la jornada, con sus fechas--- y su efecto en el cuadrante y en el cotejo | **4-6 días.** Son cuatro artículos con reglas distintas, y toca el cálculo de lo esperado |
+| 9 | **El acuerdo de trabajo a distancia y su umbral** (Ley 10/2021). El fichaje ya dice desde dónde se trabajó; no consta el acuerdo ni si se pasa del 30 % que lo hace obligatorio | **2-3 días.** El documento con sus fechas y el porcentaje calculado sobre lo trabajado |
+| 10 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
 
 ---
 

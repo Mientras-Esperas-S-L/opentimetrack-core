@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-27 13:30+0000\n"
+"POT-Creation-Date: 2026-08-27 20:28+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -194,7 +194,7 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:175 apps/absences/models.py:531
-#: apps/audit/models.py:185 apps/punches/models.py:538
+#: apps/audit/models.py:191 apps/punches/models.py:538
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:341 apps/tenants/rules.py:425
 msgid "note"
@@ -243,7 +243,7 @@ msgstr "Cancelada"
 msgid "employee"
 msgstr "persoa traballadora"
 
-#: apps/absences/models.py:258 apps/audit/models.py:178
+#: apps/absences/models.py:258 apps/audit/models.py:184
 #: apps/punches/corrections.py:94 apps/punches/models.py:152
 msgid "type"
 msgstr "tipo"
@@ -315,7 +315,7 @@ msgid "absence"
 msgstr "ausencia"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/absences/models.py:342
+#: apps/absences/models.py:342 apps/users/erase.py:80
 msgid "absences"
 msgstr "ausencias"
 
@@ -339,7 +339,8 @@ msgid ""
 "Part of a day is one day. For several days, leave the times empty and they "
 "count whole."
 msgstr ""
-"Unha parte do día é un día. Para varios días, deixa as horas baleiras e contan enteiros."
+"Unha parte do día é un día. Para varios días, deixa as horas baleiras e "
+"contan enteiros."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/absences/models.py:435
@@ -349,7 +350,9 @@ msgid ""
 "worker does not hand the certificate to the employer: the INSS sends the "
 "data to the company."
 msgstr ""
-"O parte médico non se garda. Rexistrar a ausencia, as súas datas e o seu estado abonda para os efectos da xornada, e desde o RD 1060/2022 a persoa non lle entrega o parte á empresa: o INSS mándalle os datos directamente."
+"O parte médico non se garda. Rexistrar a ausencia, as súas datas e o seu "
+"estado abonda para os efectos da xornada, e desde o RD 1060/2022 a persoa "
+"non lle entrega o parte á empresa: o INSS mándalle os datos directamente."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/absences/models.py:479
@@ -417,7 +420,7 @@ msgid "recovered holiday"
 msgstr "vacacións recuperadas"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/absences/models.py:535
+#: apps/absences/models.py:535 apps/users/erase.py:83
 msgid "recovered holidays"
 msgstr "vacacións recuperadas"
 
@@ -525,7 +528,7 @@ msgstr "o tempo indispensable"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/absences/views.py:182 apps/shifts/views.py:204
-#: apps/tenants/views.py:181 apps/users/views.py:667 apps/users/views.py:737
+#: apps/tenants/views.py:181 apps/users/views.py:730 apps/users/views.py:800
 msgid "Added"
 msgstr "Engadido"
 
@@ -750,12 +753,17 @@ msgstr "Purgou o rexistro que cumpriu o seu prazo"
 msgid "Delivered somebody their own record"
 msgstr "Entregoulle a alguén o seu propio rexistro"
 
-#: apps/audit/models.py:151
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:139
+msgid "Erased a person who left no record"
+msgstr "Retirou unha alta que non deixou rastro"
+
+#: apps/audit/models.py:157
 msgid "when"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:157 apps/common/models.py:117
+#: apps/audit/models.py:163 apps/common/models.py:117
 #: apps/tenants/models.py:169 apps/tenants/models.py:197
 #: apps/tenants/rules.py:39 apps/tenants/rules.py:318 apps/tenants/rules.py:403
 #: apps/users/models.py:274
@@ -763,37 +771,37 @@ msgid "company"
 msgstr "empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:167
+#: apps/audit/models.py:173
 msgid "who"
 msgstr "quen"
 
-#: apps/audit/models.py:171
+#: apps/audit/models.py:177
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:173
+#: apps/audit/models.py:179
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:179
+#: apps/audit/models.py:185
 msgid "identifier"
 msgstr ""
 
-#: apps/audit/models.py:180
+#: apps/audit/models.py:186
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:184
+#: apps/audit/models.py:190
 msgid "changes"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:207
+#: apps/audit/models.py:213
 msgid "audit entry"
 msgstr "asento do rastro"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:208
+#: apps/audit/models.py:214
 msgid "audit trail"
 msgstr "rastro de auditoría"
 
@@ -867,7 +875,9 @@ msgid ""
 "You cannot resolve %(what)s of your own. Another manager or administrator "
 "has to, so that the change passes through a second person."
 msgstr ""
-"Non podes resolver %(what)s de ti mesmo. Tenno que facer outra persoa responsable ou da administración, para que o cambio pase por unhas segundas mans."
+"Non podes resolver %(what)s de ti mesmo. Tenno que facer outra persoa "
+"responsable ou da administración, para que o cambio pase por unhas segundas "
+"mans."
 
 #: apps/common/models.py:50
 msgid "created at"
@@ -888,7 +898,8 @@ msgid ""
 "This endpoint is for people. An application uses /api/app/ with its own "
 "credential and permissions."
 msgstr ""
-"Este punto de acceso é para persoas. Unha aplicación usa /api/app/ coa súa credencial e os seus permisos."
+"Este punto de acceso é para persoas. Unha aplicación usa /api/app/ coa súa "
+"credencial e os seus permisos."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/common/permissions.py:65
@@ -918,7 +929,8 @@ msgid ""
 "ignored, and you would get the default period instead of the one you asked "
 "for."
 msgstr ""
-"Aquí o período pídese como «%(good)s». Escrito desta outra maneira ignoraríase, e recibirías o período por defecto en vez do que pediches."
+"Aquí o período pídese como «%(good)s». Escrito desta outra maneira "
+"ignoraríase, e recibirías o período por defecto en vez do que pediches."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/common/rangos.py:117
@@ -927,7 +939,8 @@ msgid ""
 "«%(bad)s» is not read here, so asking with it would quietly give you a "
 "different document. This endpoint reads: %(good)s."
 msgstr ""
-"Aquí non se le «%(bad)s», así que pedilo así daríache un documento distinto sen dicircho. Este punto de acceso le: %(good)s."
+"Aquí non se le «%(bad)s», así que pedilo así daríache un documento distinto "
+"sen dicircho. Este punto de acceso le: %(good)s."
 
 #: apps/common/tests/test_exceptions.py:194 apps/punches/services.py:393
 msgid "You clocked a moment ago. Check the screen before clocking again."
@@ -946,7 +959,9 @@ msgid ""
 "%(chars)s. Delete them and write it again --- what is filed has to say the "
 "same as what is on screen."
 msgstr ""
-"Este texto contén caracteres que non se ven pero cambian como se le: %(chars)s. Bórraos e escríbeo de novo --- o que queda arquivado ten que dicir o mesmo que o que hai na pantalla."
+"Este texto contén caracteres que non se ven pero cambian como se le: "
+"%(chars)s. Bórraos e escríbeo de novo --- o que queda arquivado ten que "
+"dicir o mesmo que o que hai na pantalla."
 
 #: apps/common/transitions.py:76 apps/punches/corrections.py:628
 msgid "This request has already been resolved."
@@ -1172,7 +1187,8 @@ msgid ""
 "Only a proposal still waiting for the person concerned can be withdrawn. "
 "This one is no longer waiting."
 msgstr ""
-"Só se pode retirar unha proposta que aínda espera a persoa afectada. Esta xa non espera."
+"Só se pode retirar unha proposta que aínda espera a persoa afectada. Esta xa "
+"non espera."
 
 #: apps/punches/corrections.py:466 apps/punches/corrections.py:671
 #: apps/punches/corrections.py:721
@@ -1214,7 +1230,8 @@ msgid ""
 "The person concerned has not answered yet. Wait, or apply it without "
 "agreement once the period has passed."
 msgstr ""
-"A persoa afectada aínda non respondeu. Agarda, ou aplícao sen acordo cando pase o prazo."
+"A persoa afectada aínda non respondeu. Agarda, ou aplícao sen acordo cando "
+"pase o prazo."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/punches/corrections.py:658
@@ -1222,7 +1239,8 @@ msgid ""
 "That entry has already been changed by another correction. Ask for a new one "
 "on the entry as it stands now."
 msgstr ""
-"Ese asento xa o cambiou outra corrección. Pide unha nova sobre o asento tal como está agora."
+"Ese asento xa o cambiou outra corrección. Pide unha nova sobre o asento tal "
+"como está agora."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/punches/corrections.py:825
@@ -1277,7 +1295,8 @@ msgid ""
 "Send an Idempotency-Key header naming this operation, so a retry is not "
 "recorded as a second event."
 msgstr ""
-"Envía unha cabeceira Idempotency-Key que nomee esta operación, para que un reintento non quede rexistrado como unha segunda fichaxe."
+"Envía unha cabeceira Idempotency-Key que nomee esta operación, para que un "
+"reintento non quede rexistrado como unha segunda fichaxe."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/punches/delegated.py:173 apps/punches/delegated.py:198
@@ -1540,7 +1559,7 @@ msgid "clock event"
 msgstr "fichaxe"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:282
+#: apps/punches/models.py:282 apps/users/erase.py:77
 msgid "clock events"
 msgstr "fichaxes"
 
@@ -1609,7 +1628,7 @@ msgid "overtime decision"
 msgstr "decisión sobre horas extras"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:556
+#: apps/punches/models.py:556 apps/users/erase.py:81
 msgid "overtime decisions"
 msgstr "decisións sobre horas extras"
 
@@ -1702,20 +1721,20 @@ msgstr ""
 msgid "You cannot clock in: you have approved leave for today."
 msgstr "Non podes fichar: tes unha ausencia aprobada para hoxe."
 
-#: apps/reports/delivery.py:122 apps/users/passwords.py:136
+#: apps/reports/delivery.py:125 apps/users/passwords.py:136
 msgid "the platform"
 msgstr "a plataforma"
 
-#: apps/reports/delivery.py:138
+#: apps/reports/delivery.py:141
 #, python-format
 msgid "Your working time record at %(company)s"
 msgstr "O teu rexistro de xornada en %(company)s"
 
-#: apps/reports/delivery.py:171
+#: apps/reports/delivery.py:183
 msgid "This link is no longer valid. Ask the company for a new one."
 msgstr "Esta ligazón xa non vale. Pídelle outra á empresa."
 
-#: apps/reports/delivery.py:204
+#: apps/reports/delivery.py:215
 msgid "the person concerned, through their delivery link"
 msgstr "a persoa interesada, pola súa ligazón de entrega"
 
@@ -1760,7 +1779,7 @@ msgid "payroll summary"
 msgstr "resumo para a nómina"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/payroll.py:117
+#: apps/reports/payroll.py:117 apps/users/erase.py:82
 msgid "payroll summaries"
 msgstr "resumos para a nómina"
 
@@ -1882,7 +1901,8 @@ msgid ""
 "Times are recorded by the server, never by the device that requested them, "
 "and are shown in the time zone stated above."
 msgstr ""
-"As horas rexístraas o servidor, nunca o dispositivo que as pide, e amósanse no fuso horario indicado enriba."
+"As horas rexístraas o servidor, nunca o dispositivo que as pide, e amósanse "
+"no fuso horario indicado enriba."
 
 #: apps/reports/pdf.py:260 apps/reports/services.py:637
 msgid "Generated"
@@ -1913,7 +1933,8 @@ msgstr "pausa sen fin"
 msgid ""
 "an entry no longer matches its integrity seal: it was altered outside the app"
 msgstr ""
-"un asento xa non coincide co seu selo de integridade: alterouse fóra da aplicación"
+"un asento xa non coincide co seu selo de integridade: alterouse fóra da "
+"aplicación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/reports/services.py:509
@@ -2120,7 +2141,8 @@ msgstr ""
 #: apps/shifts/services.py:437
 msgid "The clocks went forward that night, so the shifts are an hour closer."
 msgstr ""
-"Aquela noite os reloxos adiantáronse, así que as quendas quedan unha hora máis perto."
+"Aquela noite os reloxos adiantáronse, así que as quendas quedan unha hora "
+"máis perto."
 
 #: apps/shifts/services.py:449
 #, python-format
@@ -2307,7 +2329,8 @@ msgid ""
 "With no days to answer, a change can be applied the moment it is proposed: "
 "nobody gets the chance to agree or to disagree."
 msgstr ""
-"Sen días para responder, un cambio pode aplicarse no momento en que se propón: ninguén ten a ocasión de estar de acordo nin de non estalo."
+"Sen días para responder, un cambio pode aplicarse no momento en que se "
+"propón: ninguén ten a ocasión de estar de acordo nin de non estalo."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/shifts/views.py:679
@@ -2327,7 +2350,8 @@ msgid ""
 "Changing how time is counted needs the day it starts to apply. Without it "
 "the change would reach periods already closed and reported."
 msgstr ""
-"Cambiar como se conta o tempo precisa o día en que empeza a aplicarse. Sen iso o cambio chegaría a períodos xa pechados e informados."
+"Cambiar como se conta o tempo precisa o día en que empeza a aplicarse. Sen "
+"iso o cambio chegaría a períodos xa pechados e informados."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/shifts/views.py:883
@@ -2345,7 +2369,8 @@ msgid ""
 "agreement.regcon: put it in quotes. Unquoted it is read as a number and a "
 "code beginning with zero loses it"
 msgstr ""
-"agreement.regcon: pono entre comiñas. Sen comiñas lese como un número e un código que comeza por cero pérdeo"
+"agreement.regcon: pono entre comiñas. Sen comiñas lese como un número e un "
+"código que comeza por cero pérdeo"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/agreements.py:158
@@ -2374,7 +2399,8 @@ msgid ""
 "expired on %(day)s; a lapsed agreement that looks current is worse than no "
 "ficha at all"
 msgstr ""
-"caducou o %(day)s; un convenio vencido que parece vixente é peor que non ter ningunha ficha"
+"caducou o %(day)s; un convenio vencido que parece vixente é peor que non ter "
+"ningunha ficha"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/agreements.py:269
@@ -2401,7 +2427,9 @@ msgid ""
 "distribute the day irregularly, which is a company fact and not a property "
 "of the agreement"
 msgstr ""
-"%(got)s supera as nove horas ordinarias; por riba diso precísase o acordo para distribuír a xornada de xeito irregular, que é un feito da empresa e non unha propiedade do convenio"
+"%(got)s supera as nove horas ordinarias; por riba diso precísase o acordo "
+"para distribuír a xornada de xeito irregular, que é un feito da empresa e "
+"non unha propiedade do convenio"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/agreements.py:316
@@ -2410,7 +2438,8 @@ msgid ""
 "%(got)s is below the twelve-hour floor. RD 1561/1995 lowers it for "
 "particular sectors; if that is the case here, say so in the note"
 msgstr ""
-"%(got)s está por debaixo do piso de doce horas. O RD 1561/1995 rebáixao para sectores concretos; se aquí é o caso, dío na nota"
+"%(got)s está por debaixo do piso de doce horas. O RD 1561/1995 rebáixao para "
+"sectores concretos; se aquí é o caso, dío na nota"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/agreements.py:329
@@ -2434,7 +2463,8 @@ msgstr "%(got)s %(unit)s está por debaixo do mínimo de %(floor)s"
 #: apps/tenants/agreements.py:370
 msgid "the break counts as working time but its length is not transcribed"
 msgstr ""
-"o descanso conta como tempo de traballo pero a súa duración non se transcribiu"
+"o descanso conta como tempo de traballo pero a súa duración non se "
+"transcribiu"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/agreements.py:390
@@ -2442,7 +2472,8 @@ msgstr ""
 msgid ""
 "same code as %(other)s: the REGCON is what tells two similar agreements apart"
 msgstr ""
-"mesmo código que %(other)s: o REGCON é o que distingue dous convenios semellantes"
+"mesmo código que %(other)s: o REGCON é o que distingue dous convenios "
+"semellantes"
 
 #: apps/tenants/application_views.py:86
 #, python-format
@@ -2519,7 +2550,8 @@ msgstr "permisos"
 #: apps/tenants/applications.py:50
 msgid "List of granted scopes. Empty means the application can do nothing."
 msgstr ""
-"Lista de permisos concedidos. Baleira quere dicir que a aplicación non pode facer nada."
+"Lista de permisos concedidos. Baleira quere dicir que a aplicación non pode "
+"facer nada."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/applications.py:60
@@ -2838,7 +2870,8 @@ msgid ""
 "Only when the agreement or the contract says so. Assuming it would overstate "
 "the hours worked."
 msgstr ""
-"Só cando o convenio ou o contrato o din. Dalo por feito inflaría as horas traballadas."
+"Só cando o convenio ou o contrato o din. Dalo por feito inflaría as horas "
+"traballadas."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/rules.py:101
@@ -2876,7 +2909,8 @@ msgid ""
 "Days to answer a proposed change before the company may apply it anyway, "
 "recorded as made without agreement."
 msgstr ""
-"Días para responder un cambio proposto antes de que a empresa poida aplicalo igualmente, rexistrado como feito sen acordo."
+"Días para responder un cambio proposto antes de que a empresa poida aplicalo "
+"igualmente, rexistrado como feito sen acordo."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/rules.py:120
@@ -2889,7 +2923,8 @@ msgid ""
 "Cap on hours a part-time contract may work beyond what was agreed, as a "
 "percentage of it."
 msgstr ""
-"Límite de horas que un contrato a tempo parcial pode facer máis alá do pactado, en porcentaxe."
+"Límite de horas que un contrato a tempo parcial pode facer máis alá do "
+"pactado, en porcentaxe."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/rules.py:133
@@ -2902,7 +2937,8 @@ msgid ""
 "A punch within this many minutes of the rostered start counts as on time. 0 "
 "is strict."
 msgstr ""
-"Unha fichaxe dentro destes minutos da hora prevista conta como puntual. 0 é estrito."
+"Unha fichaxe dentro destes minutos da hora prevista conta como puntual. 0 é "
+"estrito."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/rules.py:140
@@ -2924,7 +2960,8 @@ msgstr "sen avisos desde"
 #: apps/tenants/rules.py:155
 msgid "Art. 88 LOPDGDD: the right to disconnect. Nothing is sent after this."
 msgstr ""
-"Art. 88 LOPDGDD: o dereito á desconexión. Despois desta hora non se envía nada."
+"Art. 88 LOPDGDD: o dereito á desconexión. Despois desta hora non se envía "
+"nada."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/rules.py:158
@@ -2957,7 +2994,8 @@ msgid ""
 "After this, an unclosed working day is read as a forgotten clock-out rather "
 "than a shift still running. Raise it for 24-hour on-call rosters."
 msgstr ""
-"Pasado isto, unha xornada sen pechar lese como unha saída esquecida e non como unha quenda que aínda dura. Súbeo para gardas de 24 horas."
+"Pasado isto, unha xornada sen pechar lese como unha saída esquecida e non "
+"como unha quenda que aínda dura. Súbeo para gardas de 24 horas."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/rules.py:198 apps/tenants/rules.py:199
@@ -3019,7 +3057,8 @@ msgstr "organizacións do rexistro"
 msgid ""
 "The day this way of counting starts to apply. Days before it keep theirs."
 msgstr ""
-"O día en que este xeito de contar comeza a aplicarse. Os días anteriores conservan o seu."
+"O día en que este xeito de contar comeza a aplicarse. Os días anteriores "
+"conservan o seu."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/rules.py:422
@@ -3047,7 +3086,8 @@ msgid ""
 "Say which one: the agreement, or the decision and its date. A route with "
 "nothing to check it against documents nothing."
 msgstr ""
-"Di cal: o acordo, ou a decisión e a súa data. Unha vía sen nada co que contrastala non documenta nada."
+"Di cal: o acordo, ou a decisión e a súa data. Unha vía sen nada co que "
+"contrastala non documenta nada."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/views.py:104
@@ -3055,11 +3095,67 @@ msgid ""
 "A prior consultation belongs to the employer-decision route. An agreement is "
 "the negotiation."
 msgstr ""
-"Unha consulta previa pertence á vía da decisión empresarial. Un acordo é a negociación."
+"Unha consulta previa pertence á vía da decisión empresarial. Un acordo é a "
+"negociación."
 
 #: apps/tenants/views.py:142 apps/users/serializers.py:380
 msgid "That workplace belongs to another company."
 msgstr "Ese centro de traballo é doutra empresa."
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/erase.py:78
+msgid "corrections"
+msgstr "correccións"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/erase.py:86
+msgid "rostered shifts"
+msgstr "quendas planificadas"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/erase.py:92
+msgid "leave they approved"
+msgstr "ausencias que aprobou"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/erase.py:93
+msgid "leave they requested for somebody else"
+msgstr "ausencias que pediu para outras persoas"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/erase.py:94
+msgid "corrections they resolved"
+msgstr "correccións que resolveu"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/erase.py:95
+msgid "overtime they decided"
+msgstr "horas extras que decidiu"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/erase.py:96
+msgid "payroll summaries they generated"
+msgstr "resumos para a nómina que xerou"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/erase.py:97
+msgid "holiday recoveries they confirmed"
+msgstr "recuperacións de vacacións que confirmou"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/erase.py:98
+msgid "clock events they recorded for others"
+msgstr "fichaxes que rexistrou para outras persoas"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/erase.py:99
+msgid "changes to how time is counted"
+msgstr "cambios no xeito de contar o tempo"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/erase.py:100
+msgid "application credentials they created"
+msgstr "credenciais de aplicación que creou"
 
 #: apps/users/models.py:52
 msgid "managers"
@@ -3402,7 +3498,8 @@ msgid ""
 "%(name)s does not have a manager profile, so putting them in charge would "
 "grant nothing."
 msgstr ""
-"%(name)s non ten perfil de responsable, así que poñela á fronte non lle concedería nada."
+"%(name)s non ten perfil de responsable, así que poñela á fronte non lle "
+"concedería nada."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/users/serializers.py:339
@@ -3430,7 +3527,8 @@ msgstr "Non pode ser hoxe nin unha data futura."
 #, python-format
 msgid "That gives an age of %(age)s, below the minimum working age. %(basis)s"
 msgstr ""
-"Iso dá unha idade de %(age)s, por debaixo da idade mínima para traballar. %(basis)s"
+"Iso dá unha idade de %(age)s, por debaixo da idade mínima para traballar. "
+"%(basis)s"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/users/serializers.py:416
@@ -3443,7 +3541,8 @@ msgid ""
 "There is no agreed figure on this regime. Clear it, or choose one that has "
 "hours."
 msgstr ""
-"Neste réxime non hai cifra pactada. Baléirala, ou escolle un réxime que teña horas."
+"Neste réxime non hai cifra pactada. Baléirala, ou escolle un réxime que teña "
+"horas."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/users/serializers.py:449
@@ -3462,7 +3561,8 @@ msgid ""
 "%(basis)s: workers under eighteen may not work at night, so the status "
 "cannot apply to them."
 msgstr ""
-"%(basis)s: as persoas menores de dezaoito anos non poden traballar de noite, así que a condición non se lles pode aplicar."
+"%(basis)s: as persoas menores de dezaoito anos non poden traballar de noite, "
+"así que a condición non se lles pode aplicar."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/users/serializers.py:497
@@ -3471,7 +3571,8 @@ msgid ""
 "%(hours)s h a week is above the company's %(ceiling)s h. A contract cannot "
 "agree past the legal maximum."
 msgstr ""
-"%(hours)s h á semana son máis que as %(ceiling)s h da empresa. Un contrato non pode pactar máis alá do máximo legal."
+"%(hours)s h á semana son máis que as %(ceiling)s h da empresa. Un contrato "
+"non pode pactar máis alá do máximo legal."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/users/serializers.py:546
@@ -3483,20 +3584,20 @@ msgstr "Xa existe unha empresa con ese NIF."
 msgid "Wrong credentials."
 msgstr "Credenciais incorrectas."
 
-#: apps/users/views.py:200
+#: apps/users/views.py:201
 msgid "No session to renew."
 msgstr "Non hai sesión que renovar."
 
-#: apps/users/views.py:214
+#: apps/users/views.py:215
 msgid "The session has expired. Sign in again."
 msgstr "A sesión caducou. Volve entrar."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:237
+#: apps/users/views.py:238
 msgid "Send the refresh token to close the session."
 msgstr "Envía o testemuño de refresco para pechar a sesión."
 
-#: apps/users/views.py:430
+#: apps/users/views.py:431
 msgid ""
 "This is the only active administrator. Appoint another one first, or the "
 "company is left with nobody able to manage it."
@@ -3504,46 +3605,75 @@ msgstr ""
 "É o único administrador activo. Nomea antes outro, ou a empresa queda sen "
 "ninguén que a poida xestionar."
 
-#: apps/users/views.py:485
+#: apps/users/views.py:486
 msgid "This account signs in through your identity provider."
 msgstr "Esta conta entra a través do voso provedor de identidade."
 
-#: apps/users/views.py:487
+#: apps/users/views.py:488
 msgid "Reactivate the account before inviting them."
 msgstr "Volve dar de alta a conta antes de convidala."
 
-#: apps/users/views.py:513
+#: apps/users/views.py:514
 msgid "There is no address to send it to. Add one first."
 msgstr "Non hai ningún enderezo ao que mandalo. Engade un antes."
 
-#: apps/users/views.py:590
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/views.py:589
+msgid "You cannot erase your own account."
+msgstr "Non podes borrar a túa propia conta."
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/views.py:601
+#, python-format
+msgid "what is theirs: %(cosas)s"
+msgstr "o que é seu: %(cosas)s"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/views.py:605
+#, python-format
+msgid "what they decided about other people: %(cosas)s"
+msgstr "o que decidiu sobre outras persoas: %(cosas)s"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/views.py:611
+#, python-format
+msgid ""
+"%(quien)s left a record, so their file has to stay and explain it --- "
+"%(que)s. Deactivate them instead."
+msgstr ""
+"%(quien)s deixou rastro, así que a súa ficha ten que quedar e explicalo --- %(que)s. Dálle de baixa no seu lugar."
+
+#: apps/users/views.py:653
 msgid "You cannot deactivate your own account."
 msgstr "Non podes dar de baixa a túa propia conta."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:646
+#: apps/users/views.py:709
 #, python-format
 msgid "Left on %(day)s. %(count)s shift(s) still rostered after that."
 msgstr ""
-"Marchou o %(day)s. Aínda ten %(count)s quenda(s) planificadas despois desa data."
+"Marchou o %(day)s. Aínda ten %(count)s quenda(s) planificadas despois desa "
+"data."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:649
+#: apps/users/views.py:712
 #, python-format
 msgid "Left on %(day)s."
 msgstr "Marchou o %(day)s."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:705
+#: apps/users/views.py:768
 #, python-format
 msgid ""
 "%(count)s people answer for this department. Move them first: leaving them "
 "in charge of nothing means they can no longer read anybody's record but "
 "their own."
 msgstr ""
-"%(count)s persoas responden deste departamento. Móveas primeiro: deixalas á fronte de nada quere dicir que xa non poderán ler o rexistro de ninguén agás o seu."
+"%(count)s persoas responden deste departamento. Móveas primeiro: deixalas á "
+"fronte de nada quere dicir que xa non poderán ler o rexistro de ninguén agás "
+"o seu."
 
-#: apps/users/views.py:753
+#: apps/users/views.py:816
 #, python-format
 msgid ""
 "%(count)s people work there. Move them first: without a workplace they lose "
@@ -3552,7 +3682,7 @@ msgstr ""
 "Alí traballan %(count)s persoas. Móveas primeiro: sen centro perden os seus "
 "festivos locais e o seu fuso horario."
 
-#: apps/users/views.py:808
+#: apps/users/views.py:871
 msgid "The link is not valid or has already been used."
 msgstr "A ligazón non é válida ou xa se usou."
 
@@ -3615,7 +3745,8 @@ msgid ""
 msgstr ""
 "A ligazón funciona unha vez e caduca en %(hours)s horas.\n"
 "\n"
-"Se non fuches ti, ignora esta mensaxe: non cambia nada ata que non se use a ligazón."
+"Se non fuches ti, ignora esta mensaxe: non cambia nada ata que non se use a "
+"ligazón."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: templates/emails/punch_reminder.txt:1
@@ -3648,10 +3779,13 @@ msgid ""
 msgstr ""
 "Ola %(first_name)s,\n"
 "\n"
-"A túa xornada do %(day)s en %(company)s aínda está aberta: fichaches a entrada e non a saída.\n"
+"A túa xornada do %(day)s en %(company)s aínda está aberta: fichaches a "
+"entrada e non a saída.\n"
 "\n"
-"Ficha a saída cando acabes. A hora ponla o servidor a partir da túa fichaxe,\n"
-"así que queda rexistrada tal e como acontece, coas horas extras incluídas se hoxe quedas máis tempo."
+"Ficha a saída cando acabes. A hora ponla o servidor a partir da túa "
+"fichaxe,\n"
+"así que queda rexistrada tal e como acontece, coas horas extras incluídas se "
+"hoxe quedas máis tempo."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: templates/emails/punch_reminder.txt:12
@@ -3659,7 +3793,8 @@ msgid ""
 "This is only a reminder: nothing has been recorded for you. You can turn "
 "these off in your profile."
 msgstr ""
-"Isto só é un recordatorio: non se rexistrou nada no teu nome. Podes desactivalos no teu perfil."
+"Isto só é un recordatorio: non se rexistrou nada no teu nome. Podes "
+"desactivalos no teu perfil."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: templates/emails/record_change_proposed.txt:1
@@ -3696,11 +3831,13 @@ msgid ""
 "change,\n"
 "and it will be recorded as made without your agreement."
 msgstr ""
-"Aínda non cambiou nada. Podes aceptalo, ou dicir que non estás de acordo ---\n"
+"Aínda non cambiou nada. Podes aceptalo, ou dicir que non estás de acordo "
+"---\n"
 "e entón a túa versión queda rexistrada a carón do cambio e infórmase a\n"
 "representación legal das persoas traballadoras.\n"
 "\n"
-"Tes %(days)s días para responder. Pasado ese prazo a empresa pode aplicar o cambio,\n"
+"Tes %(days)s días para responder. Pasado ese prazo a empresa pode aplicar o "
+"cambio,\n"
 "e quedará rexistrado como feito sen o teu acordo."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
@@ -3782,7 +3919,8 @@ msgid ""
 msgstr ""
 "Ola %(first_name)s:\n"
 "\n"
-"Aquí tes a ligazón para descargar o teu propio rexistro de xornada en %(company)s."
+"Aquí tes a ligazón para descargar o teu propio rexistro de xornada en "
+"%(company)s."
 
 #: templates/emails/record_delivery.txt:7
 #, python-format
@@ -3841,7 +3979,8 @@ msgid ""
 "register, so you can consult the entry and its history in the application."
 msgstr ""
 "O art. 4.b do decreto do rexistro de xornada esixe que se vos informe\n"
-"cando isto acontece. A empresa aínda pode aplicar o cambio, e se o fai, o rexistro\n"
+"cando isto acontece. A empresa aínda pode aplicar o cambio, e se o fai, o "
+"rexistro\n"
 "amosará que se fixo sen acordo, coa versión da persoa a carón.\n"
 "\n"
 "Aquí non se reproduce o que escribiu. O art. 6.2 dávos acceso ao\n"

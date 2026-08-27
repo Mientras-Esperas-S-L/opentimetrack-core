@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 133 · **La lista aprobada el 27/08 está terminada, y el bucle parado.** El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 134 · La lista aprobada el 27/08 está terminada; sigue **lo que quedó propuesto**, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,103 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 134 --- Retirar un alta equivocada (27/08)
+
+Lo que quedó propuesto al cerrar la lista, y que había aparecido **dos veces solo
+el mismo día**: 946 personas de basura en la base de demostración por la mañana y
+57 más por la tarde, cuando el guard del sedimento saltó. Francisco eligió hacerlo
+antes de volver a la auditoría exploratoria.
+
+#### Lo que ya estaba bien, y por qué no se tocó
+
+`DELETE /api/employees/<id>/` **no borra: da de baja**, y está sobreescrito a
+propósito con su razón escrita ---«their clock events must survive»---. Eso es
+correcto y se queda: los fichajes de quien trabajó aquí viven cuatro años y su
+ficha tiene que seguir explicándolos.
+
+Lo que faltaba es el otro caso, que no tenía salida: **el alta equivocada**. El
+correo mal escrito, la persona duplicada, la que se creó en la empresa que no era.
+
+Así que verbo propio: `POST /api/employees/<id>/erase/`. Borrar de verdad y dar de
+baja son operaciones distintas y no comparten botón.
+
+#### La comprobación, que no es «no tiene fichajes»
+
+Son **tres familias**, y la tercera es la que no se ve:
+
+1. **Lo que la base ya protege** (`PROTECT`): fichajes y correcciones. Sin
+   comprobarlo antes, el borrado falla con un `ProtectedError` que no dice de
+   quién ni cuántos.
+2. **Lo que se iría en cascada** y es historial: ausencias, decisiones de horas
+   extra, resúmenes de nómina entregados con el recibo de salarios y vacaciones
+   recuperadas. Nada de eso lo tiene un alta equivocada.
+3. **Lo que decidió sobre otras personas.** Si aprobó una ausencia, resolvió una
+   corrección o autorizó horas extra, esos campos son `SET_NULL`: borrarla **no
+   falla, vacía**. La aprobación se queda con «decidido por: nadie», en silencio,
+   y el art. 4.b pide que un cambio en el registro lleve nombre y apellidos.
+
+Medido sobre la empresa de demostración: borrar a Marta Ruiz dejaría **53
+aprobaciones de ausencias sin nombre**. Ninguna de las dos primeras familias la
+habría detenido por esa razón ---sí por sus fichajes--- pero el conteo lo separa
+para poder decirlo.
+
+El rastro de auditoría sí sobrevive a la persona, porque guarda `actor_label`, el
+nombre tal como se escribió. Una aprobación no tiene esa copia.
+
+#### Una prueba mía que pasaba por el motivo equivocado
+
+`test_no_deja_a_la_empresa_sin_administracion` daba dos perfiles de
+administración, borraba uno y comprobaba que el último no se podía borrar. Pasaba
+---y seguía pasando con el guard **quitado**--- porque el último borrado lo pedía
+esa misma persona sobre sí misma, y eso ya lo impide otra comprobación.
+
+Lo que de verdad lo garantiza es la combinación: borrar es cosa de la
+administración y nadie puede borrarse a sí mismo. El guard sigue llamándose
+---cuesta una línea y protege si mañana se permite borrar a un responsable--- pero
+hoy es defensa en profundidad. Reescrita para que diga eso, y no lo que parecía.
+
+De las cuatro guardas, tres se rompen y ponen una prueba en rojo. La cuarta es la
+redundante, y ahora está escrito que lo es.
+
+#### Dos trampas de la prueba de navegador
+
+**El diálogo tapa la tabla.** MUI marca el resto de la página con `aria-hidden`
+mientras hay un modal abierto, así que `getByRole('row')` devolvía **cero por el
+diálogo** y la comprobación pasaba sin haber borrado nada. Se espera a que el
+diálogo se vaya y se pregunta al servidor, que es quien tiene la verdad.
+
+**Y la prueba se saboteaba a sí misma**: comprobar por API que la persona ya no
+está pide un 404 a propósito, y el navegador lo apunta como error de red. La
+vigilancia de la consola se hace ahora **antes** de esa comprobación, porque lo
+que vigila es la pantalla mientras se usa.
+
+Las dos las dio la captura del fallo, que Playwright guarda sin que nadie se la
+pida. La lección 252 otra vez.
+
+#### Traducciones: diez `fuzzy` que decían cosas falsas
+
+Los mensajes nuevos se parecen a otros existentes, así que `makemessages` arrastró
+traducciones viejas y las marcó dudosas. Entre ellas: «leave they approved»
+heredó **«ausencia que las pisó»**, «leave they requested for somebody else» heredó
+**«Esa solicitud es de otra persona.»** ---una frase de error--- y «You cannot erase
+your own account» heredó **«No puedes dar de baja tu propia cuenta»**, que cambia
+borrar por dar de baja, que es justo la distinción de esta función.
+
+Los dieciséis traducidos en los tres idiomas. Y de paso, el aplicador **ya no marca
+el castellano** como «traducido sin hablante nativo»: eso decía algo falso, porque
+el castellano se escribe con conocimiento. Solo catalán y gallego llevan la marca.
+
+#### Verde al cerrar
+
+`1.310` pruebas de backend (once nuevas), `ruff` limpio, sin migraciones
+pendientes, castellano completo con 727 mensajes y los tres catálogos a cero
+`fuzzy`.
+
+Y en `docs/cobertura-legal.md`: sale el punto 7 de «Por dónde seguir», que era
+esto, y entran tres que no estaban en ninguna lista ---reducciones por cuidados,
+el acuerdo de trabajo a distancia y las jornadas especiales por sector---, que
+salieron al repasar el dossier con Francisco.
 
 ### Vuelta 133 --- Las dependencias, y la lista se agota (27/08)
 

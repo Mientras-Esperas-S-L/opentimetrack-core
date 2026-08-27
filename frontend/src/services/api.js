@@ -498,6 +498,17 @@ export const inviteEmployee = (id) => post(`/employees/${id}/invite/`)
  *  pero no debería seguir entrando al producto. El enlace no abre sesión. */
 export const deliverRecord = (id) => post(`/employees/${id}/deliver-record/`)
 
+/** Borra de verdad a quien no dejó rastro.
+ *
+ *  Distinto de dar de baja, que es lo que hace `DELETE` y hace bien: los
+ *  fichajes de quien trabajó aquí viven cuatro años y su ficha tiene que seguir
+ *  explicándolos. Esto es para el alta equivocada ---el correo mal escrito, la
+ *  persona duplicada--- que hasta ahora solo se podía desactivar y se quedaba en
+ *  la lista para siempre.
+ *
+ *  El servidor se niega y dice qué encontró si hay algo que explicar. */
+export const erasePerson = (id) => post(`/employees/${id}/erase/`)
+
 export const getDepartments = async (params) => catalogoEntero('/departments/', params)
 export const createDepartment = (payload) => post('/departments/', payload)
 export const updateDepartment = async (id, payload) =>

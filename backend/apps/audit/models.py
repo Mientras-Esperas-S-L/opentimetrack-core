@@ -131,6 +131,12 @@ class AuditAction(models.TextChoices):
     #: generó--- y otro cuando se descarga. Sin el segundo no se puede demostrar
     #: que la solicitud del art. 15 RGPD llegó a atenderse, solo que se contestó.
     RECORD_DELIVERED = "RECORD_DELIVERED", _("Delivered somebody their own record")
+    #: Un alta equivocada, retirada. Solo se permite cuando esa persona no dejó
+    #: nada que explicar ---ni trabajo suyo ni decisiones sobre el de otros--- así
+    #: que este asiento **es lo único que queda de que existió**. Por eso lleva el
+    #: nombre y el correo dentro, y no solo el identificador de una fila que ya no
+    #: está.
+    PERSON_ERASED = "PERSON_ERASED", _("Erased a person who left no record")
 
     # Failed sign-ins are deliberately absent. ATOMIC_REQUESTS is on and DRF
     # rolls the transaction back when it returns an error, so an entry written

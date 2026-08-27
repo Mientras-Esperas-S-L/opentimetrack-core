@@ -40,6 +40,7 @@ import {
   getEmployees,
   getWorkplaces,
   deliverRecord,
+  erasePerson,
   inviteEmployee,
   PAGE_SIZE,
   reactivateEmployee,
@@ -592,7 +593,16 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
  *  putting them a click away also stops "Dar de baja" sitting under the cursor
  *  next to "Editar".
  */
-function RowActions({ person, busy, onEdit, onInvite, onDeliver, onReactivate, onDeactivate }) {
+function RowActions({
+  person,
+  busy,
+  onEdit,
+  onInvite,
+  onDeliver,
+  onReactivate,
+  onDeactivate,
+  onErase,
+}) {
   // Una sola vez: se usa en cuatro rótulos accesibles de esta fila y estaba
   // escrito a mano en tres sitios distintos.
   const quien = `${person.first_name} ${person.last_name}`.trim() || person.email
@@ -645,6 +655,15 @@ function RowActions({ person, busy, onEdit, onInvite, onDeliver, onReactivate, o
           Enviarle su registro
         </MenuItem>
         {person.is_active && <MenuItem onClick={pick(onDeactivate)}>Dar de baja</MenuItem>}
+        {/* Un alta equivocada: el correo mal escrito, la persona duplicada, la
+            que se creó en la empresa que no era. Solo se ofrece con la cuenta ya
+            de baja, que es como se llega a darse cuenta. Si dejó cualquier
+            rastro el servidor se niega y dice qué encontró. */}
+        {!person.is_active && (
+          <MenuItem onClick={pick(onErase)} disabled={busy}>
+            Borrar definitivamente
+          </MenuItem>
+        )}
       </Menu>
     </Stack>
   )
@@ -756,6 +775,16 @@ export default function People() {
   const deliver = useMutation({
     mutationFn: deliverRecord,
     onSuccess: (data) => setSent(data.sent_to),
+    onError: setError,
+  })
+
+  //: Solo para quien ya está de baja, que es como se llega aquí: primero se
+  //: desactiva y después alguien se da cuenta de que el alta estaba mal. El
+  //: servidor comprueba lo que importa ---que no dejara nada que explicar--- y
+  //: se niega diciendo qué encontró, así que la pantalla no repite esa lógica.
+  const erase = useMutation({
+    mutationFn: erasePerson,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['employees'] }),
     onError: setError,
   })
 
@@ -1079,10 +1108,20 @@ export default function People() {
                     <TableCell align="right">
                       <RowActions
                         person={person}
-                        busy={invite.isPending || deliver.isPending}
+                        busy={invite.isPending || deliver.isPending || erase.isPending}
                         onEdit={() => setEditing(person)}
                         onInvite={() => invite.mutate(person.id)}
                         onDeliver={() => deliver.mutate(person.id)}
+                        onErase={() =>
+                          setConfirming({
+                            title: 'Borrar definitivamente',
+                            body: `${person.first_name} ${person.last_name}`.trim() || person.email,
+                            detail:
+                              'Se retira de la lista y no se puede deshacer. Solo funciona si no dejó nada que explicar: ni fichajes, ni ausencias, ni decisiones sobre otras personas. Si dejó algo, no se borra y se te dice qué.',
+                            verb: 'Borrar',
+                            run: () => erase.mutate(person.id),
+                          })
+                        }
                         onReactivate={() => reactivate.mutate(person.id)}
                         onDeactivate={() =>
                           setConfirming({

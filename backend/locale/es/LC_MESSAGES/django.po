@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-27 13:30+0000\n"
+"POT-Creation-Date: 2026-08-27 20:28+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -182,7 +182,7 @@ msgid "needs a supporting document"
 msgstr "necesita justificante"
 
 #: apps/absences/models.py:175 apps/absences/models.py:531
-#: apps/audit/models.py:185 apps/punches/models.py:538
+#: apps/audit/models.py:191 apps/punches/models.py:538
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:341 apps/tenants/rules.py:425
 msgid "note"
@@ -226,7 +226,7 @@ msgstr "Cancelada"
 msgid "employee"
 msgstr "persona trabajadora"
 
-#: apps/absences/models.py:258 apps/audit/models.py:178
+#: apps/absences/models.py:258 apps/audit/models.py:184
 #: apps/punches/corrections.py:94 apps/punches/models.py:152
 msgid "type"
 msgstr "tipo"
@@ -300,7 +300,7 @@ msgstr ""
 msgid "absence"
 msgstr "ausencia"
 
-#: apps/absences/models.py:342
+#: apps/absences/models.py:342 apps/users/erase.py:80
 msgid "absences"
 msgstr "ausencias"
 
@@ -392,7 +392,7 @@ msgstr "confirmada el"
 msgid "recovered holiday"
 msgstr "vacaciones recuperadas"
 
-#: apps/absences/models.py:535
+#: apps/absences/models.py:535 apps/users/erase.py:83
 msgid "recovered holidays"
 msgstr "vacaciones recuperadas"
 
@@ -495,7 +495,7 @@ msgid "the time it takes"
 msgstr "el tiempo indispensable"
 
 #: apps/absences/views.py:182 apps/shifts/views.py:204
-#: apps/tenants/views.py:181 apps/users/views.py:667 apps/users/views.py:737
+#: apps/tenants/views.py:181 apps/users/views.py:730 apps/users/views.py:800
 msgid "Added"
 msgstr "Añadido"
 
@@ -685,46 +685,50 @@ msgstr "Purgó el registro que cumplió su plazo"
 msgid "Delivered somebody their own record"
 msgstr "Le entregó a alguien su propio registro"
 
-#: apps/audit/models.py:151
+#: apps/audit/models.py:139
+msgid "Erased a person who left no record"
+msgstr "Retiró un alta que no dejó rastro"
+
+#: apps/audit/models.py:157
 msgid "when"
 msgstr "cuándo"
 
-#: apps/audit/models.py:157 apps/common/models.py:117
+#: apps/audit/models.py:163 apps/common/models.py:117
 #: apps/tenants/models.py:169 apps/tenants/models.py:197
 #: apps/tenants/rules.py:39 apps/tenants/rules.py:318 apps/tenants/rules.py:403
 #: apps/users/models.py:274
 msgid "company"
 msgstr "empresa"
 
-#: apps/audit/models.py:167
+#: apps/audit/models.py:173
 msgid "who"
 msgstr "quién"
 
-#: apps/audit/models.py:171
+#: apps/audit/models.py:177
 msgid "who (as recorded)"
 msgstr "quién (tal y como se registró)"
 
-#: apps/audit/models.py:173
+#: apps/audit/models.py:179
 msgid "action"
 msgstr "acción"
 
-#: apps/audit/models.py:179
+#: apps/audit/models.py:185
 msgid "identifier"
 msgstr "identificador"
 
-#: apps/audit/models.py:180
+#: apps/audit/models.py:186
 msgid "what (as recorded)"
 msgstr "sobre qué (tal y como se registró)"
 
-#: apps/audit/models.py:184
+#: apps/audit/models.py:190
 msgid "changes"
 msgstr "cambios"
 
-#: apps/audit/models.py:207
+#: apps/audit/models.py:213
 msgid "audit entry"
 msgstr "entrada de auditoría"
 
-#: apps/audit/models.py:208
+#: apps/audit/models.py:214
 msgid "audit trail"
 msgstr "registro de actividad"
 
@@ -1436,7 +1440,7 @@ msgstr "sustituido por"
 msgid "clock event"
 msgstr "fichaje"
 
-#: apps/punches/models.py:282
+#: apps/punches/models.py:282 apps/users/erase.py:77
 msgid "clock events"
 msgstr "fichajes"
 
@@ -1497,7 +1501,7 @@ msgstr "resuelta el"
 msgid "overtime decision"
 msgstr "decisión sobre horas extraordinarias"
 
-#: apps/punches/models.py:556
+#: apps/punches/models.py:556 apps/users/erase.py:81
 msgid "overtime decisions"
 msgstr "decisiones sobre horas extraordinarias"
 
@@ -1585,20 +1589,20 @@ msgstr ""
 msgid "You cannot clock in: you have approved leave for today."
 msgstr "No puedes fichar: tienes una ausencia aprobada para hoy."
 
-#: apps/reports/delivery.py:122 apps/users/passwords.py:136
+#: apps/reports/delivery.py:125 apps/users/passwords.py:136
 msgid "the platform"
 msgstr "la plataforma"
 
-#: apps/reports/delivery.py:138
+#: apps/reports/delivery.py:141
 #, python-format
 msgid "Your working time record at %(company)s"
 msgstr "Tu registro de jornada en %(company)s"
 
-#: apps/reports/delivery.py:171
+#: apps/reports/delivery.py:183
 msgid "This link is no longer valid. Ask the company for a new one."
 msgstr "Este enlace ya no vale. Pídele otro a la empresa."
 
-#: apps/reports/delivery.py:204
+#: apps/reports/delivery.py:215
 msgid "the person concerned, through their delivery link"
 msgstr "la persona interesada, por su enlace de entrega"
 
@@ -1634,7 +1638,7 @@ msgstr "generado por"
 msgid "payroll summary"
 msgstr "resumen de nómina"
 
-#: apps/reports/payroll.py:117
+#: apps/reports/payroll.py:117 apps/users/erase.py:82
 msgid "payroll summaries"
 msgstr "resúmenes de nómina"
 
@@ -2841,6 +2845,50 @@ msgstr ""
 msgid "That workplace belongs to another company."
 msgstr "Ese centro de trabajo es de otra empresa."
 
+#: apps/users/erase.py:78
+msgid "corrections"
+msgstr "correcciones"
+
+#: apps/users/erase.py:86
+msgid "rostered shifts"
+msgstr "turnos planificados"
+
+#: apps/users/erase.py:92
+msgid "leave they approved"
+msgstr "ausencias que aprobó"
+
+#: apps/users/erase.py:93
+msgid "leave they requested for somebody else"
+msgstr "ausencias que pidió para otras personas"
+
+#: apps/users/erase.py:94
+msgid "corrections they resolved"
+msgstr "correcciones que resolvió"
+
+#: apps/users/erase.py:95
+msgid "overtime they decided"
+msgstr "horas extra que decidió"
+
+#: apps/users/erase.py:96
+msgid "payroll summaries they generated"
+msgstr "resúmenes de nómina que generó"
+
+#: apps/users/erase.py:97
+msgid "holiday recoveries they confirmed"
+msgstr "recuperaciones de vacaciones que confirmó"
+
+#: apps/users/erase.py:98
+msgid "clock events they recorded for others"
+msgstr "fichajes que registró para otras personas"
+
+#: apps/users/erase.py:99
+msgid "changes to how time is counted"
+msgstr "cambios en cómo se cuenta el tiempo"
+
+#: apps/users/erase.py:100
+msgid "application credentials they created"
+msgstr "credenciales de aplicación que creó"
+
 #: apps/users/models.py:52
 msgid "managers"
 msgstr "responsables"
@@ -3277,19 +3325,19 @@ msgstr "Ya existe una empresa con este identificador fiscal."
 msgid "Wrong credentials."
 msgstr "Credenciales incorrectas."
 
-#: apps/users/views.py:200
+#: apps/users/views.py:201
 msgid "No session to renew."
 msgstr "No hay sesión que renovar."
 
-#: apps/users/views.py:214
+#: apps/users/views.py:215
 msgid "The session has expired. Sign in again."
 msgstr "La sesión ha caducado. Vuelve a entrar."
 
-#: apps/users/views.py:237
+#: apps/users/views.py:238
 msgid "Send the refresh token to close the session."
 msgstr "Manda el testigo de refresco para cerrar la sesión."
 
-#: apps/users/views.py:430
+#: apps/users/views.py:431
 msgid ""
 "This is the only active administrator. Appoint another one first, or the "
 "company is left with nobody able to manage it."
@@ -3297,34 +3345,55 @@ msgstr ""
 "Es el único administrador activo. Nombra antes a otro, o la empresa se queda "
 "sin nadie que pueda gestionarla."
 
-#: apps/users/views.py:485
+#: apps/users/views.py:486
 msgid "This account signs in through your identity provider."
 msgstr "Esta cuenta entra a través de vuestro proveedor de identidad."
 
-#: apps/users/views.py:487
+#: apps/users/views.py:488
 msgid "Reactivate the account before inviting them."
 msgstr "Vuelve a dar de alta la cuenta antes de invitarla."
 
-#: apps/users/views.py:513
+#: apps/users/views.py:514
 msgid "There is no address to send it to. Add one first."
-msgstr ""
-"No hay ninguna dirección a la que mandarlo. Añade una antes."
+msgstr "No hay ninguna dirección a la que mandarlo. Añade una antes."
 
-#: apps/users/views.py:590
+#: apps/users/views.py:589
+msgid "You cannot erase your own account."
+msgstr "No puedes borrar tu propia cuenta."
+
+#: apps/users/views.py:601
+#, python-format
+msgid "what is theirs: %(cosas)s"
+msgstr "lo suyo: %(cosas)s"
+
+#: apps/users/views.py:605
+#, python-format
+msgid "what they decided about other people: %(cosas)s"
+msgstr "lo que decidió sobre otras personas: %(cosas)s"
+
+#: apps/users/views.py:611
+#, python-format
+msgid ""
+"%(quien)s left a record, so their file has to stay and explain it --- "
+"%(que)s. Deactivate them instead."
+msgstr ""
+"%(quien)s dejó rastro, así que su ficha tiene que quedarse y explicarlo --- %(que)s. Dale de baja en su lugar."
+
+#: apps/users/views.py:653
 msgid "You cannot deactivate your own account."
 msgstr "No puedes dar de baja tu propia cuenta."
 
-#: apps/users/views.py:646
+#: apps/users/views.py:709
 #, python-format
 msgid "Left on %(day)s. %(count)s shift(s) still rostered after that."
 msgstr "Se fue el %(day)s. Le quedan %(count)s turno(s) planificados después."
 
-#: apps/users/views.py:649
+#: apps/users/views.py:712
 #, python-format
 msgid "Left on %(day)s."
 msgstr "Se fue el %(day)s."
 
-#: apps/users/views.py:705
+#: apps/users/views.py:768
 #, python-format
 msgid ""
 "%(count)s people answer for this department. Move them first: leaving them "
@@ -3334,7 +3403,7 @@ msgstr ""
 "De este departamento responden %(count)s personas. Muévelas primero: al "
 "mando de nada, dejan de poder leer los datos de nadie más que los suyos."
 
-#: apps/users/views.py:753
+#: apps/users/views.py:816
 #, python-format
 msgid ""
 "%(count)s people work there. Move them first: without a workplace they lose "
@@ -3343,7 +3412,7 @@ msgstr ""
 "Ahí trabajan %(count)s personas. Muévelas primero: sin centro pierden sus "
 "festivos locales y su zona horaria."
 
-#: apps/users/views.py:808
+#: apps/users/views.py:871
 msgid "The link is not valid or has already been used."
 msgstr "El enlace no es válido o ya se ha usado."
 
@@ -3560,7 +3629,8 @@ msgid ""
 msgstr ""
 "Hola %(first_name)s:\n"
 "\n"
-"Aquí tienes el enlace para descargar tu propio registro de jornada en %(company)s."
+"Aquí tienes el enlace para descargar tu propio registro de jornada en "
+"%(company)s."
 
 #: templates/emails/record_delivery.txt:7
 #, python-format
