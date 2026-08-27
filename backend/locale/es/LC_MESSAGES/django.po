@@ -3538,3 +3538,6 @@ msgstr "este día constaba además como: %(absence)s"
 
 msgid "«%(bad)s» is not read here, so asking with it would quietly give you a different document. This endpoint reads: %(good)s."
 msgstr "«%(bad)s» no se lee aquí, así que pedirlo así te daría otro documento sin avisar. Este punto de entrada lee: %(good)s."
+
+msgid "This endpoint is for people. An application uses /api/app/ with its own credential and permissions."
+msgstr "Este punto de entrada es para personas. Una aplicación usa /api/app/ con su propia credencial y sus permisos."

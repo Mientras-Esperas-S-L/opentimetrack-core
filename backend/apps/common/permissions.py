@@ -27,6 +27,27 @@ class IsAuthenticatedInTenant(BasePermission):
         if not (user and user.is_authenticated):
             return False
 
+        # Una aplicación no entra por aquí. Tiene su propia puerta en
+        # `/api/app/…`, donde `HasApplicationScope` mira qué permiso lleva.
+        #
+        # `ApplicationUser` dice `is_authenticated` y trae `tenant_id`, así que
+        # esta comprobación la daba por buena. Medido con una credencial **sin
+        # ningún permiso**: `/departments/`, `/workplaces/` y
+        # `/working-time-rules/` contestaban 200 ---la estructura de la empresa y
+        # sus reglas de jornada--- y otros cinco reventaban con `AttributeError`
+        # al pedirle a la aplicación un `id`, un `pk` o una zona horaria que no
+        # tiene, o sea un 500 donde tenía que haber un 403.
+        #
+        # `HasApplicationScope` dice de sí mismo que «olvidar declarar un permiso
+        # no debe abrir una puerta». La abría este otro, que no sabía de
+        # aplicaciones.
+        if hasattr(user, "allows"):
+            self.message = _(
+                "This endpoint is for people. An application uses /api/app/ with its "
+                "own credential and permissions."
+            )
+            return False
+
         # A platform superuser without a company only exists on self-hosted
         # installs and does not operate on service data.
         if user.tenant_id is None:

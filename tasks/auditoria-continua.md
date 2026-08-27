@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 114 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 115 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -345,6 +345,48 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 115 --- Una credencial sin permisos entraba por la puerta de las personas (27/08)
+
+Lente: **la puerta de integración**, atacada como lo haría una aplicación de
+terceros. El producto tiene dos formas de entrar ---personas con sesión,
+aplicaciones con credencial--- y cada una tiene su permiso. Los dos están bien
+escritos. **El cruce no lo miraba nadie.**
+
+#### Lo que se encontró
+
+`ApplicationUser` contesta `is_authenticated` y trae `tenant_id`, porque el código
+compartido no debería tener que preguntar con quién habla. Y eso es justo lo que
+`IsAuthenticatedInTenant` comprueba. Medido con una credencial **sin ningún
+permiso declarado** (`scopes: []`):
+
+| Endpoint | Antes |
+|---|---|
+| `/departments/`, `/workplaces/` | **200** --- la estructura de la empresa |
+| `/working-time-rules/` | **200** --- sus reglas de jornada |
+| `/audit/` | `AttributeError: sin 'id'` --- un **500** |
+| `/punches/`, `/absences/` | `AttributeError: sin 'pk'` |
+| los dos informes | `AttributeError: sin 'tzinfo'` |
+
+Donde no llegaba a leer, reventaba: un 500 en el sitio de un 403.
+
+`HasApplicationScope` dice de sí mismo que «olvidar declarar un permiso no debe
+abrir una puerta». No la abría él; la abría el permiso de al lado, que no sabía de
+aplicaciones.
+
+#### Qué se ha hecho
+
+Una línea en `IsAuthenticatedInTenant`: si quien llama es una aplicación, 403 con
+un mensaje que dice **cuál es su puerta**. Los doce endpoints pasan de 200 o 500 a
+403.
+
+Y **dos tercios de las quince pruebas son lo que no puede romperse**, porque una
+línea mal puesta ahí deja fuera a toda integración ---daño mucho mayor que el que
+arregla---: que la aplicación siga entrando por `/api/app/people/` y
+`/api/app/attendance/`, y que una persona siga entrando por la suya. Comprobado en
+caliente antes de escribirlas.
+
+Una cadena nueva, traducida: **702 mensajes, cero sin traducir**.
 
 ### Vuelta 114 --- Una letra de menos y el informe era de otra persona (27/08)
 

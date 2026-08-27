@@ -3335,3 +3335,46 @@ no como un fixture mal armado.
 verdad. Antes de dar por bueno un rechazo de permisos en una prueba nueva,
 comprueba qué campo consulta el código que rechaza --- son tres segundos de `grep`
 y evitan reportar como fallo lo que es un fixture.
+
+## 213. Dos sistemas de permisos correctos por separado, y nadie mira el cruce
+
+El producto tiene dos formas de entrar. Las personas, con su sesión y
+`IsAuthenticatedInTenant` debajo de todo. Las aplicaciones, con su credencial y
+`HasApplicationScope`, que dice de sí mismo: «una vista sin permiso declarado
+deniega en vez de permitir; olvidar declararlo no debe abrir una puerta».
+
+Los dos están bien. El cruce no lo miraba nadie. `ApplicationUser` contesta
+`is_authenticated` y trae `tenant_id` ---porque el código compartido no debería
+tener que preguntar con quién habla--- y eso es exactamente lo que
+`IsAuthenticatedInTenant` comprueba. Medido con una credencial **sin ningún
+permiso**:
+
+    /departments/, /workplaces/, /working-time-rules/   -> 200
+    /audit/, /punches/, /absences/, los dos informes    -> AttributeError (un 500)
+
+O sea: leía la estructura de la empresa y sus reglas de jornada, y donde no
+llegaba a leer reventaba en vez de contestar 403.
+
+**Regla**: cuando existan dos identidades que autentican por caminos distintos,
+prueba **cada una contra la puerta de la otra**. El fallo no está en ninguno de
+los dos permisos ---leídos por separado los dos son correctos--- sino en que uno
+de ellos nunca se preguntó si el llamante era del otro tipo.
+
+**Y la pista que lo delata**: un `AttributeError` pidiendo `id`, `pk` o `tzinfo`
+sobre un objeto que hace de usuario. Ahí el código ya estaba diciendo que quien
+llama no es lo que él cree.
+
+## 214. Cerrar una puerta se prueba por los dos lados
+
+Rechazar a las aplicaciones en el permiso de personas es una línea. Y una línea
+mal puesta deja fuera a **toda** integración, que es un daño mucho mayor que el
+que arregla.
+
+Por eso dos tercios de la prueba son lo que no puede romperse: que una aplicación
+con sus permisos siga entrando por `/api/app/…`, y que una persona siga entrando
+por la suya. Comprobado además en caliente antes de escribir la prueba.
+
+**Regla**: toda restricción nueva se acompaña de las pruebas de lo que sigue
+permitido, y esas se escriben **primero**. Es la misma disciplina que la lista
+blanca de la vuelta anterior: al cerrar, lo caro no es que se cuele algo, es que
+deje de pasar lo que debía.
