@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
@@ -59,6 +60,7 @@ function WorkplaceDialog({
   saving,
   error,
 }) {
+  const { t } = useTranslation()
   // Las del país primero, y sin repetirlas abajo.
   const zonasHorarias = [
     ...Object.keys(zonasDelPais),
@@ -100,45 +102,47 @@ function WorkplaceDialog({
               autoFocus
               required
               fullWidth
-              label="Nombre"
-              placeholder="Oficina central, Nave de Getafe…"
+              label={t('Nombre')}
+              placeholder={t('Oficina central, Nave de Getafe…')}
               value={form.name}
               onChange={set('name')}
             />
             <TextField
               fullWidth
-              label="Dirección"
+              label={t('Dirección')}
               value={form.address}
               onChange={set('address')}
-              helperText="Es donde una inspección pediría el registro de esta gente."
+              helperText={t('Es donde una inspección pediría el registro de esta gente.')}
             />
 
             <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
               <TextField
                 fullWidth
-                label="Municipio"
+                label={t('Municipio')}
                 value={form.municipality}
                 onChange={set('municipality')}
-                helperText="Decide los dos festivos locales."
+                helperText={t('Decide los dos festivos locales.')}
               />
               <TextField
-                label="Código INE"
+                label={t('Código INE')}
                 value={form.municipality_code}
                 onChange={set('municipality_code')}
                 sx={{ minWidth: 150 }}
-                helperText="Opcional"
+                helperText={t('Opcional')}
               />
             </Stack>
 
             <TextField
               select
               fullWidth
-              label="Comunidad autónoma"
+              label={t('Comunidad autónoma')}
               value={form.region}
               onChange={set('region')}
-              helperText="Decide los festivos autonómicos. Sin ella solo se aplican los nacionales."
+              helperText={t(
+                'Decide los festivos autonómicos. Sin ella solo se aplican los nacionales.',
+              )}
             >
-              <MenuItem value="">Sin especificar</MenuItem>
+              <MenuItem value="">{t('Sin especificar')}</MenuItem>
               {Object.entries(regions).map(([code, name]) => (
                 <MenuItem key={code} value={code}>
                   {name}
@@ -167,7 +171,7 @@ function WorkplaceDialog({
                 <TextField
                   {...params}
                   fullWidth
-                  label="Zona horaria"
+                  label={t('Zona horaria')}
                   placeholder={companyZone}
                   helperText={`Vacío usa la de la empresa (${companyZone}). Solo hace falta si el centro está en otra: en España, Canarias.`}
                 />
@@ -177,10 +181,10 @@ function WorkplaceDialog({
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="inherit">
-            Cancelar
+            {t('Cancelar')}
           </Button>
           <Button type="submit" variant="contained" disabled={saving || !form.name.trim()}>
-            Guardar
+            {t('Guardar')}
           </Button>
         </DialogActions>
       </form>
@@ -197,6 +201,7 @@ function WorkplaceDialog({
  *  dice en vez de disimularlo.
  */
 function Holidays({ workplaces }) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { session } = useAuth()
   const isAdmin = session?.user?.role === 'ADMIN'
@@ -229,7 +234,7 @@ function Holidays({ workplaces }) {
   return (
     <Box sx={{ mt: 4 }}>
       <Stack direction="row" sx={{ gap: 2, alignItems: 'baseline', mb: 1 }}>
-        <Typography variant="h6">Festivos</Typography>
+        <Typography variant="h6">{t('Festivos')}</Typography>
         <TextField
           select
           size="small"
@@ -280,7 +285,7 @@ function Holidays({ workplaces }) {
             <Chip size="small" variant="outlined" label={day.workplace_name ?? day.scope_display} />
             {isAdmin && (day.scope === 'LOCAL' || day.scope === 'COMPANY') && (
               <Button size="small" color="inherit" onClick={() => drop.mutate(day.id)}>
-                Quitar
+                {t('Quitar')}
               </Button>
             )}
           </Stack>
@@ -304,7 +309,7 @@ function Holidays({ workplaces }) {
               required
               size="small"
               type="date"
-              label="Día"
+              label={t('Día')}
               value={adding.day}
               onChange={(event) => setAdding({ ...adding, day: event.target.value })}
               slotProps={{ inputLabel: { shrink: true } }}
@@ -312,8 +317,8 @@ function Holidays({ workplaces }) {
             <TextField
               required
               size="small"
-              label="Nombre"
-              placeholder="Feria de Jerez"
+              label={t('Nombre')}
+              placeholder={t('Feria de Jerez')}
               value={adding.name}
               onChange={(event) => setAdding({ ...adding, name: event.target.value })}
               sx={{ flexGrow: 1 }}
@@ -321,12 +326,12 @@ function Holidays({ workplaces }) {
             <TextField
               select
               size="small"
-              label="Dónde"
+              label={t('Dónde')}
               value={adding.workplace}
               onChange={(event) => setAdding({ ...adding, workplace: event.target.value })}
               sx={{ minWidth: 190 }}
             >
-              <MenuItem value="">Toda la empresa</MenuItem>
+              <MenuItem value="">{t('Toda la empresa')}</MenuItem>
               {workplaces.map((place) => (
                 <MenuItem key={place.id} value={place.id}>
                   {place.name}
@@ -334,7 +339,7 @@ function Holidays({ workplaces }) {
               ))}
             </TextField>
             <Button type="submit" variant="outlined" disabled={add.isPending}>
-              Añadir
+              {t('Añadir')}
             </Button>
           </Stack>
           <Typography variant="caption" color="text.secondary">
@@ -349,6 +354,7 @@ function Holidays({ workplaces }) {
 }
 
 export default function Workplaces() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { session } = useAuth()
   const isAdmin = session?.user?.role === 'ADMIN'
@@ -402,12 +408,14 @@ export default function Workplaces() {
   return (
     <>
       <PageHeader
-        title="Centros de trabajo"
-        subtitle="Dónde se trabaja. Decide los festivos locales, la zona horaria de la jornada y dónde se pide el registro en una inspección."
+        title={t('Centros de trabajo')}
+        subtitle={t(
+          'Dónde se trabaja. Decide los festivos locales, la zona horaria de la jornada y dónde se pide el registro en una inspección.',
+        )}
         action={
           isAdmin && (
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => setEditing(null)}>
-              Nuevo centro
+              {t('Nuevo centro')}
             </Button>
           )
         }
@@ -419,8 +427,9 @@ export default function Workplaces() {
         <Loading rows={3} />
       ) : workplaces.length === 0 ? (
         <Empty>
-          Todavía no hay centros. Sin ellos no se pueden aplicar los festivos locales, y toda la
-          plantilla se mide en la zona horaria de la empresa.
+          {t(
+            'Todavía no hay centros. Sin ellos no se pueden aplicar los festivos locales, y toda la plantilla se mide en la zona horaria de la empresa.',
+          )}
         </Empty>
       ) : (
         <Stack component="ul" sx={{ gap: 1.5, listStyle: 'none', m: 0, p: 0 }}>
@@ -460,7 +469,7 @@ export default function Workplaces() {
                   </Typography>
                   {!place.region && (
                     <Typography variant="caption" color="warning.main">
-                      Sin comunidad autónoma: solo se le aplicarán los festivos nacionales.
+                      {t('Sin comunidad autónoma: solo se le aplicarán los festivos nacionales.')}
                     </Typography>
                   )}
                 </Box>
@@ -477,7 +486,7 @@ export default function Workplaces() {
                       aria-label={`Editar ${place.name}`}
                       onClick={() => setEditing(place)}
                     >
-                      Editar
+                      {t('Editar')}
                     </Button>
                     {place.people_count === 0 && (
                       <Button
@@ -486,15 +495,15 @@ export default function Workplaces() {
                         aria-label={`Eliminar el centro ${place.name}`}
                         onClick={() =>
                           setConfirming({
-                            title: 'Eliminar el centro',
+                            title: t('Eliminar el centro'),
                             body: place.name,
-                            detail: 'No trabaja nadie ahí, así que no se pierde nada.',
-                            verb: 'Eliminar',
+                            detail: t('No trabaja nadie ahí, así que no se pierde nada.'),
+                            verb: t('Eliminar'),
                             run: () => remove.mutate(place.id),
                           })
                         }
                       >
-                        Eliminar
+                        {t('Eliminar')}
                       </Button>
                     )}
                   </Stack>
@@ -507,8 +516,9 @@ export default function Workplaces() {
 
       {workplaces.some((place) => place.people_count === 0) && (
         <Alert severity="info" variant="outlined" sx={{ mt: 2 }}>
-          Un centro con gente dentro no se puede eliminar: se quedarían sin festivos locales y
-          pasarían a medirse en la zona de la empresa. Muévelos primero.
+          {t(
+            'Un centro con gente dentro no se puede eliminar: se quedarían sin festivos locales y pasarían a medirse en la zona de la empresa. Muévelos primero.',
+          )}
         </Alert>
       )}
 

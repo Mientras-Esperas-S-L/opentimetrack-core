@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Badge from '@mui/material/Badge'
@@ -79,6 +80,7 @@ const KIND_LABELS = {
  *  solo dice que esa parte no se autoriza.
  */
 function OvertimePersonCard({ group, busy, onDecide, select }) {
+  const { t } = useTranslation()
   const [settlement, setSettlement] = useState('PAID')
   const [showDays, setShowDays] = useState(false)
   const { rows } = group
@@ -121,9 +123,9 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
           </Typography>
           {nocturno && (
             <Typography variant="caption" color="error.main" sx={{ display: 'block', mt: 0.5 }}>
-              Tiene la condición de trabajadora o trabajador nocturno, y el art. 36.1 ET prohíbe las
-              horas extraordinarias a quien la tenga. Las horas ya se trabajaron y hay que
-              clasificarlas; lo que no puede es repetirse.
+              {t(
+                'Tiene la condición de trabajadora o trabajador nocturno, y el art. 36.1 ET prohíbe las horas extraordinarias a quien la tenga. Las horas ya se trabajaron y hay que clasificarlas; lo que no puede es repetirse.',
+              )}
             </Typography>
           )}
           {cambioDeHora !== 0 && (
@@ -163,13 +165,13 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
           <TextField
             select
             size="small"
-            label="Se salda"
+            label={t('Se salda')}
             value={settlement}
             onChange={(event) => setSettlement(event.target.value)}
             sx={{ minWidth: 150 }}
           >
-            <MenuItem value="PAID">Pagada</MenuItem>
-            <MenuItem value="REST">Con descanso</MenuItem>
+            <MenuItem value="PAID">{t('Pagada')}</MenuItem>
+            <MenuItem value="REST">{t('Con descanso')}</MenuItem>
           </TextField>
           <Button
             variant="contained"
@@ -225,7 +227,7 @@ function OvertimePersonCard({ group, busy, onDecide, select }) {
                       disabled={busy}
                       onClick={() => onDecide({ days: [row.day], authorise: true, settlement })}
                     >
-                      Autorizar
+                      {t('Autorizar')}
                     </Button>
                     <Button
                       size="small"
@@ -259,6 +261,7 @@ const fmt = (value) => {
  *  should not be as effortless as a yes.
  */
 function RequestCard({ title, meta, reason, children, onApprove, onReject, busy, select }) {
+  const { t } = useTranslation()
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
       <Stack
@@ -291,10 +294,10 @@ function RequestCard({ title, meta, reason, children, onApprove, onReject, busy,
 
         <Stack direction="row" sx={{ gap: 1, flexShrink: 0 }}>
           <Button size="small" onClick={onReject} disabled={busy} color="inherit">
-            Rechazar
+            {t('Rechazar')}
           </Button>
           <Button size="small" variant="contained" onClick={onApprove} disabled={busy}>
-            Aprobar
+            {t('Aprobar')}
           </Button>
         </Stack>
       </Stack>
@@ -313,10 +316,20 @@ function RequestCard({ title, meta, reason, children, onApprove, onReject, busy,
  *  convierte el filtro en la salida y no en un adorno.
  */
 function ListaRecortada({ total, mostradas }) {
+  const { t } = useTranslation()
   if (!total || total <= mostradas) return null
   return (
     <Alert severity="info" variant="outlined">
-      Se muestran {mostradas} de {total}. Usa los filtros de arriba para llegar al resto.
+      {/* Con los números dentro de la frase: en otro idioma no van
+          necesariamente en este orden, y partir el texto para intercalarlos
+          obliga a traducir trozos que por separado no significan nada. */}
+      {t(
+        'Se muestran {{mostradas}} de {{total}}. Usa los filtros de arriba para llegar al resto.',
+        {
+          mostradas,
+          total,
+        },
+      )}
     </Alert>
   )
 }
@@ -333,6 +346,7 @@ const seleccionadas = (filas, seleccion) => filas.filter((fila) => seleccion.isS
  *  mande a cinco.
  */
 function RejectDialog({ open, onClose, onConfirm, needsNote, count = 1, busy }) {
+  const { t } = useTranslation()
   const [note, setNote] = useState('')
   const many = count > 1
 
@@ -367,7 +381,7 @@ function RejectDialog({ open, onClose, onConfirm, needsNote, count = 1, busy }) 
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="inherit">
-          Volver
+          {t('Volver')}
         </Button>
         <Button
           onClick={confirm}
@@ -383,6 +397,7 @@ function RejectDialog({ open, onClose, onConfirm, needsNote, count = 1, busy }) 
 }
 
 export default function Decisions() {
+  const { t } = useTranslation()
   const { session } = useAuth()
   // Respaldo. Cada corrección dice el huso de la persona a la que afecta: en
   // una empresa con delegaciones, leer todas las horas en el de la central es
@@ -643,8 +658,10 @@ export default function Decisions() {
   return (
     <>
       <PageHeader
-        title="Por decidir"
-        subtitle="Solicitudes esperando respuesta. Toda decisión queda registrada con su autor y su momento."
+        title={t('Por decidir')}
+        subtitle={t(
+          'Solicitudes esperando respuesta. Toda decisión queda registrada con su autor y su momento.',
+        )}
       />
 
       <ErrorNote error={error} onClose={() => setError(null)} />
@@ -667,7 +684,7 @@ export default function Decisions() {
               color="secondary"
               sx={{ pr: 1.5 }}
             >
-              Ausencias
+              {t('Ausencias')}
             </Badge>
           }
         />
@@ -679,7 +696,7 @@ export default function Decisions() {
               color="secondary"
               sx={{ pr: 1.5 }}
             >
-              Fichajes
+              {t('Fichajes')}
             </Badge>
           }
         />
@@ -691,7 +708,7 @@ export default function Decisions() {
               color="secondary"
               sx={{ pr: 1.5 }}
             >
-              Sin acuerdo
+              {t('Sin acuerdo')}
             </Badge>
           }
         />
@@ -703,7 +720,7 @@ export default function Decisions() {
               color="secondary"
               sx={{ pr: 1.5 }}
             >
-              Horas extra
+              {t('Horas extra')}
             </Badge>
           }
         />
@@ -715,7 +732,7 @@ export default function Decisions() {
               color="secondary"
               sx={{ pr: 1.5 }}
             >
-              Vacaciones por recuperar
+              {t('Vacaciones por recuperar')}
             </Badge>
           }
         />
@@ -729,11 +746,11 @@ export default function Decisions() {
         <SearchField
           value={search}
           onChange={setSearch}
-          placeholder="Nombre, tipo, motivo…"
+          placeholder={t('Nombre, tipo, motivo…')}
           width={260}
         />
         <PickFilter
-          label="Persona"
+          label={t('Persona')}
           value={forWhom}
           onChange={setWho}
           options={peopleHere}
@@ -742,7 +759,7 @@ export default function Decisions() {
         />
         {filtering && (
           <Button size="small" color="inherit" onClick={clearFilters}>
-            Quitar filtros
+            {t('Quitar filtros')}
           </Button>
         )}
       </FilterBar>
@@ -790,8 +807,9 @@ export default function Decisions() {
                         {fmt(absence.over_the_limit.allowance)} en este periodo.
                       </>
                     )}{' '}
-                    Se puede aprobar igual —el convenio puede dar más de lo que consta en el
-                    catálogo—, pero conviene saberlo.
+                    {t(
+                      'Se puede aprobar igual —el convenio puede dar más de lo que consta en el catálogo—, pero conviene saberlo.',
+                    )}
                   </Alert>
                 )}
 
@@ -884,8 +902,9 @@ export default function Decisions() {
                   color="text.secondary"
                   sx={{ display: 'block', mt: 1 }}
                 >
-                  Si se aprueba, el original no se borra: queda anulado y legible, y el fichaje
-                  nuevo se marca como corrección. Se avisará a la persona.
+                  {t(
+                    'Si se aprueba, el original no se borra: queda anulado y legible, y el fichaje nuevo se marca como corrección. Se avisará a la persona.',
+                  )}
                 </Typography>
               </RequestCard>
             ))}
@@ -946,10 +965,9 @@ export default function Decisions() {
         ) : (
           <Stack sx={{ gap: 1.5 }}>
             <Alert severity="info" variant="outlined">
-              Un cambio que propone la empresa sobre el registro de otra persona necesita su
-              autorización (art. 4.b). Si discrepa o no contesta en el plazo, la empresa puede
-              aplicarlo igualmente: queda marcado como hecho sin acuerdo y su versión viaja al
-              informe de Inspección.
+              {t(
+                'Un cambio que propone la empresa sobre el registro de otra persona necesita su autorización (art. 4.b). Si discrepa o no contesta en el plazo, la empresa puede aplicarlo igualmente: queda marcado como hecho sin acuerdo y su versión viaja al informe de Inspección.',
+              )}
             </Alert>
 
             {shownOpen.map((correction) => (
@@ -1004,7 +1022,7 @@ export default function Decisions() {
 
                     {correction.employee_dissent && (
                       <Typography variant="body2" sx={{ mt: 1.5, maxWidth: '68ch' }}>
-                        <strong>Su versión:</strong> {correction.employee_dissent}
+                        <strong>{t('Su versión:')}</strong> {correction.employee_dissent}
                       </Typography>
                     )}
 
@@ -1030,18 +1048,22 @@ export default function Decisions() {
                       disabled={decide.isPending}
                       onClick={() =>
                         setConfirming({
-                          title: 'Aplicar sin acuerdo',
+                          title: t('Aplicar sin acuerdo'),
                           body: correction.employee_name,
                           detail: correction.employee_dissent
-                            ? 'Su versión queda registrada junto al cambio y las dos cosas van al informe de Inspección. Se le avisa.'
-                            : 'Todavía no ha contestado. El registro dirá que se aplicó sin su conformidad, no que estuviera de acuerdo.',
-                          verb: 'Aplicar',
+                            ? t(
+                                'Su versión queda registrada junto al cambio y las dos cosas van al informe de Inspección. Se le avisa.',
+                              )
+                            : t(
+                                'Todavía no ha contestado. El registro dirá que se aplicó sin su conformidad, no que estuviera de acuerdo.',
+                              ),
+                          verb: t('Aplicar'),
                           run: () =>
                             decide.mutate({ action: applyCorrectionAnyway, id: correction.id }),
                         })
                       }
                     >
-                      Aplicar sin acuerdo
+                      {t('Aplicar sin acuerdo')}
                     </Button>
                     <Button
                       size="small"
@@ -1049,7 +1071,7 @@ export default function Decisions() {
                       disabled={decide.isPending}
                       onClick={() => openReject(rejectCorrection, correction.id, true)}
                     >
-                      Retirar la propuesta
+                      {t('Retirar la propuesta')}
                     </Button>
                   </Stack>
                 </Stack>
@@ -1113,9 +1135,9 @@ export default function Decisions() {
         ) : (
           <Stack sx={{ gap: 1.5 }}>
             <Alert severity="info" variant="outlined">
-              El registro capta el tiempo real. Aquí solo dices qué parte es hora extra autorizada y
-              cómo se salda (art. 35.1): pagada, o compensada con descanso dentro de cuatro meses.
-              No se toca ningún fichaje.
+              {t(
+                'El registro capta el tiempo real. Aquí solo dices qué parte es hora extra autorizada y cómo se salda (art. 35.1): pagada, o compensada con descanso dentro de cuatro meses. No se toca ningún fichaje.',
+              )}
             </Alert>
 
             {shownOvertime.map((group) => (
@@ -1188,13 +1210,13 @@ export default function Decisions() {
         (recoveries.isLoading ? (
           <Loading />
         ) : recoveryRows.length === 0 ? (
-          <Empty>No hay vacaciones pendientes de recuperar.</Empty>
+          <Empty>{t('No hay vacaciones pendientes de recuperar.')}</Empty>
         ) : (
           <Stack sx={{ gap: 1.5 }}>
             <Alert severity="info" variant="outlined">
-              Cuando una baja cae encima de unas vacaciones ya aprobadas, esos días no se han
-              disfrutado y se disfrutan después (art. 38.3 ET). Aquí solo se confirma que vuelven al
-              saldo: la baja y las vacaciones no se tocan.
+              {t(
+                'Cuando una baja cae encima de unas vacaciones ya aprobadas, esos días no se han disfrutado y se disfrutan después (art. 38.3 ET). Aquí solo se confirma que vuelven al saldo: la baja y las vacaciones no se tocan.',
+              )}
             </Alert>
 
             {recoveryRows.map((row) => (
@@ -1228,14 +1250,14 @@ export default function Decisions() {
                       disabled={ruleRecovery.isPending}
                       onClick={() => ruleRecovery.mutate({ recovery: row.id, accept: true })}
                     >
-                      Devolver al saldo
+                      {t('Devolver al saldo')}
                     </Button>
                     <Button
                       color="inherit"
                       disabled={ruleRecovery.isPending}
                       onClick={() => ruleRecovery.mutate({ recovery: row.id, accept: false })}
                     >
-                      No procede
+                      {t('No procede')}
                     </Button>
                   </Stack>
                 </Stack>

@@ -71,6 +71,32 @@ const PANTALLAS = [
     },
     rol: 'button',
   },
+  {
+    ruta: '/panel/centros',
+    titulo: {
+      es: 'Centros de trabajo',
+      ca: 'Centres de treball',
+      gl: 'Centros de traballo',
+    },
+    propio: {
+      es: 'Decide los festivos locales',
+      ca: 'Decideix els festius locals',
+      gl: 'Decide os festivos locais',
+    },
+    control: { es: 'Nuevo centro', ca: 'Nou centre', gl: 'Novo centro' },
+    rol: 'button',
+  },
+  {
+    ruta: '/panel/fichajes',
+    titulo: { es: 'Fichajes', ca: 'Fitxatges', gl: 'Fichaxes' },
+    propio: {
+      es: 'Un fichaje anulado sigue siendo legible',
+      ca: 'Un fitxatge anul·lat continua sent llegible',
+      gl: 'Unha fichaxe anulada segue sendo lexible',
+    },
+    control: { es: 'Hasta', ca: 'Fins a', gl: 'Ata' },
+    rol: 'textbox',
+  },
 ]
 
 test.describe('La pantalla, en los tres idiomas', () => {

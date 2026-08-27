@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 136 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas**, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 137 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas**, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,52 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 137 --- Centros, Por decidir y Fichajes (27/08)
+
+Tercera tanda: `Workplaces.jsx`, `Decisions.jsx` y `Timesheet.jsx`, 87 claves. El
+catálogo pasa de 182 a **259**, y con seis pantallas hechas está traducido cerca del
+**70 %** de las cadenas de la interfaz.
+
+Son las tres que más texto legal llevan: las citas del art. 4.b sobre el cambio sin
+acuerdo, la del art. 35.1 sobre cómo se salda una hora extra, la del art. 36.1 que
+prohíbe horas extraordinarias a quien tiene la condición de trabajo nocturno, y la
+del art. 38.3 sobre las vacaciones que se comió una baja.
+
+#### El hook va donde hay pantalla, no donde hay texto
+
+El script que envuelve pone `useTranslation` en cada función que parece un
+componente, y se equivocó dos veces:
+
+- **`byDay`** agrupa fichajes por día y no pinta nada. Un hook ahí es un error de
+  las reglas de React, y `eslint` lo dijo tal cual: «se llama en una función que no
+  es ni un componente ni un hook».
+- **`ListaRecortada`** sí pinta, pero su único texto lleva dos números dentro
+  ---«Se muestran 5 de 40»--- así que el script no lo tocó y el hook quedó sin usar.
+  Envuelto a mano con interpolación, `{{mostradas}}` y `{{total}}`, **con los
+  números dentro de la frase**: en otro idioma no van necesariamente en ese orden,
+  y partir el texto para intercalarlos obliga a traducir trozos que por separado no
+  significan nada.
+
+Las dos las cazó `eslint` antes de que llegaran a ninguna parte.
+
+#### Y una muestra que la salvaguarda de ayer habría dejado pasar
+
+Al elegir pantalla para la prueba pensé en «Por decidir», y su título se escribe
+**igual en castellano y en gallego**. La comprobación que puse en la vuelta 136
+---que la muestra cambie entre idiomas--- lo habría dicho en un rojo claro, pero
+esta vez la vi antes: se eligieron Centros de trabajo y Fichajes, cuyos tres textos
+sí difieren.
+
+Que una salvaguarda te cambie la forma de elegir **antes** de que salte es
+exactamente para lo que está.
+
+#### Verde al cerrar
+
+`1.310` pruebas de backend, linters limpios, la prueba de los tres idiomas
+cubriendo ya **cinco pantallas**.
+
+**Quedan 22 ficheros** y unas 79 cadenas, todas en pantallas pequeñas.
 
 ### Vuelta 136 --- Ajustes y Mi jornada, y una muestra que no comprobaba nada (27/08)
 

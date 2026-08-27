@@ -4422,3 +4422,34 @@ biblioteca, compruébalo ---la propia página en modo depuración lo dice, o un
 `page.getByRole('...').count()` en una prueba de usar y tirar---. Suponer el rol
 da un locator que devuelve cero, y cero es exactamente lo que muchas aserciones
 aceptan sin protestar.
+
+## 270. Los números van dentro de la frase, no cosidos alrededor
+
+«Se muestran {mostradas} de {total}. Usa los filtros…» se puede escribir en JSX
+partiendo el texto en tres trozos con los números en medio. Traducirlo así es
+imposible: los trozos por separado no significan nada, y **en otro idioma no van
+necesariamente en ese orden**.
+
+Con la clave entera y la interpolación de i18next ---`{{mostradas}}`,
+`{{total}}`--- quien traduce ve la frase completa y coloca los huecos donde su
+idioma los pida.
+
+**La regla**: una cadena traducible es **una frase entera**. Si tienes que
+concatenar para meter un dato, el dato va como parámetro con nombre, no como
+trozo de la concatenación. Y el nombre importa: `{{cuantas}}` se traduce mejor que
+`{{n}}`.
+
+## 271. Una salvaguarda vale más cuando cambia lo que eliges que cuando salta
+
+En la vuelta anterior puse una comprobación que exige que el texto de muestra de la
+prueba de idiomas **cambie entre idiomas**, después de perder un rato con «Mes
+anterior», que se escribe igual en los tres.
+
+En esta vuelta iba a elegir «Por decidir» ---idéntico en castellano y gallego--- y
+me detuve antes de escribirlo, porque sabía que saltaría. La salvaguarda no llegó a
+ejecutarse y ya había hecho su trabajo.
+
+**Vale la pena escribirlo así**: el valor de una comprobación no se mide solo por
+las veces que se pone roja, sino por las decisiones que cambia mientras está en
+verde. Eso también es una razón para que su mensaje explique **por qué** falla y no
+solo que falla.

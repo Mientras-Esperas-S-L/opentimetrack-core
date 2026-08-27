@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
@@ -55,16 +56,17 @@ import { useAuth } from '../../hooks/useAuth.js'
  *  entre dos páginas.
  */
 function TablaDeFichajes({ eventos, employee, zone, conFecha = false, setCorrecting }) {
+  const { t } = useTranslation()
   return (
     <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
       <Table size="small">
         <TableHead>
           <TableRow>
-            {conFecha && <TableCell sx={{ width: 118 }}>Fecha</TableCell>}
-            <TableCell sx={{ width: 92 }}>Hora</TableCell>
-            <TableCell sx={{ width: 110 }}>Tipo</TableCell>
-            {!employee && <TableCell>Persona</TableCell>}
-            <TableCell align="right">Origen</TableCell>
+            {conFecha && <TableCell sx={{ width: 118 }}>{t('Fecha')}</TableCell>}
+            <TableCell sx={{ width: 92 }}>{t('Hora')}</TableCell>
+            <TableCell sx={{ width: 110 }}>{t('Tipo')}</TableCell>
+            {!employee && <TableCell>{t('Persona')}</TableCell>}
+            <TableCell align="right">{t('Origen')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -132,7 +134,7 @@ function TablaDeFichajes({ eventos, employee, zone, conFecha = false, setCorrect
                       aria-label={`Corregir la ${punch.punch_type === 'IN' ? 'entrada' : 'salida'} de ${punch.employee_name} de las ${timeOfWithSeconds(punch.timestamp, punch.time_zone ?? zone)}`}
                       onClick={() => setCorrecting({ punch })}
                     >
-                      Corregir
+                      {t('Corregir')}
                     </Button>
                   )}
                 </Stack>
@@ -177,6 +179,7 @@ function CorrectionDialog({
   saving,
   error,
 }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState({ kind: 'ADD', proposed_type: 'OUT', when: '', reason: '' })
   const [loaded, setLoaded] = useState(null)
 
@@ -217,8 +220,9 @@ function CorrectionDialog({
         <DialogContent>
           <ErrorNote error={error} />
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            La corrección queda registrada con tu nombre, el momento y el motivo. El fichaje
-            original no se borra: queda anulado y legible, y se avisará a la persona.
+            {t(
+              'La corrección queda registrada con tu nombre, el momento y el motivo. El fichaje original no se borra: queda anulado y legible, y se avisará a la persona.',
+            )}
           </Typography>
           <Stack sx={{ gap: 2, pt: 0.5 }}>
             {punch ? (
@@ -229,19 +233,19 @@ function CorrectionDialog({
             ) : (
               <TextField
                 select
-                label="Qué falta"
+                label={t('Qué falta')}
                 value={form.proposed_type}
                 onChange={set('proposed_type')}
               >
-                <MenuItem value="IN">Una entrada</MenuItem>
-                <MenuItem value="OUT">Una salida</MenuItem>
+                <MenuItem value="IN">{t('Una entrada')}</MenuItem>
+                <MenuItem value="OUT">{t('Una salida')}</MenuItem>
               </TextField>
             )}
 
             {punch && (
-              <TextField select label="Qué hacer" value={form.kind} onChange={set('kind')}>
-                <MenuItem value="MODIFY">Cambiar la hora</MenuItem>
-                <MenuItem value="VOID">Anular el fichaje</MenuItem>
+              <TextField select label={t('Qué hacer')} value={form.kind} onChange={set('kind')}>
+                <MenuItem value="MODIFY">{t('Cambiar la hora')}</MenuItem>
+                <MenuItem value="VOID">{t('Anular el fichaje')}</MenuItem>
               </TextField>
             )}
 
@@ -250,11 +254,11 @@ function CorrectionDialog({
                 required
                 fullWidth
                 type="datetime-local"
-                label="Hora real"
+                label={t('Hora real')}
                 value={form.when}
                 onChange={set('when')}
                 slotProps={{ inputLabel: { shrink: true } }}
-                helperText="No puede ser una hora futura."
+                helperText={t('No puede ser una hora futura.')}
               />
             )}
 
@@ -263,20 +267,24 @@ function CorrectionDialog({
               fullWidth
               multiline
               minRows={3}
-              label="Motivo"
-              placeholder="Por ejemplo: el operario avisó de que la tableta estaba sin batería."
+              label={t('Motivo')}
+              placeholder={t(
+                'Por ejemplo: el operario avisó de que la tableta estaba sin batería.',
+              )}
               value={form.reason}
               onChange={set('reason')}
-              helperText="Obligatorio. Una corrección sin motivo no se distingue de una manipulación."
+              helperText={t(
+                'Obligatorio. Una corrección sin motivo no se distingue de una manipulación.',
+              )}
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="inherit">
-            Cancelar
+            {t('Cancelar')}
           </Button>
           <Button type="submit" variant="contained" disabled={saving}>
-            Registrar corrección
+            {t('Registrar corrección')}
           </Button>
         </DialogActions>
       </form>
@@ -285,6 +293,7 @@ function CorrectionDialog({
 }
 
 export default function Timesheet() {
+  const { t } = useTranslation()
   const { session } = useAuth()
   // Respaldo. La hora de cada fila sale del propio fichaje, que dice en qué
   // huso se vivió: un volcado mezcla gente de varias delegaciones y una sola
@@ -377,8 +386,10 @@ export default function Timesheet() {
   return (
     <>
       <PageHeader
-        title="Fichajes"
-        subtitle="El registro tal y como está guardado. Un fichaje anulado sigue siendo legible: no se borra nada."
+        title={t('Fichajes')}
+        subtitle={t(
+          'El registro tal y como está guardado. Un fichaje anulado sigue siendo legible: no se borra nada.',
+        )}
         action={
           employee && (
             <Button
@@ -386,7 +397,7 @@ export default function Timesheet() {
               startIcon={<EditNoteIcon />}
               onClick={() => setCorrecting({})}
             >
-              Corregir
+              {t('Corregir')}
             </Button>
           )
         }
@@ -415,7 +426,7 @@ export default function Timesheet() {
         <TextField
           size="small"
           type="date"
-          label="Desde"
+          label={t('Desde')}
           value={from}
           onChange={(event) => rephrase(setFrom)(event.target.value)}
           slotProps={{ inputLabel: { shrink: true } }}
@@ -423,7 +434,7 @@ export default function Timesheet() {
         <TextField
           size="small"
           type="date"
-          label="Hasta"
+          label={t('Hasta')}
           value={to}
           onChange={(event) => rephrase(setTo)(event.target.value)}
           slotProps={{ inputLabel: { shrink: true } }}
@@ -431,7 +442,7 @@ export default function Timesheet() {
           helperText={to < from ? 'Va antes que la inicial.' : ' '}
         />
         <PickFilter
-          label="Tipo"
+          label={t('Tipo')}
           value={kind}
           onChange={rephrase(setKind)}
           options={PUNCH_TYPES}
@@ -439,7 +450,7 @@ export default function Timesheet() {
           width={140}
         />
         <PickFilter
-          label="Origen"
+          label={t('Origen')}
           value={source}
           onChange={rephrase(setSource)}
           options={SOURCE_OPTIONS}
@@ -450,15 +461,16 @@ export default function Timesheet() {
 
       {faltan && (
         <Alert severity="warning" variant="outlined" sx={{ mb: 2 }}>
-          Este periodo tiene más fichajes de los que caben aquí, así que no los estás viendo todos.
-          Acorta las fechas para verlo completo.
+          {t(
+            'Este periodo tiene más fichajes de los que caben aquí, así que no los estás viendo todos. Acorta las fechas para verlo completo.',
+          )}
         </Alert>
       )}
 
       {isLoading ? (
         <Loading rows={6} />
       ) : rows.length === 0 ? (
-        <Empty>No hay fichajes en ese periodo.</Empty>
+        <Empty>{t('No hay fichajes en ese periodo.')}</Empty>
       ) : !porDia ? (
         <TablaDeFichajes
           eventos={rows}
