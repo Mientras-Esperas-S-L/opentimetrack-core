@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 123 · Vueltas seguidas sin hallazgos: 1
+Vueltas dadas: 124 · Vueltas seguidas sin hallazgos: 2
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -370,6 +370,41 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 124 --- Las trece comprobaciones del cuadrante, rotas una a una (27/08) --- LIMPIA
+
+Lente: **romper cada comprobación y ver cuál no echa nada de menos**, que es la
+técnica que validó la vuelta anterior. Aplicada a los trece `_check_*` del repaso
+del cuadrante, que son los avisos legales del producto.
+
+Silenciando cada uno ---`return []` como primera sentencia--- y corriendo la suite:
+
+| Comprobación | Pruebas que se rompen |
+|---|---|
+| descanso entre jornadas | 11 |
+| horas semanales | 7 |
+| menores de 18 | 6 |
+| preaviso del cuadrante | 4 |
+| trabajo nocturno | 3 |
+| descanso semanal, festivo | 2 |
+| pausa, promedio nocturno, semanas seguidas de noche, ausencia aprobada, tiempo real trabajado, fuera del contrato | 1 |
+
+**Las trece están cubiertas.**
+
+#### El falso hueco, y por qué
+
+El primer barrido corrió solo `apps/shifts`, `apps/reports` y `apps/legal`, donde
+uno esperaría que vivan esas pruebas. Con ese alcance, **dos salían sin
+cobertura**: el turno en festivo y el turno fuera de las fechas del contrato. Dos
+avisos legales sin nadie mirándolos habría sido un hallazgo gordo.
+
+Con la suite entera, las dos rompen pruebas. Las cubren ficheros de otras apps,
+que es lo normal en pruebas de extremo a extremo: una prueba de ausencias
+ejercita el cuadrante sin vivir en `apps/shifts`.
+
+Acotar la suite acelera el triaje ---once de trece resueltas en veinte segundos
+cada una--- y a cambio convierte «no lo cubre esta app» en «no lo cubre nadie».
+Cada candidato limpio se repite con todo antes de escribirlo.
 
 ### Vuelta 123 --- Los efectos diferidos, y cuáles prueba alguien (27/08) --- LIMPIA
 

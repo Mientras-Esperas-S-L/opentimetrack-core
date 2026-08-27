@@ -3673,3 +3673,24 @@ podía llegar a ocurrir en ese contexto. La pregunta no es «¿captura los
 callbacks?» sino «¿este efecto es diferido?». Ocho de quince candidatos se caen
 con esa sola comprobación, y hacerla cuesta un `grep` por el sitio donde se
 manda.
+
+## 229. Al medir cobertura, acotar la suite da falsos huecos
+
+Silenciando las trece comprobaciones del cuadrante una a una y corriendo
+`apps/shifts`, `apps/reports` y `apps/legal` ---donde uno esperaría que vivan sus
+pruebas--- dos salieron sin cobertura: el turno en festivo y el turno fuera de las
+fechas del contrato. Dos avisos legales sin nadie mirándolos habría sido un
+hallazgo gordo.
+
+Con la **suite completa**, las dos rompen pruebas: dos y una. Las cubren ficheros
+de otras apps, que es lo normal en pruebas de extremo a extremo --- una prueba de
+ausencias ejercita el cuadrante sin vivir en `apps/shifts`.
+
+**Regla**: la mutación mide cobertura solo si corre **todo**. Acotar la suite por
+app acelera el barrido y a cambio convierte «no lo cubre esta app» en «no lo cubre
+nadie», que es una conclusión distinta y falsa. Sirve para triar --- once de trece
+quedaron resueltas en veinte segundos cada una --- pero **cada candidato que salga
+limpio se repite con la suite entera antes de escribirlo en ningún sitio**.
+
+Es el reverso de la lección 224: allí el detector tenía demasiado ruido, aquí
+tenía poco alcance. Las dos veces el error fue creerme el primer número.
