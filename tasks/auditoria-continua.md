@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 116 · Vueltas seguidas sin hallazgos: 1
+Vueltas dadas: 117 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -345,6 +345,51 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 117 --- «20.00» no era 20 (27/08)
+
+Lente: **lo que se valida al crear y no al modificar**, que sale de la lección de
+la 116 ---una comprobación hecha en un sentido señala la que falta en el otro---.
+
+#### Lo que aguantó
+
+Las validaciones cruzadas de personas **sí corren en un `PATCH` parcial**, que es
+donde suelen escaparse: pasar a tiempo parcial sin horas da 400, poner una fecha
+de fin anterior al inicio mandando **solo** el fin da 400, y un `PATCH` legítimo
+sigue dando 200. Están escritas combinando lo que llega con lo que ya había
+---`attrs.get(campo, getattr(instancia, campo))`--- que es justo lo que hay que
+hacer.
+
+#### Lo que no, y apareció de rebote
+
+Mandando las horas pactadas como `"20.00"` ---porque a mí me salió escribirlo
+así--- contestó **400**. Con `20` contestaba 201.
+
+    20      -> 201        0020.0  -> 201
+    20.0    -> 201        20.00   -> 400
+    20.5    -> 201        20.50   -> 400
+
+**Los ceros de la izquierda daban igual y los de la derecha no.** Esa asimetría
+es la pista: `DecimalField` cuenta los decimales del `Decimal` tal como llega, no
+los significativos. Y el mensaje no ayudaba a verlo porque era cierto: «asegúrese
+de que no haya más de 1 decimales» ---tiene dos, y ninguno cuenta---.
+
+Pasaba en los tres campos que se pactan en horas ---las de la persona y las dos
+del convenio--- y en el porcentaje del ERTE. Duele en integraciones: dos decimales
+es como formatea cualquiera que venga del mundo de las nóminas, así que un
+cliente correcto se comía un 400 por escribir el mismo número de otra manera.
+
+#### Qué se ha hecho
+
+`apps/common/campos.py`, que no existía: un decimal que normaliza el valor antes
+de validar. Va como **mixin** de `ModelSerializer` para que los campos sigan
+sacando `max_digits` y `decimal_places` del modelo ---declararlos a mano en cada
+serializador es lo que hace que un día dejen de coincidir con la columna---.
+
+Y la mitad de las nueve pruebas es lo que **no** puede aflojarse: `20.55` no es
+`20,5`, media hora es el grano con el que se pactan las jornadas, y esa precisión
+se sigue rechazando. Más lo que no es un número, que tiene que seguir dando su
+propio error.
 
 ### Vuelta 116 --- La puerta de integración, atacada por dentro (27/08) --- LIMPIA
 

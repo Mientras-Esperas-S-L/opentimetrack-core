@@ -3422,3 +3422,46 @@ salir cero las dos, el sospechoso pasaba a ser la sonda.
 borrado de ficheros va dentro de `django_capture_on_commit_callbacks`. Y cuando
 una comprobación dé cero, mide **el caso que sí debería dar distinto de cero**
 antes de escribir la palabra «hallazgo».
+
+## 217. Una validación asimétrica delata que mira la forma y no el valor
+
+Las horas pactadas se rechazaban así:
+
+    20      -> 201        0020.0  -> 201
+    20.0    -> 201        20.00   -> 400
+    20.5    -> 201        20.50   -> 400
+
+Los ceros de la izquierda daban igual y los de la derecha no. Esa asimetría es la
+pista: si el valor fuera lo que se juzga, las dos columnas se comportarían igual.
+`DecimalField` cuenta los decimales del `Decimal` **tal como llega**
+---`Decimal("20.00").as_tuple().exponent` es -2--- y no los significativos.
+
+Y el mensaje no ayudaba a verlo, porque era cierto: «asegúrese de que no haya más
+de 1 decimales». Tiene dos. Ninguno cuenta.
+
+Duele en integraciones: dos decimales es como formatea cualquiera que venga del
+mundo de las nóminas, así que un cliente correcto se comía un 400 por escribir el
+mismo número de otra forma.
+
+**Regla**: cuando una validación acepte una escritura y rechace otra del **mismo
+valor**, el fallo está en que se juzga la representación. Normaliza antes de
+validar. Es la misma lección que el sello de la vuelta 109, en otro tipo de dato:
+allí un instante en dos husos, aquí un número con dos colas de ceros.
+
+**Y el límite de la normalización**: `20.55` no es `20.5`. Se quitan los ceros
+que no dicen nada y se conserva lo que sí; la precisión que no cabe se sigue
+rechazando, y eso es la mitad de la prueba.
+
+## 218. Probar los formatos de un número, no solo un número
+
+El fallo no apareció al probar valores límite ---cero, negativos, enormes, con
+demasiados decimales--- que es lo que uno prueba primero y que aquí estaba todo
+bien. Apareció por accidente: la sonda mandaba `"20.00"` porque a mí me salió
+escribirlo así, y contestó 400 donde esperaba 201.
+
+**Regla**: para un campo numérico, la tabla de casos incluye **el mismo número
+escrito de varias formas** ---entero, con un decimal, con dos, con ceros a la
+izquierda, en notación exponencial, como texto y como número--- además de los
+valores límite. Son dos ejes distintos: uno prueba qué valores se aceptan y el
+otro qué escrituras. El segundo casi nunca se prueba, y es donde viven los fallos
+que solo ve quien integra.

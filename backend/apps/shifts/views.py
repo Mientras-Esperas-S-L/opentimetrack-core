@@ -21,6 +21,7 @@ from apps import legal
 from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.audit.trail import StructureTrail
+from apps.common.campos import DecimalesTolerantes
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import (
     IsAuthenticatedInTenant,
@@ -694,7 +695,7 @@ def _outside_the_law(rules, framework, changed) -> list[dict]:
     return avisos
 
 
-class RulesSerializer(serializers.ModelSerializer):
+class RulesSerializer(DecimalesTolerantes, serializers.ModelSerializer):
     class Meta:
         model = WorkingTimeRules
         exclude = ["tenant", "created_at", "updated_at"]

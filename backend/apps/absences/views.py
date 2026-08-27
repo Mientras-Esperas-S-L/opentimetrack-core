@@ -33,6 +33,7 @@ from apps.absences.uploads import validate_content, validate_extension, validate
 from apps.absences.usage import usage_summary
 from apps.audit.models import AuditAction
 from apps.audit.services import record
+from apps.common.campos import DecimalTolerante
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import (
     IsAdmin,
@@ -297,7 +298,7 @@ class AbsenceRequestSerializer(serializers.Serializer):
     end_time = serializers.TimeField(required=False, allow_null=True)
     #: Only for a suspension that reduces the working day instead of stopping
     #: it. Between 10 and 70 for an ERTE under art. 47.
-    reduction_share = serializers.DecimalField(
+    reduction_share = DecimalTolerante(
         max_digits=5,
         decimal_places=2,
         required=False,

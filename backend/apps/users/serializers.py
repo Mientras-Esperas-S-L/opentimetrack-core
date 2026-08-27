@@ -10,6 +10,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps import legal
+from apps.common.campos import DecimalesTolerantes
 from apps.tenants.models import Tenant, validate_time_zone
 from apps.users.models import Department, Role, Workplace
 
@@ -218,7 +219,7 @@ class DepartmentSerializer(serializers.ModelSerializer):
         return value
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(DecimalesTolerantes, serializers.ModelSerializer):
     full_name = serializers.CharField(source="get_full_name", read_only=True)
     department_name = serializers.CharField(source="department.name", read_only=True, default=None)
     workplace_name = serializers.CharField(source="workplace.name", read_only=True, default=None)
@@ -294,7 +295,7 @@ class UserSerializer(serializers.ModelSerializer):
         return str(obj.tzinfo)
 
 
-class UserWriteSerializer(serializers.ModelSerializer):
+class UserWriteSerializer(DecimalesTolerantes, serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, min_length=12)
 
     class Meta:
