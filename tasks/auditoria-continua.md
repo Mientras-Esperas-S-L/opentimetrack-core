@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 130 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
+Vueltas dadas: 131 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,71 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 131 --- Catalán y gallego, y la clasificación que escondía la mitad (27/08)
+
+Tarea **8 de la lista**. Eran **507 huecos**, de los que 354 eran cadenas cortas, y
+la primera lectura decía que 300 de ellos eran «etiquetas de modelo» que **se dejan
+sin traducir a propósito**: así lo tenía decidido el proyecto y así lo explica el
+docstring de `test_lo_que_no_esta_traducido_cae_al_castellano_y_no_al_ingles`, que
+además comprueba lo único que hace viable esa decisión ---que lo que falta cae al
+castellano y no al inglés---.
+
+Con esa lectura el trabajo eran 207. Se tradujeron.
+
+#### Y entonces la clasificación resultó estar mal
+
+La regla era «si el mensaje sale de un `models.py`, es una etiqueta de campo». Y en
+este proyecto **los modelos no viven solo en `models.py`**: están también en
+`corrections.py`, `applications.py`, `holidays.py`, `rules.py` y `payroll.py` ---lo
+mismo que ya había sorprendido en la vuelta 127 buscando las claves ajenas hacia
+`Punch`---. Así que dieciocho etiquetas de campo caían en el grupo equivocado.
+
+Eso era lo de menos. Rehecha la clasificación con `ast`, mirando **qué envuelve
+cada cadena** en vez de en qué fichero está, salió lo otro: de las 300 supuestas
+etiquetas internas, **147 eran visibles**. Los tipos de ausencia («Vacaciones»,
+«Baja médica»), los estados, las veintitantas acciones que salen en el rastro, las
+unidades de los topes de permisos. Todo eso aparece en el calendario, en el informe
+y en los correos, y estaba clasificado como interno porque su `TextChoices` vive en
+un `models.py`.
+
+Total: **354 mensajes traducidos por idioma**, 708 traducciones. Quedan 153 sin
+traducir, que son las etiquetas de campo de verdad ---las que están dentro de un
+`XxxField(...)`--- y siguen cayendo al castellano.
+
+#### Lo que hace que esto no se repita
+
+`test_los_dos_idiomas_van_al_dia` clasifica con `ast` y exige que lo visible esté en
+los dos idiomas. Sin él el criterio no se sostiene solo: **nadie había dejado esos
+207 sin traducir a propósito**. Se fueron añadiendo funciones, los catálogos no
+crecieron con ellas, y no se notaba porque cada mensaje caía al castellano y la
+pantalla seguía siendo legible. Un hueco que no se ve no se arregla.
+
+Con cuatro contrastes, porque la comprobación acaba de dar cero: que la
+clasificación distingue el mismo texto puesto en un campo y en un `TextChoices`;
+que una cadena en los dos sitios cuenta como visible ---traducir de más cuesta una
+traducción de sobra, traducir de menos cuesta una pantalla en dos idiomas---; y que
+el lector del catálogo encuentra huecos de verdad, porque si devolviera un conjunto
+vacío por un error de parseo las dos comprobaciones pasarían para siempre.
+
+Comprobado quitando la traducción de «Sick leave»: se pone rojo y la nombra.
+
+#### Que piden revisión, dicho donde se ve
+
+Cada traducción lleva `# revisar: traducido sin hablante nativo el 2026-08-27` en
+el catálogo, y `docs/traducciones.md` explica el criterio, cómo listarlas y qué
+hacer al revisarlas: corregir lo que esté mal y **quitar la marca** de lo aprobado,
+para que lo que siga marcado sea lo que siga sin revisar.
+
+La marca va como comentario del traductor (`# `) y no como `#.`, que es el hueco de
+los comentarios extraídos del código y `makemessages` regenera en cada pasada. Y
+**no** como `#, fuzzy`, que era la tentación evidente: Django ignora los fuzzy, así
+que marcarlas así equivaldría a no haberlas traducido.
+
+#### Verde al cerrar
+
+`1.294` pruebas de backend (cinco nuevas), `ruff` limpio, los tres catálogos
+compilando sin avisos y a **cero `fuzzy`**.
 
 ### Vuelta 130 --- El hoy de quien pregunta, y un guard para que no vuelva (27/08)
 

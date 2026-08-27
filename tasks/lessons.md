@@ -4091,3 +4091,53 @@ ajuste antes de dar por bueno un reemplazo que solo suena mejor.
 rutas tendrá que fingir también la zona. Que un doble crezca al arreglar esto es
 señal de que el código pide un dato que antes no pedía --- correcto ---, no de que
 el arreglo esté mal.
+
+## 249. Una clasificación heredada también se audita, sobre todo si justifica no hacer trabajo
+
+El proyecto tenía decidido «se traduce lo que llega a una persona y se deja la
+etiqueta de un campo», con la regla operativa «si sale de un `models.py`, es
+etiqueta». La decisión era buena. **La regla que la implementaba, no**: en este
+proyecto los modelos viven en seis ficheros distintos, y con `ast` resultó que
+**147 de las 300 supuestas etiquetas internas eran visibles** ---tipos de ausencia,
+estados, las acciones que salen en el rastro---.
+
+Lo que hace esto peligroso es que la clasificación **justificaba no trabajar**. Una
+regla que dice «esto no hace falta» se revisa menos que una que dice «esto falta»,
+porque nadie va a buscar trabajo. Y cuanto más razonada esté la decisión de fondo
+---aquí lo estaba, y bien--- más se confía en la regla que la aplica.
+
+**Cómo se audita**: coge el grupo «no hace falta» y clasifícalo otra vez con un
+criterio distinto. Si los dos coinciden, la regla vale; si no, la diferencia es
+trabajo escondido.
+
+## 250. Un hueco que cae de pie no se ve, y por eso no se arregla
+
+Los 207 mensajes visibles sin traducir en catalán y gallego llevaban meses ahí, y
+nadie los había dejado a propósito: se añadían funciones y los catálogos no crecían
+con ellas. **No se notaba porque cada uno caía al castellano** y la pantalla seguía
+siendo perfectamente legible para todo el mundo.
+
+Es el mismo patrón que un `fuzzy` (Django lo ignora y sale el original), que un
+`role` que falta (el locator devuelve cero y la aserción pasa) y que un `skip` en
+una prueba (verde sin comprobar nada). **Un mecanismo de degradación elegante
+esconde su propia causa.**
+
+**La regla**: cuando montes una caída elegante ---un idioma de reserva, un valor por
+defecto, un reintento callado---, monta **al lado** la comprobación de cuántas veces
+se está usando. La caída es para el usuario; el recuento es para ti.
+
+## 251. `fuzzy` no es una marca de «revísame»
+
+La forma obvia de decir «esta traducción está sin revisar» es `#, fuzzy`. Es
+exactamente lo que no hay que hacer: **Django ignora los mensajes marcados fuzzy**,
+así que marcarlos así equivale a no haberlos traducido, y la pantalla vuelve al
+idioma de reserva sin que nadie lo note.
+
+La marca correcta es un comentario del traductor, `# revisar: ...`, que gettext
+conserva y no cambia nada en ejecución. **Y no `#.`**, que es el hueco de los
+comentarios extraídos del código: `makemessages` lo regenera en cada pasada y se
+lleva la marca por delante.
+
+**Lo general**: antes de usar un campo de metadatos para lo que parece querer decir,
+comprueba **qué hace el programa con él**. Aquí «dudoso» significaba «no lo uses»,
+que es casi lo contrario de lo que se quería decir.
