@@ -27,9 +27,14 @@ TABLA = "audit_auditlog"
 
 def _estado() -> dict[str, str]:
     with connection.cursor() as cursor:
+        # El nombre de la tabla va como parámetro, no interpolado: aquí sería
+        # inofensivo ---es una constante de este fichero--- pero un `f` dentro de
+        # un `execute` es justo el patrón que no conviene tener escrito en
+        # ningún sitio del que alguien copie luego.
         cursor.execute(
             "SELECT tgname, tgenabled FROM pg_trigger "
-            f"WHERE tgrelid = '{TABLA}'::regclass AND NOT tgisinternal"
+            "WHERE tgrelid = %s::regclass AND NOT tgisinternal",
+            [TABLA],
         )
         return dict(cursor.fetchall())
 

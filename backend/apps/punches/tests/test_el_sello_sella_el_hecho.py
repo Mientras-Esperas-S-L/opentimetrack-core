@@ -42,21 +42,26 @@ CUANDO = datetime(2026, 7, 2, 4, 58, tzinfo=UTC)
 
 @pytest.fixture
 def gente(db):
-    empresa = Tenant.objects.create(
-        name="Sello SL", tax_id="B33333333", time_zone="Europe/Madrid"
-    )
+    empresa = Tenant.objects.create(name="Sello SL", tax_id="B33333333", time_zone="Europe/Madrid")
     with tenant_context(empresa.id):
         quien = User.objects.create_user(
-            email="sello@example.com", password=PASSWORD, tenant=empresa,
-            first_name="Sel", last_name="Lo",
+            email="sello@example.com",
+            password=PASSWORD,
+            tenant=empresa,
+            first_name="Sel",
+            last_name="Lo",
         )
         yield empresa, quien
 
 
 def _ficha(empresa, quien, cuando, **extra):
     return Punch.objects.create(
-        tenant=empresa, employee=quien, punch_type=PunchType.IN,
-        interval=PunchInterval.WORK, timestamp=cuando, **extra,
+        tenant=empresa,
+        employee=quien,
+        punch_type=PunchType.IN,
+        interval=PunchInterval.WORK,
+        timestamp=cuando,
+        **extra,
     )
 
 
