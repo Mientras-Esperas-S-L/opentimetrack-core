@@ -445,16 +445,16 @@ export default function Timesheet() {
           label={t('Tipo')}
           value={kind}
           onChange={rephrase(setKind)}
-          options={PUNCH_TYPES}
-          all="Todos"
+          options={PUNCH_TYPES.map((tipo) => ({ ...tipo, label: t(tipo.label) }))}
+          all={t('Todos')}
           width={140}
         />
         <PickFilter
           label={t('Origen')}
           value={source}
           onChange={rephrase(setSource)}
-          options={SOURCE_OPTIONS}
-          all="Todos"
+          options={SOURCE_OPTIONS.map((origen) => ({ ...origen, label: t(origen.label) }))}
+          all={t('Todos')}
           width={170}
         />
       </Stack>
@@ -514,7 +514,7 @@ export default function Timesheet() {
           page={page}
           pageSize={PAGE_SIZE}
           onChange={setPage}
-          noun="fichajes"
+          noun={{ singular: 'fichaje', plural: 'fichajes' }}
         />
       )}
 

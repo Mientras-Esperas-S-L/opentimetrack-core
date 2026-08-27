@@ -4511,3 +4511,42 @@ de tope para comprobar el aviso, así que el dato estaba sembrado y solo había 
 mirar dos cosas más. Buscar la prueba que ya tiene el escenario montado sale más a
 cuenta que escribir una desde cero ---y la deja cubriendo algo más, en vez de
 sumar otro fichero a la tanda---.
+
+## 275. Lo que no cambia de idioma se ve más que lo que falta
+
+Seis pantallas traducidas enteras al catalán seguían diciendo «Agosto de 2026» en
+la cabecera, porque nueve sitios formateaban con `'es-ES'` escrito a mano.
+
+La diferencia con una cadena sin traducir es de lectura, no de cantidad. Lo que
+falta cae al castellano y se lee como «esto todavía no está»; una fecha en
+castellano dentro de una pantalla en catalán se lee como **un descuido**, porque
+todo lo de alrededor sí cambió. La segunda hace más daño con menos motivo.
+
+Y tenía dos causas encadenadas, las dos invisibles desde el catálogo:
+
+1. El locale escrito a mano, que es la que se ve buscando `'es-ES'`.
+2. **El idioma se fijaba en un `useEffect`**, o sea después del primer pintado.
+   `useTranslation` repinta a quien lo usa; un módulo de utilidades no es un
+   componente y no puede usarlo, así que lo que él escribe se queda con el idioma
+   de arranque para siempre.
+
+**La regla**: al revisar si algo está traducido, mirar también lo que **no** pasa
+por el catálogo ---fechas, horas, números, monedas, órdenes de clasificación---.
+El catálogo al 100 % no significa que la pantalla hable un solo idioma.
+
+## 276. La singularización mecánica no sobrevive al cambio de idioma
+
+`noun.replace(/s$/, '')` para sacar «persona» de «personas». En castellano cuela
+casi siempre; en catalán, «persones» da «persone», que no es una palabra, y
+«correccions» da «correccion», sin el acento que la hace serlo.
+
+Lo llamativo es que el proyecto **ya tenía** un `plural(n, una, muchas)` escrito en
+agosto justo por esto, con su prueba, y aun así dos componentes seguían quitando la
+«s». El helper existía y no se había aplicado donde hacía falta: **una herramienta
+escrita no es una herramienta usada**, y al arreglar un defecto conviene buscar
+todos sus hermanos antes de darlo por cerrado.
+
+Al cambiar la firma ---`noun={{ singular, plural }}`--- salió otra: nombrar las
+claves con género (`una`/`varias`) se lee bien en el punto de llamada y **no
+generaliza**, porque el mismo componente cuenta cosas de los dos géneros. El
+nombre neutro es peor de leer una vez y correcto siempre.

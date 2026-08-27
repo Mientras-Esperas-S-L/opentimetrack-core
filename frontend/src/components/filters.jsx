@@ -16,6 +16,7 @@ import InputAdornment from '@mui/material/InputAdornment'
 import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
+import { useTranslation } from 'react-i18next'
 import ClearIcon from '@mui/icons-material/Clear'
 import SearchIcon from '@mui/icons-material/Search'
 
@@ -34,13 +35,14 @@ export function FilterBar({ children, right }) {
   )
 }
 
-export function SearchField({ value, onChange, placeholder = 'Buscar', width = 240 }) {
+export function SearchField({ value, onChange, placeholder, width = 240 }) {
+  const { t } = useTranslation()
   return (
     <TextField
       size="small"
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      placeholder={placeholder}
+      placeholder={placeholder ?? t('Buscar')}
       // Un tope, no una medida. Con `width` a secas el campo mide eso pase lo
       // que pase, y en un móvil de 390 px un buscador de 380 más su borde se
       // sale de la pantalla --- lo estrenó Personas al pasar a este componente.
@@ -64,7 +66,11 @@ export function SearchField({ value, onChange, placeholder = 'Buscar', width = 2
           // deja un espacio dentro, y la lista se queda vacía sin explicación.
           endAdornment: value ? (
             <InputAdornment position="end">
-              <IconButton size="small" onClick={() => onChange('')} aria-label="Vaciar la búsqueda">
+              <IconButton
+                size="small"
+                onClick={() => onChange('')}
+                aria-label={t('Vaciar la búsqueda')}
+              >
                 <ClearIcon fontSize="small" />
               </IconButton>
             </InputAdornment>
@@ -75,8 +81,15 @@ export function SearchField({ value, onChange, placeholder = 'Buscar', width = 2
   )
 }
 
-/** Un desplegable con «todas» delante. `options` es `[{value, label}]`. */
-export function PickFilter({ label, value, onChange, options, all = 'Todas', width = 190 }) {
+/** Un desplegable con «todas» delante.
+ *
+ *  `options` es `[{value, label}]` y el rótulo llega **ya traducido**: aquí no
+ *  se traduce nada. La mayoría son nombres que vienen de la base ---personas,
+ *  departamentos, centros--- y pasarlos por `t()` haría que un centro llamado
+ *  «Entrada» se leyera en catalán.
+ */
+export function PickFilter({ label, value, onChange, options, all, width = 190 }) {
+  const { t } = useTranslation()
   return (
     <TextField
       select
@@ -86,7 +99,7 @@ export function PickFilter({ label, value, onChange, options, all = 'Todas', wid
       onChange={(event) => onChange(event.target.value)}
       sx={{ width }}
     >
-      <MenuItem value="">{all}</MenuItem>
+      <MenuItem value="">{all ?? t('Todas')}</MenuItem>
       {options.map((option) => (
         <MenuItem key={option.value} value={option.value}>
           {option.label}

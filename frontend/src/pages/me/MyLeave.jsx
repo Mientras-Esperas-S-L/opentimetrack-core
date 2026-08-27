@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
 import Alert from '@mui/material/Alert'
@@ -117,6 +118,7 @@ function Balance({ balance }) {
  *  un permiso retribuido o uno sin sueldo.
  */
 export default function MyLeave() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [asking, setAsking] = useState(false)
   const [error, setError] = useState(null)
@@ -202,7 +204,7 @@ export default function MyLeave() {
             value: String(esteAño - i),
             label: String(esteAño - i),
           }))}
-          all="Todos"
+          all={t('Todos')}
           width={130}
         />
         <PickFilter
@@ -218,7 +220,7 @@ export default function MyLeave() {
             { value: 'REJECTED', label: 'Rechazada' },
             { value: 'CANCELLED', label: 'Cancelada' },
           ]}
-          all="Todos"
+          all={t('Todos')}
           width={170}
         />
       </FilterBar>
@@ -329,7 +331,7 @@ export default function MyLeave() {
         page={page}
         pageSize={PAGE_SIZE}
         onChange={setPage}
-        noun="solicitudes"
+        noun={{ singular: 'solicitud', plural: 'solicitudes' }}
       />
 
       <ConfirmDialog

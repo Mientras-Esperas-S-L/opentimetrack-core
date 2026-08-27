@@ -170,4 +170,81 @@ test.describe('La pantalla, en los tres idiomas', () => {
       }
     })
   }
+
+  /** Lo que sale en todas las pantallas a la vez.
+   *
+   *  `components/common.jsx` ---el paginador, los estados, el aviso de plazo
+   *  agotado--- y `filters.jsx` no son de ninguna pantalla y están en todas.
+   *  Comprobarlos por la tabla de arriba no distingue si lo que se tradujo fue
+   *  la pantalla o el trozo compartido: esto los mira aparte.
+   */
+  test('lo que comparten todas las pantallas', async ({ page }) => {
+    await page.goto('/')
+    const antes = (await api(page, '/auth/me/')).body?.locale ?? ''
+    try {
+      await api(page, '/auth/me/', { method: 'PATCH', body: { locale: 'ca' } })
+      await irA(page, '/panel/fichajes', 'Fitxatges')
+
+      // El «todos» de un desplegable de filtro, que lo pone `filters.jsx` y
+      // no la pantalla. No sirve el texto del buscador: todas las pantallas le
+      // pasan el suyo, así que el de por defecto no se lee en ninguna.
+      await expect(page.getByRole('combobox', { name: 'Origen' })).toBeVisible()
+      await page.getByRole('combobox', { name: 'Origen' }).click()
+      await expect(page.getByRole('option', { name: 'Tots', exact: true })).toBeVisible()
+      await expect(page.getByRole('option', { name: 'Todos', exact: true })).toHaveCount(0)
+      await page.keyboard.press('Escape')
+      await expect(page.getByRole('listbox')).toHaveCount(0)
+
+      // Y el contador del paginador, con su sustantivo: la frase la arma
+      // `Pager` y el sustantivo lo pone quien lo usa, así que si falla
+      // cualquiera de los dos lados esto se ve.
+      await expect(page.getByText(/\d+ fitxatges/).first()).toBeVisible()
+      await expect(page.getByText(/\d+ fichajes/)).toHaveCount(0)
+    } finally {
+      await api(page, '/auth/me/', { method: 'PATCH', body: { locale: antes } })
+    }
+  })
+
+  /** Las fechas.
+   *
+   *  Se escribían con `'es-ES'` fijo en nueve sitios, así que una pantalla
+   *  traducida entera seguía diciendo «agosto de 2026». Lo que no cambia se ve
+   *  más que lo que falta: parece un descuido, no un trabajo a medias.
+   *
+   *  El gallego no sirve de muestra aquí ---escribe los meses igual que el
+   *  castellano---, así que la comprobación es en catalán.
+   */
+  test('las fechas también hablan el idioma', async ({ page }) => {
+    // «Abril» y «octubre» se escriben igual en castellano y en catalán, así que
+    // dos meses al año esta prueba no distinguiría nada ---y escrita del revés,
+    // se pondría roja sola sin que nada estuviera mal---. Si toca uno de esos,
+    // avanza al siguiente, que sí difiere.
+    const AMBIGUOS = /abril|octubre/i
+    const EN_CATALAN = /gener|febrer|març|maig|juny|juliol|agost|setembre|novembre|desembre/i
+    const EN_CASTELLANO =
+      /enero|febrero|marzo|mayo|junio|julio|agosto|septiembre|noviembre|diciembre/i
+
+    await page.goto('/')
+    const antes = (await api(page, '/auth/me/')).body?.locale ?? ''
+    try {
+      await api(page, '/auth/me/', { method: 'PATCH', body: { locale: 'ca' } })
+      // El título va en castellano a propósito: el cuadrante todavía no está
+      // traducido, y esta prueba mira sus **fechas**, que sí lo están porque
+      // salen de `format.js`. Al traducir `Roster.jsx` habrá que cambiarlo por
+      // «Quadrant», y la prueba se pondrá roja para recordarlo.
+      await irA(page, '/panel/cuadrante', 'Cuadrante')
+
+      const leer = async () => (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      if (AMBIGUOS.test(await leer())) {
+        await page.getByRole('button', { name: 'Mes següent' }).click()
+        await expect.poll(async () => AMBIGUOS.test(await leer())).toBe(false)
+      }
+
+      const cabecera = await leer()
+      expect(cabecera, 'el mes no sale en catalán').toMatch(EN_CATALAN)
+      expect(cabecera, 'el mes sigue en castellano').not.toMatch(EN_CASTELLANO)
+    } finally {
+      await api(page, '/auth/me/', { method: 'PATCH', body: { locale: antes } })
+    }
+  })
 })

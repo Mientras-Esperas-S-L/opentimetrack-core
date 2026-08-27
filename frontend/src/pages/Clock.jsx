@@ -17,6 +17,7 @@ import { useAuth } from '../hooks/useAuth.js'
 import { clock, getMyShiftToday, getToday } from '../services/api.js'
 import { hhmm, hhmmss, timeOf } from '../components/format.js'
 import { serverAt, serverClockReady } from '../services/serverClock.js'
+import { localeDeFechas } from '../i18n/index.js'
 
 /** Un latido común, en el borde del segundo.
  *
@@ -101,7 +102,7 @@ function WallClock({ zone, sx }) {
       sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 400, ...sx }}
       aria-live="off"
     >
-      {serverAt(now).toLocaleTimeString('es-ES', {
+      {serverAt(now).toLocaleTimeString(localeDeFechas(), {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
@@ -241,7 +242,7 @@ export default function Clock() {
         Hola, {session?.user?.first_name || session?.user?.full_name}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        {new Date().toLocaleDateString('es-ES', {
+        {new Date().toLocaleDateString(localeDeFechas(), {
           weekday: 'long',
           day: 'numeric',
           month: 'long',

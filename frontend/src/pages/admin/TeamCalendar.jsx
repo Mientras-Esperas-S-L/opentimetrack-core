@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -136,6 +137,7 @@ const daysIn = (year, month) => new Date(year, month + 1, 0).getDate()
 const weekdayOf = (year, month, day) => (new Date(year, month, day).getDay() + 6) % 7
 
 export default function TeamCalendar() {
+  const { t } = useTranslation()
   const today = new Date()
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() })
 
@@ -293,7 +295,7 @@ export default function TeamCalendar() {
           value={kind}
           onChange={setKind}
           options={Object.entries(KIND_LABELS).map(([value, label]) => ({ value, label }))}
-          all="Todos"
+          all={t('Todos')}
           width={160}
         />
         <PickFilter
@@ -304,7 +306,7 @@ export default function TeamCalendar() {
             { value: 'PENDING', label: 'Sin resolver' },
             { value: 'APPROVED', label: 'Concedidas' },
           ]}
-          all="Todos"
+          all={t('Todos')}
           width={160}
         />
 

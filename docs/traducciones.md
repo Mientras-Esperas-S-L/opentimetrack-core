@@ -8,7 +8,7 @@ enseñárselo a un cliente.
 | Qué | Catalán y gallego |
 |---|---|
 | Lo que responde el servidor: correos, errores, avisos legales, tipos y estados | **Traducido** ---558 de 711 mensajes; el resto son etiquetas de campo que se dejan a propósito--- |
-| La pantalla: botones, rótulos, textos de cada página | **En curso** ---313 de 966 cadenas al 28/08/2026. Enteras: Personas, Ajustes, Mi jornada, Centros de trabajo, Fichajes y Por decidir--- |
+| La pantalla: botones, rótulos, textos de cada página | **En curso** ---362 de 971 cadenas al 28/08/2026. Enteras: Personas, Ajustes, Mi jornada, Centros de trabajo, Fichajes, Por decidir y todo lo compartido (menú, paginadores, filtros, estados, fechas)--- |
 
 Así que una empresa catalana ve hoy el menú, los correos y los errores en
 catalán, seis pantallas en catalán y el resto en castellano. **Hasta que esté
@@ -60,6 +60,26 @@ módulo, cuando todavía no se sabe en qué idioma va a mirarlo nadie, así que 
 cadena se marca ahí y se traduce en el punto de uso. Y ojo con los mapas que
 además **alimentan un buscador**: si solo se traduce donde se pinta, el filtro
 sigue comparando contra el castellano y escribir en catalán no encuentra nada.
+
+## Lo que no pasa por el catálogo
+
+Un catálogo al 100 % no significa que la pantalla hable un solo idioma.
+
+**Las fechas y las horas** salen de `toLocaleDateString`, no de `t()`. Iban con
+`'es-ES'` escrito a mano en nueve sitios, así que seis pantallas traducidas
+enteras decían «Agosto de 2026» encima. El locale sale ahora de
+`localeDeFechas()`, en `src/i18n/index.js`. **Ningún `'es-ES'` nuevo**: lo mira
+la prueba `las fechas también hablan el idioma`.
+
+**Los sustantivos contables** llevan las dos formas. `Pager` y `SelectionBar`
+reciben `noun={{ singular: 'persona', plural: 'personas' }}` y eligen con
+`plural()`. Sacar el singular quitándole la «s» al plural da «persone» en
+catalán, que no es una palabra.
+
+**Y el idioma se fija antes de pintar**, no en un efecto: `useTranslation` solo
+repinta a quien lo usa, y `format.js` no es un componente. Cambiar de idioma en
+caliente remonta la aplicación con una `key`, que cuesta el estado de la
+pantalla y pasa una vez.
 
 ## Qué se traduce y qué no
 

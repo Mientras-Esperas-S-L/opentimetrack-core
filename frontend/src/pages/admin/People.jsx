@@ -997,7 +997,7 @@ export default function People() {
       {isAdmin && (
         <SelectionBar
           selection={pick}
-          noun="personas"
+          noun={{ singular: 'persona', plural: 'personas' }}
           busy={Boolean(enCurso)}
           actions={[
             {
@@ -1172,7 +1172,7 @@ export default function People() {
         page={page}
         pageSize={PAGE_SIZE}
         onChange={setPage}
-        noun="personas"
+        noun={{ singular: 'persona', plural: 'personas' }}
       />
 
       <PersonDialog

@@ -12,6 +12,7 @@ import Typography from '@mui/material/Typography'
 
 import { getCoverage, reassignShift } from '../services/api.js'
 import { ErrorNote, Loading } from './common.jsx'
+import { localeDeFechas } from '../i18n/index.js'
 
 const MOTIVO = {
   left_the_company: 'dejó la empresa',
@@ -31,7 +32,7 @@ function Hueco({ hueco, onCubrir, guardando }) {
   const elegido = hueco.candidates.find((c) => c.employee_id === quien)
   // El día distingue estos huecos entre sí: el mismo turno de la misma persona
   // aparece varias veces, uno por jornada sin cubrir.
-  const diaLegible = new Date(`${hueco.day}T00:00:00`).toLocaleDateString('es-ES', {
+  const diaLegible = new Date(`${hueco.day}T00:00:00`).toLocaleDateString(localeDeFechas(), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',

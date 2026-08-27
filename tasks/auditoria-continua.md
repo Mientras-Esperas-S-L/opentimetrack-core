@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 138 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---313 de 966 cadenas, medidas con el árbol y no con grep---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 139 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---362 de 971 cadenas, medidas con el árbol y no con grep---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,45 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 139 --- Lo que sale en todas las pantallas a la vez (28/08)
+
+**Lo que se buscaba:** traducir los componentes compartidos, que la medida
+nueva puso los primeros. Son pocas cadenas ---`common.jsx` tiene nueve--- pero
+salen en las treinta y ocho pantallas, así que valen más que cualquier pantalla
+suelta.
+
+**Traducido:** `common.jsx` (el paginador, los estados, el aviso de plazo
+agotado), `punches.js` (tipo y origen de un fichaje), `selection.jsx`,
+`filters.jsx`, `format.js` y `navigation.jsx`. El catálogo: 306 → **351 claves**.
+
+**Y tres cosas que solo se ven al traducir:**
+
+- **Las fechas seguían en castellano.** Nueve sitios formateaban con `'es-ES'`
+  fijo, así que una pantalla traducida entera decía «Agosto de 2026» encima.
+  Ahora sale del idioma de la sesión (`localeDeFechas()`). **Lo que no cambia se
+  ve más que lo que falta**: parece un descuido, no un trabajo a medias.
+
+- **El idioma se fijaba después de pintar.** `ConIdioma` llamaba a
+  `changeLanguage` desde un `useEffect`, o sea **después** del primer pintado,
+  y `useTranslation` solo repinta a quien lo usa. `format.js` no es un
+  componente y no puede usarlo, así que las fechas se quedaban con el idioma de
+  arranque. Se fija ahora antes de pintar, y la aplicación se remonta con una
+  `key` cuando alguien cambia de idioma en caliente.
+
+- **«1 personas».** `Pager` y `SelectionBar` sacaban el singular quitándole la
+  «s» al plural. Funcionaba de casualidad en castellano ---y ni eso: ya había
+  una prueba de agosto por «1 personas de alta»--- y en catalán deja «persone»,
+  que no es una palabra. `noun` pasa a llevar las dos formas, `{singular,
+  plural}`, en los catorce sitios que lo usan. La singularización mecánica no
+  sobrevive al cambio de idioma.
+
+**Las dos comprobaciones nuevas**, las dos en `53-la-pantalla-en-tres-idiomas`:
+lo compartido se mira aparte de la tabla de pantallas ---por la tabla no se
+distingue si lo traducido fue la pantalla o el trozo común--- y las fechas
+tienen la suya. Esta última esquiva una trampa de calendario: «abril» y
+«octubre» se escriben igual en castellano y en catalán, así que dos meses al año
+la prueba no distinguiría nada; si toca uno de esos, avanza al mes siguiente.
 
 ### Vuelta 138 --- La medida estaba mal, y con ella tres pantallas dadas por hechas (28/08)
 

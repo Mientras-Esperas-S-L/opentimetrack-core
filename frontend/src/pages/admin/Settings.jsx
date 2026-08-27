@@ -27,6 +27,7 @@ import { ErrorNote, Loading, PageHeader, Panel } from '../../components/common.j
 import { plural } from '../../components/format.js'
 import { avisoDeAlcance } from './avisoDeAlcance.js'
 import { useAuth } from '../../hooks/useAuth.js'
+import { localeDeFechas } from '../../i18n/index.js'
 
 /** Spain spans two, and both are in daily use. The rest of the list is there
  *  because the product is not Spain-only, even if the rules currently are. */
@@ -52,7 +53,7 @@ const ZONES = (() => {
 /** "Europe/Madrid · UTC+02:00", so a choice can be checked at a glance. */
 const offsetOf = (zone) => {
   try {
-    const parts = new Intl.DateTimeFormat('es-ES', {
+    const parts = new Intl.DateTimeFormat(localeDeFechas(), {
       timeZone: zone,
       timeZoneName: 'shortOffset',
     }).formatToParts(new Date())

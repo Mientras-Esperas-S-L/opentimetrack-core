@@ -101,4 +101,16 @@ i18next.use(initReactI18next).init({
  */
 export const alCatalogo = (cadena) => cadena
 
+/** Con qué idioma escribe el navegador las fechas y las horas.
+ *
+ *  Estaba en nueve sitios como `'es-ES'` fijo, así que una pantalla traducida
+ *  al catalán seguía diciendo «agosto de 2026» y «Lunes, 25 Ago». La mitad
+ *  traducida se ve, pero la mitad que no cambia se ve más: pasa por descuido y
+ *  no por «esto todavía no está».
+ *
+ *  Se lee en cada llamada, no se guarda: cambiar de idioma no recarga la
+ *  página, y un valor calculado al arrancar se quedaría en el de entonces.
+ */
+export const localeDeFechas = () => `${normalizar(i18next.language)}-ES`
+
 export default i18next

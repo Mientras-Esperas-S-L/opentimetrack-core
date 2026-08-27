@@ -17,15 +17,20 @@ import Checkbox from '@mui/material/Checkbox'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { useTranslation } from 'react-i18next'
+
+import { alCatalogo } from '../i18n/index.js'
+import { plural } from './format.js'
 
 /** La casilla de una fila. */
 export function SelectBox({ selection, item, label }) {
+  const { t } = useTranslation()
   return (
     <Checkbox
       size="small"
       checked={selection.isSelected(item)}
       onChange={() => selection.toggle(item)}
-      slotProps={{ input: { 'aria-label': label ?? 'Seleccionar' } }}
+      slotProps={{ input: { 'aria-label': label ?? t('Seleccionar') } }}
       sx={{ ml: -1 }}
     />
   )
@@ -33,6 +38,7 @@ export function SelectBox({ selection, item, label }) {
 
 /** La casilla de la cabecera: todo, nada, o el guion de «algunas». */
 export function SelectAllBox({ selection, count }) {
+  const { t } = useTranslation()
   return (
     <Checkbox
       size="small"
@@ -40,7 +46,7 @@ export function SelectAllBox({ selection, count }) {
       indeterminate={selection.someSelected}
       onChange={selection.toggleAll}
       disabled={count === 0}
-      slotProps={{ input: { 'aria-label': 'Seleccionar todo' } }}
+      slotProps={{ input: { 'aria-label': t('Seleccionar todo') } }}
     />
   )
 }
@@ -50,7 +56,13 @@ export function SelectAllBox({ selection, count }) {
  *  `actions` son `{label, onClick, variant, color}`. Cada pantalla pone las
  *  suyas: aquí no se sabe qué significa aprobar.
  */
-export function SelectionBar({ selection, noun = 'elementos', actions = [], busy }) {
+export function SelectionBar({
+  selection,
+  noun = { singular: alCatalogo('elemento'), plural: alCatalogo('elementos') },
+  actions = [],
+  busy,
+}) {
+  const { t } = useTranslation()
   if (selection.count === 0) return null
 
   return (
@@ -73,7 +85,7 @@ export function SelectionBar({ selection, noun = 'elementos', actions = [], busy
         // personas» y el del paginador también, así que sin un nombre no había
         // forma de referirse a uno de los dos.
         role="toolbar"
-        aria-label="Acciones sobre lo seleccionado"
+        aria-label={t('Acciones sobre lo seleccionado')}
         sx={{
           pointerEvents: 'auto',
           px: 2,
@@ -86,10 +98,10 @@ export function SelectionBar({ selection, noun = 'elementos', actions = [], busy
         }}
       >
         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-          {selection.count} {selection.count === 1 ? noun.replace(/s$/, '') : noun}
+          {selection.count} {plural(selection.count, t(noun.singular), t(noun.plural))}
         </Typography>
         <Button size="small" color="inherit" onClick={selection.clear} disabled={busy}>
-          Quitar selección
+          {t('Quitar selección')}
         </Button>
         <Stack direction="row" sx={{ gap: 1 }}>
           {actions.map((action) => (

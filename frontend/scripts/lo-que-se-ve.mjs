@@ -64,6 +64,10 @@ const CLAVES = new Set([
   'text',
   'noun',
   'message',
+  // Las dos formas de un sustantivo contable, que viajan juntas en un objeto:
+  // `noun={{ singular: 'persona', plural: 'personas' }}`.
+  'singular',
+  'plural',
 ])
 
 const ACENTO = /[áéíóúñüÁÉÍÓÚÑÜ¿¡]/

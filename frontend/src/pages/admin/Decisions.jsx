@@ -889,7 +889,7 @@ export default function Decisions() {
             <ListaRecortada total={absences.data?.count} mostradas={absenceRows.length} />
             <SelectionBar
               selection={absencePick}
-              noun="ausencias"
+              noun={{ singular: 'ausencia', plural: 'ausencias' }}
               busy={bulking}
               actions={[
                 {
@@ -965,7 +965,7 @@ export default function Decisions() {
               count={corrections.data?.count}
               page={paginaCorrecciones}
               pageSize={PAGE_SIZE}
-              noun="correcciones"
+              noun={{ singular: 'corrección', plural: 'correcciones' }}
               onChange={(pagina) => {
                 setPaginaCorrecciones(pagina)
                 // La selección se vacía al cambiar de página: las acciones en
@@ -977,7 +977,7 @@ export default function Decisions() {
             />
             <SelectionBar
               selection={correctionPick}
-              noun="correcciones"
+              noun={{ singular: 'corrección', plural: 'correcciones' }}
               busy={bulking}
               actions={[
                 {
@@ -1150,7 +1150,7 @@ export default function Decisions() {
               count={waiting.data?.count}
               page={paginaEspera}
               pageSize={PAGE_SIZE}
-              noun="propuestas"
+              noun={{ singular: 'propuesta', plural: 'propuestas' }}
               onChange={(pagina) => {
                 setPaginaEspera(pagina)
                 openPick.clear()
@@ -1158,7 +1158,7 @@ export default function Decisions() {
             />
             <SelectionBar
               selection={openPick}
-              noun="propuestas"
+              noun={{ singular: 'propuesta', plural: 'propuestas' }}
               busy={bulking}
               actions={[
                 {
@@ -1225,7 +1225,7 @@ export default function Decisions() {
                 aplicara sin pensar. */}
             <SelectionBar
               selection={overtimePick}
-              noun="personas"
+              noun={{ singular: 'persona', plural: 'personas' }}
               busy={bulking}
               actions={[
                 {
@@ -1332,7 +1332,7 @@ export default function Decisions() {
                 nada salvo el tiempo que se tarda. */}
             <SelectionBar
               selection={recoveryPick}
-              noun="recuperaciones"
+              noun={{ singular: 'recuperación', plural: 'recuperaciones' }}
               busy={bulking}
               actions={[
                 {

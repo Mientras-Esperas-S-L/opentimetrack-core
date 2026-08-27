@@ -12,6 +12,10 @@ import Paper from '@mui/material/Paper'
 import Skeleton from '@mui/material/Skeleton'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
+import { useTranslation } from 'react-i18next'
+
+import { alCatalogo } from '../i18n/index.js'
+import { plural } from './format.js'
 import { SOURCE_LABELS } from './punches.js'
 
 /** The small pieces every screen needs, so they look the same on all of them. */
@@ -102,6 +106,7 @@ export function Empty({ children }) {
  *  «datos no válidos». Quien lo veía no tenía forma de saber qué corregir.
  */
 export function ErrorNote({ error, onClose }) {
+  const { t } = useTranslation()
   if (!error) return null
 
   // `details` es `{campo: [motivos]}`, y a veces el motivo es un objeto anidado
@@ -127,7 +132,7 @@ export function ErrorNote({ error, onClose }) {
           que no lo pidió --- mientras su responsable lo ve en la cola. */}
       {error.code === 'timeout' && (
         <Box sx={{ mt: 0.5, fontWeight: 600 }}>
-          Puede que sí se haya guardado. Comprueba la lista antes de volver a enviarlo.
+          {t('Puede que sí se haya guardado. Comprueba la lista antes de volver a enviarlo.')}
         </Box>
       )}
     </Alert>
@@ -143,8 +148,19 @@ export function ErrorNote({ error, onClose }) {
  *
  *  So the total shows even on a single page: "12 registros" is a statement that
  *  there are twelve, which is what makes the fuller lists trustworthy.
+ *
+ *  `noun` lleva las dos formas ---`{singular, plural}`--- y no una sola con la
+ *  «s» quitada: eso funcionaba de casualidad en castellano y en catalán deja
+ *  «persone», que no es una palabra.
  */
-export function Pager({ count, page, pageSize, onChange, noun = 'registros' }) {
+export function Pager({
+  count,
+  page,
+  pageSize,
+  onChange,
+  noun = { singular: alCatalogo('registro'), plural: alCatalogo('registros') },
+}) {
+  const { t } = useTranslation()
   if (!count) return null
 
   const pages = Math.ceil(count / pageSize)
@@ -161,7 +177,17 @@ export function Pager({ count, page, pageSize, onChange, noun = 'registros' }) {
         color="text.secondary"
         sx={{ fontVariantNumeric: 'tabular-nums' }}
       >
-        {pages > 1 ? `${first}–${last} de ${count} ${noun}` : `${count} ${noun}`}
+        {pages > 1
+          ? t('{{primero}}–{{ultimo}} de {{total}} {{cosas}}', {
+              primero: first,
+              ultimo: last,
+              total: count,
+              cosas: t(noun.plural),
+            })
+          : t('{{total}} {{cosas}}', {
+              total: count,
+              cosas: plural(count, t(noun.singular), t(noun.plural)),
+            })}
       </Typography>
       {pages > 1 && (
         <Pagination
@@ -194,6 +220,7 @@ export function Pager({ count, page, pageSize, onChange, noun = 'registros' }) {
  *  needs one piece of state: `{ title, body, detail, verb, run }`, or null.
  */
 export function ConfirmDialog({ request, onClose, busy }) {
+  const { t } = useTranslation()
   const open = Boolean(request)
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
@@ -208,7 +235,7 @@ export function ConfirmDialog({ request, onClose, busy }) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="inherit" autoFocus>
-          Cancelar
+          {t('Cancelar')}
         </Button>
         <Button
           variant="contained"
@@ -219,7 +246,7 @@ export function ConfirmDialog({ request, onClose, busy }) {
             onClose()
           }}
         >
-          {request?.verb ?? 'Continuar'}
+          {request?.verb ?? t('Continuar')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -227,9 +254,9 @@ export function ConfirmDialog({ request, onClose, busy }) {
 }
 
 const STATUS_LOOKS = {
-  PENDING: { label: 'Pendiente', color: 'warning', variant: 'filled' },
-  APPROVED: { label: 'Aprobada', color: 'success', variant: 'outlined' },
-  REJECTED: { label: 'Rechazada', color: 'default', variant: 'outlined' },
+  PENDING: { label: alCatalogo('Pendiente'), color: 'warning', variant: 'filled' },
+  APPROVED: { label: alCatalogo('Aprobada'), color: 'success', variant: 'outlined' },
+  REJECTED: { label: alCatalogo('Rechazada'), color: 'default', variant: 'outlined' },
   // Art. 4.b. AWAITING_EMPLOYEE is the only one of the two still open: it
   // covers both "has not answered" and "answered saying no", because either
   // way the change has not been applied and somebody has to move.
@@ -238,27 +265,35 @@ const STATUS_LOOKS = {
   // went ahead without agreement and the person's version is recorded beside
   // it. Outlined, because it is over; secondary, because a reader of the
   // record has to be able to tell it from one both parties accepted.
-  AWAITING_EMPLOYEE: { label: 'Esperando tu respuesta', color: 'warning', variant: 'filled' },
-  DISPUTED: { label: 'Aplicada sin acuerdo', color: 'secondary', variant: 'outlined' },
+  AWAITING_EMPLOYEE: {
+    label: alCatalogo('Esperando tu respuesta'),
+    color: 'warning',
+    variant: 'filled',
+  },
+  DISPUTED: { label: alCatalogo('Aplicada sin acuerdo'), color: 'secondary', variant: 'outlined' },
 }
 
 /** State reads at a glance: the ones that ask somebody to do something are
  *  filled, the ones that are over are outlined. */
 export function StatusChip({ status, label }) {
+  const { t } = useTranslation()
   const look = STATUS_LOOKS[status] ?? { label: status, color: 'default', variant: 'outlined' }
-  return <Chip size="small" label={label ?? look.label} color={look.color} variant={look.variant} />
+  return (
+    <Chip size="small" label={label ?? t(look.label)} color={look.color} variant={look.variant} />
+  )
 }
 
 /** How the record got here. Not decoration: an event somebody else produced is
  *  not the same as one the person made, and the inspection report says so too.
  *  The two that were not made by the person are the ones that stand out. */
 export function SourceChip({ source }) {
+  const { t } = useTranslation()
   const flagged = source === 'DELEGATED' || source === 'ADMIN'
   return (
     <Chip
       size="small"
       variant="outlined"
-      label={SOURCE_LABELS[source] ?? source}
+      label={t(SOURCE_LABELS[source] ?? source)}
       color={flagged ? 'secondary' : 'default'}
       sx={{ fontSize: '0.7rem', height: 22 }}
     />

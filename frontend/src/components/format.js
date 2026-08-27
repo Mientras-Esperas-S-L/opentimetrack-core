@@ -9,6 +9,9 @@
  *  actually holds.
  */
 
+import i18next from '../i18n/index.js'
+import { localeDeFechas } from '../i18n/index.js'
+
 const pad = (n) => String(n).padStart(2, '0')
 
 export function hhmm(totalSeconds) {
@@ -73,7 +76,7 @@ export function capitalised(text) {
 
 export function timeOf(iso, timeZone) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleTimeString('es-ES', {
+  return new Date(iso).toLocaleTimeString(localeDeFechas(), {
     hour: '2-digit',
     minute: '2-digit',
     timeZone,
@@ -91,7 +94,7 @@ export function timeOf(iso, timeZone) {
  */
 export function timeOfWithSeconds(iso, timeZone) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleTimeString('es-ES', {
+  return new Date(iso).toLocaleTimeString(localeDeFechas(), {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -102,7 +105,7 @@ export function timeOfWithSeconds(iso, timeZone) {
 export function dateOf(value, options = {}) {
   if (!value) return '—'
   const asDate = value.length === 10 ? new Date(`${value}T00:00:00`) : new Date(value)
-  return asDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', ...options })
+  return asDate.toLocaleDateString(localeDeFechas(), { day: '2-digit', month: 'short', ...options })
 }
 
 export function dayRange(from, to) {
@@ -139,7 +142,7 @@ export const monthBounds = ({ year, month }) => ({
 
 /** "agosto de 2026", for a month header. */
 export const monthName = ({ year, month }) =>
-  new Date(year, month, 1).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+  new Date(year, month, 1).toLocaleDateString(localeDeFechas(), { month: 'long', year: 'numeric' })
 
 /** Cómo se llama una ausencia y cuánto dura, en una línea.
  *
@@ -152,6 +155,7 @@ export const monthName = ({ year, month }) =>
 export const leaveLabel = (absence) => absence?.leave_type_name || absence?.type_display || ''
 
 export const leaveLength = (absence) => {
+  const t = i18next.t.bind(i18next)
   if (!absence) return ''
   if (absence.start_time && absence.end_time) {
     const hours = Number(absence.hours ?? 0)
@@ -163,7 +167,11 @@ export const leaveLength = (absence) => {
   // la define.
   if (absence.reduction_share != null && Number(absence.reduction_share) < 100) {
     const share = Number(absence.reduction_share)
-    return `${absence.days} ${absence.days === 1 ? 'día' : 'días'} · reduce la jornada un ${share % 1 === 0 ? share : share.toFixed(1).replace('.', ',')} %`
+    return t('{{cuantos}} {{unidad}} · reduce la jornada un {{porcentaje}} %', {
+      cuantos: absence.days,
+      unidad: plural(absence.days, t('día'), t('días')),
+      porcentaje: share % 1 === 0 ? share : share.toFixed(1).replace('.', ','),
+    })
   }
-  return `${absence.days} ${absence.days === 1 ? 'día' : 'días'}`
+  return `${absence.days} ${plural(absence.days, t('día'), t('días'))}`
 }

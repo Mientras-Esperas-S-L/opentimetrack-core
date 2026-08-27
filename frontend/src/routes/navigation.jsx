@@ -29,36 +29,43 @@ import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard'
  *  routes are guarded again on their own.
  */
 
+import { alCatalogo } from '../i18n/index.js'
+
 export const NAV_ME = [
-  { to: '/', label: 'Fichar', icon: <AccessTimeIcon />, end: true },
-  { to: '/mi-jornada', label: 'Mi jornada', icon: <HistoryIcon /> },
-  { to: '/mis-ausencias', label: 'Mis ausencias', icon: <BeachAccessIcon /> },
+  { to: '/', label: alCatalogo('Fichar'), icon: <AccessTimeIcon />, end: true },
+  { to: '/mi-jornada', label: alCatalogo('Mi jornada'), icon: <HistoryIcon /> },
+  { to: '/mis-ausencias', label: alCatalogo('Mis ausencias'), icon: <BeachAccessIcon /> },
   // Aqui y no en Gestion: si el registro sirve para saber quien ha leido tu
   // ficha, la persona cuya ficha es tiene que poder mirarlo.
-  { to: '/actividad', label: 'Actividad', icon: <PolicyIcon /> },
+  { to: '/actividad', label: alCatalogo('Actividad'), icon: <PolicyIcon /> },
 ]
 
 export const NAV_ADMIN = [
   // `end` como en «Fichar»: sin él, `/panel` casa como prefijo de
   // `/panel/personas` y de todas las demás, y «Resumen» se quedaba encendido a
   // la vez que la pantalla en la que estabas.
-  { to: '/panel', label: 'Resumen', icon: <SpaceDashboardIcon />, end: true },
-  { to: '/panel/personas', label: 'Personas', icon: <GroupsIcon /> },
-  { to: '/panel/departamentos', label: 'Departamentos', icon: <ApartmentIcon /> },
-  { to: '/panel/centros', label: 'Centros', icon: <PlaceIcon /> },
-  { to: '/panel/calendario', label: 'Calendario', icon: <CalendarMonthIcon /> },
-  { to: '/panel/cuadrante', label: 'Cuadrante', icon: <EditCalendarIcon /> },
-  { to: '/panel/turnos', label: 'Turnos', icon: <ScheduleIcon /> },
+  { to: '/panel', label: alCatalogo('Resumen'), icon: <SpaceDashboardIcon />, end: true },
+  { to: '/panel/personas', label: alCatalogo('Personas'), icon: <GroupsIcon /> },
+  { to: '/panel/departamentos', label: alCatalogo('Departamentos'), icon: <ApartmentIcon /> },
+  { to: '/panel/centros', label: alCatalogo('Centros'), icon: <PlaceIcon /> },
+  { to: '/panel/calendario', label: alCatalogo('Calendario'), icon: <CalendarMonthIcon /> },
+  { to: '/panel/cuadrante', label: alCatalogo('Cuadrante'), icon: <EditCalendarIcon /> },
+  { to: '/panel/turnos', label: alCatalogo('Turnos'), icon: <ScheduleIcon /> },
   // Lo lee cualquiera que gestione: saber cuánto da un permiso es lo que hace
   // falta para resolver una solicitud. Editarlo lo comprueba la propia
   // pantalla, que solo enseña «Cambiar» a administración.
-  { to: '/panel/permisos', label: 'Permisos', icon: <EventAvailableIcon /> },
-  { to: '/panel/fichajes', label: 'Fichajes', icon: <AccessTimeIcon /> },
-  { to: '/panel/decisiones', label: 'Por decidir', icon: <RuleIcon /> },
-  { to: '/panel/informes', label: 'Informes', icon: <DescriptionIcon /> },
+  { to: '/panel/permisos', label: alCatalogo('Permisos'), icon: <EventAvailableIcon /> },
+  { to: '/panel/fichajes', label: alCatalogo('Fichajes'), icon: <AccessTimeIcon /> },
+  { to: '/panel/decisiones', label: alCatalogo('Por decidir'), icon: <RuleIcon /> },
+  { to: '/panel/informes', label: alCatalogo('Informes'), icon: <DescriptionIcon /> },
   // Solo administración: autorizar una aplicación es repartir una llave a los
   // registros de la empresa, y el API lo rechaza a un responsable con un 403.
   // Un menú que lo ofrece y una API que lo niega es peor que no ofrecerlo.
-  { to: '/panel/aplicaciones', label: 'Aplicaciones', icon: <KeyIcon />, adminOnly: true },
-  { to: '/panel/ajustes', label: 'Ajustes', icon: <SettingsIcon /> },
+  {
+    to: '/panel/aplicaciones',
+    label: alCatalogo('Aplicaciones'),
+    icon: <KeyIcon />,
+    adminOnly: true,
+  },
+  { to: '/panel/ajustes', label: alCatalogo('Ajustes'), icon: <SettingsIcon /> },
 ]

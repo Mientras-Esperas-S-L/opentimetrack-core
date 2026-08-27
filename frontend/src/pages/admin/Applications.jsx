@@ -397,7 +397,7 @@ export default function Applications() {
         page={page}
         pageSize={PAGE_SIZE}
         onChange={setPage}
-        noun="aplicaciones"
+        noun={{ singular: 'aplicación', plural: 'aplicaciones' }}
       />
 
       <ApplicationDialog

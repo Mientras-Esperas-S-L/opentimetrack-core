@@ -16,6 +16,7 @@ import { Empty, Loading, PageHeader, Pager } from '../../components/common.jsx'
 import { dateOf, firstOfThisMonth, today } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
+import { localeDeFechas } from '../../i18n/index.js'
 
 /** Entries that are somebody reading, as opposed to somebody changing.
  *
@@ -36,7 +37,7 @@ const GROUPS = [
 ]
 
 function when(iso) {
-  return new Date(iso).toLocaleString('es-ES', {
+  return new Date(iso).toLocaleString(localeDeFechas(), {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',
@@ -272,7 +273,7 @@ export default function AuditTrail() {
         page={page}
         pageSize={PAGE_SIZE}
         onChange={setPage}
-        noun="entradas"
+        noun={{ singular: 'entrada', plural: 'entradas' }}
       />
 
       {rows.length > 0 && (
