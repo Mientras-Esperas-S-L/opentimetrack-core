@@ -1,8 +1,18 @@
 # Idiomas: qué está traducido y qué pide revisión
 
-El producto habla **castellano, catalán y gallego**. El castellano está completo;
-los otros dos están **traducidos sin hablante nativo** y eso hay que saberlo antes
-de enseñárselos a un cliente.
+El producto habla **castellano** entero. Del catalán y del gallego hay **el
+servidor traducido y la pantalla no**, y las traducciones que hay se hicieron
+**sin hablante nativo**. Las dos cosas hay que saberlas antes de enseñárselo a un
+cliente.
+
+| Qué | Catalán y gallego |
+|---|---|
+| Lo que responde el servidor: correos, errores, avisos legales, tipos y estados | **Traducido** ---558 de 711 mensajes; el resto son etiquetas de campo que se dejan a propósito--- |
+| La pantalla: botones, rótulos, textos de cada página | **Solo el menú.** El catálogo del frontend tiene 23 claves y son las de la navegación; todo lo demás está en castellano fijo en el código |
+
+Así que una empresa catalana vería hoy el menú en catalán, los correos y los
+errores en catalán, y el resto de la interfaz en castellano. **No se puede
+anunciar como «disponible en catalán»**, y así lo dice el dossier.
 
 ## Qué se traduce y qué no
 

@@ -11,6 +11,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import LoginIcon from '@mui/icons-material/Login'
 import LogoutIcon from '@mui/icons-material/Logout'
+import PauseIcon from '@mui/icons-material/PauseCircle'
 
 import { useAuth } from '../hooks/useAuth.js'
 import { clock, getMyShiftToday, getToday } from '../services/api.js'
@@ -112,8 +113,55 @@ function WallClock({ zone, sx }) {
 
 const STATES = {
   WORKING: { label: 'Trabajando', color: 'success' },
+  //: El servidor lo devuelve desde que existe `PunchInterval.BREAK`, y aquí no
+  //: estaba: `STATES[estado]` caía al respaldo y la pantalla decía «Sin
+  //: empezar» a quien tenía la jornada abierta y una pausa en marcha. No se
+  //: notaba porque nada de la web podía abrir una pausa; la puerta de
+  //: integración sí.
+  ON_BREAK: { label: 'En pausa', color: 'warning' },
   OFF: { label: 'Jornada cerrada', color: 'default' },
   NOT_STARTED: { label: 'Sin empezar', color: 'default' },
+}
+
+/** Qué es cada tramo del día, para el desglose.
+ *
+ *  Sin esto una pausa se lee igual que un rato trabajado, que es justo lo que el
+ *  art. 3.d viene a distinguir. */
+const TRAMOS = {
+  BREAK: { etiqueta: 'Pausa', color: 'warning' },
+  STANDBY: { etiqueta: 'Presencia', color: 'info' },
+  DISCONNECTION: { etiqueta: 'Fuera de horario', color: 'info' },
+}
+
+const MODOS = [
+  { valor: 'ONSITE', etiqueta: 'Presencial' },
+  { valor: 'REMOTE', etiqueta: 'A distancia' },
+]
+
+/** El modo elegido hoy, si se eligió.
+ *
+ *  Se recuerda por día y no para siempre: el art. 3.e habla del día «o parte de
+ *  él», y quien ayer trabajó en casa hoy puede estar en la obra. Y **no hay
+ *  valor por defecto**: vacío significa «no consta», y suponer «presencial»
+ *  llenaría el registro de un dato que nadie ha afirmado ---peor que el hueco,
+ *  porque el hueco se ve---.
+ */
+function modoDeHoy(dia) {
+  try {
+    const guardado = JSON.parse(localStorage.getItem('ott.work-mode') ?? 'null')
+    return guardado?.dia === dia ? guardado.modo : ''
+  } catch {
+    return ''
+  }
+}
+
+function recuerdaElModo(dia, modo) {
+  try {
+    localStorage.setItem('ott.work-mode', JSON.stringify({ dia, modo }))
+  } catch {
+    // Una pestaña privada o el almacenamiento lleno. El fichaje va igual: esto
+    // solo ahorra volver a decirlo en el siguiente del día.
+  }
 }
 
 export default function Clock() {
@@ -134,9 +182,20 @@ export default function Clock() {
     queryFn: getMyShiftToday,
   })
 
+  //: El día en la zona de la persona, que es la que la pantalla enseña. Sirve
+  //: para que el modo de trabajo se olvide al cambiar de día.
+  const hoy = new Date().toISOString().slice(0, 10)
+  const [modo, setModo] = useState(() => modoDeHoy(hoy))
+
   const punch = useMutation({
-    mutationFn: () =>
-      clock(`web-${navigator.userAgentData?.platform ?? navigator.platform ?? 'unknown'}`),
+    mutationFn: (que = {}) =>
+      clock(`web-${navigator.userAgentData?.platform ?? navigator.platform ?? 'unknown'}`, {
+        interval: que.interval,
+        // Solo en la entrada de la jornada: es lo que abre el tramo, y todo lo
+        // descriptivo viaja en el evento que abre. Mandarlo al salir lo pondría
+        // en un fichaje que no describe nada.
+        workMode: que.interval || working ? undefined : modo,
+      }),
     onSuccess: (registrado) => {
       setError(null)
 
@@ -172,6 +231,7 @@ export default function Clock() {
   })
 
   const working = today?.state === 'WORKING'
+  const enPausa = today?.state === 'ON_BREAK'
   const seconds = useLiveSeconds(today, working)
   const state = STATES[today?.state] ?? STATES.NOT_STARTED
 
@@ -262,18 +322,74 @@ export default function Clock() {
               </Alert>
             )}
 
-            {/* One tap. The server decides whether it is an entry or an exit. */}
+            {/* El modo de trabajo, y solo antes de entrar: es el fichaje de
+                entrada el que abre el tramo y lo describe. Sin preselección a
+                propósito ---ver `modoDeHoy`---, así que quien no lo toca ficha
+                exactamente como antes y en el registro consta que no se dijo. */}
+            {!working && !enPausa && (
+              <Stack sx={{ alignItems: 'center', mb: 3 }} spacing={1}>
+                <Stack direction="row" spacing={1}>
+                  {MODOS.map(({ valor, etiqueta }) => (
+                    <Chip
+                      key={valor}
+                      label={etiqueta}
+                      color={modo === valor ? 'primary' : 'default'}
+                      variant={modo === valor ? 'filled' : 'outlined'}
+                      onClick={() => {
+                        const elegido = modo === valor ? '' : valor
+                        setModo(elegido)
+                        recuerdaElModo(hoy, elegido)
+                      }}
+                    />
+                  ))}
+                </Stack>
+                <Typography variant="caption" color="text.secondary">
+                  Desde dónde trabajas hoy (art. 3.e). Puedes dejarlo sin decir.
+                </Typography>
+              </Stack>
+            )}
+
+            {/* Un toque. El servidor decide si es entrada o salida.
+                En pausa solo se ofrece volver: el art. 3.d pide el final de la
+                pausa, y dejar fichar la salida desde aquí cerraría la jornada
+                con la pausa abierta ---un día que dice que alguien se fue a
+                comer y no volvió nunca---. */}
             <Button
               variant="contained"
-              color={working ? 'secondary' : 'primary'}
+              color={enPausa ? 'warning' : working ? 'secondary' : 'primary'}
               size="large"
-              startIcon={working ? <LogoutIcon /> : <LoginIcon />}
-              onClick={() => punch.mutate()}
+              startIcon={enPausa ? <LoginIcon /> : working ? <LogoutIcon /> : <LoginIcon />}
+              onClick={() => punch.mutate(enPausa ? { interval: 'BREAK' } : {})}
               disabled={punch.isPending}
               sx={{ py: 2, px: 6, fontSize: '1.15rem', borderRadius: 2 }}
             >
-              {punch.isPending ? 'Registrando…' : working ? 'Fichar salida' : 'Fichar entrada'}
+              {punch.isPending
+                ? 'Registrando…'
+                : enPausa
+                  ? 'Volver de la pausa'
+                  : working
+                    ? 'Fichar salida'
+                    : 'Fichar entrada'}
             </Button>
+
+            {/* La pausa que no es tiempo de trabajo (art. 3.d). Secundaria y
+                debajo: es lo que se hace una vez al día, no lo que se viene a
+                hacer aquí. Si el convenio dice que el descanso cuenta como
+                trabajo, el servidor no lo descuenta ---la regla es de la
+                empresa, no nuestra--- y esto sigue sirviendo para registrarlo,
+                que es lo que pide el artículo. */}
+            {working && (
+              <Box sx={{ mt: 2 }}>
+                <Button
+                  variant="text"
+                  startIcon={<PauseIcon />}
+                  onClick={() => punch.mutate({ interval: 'BREAK' })}
+                  disabled={punch.isPending}
+                >
+                  Empezar una pausa
+                </Button>
+              </Box>
+            )}
           </>
         )}
       </Paper>
@@ -290,17 +406,38 @@ export default function Clock() {
                 direction="row"
                 sx={{ justifyContent: 'space-between', alignItems: 'center' }}
               >
-                <Typography sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {timeOf(segment.in, today.time_zone)}
-                  {' → '}
-                  {segment.out ? timeOf(segment.out, today.time_zone) : '…'}
-                </Typography>
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <Typography sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                    {timeOf(segment.in, today.time_zone)}
+                    {' → '}
+                    {segment.out ? timeOf(segment.out, today.time_zone) : '…'}
+                  </Typography>
+                  {/* Qué es este tramo. Un rato de pausa se leía igual que un
+                      rato trabajado, que es lo que el art. 3.d distingue. */}
+                  {TRAMOS[segment.interval] && (
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      color={TRAMOS[segment.interval].color}
+                      label={TRAMOS[segment.interval].etiqueta}
+                    />
+                  )}
+                  {segment.work_mode === 'REMOTE' && (
+                    <Chip size="small" variant="outlined" label="A distancia" />
+                  )}
+                </Stack>
                 <Typography variant="body2" color="text.secondary">
                   {hhmm(segment.seconds)}
                 </Typography>
               </Stack>
             ))}
           </Stack>
+          {today.break_seconds > 0 && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              {hhmm(today.break_seconds)} de pausa. Si tu convenio dice que el descanso es tiempo de
+              trabajo, ya está contado en las horas de arriba.
+            </Typography>
+          )}
           <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
             Horas de {today.time_zone}. Las pone el servidor, no tu dispositivo.
           </Typography>

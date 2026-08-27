@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 131 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
+Vueltas dadas: 132 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,83 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 132 --- La pausa y el modo de trabajo, que estaban hechos y desconectados (27/08)
+
+Tarea **9 de la lista**. Francisco la dejó a criterio: «si lo de pausar es
+necesario para cumplir ley, se implementa. Si es conveniente, aunque no se exija,
+lo implementamos. Si es contraproducente no lo implementamos». La recomendación fue
+implementarlo, y al abrirlo resultó que **casi todo estaba ya escrito**.
+
+El backend lo tenía entero desde antes: `PunchInterval.BREAK` con su comentario
+explicando por qué la pausa se modela como una clase de intervalo y no como dos
+tipos de fichaje más; `register_punch` recibe `interval` y `work_mode`; la vista los
+lee del cuerpo; `build_day_status` devuelve **`ON_BREAK`** y cuenta los segundos de
+pausa aparte; y la regla de si el descanso se descuenta de las horas sale del
+convenio de la empresa y no de nosotros.
+
+Lo que faltaba era **ofrecerlo**: la web mandaba solo el identificador del
+dispositivo. Ninguna persona podía abrir una pausa ni decir desde dónde trabaja.
+
+#### El defecto que estaba esperando
+
+`STATES` en el frontend no conocía `ON_BREAK`, así que `STATES[estado]` caía al
+respaldo y la pantalla decía **«Sin empezar»** a quien tenía la jornada abierta y
+una pausa en marcha. Nadie lo había visto porque nada de la web podía abrir una
+pausa ---pero la puerta de integración sí, y ahí el estado llegaba---.
+
+Es el mismo patrón que la vuelta 129: mientras nadie puede llegar a un estado, el
+error de ese estado no se ve.
+
+#### Lo construido
+
+- **Un botón secundario, «Empezar una pausa»**, solo mientras trabaja. Debajo del
+  principal y en texto, no compitiendo con él: fichar es lo que se viene a hacer
+  aquí, la pausa es una vez al día.
+- **En pausa, el botón principal es «Volver de la pausa»**, y **no se ofrece
+  fichar la salida**. Cerrar la jornada con la pausa abierta dejaría un día que
+  dice que alguien se fue a comer y no volvió nunca; el art. 3.d pide el final de
+  la pausa.
+- **El modo de trabajo (art. 3.e)**, dos chips antes de entrar, y **sin
+  preselección**. Vacío significa «no consta», y suponer «presencial» llenaría el
+  registro de un dato que nadie ha afirmado ---peor que el hueco, porque el hueco
+  se ve---. Se recuerda por día, no para siempre: el artículo habla del día «o
+  parte de él».
+- Solo se manda **en la entrada de la jornada**: es el fichaje que abre el tramo y
+  todo lo descriptivo viaja en el que abre.
+- **El desglose dice qué fue cada tramo.** Una pausa se leía igual que un rato
+  trabajado, que es exactamente lo que el art. 3.d viene a distinguir. Y el total
+  de pausa del día, con el aviso de que si el convenio la cuenta como trabajo ya
+  está dentro de las horas de arriba.
+
+#### Media hora perdida por no mirar la captura
+
+Al correr la prueba falló **el arranque de la sesión de admin**, con un tiempo
+agotado en `locator.fill`. Perseguí tres hipótesis ---las credenciales, el cupo de
+cinco intentos por IP, el estado de los contenedores--- y comprobé el login por
+API, que funcionaba.
+
+La captura del fallo, que Playwright ya había guardado, tenía la respuesta a
+pantalla completa: **importé un icono de MUI que no existe**
+(`PauseCircleOutline`; los que hay son `PauseCircle` y `PauseCircleOutlined`), y el
+overlay de error de Vite tapaba el formulario de login. De ahí que el campo no
+apareciera, y de ahí que fallara **solo** el admin: es la única sesión caducada, y
+las otras tres no pasan por el formulario.
+
+#### Y un documento que decía más de lo que hay
+
+Al revisar si los textos nuevos había que traducir salió que el catálogo del
+frontend tiene **23 claves, y son las del menú**: el resto de la interfaz está en
+castellano fijo. Así que `docs/traducciones.md`, escrito ayer, empezaba diciendo
+«el producto habla castellano, catalán y gallego», y lo que hay es **el servidor
+traducido y la pantalla no**. Corregido con una tabla que lo separa.
+
+#### Verde al cerrar
+
+`1.294` pruebas de backend, `ruff` y los linters del frontend limpios, cinco
+pruebas de navegador nuevas. Las cuatro piezas comprobadas rompiéndolas una a una
+---sin el estado, sin el botón, preseleccionando el modo, sin las etiquetas del
+desglose---: cada una pone exactamente una prueba en rojo.
 
 ### Vuelta 131 --- Catalán y gallego, y la clasificación que escondía la mitad (27/08)
 

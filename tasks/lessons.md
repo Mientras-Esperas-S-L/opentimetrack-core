@@ -4141,3 +4141,57 @@ lleva la marca por delante.
 **Lo general**: antes de usar un campo de metadatos para lo que parece querer decir,
 comprueba **qué hace el programa con él**. Aquí «dudoso» significaba «no lo uses»,
 que es casi lo contrario de lo que se quería decir.
+
+## 252. La captura del fallo se mira **primero**, no cuando se agotan las hipótesis
+
+Falló el arranque de la sesión de admin con un tiempo agotado en `locator.fill`.
+Perseguí tres hipótesis ---credenciales, el cupo de cinco intentos por IP, el estado
+de los contenedores--- y comprobé el login por API, que funcionaba. Media hora.
+
+La captura que Playwright ya había guardado tenía la respuesta a pantalla completa:
+**un icono de MUI que no existe**, y el overlay de error de Vite tapando el
+formulario. El campo no aparecía porque había un panel rojo encima.
+
+**La regla**: cuando una prueba de navegador falla por «no encuentro el elemento»,
+la primera acción es abrir `test-results/.../test-failed-1.png`. Playwright la deja
+sin que se la pida nadie. Razonar sobre por qué no está un elemento sin mirar la
+pantalla es adivinar con los ojos cerrados.
+
+**Y la pista que casi lo delata**: fallaba **solo el admin** y las otras tres
+sesiones pasaban en medio segundo. Eso no apuntaba al admin, apuntaba al
+**formulario**: las otras tres no pasan por él porque su sesión guardada seguía
+valiendo. Cuando un fallo es específico de un caso, pregunta qué hace ese caso que
+los demás no hacen, no qué tiene de especial.
+
+## 253. Un icono que no existe no es un icono que falta: es la pantalla entera caída
+
+`import PauseIcon from '@mui/icons-material/PauseCircleOutline'` no da un hueco
+donde iría el icono. Vite no resuelve el módulo, pone un **overlay a pantalla
+completa** y con él se cae todo lo que hubiera detrás ---incluido el formulario de
+otra ruta---. Un fallo de importación en una pantalla tumba la aplicación en
+desarrollo.
+
+**Antes de importar un símbolo de una biblioteca grande, comprueba que existe en la
+versión instalada**: `ls node_modules/@mui/icons-material/ | grep -i pause` cuesta
+dos segundos. En MUI 9 hay `PauseCircle` y `PauseCircleOutlined`; `PauseCircleOutline`
+---sin la «d»--- es de una versión anterior y es el nombre que la memoria sugiere.
+
+Va en la misma familia que la lección del HMR: **el símbolo nuevo y su import van
+en el mismo cambio, y el import se verifica contra lo que hay instalado**, no contra
+lo que uno recuerda.
+
+## 254. Al documentar algo, comprueba también la mitad que no estabas mirando
+
+`docs/traducciones.md` se escribió mirando los catálogos de Django, y empezaba
+diciendo «el producto habla castellano, catalán y gallego». Cierto del servidor. El
+catálogo del **frontend** tiene 23 claves y son las del menú: el resto de la
+interfaz está en castellano fijo en el código.
+
+Así que el documento describía correctamente lo que había mirado y **falsamente el
+producto**. Una empresa catalana vería el menú y los correos en catalán y la
+pantalla en castellano.
+
+**La regla**: cuando escribas «el producto hace X», enumera por dónde puede pasar X
+---servidor, pantalla, correos, informes, exportaciones--- y comprueba cada uno.
+Documentar la parte que se acaba de tocar es lo natural, y es justo lo que produce
+un documento que exagera sin mentir en ningún dato concreto.

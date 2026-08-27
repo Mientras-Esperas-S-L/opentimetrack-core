@@ -349,7 +349,23 @@ export const setPasswordFromLink = async (payload) => {
 // ---------------------------------------------------------------- clock events
 
 export const getToday = () => get('/punches/today/')
-export const clock = (deviceId) => post('/punches/', { device_id: deviceId })
+/** Ficha. El servidor decide si es entrada o salida, y de qué.
+ *
+ *  `interval` dice **qué** se abre o se cierra: la jornada (art. 3.c) o una
+ *  pausa que no es tiempo de trabajo (art. 3.d). El tipo se deduce del estado
+ *  de ese intervalo, así que el mismo botón abre y cierra la pausa sin que el
+ *  cliente tenga que llevar la cuenta.
+ *
+ *  `workMode` es el art. 3.e ---presencial o a distancia, para el día o parte
+ *  de él---. Se manda solo si la persona lo ha dicho: vacío es «no consta», y
+ *  eso es más honesto que suponer «presencial» y llenar el registro de un dato
+ *  que nadie ha afirmado. */
+export const clock = (deviceId, { interval, workMode } = {}) =>
+  post('/punches/', {
+    device_id: deviceId,
+    ...(interval ? { interval } : {}),
+    ...(workMode ? { work_mode: workMode } : {}),
+  })
 export const getPunches = async (params) => page(await get('/punches/', params))
 /** Todos los fichajes del periodo, sin partir ninguna jornada. */
 export const getAllPunches = (params) => periodoEntero('/punches/', params)
