@@ -148,6 +148,22 @@ def api_exception_handler(exc, context):
             # Errores de validación por campo.
             message = "Los datos enviados no son válidos."
             details = detail
+        elif isinstance(detail, list | tuple):
+            # Una lista de errores sin campo al que colgarlos: la produce
+            # `ValidationError([...])`, y es lo que sale cuando una regla no es
+            # de un campo concreto ---por ejemplo, un identificador que no es un
+            # UUID llegando a un filtro---.
+            #
+            # `str()` de una lista usa el `repr` de lo que lleva dentro, así que
+            # el cliente recibía esto:
+            #
+            #     [ErrorDetail(string='“pepe” no es un UUID válido.', code='invalid')]
+            #
+            # El mensaje bueno estaba ahí dentro, envuelto en el nombre de una
+            # clase de DRF. `ErrorDetail` hereda de `str`, así que basta con
+            # convertir uno a uno en vez de la lista entera.
+            message = " ".join(str(m) for m in detail)
+            details = {}
         else:
             message = str(detail)
             details = {}

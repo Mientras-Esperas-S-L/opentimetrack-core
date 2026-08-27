@@ -3255,3 +3255,43 @@ sabía decir en el caso fácil.
 **Y el olfato**: si un dato viaja a la huella de verificación pero no aparece en
 el papel, algo está mal en el papel. La ausencia ya entraba en el `fingerprint`,
 o sea que el producto la consideraba parte del registro; solo faltaba enseñarla.
+
+## 209. `str()` de una lista enseña el `repr` de lo que lleva dentro
+
+El manejador de errores de la API metía el mensaje con `str(detail)`. Cuando
+`detail` era una lista ---lo que produce `ValidationError([...])`, y lo que sale
+cuando la regla no cuelga de un campo concreto--- el cliente recibía esto:
+
+    [ErrorDetail(string='“pepe” no es un UUID válido.', code='invalid')]
+
+La frase buena estaba dentro, envuelta en el nombre de una clase de DRF. Y no se
+notaba porque **el caso frecuente iba bien**: un error por campo llega como
+diccionario y se serializa limpio, y un `NotFound` trae un `detail` de texto. Solo
+la rama de la lista, que es la menos transitada, salía así.
+
+La trampa concreta: `ErrorDetail` hereda de `str`, así que `str(uno)` da la frase
+y `str([uno])` da el `repr`. Un elemento suelto se ve bien y la lista no.
+
+**Regla**: nunca metas una colección en un campo de texto con `str()`. Recorre y
+convierte uno a uno. Y al auditar una API, prueba los errores igual que las
+respuestas buenas: pásale a cada endpoint un identificador que no sea un
+identificador y **lee la frase que devuelve**, no solo el código de estado.
+
+## 210. Una sonda mal escrita puede acusar al producto y de paso encontrar otra cosa
+
+La sonda de esta vuelta mandaba `?employee=<mi id>` para comprobar que pedir el
+informe de uno mismo por identificador explícito funciona. Daba **400 en las
+cuatro sesiones**, lo que parecía un fallo redondo: pedirse a uno mismo se
+rechaza y pedir a otro no.
+
+No era eso. `/auth/me/` no devuelve el identificador en el campo que yo leía, así
+que la sonda mandaba literalmente `?employee=undefined`. Lo delató el propio
+mensaje ---«“undefined” no es un UUID válido»--- que decía exactamente qué se
+había enviado.
+
+Dos cosas de aquí. La primera, la de siempre: **imprime lo que crees que estás
+mandando** antes de acusar a nadie; una línea con el valor habría ahorrado el
+rodeo. La segunda, que el rodeo valió la pena: el mensaje que desmontó mi
+hipótesis era el que estaba mal formado, y ese sí era un fallo. Un experimento
+que sale al revés de lo previsto no es tiempo perdido si se lee con atención lo
+que devolvió.

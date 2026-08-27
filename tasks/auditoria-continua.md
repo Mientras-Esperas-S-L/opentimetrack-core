@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 112 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 113 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -345,6 +345,53 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 113 --- El mensaje de error salía con la clase de DRF dentro (27/08)
+
+Lente: **el operario y su propio registro**, el perfil que llevaba varias vueltas
+sin tocar. El art. 34.9 le da derecho a consultarlo y el 6.1 a recibir el
+resumen.
+
+#### Lo que aguantó
+
+- **El operario obtiene su informe** ---PDF de 14 KB--- y en los tres formatos.
+- **No ve a nadie más**: `/employees/` solo le devuelve a sí mismo, así que no
+  hay ni a quién pedirle el informe.
+- Administración y responsable sí obtienen el de otra persona de su alcance, y la
+  empresa vecina solo el suyo.
+- Antes, dos pares de la lente anterior: **turno sobre ausencia aprobada** ya lo
+  avisa `_check_leave_clashes` ---y con el matiz de excluir las parciales y los
+  ERTE de reducción, que son gente que sí debe estar en el cuadrante--- y los
+  **fichajes anulados** no entran en el informe, que filtra `is_active=True`.
+
+#### Lo que no
+
+El manejador de errores metía el mensaje con `str(detail)`. Cuando el error viene
+como **lista** ---lo que produce `ValidationError([...])`, y lo que sale cuando la
+regla no cuelga de un campo--- el cliente recibía esto:
+
+    [ErrorDetail(string='“pepe” no es un UUID válido.', code='invalid')]
+
+La frase buena dentro, envuelta en el nombre de una clase de DRF. No se notaba
+porque **el caso frecuente iba bien**: un error por campo llega como diccionario y
+sale limpio, y un `NotFound` trae texto. Solo la rama de la lista, la menos
+transitada, salía así. `ErrorDetail` hereda de `str`, de modo que uno suelto se ve
+bien y la lista no.
+
+Arreglado en el manejador, que es donde afecta a **todos** los endpoints a la vez.
+Cinco pruebas, y dos son contraste: que los errores por campo sigan yendo a
+`details` ---quien integra necesita saber cuál falla--- y que un `detail` de texto
+se quede como estaba.
+
+#### Cómo apareció, que es lo que conviene contar
+
+Mi propia sonda estaba mal. Mandaba `?employee=<mi id>` y daba 400 en las cuatro
+sesiones, lo que parecía un fallo redondo. No lo era: `/auth/me/` no devuelve el
+identificador en el campo que yo leía, así que enviaba `?employee=undefined`.
+
+Lo delató **el propio mensaje**, que decía «“undefined” no es un UUID válido» ---y
+ese mensaje era el que estaba mal formado---. El experimento salió al revés de lo
+previsto y encontró otra cosa por el camino.
 
 ### Vuelta 112 --- El día de vacaciones en el que se trabajó salía como un día normal (27/08)
 
