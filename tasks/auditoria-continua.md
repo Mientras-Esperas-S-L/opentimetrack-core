@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 117 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 118 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -285,6 +285,14 @@ completo (evidencia y refutación) está en el registro del workflow.
   El plan: prohibirla con ruff (`flake8-tidy-imports.banned-api`) y barrer las
   veintisiete en la misma pasada, que es como se arregló en el producto.
 
+- **La unicidad del número de empleado en la base sigue distinguiendo
+  mayúsculas.** (v118) El alta por API ya lo impide, pero por shell o importación
+  se pueden crear «EMP-9» y «emp-9», y entonces la puerta de integración resuelve
+  una al azar y el fichaje delegado se planta por ambigüedad. El arreglo completo
+  es un índice funcional sobre `Lower(employee_id)`, y esa migración **falla si en
+  producción ya hay dos que chocan**. En desarrollo hay cero. Decisión de
+  producto, no de auditoría.
+
 - **Los catálogos de catalán y gallego, con 501 huecos cada uno** (medido en la
   vuelta 101; eran 460 en la 43). Los dejó la vuelta 43 al vaciar traducciones
   falsas y al extraer cadenas que llevaban tiempo sin recogerse, y **crecen solos**:
@@ -345,6 +353,53 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 118 --- «EMP-9» y «emp-9» eran dos personas al crearlas y una al buscarlas (27/08)
+
+Lente: **las escrituras de cada dato, no sus valores**, generalizando el hallazgo
+de la 117 a los identificadores.
+
+#### Lo que aguantó
+
+**El correo está bien resuelto.** Se guarda normalizado ---`Ana.Lopez@Example.COM`
+entra y queda `ana.lopez@example.com`--- y las cuatro variantes que probé
+---minúsculas, mayúsculas, con espacios alrededor, caja mezclada--- se rechazan
+como duplicado. Queda **una** persona.
+
+#### Lo que no
+
+El **número de empleado** distinguía mayúsculas al darlo de alta y no al
+buscarlo. Los dos sitios que resuelven una referencia usan `iexact` ---la puerta
+de integración y el fichaje delegado---, y el alta comparaba exacto. Con las dos
+creadas:
+
+    _resolve(«EMP-9»)          -> una de las dos, la primera, sin decir que hay otra
+    resolve_employee(«EMP-9»)  -> «la referencia coincide con más de una persona»
+
+Una puerta elegía al azar y la otra **se plantaba para todo el mundo**. Y el
+conflicto lo creaba un tercer sitio que no sabía de los otros dos.
+
+La pista, otra vez, fue la asimetría: el espacio **sí** se normalizaba ---« EMP-9 »
+chocaba--- y la caja no. Igual que los ceros de la vuelta anterior.
+
+#### Qué se ha hecho
+
+`validate_employee_id` compara con `iexact`, que es lo que ya hacía todo lo demás.
+La puerta de aplicaciones **ya estaba protegida** ---su `PUT` contestaba 409--- así
+que era la de personas la que faltaba.
+
+La mitad de las ocho pruebas es lo que no puede romperse: numerar es opcional,
+dos personas sin número no chocan entre sí, un número distinto sigue valiendo, y
+**quien conserva el suyo al editarse tiene que poder guardar** ---esa se rompe
+sola si la comprobación no se excluye a sí misma---.
+
+#### Decisión abierta
+
+La restricción de la base ---`unique_staff_number_per_company`--- sigue siendo
+sensible a la caja, así que por shell o por importación el conflicto todavía se
+puede crear. Hacerla insensible pide una migración con índice funcional sobre
+`Lower(employee_id)`, y **eso falla si en producción ya existen dos que chocan**.
+Medido en desarrollo: **cero choques**. La decisión de migrar no es de auditoría.
 
 ### Vuelta 117 --- «20.00» no era 20 (27/08)
 

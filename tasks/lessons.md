@@ -3465,3 +3465,28 @@ izquierda, en notación exponencial, como texto y como número--- además de los
 valores límite. Son dos ejes distintos: uno prueba qué valores se aceptan y el
 otro qué escrituras. El segundo casi nunca se prueba, y es donde viven los fallos
 que solo ve quien integra.
+
+## 219. Si dos cosas se buscan como iguales, no se pueden crear como distintas
+
+El número de empleado se buscaba con `iexact` en los dos sitios que resuelven una
+referencia ---la puerta de integración y el fichaje delegado--- y se comprobaba
+**exacto** al dar de alta. Así que se podían crear `EMP-9` y `emp-9`, y luego:
+
+    _resolve(«EMP-9»)          -> una de las dos, la primera, sin decir que hay otra
+    resolve_employee(«EMP-9»)  -> «la referencia coincide con más de una persona»
+
+Una puerta elegía al azar y la otra se plantaba, para todo el mundo. El conflicto
+lo había creado un tercer sitio que no sabía de las otras dos.
+
+Y otra vez la asimetría como pista: el espacio **sí** se normalizaba ---« EMP-9 »
+chocaba--- y la caja no.
+
+**Regla**: la unicidad y la búsqueda tienen que estar de acuerdo en qué es «el
+mismo». Cuando encuentres un `iexact` al leer, mira con qué se compara al
+escribir; y al revés. Si no coinciden, el sistema puede llegar a un estado que él
+mismo considera ambiguo.
+
+**Y el orden de la comprobación**: esto no se ve leyendo el serializador, que
+está bien escrito para lo suyo. Se ve poniendo juntas la consulta de lectura y la
+de escritura, que viven en ficheros distintos y las escribió gente distinta con
+razón cada una.

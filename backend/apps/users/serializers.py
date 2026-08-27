@@ -353,8 +353,17 @@ class UserWriteSerializer(DecimalesTolerantes, serializers.ModelSerializer):
         if not value:
             return value
 
+        # `iexact` y no exacto, porque **el resto del producto ya trata
+        # «EMP-9» y «emp-9» como la misma persona**: así los busca `_resolve`
+        # en la puerta de integración y así los busca el fichaje delegado, que
+        # además rechaza la referencia por ambigua si encuentra dos.
+        #
+        # Comparando exacto, esta puerta dejaba crear las dos. Medido: quedaban
+        # dos personas, `_resolve` devolvía una de ellas ---la primera, sin
+        # decir que había otra--- y el fichaje delegado se plantaba con
+        # «la referencia coincide con más de una persona» para todo el mundo.
         company = self.context["request"].user.tenant
-        existing = User.objects.filter(tenant=company, employee_id=value)
+        existing = User.objects.filter(tenant=company, employee_id__iexact=value)
         if self.instance:
             existing = existing.exclude(pk=self.instance.pk)
         if (otra := existing.first()) is not None:
