@@ -3490,3 +3490,44 @@ mismo considera ambiguo.
 está bien escrito para lo suyo. Se ve poniendo juntas la consulta de lectura y la
 de escritura, que viven en ficheros distintos y las escribió gente distinta con
 razón cada una.
+
+## 220. Tres comprobaciones seguidas, y la tercera con otra vara
+
+En la función que impide pisar la ficha de otro, la puerta de integración tenía
+esto:
+
+    if otros.filter(email__iexact=person.email)...
+    if otros.filter(employee_id__iexact=person.employee_id)...
+    if otros.filter(oidc_sub=person.oidc_sub)...          # <- exacto
+
+Tres líneas seguidas, dos con `iexact` y la última sin él. No es un descuido
+raro: se escriben en momentos distintos, y al añadir la tercera se copia la forma
+pero se pierde un detalle de una palabra.
+
+Y era la peor de las tres para perderlo. `oidc_sub` es «the immutable anchor» del
+acceso federado: medido, empujar «sub-1» y «Sub-1» junto a «SUB-1» dejaba **tres
+personas con la misma identidad**, con `_resolve` devolviendo la primera. Es lo
+mismo que `users/backends.py` ya advierte del correo duplicado --- «son la misma
+persona duplicada, y el acceso entraría en cualquiera» --- pero por la puerta que
+usan las integraciones.
+
+**Regla**: cuando veas comprobaciones hermanas en fila, léelas **en columna**, no
+de arriba abajo. Poner una debajo de otra hace saltar a la vista la que usa otra
+vara. Es la misma técnica que encontró la asimetría de los ceros y la del número
+de empleado: comparar formas, no leer significados.
+
+## 221. Una validación sobre un campo que el serializador no expone es decoración
+
+Al arreglar lo de arriba escribí también un `validate_oidc_sub` en el serializador
+de personas, que no tenía ninguna comprobación. Se veía razonable y no corría
+nunca: DRF solo llama a `validate_<campo>` para los campos declarados, y ese
+serializador no expone `oidc_sub`. La API de personas ignora el campo por
+completo --- se manda y la persona queda sin identidad.
+
+O sea, había escrito exactamente lo que esta auditoría lleva veinte vueltas
+encontrando: código que parece proteger y no se ejecuta. Retirado, junto con su
+cadena de traducción.
+
+**Regla**: antes de escribir un `validate_x`, comprueba que `x` está en los
+`fields`. Y en general, después de escribir una protección, **haz que falle una
+vez**: si no consigues verla saltar, no está puesta.

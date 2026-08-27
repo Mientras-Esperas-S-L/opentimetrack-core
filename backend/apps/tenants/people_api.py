@@ -380,7 +380,14 @@ def _refuse_collisions(person: User, company) -> None:
             message=_("Somebody else in this company already uses that staff number."),
             details={"employee_id": person.employee_id},
         )
-    if person.oidc_sub and otros.filter(oidc_sub=person.oidc_sub).exists():
+    # `iexact`, como las dos comprobaciones de arriba y como la búsqueda de
+    # `_resolve`. Comparando exacto se colaban «sub-1» y «Sub-1» junto a
+    # «SUB-1»: medido, tres personas con la misma identidad, y `_resolve`
+    # devolviendo la primera sin decir que había más. Es el ancla del acceso
+    # federado --- «the immutable anchor», dice el modelo --- así que duplicarla es
+    # que quien entre por el proveedor de identidad caiga en cualquiera de las
+    # tres.
+    if person.oidc_sub and otros.filter(oidc_sub__iexact=person.oidc_sub).exists():
         raise BusinessRuleError(
             code="identity_taken",
             message=_("Somebody else in this company already uses that identity."),

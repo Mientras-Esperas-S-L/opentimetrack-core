@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 118 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 119 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -353,6 +353,57 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 119 --- La identidad federada se podía duplicar cambiando una mayúscula (27/08)
+
+Lente: **cada `iexact` contra su pareja de escritura**, el barrido que pedía la
+lección de la vuelta anterior.
+
+#### Lo que se encontró
+
+En la función que impide pisar la ficha de otro, tres comprobaciones seguidas:
+
+    if otros.filter(email__iexact=person.email)...
+    if otros.filter(employee_id__iexact=person.employee_id)...
+    if otros.filter(oidc_sub=person.oidc_sub)...          # <- exacto
+
+Dos con `iexact` y la tercera sin él, mientras `_resolve` busca las tres con
+`iexact`. Medido, empujando la misma identidad con la caja cambiada:
+
+    SUB-1   -> 409 identity_taken
+    sub-1   -> 201   crea otra persona
+    Sub-1   -> 201   y otra
+
+**Tres personas con la misma identidad**, y `_resolve` devolviendo la primera sin
+decir que había más.
+
+Era la peor de las tres para perder esa palabra. `oidc_sub` es «the immutable
+anchor» del acceso federado, así que con tres anclas iguales quien entra por el
+proveedor de identidad cae en cualquiera de las tres --- lo mismo que
+`users/backends.py` ya advierte del correo duplicado, «son la misma persona
+duplicada, y el acceso entraría en cualquiera», pero por la puerta que usan las
+integraciones.
+
+#### Qué se ha hecho
+
+Una palabra: `iexact` en esa tercera línea. De tres personas a **una**, y las
+tres cajas llegan a ella.
+
+La mitad de las ocho pruebas es lo que no puede romperse: otra identidad distinta
+sigue entrando, no tener identidad es lo normal en una empresa sin proveedor, y
+**el empuje repetido de la misma ficha** ---lo que hace un conector cada noche---
+no puede chocar consigo mismo.
+
+#### Lo que escribí y retiré
+
+También puse un `validate_oidc_sub` en el serializador de personas, que no tenía
+ninguna comprobación. **No corría nunca**: DRF solo llama a `validate_<campo>`
+para los campos declarados, y ese serializador no expone `oidc_sub` ---la API de
+personas ignora el campo, la persona queda sin identidad---. Retirado con su
+cadena de traducción: era exactamente lo que estas vueltas llevan encontrando,
+código que parece proteger y no se ejecuta.
+
+Medido en desarrollo: **cero identidades duplicadas** hoy.
 
 ### Vuelta 118 --- «EMP-9» y «emp-9» eran dos personas al crearlas y una al buscarlas (27/08)
 
