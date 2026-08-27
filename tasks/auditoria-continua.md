@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 113 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 114 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -345,6 +345,60 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 114 --- Una letra de menos y el informe era de otra persona (27/08)
+
+Lente: **los mensajes de error, leídos**. Sale de la lección de la vuelta
+anterior: probar los errores igual que las respuestas buenas, pasándole a cada
+endpoint entradas malas y **leyendo la frase**, no solo el código.
+
+#### Lo que aguantó
+
+Quince formas de entrada mala ---identificadores que no son identificadores en
+siete listados, cuerpos vacíos, JSON roto, tipos equivocados, páginas
+inexistentes, fechas imposibles--- y **todas contestan una frase limpia y
+traducida**, con el campo que falla en `details`. Los rangos numéricos también:
+`0`, `-5` y `1.5` en el tope de jornada dan su mensaje propio.
+
+El detector se calibró antes de fiarse de él: marca la forma del fallo de la
+vuelta 113 y no marca una frase normal.
+
+#### Lo que no
+
+Los parámetros desconocidos se ignoran ---comportamiento por defecto---, y en el
+documento del art. 34.9 eso no es una molestia:
+
+    ?employe=<id de otra persona>      -> 200 con el registro de quien pregunta
+    ?employee_id=<id>                  -> igual
+    ?user=<id>                         -> igual
+    ?date_form=2026-08-01               -> 200 con el periodo por defecto
+
+Una letra de menos y el fichero que sale lleva otro nombre dentro. Un guion que
+descargue la plantilla entera con la errata produce una carpeta de documentos que
+no son de quien dicen ser.
+
+**El proyecto ya había tomado esta decisión** en `refuse_wrong_period_names`, y
+se había quedado en dos nombres: «lo que se pone a disposición de la Inspección es
+el registro que se pidió, no otro». Aquí no es otro periodo: es otra persona.
+
+Arreglado con lista blanca explícita en los dos documentos ---informe y resumen---
+y **solo ahí**: en un listado corriente, rechazar lo desconocido rompería a quien
+añade un parámetro para saltarse una caché; en un documento probatorio, un 400 es
+mejor respuesta que el registro de otra persona.
+
+Trece pruebas, y **la mitad son la lista blanca**: `format`, `scope`,
+`department`, el periodo y ninguno, cada uno comprobando que sigue dando 200. Una
+lista blanca a la que le falte un nombre rompe el producto de forma más cara que
+el fallo que arregla.
+
+Una cadena nueva, traducida: **701 mensajes, cero sin traducir**.
+
+#### Tres fallos que eran míos
+
+Las tres pruebas que fallaron al principio no eran del producto: había creado a
+quien manda con `is_staff=True`, y lo que el código lee es `role`. `is_staff` es
+de Django y aquí no decide nada. El 400 que volvía ---«solo puedes pedir tu propio
+registro»--- se lee como un fallo y era un fixture mal armado.
 
 ### Vuelta 113 --- El mensaje de error salía con la clase de DRF dentro (27/08)
 

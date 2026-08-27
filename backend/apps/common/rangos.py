@@ -80,3 +80,44 @@ def refuse_inverted_range(params) -> None:
         {"date_to": _("The end date cannot precede the start date.")},
         code="invalid",
     )
+
+
+def refuse_unknown_params(params, conocidos) -> None:
+    """Rechaza un parámetro que no existe, en los documentos que se entregan.
+
+    Los desconocidos se ignoran, y en un listado eso es una molestia. En el
+    informe del art. 34.9 es otra cosa: quien pide
+
+        ?employe=<id de otra persona>       (una letra menos)
+
+    recibe **200 y el registro de quien pregunta**, con su nombre dentro y su
+    apellido en el nombre del fichero. Medido: `employe`, `employee_id` y `user`
+    devolvían los tres el informe de quien llamaba en vez del pedido, y
+    `date_form` o `dateto` devolvían el periodo por defecto. Un guion que
+    descargue la plantilla entera con la errata genera una carpeta de documentos
+    que no son de quien dicen ser.
+
+    Es el mismo razonamiento que `refuse_wrong_period_names`, que se escribió
+    para `from`/`to` y se quedó en esos dos nombres: «lo que se pone a
+    disposición de la Inspección es el registro que se pidió, no otro».
+
+    La lista es blanca y explícita, y solo se aplica aquí. En un listado
+    corriente rechazar todo lo desconocido rompería a quien añade un parámetro
+    inocuo para saltarse una caché; en un documento probatorio, un 400 es mejor
+    respuesta que el registro de otra persona.
+    """
+    desconocidos = sorted(k for k in params if k not in conocidos)
+    if not desconocidos:
+        return
+
+    validos = ", ".join(sorted(conocidos))
+    raise ValidationError(
+        {
+            k: _(
+                "«%(bad)s» is not read here, so asking with it would quietly give you "
+                "a different document. This endpoint reads: %(good)s."
+            )
+            % {"bad": k, "good": validos}
+            for k in desconocidos
+        }
+    )

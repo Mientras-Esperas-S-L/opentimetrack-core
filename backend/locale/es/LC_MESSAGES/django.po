@@ -3535,3 +3535,6 @@ msgstr "Días con actividad"
 
 msgid "this day was also recorded as: %(absence)s"
 msgstr "este día constaba además como: %(absence)s"
+
+msgid "«%(bad)s» is not read here, so asking with it would quietly give you a different document. This endpoint reads: %(good)s."
+msgstr "«%(bad)s» no se lee aquí, así que pedirlo así te daría otro documento sin avisar. Este punto de entrada lee: %(good)s."

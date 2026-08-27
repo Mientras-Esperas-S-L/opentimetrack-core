@@ -3295,3 +3295,43 @@ rodeo. La segunda, que el rodeo valió la pena: el mensaje que desmontó mi
 hipótesis era el que estaba mal formado, y ese sí era un fallo. Un experimento
 que sale al revés de lo previsto no es tiempo perdido si se lee con atención lo
 que devolvió.
+
+## 211. Una lista blanca se prueba por los dos lados, y el lado caro es el bueno
+
+Rechazar los parámetros que no se leen arregla un fallo real: `?employe=<id>`
+---una letra menos--- devolvía **200 con el registro de quien preguntaba**, no el
+pedido.
+
+Pero una lista blanca a la que le falte un nombre rompe el producto de una forma
+mucho más cara que el fallo que viene a arreglar: en vez de un documento
+equivocado de vez en cuando, un 400 permanente en algo que funcionaba. Por eso la
+mitad de la prueba son los parámetros que **sí** existen ---`format`, `scope`,
+`department`, el periodo, y ninguno---, cada uno comprobando que sigue dando 200.
+
+**Regla**: al escribir una lista de lo permitido, escribe primero la prueba de lo
+permitido. Y sácala del código que lee esos parámetros ---aquí, los
+`query_params.get(...)` y los `OpenApiParameter` ya declarados---, no de la
+memoria: lo que se olvida al hacer la lista es exactamente lo que se olvida al
+imaginar la prueba.
+
+**Y dónde aplicarla**: solo donde el coste de ignorar sea alto. En un listado
+corriente, rechazar lo desconocido rompe a quien añade un parámetro inocuo para
+saltarse una caché; en un documento probatorio, un 400 es mejor respuesta que el
+registro de otra persona.
+
+## 212. `is_staff` no es un rol de negocio
+
+Tres pruebas de esta vuelta fallaron y las tres eran mías: había creado a la
+persona que manda con `is_staff=True`, creyendo que eso la hacía administración.
+No: `can_manage` mira `role in {MANAGER, ADMIN}`, y `is_staff` es de Django ---el
+acceso a su panel---, que aquí no decide nada.
+
+El fallo se disfraza bien porque el nombre suena a lo que uno quiere y porque
+falla **tarde**: la prueba se monta, la petición sale, y el 400 que vuelve dice
+«solo puedes pedir tu propio registro», que se lee como un fallo del producto y
+no como un fixture mal armado.
+
+**Regla**: en las pruebas, el permiso se da con el campo que el producto lee de
+verdad. Antes de dar por bueno un rechazo de permisos en una prueba nueva,
+comprueba qué campo consulta el código que rechaza --- son tres segundos de `grep`
+y evitan reportar como fallo lo que es un fixture.

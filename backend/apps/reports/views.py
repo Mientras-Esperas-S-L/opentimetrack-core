@@ -22,7 +22,7 @@ from apps.audit.services import record
 from apps.common.descargas import nombre_de_persona, nombre_seguro
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import IsAuthenticatedInTenant
-from apps.common.rangos import refuse_wrong_period_names
+from apps.common.rangos import refuse_unknown_params, refuse_wrong_period_names
 from apps.common.scope import people_queryset, person_in_scope
 from apps.punches.models import Punch
 from apps.reports.payroll import PayrollSummary, period_containing
@@ -85,6 +85,7 @@ class ReportView(APIView):
         today = timezone.localdate()
 
         refuse_wrong_period_names(request.query_params)
+        refuse_unknown_params(request.query_params, PARAMS_DEL_INFORME)
         date_from = _parse_date(request.query_params.get("date_from"), today - timedelta(days=30))
         date_to = _parse_date(request.query_params.get("date_to"), today)
         if date_to < date_from:
@@ -252,6 +253,19 @@ class PayrollRunRequestSerializer(serializers.Serializer):
     )
 
 
+#: Lo que de verdad lee el informe del art. 34.9. Cualquier otra cosa se ignoraría
+#: y devolvería un documento que no es el que se pidió, así que se rechaza. Van
+#: aquí y no derivadas del esquema para que añadir un parámetro sea una decisión
+#: consciente en un solo sitio.
+PARAMS_DEL_INFORME = frozenset(
+    {"employee", "date_from", "date_to", "format", "scope", "department"}
+)
+
+#: Y los del resumen del art. 6.1, que son otros: el periodo no se elige, se
+#: deduce del día que se dé.
+PARAMS_DEL_RESUMEN = frozenset({"employee", "day", "format"})
+
+
 @extend_schema(tags=["reports"])
 class PayrollSummaryView(APIView):
     """The summary that goes out with the payslip (art. 6.1).
@@ -280,6 +294,7 @@ class PayrollSummaryView(APIView):
     )
     def get(self, request):
         company = request.user.tenant
+        refuse_unknown_params(request.query_params, PARAMS_DEL_RESUMEN)
         employee = _employee_for(request)
 
         anchor = _parse_date(request.query_params.get("day"), timezone.localdate())
