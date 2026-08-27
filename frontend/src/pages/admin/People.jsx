@@ -39,6 +39,7 @@ import {
   getDepartments,
   getEmployees,
   getWorkplaces,
+  deliverRecord,
   inviteEmployee,
   PAGE_SIZE,
   reactivateEmployee,
@@ -591,7 +592,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
  *  putting them a click away also stops "Dar de baja" sitting under the cursor
  *  next to "Editar".
  */
-function RowActions({ person, busy, onEdit, onInvite, onReactivate, onDeactivate }) {
+function RowActions({ person, busy, onEdit, onInvite, onDeliver, onReactivate, onDeactivate }) {
   // Una sola vez: se usa en cuatro rótulos accesibles de esta fila y estaba
   // escrito a mano en tres sitios distintos.
   const quien = `${person.first_name} ${person.last_name}`.trim() || person.email
@@ -636,6 +637,13 @@ function RowActions({ person, busy, onEdit, onInvite, onReactivate, onDeactivate
             Enviar enlace de acceso
           </MenuItem>
         )}
+        {/* Para quien ya no trabaja aquí es la única salida: su registro se
+            conserva cuatro años (art. 34.9) y sigue teniendo derecho a pedirlo
+            (art. 15 RGPD), y reactivarle la cuenta para que lo vea le daría
+            acceso a todo lo demás. El enlace no abre sesión. */}
+        <MenuItem onClick={pick(onDeliver)} disabled={busy || !person.email}>
+          Enviarle su registro
+        </MenuItem>
         {person.is_active && <MenuItem onClick={pick(onDeactivate)}>Dar de baja</MenuItem>}
       </Menu>
     </Stack>
@@ -736,6 +744,17 @@ export default function People() {
 
   const invite = useMutation({
     mutationFn: inviteEmployee,
+    onSuccess: (data) => setSent(data.sent_to),
+    onError: setError,
+  })
+
+  //: Se ofrece también con las cuentas de alta ---quien está dentro lo tiene en
+  //: su pantalla, pero puede haber perdido el acceso--- y sobre todo con las de
+  //: baja, que es el caso que no tenía salida: sus datos se guardan cuatro años
+  //: y no había forma de que los viera sin reactivarle la cuenta, que le daría
+  //: acceso al cuadrante y a sus antiguos compañeros.
+  const deliver = useMutation({
+    mutationFn: deliverRecord,
     onSuccess: (data) => setSent(data.sent_to),
     onError: setError,
   })
@@ -1060,9 +1079,10 @@ export default function People() {
                     <TableCell align="right">
                       <RowActions
                         person={person}
-                        busy={invite.isPending}
+                        busy={invite.isPending || deliver.isPending}
                         onEdit={() => setEditing(person)}
                         onInvite={() => invite.mutate(person.id)}
+                        onDeliver={() => deliver.mutate(person.id)}
                         onReactivate={() => reactivate.mutate(person.id)}
                         onDeactivate={() =>
                           setConfirming({

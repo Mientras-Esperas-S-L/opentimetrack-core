@@ -31,6 +31,7 @@ from apps.common.permissions import (
     ReadForAllWriteForAdmin,
 )
 from apps.common.scope import people_queryset
+from apps.reports.delivery import send_delivery_email
 from apps.users.models import Department, Role, Workplace
 from apps.users.passwords import resolve_token, revoke_sessions, send_account_email
 from apps.users.serializers import (
@@ -486,6 +487,42 @@ class UserViewSet(viewsets.ModelViewSet):
                     else _("Reactivate the account before inviting them.")
                 ),
             )
+        return Response({"sent_to": person.email})
+
+    @extend_schema(request=None, responses={200: dict})
+    @action(detail=True, methods=["post"], url_path="deliver-record")
+    def deliver_record(self, request, pk=None):
+        """Manda a esa persona un enlace para descargar su propio registro.
+
+        **Existe sobre todo para quien ya no trabaja aquí.** El art. 34.9 obliga
+        a conservar su registro cuatro años y el art. 15 del RGPD le da derecho a
+        pedirlo, y las dos cosas siguen valiendo después del último día: lo que
+        se acaba es la relación laboral, no el derecho sobre los datos.
+
+        Se permite igual con las cuentas activas: quien está de alta lo tiene en
+        su pantalla, pero puede haber perdido el acceso, y no hay razón para que
+        la administración tenga que elegir entre reactivar a alguien y atender su
+        solicitud.
+
+        El enlace no abre sesión. Ver `apps.reports.delivery`.
+        """
+        person = self.get_object()
+        if not person.email:
+            raise BusinessRuleError(
+                code="no_address",
+                message=_("There is no address to send it to. Add one first."),
+            )
+
+        send_delivery_email(person, base_url=settings.FRONTEND_URL)
+        record(
+            action=AuditAction.RECORD_DELIVERED,
+            actor=request.user,
+            target=person,
+            target_type="user",
+            target_label=person.get_full_name() or person.email,
+            changes={"sent_to": person.email, "picked_up": False},
+            note="" if person.is_active else "cuenta de baja",
+        )
         return Response({"sent_to": person.email})
 
     def perform_update(self, serializer):

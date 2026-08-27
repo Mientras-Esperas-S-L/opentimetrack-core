@@ -80,6 +80,44 @@ async function listaEntera(page, ruta, filtro = '') {
 test.use({ storageState: 'e2e/.sesiones/admin.json' })
 
 test.describe('Al terminar la tanda', () => {
+  /** El sedimento de las de baja, que no es cero pero no puede crecer sin techo.
+   *
+   *  La comprobación de al lado mira solo las activas, y su razón está escrita:
+   *  «el producto no borra personas a propósito, que los fichajes viven cuatro
+   *  años». Es verdad a medias. **Lo era del todo para quien tiene fichajes**, y
+   *  falso para quien no tiene ninguno: el 27/08 había **946 personas de prueba
+   *  dadas de baja en la empresa de demostración, ninguna con un solo fichaje**,
+   *  de 969 personas en total. La pantalla de Personas era basura en un 98 %.
+   *
+   *  Y el razonamiento se muerde la cola: no se miraban porque eran demasiadas
+   *  para traerlas en una página, y eran demasiadas porque nadie las miraba.
+   *
+   *  Esto no exige cero, porque la API **no borra personas** ---y hace bien, con
+   *  los fichajes viviendo cuatro años---, así que una prueba que da de alta a
+   *  alguien y lo retira solo puede dejarlo de baja. Lo que hace es avisar cuando
+   *  el sedimento pasa de un tope. El tope es un cortafuegos, no un objetivo: si
+   *  salta, la salida no es subirlo.
+   */
+  const TOPE_DE_BAJA = 60
+
+  test('el sedimento de personas de prueba dadas de baja no crece sin techo', async ({ page }) => {
+    await irA(page, '/panel/personas', 'Personas')
+
+    const deBaja = await listaEntera(page, '/employees/', '&is_active=false')
+    const sedimento = deBaja
+      .filter((p) => !REUTILIZADOS.includes(p.email))
+      .filter((p) => DE_PRUEBA.test(p.email ?? '') || DE_PRUEBA.test(p.full_name ?? ''))
+
+    expect(
+      sedimento.length,
+      `hay ${sedimento.length} personas de prueba dadas de baja y el tope está en ` +
+        `${TOPE_DE_BAJA}. No se arregla subiendo el tope: o una prueba está creando ` +
+        'personas que no necesita, o hace falta poder borrar de verdad a quien no ' +
+        'tiene ni un fichaje ---un alta equivocada no puede quedarse para siempre---. ' +
+        `${COMO_SE_ARREGLA}`,
+    ).toBeLessThanOrEqual(TOPE_DE_BAJA)
+  })
+
   test('no quedan personas de prueba dadas de alta', async ({ page }) => {
     await irA(page, '/panel/personas', 'Personas')
 

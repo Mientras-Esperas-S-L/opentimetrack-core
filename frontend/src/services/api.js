@@ -475,6 +475,13 @@ export const reactivateEmployee = async (id) =>
   (await api.patch(`/employees/${id}/`, { is_active: true })).data
 export const inviteEmployee = (id) => post(`/employees/${id}/invite/`)
 
+/** Manda a esa persona un enlace para descargar su propio registro.
+ *
+ *  Existe sobre todo para quien ya no trabaja aquí: su registro se conserva
+ *  cuatro años (art. 34.9) y sigue teniendo derecho a pedirlo (art. 15 RGPD),
+ *  pero no debería seguir entrando al producto. El enlace no abre sesión. */
+export const deliverRecord = (id) => post(`/employees/${id}/deliver-record/`)
+
 export const getDepartments = async (params) => catalogoEntero('/departments/', params)
 export const createDepartment = (payload) => post('/departments/', payload)
 export const updateDepartment = async (id, payload) =>

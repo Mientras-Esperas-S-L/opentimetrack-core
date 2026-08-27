@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 127 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
+Vueltas dadas: 128 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,104 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 128 --- Quien ya no trabaja allí puede pedir su registro (27/08)
+
+Tarea **4 de la lista**, y Francisco la planteó como pregunta: «en teoría no
+debería tener acceso a recursos de la empresa si no trabaja. ¿Existen precedentes
+que digan que sí puede seguir teniendo acceso hasta que finalice el tiempo de
+retención de sus datos?».
+
+**La respuesta corta es que el derecho no se extingue, pero no es un acceso.** El
+art. 34.9 ET obliga a conservar el registro cuatro años y a tenerlo a disposición
+de la persona trabajadora; el art. 15 del RGPD le da derecho a pedir sus datos
+mientras se conserven, y ese derecho no se acaba el último día de contrato: lo que
+se acaba es la relación laboral, no el tratamiento. Pero el art. 15 se ejerce **por
+solicitud y se satisface con una entrega**: no obliga a mantener a nadie dentro de
+la aplicación. Y mantenerla dentro tiene coste real ---vería el cuadrante, a sus
+antiguos compañeros y lo que la empresa haya cambiado desde que se fue---, así que
+la lectura amplia sería peor para todos, incluida esa persona.
+
+*No se citan sentencias porque no se han comprobado. Lo de arriba sale del texto
+de los dos artículos, y conviene que lo confirme la asesoría antes de ponerlo en
+un documento que salga de aquí.*
+
+#### Lo construido: una entrega, no una cuenta
+
+`apps/reports/delivery.py`. La administración genera un enlace para una persona
+concreta ---de alta o de baja--- y le llega por correo. El enlace no abre sesión ni
+sirve para nada más que descargar **su** registro.
+
+Tres cosas lo acotan, y las tres tienen prueba:
+
+1. **No hay parámetro que diga de quién es el registro**: sale del identificador
+   firmado. Así que no hay nada que cambiar para alcanzar a otra persona; añadir
+   `?employee=` a mano no cambia lo que sale.
+2. **Se entrega exactamente lo que se conserva.** El periodo lo decide
+   `first_day_kept`, el mismo que usa la purga de la vuelta 127 para decidir qué
+   borrar. Con dos definiciones del plazo, un día habría registro entregable que ya
+   no existe, o registro guardado que no se entrega.
+3. **Un ámbito propio dentro del valor firmado.** Sin él, el enlace de invitación
+   ---que se deriva de los mismos campos--- descargaría el registro de esa persona.
+
+Y lo que lo mata antes de tiempo: **reactivar la cuenta** y **cambiar la
+contraseña**. Las dos significan que ya hay otra puerta.
+
+#### Un error mío, corregido antes de cerrar
+
+Escribí en tres sitios que el enlace es «de un solo uso», copiando el del
+restablecimiento de contraseña. **Es falso**: aquel se invalida al usarse porque
+poner una contraseña cambia el hash que va en el valor firmado, y descargar un
+informe no cambia nada. Con este mecanismo vale hasta que caduque.
+
+Lo que corregí fue el texto, no el mecanismo, porque **usarlo dos veces es el caso
+normal**: el PDF y el CSV son dos descargas de la misma solicitud. Un enlace que
+muere en la primera obligaría a pedir otro para la segunda.
+
+#### Y de camino, 946 personas de basura
+
+Al buscar a alguien de baja para probar salieron **946 personas de prueba dadas de
+baja** en la empresa de demostración, de 969 en total: la pantalla de Personas era
+basura en un 98 %. Ninguna tenía un solo fichaje.
+
+El guard de residuos las ignoraba **a propósito**, y su razón está escrita: «el
+producto no borra personas a propósito, que los fichajes viven cuatro años». Es
+verdad a medias ---del todo para quien tiene fichajes, falso para quien no tiene
+ninguno--- y el razonamiento se muerde la cola: no se miraban porque eran
+demasiadas para traerlas en una página, y eran demasiadas porque nadie las miraba.
+
+Retiradas en tres pasos, con copia de 946 entradas y seis cinturones a cero (sin
+fichajes, sin correcciones, ninguna de alta, ninguna de otra empresa, ninguna
+staff, ninguna exenta) **y el contraste**: metiendo a Hugo en la lista el detector
+de fichajes da 56, así que los ceros no eran un detector roto.
+
+Quedan 23 personas. Añadido al guard un tope de 60 para el sedimento de las de
+baja, con el aviso de que subir el tope no es el arreglo: o una prueba crea
+personas que no necesita, o **hace falta poder borrar de verdad a quien no tiene ni
+un fichaje**, porque un alta equivocada no puede quedarse para siempre. Eso último
+es una propuesta, no está hecho.
+
+#### Dos guards que hicieron su trabajo
+
+El barrido de aislamiento se puso rojo al añadir las dos rutas nuevas y no dejó
+cerrar hasta declararlas ---la pública con la razón, la del panel al barrido
+normal---. Y la prueba de traducciones marcadas `fuzzy` cazó tres que eran
+peligrosas de verdad: la acción nueva del rastro heredó «Consultó el registro de
+otra persona» y el asunto del correo heredó «Tu registro de jornada ha cambiado».
+Django ignora los `fuzzy`, así que no se veían; aceptarlos a ciegas habría puesto
+el rastro a decir que alguien fisgó donde lo que hubo fue una entrega.
+
+**Y un detector mío mal hecho**: al retirar los flags usé `^#, fuzzy\n`, que no
+coincide con `#, fuzzy, python-format`. Los dos mensajes con `%(company)s` dentro
+se quedaron marcados aunque estuvieran traducidos. El patrón del guard ya estaba
+bien escrito ---`^#,.*\bfuzzy\b`--- y el mío era más estrecho que el que iba a
+tener que satisfacer.
+
+#### Verde al cerrar
+
+`1.284` pruebas de backend (doce nuevas), `ruff` limpio, sin migraciones
+pendientes, castellano a **711 mensajes traducidos y cero sin traducir**, y los
+tres catálogos a **cero `fuzzy`**.
 
 ### Tarea 5 --- Los tres documentos al día (27/08)
 

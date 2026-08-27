@@ -1,0 +1,13 @@
+{% load i18n %}{% blocktranslate %}Hello {{ first_name }},
+
+Here is the link to download your own working time record at {{ company }}.{% endblocktranslate %}
+
+{{ link }}
+
+{% blocktranslate %}It expires in {{ hours }} hours, and until then you can use it as many
+times as you need --- the PDF and the spreadsheet are two downloads. If it stops
+working, ask {{ company }} for another one.{% endblocktranslate %}
+
+{% blocktranslate %}What you get is the whole record still kept, which is at least the four
+years the law requires. It does not open an account and it gives access to
+nothing else.{% endblocktranslate %}

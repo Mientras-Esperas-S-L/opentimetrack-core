@@ -327,7 +327,7 @@ Agencia de Protección de Datos.
 | Conservar el registro cuatro años | 34.9 ET | **Cubierto.** El plazo es un campo de la empresa y no puede bajar de cuatro años: lo rechaza el formulario y lo vuelve a rechazar el código que borra, porque un número escrito por consola o por importación nunca pasó por el formulario |
 | Borrar cuando el plazo se cumple | 5.1.e RGPD | **Cubierto desde el 27/08/2026.** Un trabajo diario borra los fichajes que pasaron el plazo de su empresa y deja asiento de cuántos y hasta qué fecha. Antes de esa fecha el campo declaraba una política que nadie aplicaba |
 | Metadatos de red con su propio plazo | 5.1.e RGPD | **Cubierto.** La IP, el dispositivo y el agente salen al año, y el fichaje sigue verificando su firma: por eso la firma no los incluye |
-| Acceso de la persona a su propio registro | 34.9 ET, 15 RGPD | **A medias.** Quien trabaja allí lo tiene entero. Quien ya no trabaja allí pierde el acceso al desactivarse la cuenta, y sus datos siguen guardados los cuatro años: puede pedirlos, pero no verlos por su cuenta |
+| Acceso de la persona a su propio registro | 34.9 ET, 15 RGPD | **Cubierto desde el 27/08/2026.** Quien trabaja allí lo tiene entero en su pantalla. A quien ya no trabaja allí la administración le manda un **enlace de entrega**: descarga su registro completo, en PDF o en hoja de cálculo, y no abre sesión ni da acceso a nada más |
 
 Tres cosas que el borrado **no** toca, y cada una por su razón:
 
@@ -342,6 +342,11 @@ Tres cosas que el borrado **no** toca, y cada una por su razón:
   borrado ---que es lo que habría que comprobar antes de dar por buena cualquier
   purga: si el rastro guardase una copia, la purga sería decorativa---.
 
+Y las dos caras del plazo usan **la misma definición**: el día desde el que se
+conserva lo decide una sola función, y de ella salen tanto lo que la purga borra
+como lo que el enlace de entrega incluye. Con dos definiciones, un día habría
+registro entregable que ya no existe, o registro guardado que no se entrega.
+
 Y un corte que importa: **el plazo se cumple por días enteros, en el huso de la
 empresa**, no a la hora exacta de hace cuatro años. Cortar por instante se llevaría
 la mañana de un día y dejaría la tarde, y un día con solo la salida registrada no
@@ -355,16 +360,17 @@ Ordenado por lo que más se nota en un cliente real, no por dificultad.
 
 1. **Transcribir la resolución del BOE de 2026**, que es lo único que le falta
    al calendario para estar completo.
-2. **Acceso de quien ya no trabaja allí a su propio registro**, mientras sus
-   datos sigan guardados: hoy los conservamos cuatro años y no puede verlos.
-3. **Saldos de devolución**: horas extra compensadas, relevo de turno,
+2. **Saldos de devolución**: horas extra compensadas, relevo de turno,
    distribución irregular. Convertir los avisos en una cuenta.
-4. **Vacaciones**: devengo proporcional y traslado por IT.
-5. **Llamamiento del fijo discontinuo** (art. 16), ya señalado en el código.
-6. **Topes que se guardan y no se comprueban**: 80 horas extra al año, 30 % de
-   complementarias al mes, 65/85 % del contrato formativo.
-7. **Historia de la adscripción a departamento**, cuando el informe empiece a
+3. **Vacaciones**: devengo proporcional y traslado por IT.
+4. **Llamamiento del fijo discontinuo** (art. 16), ya señalado en el código.
+5. **Topes que se guardan y no se comprueban**: 30 % de complementarias al mes y
+   65/85 % del contrato formativo. El de 80 horas extra al año ya se contrasta.
+6. **Historia de la adscripción a departamento**, cuando el informe empiece a
    mentir.
+7. **Borrar de verdad a quien no tiene ni un fichaje.** Un alta equivocada no se
+   puede quitar: solo darse de baja, y se queda en la lista para siempre. Con
+   fichajes es correcto que no se pueda; sin ellos, no.
 
 ---
 

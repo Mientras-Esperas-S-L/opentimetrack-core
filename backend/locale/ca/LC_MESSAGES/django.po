@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-27 12:50+0000\n"
+"POT-Creation-Date: 2026-08-27 13:30+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan\n"
@@ -181,7 +181,7 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:175 apps/absences/models.py:531
-#: apps/audit/models.py:180 apps/punches/models.py:538
+#: apps/audit/models.py:185 apps/punches/models.py:538
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:341 apps/tenants/rules.py:425
 msgid "note"
@@ -225,7 +225,7 @@ msgstr ""
 msgid "employee"
 msgstr "persona treballadora"
 
-#: apps/absences/models.py:258 apps/audit/models.py:173
+#: apps/absences/models.py:258 apps/audit/models.py:178
 #: apps/punches/corrections.py:94 apps/punches/models.py:152
 msgid "type"
 msgstr "tipus"
@@ -484,7 +484,7 @@ msgid "the time it takes"
 msgstr "el temps indispensable"
 
 #: apps/absences/views.py:182 apps/shifts/views.py:204
-#: apps/tenants/views.py:181 apps/users/views.py:630 apps/users/views.py:700
+#: apps/tenants/views.py:181 apps/users/views.py:667 apps/users/views.py:737
 msgid "Added"
 msgstr ""
 
@@ -670,46 +670,50 @@ msgstr ""
 msgid "Purged expired working time records"
 msgstr "Va purgar el registre que va complir el seu termini"
 
-#: apps/audit/models.py:146
+#: apps/audit/models.py:133
+msgid "Delivered somebody their own record"
+msgstr "Va entregar a algú el seu propi registre"
+
+#: apps/audit/models.py:151
 msgid "when"
 msgstr ""
 
-#: apps/audit/models.py:152 apps/common/models.py:117
+#: apps/audit/models.py:157 apps/common/models.py:117
 #: apps/tenants/models.py:169 apps/tenants/models.py:197
 #: apps/tenants/rules.py:39 apps/tenants/rules.py:318 apps/tenants/rules.py:403
 #: apps/users/models.py:274
 msgid "company"
 msgstr ""
 
-#: apps/audit/models.py:162
+#: apps/audit/models.py:167
 msgid "who"
 msgstr ""
 
-#: apps/audit/models.py:166
+#: apps/audit/models.py:171
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:168
+#: apps/audit/models.py:173
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:174
+#: apps/audit/models.py:179
 msgid "identifier"
 msgstr ""
 
-#: apps/audit/models.py:175
+#: apps/audit/models.py:180
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:179
+#: apps/audit/models.py:184
 msgid "changes"
 msgstr ""
 
-#: apps/audit/models.py:202
+#: apps/audit/models.py:207
 msgid "audit entry"
 msgstr ""
 
-#: apps/audit/models.py:203
+#: apps/audit/models.py:208
 msgid "audit trail"
 msgstr ""
 
@@ -1538,6 +1542,24 @@ msgstr ""
 #: apps/punches/services.py:562
 msgid "You cannot clock in: you have approved leave for today."
 msgstr "No pots fitxar: tens una absència aprovada per a avui."
+
+#: apps/reports/delivery.py:122 apps/users/passwords.py:136
+msgid "the platform"
+msgstr "la plataforma"
+
+#: apps/reports/delivery.py:138
+#, python-format
+msgid "Your working time record at %(company)s"
+msgstr "El teu registre de jornada a %(company)s"
+
+#: apps/reports/delivery.py:171
+msgid "This link is no longer valid. Ask the company for a new one."
+msgstr ""
+"Aquest enllaç ja no és vàlid. Demana'n un altre a l'empresa."
+
+#: apps/reports/delivery.py:204
+msgid "the person concerned, through their delivery link"
+msgstr "la persona interessada, pel seu enllaç d'entrega"
 
 #: apps/reports/payroll.py:37 apps/tenants/models.py:125
 msgid "Monthly"
@@ -2430,11 +2452,11 @@ msgid ""
 "contracts are not affected: they are not the working time record and they do "
 "not live off this period."
 msgstr ""
-"Quant de temps es conserven els fitxatges, passat el qual s'esborren. "
-"Quatre anys és el sòl de l'art. 34.9 ET; un termini més llarg necessita "
-"la seva pròpia justificació, perquè conservar una dada per si algun dia "
-"és útil no és una base. Les absències i els contractes no es veuen "
-"afectats: no són el registre de jornada i no viuen d'aquest termini."
+"Quant de temps es conserven els fitxatges, passat el qual s'esborren. Quatre "
+"anys és el sòl de l'art. 34.9 ET; un termini més llarg necessita la seva "
+"pròpia justificació, perquè conservar una dada per si algun dia és útil no "
+"és una base. Les absències i els contractes no es veuen afectats: no són el "
+"registre de jornada i no viuen d'aquest termini."
 
 #: apps/tenants/models.py:156
 msgid "security metadata retention (days)"
@@ -3007,10 +3029,6 @@ msgstr ""
 msgid "people"
 msgstr ""
 
-#: apps/users/passwords.py:136
-msgid "the platform"
-msgstr "la plataforma"
-
 #: apps/users/passwords.py:138
 #, python-format
 msgid "Your account at %(company)s"
@@ -3095,19 +3113,19 @@ msgstr ""
 msgid "Wrong credentials."
 msgstr ""
 
-#: apps/users/views.py:199
+#: apps/users/views.py:200
 msgid "No session to renew."
 msgstr "No hi ha cap sessió per renovar."
 
-#: apps/users/views.py:213
+#: apps/users/views.py:214
 msgid "The session has expired. Sign in again."
 msgstr "La sessió ha caducat. Torna a entrar."
 
-#: apps/users/views.py:236
+#: apps/users/views.py:237
 msgid "Send the refresh token to close the session."
 msgstr ""
 
-#: apps/users/views.py:429
+#: apps/users/views.py:430
 msgid ""
 "This is the only active administrator. Appoint another one first, or the "
 "company is left with nobody able to manage it."
@@ -3115,29 +3133,33 @@ msgstr ""
 "És l'únic administrador actiu. Nomena'n un altre abans, o l'empresa es queda "
 "sense ningú que la pugui gestionar."
 
-#: apps/users/views.py:484
+#: apps/users/views.py:485
 msgid "This account signs in through your identity provider."
 msgstr "Aquest compte entra a través del vostre proveïdor d'identitat."
 
-#: apps/users/views.py:486
+#: apps/users/views.py:487
 msgid "Reactivate the account before inviting them."
 msgstr "Torna a donar d'alta el compte abans de convidar-lo."
 
-#: apps/users/views.py:553
+#: apps/users/views.py:513
+msgid "There is no address to send it to. Add one first."
+msgstr "No hi ha cap adreça on enviar-ho. Afegeix-ne una abans."
+
+#: apps/users/views.py:590
 msgid "You cannot deactivate your own account."
 msgstr "No pots donar de baixa el teu propi compte."
 
-#: apps/users/views.py:609
+#: apps/users/views.py:646
 #, python-format
 msgid "Left on %(day)s. %(count)s shift(s) still rostered after that."
 msgstr ""
 
-#: apps/users/views.py:612
+#: apps/users/views.py:649
 #, python-format
 msgid "Left on %(day)s."
 msgstr ""
 
-#: apps/users/views.py:668
+#: apps/users/views.py:705
 #, python-format
 msgid ""
 "%(count)s people answer for this department. Move them first: leaving them "
@@ -3145,7 +3167,7 @@ msgid ""
 "their own."
 msgstr ""
 
-#: apps/users/views.py:716
+#: apps/users/views.py:753
 #, python-format
 msgid ""
 "%(count)s people work there. Move them first: without a workplace they lose "
@@ -3154,7 +3176,7 @@ msgstr ""
 "Allà hi treballen %(count)s persones. Mou-les primer: sense centre perden "
 "els seus festius locals i la seva zona horària."
 
-#: apps/users/views.py:771
+#: apps/users/views.py:808
 msgid "The link is not valid or has already been used."
 msgstr "L'enllaç no és vàlid o ja s'ha fet servir."
 
@@ -3314,6 +3336,39 @@ msgid ""
 "\n"
 "If this does not match what happened, tell whoever manages your working time."
 msgstr ""
+
+#: templates/emails/record_delivery.txt:1
+#, python-format
+msgid ""
+"Hello %(first_name)s,\n"
+"\n"
+"Here is the link to download your own working time record at %(company)s."
+msgstr ""
+"Hola %(first_name)s:\n"
+"\n"
+"Aquí tens l'enllaç per descarregar el teu propi registre de jornada a %(company)s."
+
+#: templates/emails/record_delivery.txt:7
+#, python-format
+msgid ""
+"It expires in %(hours)s hours, and until then you can use it as many\n"
+"times as you need --- the PDF and the spreadsheet are two downloads. If it "
+"stops\n"
+"working, ask %(company)s for another one."
+msgstr ""
+"Caduca en %(hours)s hores i fins aleshores el pots fer servir les vegades\n"
+"que necessitis: el PDF i el full de càlcul són dues descàrregues. Si deixa\n"
+"de funcionar, demana'n un altre a %(company)s."
+
+#: templates/emails/record_delivery.txt:11
+msgid ""
+"What you get is the whole record still kept, which is at least the four\n"
+"years the law requires. It does not open an account and it gives access to\n"
+"nothing else."
+msgstr ""
+"El que reps és tot el registre que encara es conserva, que són com a mínim\n"
+"els quatre anys que exigeix la llei. No obre cap compte i no dóna accés a\n"
+"res més."
 
 #: templates/emails/representatives_informed.txt:1
 #, python-format

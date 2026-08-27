@@ -557,8 +557,22 @@ def test_every_route_is_covered_by_this_sweep():
         "api/app/people/",
         "api/app/people/<str:reference>/",
         "api/app/attendance/",
+        # Sin sesión a propósito, y de quién es el registro **no llega en la
+        # petición**: sale del identificador firmado del enlace, así que no hay
+        # ningún parámetro que se pueda cambiar para alcanzar a otra persona ---la
+        # forma que tendría aquí el aislamiento---. Su barrido propio está en
+        # apps/reports/tests/test_entrega_del_registro.py, e incluye que el
+        # enlace de una persona no sirva para otra ni cruzando las mitades, que
+        # no valga como credencial para el resto de la API, que caduque, y que un
+        # enlace de contraseña no sirva para descargar.
+        "api/record-delivery/<str:uid>/<str:token>/",
     }
     swept = {
+        # Manda un documento con el registro de alguien a su correo. Se barre con
+        # el resto de acciones de `employees` en apps/users/tests/, y su prueba
+        # propia comprueba que una persona sin permisos de gestión no puede
+        # lanzarla ---sería una forma de sacar el registro de un compañero---.
+        "api/^employees/(?P<pk>[^/.]+)/deliver-record/$",
         "api/^punches/$",
         "api/^punches/(?P<pk>[^/.]+)/$",
         "api/^punches/today/$",

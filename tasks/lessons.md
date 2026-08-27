@@ -3911,3 +3911,76 @@ quince del art. 45 están en el catálogo» pero no decía nada de la baja por
 contingencia, que el artefacto daba por «A medias» y «Falta». En el código están
 las dos, separadas y con su nota. Sin mirarlo habría publicado un «falta» sobre
 algo que existe.
+
+## 240. Un derecho que no se extingue no es lo mismo que un acceso que se conserva
+
+Al mirar si quien deja la empresa puede seguir viendo su registro, la pregunta
+parecía ser «sí o no». No lo era. El derecho del art. 15 RGPD **no se extingue**
+con la relación laboral, y el art. 34.9 obliga a conservar el registro cuatro
+años. Pero el art. 15 se ejerce **por solicitud y se satisface con una entrega**:
+ninguno de los dos obliga a mantener a nadie dentro de la aplicación.
+
+Y la lectura amplia ---dejarle la cuenta abierta--- **sería peor para todos**,
+incluida esa persona: vería el cuadrante, a sus antiguos compañeros y lo que la
+empresa haya cambiado desde que se fue.
+
+**La regla de diseño**: cuando una obligación legal se traduce a producto,
+pregúntate si lo que la ley pide es un **derecho a obtener** o un **derecho a
+acceder**. Casi siempre es el primero, y construir el segundo da un producto con
+más superficie y peor cumplimiento.
+
+**Y no citar sentencias sin haberlas leído.** El razonamiento de arriba sale del
+texto de los dos artículos, y así queda dicho en el cuaderno: lo que no se ha
+comprobado se marca como sin comprobar, aunque suene más flojo.
+
+## 241. Al copiar un mecanismo, comprueba cuál de sus propiedades venía del uso
+
+El enlace de entrega hereda de `PasswordResetTokenGenerator`, así que escribí que
+era «de un solo uso», que es lo que es el del restablecimiento. **Falso**: aquel se
+invalida al usarse porque poner una contraseña cambia el hash que entra en el valor
+firmado. Descargar un informe no cambia nada, así que el mío vale hasta que caduque.
+
+Lo que se hereda es la **firma y el plazo**; el consumo al usarse era un efecto del
+uso concreto, no del mecanismo.
+
+**Y el arreglo fue el texto, no el código**: usarlo dos veces es el caso normal ---el
+PDF y el CSV son dos descargas de la misma solicitud---, así que forzar un solo uso
+habría sido construir un defecto para cumplir una frase que escribí yo.
+
+**Cómo se ve venir**: al documentar una pieza copiada, por cada propiedad que le
+atribuyas, señala **la línea** que la produce. Si no la encuentras, la propiedad no
+está.
+
+## 242. Un detector más estrecho que el guard que tiene que satisfacer
+
+Retiré los flags `fuzzy` de los catálogos con `^#, fuzzy\n`, y dos mensajes
+siguieron marcados: los que llevan `%(company)s` tienen la línea
+`#, fuzzy, python-format`, con el flag acompañado.
+
+El guard que vigila los fuzzy ya usaba el patrón correcto ---`^#,.*\bfuzzy\b`--- y
+estaba escrito desde antes. Mi detector era **más estrecho que la comprobación que
+iba a tener que pasar**, y lo supe porque la comprobación existía.
+
+**La regla**: cuando arreglas algo que un guard vigila, **lee el patrón del guard y
+usa ese**, no uno que escribes de nuevo. Si el tuyo es más estrecho tendrás un
+verde falso hasta que el guard corra; si es más ancho, tocarás cosas que nadie te
+pidió tocar.
+
+## 243. «No lo mires porque son demasiados» es circular
+
+El guard de residuos no revisaba las personas de baja, con una razón escrita y
+sensata: el producto no borra personas porque sus fichajes viven cuatro años. Pero
+había **946 personas de prueba de baja sin un solo fichaje**, de 969 en la empresa:
+el 98 % de la pantalla era basura.
+
+El comentario decía además que traerlas todas partiría la lista en páginas. Ahí
+está el círculo: **no se miraban porque eran demasiadas, y eran demasiadas porque
+nadie las miraba**.
+
+**Cómo romperlo**: cuando una comprobación se salta un conjunto por su tamaño, ese
+tamaño es el dato que hay que vigilar. Un tope con un mensaje que diga «subir el
+tope no es el arreglo» cuesta diez líneas y convierte un punto ciego en una alarma.
+
+**Y separa el «no se puede» del «no se hace»**: aquí no se podía borrar a quien
+tiene fichajes ---cierto--- y de ahí se había concluido que no se podía borrar a
+nadie, que es falso y era el 98 % del problema.

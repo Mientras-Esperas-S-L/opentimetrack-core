@@ -126,6 +126,11 @@ class AuditAction(models.TextChoices):
     #: añadir--- así que una empresa nunca puede quedarse sin poder demostrar
     #: por qué ya no tiene aquellos fichajes.
     RECORD_PURGED = "RECORD_PURGED", _("Purged expired working time records")
+    #: Se entregó a alguien su propio registro por un enlace, sin cuenta. Dos
+    #: asientos por entrega: uno cuando se genera el enlace ---con quién lo
+    #: generó--- y otro cuando se descarga. Sin el segundo no se puede demostrar
+    #: que la solicitud del art. 15 RGPD llegó a atenderse, solo que se contestó.
+    RECORD_DELIVERED = "RECORD_DELIVERED", _("Delivered somebody their own record")
 
     # Failed sign-ins are deliberately absent. ATOMIC_REQUESTS is on and DRF
     # rolls the transaction back when it returns an error, so an entry written
