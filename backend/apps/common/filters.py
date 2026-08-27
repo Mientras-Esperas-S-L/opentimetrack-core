@@ -22,7 +22,7 @@ import django_filters
 from django.utils.translation import gettext_lazy as _
 from rest_framework.filters import SearchFilter
 
-from apps.common.rangos import refuse_wrong_period_names
+from apps.common.rangos import refuse_inverted_range, refuse_wrong_period_names
 
 
 def _sin_acentos(texto: str) -> str:
@@ -65,6 +65,7 @@ class LocalDayRangeFilter(django_filters.FilterSet):
     def __init__(self, data=None, *args, **kwargs):
         if data is not None:
             refuse_wrong_period_names(data)
+            refuse_inverted_range(data)
         super().__init__(data, *args, **kwargs)
 
     @property

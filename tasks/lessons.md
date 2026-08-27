@@ -3204,3 +3204,26 @@ las comprobaciones del resumen.
 **Y el olfato que lo encontró**: el JSON traía campos que el fichero no. Cuando
 una API devuelve más de lo que el documento equivalente enseña, o sobra en la
 API o falta en el documento; en ninguno de los dos casos está bien.
+
+## 207. Una regla aplicada a mano en dos sitios es una regla que falta en el tercero
+
+Pedir un periodo que acaba antes de empezar se rechazaba en el informe del art.
+34.9 y en el cuadrante, cada uno por su cuenta y con el mismo mensaje traducido.
+En los listados de fichajes y del rastro devolvía **200 con cero filas**.
+
+Es el mismo patrón que los cinco catálogos de la vuelta 102 y que los trabajos
+periódicos de la 104: la decisión estaba tomada, escrita y traducida, y no había
+llegado al sitio donde vive el mecanismo compartido ---aquí
+`LocalDayRangeFilter`, que ya rechazaba los **nombres** equivocados del periodo
+con este razonamiento: contestar 200 con un periodo que nadie pidió es
+exactamente lo que el art. 34.9 no admite---. El orden es el mismo argumento.
+
+Y el cero es peor que el error. En un informe queda un documento con su periodo
+escrito dentro; en un listado queda una tabla vacía que se lee como «no hubo
+actividad», que en un rastro de auditoría es la conclusión contraria a la
+verdadera.
+
+**Regla**: cuando encuentres una validación escrita a mano, `grep` del mensaje
+antes de seguir. Si aparece dos veces, la pregunta no es si está bien puesta,
+sino **dónde falta la tercera** --- y el sitio donde tiene que vivir suele ser
+uno que ya rechaza algo parecido por el mismo motivo.

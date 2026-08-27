@@ -17,6 +17,8 @@ dejaría dos nombres vivos para siempre.
 
 from __future__ import annotations
 
+from datetime import date
+
 from django.utils.translation import gettext_lazy as _
 from rest_framework.exceptions import ValidationError
 
@@ -45,4 +47,36 @@ def refuse_wrong_period_names(params) -> None:
             % {"good": bueno}
             for malo, bueno in equivocados.items()
         }
+    )
+
+
+def refuse_inverted_range(params) -> None:
+    """Rechaza un periodo que acaba antes de empezar, en vez de contestar cero.
+
+    No existe ninguna consulta legítima que vaya del 26 al 1: es siempre un dedo
+    equivocado o un guion que arma las fechas al revés. Y devolver **cero filas
+    sin decir nada** es la peor de las respuestas posibles, porque se lee como
+    «no hubo actividad en ese periodo» ---en el rastro de auditoría, exactamente
+    la conclusión contraria a la verdadera---.
+
+    El producto ya rechazaba esto en el informe del art. 34.9 y en el cuadrante,
+    cada uno por su cuenta y con este mismo mensaje. Faltaba en el filtro que
+    comparten los listados de fichajes y del rastro, que es donde más barato es
+    creerse el cero.
+
+    Las fechas mal escritas no se tocan aquí: de eso ya se queja el propio
+    `DateFilter`, y adelantarse solo cambiaría un mensaje bueno por otro.
+    """
+    desde, hasta = params.get("date_from"), params.get("date_to")
+    if not desde or not hasta:
+        return
+    try:
+        if date.fromisoformat(str(desde)) <= date.fromisoformat(str(hasta)):
+            return
+    except ValueError:
+        return
+
+    raise ValidationError(
+        {"date_to": _("The end date cannot precede the start date.")},
+        code="invalid",
     )

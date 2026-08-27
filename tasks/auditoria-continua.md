@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 110 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 111 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -345,6 +345,51 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 111 --- El rastro contestaba «cero» a un periodo al revés (27/08)
+
+Lente: **cada descarga contra su pantalla**, que sale de la lección de la 110
+---cuando una salida enseña menos que otra del mismo dato, o sobra en una o falta
+en la otra---.
+
+#### Lo que aguantó, y se midió
+
+El rastro de auditoría dice de sí mismo que el fichero lleva «las mismas
+entradas que devuelve la lista, con los mismos filtros». Comprobado:
+
+| Sesión | La lista dice | El fichero trae |
+|---|---|---|
+| administración | 22.598 | 22.598 |
+| responsable | 292 | 292 |
+| operario | 1.828 | 1.828 |
+| empresa vecina | 2 | 2 |
+
+Con filtros puestos también cuadra ---5.328 y 2.949 por tipo de acción--- y el
+filtro de fechas funciona, validado contra un caso conocido: 2.328 apuntes hoy,
+16.547 en dos días, 22.608 en el año.
+
+#### Lo que no
+
+**El periodo al revés.** `?date_from=2026-08-27&date_to=2026-08-26` contestaba
+**200 con cero filas**, en el listado y en el fichero.
+
+No hay consulta legítima que vaya del 27 al 26: es siempre un dedo equivocado o
+un guion que arma las fechas al revés. Y el cero callado es la peor respuesta,
+porque se lee como «no hubo actividad en ese periodo» --- en un rastro de
+auditoría, la conclusión contraria a la verdadera.
+
+Lo llamativo es que **la decisión ya estaba tomada**: el informe del art. 34.9 y
+el cuadrante lo rechazan, cada uno por su cuenta, con el mismo mensaje ya
+traducido. Faltaba en `LocalDayRangeFilter`, el filtro que comparten fichajes y
+rastro --- que ya rechazaba los **nombres** equivocados del periodo con este
+argumento: contestar 200 con un periodo que nadie pidió es lo que el art. 34.9 no
+admite. El orden de las fechas es el mismo argumento.
+
+Arreglado donde vive el mecanismo, reutilizando el mensaje que ya existía, así
+que no se abre ningún hueco de traducción. Ocho pruebas, y **la mitad son el
+contraste**: el mismo día en los dos extremos ---la consulta más corriente que
+hay--- un extremo suelto, y una fecha mal escrita, que tiene que seguir dando su
+propio error y no el del orden.
 
 ### Vuelta 110 --- El papel que acompaña a la nómina se titulaba como el otro (27/08)
 
