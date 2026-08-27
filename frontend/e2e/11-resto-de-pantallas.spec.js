@@ -30,17 +30,34 @@ test.describe('Fichajes', () => {
 
     await page.getByRole('combobox', { name: /Persona/ }).fill('Hugo')
     await page.getByRole('option', { name: /Hugo Bermejo/ }).click()
-    await page.waitForTimeout(900)
+
+    // La pantalla **retiene las filas de antes** mientras llega la respuesta
+    // filtrada ---`placeholderData: (previous) => previous`, y está bien que lo
+    // haga: evita el parpadeo en blanco---. Así que esperar por reloj y contar
+    // era una carrera: 900 ms bastaban casi siempre y fallaban cuando la API
+    // tardaba más, y el fallo salía como «filtrar no quitó nada», acusando al
+    // producto de un defecto que no tenía. Se espera por la condición.
+    await expect
+      .poll(() => filas().count(), { message: 'filtrar no quitó nada' })
+      .toBeLessThan(antes)
+
+    // Y que no pasó por quedarse vacía a medio pintar, que también es «menos».
+    await expect(filas().first()).toBeVisible()
 
     // Filtrado por una persona, la columna «Persona» desaparece: repetir el
     // mismo nombre en cada fila no informa de nada. Está bien pensado, y por
     // eso la prueba comprueba **eso** y no que cada fila lleve el nombre.
     await expect(page.getByRole('columnheader', { name: 'Persona' })).toHaveCount(0)
-    expect(await filas().count(), 'filtrar no quitó nada').toBeLessThan(antes)
 
     // Y que de verdad sean los suyos, que por pantalla ya no se puede leer.
+    // Comprobar solo el 200 no decía nada: un filtro que ignora el término
+    // devuelve 200 con la empresa entera. Se mira lo que trae.
     const suyos = await api(page, '/punches/?search=Hugo')
     expect(suyos.status).toBe(200)
+    const nombres = new Set(
+      (suyos.body.results ?? suyos.body).map((p) => p.employee_name ?? p.employee),
+    )
+    expect(nombres.size, 'el filtro trajo fichajes de más de una persona').toBe(1)
 
     expect(ruido()).toEqual([])
     expect(await huecosVisibles(page)).toEqual([])

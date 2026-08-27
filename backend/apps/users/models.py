@@ -20,6 +20,7 @@ import zoneinfo
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
+from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -548,8 +549,16 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
             #
             # Solo cuando lo hay: en blanco es lo normal en una empresa que no
             # usa números, y no puede chocar consigo mismo.
+            # Y sin distinguir mayúsculas, porque **el resto del producto ya
+            # trata «EMP-9» y «emp-9» como la misma persona**: así los busca
+            # `_resolve` en la puerta de integración y así el fichaje delegado,
+            # que además rechaza la referencia por ambigua si encuentra dos.
+            # Comparando exacto se podían crear las dos por shell o por
+            # importación, y entonces una puerta elegía al azar y la otra se
+            # plantaba para todo el mundo.
             models.UniqueConstraint(
-                fields=["tenant", "employee_id"],
+                Lower("employee_id"),
+                "tenant",
                 condition=~models.Q(employee_id=""),
                 name="unique_staff_number_per_company",
             ),

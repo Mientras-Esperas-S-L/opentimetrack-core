@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 125 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
+Vueltas dadas: 126 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,127 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 126 --- El número de empleado ya es único también para la base (27/08)
+
+Tarea **2 de la lista**. La vuelta 118 arregló que dos personas de la misma
+empresa pudieran llevar el mismo número escrito con otra caja ---`EMP-9` y
+`emp-9`---, pero lo arregló **solo en el alta por API**: `validate_employee_id`
+compara con `iexact`, igual que los dos sitios que resuelven una referencia (la
+puerta de integración y el fichaje delegado). La restricción de la base seguía
+comparando exacto.
+
+Eso dejaba la puerta abierta a todo lo que no pasa por el serializador: el shell,
+una importación, un `update` masivo, un `loaddata`. Y el daño no es del que lo
+crea: cuando existen las dos, una puerta resuelve **una al azar** y la otra se
+planta con «la referencia coincide con más de una persona», **para todos los
+fichajes de esa empresa**.
+
+Ahora el índice es funcional, sobre `Lower(employee_id)`:
+
+```python
+models.UniqueConstraint(
+    Lower("employee_id"), "tenant",
+    condition=~models.Q(employee_id=""),
+    name="unique_staff_number_per_company",
+)
+```
+
+Se conservan las dos mitades de la condición vieja, porque cada una sostiene un
+caso real: el `condition` deja que **varias personas no lleven número** (numerar
+es opcional, y sin eso una empresa que no numera solo podría dar de alta a una),
+y el `tenant` deja que **dos clientes numeren desde el uno**. Las dos tienen
+prueba propia, no solo el caso que se venía a arreglar.
+
+#### La migración se niega antes de tocar nada
+
+Cambiar un índice a único puede reventar a mitad si ya hay duplicados, y el
+mensaje que da Postgres ---la clave que colisiona--- no dice **quién** es. Así que
+la operación **primera** de la migración, antes del `RemoveConstraint`, es un
+`RunPython` que agrupa por `(tenant_id, Lower(employee_id))`, y si algo sale con
+más de uno lanza `RuntimeError` nombrando empresa, número y los correos:
+
+```
+Jardines Demo S.L.: 2 personas con el número «emp-choque»
+  -> «EMP-CHOQUE» choque.mayus@demo.local, «emp-choque» choque.minus@demo.local
+```
+
+Y **no elige por su cuenta**: dice que cambie el número quien tenga que hacerlo,
+«porque quién se queda el número lo decide la empresa: el número identifica a la
+persona en sus nóminas y en su convenio». Renombrar a `EMP-9-bis` por detrás
+sería un cambio silencioso en un dato que sale en documentos que firma un tercero.
+
+En esta base **no hay ni un choque**, así que la defensa no salta sola. Se
+comprobó a mano: vuelta a `users 0015`, dos personas creadas por shell con
+`EMP-CHOQUE` y `emp-choque`, y al migrar se plantó con el mensaje de arriba
+dejando la migración **sin aplicar** ---verificado con `showmigrations`---. Luego
+se retiró el choque y migró a la primera. Una defensa que no se ha visto saltar
+no está puesta.
+
+#### Y de paso, el primer trozo de la tarea 6 --- con causa
+
+La tanda de navegador de esta vuelta salió con **un rojo**: «Fichajes › filtra por
+persona y por fechas», que a solas pasa. Es el patrón que ya conocíamos, pero esta
+vez la causa se dejó ver entera, y **es la tarea 6**:
+
+```js
+await page.getByRole('option', { name: /Hugo Bermejo/ }).click()
+await page.waitForTimeout(900)          // <-- espera por reloj
+expect(await filas().count()).toBeLessThan(antes)   // <-- count() no espera
+```
+
+La pantalla de fichajes usa `placeholderData: (previous) => previous`, y hace
+bien: **retiene las filas de antes** mientras llega la respuesta filtrada, en vez
+de parpadear en blanco. El efecto es que a los 900 ms se pueden estar contando
+**las cincuenta filas viejas**, y el fallo sale como «filtrar no quitó nada»
+---acusando al producto de un defecto que no tiene---.
+
+Medido para descartar la otra hipótesis: sin filtro la página va llena (50 de las
+879 del mes), y con Hugo son 14 fichajes en 7 días. El margen es de 50 a ~21, así
+que la aserción no es frágil por volumen: **lo único que puede fallar es la
+carrera**.
+
+Sustituida por espera por condición (`expect.poll`), más una comprobación de que
+no pasó por quedarse vacía a medio pintar, que también sería «menos filas».
+
+Y demostrado en caliente, con la API retardada a 2 s por `page.route`, las dos
+versiones una al lado de la otra: **la vieja falla con el mismo mensaje que salió
+en la tanda y la nueva pasa**. La demostración era un fichero de usar y tirar y ya
+está borrado.
+
+De paso, a dos líneas de allí había una aserción hueca: se pedía
+`/punches/?search=Hugo` y solo se comprobaba el `200`, bajo un comentario que
+prometía «que de verdad sean los suyos». Un filtro que ignorase el término
+devolvería `200` con la empresa entera. Ahora se mira lo que trae.
+
+**Quedan 40 esperas por reloj**, y ya se sabe qué buscar en cada una: no es el
+reloj lo que falla, es el `count()`/`textContent()` crudo que hay detrás. Barridas
+las cuarenta con ese criterio ---un `expect(await ...)` en las ocho líneas
+siguientes---, **diez llevan el patrón exacto que acaba de fallar**:
+
+```
+03-sesion.spec.js:83            (2500 ms)
+07-pantallas.spec.js:87          (600 ms)
+11-resto-de-pantallas.spec.js:126, :242
+12-acciones-masivas.spec.js:66   (800 ms)
+15-filtros.spec.js:38, :53, :137, :147   <-- cuatro en el mismo fichero
+30-contraste.spec.js:96          (400 ms)
+```
+
+Esas diez van primero en la vuelta que siga con la tarea 6, y `15-filtros` va
+antes que ninguna. Las otras treinta esperan a que algo se asiente sin sacar
+ningún valor detrás: son lentas, no frágiles, y se miran después.
+
+#### Verde al cerrar
+
+`1.259` pruebas de backend (siete nuevas), la suite de navegador entera, `ruff`
+limpio, sin migraciones pendientes.
+
+**Queda de la lista**: 3 (`record_retention_years`), 4 (acceso de quien ya no
+trabaja allí), 5 (el `.md` del dossier; el artefacto ya está al día), 6 (las 41
+esperas por reloj, que **no cabe en una vuelta** y se partirá), 7 (los 27
+`date.today()`), 8 (los 501 huecos de catalán y gallego), 9 (pausa y modo de
+trabajo al fichar, **recomendado implementar**) y 10 (dependencias).
 
 ### Vuelta 125 --- Retirados los huérfanos, y tres colores que no se leían (27/08)
 

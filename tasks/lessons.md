@@ -3795,3 +3795,62 @@ contestaba correctamente a un estado que nadie había querido montar.
 estado se rompe **de forma permanente** en cuanto falla una vez. La de al lado, en
 el mismo fichero, ya usaba días propios de cada corrida y explicaba por qué. La
 regla estaba escrita a diez líneas de distancia.
+
+## 234. Una regla que solo vive en el serializador no está puesta
+
+La comprobación de que el número de empleado no se repita ignorando mayúsculas
+llevaba ocho vueltas escrita ---en `validate_employee_id`--- y estaba **abierta por
+todos los demás lados**: shell, importación, `update` masivo, `loaddata`. El
+serializador es una puerta, no una regla; la regla vive en la base.
+
+**Cómo se ve**: si un invariante importa, pregúntate quién lo rompe **sin pasar
+por la vista**. Si la respuesta es «cualquiera con acceso al ORM», falta el
+`UniqueConstraint`, el `CheckConstraint` o el trigger. La prueba que lo demuestra
+tampoco puede usar el serializador: tiene que crear el objeto a pelo y esperar
+`IntegrityError`.
+
+## 235. Al endurecer un índice, mira antes y niégate con nombres
+
+Un `AddConstraint` que se vuelve único puede reventar a mitad de la migración, y
+lo que Postgres imprime ---la clave duplicada--- no dice de **quién** es. La
+operación que mira va **primera**, antes del `RemoveConstraint`, y si encuentra
+choques lanza `RuntimeError` con empresa, valor y correos, dejando la base como
+estaba.
+
+**Y no arregles tú el choque.** La tentación es renombrar el duplicado a
+`X-bis` y seguir. Aquí ese número sale en la nómina y en el convenio de una
+persona: elegir por la empresa es cambiarle un dato que firma un tercero. La
+migración se planta y dice qué hay que decidir.
+
+**Comprobado en caliente, no sobre el papel**: en esta base no hay ni un choque,
+así que la defensa nunca habría saltado sola. Se retrocedió una migración, se
+creó el choque a propósito por shell, se vio el mensaje, y se confirmó con
+`showmigrations` que **la migración quedó sin aplicar**. Sigue valiendo la 227: si
+quieres saber si una defensa está puesta, rómpela.
+
+## 236. Una espera por reloj no falla por el reloj: falla por el `count()` que hay detrás
+
+El rojo intermitente de «Fichajes › filtra por persona y por fechas» era una
+`waitForTimeout(900)` seguida de `expect(await filas().count()).toBeLessThan(...)`.
+Lo que rompe no es que 900 ms sea poco: es que **`count()` no espera**. Todo lo
+que hay alrededor ---`toBeVisible`, `toHaveCount`, `toHaveText`--- reintenta hasta
+el timeout; en el momento en que se saca el valor a una variable con `await`, se
+pierde ese reintento y queda una foto de un instante arbitrario.
+
+**Cómo se ve venir**: `await ...count()`, `await ...textContent()`, `await
+...innerText()` metidos dentro de un `expect(...)`. Y peor si delante hay un
+`waitForTimeout`, que es la confesión de que alguien ya sabía que había carrera.
+
+**El arreglo es `expect.poll`**, que devuelve el reintento a un valor calculado.
+
+**Y la razón de que la carrera exista importa**: aquí la pantalla retiene a
+propósito las filas anteriores mientras carga (`placeholderData: previous`), para
+no parpadear en blanco. Es una buena decisión de producto que convierte «todavía
+no ha llegado» en algo **indistinguible** de «llegó y no cambió nada». Cuando una
+lista mantiene los datos viejos durante la carga, ninguna aserción sobre su
+contenido vale sin espera por condición.
+
+**Corolario para leer los fallos**: el mensaje decía «filtrar no quitó nada», o
+sea acusaba al filtro del producto. La prueba estaba describiendo su propia prisa.
+Antes de creer a un fallo que acusa al producto, mira si la prueba pudo haber
+mirado demasiado pronto.
