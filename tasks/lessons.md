@@ -3378,3 +3378,47 @@ por la suya. Comprobado además en caliente antes de escribir la prueba.
 permitido, y esas se escriben **primero**. Es la misma disciplina que la lista
 blanca de la vuelta anterior: al cerrar, lo caro no es que se cuele algo, es que
 deje de pasar lo que debía.
+
+## 215. Cuando el cruce se prueba en un sentido, el fallo está en el otro
+
+La vuelta anterior encontró que una credencial de aplicación entraba por la
+puerta de las personas. Al buscar en esta si hacía falta escribir la prueba,
+apareció esta, que ya existía:
+
+    test_a_person_token_does_not_open_the_application_doors
+
+O sea: **alguien había pensado en el cruce y lo había probado en un sentido**
+---persona contra la puerta de aplicaciones--- y no en el otro. Y el que faltaba
+era el que estaba roto.
+
+No es casualidad. Se prueba el sentido que se imagina primero, que suele ser el
+que preocupa al escribir la puerta nueva («que no entre cualquiera aquí»); el
+inverso ---«que esta credencial no entre en lo de siempre»--- exige acordarse de
+un código que ya funcionaba y que nadie está tocando.
+
+**Regla**: una prueba de cruce en un sentido es la señal de que falta la del
+otro. Cuando encuentres una, escribe la simétrica en el momento, aunque parezca
+redundante: es literalmente la mitad que no se ha mirado.
+
+## 216. `on_commit` hace que un rastro parezca ausente
+
+La sonda decía que dar de alta a una persona **no dejaba ni un apunte** en el
+rastro de auditoría, ni hecho por una aplicación ni por administración. Sonaba a
+hallazgo grave: el registro de quién cambia qué es media razón de ser del
+producto.
+
+Era mío. El rastro se escribe en `transaction.on_commit`, y en una prueba con
+`django_db` la transacción no se confirma nunca, así que la llamada queda
+encolada y jamás corre. Con `django_capture_on_commit_callbacks(execute=True)`
+aparecieron los apuntes, y bien puestos: `PERSON_CREATED` con
+`actor=«aplicación · Conector»` cuando lo hace un conector, y con el nombre de la
+persona cuando lo hace una persona.
+
+Lo que lo desmontó fue el **contraste**: medir lo mismo hecho por un humano. Si
+la aplicación no dejaba rastro pero la persona sí, era un fallo del producto; al
+salir cero las dos, el sospechoso pasaba a ser la sonda.
+
+**Regla**: en este proyecto, cualquier medición del rastro, de los correos o del
+borrado de ficheros va dentro de `django_capture_on_commit_callbacks`. Y cuando
+una comprobación dé cero, mide **el caso que sí debería dar distinto de cero**
+antes de escribir la palabra «hallazgo».

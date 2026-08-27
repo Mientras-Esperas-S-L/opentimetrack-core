@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 115 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 116 · Vueltas seguidas sin hallazgos: 1
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -345,6 +345,52 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 116 --- La puerta de integración, atacada por dentro (27/08) --- LIMPIA
+
+Lente: seguir donde la 115 lo dejó. Aquella encontró el **cruce** entre las dos
+puertas; esta ataca la puerta propia de las aplicaciones.
+
+**Todo aguantó**, y se midió cada cosa:
+
+- **Aislamiento entre empresas**, por las cinco vías que hay para nombrar a una
+  persona: correo, número de empleado, identificador, y también el `PUT` y el
+  `DELETE`. Y fichar por alguien de otra empresa. Todas contestan **409
+  «ninguna persona activa coincide»**, indistinguible de «no existe», que es lo
+  correcto: confirmar que existe en otro sitio ya sería decir algo.
+- **Los alcances**: una credencial de solo lectura **lee** (200) y no escribe ni
+  borra (403), y una sin `punch:delegated` no ficha (403).
+- **Revocar funciona**: 200 antes, **401** después.
+- **La idempotencia**: la misma clave dos veces deja **un solo fichaje** (201 y
+  luego 200), y sin clave contesta 400 con código propio.
+- **El rastro identifica a la aplicación**: `PERSON_CREATED` con
+  `actor=«aplicación · Conector»`.
+
+#### Dos cosas que parecían hallazgos y eran mías
+
+**El `PUT` sobre el correo de alguien de otra empresa devolvía 201.** Parecía
+fuga; no lo es. Crea en `request.user.application.tenant` ---su propia empresa---
+y el «crear si no existe» es el empuje de plantilla que el código documenta:
+«alguien de temporada vuelve, y la aplicación de gestión lo da de alta otra vez
+con el mismo número».
+
+**El rastro parecía vacío**: cero apuntes al dar de alta. Se escribe en
+`transaction.on_commit`, que en una prueba con `django_db` no llega a correr. Lo
+desmontó el contraste ---medir lo mismo hecho por una persona, que también daba
+cero--- y con `django_capture_on_commit_callbacks` aparecieron los apuntes.
+
+#### Lo que sí deja esta vuelta
+
+Al mirar si hacía falta escribir pruebas, apareció que **ya existían todas**
+---aislamiento, alcances, el empuje que no roba el número de otro--- y entre ellas
+esta: `test_a_person_token_does_not_open_the_application_doors`.
+
+Es decir: **el cruce estaba probado en un sentido y no en el otro**, y el que
+faltaba era justo el que la vuelta 115 encontró roto. Se prueba el sentido que
+preocupa al escribir la puerta nueva; el inverso exige acordarse de un código que
+ya funcionaba.
+
+No se añaden pruebas: duplicarlas no protege más.
 
 ### Vuelta 115 --- Una credencial sin permisos entraba por la puerta de las personas (27/08)
 
