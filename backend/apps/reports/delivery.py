@@ -38,6 +38,8 @@ from django.http import HttpResponse
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
@@ -163,6 +165,16 @@ class RecordDeliveryView(APIView):
     authentication_classes = []
     renderer_classes = [PDFRenderer, CSVRenderer]
 
+    @extend_schema(
+        summary="Descargar el propio registro con un enlace de entrega",
+        description=(
+            "Devuelve el registro de la persona que firma el enlace, en PDF o CSV según "
+            "la cabecera Accept, y solo el periodo que la empresa conserva. No abre sesión. "
+            "404 si el enlace caducó, se invalidó o no existe: los tres son lo mismo desde fuera."
+        ),
+        auth=[],
+        responses={200: OpenApiTypes.BINARY, 404: None},
+    )
     def get(self, request, uid: str, token: str):
         person = resolve_delivery_token(uid, token)
         if person is None or person.tenant_id is None:
