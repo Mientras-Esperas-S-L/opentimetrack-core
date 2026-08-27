@@ -3105,3 +3105,26 @@ pasar**, junto al que debe fallar, cuesta dos líneas y es lo único que disting
 «está protegido» de «me he equivocado de nombre». Es la lección 143 en su forma
 más barata de pasar por alto: aquí el falso negativo venía disfrazado del
 resultado que quería ver.
+
+## 203. Una `UniqueConstraint` con condición no está en `pg_constraint`
+
+Al cotejar las veinte constraints que declaran los modelos contra las que hay en
+la base, seis salieron «faltan»: los dos festivos, las tres de `users_user` y la
+de los tipos de permiso. Parecía que se habían perdido.
+
+No se habían perdido: Django implementa una `UniqueConstraint` **con
+`condition=`** como un **índice único parcial**, no como una constraint. Viven en
+`pg_index`, no en `pg_constraint`, y hay que mirar los dos sitios ---y en el
+segundo, `indisvalid`, porque un `CREATE INDEX CONCURRENTLY` a medias deja un
+índice que existe y no impone nada---.
+
+**Regla**: para saber si las salvaguardas declaradas siguen en la base, la
+consulta tiene que unir `pg_constraint` y `pg_index`. Y como con los triggers de
+la vuelta anterior, mirar el campo de estado y no solo el nombre: `convalidated`
+para las constraints ---una `NOT VALID` no se comprobó sobre lo que ya había--- e
+`indisvalid` para los índices.
+
+**Y el método**: seis «faltan» de golpe es demasiado ordenado para ser cierto.
+Cuando una comprobación acuse a muchas cosas a la vez, sospecha de la
+comprobación antes que del código --- que es la misma regla que ya vale para las
+pruebas.

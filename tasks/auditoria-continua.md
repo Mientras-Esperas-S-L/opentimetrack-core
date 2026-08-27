@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 107 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 108 · Vueltas seguidas sin hallazgos: 1
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -340,6 +340,66 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 108 --- Las salvaguardas de la base, por su estado real (27/08) --- LIMPIA
+
+Lente: la continuación de la anterior. Si un trigger podía estar presente e
+inerte, **¿qué más protege la base y podría estar inerte?** Las veinte
+constraints que declaran los modelos, y los índices únicos.
+
+**Todas presentes y activas.** Catorce viven en `pg_constraint` y seis son
+índices únicos parciales, los seis válidos. Ninguna constraint `NOT VALID`
+---esas no se comprobaron sobre las filas que ya había--- y ningún índice
+inválido, de los que un `CREATE INDEX CONCURRENTLY` a medias deja existiendo sin
+imponer nada.
+
+#### El falso positivo, que casi es el hallazgo
+
+El primer cotejo dijo que **faltaban seis**: los dos de festivos, los tres de
+`users_user` y el de los tipos de permiso. Seis de golpe es demasiado ordenado
+para ser cierto, y no lo era: Django implementa una `UniqueConstraint` con
+`condition=` como **índice único parcial**, así que vive en `pg_index` y no en
+`pg_constraint`. La consulta miraba un solo sitio.
+
+#### Lo que se ejercitó de verdad
+
+- **La unicidad del correo.** `unique_email_per_company` es (empresa, correo) sin
+  condición, y `unique_email_without_company` cubre el caso de empresa nula,
+  porque Postgres trata los `NULL` como distintos y la primera no protegería ahí.
+  El diseño está completo: una persona puede trabajar en dos empresas con el
+  mismo correo y aun así no puede duplicarse dentro de una.
+- **El parte de baja, que es dato del art. 9.** Se intentó subir un PDF a una
+  ausencia de tipo baja médica: contesta **409** citando el RD 1060/2022, y
+  ---lo que importaba--- **no queda ningún fichero en el almacén**: 4.625 antes y
+  4.625 después. La constraint que lo prohíbe vive en la base «y no solo en un
+  formulario», y el rechazo llega antes de escribir nada.
+
+#### Validado contra dos casos conocidos
+
+Un resultado limpio no vale sin esto. Se quitó `one_shift_per_person_per_day` y
+se invalidó a mano `unique_identity_per_company`, cada una dentro de una
+transacción deshecha: **el cotejo las echó de menos las dos veces**, y volvió a
+«nada falta» al restaurarlas.
+
+#### Descartado, con su motivo
+
+**`transaction=True` no se puede usar en las pruebas**, porque ese modo vacía las
+tablas con `TRUNCATE` en el desmontaje y el rastro no lo permite ---el mismo
+trigger de la vuelta anterior---. Lo descubrí tropezando con ello, y resulta que
+**el proyecto ya lo tenía documentado en cuatro ficheros de prueba**, con la
+salida adoptada: `django_capture_on_commit_callbacks` para lo que necesitaría ese
+modo. No es un hallazgo; queda aquí para no volver a proponerlo.
+
+#### Decisión abierta que deja esta vuelta
+
+El guardián de salud vigila **tres triggers y ninguna constraint**. La historia
+del proyecto dice que estas cosas se evaporan ---los triggers se perdieron una vez
+en una base real, con la migración marcada como aplicada--- y el mismo argumento
+vale para las veinte. La comprobación está escrita y **validada dos veces** en
+esta vuelta; conectarla al health es una decisión, no un arreglo, porque hoy no
+falta ninguna. Y tiene que ir al health y no a una prueba, por lo que el propio
+guardián ya razona: «las pruebas corren sus migraciones enteras y siempre los
+ven; es exactamente el sitio donde no estaba el problema».
 
 ### Vuelta 107 --- El guardián del rastro no veía un trigger apagado (27/08)
 
