@@ -337,10 +337,27 @@ export default function TeamCalendar() {
         <Empty>Nadie tiene ausencias este mes.</Empty>
       ) : (
         <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 40 * total + 180 }}>
+          {/* Rejilla de `Box`, así que la semántica hay que ponerla a mano: sin
+              esto un lector de pantalla no encuentra ni filas ni columnas, y
+              tampoco las encontraba la prueba que decía comprobar el filtro
+              ---localizaba `getByRole('row')` y siempre daba cero, de modo que
+              su aserción `filas <= todas` era «0 <= 0» y pasaba con el filtrado
+              desconectado---.
+
+              Quedan sin marcar **las celdas de día**, a propósito: la que tiene
+              una ausencia ya es `role="button"` para poder abrirla, y meterla
+              dentro de una celda pide un elemento más en la rejilla. Se hará
+              mirando la pantalla, no a ciegas. Con las filas y las cabeceras
+              puestas ya se puede recorrer por filas, que era el punto ciego. */}
+          <Box
+            role="table"
+            aria-label="Ausencias del mes por persona"
+            sx={{ minWidth: 40 * total + 180 }}
+          >
             {/* Day numbers. Weekends are tinted so a span reads at a glance
                 without counting cells. */}
             <Box
+              role="row"
               sx={{
                 display: 'grid',
                 gridTemplateColumns: `180px repeat(${total}, 1fr)`,
@@ -348,12 +365,13 @@ export default function TeamCalendar() {
                 borderColor: 'divider',
               }}
             >
-              <Box sx={{ p: 1 }} />
+              <Box role="columnheader" aria-label="Persona" sx={{ p: 1 }} />
               {dayNumbers.map((day) => {
                 const weekday = weekdayOf(cursor.year, cursor.month, day)
                 return (
                   <Box
                     key={day}
+                    role="columnheader"
                     sx={{
                       py: 1,
                       textAlign: 'center',
@@ -378,6 +396,7 @@ export default function TeamCalendar() {
             {people.map((person, index) => (
               <Box
                 key={person.name + index}
+                role="row"
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: `180px repeat(${total}, 1fr)`,
@@ -389,6 +408,7 @@ export default function TeamCalendar() {
                 <Typography
                   variant="body2"
                   noWrap
+                  role="rowheader"
                   sx={{ px: 1.5, alignSelf: 'center', fontWeight: 500 }}
                 >
                   {person.name}

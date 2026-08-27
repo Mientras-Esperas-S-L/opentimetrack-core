@@ -63,8 +63,12 @@ test.describe('Personas', () => {
     await page.getByRole('option', { name: 'Todos' }).click()
     await page.getByRole('combobox', { name: 'Perfil' }).click()
     await page.getByRole('option', { name: 'Administración' }).click()
-    await page.waitForTimeout(800)
-    expect(await filas().count()).toBeLessThan(todas)
+
+    // Por condición y no por reloj: `count()` no reintenta, así que con la
+    // respuesta lenta se contaban las filas de antes y el fallo salía como «el
+    // filtro no quitó nada», acusando al producto. Ver la vuelta 126.
+    await expect.poll(() => filas().count()).toBeLessThan(todas)
+    await expect(filas().first()).toBeVisible()
 
     expect(ruido()).toEqual([])
     expect(await huecosVisibles(page)).toEqual([])

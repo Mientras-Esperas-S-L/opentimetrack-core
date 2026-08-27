@@ -3984,3 +3984,67 @@ tope no es el arreglo» cuesta diez líneas y convierte un punto ciego en una al
 **Y separa el «no se puede» del «no se hace»**: aquí no se podía borrar a quien
 tiene fichajes ---cierto--- y de ahí se había concluido que no se podía borrar a
 nadie, que es falso y era el 98 % del problema.
+
+## 244. Un recuento no es una lista de defectos: clasifica antes de arreglar
+
+La tarea decía «sustituir las 41 esperas por reloj por esperas por condición», y
+ese 41 salía de contar `waitForTimeout` en la suite. Clasificadas por lo que llevan
+detrás, **solo tres eran defectos**:
+
+- **Carrera** (3): un valor del DOM sacado a una variable, que no reintenta. Son
+  los rojos intermitentes.
+- **Aserción negativa** (4): se comprueba que *nada* pasó ---la consola no se
+  quejó, la sesión no cambió, ningún texto quedó bajo el contraste mínimo---. Hay
+  que dar margen a que el efecto indeseado ocurra, y **no hay condición que
+  esperar**: quitar el reloj no la hace más rápida, la hace ciega.
+- **Estado intermedio** (1): se mira a propósito antes de que llegue la respuesta.
+  Tampoco es expresable como condición.
+- **«A que se asiente»** (25): no sacan ningún valor, la aserción que sigue ya
+  reintenta. Lentas, no frágiles: 32 s de una tanda de 11,2 min.
+
+**La regla**: cuando una tarea llega como un número ---«hay 41 X, cámbialos---»,
+el primer trabajo es **partir ese número en clases y medir cada una**. Aquí ahorró
+tocar 38 sitios que no estaban mal, y en dos de ellos habría quitado cobertura.
+
+**Y decirlo al cerrar**: la tarea no se cumple «al 7 %», se cumple, y el enunciado
+era el que contaba mal.
+
+## 245. Una prueba puede estar rota por dos motivos que se tapan entre sí
+
+«Filtra por tipo y por estado» comprobaba `filas().count() <= todas`. Dos defectos
+a la vez:
+
+1. La **aserción era hueca**: con el filtro desconectado el conteo no cambia, y «no
+   cambia» cumple `<=`. Su propio comentario decía «lo que no vale es que no cambie
+   nada nunca», que es justo lo que permitía.
+2. El **locator no encontraba nada**: `getByRole('row')` sobre una rejilla de
+   `Box` con `display: grid` y ningún `role`. Así que `todas` valía **cero** y la
+   aserción era «0 <= 0».
+
+Cada uno tapaba al otro. Arreglar solo la aserción habría dado un rojo confuso
+---«esperaba 8, recibí 0»---, y arreglar solo el locator habría dejado la
+comparación inútil pasando con números de verdad.
+
+**Cómo se detecta**: una aserción sobre un conteo que nunca has visto valer. Antes
+de confiar en `expect(n).toBeLessThan(m)`, imprime `n` y `m` una vez. Si uno es
+cero, la prueba no está comprobando lo que dice.
+
+**Y el defecto de producto que había debajo**: la rejilla sin roles no la podía
+recorrer un lector de pantalla. Lo encontró una prueba que fallaba por otra cosa.
+
+## 246. Localizar por rol también obliga a que el producto tenga roles
+
+La regla «localiza por rol» se cumple mal cuando el producto no da roles: el
+locator no falla, **devuelve cero**, y una aserción negativa o un `<=` pasan en
+verde para siempre.
+
+En una rejilla hecha con `div`s hay que ponerlos a mano: `role="table"` en el
+contenedor, `role="row"` en cada fila, `columnheader` en las cabeceras de columna y
+`rowheader` en la primera celda de cada fila. Con eso, `getByRole('row').filter({
+has: page.getByRole('rowheader') })` distingue las filas de datos de la de
+cabecera ---que era el otro error: `hasNotText: 'lun'` no excluía una cabecera hecha
+de números---.
+
+**Corolario**: cuando escribas una prueba que localiza por rol sobre una pantalla
+que no es una tabla de HTML, comprueba primero que el conteo sin filtros es el que
+esperas. Si es cero, el trabajo no es la prueba: es el producto.

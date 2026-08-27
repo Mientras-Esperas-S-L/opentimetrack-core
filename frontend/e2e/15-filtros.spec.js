@@ -35,12 +35,18 @@ test.describe('Fichajes', () => {
 
     await page.getByRole('combobox', { name: 'Tipo' }).click()
     await page.getByRole('option', { name: 'Entrada' }).click()
-    await page.waitForTimeout(900)
 
     // Filtrado a entradas, no puede quedar ninguna salida en pantalla.
-    for (const fila of await filas().all()) {
-      await expect(fila).not.toContainText('Salida')
-    }
+    //
+    // Como «no hay ninguna que incumpla» y no recorriendo las filas: un
+    // `for (const fila of await filas().all())` itera **una foto** tomada
+    // cuando se pidió, así que sin la espera por reloj de antes recorría las
+    // filas viejas ---y con ella, las recorría casi siempre---. Un locator
+    // filtrado reintenta hasta el plazo, que es lo que se quería decir.
+    await expect(filas().filter({ hasText: 'Salida' })).toHaveCount(0)
+    // Y que no pasó por quedarse vacía: sin esto un grid en blanco lo cumple.
+    await expect(filas().first()).toBeVisible()
+
     expect(await cuantos('?date_from=2026-08-01&date_to=2026-08-13&punch_type=IN')).toBeLessThan(
       todos,
     )
@@ -50,10 +56,9 @@ test.describe('Fichajes', () => {
     await page.getByRole('option', { name: 'Todos' }).click()
     await page.getByRole('combobox', { name: 'Origen' }).click()
     await page.getByRole('option', { name: 'Móvil' }).click()
-    await page.waitForTimeout(900)
-    for (const fila of await filas().all()) {
-      await expect(fila).toContainText('Móvil')
-    }
+
+    await expect(filas().filter({ hasNotText: 'Móvil' })).toHaveCount(0)
+    await expect(filas().first()).toBeVisible()
 
     expect(ruido()).toEqual([])
     expect(await huecosVisibles(page)).toEqual([])
@@ -124,27 +129,69 @@ test.describe('Mis ausencias', () => {
 test.describe('Calendario del equipo', () => {
   test.use({ storageState: 'e2e/.sesiones/admin.json' })
 
-  test('filtra por tipo y por estado', async ({ page }) => {
+  test('filtra por tipo y por estado, con el número exacto', async ({ page }) => {
+    /** Esta prueba comprobaba `personas().count() <= todas`, con el comentario
+     *  «o quedan menos filas o el mes no tenía de ese tipo; lo que no vale es
+     *  que no cambie nada nunca». Y eso es justo lo que dejaba pasar: con el
+     *  filtro **desconectado** el conteo no cambia, y «no cambia» cumple
+     *  `<=`. La aserción admitía el defecto que venía a impedir.
+     *
+     *  Ahora se cuenta contra los datos que la propia pantalla trajo. El
+     *  filtrado es en el cliente sobre una sola petición ---se ve en
+     *  `TeamCalendar.jsx`: `todo.filter(...)`--- así que el número esperado se
+     *  puede calcular exactamente, y de paso no hace falta esperar ninguna
+     *  respuesta: lo que hay que esperar es el repintado, y de eso ya se
+     *  encarga `toHaveCount`.
+     */
     const ruido = vigilarConsola(page)
     await irA(page, '/panel/calendario', 'Calendario del equipo')
-    await page.waitForTimeout(900)
 
-    const personas = () => page.getByRole('row').filter({ hasNotText: 'lun' })
-    const todas = await personas().count()
+    // Por el rol, no por descarte de texto: la fila de cabecera lleva los
+    // números del mes y el `hasNotText: 'lun'` de antes no la excluía ---por eso
+    // salían nueve filas para ocho personas---. Una fila de persona es la que
+    // tiene su nombre como cabecera de fila.
+    const personas = () => page.getByRole('row').filter({ has: page.getByRole('rowheader') })
+
+    // El mes que la pantalla está mirando al abrirse, que es el corriente.
+    const hoy = new Date()
+    const dosCifras = (n) => String(n).padStart(2, '0')
+    const desde = `${hoy.getFullYear()}-${dosCifras(hoy.getMonth() + 1)}-01`
+    const hasta = `${hoy.getFullYear()}-${dosCifras(hoy.getMonth() + 1)}-${dosCifras(
+      new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate(),
+    )}`
+
+    const { status, body } = await api(page, `/absences/calendar/?from=${desde}&to=${hasta}`)
+    expect(status).toBe(200)
+    const tramos = body?.results ?? body ?? []
+
+    // Una fila por persona con algo en el mes, no una por ausencia.
+    const cuantasFilas = (pasa) => new Set(tramos.filter(pasa).map((a) => a.employee)).size
+
+    await expect(personas()).toHaveCount(cuantasFilas(() => true))
 
     await page.getByRole('combobox', { name: 'Tipo' }).click()
     await page.getByRole('option', { name: 'Baja', exact: true }).click()
-    await page.waitForTimeout(600)
-
-    // Con un tipo puesto, o quedan menos filas o el mes no tenía de ese tipo.
-    // Las dos cosas valen; lo que no vale es que no cambie nada nunca.
-    expect(await personas().count()).toBeLessThanOrEqual(todas)
+    await expect(personas()).toHaveCount(cuantasFilas((a) => a.absence_type === 'SICK_LEAVE'))
 
     await page.getByRole('combobox', { name: 'Tipo' }).click()
     await page.getByRole('option', { name: 'Todos' }).click()
     await page.getByRole('combobox', { name: 'Estado' }).click()
     await page.getByRole('option', { name: 'Sin resolver' }).click()
-    await page.waitForTimeout(600)
+    await expect(personas()).toHaveCount(cuantasFilas((a) => a.status === 'PENDING'))
+
+    // El contraste, porque los tres números podrían ser el mismo y entonces no
+    // se habría comprobado nada: al menos uno de los filtros tiene que quitar
+    // filas. Si esto falla, es que el mes de la demostración se ha quedado sin
+    // variedad y hay que sembrar más, no relajar la comprobación.
+    const conFiltro = [
+      cuantasFilas((a) => a.absence_type === 'SICK_LEAVE'),
+      cuantasFilas((a) => a.status === 'PENDING'),
+    ]
+    expect(
+      Math.min(...conFiltro),
+      'ningún filtro quita ni una fila este mes, así que los tres conteos de arriba ' +
+        'podrían pasar con el filtrado desconectado',
+    ).toBeLessThan(cuantasFilas(() => true))
 
     expect(ruido()).toEqual([])
     expect(await huecosVisibles(page)).toEqual([])

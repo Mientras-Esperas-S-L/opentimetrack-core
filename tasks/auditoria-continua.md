@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 128 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
+Vueltas dadas: 129 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,76 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 129 --- Las esperas por reloj: eran tres defectos, no cuarenta y una (27/08)
+
+Tarea **6 de la lista**, y el resultado cambia el enunciado. Se pidió «sustituir
+las 41 esperas por reloj por esperas por condición», y ese número venía de contar
+`waitForTimeout` sin distinguir para qué estaba cada una. Clasificadas por lo que
+llevan detrás salen **cuatro clases**, y solo una es un defecto:
+
+| Clase | Cuántas | Qué es |
+|---|---|---|
+| **Carrera** | 3 | Un valor del DOM sacado a una variable, que no reintenta. **Son los rojos intermitentes.** |
+| Aserción negativa | 4 | Se comprueba que **nada** pasó. Hay que dar margen a que el efecto indeseado ocurra, y no hay condición que esperar. El reloj es lo correcto. |
+| Estado intermedio | 1 | Se mira a propósito **antes** de que llegue la respuesta ---el buscador a los 300 ms---. Tampoco es expresable como condición. |
+| «A que se asiente» | 25 | No sacan ningún valor: la aserción que sigue ya reintenta. Son lentas, no frágiles. |
+
+Las tres carreras están arregladas: una en la vuelta 126 y dos aquí. **No queda
+ninguna.**
+
+#### Lo arreglado
+
+**El bucle sobre una foto.** `for (const fila of await filas().all())` toma la
+lista en el instante en que se pide, así que sin la espera recorría las filas
+viejas ---y con ella, casi siempre---. Se cambia por lo que se quería decir: «no
+hay ninguna fila que incumpla», con un locator filtrado, que reintenta hasta el
+plazo. Más corto y más fuerte.
+
+**Y la de `12-acciones-masivas`**, que es la misma de la vuelta 126: `count()` sin
+reintento detrás de un reloj de 800 ms.
+
+#### El hallazgo: una prueba que no probaba nada, por dos motivos a la vez
+
+«Calendario del equipo › filtra por tipo y por estado» comprobaba
+`personas().count() <= todas`, con este comentario: «o quedan menos filas o el mes
+no tenía de ese tipo. Las dos cosas valen; **lo que no vale es que no cambie nada
+nunca**». Y eso es exactamente lo que dejaba pasar: con el filtro desconectado el
+conteo no cambia, y «no cambia» cumple `<=`.
+
+Pero había algo peor debajo. El locator era `getByRole('row')` y el calendario
+**no es una tabla**: es una rejilla de `Box` con `display: grid` y **ningún
+`role`**. Así que `todas` valía **cero**, la aserción era «0 <= 0», y la prueba
+llevaba pasando sin mirar una sola fila.
+
+Dos arreglos:
+
+1. **La rejilla ahora tiene semántica**: `role="table"`, `row`, `columnheader` y
+   `rowheader`. Era un defecto de accesibilidad de verdad ---un lector de pantalla
+   no podía recorrer el calendario--- y de paso hace que se pueda localizar por
+   rol como en el resto de la suite. Las **celdas** quedan sin marcar a propósito:
+   la que tiene una ausencia ya es `role="button"` para poder abrirla, y meterla
+   dentro de una celda pide un elemento más en la rejilla; eso se hace mirando la
+   pantalla, no a ciegas.
+2. **La aserción cuenta el número exacto**, calculado de los datos que la propia
+   pantalla trajo ---el filtrado es en el cliente sobre una sola petición, así que
+   se puede saber---. Más un contraste: al menos uno de los filtros tiene que
+   quitar filas, o los tres conteos podrían cuadrar con el filtrado desconectado.
+
+Comprobado desconectando el filtrado en `TeamCalendar.jsx`: **ahora se pone roja,
+y antes pasaba**.
+
+#### Lo que queda, y por qué no se toca
+
+Las 25 esperas de «a que se asiente» suman 32 s de una tanda de 11,2 min, un 4,8 %.
+Las dos que más pesan están dentro de bucles ---`07-pantallas` 600 ms × 13
+pantallas, `30-contraste` 400 ms × 10 × 2 temas--- y las dos son **aserciones
+negativas**: comprueban que la consola no se quejó y que ningún texto queda por
+debajo del contraste mínimo. Quitarles el margen no las haría más rápidas, las
+haría ciegas.
+
+Así que la tarea 6 se cierra aquí: lo que causaba rojos está arreglado, y lo que
+queda es lentitud medida que no conviene tocar.
 
 ### Vuelta 128 --- Quien ya no trabaja allí puede pedir su registro (27/08)
 

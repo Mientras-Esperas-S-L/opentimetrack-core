@@ -123,7 +123,8 @@ test.describe('Por decidir', () => {
       expect(cuantas, `la cola de ${cola} no lleva su contador`).toBeGreaterThanOrEqual(0)
 
       await pestaña.click()
-      await page.waitForTimeout(400)
+      // Sin espera: la única aserción que sigue es un `toBeVisible`, que ya
+      // reintenta hasta el plazo. El reloj solo hacía la tanda más lenta.
       if (cuantas === 0) {
         // Vacía se explica, no se queda en blanco.
         await expect(page.getByText(/no hay|nada|ninguna|al día/i).first()).toBeVisible()
