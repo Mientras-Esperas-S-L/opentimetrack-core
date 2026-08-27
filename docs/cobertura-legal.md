@@ -315,20 +315,56 @@ trabaja**. Un modelo de organización completo es otra herramienta.
 
 ---
 
+## 10. Conservación del registro
+
+No es una situación laboral, pero entra por la misma prueba: sin plazo de
+conservación el registro no se sostiene ante una inspección ---no hay nada que
+enseñar de hace tres años--- y guardado para siempre no se sostiene ante la
+Agencia de Protección de Datos.
+
+| Situación | Norma | Hoy |
+|---|---|---|
+| Conservar el registro cuatro años | 34.9 ET | **Cubierto.** El plazo es un campo de la empresa y no puede bajar de cuatro años: lo rechaza el formulario y lo vuelve a rechazar el código que borra, porque un número escrito por consola o por importación nunca pasó por el formulario |
+| Borrar cuando el plazo se cumple | 5.1.e RGPD | **Cubierto desde el 27/08/2026.** Un trabajo diario borra los fichajes que pasaron el plazo de su empresa y deja asiento de cuántos y hasta qué fecha. Antes de esa fecha el campo declaraba una política que nadie aplicaba |
+| Metadatos de red con su propio plazo | 5.1.e RGPD | **Cubierto.** La IP, el dispositivo y el agente salen al año, y el fichaje sigue verificando su firma: por eso la firma no los incluye |
+| Acceso de la persona a su propio registro | 34.9 ET, 15 RGPD | **A medias.** Quien trabaja allí lo tiene entero. Quien ya no trabaja allí pierde el acceso al desactivarse la cuenta, y sus datos siguen guardados los cuatro años: puede pedirlos, pero no verlos por su cuenta |
+
+Tres cosas que el borrado **no** toca, y cada una por su razón:
+
+- **Las ausencias y los contratos.** Una vacación de hace cinco años sigue siendo
+  lo que explica un hueco en una nómina de hace cinco años. No son el registro de
+  jornada y no viven de este plazo.
+- **Las decisiones sobre horas extra.** Son un acuerdo entre la empresa y la
+  persona, no un fichaje, y el art. 35 tiene su propia cuenta.
+- **El rastro de auditoría.** Es la prueba de que el borrado ocurrió, y no se
+  puede borrar ni corregir: lo impide la base de datos. Guarda el número de
+  fichajes que se fueron, nunca sus horas, así que conservarlo no deshace el
+  borrado ---que es lo que habría que comprobar antes de dar por buena cualquier
+  purga: si el rastro guardase una copia, la purga sería decorativa---.
+
+Y un corte que importa: **el plazo se cumple por días enteros, en el huso de la
+empresa**, no a la hora exacta de hace cuatro años. Cortar por instante se llevaría
+la mañana de un día y dejaría la tarde, y un día con solo la salida registrada no
+es un dato incompleto: se lee como una jornada de cuatro horas.
+
+---
+
 ## Por dónde seguir
 
 Ordenado por lo que más se nota en un cliente real, no por dificultad.
 
 1. **Transcribir la resolución del BOE de 2026**, que es lo único que le falta
    al calendario para estar completo.
+2. **Acceso de quien ya no trabaja allí a su propio registro**, mientras sus
+   datos sigan guardados: hoy los conservamos cuatro años y no puede verlos.
 3. **Saldos de devolución**: horas extra compensadas, relevo de turno,
    distribución irregular. Convertir los avisos en una cuenta.
-7. **Vacaciones**: devengo proporcional y traslado por IT.
+4. **Vacaciones**: devengo proporcional y traslado por IT.
 5. **Llamamiento del fijo discontinuo** (art. 16), ya señalado en el código.
 6. **Topes que se guardan y no se comprueban**: 80 horas extra al año, 30 % de
    complementarias al mes, 65/85 % del contrato formativo.
 7. **Historia de la adscripción a departamento**, cuando el informe empiece a
-    mentir.
+   mentir.
 
 ---
 

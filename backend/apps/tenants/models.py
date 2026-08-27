@@ -133,25 +133,23 @@ class Tenant(BaseModel):
         ),
     )
 
-    # **Hoy este valor no borra nada.** Se guarda, se valida contra el suelo del
-    # art. 34.9 y se publica en la API, y no hay ninguna tarea que lo aplique:
-    # los fichajes se conservan indefinidamente. Su hermano de abajo sí tiene
-    # purga (`purge_security_metadata`), y la diferencia no es deliberada ---
-    # está anotada en el cuaderno de la auditoría, vuelta 60.
+    # Este valor **sí borra**, desde el 27/08/2026: lo aplica
+    # `purge_expired_records`, que corre a diario junto a su hermano
+    # `purge_security_metadata`. Estuvo declarando una política que nadie
+    # cumplía desde la vuelta 60 de la auditoría hasta esa fecha.
     #
-    # Se deja el campo porque quitarlo sería peor: la decisión de cuánto
-    # conservar es de la empresa y tiene que poder declararse. Lo que falta es
-    # que se cumpla sola, y eso es una operación destructiva sobre el registro
-    # legal, así que no se añade sin decidirlo.
+    # El suelo del art. 34.9 se vuelve a aplicar ahí, sobre el valor leído de
+    # esta fila: la validación de la API no alcanza a un número escrito por
+    # shell o por importación, y el que borra es el comando.
     record_retention_years = models.PositiveSmallIntegerField(
         _("record retention (years)"),
         default=4,
         help_text=_(
-            "How long clock events are kept. Four years is the floor set by "
-            "art. 34.9 ET; a longer period needs its own justification, since "
-            "keeping data because it might be useful is not a basis. Note that "
-            "nothing is deleted automatically yet: this states the policy, it "
-            "does not enforce it."
+            "How long clock events are kept, after which they are deleted. Four "
+            "years is the floor set by art. 34.9 ET; a longer period needs its "
+            "own justification, since keeping data because it might be useful is "
+            "not a basis. Leave and contracts are not affected: they are not the "
+            "working time record and they do not live off this period."
         ),
     )
     security_metadata_retention_days = models.PositiveSmallIntegerField(

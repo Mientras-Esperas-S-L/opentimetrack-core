@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 126 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
+Vueltas dadas: 127 · Ejecutando la lista aprobada el 27/08 (el contador de vueltas en blanco queda en suspenso: 2 de 3 cuando se dejó de buscar)
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,92 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 127 --- El plazo de conservación se cumple solo (27/08)
+
+Tarea **3 de la lista**. `record_retention_years` llevaba desde la vuelta 60
+declarando una política que ninguna tarea aplicaba, y el propio modelo lo decía en
+un comentario: «lo que falta es que se cumpla sola, y eso es una operación
+destructiva sobre el registro legal, así que no se añade sin decidirlo». Francisco
+lo decidió el 27/08 con una condición ---que no se lleve por delante historiales
+ni datos de la empresa--- y eso es lo que hay escrito en las pruebas.
+
+Ahora lo aplica `purge_expired_records`, hermano de `purge_security_metadata` y
+escrito siguiendo su patrón, que ya estaba resuelto: todas las empresas incluidas
+las de baja, `objects_all_tenants` con filtro por empresa porque corre fuera de
+petición, `--dry-run`, `--tenant`, asiento en el rastro y decir en voz alta lo que
+se salta.
+
+**Las tres decisiones que no eran obvias:**
+
+1. **El suelo se aplica otra vez aquí.** `max(record_retention_years, 4)`, aunque
+   el serializador ya rechace menos de cuatro desde antes: la validación de la API
+   no alcanza a un número escrito por consola, por importación o por una migración
+   de datos, y **este es el código que borra**. Con la fila a 1 año se habría
+   llevado fichajes que el art. 34.9 obliga a tener; la prueba lo comprueba
+   poniendo el 1 por `update` y verificando que se usan 4.
+
+2. **El corte es un día entero en el huso de la empresa.** Cortar por instante
+   ---que es lo que hace el hermano, y para metadatos está bien--- se llevaría la
+   mañana de un día y dejaría la tarde. Y media jornada no es un dato menos: es un
+   dato **falso**, un día en que alguien parece haber trabajado cuatro horas. Con
+   `local_today(empresa)`, que ya existía.
+
+3. **Las correcciones abiertas retienen su fichaje.** Un cambio que nadie resolvió
+   no es un registro cerrado. Se cuentan y se dicen; borrarlas en silencio sería
+   perder la única señal de que alguien pidió algo y no se le contestó en cuatro
+   años.
+
+**La trampa que casi se cuela:** `PunchCorrection.target` es `on_delete=PROTECT`,
+así que borrar un fichaje corregido lanza `ProtectedError` y la pasada se planta a
+mitad. No apareció en el primer barrido porque **busqué solo en `models.py`** y en
+esta app los modelos están repartidos en seis ficheros (`corrections.py`,
+`delegated.py`, `overtime.py`, `reminders.py`, `workday.py`). El barrido bien hecho
+---todas las `ForeignKey` a `Punch` en cualquier `.py`--- sacó tres, más la
+autorreferencia `replaced_by`.
+
+**Y la pieza que iba a quedarse desconectada:** el comando solo no sirve para el
+despliegue que eligió Celery. Registrada la tarea en `beat` a las 4:30 ---la última,
+porque es la que borra jornada: si una noche algo va mal, las otras ya han pasado y
+se lee en el registro cuál fue---. Aquí no hacía falta escribir la prueba: la de la
+vuelta 99 **cuenta** los trabajos de Celery y los de la crontab del documento y
+exige que sean los mismos, así que al añadir uno se puso roja sola. Es lo que se
+quiere de un guard.
+
+Actualizado `docs/trabajos-periodicos.md`, que decía «dos trabajos» y ya listaba
+tres, y ahora son cuatro.
+
+#### Lo que el borrado no toca, y por qué cada cosa
+
+Ausencias y contratos (una vacación de 2021 explica un hueco en una nómina de
+2021), decisiones de horas extra (son un acuerdo, y el art. 35 tiene su cuenta) y
+el rastro de auditoría. Este último se comprobó antes de dar la purga por buena:
+**si el rastro guardase las horas, la purga sería decorativa**. Guarda el UUID de
+la corrección, no el antes y el después ---medido sobre los 27.101 asientos de la
+empresa de demostración---, así que borrar el fichaje sí borra el dato.
+
+#### Comprobado rompiendo, y en caliente
+
+Las cuatro defensas del comando, una a una: sin el suelo, con corte por instante,
+sin borrar antes las correcciones y sin retener las abiertas. **Cada una pone
+exactamente una prueba en rojo**, y al restaurar vuelven las trece.
+
+Y en la base de desarrollo, porque `Would delete 0 events` no prueba nada: creado
+un fichaje de marzo de 2019, visto en seco, borrado de verdad, comprobado que se
+fue, que el rastro tiene el asiento firmado por «sistema» y que no cayó nada más.
+
+#### Verde al cerrar
+
+`1.272` pruebas de backend (trece nuevas), `286` de navegador, `ruff` limpio, sin
+migraciones pendientes. Dos migraciones que se detectaron **antes** del commit y no
+después: el `help_text` del campo ---que decía «nothing is deleted automatically
+yet» y ahora sería falso--- y las `choices` del rastro con la acción nueva.
+
+Traducciones: los tres catálogos a **cero mensajes marcados `fuzzy`**. Aparecieron
+dos al regenerar, y uno no era mío: el título del resumen del art. 6.1 arrastraba
+la traducción de «un cambio en el registro de jornada» en catalán y gallego. Django
+ignora los fuzzy, así que no se veía; aceptarlo a ciegas habría puesto ese título
+en un documento legal.
 
 ### Vuelta 126 --- El número de empleado ya es único también para la base (27/08)
 

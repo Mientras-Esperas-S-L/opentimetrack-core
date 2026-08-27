@@ -3854,3 +3854,60 @@ contenido vale sin espera por condición.
 sea acusaba al filtro del producto. La prueba estaba describiendo su propia prisa.
 Antes de creer a un fallo que acusa al producto, mira si la prueba pudo haber
 mirado demasiado pronto.
+
+## 237. Antes de borrar, mira qué apunta a lo que vas a borrar --- y míralo en todos los ficheros
+
+`PunchCorrection.target` es `on_delete=PROTECT`. Un borrado en bloque de fichajes
+corregidos lanza `ProtectedError` y se planta **a mitad de la pasada**, que es el
+peor momento: con parte del trabajo hecho y sin saber cuál.
+
+El primer barrido dijo «nadie apunta a `Punch` desde otras apps» y era mentira,
+porque busqué en `apps/*/models.py` y en esta app los modelos viven en seis
+ficheros distintos: `corrections.py`, `delegated.py`, `overtime.py`,
+`reminders.py`, `workday.py`. Un modelo de Django no tiene por qué estar en
+`models.py`; solo tiene que estar importado.
+
+**Cómo hacerlo bien**: buscar `ForeignKey`/`OneToOneField` hacia el modelo en
+**todos** los `.py`, con su `on_delete` al lado, y no olvidar la autorreferencia
+---`"self"`--- que un grep por el nombre de la clase nunca encuentra.
+
+**Y clasificar por `on_delete`, que decide el trabajo**: `PROTECT` hay que
+resolverlo antes o el borrado no ocurre; `CASCADE` se lleva cosas que puede que no
+quieras perder; `SET_NULL` deja filas apuntando a nada, y eso puede leerse como
+un estado distinto ---una corrección con `result` vacío parece no aplicada---.
+
+## 238. Un recuento escrito a mano se desincroniza de las filas que cuenta
+
+El inventario de cobertura legal declaraba «91 situaciones, 49 sin cubrir» y tenía
+**90 filas con 48**. Nadie mintió: se añadió una fila y no se tocó la cabecera, o
+al revés. Y la cabecera es lo único que lee quien no baja a las tablas.
+
+**La regla**: si un documento lleva un total, **genéralo contando**, no lo
+escribas. Cuando eso no se pueda ---un documento a mano---, cuenta las filas antes
+de tocar la cifra, aunque vengas solo a añadir un apartado.
+
+Aquí el generador cuenta las píldoras de estado y con eso rellena el total, la
+barra, la leyenda y el `aria-label`. Los porcentajes se reparten y el sobrante del
+redondeo se le da al mayor, para que la barra sume 100 exacto.
+
+## 239. Un documento derivado se queda atrás en silencio, y no lo dice
+
+El artefacto de cobertura legal decía ser un reflejo de `docs/cobertura-legal.md`
+---lo pone en su pie--- y estaba en el corte del 12/08. Entre medias se habían
+cubierto **áreas enteras**: permisos retribuidos, las quince suspensiones del art.
+45, los festivos, las ausencias de parte del día, el tope de horas extra. El
+artefacto seguía diciendo «no existen en el sistema» de cosas que llevaban dos
+semanas funcionando.
+
+Nada avisa de eso. El documento no falla, no da error, y se lee perfectamente
+coherente: es la peor clase de dato viejo.
+
+**La regla**: al ir a actualizar un documento derivado, **lee primero la fuente
+entera y compara**, en vez de añadir el apartado que traías. Lo que venía a ser un
+apartado nuevo resultó ser la mitad del inventario mal.
+
+**Y comprobar contra el código lo que la fuente no detalla.** El `.md` decía «las
+quince del art. 45 están en el catálogo» pero no decía nada de la baja por
+contingencia, que el artefacto daba por «A medias» y «Falta». En el código están
+las dos, separadas y con su nota. Sin mirarlo habría publicado un «falta» sobre
+algo que existe.

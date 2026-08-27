@@ -66,7 +66,7 @@ def test_with_cron_beat_schedules_nothing(settings):
     assert sender.scheduled == []
 
 
-def test_with_celery_beat_schedules_both_jobs(settings):
+def test_with_celery_beat_schedules_every_job(settings):
     settings.SCHEDULER = "celery"
     settings.REMINDER_EVERY_MINUTES = 5
     from config.celery import register_periodic_jobs
@@ -87,7 +87,13 @@ def test_with_celery_beat_schedules_both_jobs(settings):
         # techo: con la rotación activada cada renovación deja dos filas, y cada
         # una dice de quién era la sesión.
         "purga de testigos caducados",
+        # Y la cuarta es la única que borra registro de jornada. Va la última a
+        # propósito: si una noche algo va mal, las otras ya han pasado y se lee
+        # en el registro cuál fue.
+        "purga del registro que cumplió su plazo",
     ]
+    # La lista se compara entera y en orden, y el nombre de esta prueba ya no
+    # cuenta cuántos son: decía «both jobs» cuando ya eran tres.
 
 
 @pytest.mark.django_db

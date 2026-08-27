@@ -119,6 +119,13 @@ class AuditAction(models.TextChoices):
 
     # Housekeeping that removes data.
     METADATA_PURGED = "METADATA_PURGED", _("Purged security metadata")
+    #: El registro de una jornada que ha pasado su plazo de conservación. Es la
+    #: única acción del producto que **borra registro**, y por eso su asiento es
+    #: lo único que quedará de esos días: dice cuántos, hasta qué fecha y con qué
+    #: plazo declarado. El asiento no se puede borrar ---la tabla es de solo
+    #: añadir--- así que una empresa nunca puede quedarse sin poder demostrar
+    #: por qué ya no tiene aquellos fichajes.
+    RECORD_PURGED = "RECORD_PURGED", _("Purged expired working time records")
 
     # Failed sign-ins are deliberately absent. ATOMIC_REQUESTS is on and DRF
     # rolls the transaction back when it returns an error, so an entry written

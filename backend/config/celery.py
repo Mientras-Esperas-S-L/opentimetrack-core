@@ -1,8 +1,8 @@
 """Celery, para quien lo quiera. Nadie está obligado.
 
 El producto tiene trabajos que se repiten --- recordar un fichaje, purgar
-metadatos de seguridad cuando cumplen su plazo --- y hay dos maneras honradas de
-repetirlos:
+metadatos de seguridad, tirar testigos caducados, borrar el registro que pasó su
+plazo de conservación --- y hay dos maneras honradas de repetirlos:
 
 - **cron**, que ya está en cualquier servidor y no añade nada que mantener. Un
   despliegue de una empresa con veinte personas no necesita más, y pedirle un
@@ -64,6 +64,14 @@ def register_periodic_jobs(sender, **kwargs):
         flush_expired_tokens.s(),
         name="purga de testigos caducados",
     )
+    # La última, y a su hora: es la que borra registro de jornada, así que si una
+    # noche algo va mal conviene que las otras ya hayan pasado y se lea en el
+    # registro cuál fue.
+    sender.add_periodic_task(
+        crontab(hour=4, minute=30),
+        purge_expired_records.s(),
+        name="purga del registro que cumplió su plazo",
+    )
 
 
 @app.task(name="punches.send_reminders")
@@ -105,3 +113,19 @@ def purge_security_metadata() -> int:
     from django.core.management import call_command
 
     return call_command("purge_security_metadata")
+
+
+@app.task(name="punches.purge_expired_records")
+def purge_expired_records() -> int:
+    """Los fichajes que pasaron el plazo de conservación de su empresa.
+
+    La única tarea del producto que borra registro de jornada, y por eso la única
+    con un suelo escrito en el código: nunca por debajo de los cuatro años del
+    art. 34.9 ET, sea lo que sea lo que diga la fila de la empresa.
+
+    Idempotente: la segunda pasada del mismo día no encuentra nada, y no deja
+    asiento cuando no borra.
+    """
+    from django.core.management import call_command
+
+    return call_command("purge_expired_records")

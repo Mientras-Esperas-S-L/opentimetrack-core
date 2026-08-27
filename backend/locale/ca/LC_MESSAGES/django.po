@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-26 20:04+0000\n"
+"POT-Creation-Date: 2026-08-27 12:50+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan\n"
@@ -74,18 +74,18 @@ msgstr ""
 msgid "a day"
 msgstr ""
 
-#: apps/absences/models.py:72 apps/reports/services.py:168
-#: apps/users/models.py:191
+#: apps/absences/models.py:72 apps/reports/services.py:169
+#: apps/users/models.py:192
 msgid "a week"
 msgstr "a la setmana"
 
-#: apps/absences/models.py:73 apps/reports/services.py:168
-#: apps/users/models.py:192
+#: apps/absences/models.py:73 apps/reports/services.py:169
+#: apps/users/models.py:193
 msgid "a month"
 msgstr "al mes"
 
-#: apps/absences/models.py:74 apps/reports/services.py:168
-#: apps/users/models.py:193
+#: apps/absences/models.py:74 apps/reports/services.py:169
+#: apps/users/models.py:194
 msgid "a year"
 msgstr "a l'any"
 
@@ -95,12 +95,12 @@ msgstr ""
 
 #: apps/absences/models.py:94 apps/shifts/models.py:72
 #: apps/tenants/applications.py:44 apps/tenants/holidays.py:64
-#: apps/users/models.py:34 apps/users/models.py:94
+#: apps/users/models.py:35 apps/users/models.py:95
 msgid "name"
 msgstr ""
 
 #: apps/absences/models.py:97 apps/punches/corrections.py:82
-#: apps/punches/models.py:417
+#: apps/punches/models.py:488
 msgid "kind"
 msgstr "classe"
 
@@ -181,15 +181,15 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:175 apps/absences/models.py:531
-#: apps/audit/models.py:173 apps/punches/models.py:467
+#: apps/audit/models.py:180 apps/punches/models.py:538
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:341 apps/tenants/rules.py:425
 msgid "note"
 msgstr ""
 
 #: apps/absences/models.py:176 apps/shifts/models.py:84
-#: apps/tenants/applications.py:53 apps/tenants/models.py:168
-#: apps/users/models.py:38 apps/users/models.py:132 apps/users/models.py:500
+#: apps/tenants/applications.py:53 apps/tenants/models.py:166
+#: apps/users/models.py:39 apps/users/models.py:133 apps/users/models.py:501
 msgid "active"
 msgstr ""
 
@@ -219,14 +219,14 @@ msgstr ""
 
 #: apps/absences/models.py:241 apps/absences/models.py:491
 #: apps/notifications/models.py:34 apps/punches/corrections.py:80
-#: apps/punches/models.py:149 apps/punches/models.py:414
-#: apps/punches/models.py:456 apps/reports/payroll.py:97
+#: apps/punches/models.py:150 apps/punches/models.py:485
+#: apps/punches/models.py:527 apps/reports/payroll.py:97
 #: apps/shifts/models.py:111
 msgid "employee"
 msgstr "persona treballadora"
 
-#: apps/absences/models.py:258 apps/audit/models.py:166
-#: apps/punches/corrections.py:94 apps/punches/models.py:151
+#: apps/absences/models.py:258 apps/audit/models.py:173
+#: apps/punches/corrections.py:94 apps/punches/models.py:152
 msgid "type"
 msgstr "tipus"
 
@@ -262,12 +262,12 @@ msgstr ""
 msgid "reason"
 msgstr "motiu"
 
-#: apps/absences/models.py:312 apps/punches/models.py:231
+#: apps/absences/models.py:312 apps/punches/models.py:232
 msgid "recorded by"
 msgstr ""
 
 #: apps/absences/models.py:316 apps/absences/models.py:520
-#: apps/punches/corrections.py:104 apps/punches/models.py:460
+#: apps/punches/corrections.py:104 apps/punches/models.py:531
 msgid "status"
 msgstr "estat"
 
@@ -299,15 +299,15 @@ msgid "absences"
 msgstr ""
 
 #: apps/absences/models.py:409 apps/absences/services.py:313
-#: apps/reports/views.py:91 apps/shifts/views.py:307
+#: apps/common/rangos.py:80 apps/reports/views.py:92 apps/shifts/views.py:307
 msgid "The end date cannot precede the start date."
 msgstr "La data final no pot anar abans que la inicial."
 
-#: apps/absences/models.py:415 apps/absences/views.py:312
+#: apps/absences/models.py:415 apps/absences/views.py:313
 msgid "Give both times, or neither: half of a range is not one."
 msgstr "Posa les dues hores o cap: mitja franja no és una franja."
 
-#: apps/absences/models.py:418 apps/users/serializers.py:445
+#: apps/absences/models.py:418 apps/users/serializers.py:455
 msgid "It ends before it starts."
 msgstr ""
 
@@ -479,20 +479,20 @@ msgstr ""
 msgid "The file is %(size).1f MB and the limit is %(limit)s MB."
 msgstr ""
 
-#: apps/absences/views.py:155
+#: apps/absences/views.py:156
 msgid "the time it takes"
 msgstr "el temps indispensable"
 
-#: apps/absences/views.py:181 apps/shifts/views.py:204
+#: apps/absences/views.py:182 apps/shifts/views.py:204
 #: apps/tenants/views.py:181 apps/users/views.py:630 apps/users/views.py:700
 msgid "Added"
 msgstr ""
 
-#: apps/absences/views.py:209 apps/audit/trail.py:74
+#: apps/absences/views.py:210 apps/audit/trail.py:74
 msgid "Changed"
 msgstr ""
 
-#: apps/absences/views.py:227
+#: apps/absences/views.py:228
 #, python-format
 msgid ""
 "%(count)s absences use it. Deactivate it instead: deleting would take the "
@@ -501,24 +501,24 @@ msgstr ""
 "L'utilitzen %(count)s absències. Desactiva'l en lloc d'esborrar-lo: esborrar-"
 "lo trauria el motiu a registres que han de durar quatre anys."
 
-#: apps/absences/views.py:233 apps/audit/trail.py:78
+#: apps/absences/views.py:234 apps/audit/trail.py:78
 msgid "Deleted"
 msgstr ""
 
-#: apps/absences/views.py:254 apps/absences/views.py:481
-#: apps/punches/correction_views.py:246 apps/reports/views.py:390
+#: apps/absences/views.py:255 apps/absences/views.py:482
+#: apps/punches/correction_views.py:246 apps/reports/views.py:405
 msgid "That person is not in this company."
 msgstr "Aquesta persona no pertany a aquesta empresa."
 
-#: apps/absences/views.py:390
+#: apps/absences/views.py:391
 msgid "Leave can only be requested for yourself."
 msgstr "Només pots sol·licitar absències per a tu."
 
-#: apps/absences/views.py:400
+#: apps/absences/views.py:401
 msgid "That leave type does not exist or is no longer in use."
 msgstr "Aquest tipus de permís no existeix o ja no s'utilitza."
 
-#: apps/absences/views.py:411
+#: apps/absences/views.py:412
 msgid ""
 "This kind of leave is recorded by the company, not requested. Talk to "
 "whoever manages your working time."
@@ -526,11 +526,11 @@ msgstr ""
 "Aquest tipus d'absència la registra l'empresa, no se sol·licita. Parla amb "
 "qui gestioni la teva jornada."
 
-#: apps/absences/views.py:595
+#: apps/absences/views.py:596
 msgid "You can only see your own balance."
 msgstr "Només pots consultar el teu propi saldo."
 
-#: apps/absences/views.py:635 apps/shifts/views.py:264
+#: apps/absences/views.py:636 apps/shifts/views.py:264
 msgid "Give 'from' and 'to' as YYYY-MM-DD."
 msgstr "Indica 'from' i 'to' amb el format AAAA-MM-DD."
 
@@ -666,46 +666,50 @@ msgstr ""
 msgid "Purged security metadata"
 msgstr ""
 
-#: apps/audit/models.py:139
+#: apps/audit/models.py:128
+msgid "Purged expired working time records"
+msgstr "Va purgar el registre que va complir el seu termini"
+
+#: apps/audit/models.py:146
 msgid "when"
 msgstr ""
 
-#: apps/audit/models.py:145 apps/common/models.py:117
-#: apps/tenants/models.py:171 apps/tenants/models.py:199
+#: apps/audit/models.py:152 apps/common/models.py:117
+#: apps/tenants/models.py:169 apps/tenants/models.py:197
 #: apps/tenants/rules.py:39 apps/tenants/rules.py:318 apps/tenants/rules.py:403
-#: apps/users/models.py:273
+#: apps/users/models.py:274
 msgid "company"
 msgstr ""
 
-#: apps/audit/models.py:155
+#: apps/audit/models.py:162
 msgid "who"
 msgstr ""
 
-#: apps/audit/models.py:159
+#: apps/audit/models.py:166
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:161
+#: apps/audit/models.py:168
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:167
+#: apps/audit/models.py:174
 msgid "identifier"
 msgstr ""
 
-#: apps/audit/models.py:168
+#: apps/audit/models.py:175
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:172
+#: apps/audit/models.py:179
 msgid "changes"
 msgstr ""
 
-#: apps/audit/models.py:195
+#: apps/audit/models.py:202
 msgid "audit entry"
 msgstr ""
 
-#: apps/audit/models.py:196
+#: apps/audit/models.py:203
 msgid "audit trail"
 msgstr ""
 
@@ -788,28 +792,41 @@ msgstr ""
 msgid "A valid session is required."
 msgstr ""
 
-#: apps/common/permissions.py:44
+#: apps/common/permissions.py:46
+msgid ""
+"This endpoint is for people. An application uses /api/app/ with its own "
+"credential and permissions."
+msgstr ""
+
+#: apps/common/permissions.py:65
 msgid "Only an administrator may perform this operation."
 msgstr ""
 
-#: apps/common/permissions.py:51
+#: apps/common/permissions.py:72
 msgid "Manager or administrator profile required."
 msgstr ""
 
-#: apps/common/permissions.py:60
+#: apps/common/permissions.py:81
 msgid "Only an administrator may modify this resource."
 msgstr ""
 
-#: apps/common/permissions.py:106
+#: apps/common/permissions.py:127
 msgid "The application does not carry the required permission."
 msgstr ""
 
-#: apps/common/rangos.py:41
+#: apps/common/rangos.py:43
 #, python-format
 msgid ""
 "The period is asked for as «%(good)s» here. Written like this it would be "
 "ignored, and you would get the default period instead of the one you asked "
 "for."
+msgstr ""
+
+#: apps/common/rangos.py:117
+#, python-format
+msgid ""
+"«%(bad)s» is not read here, so asking with it would quietly give you a "
+"different document. This endpoint reads: %(good)s."
 msgstr ""
 
 #: apps/common/tests/test_exceptions.py:194 apps/punches/services.py:393
@@ -844,7 +861,7 @@ msgstr ""
 msgid "authentication secret"
 msgstr ""
 
-#: apps/notifications/models.py:43 apps/punches/models.py:239
+#: apps/notifications/models.py:43 apps/punches/models.py:240
 msgid "device"
 msgstr ""
 
@@ -1093,45 +1110,45 @@ msgid ""
 "on the entry as it stands now."
 msgstr ""
 
-#: apps/punches/corrections.py:822
+#: apps/punches/corrections.py:825
 msgid "Your employer has withdrawn the proposed change to your record"
 msgstr ""
 
-#: apps/punches/corrections.py:881
+#: apps/punches/corrections.py:884
 msgid "Your employer proposes a change to your working time record"
 msgstr "La teva empresa proposa un canvi en el teu registre de jornada"
 
-#: apps/punches/corrections.py:900
+#: apps/punches/corrections.py:903
 #, python-format
 msgid "Add an entry: %(kind)s at %(when)s."
 msgstr "Afegir un fitxatge: %(kind)s a les %(when)s."
 
-#: apps/punches/corrections.py:901
+#: apps/punches/corrections.py:904
 #, python-format
 msgid "Change the time of an entry to %(when)s."
 msgstr "Canviar l'hora d'un fitxatge a les %(when)s."
 
-#: apps/punches/corrections.py:902
+#: apps/punches/corrections.py:905
 #, python-format
 msgid "Void the entry recorded at %(when)s."
 msgstr "Anul·lar el fitxatge registrat a les %(when)s."
 
-#: apps/punches/corrections.py:959
+#: apps/punches/corrections.py:962
 #, python-format
 msgid "An entry was added: %(kind)s at %(when)s."
 msgstr "S'ha afegit un fitxatge: %(kind)s a les %(when)s."
 
-#: apps/punches/corrections.py:960
+#: apps/punches/corrections.py:963
 #, python-format
 msgid "The time of an entry was changed to %(when)s."
 msgstr "S'ha canviat l'hora d'un fitxatge a les %(when)s."
 
-#: apps/punches/corrections.py:961
+#: apps/punches/corrections.py:964
 #, python-format
 msgid "An entry recorded at %(when)s was voided."
 msgstr "S'ha anul·lat el fitxatge registrat a les %(when)s."
 
-#: apps/punches/corrections.py:985
+#: apps/punches/corrections.py:988
 msgid "Your working time record has changed"
 msgstr "El teu registre de jornada ha canviat"
 
@@ -1153,310 +1170,310 @@ msgstr ""
 msgid "No active person matches that reference."
 msgstr "Cap persona activa no coincideix amb aquesta referència."
 
-#: apps/punches/models.py:33
+#: apps/punches/models.py:34
 msgid "Clock in"
 msgstr "Entrada"
 
-#: apps/punches/models.py:34
+#: apps/punches/models.py:35
 msgid "Clock out"
 msgstr "Sortida"
 
-#: apps/punches/models.py:53
+#: apps/punches/models.py:54
 msgid "Working day"
 msgstr ""
 
-#: apps/punches/models.py:54
+#: apps/punches/models.py:55
 msgid "Break that is not working time"
 msgstr ""
 
-#: apps/punches/models.py:55
+#: apps/punches/models.py:56
 msgid "Waiting or on-call time"
 msgstr ""
 
-#: apps/punches/models.py:56
+#: apps/punches/models.py:57
 msgid "Interruption of the right to disconnect"
 msgstr ""
 
-#: apps/punches/models.py:67 apps/users/models.py:431
+#: apps/punches/models.py:68 apps/users/models.py:432
 msgid "On site"
 msgstr ""
 
-#: apps/punches/models.py:68 apps/users/models.py:431
+#: apps/punches/models.py:69 apps/users/models.py:432
 msgid "Remote"
 msgstr ""
 
-#: apps/punches/models.py:78
+#: apps/punches/models.py:79
 msgid "Ordinary"
 msgstr ""
 
-#: apps/punches/models.py:79
+#: apps/punches/models.py:80 apps/reports/services.py:594
 msgid "Overtime"
 msgstr ""
 
-#: apps/punches/models.py:80
+#: apps/punches/models.py:81
 msgid "Complementary"
 msgstr ""
 
-#: apps/punches/models.py:86
+#: apps/punches/models.py:87
 msgid "Compensated with rest"
 msgstr ""
 
-#: apps/punches/models.py:87
+#: apps/punches/models.py:88
 msgid "Paid"
 msgstr ""
 
-#: apps/punches/models.py:99
+#: apps/punches/models.py:100
 msgid "None"
 msgstr ""
 
-#: apps/punches/models.py:100
+#: apps/punches/models.py:101
 msgid "Care or family reasons (art. 34.8 ET)"
 msgstr ""
 
-#: apps/punches/models.py:101
+#: apps/punches/models.py:102
 msgid "Flexible hours"
 msgstr ""
 
-#: apps/punches/models.py:102
+#: apps/punches/models.py:103
 msgid "Irregular distribution (art. 34.2 ET)"
 msgstr ""
 
-#: apps/punches/models.py:103
+#: apps/punches/models.py:104
 msgid "Another arrangement"
 msgstr ""
 
-#: apps/punches/models.py:114
+#: apps/punches/models.py:115
 msgid "Web panel"
 msgstr ""
 
-#: apps/punches/models.py:115
+#: apps/punches/models.py:116
 msgid "Mobile app"
 msgstr ""
 
-#: apps/punches/models.py:116
+#: apps/punches/models.py:117
 msgid "External application, employee identity"
 msgstr ""
 
-#: apps/punches/models.py:117
+#: apps/punches/models.py:118
 msgid "External application, on behalf of the employee"
 msgstr ""
 
-#: apps/punches/models.py:118
+#: apps/punches/models.py:119
 msgid "Shared terminal"
 msgstr ""
 
-#: apps/punches/models.py:119
+#: apps/punches/models.py:120
 msgid "Manual correction by an administrator"
 msgstr ""
 
-#: apps/punches/models.py:120
+#: apps/punches/models.py:121
 msgid "Data import"
 msgstr ""
 
-#: apps/punches/models.py:136
+#: apps/punches/models.py:137
 msgid "A person pressed the button"
 msgstr ""
 
-#: apps/punches/models.py:137
+#: apps/punches/models.py:138
 msgid "Entering or leaving a worksite"
 msgstr ""
 
-#: apps/punches/models.py:138
+#: apps/punches/models.py:139
 msgid "Joining or leaving a work network"
 msgstr ""
 
-#: apps/punches/models.py:139
+#: apps/punches/models.py:140
 msgid "Another system's presence event"
 msgstr ""
 
-#: apps/punches/models.py:157
+#: apps/punches/models.py:158
 msgid "interval"
 msgstr ""
 
-#: apps/punches/models.py:163
+#: apps/punches/models.py:164
 msgid "mode"
 msgstr ""
 
-#: apps/punches/models.py:165
+#: apps/punches/models.py:166
 msgid "nature of the hours"
 msgstr ""
 
-#: apps/punches/models.py:171
+#: apps/punches/models.py:172
 msgid "how the overtime is settled"
 msgstr ""
 
-#: apps/punches/models.py:175
+#: apps/punches/models.py:176
 msgid "Required for overtime: art. 3.f asks whether it is rested or paid."
 msgstr ""
 
-#: apps/punches/models.py:178
+#: apps/punches/models.py:179
 msgid "to prevent or repair urgent damage"
 msgstr ""
 
-#: apps/punches/models.py:181
+#: apps/punches/models.py:182
 msgid ""
 "Art. 35.3 ET: hours worked to prevent or repair accidents and other "
 "extraordinary and urgent damage. They do not count towards the annual "
 "overtime limit, so they have to be distinguishable."
 msgstr ""
 
-#: apps/punches/models.py:187
+#: apps/punches/models.py:188
 msgid "arrangement"
 msgstr ""
 
-#: apps/punches/models.py:195
+#: apps/punches/models.py:196
 msgid "timestamp"
 msgstr ""
 
-#: apps/punches/models.py:213 apps/tenants/models.py:53
-#: apps/users/models.py:122
+#: apps/punches/models.py:214 apps/tenants/models.py:53
+#: apps/users/models.py:123
 msgid "time zone"
 msgstr ""
 
-#: apps/punches/models.py:217
+#: apps/punches/models.py:218
 msgid "source"
 msgstr ""
 
-#: apps/punches/models.py:220
+#: apps/punches/models.py:221
 msgid "source application"
 msgstr ""
 
-#: apps/punches/models.py:223
+#: apps/punches/models.py:224
 msgid "Which application recorded it, when it was not this one."
 msgstr ""
 
-#: apps/punches/models.py:232
+#: apps/punches/models.py:233
 msgid "Set when somebody other than the employee created the record."
 msgstr ""
 
-#: apps/punches/models.py:238
+#: apps/punches/models.py:239
 msgid "IP address"
 msgstr ""
 
-#: apps/punches/models.py:240
+#: apps/punches/models.py:241
 msgid "user agent"
 msgstr ""
 
-#: apps/punches/models.py:253
+#: apps/punches/models.py:254
 msgid "trigger"
 msgstr ""
 
-#: apps/punches/models.py:256
+#: apps/punches/models.py:257
 msgid "trigger evidence"
 msgstr ""
 
-#: apps/punches/models.py:259
+#: apps/punches/models.py:260
 msgid ""
 "What proves the trigger: coordinates, a network name, an external event id."
 msgstr ""
 
-#: apps/punches/models.py:262
+#: apps/punches/models.py:263
 msgid "integrity hash"
 msgstr ""
 
-#: apps/punches/models.py:264
+#: apps/punches/models.py:265
 msgid "hash version"
 msgstr ""
 
-#: apps/punches/models.py:268
+#: apps/punches/models.py:269
 msgid "valid"
 msgstr ""
 
-#: apps/punches/models.py:269
+#: apps/punches/models.py:270
 msgid "voided at"
 msgstr ""
 
-#: apps/punches/models.py:276
+#: apps/punches/models.py:277
 msgid "replaced by"
 msgstr ""
 
-#: apps/punches/models.py:280
+#: apps/punches/models.py:281
 msgid "clock event"
 msgstr ""
 
-#: apps/punches/models.py:281
+#: apps/punches/models.py:282
 msgid "clock events"
 msgstr ""
 
-#: apps/punches/models.py:407
+#: apps/punches/models.py:478
 msgid "Missing entry"
 msgstr ""
 
-#: apps/punches/models.py:408
+#: apps/punches/models.py:479
 msgid "Day left open"
 msgstr ""
 
-#: apps/punches/models.py:416 apps/punches/models.py:458
+#: apps/punches/models.py:487 apps/punches/models.py:529
 #: apps/shifts/models.py:113 apps/tenants/holidays.py:63
 msgid "day"
 msgstr ""
 
-#: apps/punches/models.py:418
+#: apps/punches/models.py:489
 msgid "sent at"
 msgstr ""
 
-#: apps/punches/models.py:421
+#: apps/punches/models.py:492
 msgid "clock reminder"
 msgstr ""
 
-#: apps/punches/models.py:422
+#: apps/punches/models.py:493
 msgid "clock reminders"
 msgstr ""
 
-#: apps/punches/models.py:449
+#: apps/punches/models.py:520
 msgid "Authorised"
 msgstr ""
 
-#: apps/punches/models.py:450
+#: apps/punches/models.py:521
 msgid "Not authorised"
 msgstr ""
 
-#: apps/punches/models.py:459
+#: apps/punches/models.py:530
 msgid "overtime minutes ruled on"
 msgstr ""
 
-#: apps/punches/models.py:465
+#: apps/punches/models.py:536
 msgid "settlement"
 msgstr ""
 
-#: apps/punches/models.py:475
+#: apps/punches/models.py:546
 msgid "decided by"
 msgstr "resolta per"
 
-#: apps/punches/models.py:480
+#: apps/punches/models.py:551
 msgid "decided alone"
 msgstr ""
 
-#: apps/punches/models.py:481
+#: apps/punches/models.py:552
 msgid "decided at"
 msgstr "resolta el"
 
-#: apps/punches/models.py:484
+#: apps/punches/models.py:555
 msgid "overtime decision"
 msgstr ""
 
-#: apps/punches/models.py:485
+#: apps/punches/models.py:556
 msgid "overtime decisions"
 msgstr ""
 
-#: apps/punches/models.py:533 apps/tenants/applications.py:64
+#: apps/punches/models.py:604 apps/tenants/applications.py:64
 #: apps/tenants/applications.py:90
 msgid "application"
 msgstr ""
 
-#: apps/punches/models.py:535
+#: apps/punches/models.py:606
 msgid "idempotency key"
 msgstr ""
 
-#: apps/punches/models.py:542
+#: apps/punches/models.py:613
 msgid "event"
 msgstr ""
 
-#: apps/punches/models.py:546
+#: apps/punches/models.py:617
 msgid "delegated punch receipt"
 msgstr ""
 
-#: apps/punches/models.py:547
+#: apps/punches/models.py:618
 msgid "delegated punch receipts"
 msgstr ""
 
@@ -1558,143 +1575,169 @@ msgstr ""
 msgid "payroll summaries"
 msgstr ""
 
-#: apps/reports/pdf.py:64 apps/reports/pdf.py:84 apps/reports/services.py:518
+#: apps/reports/pdf.py:57 apps/reports/services.py:553
+msgid "Summary of the working time record"
+msgstr "Resum del registre de jornada"
+
+#: apps/reports/pdf.py:57 apps/reports/services.py:553
 msgid "Working time record"
 msgstr "Registre de jornada"
 
-#: apps/reports/pdf.py:86
+#: apps/reports/pdf.py:98 apps/reports/services.py:556
+msgid "Delivered with the payslip (art. 6.1)"
+msgstr ""
+
+#: apps/reports/pdf.py:100
 msgid "Article 34.9 of the Spanish Workers' Statute (Royal Decree-Law 8/2019)"
 msgstr ""
 
-#: apps/reports/pdf.py:93 apps/reports/services.py:519
+#: apps/reports/pdf.py:108 apps/reports/services.py:557
 #: apps/tenants/holidays.py:57
 msgid "Company"
 msgstr "Empresa"
 
-#: apps/reports/pdf.py:93 apps/reports/services.py:519
+#: apps/reports/pdf.py:108 apps/reports/services.py:557
 msgid "Tax number"
 msgstr "CIF/NIF"
 
-#: apps/reports/pdf.py:95 apps/reports/services.py:521 apps/users/models.py:224
+#: apps/reports/pdf.py:110 apps/reports/services.py:559
+#: apps/users/models.py:225
 msgid "Employee"
 msgstr "Persona treballadora"
 
-#: apps/reports/pdf.py:97 apps/reports/services.py:521
+#: apps/reports/pdf.py:112 apps/reports/services.py:559
 msgid "Staff number"
 msgstr "Núm. d'empleat"
 
-#: apps/reports/pdf.py:101 apps/reports/services.py:524
+#: apps/reports/pdf.py:116 apps/reports/services.py:562
 msgid "Period"
 msgstr "Període"
 
-#: apps/reports/pdf.py:103 apps/reports/services.py:524
+#: apps/reports/pdf.py:118 apps/reports/services.py:562
 msgid "Time zone"
 msgstr "Zona horària"
 
-#: apps/reports/pdf.py:110 apps/reports/services.py:533
+#: apps/reports/pdf.py:125 apps/reports/services.py:571
 msgid "Break"
 msgstr ""
 
-#: apps/reports/pdf.py:111 apps/reports/services.py:534
+#: apps/reports/pdf.py:126 apps/reports/services.py:572
 msgid "counts as working time"
 msgstr ""
 
-#: apps/reports/pdf.py:113 apps/reports/services.py:536
+#: apps/reports/pdf.py:128 apps/reports/services.py:574
 msgid "does not count as working time"
 msgstr ""
 
-#: apps/reports/pdf.py:114 apps/reports/services.py:537
+#: apps/reports/pdf.py:129 apps/reports/services.py:575
 msgid "Maximum open day (hours)"
 msgstr ""
 
-#: apps/reports/pdf.py:137 apps/reports/services.py:542
+#: apps/reports/pdf.py:138 apps/reports/services.py:586
+msgid "Regime"
+msgstr ""
+
+#: apps/reports/pdf.py:140 apps/reports/services.py:588
+msgid "Contracted hours"
+msgstr ""
+
+#: apps/reports/pdf.py:167 apps/reports/services.py:602
 msgid "Date"
 msgstr "Data"
 
-#: apps/reports/pdf.py:137 apps/reports/services.py:542
+#: apps/reports/pdf.py:167 apps/reports/services.py:602
 msgid "Entry"
 msgstr "Entrada"
 
-#: apps/reports/pdf.py:137 apps/reports/services.py:542
+#: apps/reports/pdf.py:167 apps/reports/services.py:602
 msgid "Exit"
 msgstr "Sortida"
 
-#: apps/reports/pdf.py:137 apps/reports/services.py:542
+#: apps/reports/pdf.py:167 apps/reports/services.py:602
 msgid "Hours"
 msgstr "Hores"
 
-#: apps/reports/pdf.py:137 apps/reports/services.py:542
+#: apps/reports/pdf.py:167 apps/reports/services.py:602
 msgid "Notes"
 msgstr "Observacions"
 
-#: apps/reports/pdf.py:160
+#: apps/reports/pdf.py:190
 msgid "No records in this period"
 msgstr ""
 
-#: apps/reports/pdf.py:189
+#: apps/reports/pdf.py:219
 msgid "Total for the period"
 msgstr ""
 
-#: apps/reports/pdf.py:192 apps/reports/services.py:568
+#: apps/reports/pdf.py:222 apps/reports/services.py:628
 msgid "Breaks, not counted as working time"
 msgstr "Pauses, que no computen com a jornada"
 
-#: apps/reports/pdf.py:197 apps/reports/services.py:573
+#: apps/reports/pdf.py:227 apps/reports/services.py:633
 msgid "Waiting time, not counted as working time"
 msgstr "Temps d'espera, que no computa com a jornada"
 
-#: apps/reports/pdf.py:224
+#: apps/reports/pdf.py:254
 msgid ""
 "Times are recorded by the server, never by the device that requested them, "
 "and are shown in the time zone stated above."
 msgstr ""
 
-#: apps/reports/pdf.py:230 apps/reports/services.py:577
+#: apps/reports/pdf.py:260 apps/reports/services.py:637
 msgid "Generated"
 msgstr "Generat"
 
-#: apps/reports/pdf.py:231 apps/reports/services.py:578
+#: apps/reports/pdf.py:261 apps/reports/services.py:638
 msgid "Verification hash"
 msgstr "Empremta de verificació"
 
-#: apps/reports/services.py:333
+#: apps/reports/services.py:334
 msgid "two entries with no exit in between"
 msgstr "dues entrades sense sortida enmig"
 
-#: apps/reports/services.py:340
+#: apps/reports/services.py:341
 msgid "exit with no matching entry"
 msgstr "sortida sense entrada prèvia"
 
-#: apps/reports/services.py:350
+#: apps/reports/services.py:363
 msgid "entry with no exit"
 msgstr "entrada sense sortida"
 
-#: apps/reports/services.py:353
+#: apps/reports/services.py:366
 msgid "break with no end"
 msgstr "pausa sense fi"
 
-#: apps/reports/services.py:376
+#: apps/reports/services.py:389
 msgid ""
 "an entry no longer matches its integrity seal: it was altered outside the app"
 msgstr ""
 
-#: apps/reports/services.py:486
+#: apps/reports/services.py:509
+#, python-format
+msgid "this day was also recorded as: %(absence)s"
+msgstr ""
+
+#: apps/reports/services.py:511
 msgid "recorded by an application on the person's behalf"
 msgstr ""
 
-#: apps/reports/services.py:491
+#: apps/reports/services.py:516
 msgid "corrected by the company"
 msgstr ""
 
-#: apps/reports/services.py:493
+#: apps/reports/services.py:518
 msgid "imported from another system"
 msgstr ""
 
-#: apps/reports/services.py:498
+#: apps/reports/services.py:523
 msgid "changed without the person's agreement (art. 4.b)"
 msgstr "modificat sense la conformitat de la persona (art. 4.b)"
 
-#: apps/reports/services.py:562
+#: apps/reports/services.py:596
+msgid "Days with activity"
+msgstr ""
+
+#: apps/reports/services.py:622
 msgid "Total"
 msgstr "Total"
 
@@ -1702,19 +1745,19 @@ msgstr "Total"
 msgid "Dates must be written as YYYY-MM-DD."
 msgstr "Les dates s'escriuen com AAAA-MM-DD."
 
-#: apps/reports/views.py:105 apps/reports/views.py:161
+#: apps/reports/views.py:106 apps/reports/views.py:162
 msgid "You may only request your own record."
 msgstr "Només pots demanar el teu propi registre."
 
-#: apps/reports/views.py:110
+#: apps/reports/views.py:111
 msgid "That person does not exist."
 msgstr "Aquesta persona no existeix."
 
-#: apps/reports/views.py:190
+#: apps/reports/views.py:191
 msgid "Nobody worked in that period."
 msgstr "Ningú no va treballar en aquest període."
 
-#: apps/reports/views.py:195
+#: apps/reports/views.py:196
 #, python-format
 msgid ""
 "%(count)s people is over the %(limit)s this can produce in one request. "
@@ -1723,11 +1766,11 @@ msgstr ""
 "%(count)s persones superen les %(limit)s que es poden generar de cop. Acota "
 "per departament."
 
-#: apps/reports/views.py:332
+#: apps/reports/views.py:347
 msgid "Only a manager or an administrator generates the summaries."
 msgstr "Només un responsable o l'administració genera els resums."
 
-#: apps/reports/views.py:385
+#: apps/reports/views.py:400
 msgid "You may only ask for your own summary."
 msgstr "Només pots demanar el teu propi resum."
 
@@ -1816,7 +1859,7 @@ msgid "Choose at least one day."
 msgstr "Tria almenys un dia."
 
 #: apps/shifts/services.py:150 apps/shifts/views.py:324
-#: apps/users/serializers.py:208
+#: apps/users/serializers.py:209
 msgid "Somebody in that list is not in this company."
 msgstr "Algú d'aquesta llista no pertany a aquesta empresa."
 
@@ -2031,29 +2074,29 @@ msgstr ""
 msgid "Shift covered by somebody else."
 msgstr ""
 
-#: apps/shifts/views.py:637
+#: apps/shifts/views.py:657
 msgid ""
 "With no days to answer, a change can be applied the moment it is proposed: "
 "nobody gets the chance to agree or to disagree."
 msgstr ""
 
-#: apps/shifts/views.py:659
+#: apps/shifts/views.py:679
 #, python-format
 msgid "%(value)s is below the %(floor)s that %(basis)s sets."
 msgstr ""
 
-#: apps/shifts/views.py:670
+#: apps/shifts/views.py:690
 #, python-format
 msgid "%(value)s is above the %(ceiling)s that %(basis)s sets."
 msgstr ""
 
-#: apps/shifts/views.py:830
+#: apps/shifts/views.py:850
 msgid ""
 "Changing how time is counted needs the day it starts to apply. Without it "
 "the change would reach periods already closed and reported."
 msgstr ""
 
-#: apps/shifts/views.py:863
+#: apps/shifts/views.py:883
 msgid "How time was counted until this change."
 msgstr ""
 
@@ -2199,7 +2242,7 @@ msgstr ""
 msgid "Receive outbound events"
 msgstr ""
 
-#: apps/tenants/applications.py:45 apps/users/models.py:36
+#: apps/tenants/applications.py:45 apps/users/models.py:37
 msgid "description"
 msgstr ""
 
@@ -2267,8 +2310,8 @@ msgstr ""
 msgid "origin"
 msgstr ""
 
-#: apps/tenants/holidays.py:81 apps/users/models.py:135
-#: apps/users/models.py:287
+#: apps/tenants/holidays.py:81 apps/users/models.py:136
+#: apps/users/models.py:288
 msgid "workplace"
 msgstr ""
 
@@ -2313,7 +2356,7 @@ msgstr ""
 msgid "IANA name. Storage is always UTC; this only affects display."
 msgstr ""
 
-#: apps/tenants/models.py:60 apps/users/models.py:316
+#: apps/tenants/models.py:60 apps/users/models.py:317
 msgid "language"
 msgstr ""
 
@@ -2323,7 +2366,7 @@ msgid ""
 "browser's setting is only used when neither is set."
 msgstr ""
 
-#: apps/tenants/models.py:73 apps/users/models.py:477
+#: apps/tenants/models.py:73 apps/users/models.py:478
 msgid "annual leave days"
 msgstr ""
 
@@ -2375,42 +2418,48 @@ msgid ""
 "one."
 msgstr ""
 
-#: apps/tenants/models.py:147
+#: apps/tenants/models.py:145
 msgid "record retention (years)"
 msgstr ""
 
-#: apps/tenants/models.py:150
+#: apps/tenants/models.py:148
 msgid ""
-"How long clock events are kept. Four years is the floor set by art. 34.9 ET; "
-"a longer period needs its own justification, since keeping data because it "
-"might be useful is not a basis. Note that nothing is deleted automatically "
-"yet: this states the policy, it does not enforce it."
+"How long clock events are kept, after which they are deleted. Four years is "
+"the floor set by art. 34.9 ET; a longer period needs its own justification, "
+"since keeping data because it might be useful is not a basis. Leave and "
+"contracts are not affected: they are not the working time record and they do "
+"not live off this period."
 msgstr ""
+"Quant de temps es conserven els fitxatges, passat el qual s'esborren. "
+"Quatre anys és el sòl de l'art. 34.9 ET; un termini més llarg necessita "
+"la seva pròpia justificació, perquè conservar una dada per si algun dia "
+"és útil no és una base. Les absències i els contractes no es veuen "
+"afectats: no són el registre de jornada i no viuen d'aquest termini."
 
-#: apps/tenants/models.py:158
+#: apps/tenants/models.py:156
 msgid "security metadata retention (days)"
 msgstr ""
 
-#: apps/tenants/models.py:161
+#: apps/tenants/models.py:159
 msgid ""
 "How long the IP address, device and user agent of each event are kept. They "
 "serve to spot anomalies, not to prove working time: purging them leaves the "
 "record intact."
 msgstr ""
 
-#: apps/tenants/models.py:167
+#: apps/tenants/models.py:165
 msgid "settings"
 msgstr ""
 
-#: apps/tenants/models.py:172
+#: apps/tenants/models.py:170
 msgid "companies"
 msgstr ""
 
-#: apps/tenants/models.py:214
+#: apps/tenants/models.py:212
 msgid "enabled features"
 msgstr ""
 
-#: apps/tenants/models.py:217 apps/tenants/models.py:218
+#: apps/tenants/models.py:215 apps/tenants/models.py:216
 msgid "company limits"
 msgstr ""
 
@@ -2430,7 +2479,7 @@ msgstr ""
 msgid "Somebody else in this company already uses that staff number."
 msgstr ""
 
-#: apps/tenants/people_api.py:386
+#: apps/tenants/people_api.py:393
 msgid "Somebody else in this company already uses that identity."
 msgstr ""
 
@@ -2653,209 +2702,209 @@ msgid ""
 "the negotiation."
 msgstr ""
 
-#: apps/tenants/views.py:142 apps/users/serializers.py:370
+#: apps/tenants/views.py:142 apps/users/serializers.py:380
 msgid "That workplace belongs to another company."
 msgstr "Aquest centre de treball és d'una altra empresa."
 
-#: apps/users/models.py:51
+#: apps/users/models.py:52
 msgid "managers"
 msgstr ""
 
-#: apps/users/models.py:53
+#: apps/users/models.py:54
 msgid ""
 "Who may read and resolve for the people in it. Only has an effect on the "
 "manager profile: an administrator sees the whole company."
 msgstr ""
 
-#: apps/users/models.py:59 apps/users/models.py:295
+#: apps/users/models.py:60 apps/users/models.py:296
 msgid "department"
 msgstr ""
 
-#: apps/users/models.py:60
+#: apps/users/models.py:61
 msgid "departments"
 msgstr ""
 
-#: apps/users/models.py:95
+#: apps/users/models.py:96
 msgid "address"
 msgstr ""
 
-#: apps/users/models.py:98
+#: apps/users/models.py:99
 msgid "municipality"
 msgstr ""
 
-#: apps/users/models.py:101
+#: apps/users/models.py:102
 msgid "Decides the two local public holidays."
 msgstr ""
 
-#: apps/users/models.py:107
+#: apps/users/models.py:108
 msgid "municipality code"
 msgstr ""
 
-#: apps/users/models.py:110
+#: apps/users/models.py:111
 msgid "INE code in Spain. Names repeat between provinces; codes do not."
 msgstr ""
 
-#: apps/users/models.py:113
+#: apps/users/models.py:114
 msgid "region"
 msgstr ""
 
-#: apps/users/models.py:117
+#: apps/users/models.py:118
 msgid ""
 "Decides the public holidays the region sets. Empty uses only the national "
 "ones."
 msgstr ""
 
-#: apps/users/models.py:127
+#: apps/users/models.py:128
 msgid ""
 "Empty uses the company's. Only needed where a workplace is in another zone: "
 "in Spain, the Canary Islands."
 msgstr ""
 
-#: apps/users/models.py:136
+#: apps/users/models.py:137
 msgid "workplaces"
 msgstr ""
 
-#: apps/users/models.py:174
+#: apps/users/models.py:175
 msgid "Full time"
 msgstr ""
 
-#: apps/users/models.py:175
+#: apps/users/models.py:176
 msgid "Part time"
 msgstr ""
 
-#: apps/users/models.py:176
+#: apps/users/models.py:177
 msgid "Reduced working day"
 msgstr ""
 
-#: apps/users/models.py:177
+#: apps/users/models.py:178
 msgid "Training contract"
 msgstr ""
 
-#: apps/users/models.py:178
+#: apps/users/models.py:179
 msgid "No agreed figure"
 msgstr ""
 
-#: apps/users/models.py:218
+#: apps/users/models.py:219
 msgid "Read from the roster"
 msgstr ""
 
-#: apps/users/models.py:219
+#: apps/users/models.py:220
 msgid "Yes"
 msgstr ""
 
-#: apps/users/models.py:220
+#: apps/users/models.py:221
 msgid "No"
 msgstr ""
 
-#: apps/users/models.py:225
+#: apps/users/models.py:226
 msgid "Manager"
 msgstr ""
 
-#: apps/users/models.py:226
+#: apps/users/models.py:227
 msgid "Administrator"
 msgstr ""
 
-#: apps/users/models.py:274
+#: apps/users/models.py:275
 msgid "Null only for platform superusers on self-hosted installs."
 msgstr ""
 
-#: apps/users/models.py:298
+#: apps/users/models.py:299
 msgid "email address"
 msgstr ""
 
-#: apps/users/models.py:300
+#: apps/users/models.py:301
 msgid "first name"
 msgstr ""
 
-#: apps/users/models.py:303
+#: apps/users/models.py:304
 msgid "last name"
 msgstr ""
 
-#: apps/users/models.py:305
+#: apps/users/models.py:306
 msgid "role"
 msgstr ""
 
-#: apps/users/models.py:307
+#: apps/users/models.py:308
 msgid "staff number"
 msgstr ""
 
-#: apps/users/models.py:311
+#: apps/users/models.py:312
 msgid ""
 "The person's identifier in the company's own systems. Acts as a bridge when "
 "an external application records clock events on their behalf."
 msgstr ""
 
-#: apps/users/models.py:319
+#: apps/users/models.py:320
 msgid "Overrides the company language for this person."
 msgstr ""
 
-#: apps/users/models.py:331
+#: apps/users/models.py:332
 msgid "working-time regime"
 msgstr ""
 
-#: apps/users/models.py:335
+#: apps/users/models.py:336
 msgid "Art. 3.b. Decides which limits apply, not just how many hours."
 msgstr ""
 
-#: apps/users/models.py:338
+#: apps/users/models.py:339
 msgid "contracted hours"
 msgstr ""
 
-#: apps/users/models.py:344
+#: apps/users/models.py:345
 msgid ""
 "The figure the contract agreed. Empty on a full-time contract means the "
 "company's own; empty with no agreed figure means there is none."
 msgstr ""
 
-#: apps/users/models.py:349
+#: apps/users/models.py:350
 msgid "over"
 msgstr ""
 
-#: apps/users/models.py:353
+#: apps/users/models.py:354
 msgid "Whether the figure above is a week, a month or a year."
 msgstr ""
 
-#: apps/users/models.py:362
+#: apps/users/models.py:363
 msgid "contract starts"
 msgstr ""
 
-#: apps/users/models.py:365
+#: apps/users/models.py:366
 msgid "Empty means it was already running when the company started here."
 msgstr ""
 
-#: apps/users/models.py:368
+#: apps/users/models.py:369
 msgid "contract ends"
 msgstr ""
 
-#: apps/users/models.py:371
+#: apps/users/models.py:372
 msgid "Empty means open-ended. A date makes it fixed-term."
 msgstr ""
 
-#: apps/users/models.py:374
+#: apps/users/models.py:375
 msgid "permanent seasonal"
 msgstr ""
 
-#: apps/users/models.py:377
+#: apps/users/models.py:378
 msgid ""
 "Art. 16 ET: the work comes in periods of activity. Outside them there is no "
 "expected working day, and the roster says so instead of reporting an absence."
 msgstr ""
 
-#: apps/users/models.py:383
+#: apps/users/models.py:384
 msgid "agreed hours"
 msgstr ""
 
-#: apps/users/models.py:387
+#: apps/users/models.py:388
 msgid ""
 "Art. 3.b: the agreed working hours, as text. For example 'L-V 09:00-17:00'. "
 "Free text because a schedule is not a shape a closed field can hold."
 msgstr ""
 
-#: apps/users/models.py:397
+#: apps/users/models.py:398
 msgid "night worker"
 msgstr ""
 
-#: apps/users/models.py:402
+#: apps/users/models.py:403
 msgid ""
 "Art. 36.1 ET. A status, not a shift: three hours of the daily working day at "
 "night as a rule, or a third of the year. It brings an eight-hour average "
@@ -2863,43 +2912,43 @@ msgid ""
 "from the roster."
 msgstr ""
 
-#: apps/users/models.py:409
+#: apps/users/models.py:410
 msgid "rotating shifts"
 msgstr ""
 
-#: apps/users/models.py:412
+#: apps/users/models.py:413
 msgid ""
 "Art. 36.3 ET. The person rotates between shift teams. This does not add "
 "limits: it stops the ordinary ones being applied to a changeover, where a "
 "shorter rest is lawful and owed back rather than a breach."
 msgstr ""
 
-#: apps/users/models.py:418
+#: apps/users/models.py:419
 msgid "volunteered for nights"
 msgstr ""
 
-#: apps/users/models.py:421
+#: apps/users/models.py:422
 msgid ""
 "Art. 36.3 ET allows more than two consecutive weeks on the night shift only "
 "when the person asked for it. Recorded here because the roster cannot tell a "
 "volunteer from somebody left there."
 msgstr ""
 
-#: apps/users/models.py:428
+#: apps/users/models.py:429
 msgid "usual mode"
 msgstr ""
 
-#: apps/users/models.py:433
+#: apps/users/models.py:434
 msgid ""
 "Art. 3.e. What a clock event assumes when it says nothing; each event can "
 "still record the other."
 msgstr ""
 
-#: apps/users/models.py:439
+#: apps/users/models.py:440
 msgid "date of birth"
 msgstr ""
 
-#: apps/users/models.py:443
+#: apps/users/models.py:444
 msgid ""
 "Only used to apply the protections the law gives workers under eighteen: "
 "eight hours a day, a thirty-minute break from four and a half, two days of "
@@ -2908,53 +2957,53 @@ msgid ""
 "an adult."
 msgstr ""
 
-#: apps/users/models.py:455
+#: apps/users/models.py:456
 msgid "workers' representative"
 msgstr ""
 
-#: apps/users/models.py:458
+#: apps/users/models.py:459
 msgid ""
 "Informed when somebody disagrees with a change to their record (art. 4.b), "
 "and entitled to consult the register (art. 6.2)."
 msgstr ""
 
-#: apps/users/models.py:468
+#: apps/users/models.py:469
 msgid "wants clock reminders"
 msgstr ""
 
-#: apps/users/models.py:471
+#: apps/users/models.py:472
 msgid ""
 "Send a reminder when a shift starts and there is no entry, or when a day is "
 "left open. It prompts the real punch; it never records one."
 msgstr ""
 
-#: apps/users/models.py:481
+#: apps/users/models.py:482
 msgid ""
 "Overrides the company figure for this person. Empty means the company's. "
 "Part-time and mid-year joiners are the usual reason."
 msgstr ""
 
-#: apps/users/models.py:493
+#: apps/users/models.py:494
 msgid "identity provider subject"
 msgstr ""
 
-#: apps/users/models.py:498
+#: apps/users/models.py:499
 msgid "issuer"
 msgstr ""
 
-#: apps/users/models.py:501
+#: apps/users/models.py:502
 msgid "admin site access"
 msgstr ""
 
-#: apps/users/models.py:502
+#: apps/users/models.py:503
 msgid "date joined"
 msgstr ""
 
-#: apps/users/models.py:510
+#: apps/users/models.py:511
 msgid "person"
 msgstr ""
 
-#: apps/users/models.py:511
+#: apps/users/models.py:512
 msgid "people"
 msgstr ""
 
@@ -2972,77 +3021,77 @@ msgstr "El teu compte a %(company)s"
 msgid "Reset your password at %(company)s"
 msgstr "Restablir la teva contrasenya a %(company)s"
 
-#: apps/users/serializers.py:77
+#: apps/users/serializers.py:78
 #, python-format
 msgid "%(code)s is not a region of %(country)s."
 msgstr ""
 
-#: apps/users/serializers.py:213
+#: apps/users/serializers.py:214
 #, python-format
 msgid ""
 "%(name)s does not have a manager profile, so putting them in charge would "
 "grant nothing."
 msgstr ""
 
-#: apps/users/serializers.py:338
+#: apps/users/serializers.py:339
 msgid "Somebody in this company already uses it."
 msgstr ""
 
-#: apps/users/serializers.py:361
+#: apps/users/serializers.py:371
 #, python-format
 msgid "%(name)s already uses that staff number."
 msgstr ""
 
-#: apps/users/serializers.py:377
+#: apps/users/serializers.py:387
 msgid "That department belongs to another company."
 msgstr ""
 
-#: apps/users/serializers.py:393
+#: apps/users/serializers.py:403
 msgid "It cannot be today or a future date."
 msgstr ""
 
-#: apps/users/serializers.py:402
+#: apps/users/serializers.py:412
 #, python-format
 msgid "That gives an age of %(age)s, below the minimum working age. %(basis)s"
 msgstr ""
 
-#: apps/users/serializers.py:406
+#: apps/users/serializers.py:416
 msgid "That gives an age of over a hundred years."
 msgstr ""
 
-#: apps/users/serializers.py:431
+#: apps/users/serializers.py:441
 msgid ""
 "There is no agreed figure on this regime. Clear it, or choose one that has "
 "hours."
 msgstr ""
 
-#: apps/users/serializers.py:439
+#: apps/users/serializers.py:449
 msgid "Art. 3.b asks for the agreed hours on this regime."
 msgstr ""
 
-#: apps/users/serializers.py:448
+#: apps/users/serializers.py:458
 msgid "It has to be above zero."
 msgstr ""
 
-#: apps/users/serializers.py:468
+#: apps/users/serializers.py:478
 #, python-format
 msgid ""
 "%(basis)s: workers under eighteen may not work at night, so the status "
 "cannot apply to them."
 msgstr ""
 
-#: apps/users/serializers.py:487
+#: apps/users/serializers.py:497
 #, python-format
 msgid ""
 "%(hours)s h a week is above the company's %(ceiling)s h. A contract cannot "
 "agree past the legal maximum."
 msgstr ""
 
-#: apps/users/serializers.py:536
+#: apps/users/serializers.py:546
 msgid "A company with this tax number already exists."
 msgstr ""
 
-#: apps/users/serializers.py:600 apps/users/serializers.py:613
+#: apps/users/serializers.py:610 apps/users/serializers.py:623
 msgid "Wrong credentials."
 msgstr ""
 
