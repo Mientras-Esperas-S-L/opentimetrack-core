@@ -369,6 +369,53 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Tarea 5 --- Los tres documentos al día (27/08)
+
+Francisco pidió el dossier, la cobertura legal y el diseño de la aplicación, cada
+uno en su artefacto y en su `.md`.
+
+**El dossier** (v1.4 → v1.5, y artefacto): cifras al día ---1.272 pruebas de
+backend, 286 de navegador en 50 ficheros, 127 vueltas--- y un cambio que toca lo
+que se puede afirmar. El pilar «nada se borra» **decía más de lo que el producto
+hacía**; ahora dice «nada se borra a mano», que es más fuerte y es verdad, y añade
+el argumento de protección de datos que antes no se podía usar. Los huecos de
+catalán y gallego pasan de «unas 460» a **507 de 703**, y el documento explica que
+la cifra sube en vez de bajar porque cada función nueva añade mensajes.
+
+**La cobertura legal**: aquí lo que iba a ser «añadir un apartado» resultó ser
+**medio inventario mal**. El artefacto estaba en el corte del 12/08 y daba por
+inexistentes los permisos retribuidos, las quince suspensiones del art. 45, los
+festivos, las ausencias de parte del día y el tope de horas extra ---todo
+construido desde entonces---. Reescrito desde el `.md`, que es su fuente
+declarada, y las tablas se generan ahora con un script que **cuenta las filas** y
+con eso rellena el total, la barra, la leyenda y el `aria-label`: el recuento
+escrito a mano se había desincronizado y decía 91 situaciones con 49 sin cubrir
+cuando había 90 filas con 48.
+
+De 21/21/48 a **72 cubierto, 12 a medias, 27 falta** sobre 111. Lo que el `.md` no
+detallaba se comprobó en el código: la baja **sí** distingue contingencia ---común
+y accidente de trabajo, separadas y con su nota---, que el artefacto daba por «A
+medias» y «Falta».
+
+Añadida al `.md` y al artefacto la sección de **conservación del registro**, que
+entra por la misma prueba que las demás y no estaba: el plazo obliga en los dos
+sentidos, y el borrado no toca ausencias, contratos ni el rastro.
+
+**El diseño de la aplicación** es un documento de otra naturaleza ---una propuesta
+escrita el 11/08, antes de construir--- así que no se actualiza, se **contrasta**.
+Se conserva la propuesta tal cual y cada decisión abierta lleva ahora su «así
+quedó», más una sección final de lo propuesto frente a lo que hay. Tachar lo que
+se pensó y dejar solo el resultado haría que dejase de servir para lo único que
+sirve: saber por qué se eligió una cosa y no otra.
+
+Tres de las seis salieron distintas de lo previsto, y por razones que el diseño no
+podía ver: la bandeja de atención **se partió en dos** (el resumen se mira, la
+bandeja se vacía), el menú creció de 9 a 13+4 entradas ---todas las nuevas salen
+de un artículo, ninguna es idea de producto--- y turnos **se adelantó** porque sin
+cuadrante no hay contra qué contrastar lo trabajado.
+
+El documento de diseño **no tiene `.md`**: vive solo como artefacto.
+
 ### Vuelta 127 --- El plazo de conservación se cumple solo (27/08)
 
 Tarea **3 de la lista**. `record_retention_years` llevaba desde la vuelta 60
