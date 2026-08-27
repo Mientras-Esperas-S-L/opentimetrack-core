@@ -3177,3 +3177,30 @@ en caliente, adelantando un fichaje por SQL directo contra la base de desarrollo
 la prueba que lo acompaña tiene que incluir el **verdadero positivo más
 parecido** al caso que acabas de perdonar. Si no, lo que has escrito no es un
 arreglo: es un permiso.
+
+## 206. Dos documentos legales distintos no pueden salir del mismo generador sin decir cuál son
+
+`/reports/payroll-summary/` devolvía tres cosas según el formato. En JSON, el
+resumen del art. 6.1: totales del periodo, régimen, jornada pactada. En PDF y
+CSV, **el registro diario completo del art. 34.9**, titulado «Registro de
+jornada», dentro de un fichero llamado `resumen_…`.
+
+Se entiende cómo pasa: el resumen necesita los mismos datos, así que reutiliza
+`build_report`, y de ahí a pasarle el resultado al generador del otro documento
+hay un paso. Nadie escribió nada falso; simplemente no se dijo qué documento era.
+
+Lo que lo hace un fallo y no una minucia es a quién va: el del art. 6.1 se
+entrega **con el recibo de salarios**, y quien lo recibe compara sus horas con
+lo que cobra. Un papel que se titula como el documento de la Inspección y que se
+calla el régimen y la jornada pactada ---las dos cifras contra las que se miden
+esas horas--- no le sirve para eso, aunque contenga más datos.
+
+**Regla**: cuando dos salidas comparten generador, el parámetro que las
+distingue no es un detalle de presentación: es qué documento es. Y la prueba
+tiene que llevar **el contraste** ---que el otro documento no se haya convertido
+en este--- porque un `para_nomina=True` cableado por error pasaría igual todas
+las comprobaciones del resumen.
+
+**Y el olfato que lo encontró**: el JSON traía campos que el fichero no. Cuando
+una API devuelve más de lo que el documento equivalente enseña, o sobra en la
+API o falta en el documento; en ninguno de los dos casos está bien.

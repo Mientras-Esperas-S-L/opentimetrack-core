@@ -513,7 +513,16 @@ def day_notes(row: DayRow) -> str:
     return "; ".join(str(n) for n in notes)
 
 
-def to_csv(data: ReportData) -> str:
+def to_csv(data: ReportData, *, para_nomina: bool = False) -> str:
+    """El registro del periodo como fichero.
+
+    `para_nomina` lo convierte en el resumen del art. 6.1, que es **otro
+    documento**: acompaña al recibo de salarios y lo que se espera de él son los
+    totales del periodo y el régimen contra el que se miden. El detalle diario se
+    queda ---informa de más, no de menos--- pero el papel tiene que decir qué es:
+    salía titulado «Registro de jornada», el nombre del documento del art. 34.9,
+    en un fichero llamado `resumen_…`.
+    """
     buffer = io.StringIO()
     # `lineterminator` explícito: `csv.writer` pone «\r\n» por defecto ---lo que
     # dice la RFC 4180--- y eso llena el fichero de «^M» en cualquier editor de
@@ -528,7 +537,11 @@ def to_csv(data: ReportData) -> str:
     # libre, y este fichero se abre en Excel. Ver `apps/common/csv_export.py`.
     writer = EscritorSeguro(buffer, delimiter=";", lineterminator="\n")
 
-    writer.writerow([_("Working time record")])
+    writer.writerow(
+        [_("Summary of the working time record") if para_nomina else _("Working time record")]
+    )
+    if para_nomina:
+        writer.writerow([_("Delivered with the payslip (art. 6.1)")])
     writer.writerow([_("Company"), data.company_name, _("Tax number"), data.company_tax_id])
     writer.writerow(
         [_("Employee"), data.employee_name, _("Staff number"), data.employee_staff_number]
@@ -551,6 +564,28 @@ def to_csv(data: ReportData) -> str:
             data.computed_max_open_hours,
         ]
     )
+    if para_nomina:
+        # Lo que el art. 6.1 hace que sea este documento y no el otro: contra qué
+        # régimen se miden esas horas y cuántas se pactaron. El sistema ya lo
+        # calculaba ---la respuesta en JSON lo lleva--- y el fichero que se
+        # entregaba no lo decía.
+        writer.writerow(
+            [
+                _("Regime"),
+                data.regime or "—",
+                _("Contracted hours"),
+                data.contracted_hours or "—",
+            ]
+        )
+        writer.writerow(
+            [
+                _("Overtime"),
+                _format_hours(data.total_overtime_seconds),
+                _("Days with activity"),
+                len([r for r in data.rows if r.seconds or r.absence]),
+            ]
+        )
+
     writer.writerow([])
     writer.writerow([_("Date"), _("Entry"), _("Exit"), _("Hours"), _("Notes")])
 

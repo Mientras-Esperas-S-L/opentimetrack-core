@@ -3517,3 +3517,18 @@ msgstr ""
 "Aquí no se reproduce lo que escribió. El artículo 6.2 te da acceso al\n"
 "registro, así que puedes consultar el asiento y su historial en la "
 "aplicación."
+
+msgid "Summary of the working time record"
+msgstr "Resumen del registro de jornada"
+
+msgid "Delivered with the payslip (art. 6.1)"
+msgstr "Se entrega con el recibo de salarios (art. 6.1)"
+
+msgid "Regime"
+msgstr "Régimen"
+
+msgid "Contracted hours"
+msgstr "Jornada pactada"
+
+msgid "Days with activity"
+msgstr "Días con actividad"

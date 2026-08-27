@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 109 · Vueltas seguidas sin hallazgos: 0
+Vueltas dadas: 110 · Vueltas seguidas sin hallazgos: 0
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -264,10 +264,10 @@ completo (evidencia y refutación) está en el registro del workflow.
   **Es decisión de producto, no arreglo.** Preguntarlo antes de tocar nada. El
   manual dice ya lo que pasa hoy (§2), que antes describía otra cosa.
 
-- **El lote de informes de toda la plantilla, sin comprobar.** (v109) El botón
-  existe y la sonda no llegó a ver qué produce ---esperaba sesenta segundos y el
-  tope de una prueba son treinta---. Falta abrir esa salida y mirarle los bytes,
-  que es justo lo que destapó el fallo del sello en las otras dos.
+- ~~**El lote de informes de toda la plantilla, sin comprobar.**~~ (v109)
+  **HECHO en la v110**: genera resúmenes de nómina, contesta 201 y dice cuántos y
+  a quién deja fuera. Abrirlo destapó que el CSV y el PDF de ese resumen eran el
+  registro del art. 34.9 con otro nombre de fichero.
 
 - **Cuarenta y dos esperas por reloj en la suite de Playwright**, repartidas en
   veintiún ficheros. Una de ellas ---`waitForTimeout(2500)`--- rompía la tanda
@@ -345,6 +345,54 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 110 --- El papel que acompaña a la nómina se titulaba como el otro (27/08)
+
+Lente: **lo que quedó pendiente de la 109**, el botón «Generar los de toda la
+plantilla», y de ahí a abrir todas las salidas del resumen de nómina.
+
+#### Lo que aguantó
+
+- El botón hace `POST /reports/payroll-summary/`, contesta **201** y la pantalla
+  lo dice: «11 resúmenes generados para 2026-08-01 → 2026-08-31», con **los
+  nombres** de quien se queda fuera por no tener horas. Sin `console.error`.
+- **El periodo lo fija el ciclo de nómina, no quien pregunta**, y está razonado
+  en el código: el art. 6.1 lo ata a «el periodo fijado para el abono», y dejar
+  elegir fechas produciría resúmenes que no cuadran con ninguna nómina. La
+  pantalla tiene su propio campo «Un día del periodo» para eso.
+- **Quién puede generarlos**, con las cuatro sesiones: administración y
+  responsable sí ---está decidido así, «un responsable o la administración»---, el
+  operario recibe un rechazo con el motivo escrito, y la empresa vecina genera
+  los suyos y **solo los suyos**.
+- **Los formatos**: `json`, `pdf` y `csv` contestan 200 con los bytes que dicen
+  ser ---`%PDF-1.4`, texto--- y con `Content-Disposition`; `xml` y `exe` dan 404
+  con un error limpio, no un traceback.
+
+#### Lo que no
+
+**El CSV y el PDF del resumen eran el registro diario del art. 34.9.** Titulados
+«Registro de jornada» ---el nombre del otro documento--- dentro de un fichero
+llamado `resumen_…`. Y sin el **régimen** ni la **jornada pactada**, que la misma
+petición en JSON sí devolvía.
+
+Lo encontró comparar las tres salidas: **el JSON traía campos que el fichero no
+enseñaba**. Cuando eso pasa, o sobra en la API o falta en el documento.
+
+Importa por a quién va. El del art. 6.1 se entrega **con el recibo de salarios**,
+y quien lo recibe compara sus horas con lo que cobra: un papel que se calla
+contra qué régimen se miden esas horas no le sirve para eso, por más detalle que
+lleve.
+
+Arreglado: título propio, la línea que cita el art. 6.1, y las dos cifras que lo
+hacen ser ese documento ---régimen y jornada pactada, más horas extra y días con
+actividad---. El detalle diario se queda: informa de más, no de menos. Cuatro
+pruebas, y una de ellas es **el contraste**: que el documento del art. 34.9 no se
+haya convertido en un resumen, porque un `para_nomina=True` cableado por error
+pasaría igual todo lo demás.
+
+Cinco cadenas nuevas, traducidas al castellano ---699 mensajes, cero sin
+traducir---. Catalán y gallego suman cinco huecos a los 501 que ya tenían, que
+sigue siendo su propio hallazgo abierto.
 
 ### Vuelta 109 --- El informe acusaba de manipulación a 577 fichajes intactos (27/08)
 

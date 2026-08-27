@@ -52,7 +52,19 @@ def _celda(texto, estilo):
     return Paragraph(escape(str(texto or "")), estilo)
 
 
-def render_pdf(data: ReportData) -> bytes:
+def _titulo(para_nomina: bool) -> str:
+    """El nombre del documento, que no es el mismo en los dos casos."""
+    return str(_("Summary of the working time record") if para_nomina else _("Working time record"))
+
+
+def render_pdf(data: ReportData, *, para_nomina: bool = False) -> bytes:
+    """El registro del periodo en papel.
+
+    `para_nomina` lo convierte en el resumen del art. 6.1: mismo detalle, otro
+    encabezado y las dos cifras que hacen que sea ese documento. Sin esto, el
+    fichero se llamaba `resumen_…` y por dentro se titulaba «Registro de
+    jornada», que es el documento del art. 34.9.
+    """
     buffer = io.BytesIO()
     document = SimpleDocTemplate(
         buffer,
@@ -61,7 +73,7 @@ def render_pdf(data: ReportData) -> bytes:
         rightMargin=18 * mm,
         topMargin=16 * mm,
         bottomMargin=16 * mm,
-        title=f"{_('Working time record')} — {data.employee_name}",
+        title=f"{_titulo(para_nomina)} — {data.employee_name}",
         author=data.company_name,
     )
 
@@ -81,9 +93,12 @@ def render_pdf(data: ReportData) -> bytes:
     celda = ParagraphStyle("celda", parent=sheet["Normal"], fontSize=8, leading=10, textColor=INK)
 
     story = [
-        Paragraph(_("Working time record"), h1),
+        Paragraph(_titulo(para_nomina), h1),
         Paragraph(
-            _("Article 34.9 of the Spanish Workers' Statute (Royal Decree-Law 8/2019)"), small
+            _("Delivered with the payslip (art. 6.1)")
+            if para_nomina
+            else _("Article 34.9 of the Spanish Workers' Statute (Royal Decree-Law 8/2019)"),
+            small,
         ),
         Spacer(1, 8 * mm),
     ]
@@ -114,6 +129,21 @@ def render_pdf(data: ReportData) -> bytes:
                 _("Maximum open day (hours)"),
                 str(data.computed_max_open_hours),
             ],
+            *(
+                [
+                    # Lo que hace que esto sea el documento del art. 6.1 y no el
+                    # otro: contra qué régimen se miden las horas y cuántas se
+                    # pactaron. Ya se calculaban; el papel no las decía.
+                    [
+                        _("Regime"),
+                        _celda(data.regime or "—", celda),
+                        _("Contracted hours"),
+                        _celda(data.contracted_hours or "—", celda),
+                    ]
+                ]
+                if para_nomina
+                else []
+            ),
         ],
         colWidths=[24 * mm, 68 * mm, 26 * mm, 56 * mm],
     )

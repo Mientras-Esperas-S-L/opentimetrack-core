@@ -397,10 +397,12 @@ def _as_file(data, wanted, employee, period):
         f"resumen_{employee.last_name}_{period.first}_{period.last}", respaldo="resumen"
     )
     if wanted == "csv":
-        response = HttpResponse(to_csv(data), content_type="text/csv; charset=utf-8")
+        response = HttpResponse(
+            to_csv(data, para_nomina=True), content_type="text/csv; charset=utf-8"
+        )
         response["Content-Disposition"] = f'attachment; filename="{stem}.csv"'
     else:
-        response = HttpResponse(render_pdf(data), content_type="application/pdf")
+        response = HttpResponse(render_pdf(data, para_nomina=True), content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="{stem}.pdf"'
     response["X-Report-Hash"] = data.fingerprint
     return response
