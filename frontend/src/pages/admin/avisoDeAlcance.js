@@ -17,6 +17,8 @@
  *  se recalcula: dos copias de una regla son una que se queda atrás.
  */
 
+import i18next from '../../i18n/index.js'
+
 /** El aviso, o `null` si no hay nada que avisar.
  *
  *  @param {{name: string}[]} sueltos  responsables sin ningún departamento
@@ -26,22 +28,31 @@
 export function avisoDeAlcance(sueltos, alcanceEnUso) {
   if (!sueltos?.length) return null
 
+  const t = i18next.t.bind(i18next)
   const una = sueltos.length === 1
   const consecuencia = alcanceEnUso
     ? una
-      ? 'así que solo ve su propio registro'
-      : 'así que solo ven su propio registro'
+      ? t('así que solo ve su propio registro')
+      : t('así que solo ven su propio registro')
     : una
-      ? 'así que ve a toda la empresa'
-      : 'así que ven a toda la empresa'
+      ? t('así que ve a toda la empresa')
+      : t('así que ven a toda la empresa')
 
   return {
     // Que nadie vea a nadie es un estorbo; que alguien vea de más es un riesgo.
     severity: alcanceEnUso ? 'info' : 'warning',
     text: una
-      ? `${sueltos[0].name} no lleva ningún departamento, ${consecuencia}.`
-      : `${sueltos.length} responsables no llevan ningún departamento, ${consecuencia}: ${sueltos
-          .map((m) => m.name)
-          .join(', ')}.`,
+      ? t('{{quien}} no lleva ningún departamento, {{consecuencia}}.', {
+          quien: sueltos[0].name,
+          consecuencia,
+        })
+      : t(
+          '{{cuantas}} responsables no llevan ningún departamento, {{consecuencia}}: {{quienes}}.',
+          {
+            cuantas: sueltos.length,
+            consecuencia,
+            quienes: sueltos.map((m) => m.name).join(', '),
+          },
+        ),
   }
 }

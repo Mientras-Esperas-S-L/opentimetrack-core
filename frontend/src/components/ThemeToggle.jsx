@@ -22,25 +22,33 @@ import DarkModeIcon from '@mui/icons-material/DarkMode'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness'
 
+import { useTranslation } from 'react-i18next'
+
+import { alCatalogo } from '../i18n/index.js'
 import { useColorScheme } from '../hooks/useColorScheme.js'
 
 const OPTIONS = [
-  { value: 'system', label: 'El del sistema', icon: <SettingsBrightnessIcon fontSize="small" /> },
-  { value: 'light', label: 'Claro', icon: <LightModeIcon fontSize="small" /> },
-  { value: 'dark', label: 'Oscuro', icon: <DarkModeIcon fontSize="small" /> },
+  {
+    value: 'system',
+    label: alCatalogo('El del sistema'),
+    icon: <SettingsBrightnessIcon fontSize="small" />,
+  },
+  { value: 'light', label: alCatalogo('Claro'), icon: <LightModeIcon fontSize="small" /> },
+  { value: 'dark', label: alCatalogo('Oscuro'), icon: <DarkModeIcon fontSize="small" /> },
 ]
 
 export default function ThemeToggle() {
+  const { t } = useTranslation()
   const { choice, resolved, setChoice } = useColorScheme()
   const [anchor, setAnchor] = useState(null)
 
   return (
     <>
-      <Tooltip title="Aspecto de la pantalla">
+      <Tooltip title={t('Aspecto de la pantalla')}>
         <IconButton
           size="small"
           onClick={(event) => setAnchor(event.currentTarget)}
-          aria-label="Cambiar entre claro y oscuro"
+          aria-label={t('Cambiar entre claro y oscuro')}
           aria-haspopup="menu"
         >
           {/* El icono dice lo que se está viendo, no lo que se elegiría al
@@ -65,7 +73,7 @@ export default function ThemeToggle() {
             }}
           >
             <ListItemIcon>{option.icon}</ListItemIcon>
-            <ListItemText>{option.label}</ListItemText>
+            <ListItemText>{t(option.label)}</ListItemText>
             {choice === option.value && <CheckIcon fontSize="small" sx={{ ml: 1.5 }} />}
           </MenuItem>
         ))}

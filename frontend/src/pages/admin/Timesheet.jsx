@@ -40,6 +40,7 @@ import {
 import { firstOfThisMonth, today } from '../../components/format.js'
 import { dateOf, timeOf, timeOfWithSeconds } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
+import { alCatalogo } from '../../i18n/index.js'
 
 /** Groups the flat list of events by local day, newest first.
  *
@@ -103,7 +104,7 @@ function TablaDeFichajes({ eventos, employee, zone, conFecha = false, setCorrect
                       <ArrowUpwardIcon sx={{ fontSize: 14 }} />
                     )
                   }
-                  label={punch.punch_type === 'IN' ? 'Entrada' : 'Salida'}
+                  label={punch.punch_type === 'IN' ? t('Entrada') : t('Salida')}
                   sx={{ height: 22, fontSize: '0.72rem' }}
                 />
               </TableCell>
@@ -131,7 +132,11 @@ function TablaDeFichajes({ eventos, employee, zone, conFecha = false, setCorrect
                       // tener cuatro fichajes dentro del mismo minuto
                       // ---entrar, salir, volver--- y entonces los
                       // cuatro botones se oían exactamente igual.
-                      aria-label={`Corregir la ${punch.punch_type === 'IN' ? 'entrada' : 'salida'} de ${punch.employee_name} de las ${timeOfWithSeconds(punch.timestamp, punch.time_zone ?? zone)}`}
+                      aria-label={t('Corregir la {{tipo}} de {{quien}} de las {{hora}}', {
+                        tipo: punch.punch_type === 'IN' ? t('entrada') : t('salida'),
+                        quien: punch.employee_name,
+                        hora: timeOfWithSeconds(punch.timestamp, punch.time_zone ?? zone),
+                      })}
                       onClick={() => setCorrecting({ punch })}
                     >
                       {t('Corregir')}
@@ -216,7 +221,11 @@ function CorrectionDialog({
           })
         }}
       >
-        <DialogTitle>Corregir el registro{subject ? ` de ${subject}` : ''}</DialogTitle>
+        <DialogTitle>
+          {subject
+            ? t('Corregir el registro de {{quien}}', { quien: subject })
+            : t('Corregir el registro')}
+        </DialogTitle>
         <DialogContent>
           <ErrorNote error={error} />
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -227,8 +236,11 @@ function CorrectionDialog({
           <Stack sx={{ gap: 2, pt: 0.5 }}>
             {punch ? (
               <Alert severity="info" variant="outlined">
-                Fichaje seleccionado: {punch.punch_type === 'IN' ? 'entrada' : 'salida'} de las{' '}
-                {timeOf(punch.timestamp)} del {dateOf(punch.timestamp)}
+                {t('Fichaje seleccionado: {{tipo}} de las {{hora}} del {{fecha}}', {
+                  tipo: punch.punch_type === 'IN' ? t('entrada') : t('salida'),
+                  hora: timeOf(punch.timestamp),
+                  fecha: dateOf(punch.timestamp),
+                })}
               </Alert>
             ) : (
               <TextField
@@ -420,7 +432,7 @@ export default function Timesheet() {
                 : '',
             )
           }}
-          everyoneLabel="Toda la empresa"
+          everyoneLabel={t('Toda la empresa')}
           sx={{ minWidth: 260 }}
         />
         <TextField
@@ -439,7 +451,7 @@ export default function Timesheet() {
           onChange={(event) => rephrase(setTo)(event.target.value)}
           slotProps={{ inputLabel: { shrink: true } }}
           error={to < from}
-          helperText={to < from ? 'Va antes que la inicial.' : ' '}
+          helperText={to < from ? t('Va antes que la inicial.') : ' '}
         />
         <PickFilter
           label={t('Tipo')}
@@ -514,7 +526,7 @@ export default function Timesheet() {
           page={page}
           pageSize={PAGE_SIZE}
           onChange={setPage}
-          noun={{ singular: 'fichaje', plural: 'fichajes' }}
+          noun={{ singular: alCatalogo('fichaje'), plural: alCatalogo('fichajes') }}
         />
       )}
 

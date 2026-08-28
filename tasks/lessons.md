@@ -4720,3 +4720,26 @@ para eso ---la salvaguarda que exige que la muestra cambie entre idiomas--- o el
 propio rojo al primer intento. Elegir muestras es más delicado de lo que parece, y
 por eso conviene que el rojo llegue en la propia prueba y no cuatro pantallas más
 allá.
+
+## 286. Lo que queda al final no es lo que falta
+
+Al llegar al 95 % la lista de pendientes deja de ser una lista de trabajo y pasa a
+ser una lista de **cosas que hay que justificar**. De las 46 que quedan, ninguna es
+un hueco:
+
+- nombres de navegadores y sistemas ---`Chrome`, `Android`---, que son nombres
+  propios;
+- teclas ---`Escape`, `Enter`---, que son valores de `event.key`;
+- la cabecera `Authorization: Bearer`, que se escribe tal cual o no funciona;
+- un aviso de consola dirigido al equipo;
+- el nombre del producto;
+- dos mensajes de error de programación, en inglés y para quien programa;
+- los símbolos de duración, «2 h 30 min», iguales en los tres idiomas.
+
+Ninguna de esas siete familias se descubre contándolas: se descubre **mirándolas una
+a una**, y cada una necesita su motivo escrito al lado. Un guard que exija cero sin
+esa lista es un guard que obliga a traducir «Chrome».
+
+**La regla**: al cerrar una migración así, presupuestar el último 5 % como trabajo de
+clasificación y no de ejecución. Es donde se decide si el guard que queda detrás
+sirve para algo o hay que apagarlo a los dos meses.

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
@@ -24,6 +25,7 @@ const MINIMUM = 12
  *  arrived at a sign-in screen with no way to get a password at all.
  */
 export default function SetPassword() {
+  const { t } = useTranslation()
   const { uid, token } = useParams()
   const { setSession } = useAuth()
   const navigate = useNavigate()
@@ -64,10 +66,10 @@ export default function SetPassword() {
     >
       <Paper variant="outlined" sx={{ p: { xs: 3, sm: 4 }, width: '100%', maxWidth: 440 }}>
         <Typography variant="h6" sx={{ mb: 0.5 }}>
-          Elige tu contraseña
+          {t('Elige tu contraseña')}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Con ella entrarás a partir de ahora. El enlace sirve una sola vez.
+          {t('Con ella entrarás a partir de ahora. El enlace sirve una sola vez.')}
         </Typography>
 
         <ErrorNote error={error} onClose={() => setError(null)} />
@@ -85,27 +87,27 @@ export default function SetPassword() {
               required
               fullWidth
               type="password"
-              label="Contraseña"
+              label={t('Contraseña')}
               autoComplete="new-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               error={tooShort}
               helperText={
                 tooShort
-                  ? `Faltan ${MINIMUM - password.length} caracteres.`
-                  : `Al menos ${MINIMUM} caracteres.`
+                  ? t('Faltan {{cuantos}} caracteres.', { cuantos: MINIMUM - password.length })
+                  : t('Al menos {{cuantos}} caracteres.', { cuantos: MINIMUM })
               }
             />
             <TextField
               required
               fullWidth
               type="password"
-              label="Repítela"
+              label={t('Repítela')}
               autoComplete="new-password"
               value={repeat}
               onChange={(event) => setRepeat(event.target.value)}
               error={mismatch}
-              helperText={mismatch ? 'No coincide con la anterior.' : ' '}
+              helperText={mismatch ? t('No coincide con la anterior.') : ' '}
             />
 
             {submit.isPending && <LinearProgress />}
@@ -116,14 +118,17 @@ export default function SetPassword() {
               size="large"
               disabled={!ready || submit.isPending}
             >
-              Guardar y entrar
+              {t('Guardar y entrar')}
             </Button>
           </Stack>
         </form>
 
         <Alert severity="info" variant="outlined" sx={{ mt: 3 }}>
-          Si el enlace ha caducado o ya lo has usado, pide otro desde{' '}
-          <strong>He olvidado mi contraseña</strong> en la pantalla de acceso.
+          <Trans
+            i18nKey="Si el enlace ha caducado o ya lo has usado, pide otro desde <donde>{{enlace}}</donde> en la pantalla de acceso."
+            values={{ enlace: t('He olvidado mi contraseña') }}
+            components={{ donde: <strong /> }}
+          />
         </Alert>
       </Paper>
     </Box>

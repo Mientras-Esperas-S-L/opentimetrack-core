@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
@@ -28,7 +28,7 @@ import {
   getWorkplaces,
   updateWorkplace,
 } from '../../services/api.js'
-import { dateOf } from '../../components/format.js'
+import { dateOf, plural } from '../../components/format.js'
 import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
@@ -94,7 +94,7 @@ function WorkplaceDialog({
           onSave(form)
         }}
       >
-        <DialogTitle>{workplace ? 'Editar centro' : 'Nuevo centro de trabajo'}</DialogTitle>
+        <DialogTitle>{workplace ? t('Editar centro') : t('Nuevo centro de trabajo')}</DialogTitle>
         <DialogContent>
           <ErrorNote error={error} />
           <Stack sx={{ gap: 2, pt: 1 }}>
@@ -161,7 +161,7 @@ function WorkplaceDialog({
                 española con una delegación en Lisboa. */}
             <Autocomplete
               options={zonasHorarias}
-              groupBy={(zona) => (zonasDelPais[zona] ? 'En este país' : 'Las demás')}
+              groupBy={(zona) => (zonasDelPais[zona] ? t('En este país') : t('Las demás'))}
               getOptionLabel={(zona) =>
                 zonasDelPais[zona] ? `${zona} · ${zonasDelPais[zona]}` : zona
               }
@@ -173,7 +173,10 @@ function WorkplaceDialog({
                   fullWidth
                   label={t('Zona horaria')}
                   placeholder={companyZone}
-                  helperText={`Vacío usa la de la empresa (${companyZone}). Solo hace falta si el centro está en otra: en España, Canarias.`}
+                  helperText={t(
+                    'Vacío usa la de la empresa ({{zona}}). Solo hace falta si el centro está en otra: en España, Canarias.',
+                    { zona: companyZone },
+                  )}
                 />
               )}
             />
@@ -249,7 +252,7 @@ function Holidays({ workplaces }) {
           ))}
         </TextField>
         <Typography variant="body2" color="text.secondary">
-          {holidays.length} de los 14 del art. 37.2
+          {t('{{cuantos}} de los 14 del art. 37.2', { cuantos: holidays.length })}
         </Typography>
       </Stack>
 
@@ -257,9 +260,11 @@ function Holidays({ workplaces }) {
 
       {imported.length === 0 && (
         <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
-          No hay festivos nacionales ni autonómicos de {year}. Los trae{' '}
-          <code>python manage.py import_holidays --year {year}</code> desde el calendario transcrito
-          del BOE.
+          <Trans
+            i18nKey="No hay festivos nacionales ni autonómicos de {{año}}. Los trae <orden>python manage.py import_holidays --year {{año}}</orden> desde el calendario transcrito del BOE."
+            values={{ año: year }}
+            components={{ orden: <code /> }}
+          />
         </Alert>
       )}
 
@@ -343,9 +348,14 @@ function Holidays({ workplaces }) {
             </Button>
           </Stack>
           <Typography variant="caption" color="text.secondary">
-            Los dos festivos locales de cada municipio se meten aquí: los aprueba cada ayuntamiento
-            y no hay ningún registro nacional del que traerlos.
-            {typed.length > 0 && ` Hay ${typed.length} puestos a mano en ${year}.`}
+            {t(
+              'Los dos festivos locales de cada municipio se meten aquí: los aprueba cada ayuntamiento y no hay ningún registro nacional del que traerlos.',
+            )}
+            {typed.length > 0 &&
+              ` ${t('Hay {{cuantos}} puestos a mano en {{año}}.', {
+                cuantos: typed.length,
+                año: year,
+              })}`}
           </Typography>
         </Box>
       )}
@@ -446,9 +456,11 @@ export default function Workplaces() {
                     <Chip
                       size="small"
                       variant="outlined"
-                      label={
-                        place.people_count === 1 ? '1 persona' : `${place.people_count} personas`
-                      }
+                      label={`${place.people_count} ${plural(
+                        place.people_count,
+                        t('persona'),
+                        t('personas'),
+                      )}`}
                     />
                     {/* Solo cuando difiere de la de la empresa: repetirla en
                         cada fila sería ruido, y callarla donde cambia sería
@@ -465,7 +477,7 @@ export default function Workplaces() {
                   <Typography variant="body2" color="text.secondary">
                     {[place.address, place.municipality, place.region_name]
                       .filter(Boolean)
-                      .join(' · ') || 'Sin dirección'}
+                      .join(' · ') || t('Sin dirección')}
                   </Typography>
                   {!place.region && (
                     <Typography variant="caption" color="warning.main">
@@ -483,7 +495,7 @@ export default function Workplaces() {
                         Departamentos ya lo hacía así. */}
                     <Button
                       size="small"
-                      aria-label={`Editar ${place.name}`}
+                      aria-label={t('Editar {{cual}}', { cual: place.name })}
                       onClick={() => setEditing(place)}
                     >
                       {t('Editar')}
@@ -492,7 +504,7 @@ export default function Workplaces() {
                       <Button
                         size="small"
                         color="inherit"
-                        aria-label={`Eliminar el centro ${place.name}`}
+                        aria-label={t('Eliminar el centro {{cual}}', { cual: place.name })}
                         onClick={() =>
                           setConfirming({
                             title: t('Eliminar el centro'),

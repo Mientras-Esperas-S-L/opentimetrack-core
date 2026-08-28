@@ -41,6 +41,7 @@ import {
 import LeaveDialog from '../../components/LeaveDialog.jsx'
 import { dateOf, dayRange, leaveLabel, leaveLength, plural } from '../../components/format.js'
 import { FilterBar, PickFilter } from '../../components/filters.jsx'
+import { alCatalogo } from '../../i18n/index.js'
 
 /** The balance, as a bar plus the three numbers behind it.
  *
@@ -353,7 +354,7 @@ export default function MyLeave() {
         page={page}
         pageSize={PAGE_SIZE}
         onChange={setPage}
-        noun={{ singular: 'solicitud', plural: 'solicitudes' }}
+        noun={{ singular: alCatalogo('solicitud'), plural: alCatalogo('solicitudes') }}
       />
 
       <ConfirmDialog

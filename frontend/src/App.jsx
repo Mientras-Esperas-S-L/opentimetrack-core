@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -29,6 +30,7 @@ import Reports from './pages/admin/Reports.jsx'
 import { useAuth } from './hooks/useAuth.js'
 
 export default function App() {
+  const { t } = useTranslation()
   const { session, loading, unreachable } = useAuth()
 
   if (loading) {
@@ -52,12 +54,12 @@ export default function App() {
           variant="outlined"
           action={
             <Button color="inherit" size="small" onClick={() => window.location.reload()}>
-              Reintentar
+              {t('Reintentar')}
             </Button>
           }
         >
-          No hemos podido comprobar tu sesión. {unreachable.message ?? ''} Tu sesión sigue guardada:
-          no hace falta volver a entrar.
+          {t('No hemos podido comprobar tu sesión.')} {unreachable.message ?? ''}{' '}
+          {t('Tu sesión sigue guardada: no hace falta volver a entrar.')}
         </Alert>
       </Box>
     )

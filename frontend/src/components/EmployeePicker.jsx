@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import Autocomplete from '@mui/material/Autocomplete'
 import Chip from '@mui/material/Chip'
@@ -59,7 +60,7 @@ export default function EmployeePicker({
   value,
   onChange,
   multiple = false,
-  label = 'Persona',
+  label,
   everyoneLabel,
   /** `{ id: nombre }` que el llamante ya conoce, para las fichas de quien no
    *  esté en la página cargada. Sin esto, editar un departamento cuyos
@@ -75,6 +76,7 @@ export default function EmployeePicker({
   size,
   sx,
 }) {
+  const { t } = useTranslation()
   const [typed, setTyped] = useState('')
   // Nombres de lo que se va eligiendo aquí, para que la ficha sobreviva a que
   // la búsqueda cambie la lista bajo ella.
@@ -216,15 +218,15 @@ export default function EmployeePicker({
       }
       noOptionsText={
         search
-          ? 'Nadie coincide.'
+          ? t('Nadie coincide.')
           : onlyManagers
-            ? 'Nadie tiene perfil de responsable todavía.'
-            : 'Escribe para buscar.'
+            ? t('Nadie tiene perfil de responsable todavía.')
+            : t('Escribe para buscar.')
       }
       renderInput={(params) => (
         <TextField
           {...params}
-          label={label}
+          label={label ?? t('Persona')}
           // `required` va al `input` de texto de dentro, y en modo múltiple ese
           // campo **está vacío por diseño**: lo elegido vive en las fichas, no
           // en el texto. Así que un formulario con un selector múltiple
@@ -248,7 +250,10 @@ export default function EmployeePicker({
             // Says out loud that the list is partial. Silence here is what made
             // the old dropdown misleading rather than merely awkward.
             missing > 0 && !search
-              ? `Se muestran ${people.length} de ${data.count}. Escribe para buscar entre el resto.`
+              ? t('Se muestran {{cuantas}} de {{total}}. Escribe para buscar entre el resto.', {
+                  cuantas: people.length,
+                  total: data.count,
+                })
               : helperText
           }
         />

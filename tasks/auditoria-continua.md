@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 144 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---764 de 921 cadenas, diecinueve pantallas enteras---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 145 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---871 de 917 cadenas; solo queda Turnos, reservada como muestra, y el guard---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,29 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 145 --- El barrido de lo pequeño (28/08)
+
+**Traducido:** todo lo que quedaba salvo Turnos. Entrar, elegir contraseña,
+Centros de trabajo, Mi jornada, Fichajes, Cobertura pendiente, los
+recordatorios, el selector de tema, el de persona, el aviso de alcance y los
+tres servicios que escriben texto ---`api.js`, `bulk.js`, `avisoDeAlcance.js`---.
+El catálogo: 682 → **772 claves**. Van 871 de 917.
+
+**Los módulos que no son componentes** ---`format.js`, `bulk.js`, `api.js`,
+`avisoDeAlcance.js`--- llaman a `i18next.t` directamente, porque no hay
+componente al que enganchar el hook. El medidor no lo reconocía y los contaba
+como huecos: ahora entiende las dos formas.
+
+**Y los `noun` de todos los paginadores y barras de selección** van marcados con
+`alCatalogo`. Eran veinte cadenas repartidas por seis pantallas que se traducían
+en ejecución pero no aparecían en el catálogo como tales.
+
+**Lo que queda son 46 cadenas y ninguna es un hueco.** Nombres de navegadores
+(`push.js`), teclas (`Escape`, `Enter`), la cabecera `Authorization: Bearer`,
+un aviso de consola para el equipo, el nombre del producto, dos mensajes de
+error de programación en inglés y los símbolos de duración (`{{}} h {{}} min`).
+Cada una necesita su motivo escrito, y ese es el trabajo del guard.
 
 ### Vuelta 144 --- Resumen, Registro de actividad y Mis ausencias (28/08)
 

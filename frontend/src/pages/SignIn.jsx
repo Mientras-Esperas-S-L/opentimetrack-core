@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -13,6 +14,7 @@ import { requestPasswordReset } from '../services/api.js'
 import { useAuth } from '../hooks/useAuth.js'
 
 export default function SignIn() {
+  const { t } = useTranslation()
   const { signIn } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -62,7 +64,9 @@ export default function SignIn() {
         OpenTimeTrack
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 4 }}>
-        {mode === 'in' ? 'Entra para registrar tu jornada.' : 'Recupera el acceso a tu cuenta.'}
+        {mode === 'in'
+          ? t('Entra para registrar tu jornada.')
+          : t('Recupera el acceso a tu cuenta.')}
       </Typography>
 
       <Paper variant="outlined" sx={{ p: 3 }}>
@@ -72,11 +76,12 @@ export default function SignIn() {
                 not. Confirming that it does would turn this box into a way of
                 finding out who works where. */}
             <Alert severity="success" variant="outlined">
-              Si esa dirección tiene cuenta, le hemos enviado un enlace para elegir contraseña.
-              Caduca en 24 horas.
+              {t(
+                'Si esa dirección tiene cuenta, le hemos enviado un enlace para elegir contraseña. Caduca en 24 horas.',
+              )}
             </Alert>
             <Typography variant="body2" color="text.secondary">
-              Revisa también la carpeta de correo no deseado.
+              {t('Revisa también la carpeta de correo no deseado.')}
             </Typography>
             <Button
               onClick={() => {
@@ -85,7 +90,7 @@ export default function SignIn() {
               }}
               fullWidth
             >
-              Volver
+              {t('Volver')}
             </Button>
           </Stack>
         ) : (
@@ -98,7 +103,7 @@ export default function SignIn() {
               )}
 
               <TextField
-                label="Correo electrónico"
+                label={t('Correo electrónico')}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -111,7 +116,7 @@ export default function SignIn() {
               {mode === 'in' && (
                 <>
                   <TextField
-                    label="Contraseña"
+                    label={t('Contraseña')}
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -122,10 +127,12 @@ export default function SignIn() {
 
                   {needsCompany && (
                     <TextField
-                      label="CIF o NIF de la empresa"
+                      label={t('CIF o NIF de la empresa')}
                       value={taxId}
                       onChange={(e) => setTaxId(e.target.value)}
-                      helperText="Solo hace falta cuando el mismo correo pertenece a varias empresas."
+                      helperText={t(
+                        'Solo hace falta cuando el mismo correo pertenece a varias empresas.',
+                      )}
                       fullWidth
                     />
                   )}
@@ -135,11 +142,11 @@ export default function SignIn() {
               <Button type="submit" variant="contained" size="large" disabled={busy} fullWidth>
                 {mode === 'in'
                   ? busy
-                    ? 'Entrando…'
-                    : 'Entrar'
+                    ? t('Entrando…')
+                    : t('Entrar')
                   : busy
-                    ? 'Enviando…'
-                    : 'Enviarme un enlace'}
+                    ? t('Enviando…')
+                    : t('Enviarme un enlace')}
               </Button>
 
               <Box sx={{ textAlign: 'center' }}>
@@ -154,8 +161,8 @@ export default function SignIn() {
                   }}
                 >
                   {mode === 'in'
-                    ? 'He olvidado mi contraseña'
-                    : 'Volver a entrar con mi contraseña'}
+                    ? t('He olvidado mi contraseña')
+                    : t('Volver a entrar con mi contraseña')}
                 </Link>
               </Box>
             </Stack>

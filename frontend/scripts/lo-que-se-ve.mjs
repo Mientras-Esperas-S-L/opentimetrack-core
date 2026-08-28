@@ -116,13 +116,17 @@ const nombreDe = (n) =>
  *  mide. */
 const LLAMADAS = new Set(['t', 'alCatalogo'])
 
+/** Y `i18next.t(...)`, que es como se traduce donde no hay componente al que
+ *  enganchar el hook: `format.js`, `bulk.js`, `api.js`. */
+const esLaLlamada = (nodo) =>
+  (nodo.callee.type === 'Identifier' && LLAMADAS.has(nodo.callee.name)) ||
+  (nodo.callee.type === 'MemberExpression' &&
+    nodo.callee.object.type === 'Identifier' &&
+    nodo.callee.object.name === 'i18next' &&
+    nodo.callee.property.name === 't')
+
 const bajoT = (camino) =>
-  camino.findParent(
-    (p) =>
-      p.isCallExpression() &&
-      p.node.callee.type === 'Identifier' &&
-      LLAMADAS.has(p.node.callee.name),
-  ) != null
+  camino.findParent((p) => p.isCallExpression() && esLaLlamada(p.node)) != null
 
 const bajoTrans = (camino) =>
   camino.findParent((p) => p.isJSXElement() && p.node.openingElement.name.name === 'Trans') != null

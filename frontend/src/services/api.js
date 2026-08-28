@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 import { noteServerTime } from './serverClock.js'
+import i18next from '../i18n/index.js'
 
 const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
 
@@ -221,7 +222,9 @@ api.interceptors.response.use(
       message:
         concreto ||
         payload?.message ||
-        (plazoAgotado ? 'El servidor tarda en contestar.' : 'No hay conexión con el servidor.'),
+        (plazoAgotado
+          ? i18next.t('El servidor tarda en contestar.')
+          : i18next.t('No hay conexión con el servidor.')),
       details: porCampo,
       status,
     })

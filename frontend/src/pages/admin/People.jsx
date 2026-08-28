@@ -1181,7 +1181,7 @@ export default function People() {
         page={page}
         pageSize={PAGE_SIZE}
         onChange={setPage}
-        noun={{ singular: 'persona', plural: 'personas' }}
+        noun={{ singular: alCatalogo('persona'), plural: alCatalogo('personas') }}
       />
 
       <PersonDialog

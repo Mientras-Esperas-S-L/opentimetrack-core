@@ -11,6 +11,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Stack from '@mui/material/Stack'
 import Switch from '@mui/material/Switch'
@@ -22,6 +23,7 @@ import { disablePush, enablePush, pushState, pushSupported } from '../services/p
 import { useAuth } from '../hooks/useAuth.js'
 
 export default function RemindersControl() {
+  const { t } = useTranslation()
   const { session, setSession } = useAuth()
   const queryClient = useQueryClient()
   const wants = session?.user?.wants_punch_reminders !== false
@@ -57,7 +59,11 @@ export default function RemindersControl() {
 
   return (
     <Stack direction="row" sx={{ gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
-      <Tooltip title="Aviso si empieza tu turno y no has fichado, o si dejas la jornada abierta. Empuja al fichaje real, nunca lo hace por ti.">
+      <Tooltip
+        title={t(
+          'Aviso si empieza tu turno y no has fichado, o si dejas la jornada abierta. Empuja al fichaje real, nunca lo hace por ti.',
+        )}
+      >
         <FormControlLabel
           sx={{ mr: 0 }}
           control={
@@ -68,7 +74,7 @@ export default function RemindersControl() {
               onChange={(event) => remind.mutate(event.target.checked)}
             />
           }
-          label={<Typography variant="body2">Recordatorios</Typography>}
+          label={<Typography variant="body2">{t('Recordatorios')}</Typography>}
         />
       </Tooltip>
 
@@ -76,8 +82,10 @@ export default function RemindersControl() {
         <Tooltip
           title={
             push === 'denied'
-              ? 'Este navegador tiene los avisos bloqueados. Se cambia en sus ajustes de sitio.'
-              : 'Además del correo, aviso en este dispositivo. Solo en este: el permiso lo da el navegador.'
+              ? t('Este navegador tiene los avisos bloqueados. Se cambia en sus ajustes de sitio.')
+              : t(
+                  'Además del correo, aviso en este dispositivo. Solo en este: el permiso lo da el navegador.',
+                )
           }
         >
           <FormControlLabel
@@ -92,7 +100,7 @@ export default function RemindersControl() {
             }
             label={
               <Typography variant="body2" color={push === 'denied' ? 'text.disabled' : undefined}>
-                {push === 'denied' ? 'Avisos bloqueados' : 'En este dispositivo'}
+                {push === 'denied' ? t('Avisos bloqueados') : t('En este dispositivo')}
               </Typography>
             }
           />

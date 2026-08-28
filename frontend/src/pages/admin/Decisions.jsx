@@ -567,7 +567,7 @@ export default function Decisions() {
           ...(authorise ? { settlement } : {}),
         }),
       )
-      setError(bulkSummary(outcome, { done: authorise ? 'autorizadas' : 'denegadas' }))
+      setError(bulkSummary(outcome, { done: authorise ? t('autorizadas') : t('denegadas') }))
       refresh()
     } finally {
       setBulking(false)
@@ -581,7 +581,7 @@ export default function Decisions() {
       const outcome = await runBulk(filas, (row) =>
         confirmHolidayRecovery({ recovery: row.id, accept }),
       )
-      setError(bulkSummary(outcome, { done: accept ? 'devueltas' : 'descartadas' }))
+      setError(bulkSummary(outcome, { done: accept ? t('devueltas') : t('descartadas') }))
       refresh()
     } finally {
       setBulking(false)
@@ -889,7 +889,7 @@ export default function Decisions() {
             <ListaRecortada total={absences.data?.count} mostradas={absenceRows.length} />
             <SelectionBar
               selection={absencePick}
-              noun={{ singular: 'ausencia', plural: 'ausencias' }}
+              noun={{ singular: alCatalogo('ausencia'), plural: alCatalogo('ausencias') }}
               busy={bulking}
               actions={[
                 {
@@ -898,7 +898,7 @@ export default function Decisions() {
                     decideMany(
                       shownAbsences.filter((row) => absencePick.isSelected(row)),
                       approveAbsence,
-                      { done: 'aprobadas' },
+                      { done: t('aprobadas') },
                     ).then(absencePick.clear),
                 },
                 {
@@ -965,7 +965,7 @@ export default function Decisions() {
               count={corrections.data?.count}
               page={paginaCorrecciones}
               pageSize={PAGE_SIZE}
-              noun={{ singular: 'corrección', plural: 'correcciones' }}
+              noun={{ singular: alCatalogo('corrección'), plural: alCatalogo('correcciones') }}
               onChange={(pagina) => {
                 setPaginaCorrecciones(pagina)
                 // La selección se vacía al cambiar de página: las acciones en
@@ -977,7 +977,7 @@ export default function Decisions() {
             />
             <SelectionBar
               selection={correctionPick}
-              noun={{ singular: 'corrección', plural: 'correcciones' }}
+              noun={{ singular: alCatalogo('corrección'), plural: alCatalogo('correcciones') }}
               busy={bulking}
               actions={[
                 {
@@ -986,7 +986,7 @@ export default function Decisions() {
                     decideMany(
                       shownCorrections.filter((row) => correctionPick.isSelected(row)),
                       approveCorrection,
-                      { done: 'aprobadas' },
+                      { done: t('aprobadas') },
                     ).then(correctionPick.clear),
                 },
                 {
@@ -1150,7 +1150,7 @@ export default function Decisions() {
               count={waiting.data?.count}
               page={paginaEspera}
               pageSize={PAGE_SIZE}
-              noun={{ singular: 'propuesta', plural: 'propuestas' }}
+              noun={{ singular: alCatalogo('propuesta'), plural: alCatalogo('propuestas') }}
               onChange={(pagina) => {
                 setPaginaEspera(pagina)
                 openPick.clear()
@@ -1158,7 +1158,7 @@ export default function Decisions() {
             />
             <SelectionBar
               selection={openPick}
-              noun={{ singular: 'propuesta', plural: 'propuestas' }}
+              noun={{ singular: alCatalogo('propuesta'), plural: alCatalogo('propuestas') }}
               busy={bulking}
               actions={[
                 {
@@ -1225,7 +1225,7 @@ export default function Decisions() {
                 aplicara sin pensar. */}
             <SelectionBar
               selection={overtimePick}
-              noun={{ singular: 'persona', plural: 'personas' }}
+              noun={{ singular: alCatalogo('persona'), plural: alCatalogo('personas') }}
               busy={bulking}
               actions={[
                 {
@@ -1332,7 +1332,7 @@ export default function Decisions() {
                 nada salvo el tiempo que se tarda. */}
             <SelectionBar
               selection={recoveryPick}
-              noun={{ singular: 'recuperación', plural: 'recuperaciones' }}
+              noun={{ singular: alCatalogo('recuperación'), plural: alCatalogo('recuperaciones') }}
               busy={bulking}
               actions={[
                 {
@@ -1372,7 +1372,7 @@ export default function Decisions() {
           if (rejecting.rows) {
             const { rows, action, onDone } = rejecting
             setRejecting(null)
-            decideMany(rows, (id) => action(id, note), { done: 'rechazadas' }).then(onDone)
+            decideMany(rows, (id) => action(id, note), { done: t('rechazadas') }).then(onDone)
             return
           }
           decide.mutate({ action: rejecting.action, id: rejecting.id, note })

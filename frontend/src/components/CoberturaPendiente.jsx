@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
@@ -12,11 +13,12 @@ import Typography from '@mui/material/Typography'
 
 import { getCoverage, reassignShift } from '../services/api.js'
 import { ErrorNote, Loading } from './common.jsx'
-import { localeDeFechas } from '../i18n/index.js'
+import { plural } from './format.js'
+import { alCatalogo, localeDeFechas } from '../i18n/index.js'
 
 const MOTIVO = {
-  left_the_company: 'dejó la empresa',
-  on_leave: 'de baja',
+  left_the_company: alCatalogo('dejó la empresa'),
+  on_leave: alCatalogo('de baja'),
 }
 
 /** Un hueco y quién puede taparlo.
@@ -27,6 +29,7 @@ const MOTIVO = {
  *  abrir las fichas a mano ---que es exactamente lo que esto viene a evitar---.
  */
 function Hueco({ hueco, onCubrir, guardando }) {
+  const { t } = useTranslation()
   const [quien, setQuien] = useState('')
   const viables = hueco.candidates.filter((c) => c.viable)
   const elegido = hueco.candidates.find((c) => c.employee_id === quien)
@@ -50,13 +53,13 @@ function Hueco({ hueco, onCubrir, guardando }) {
             sx={{ fontVariantNumeric: 'tabular-nums' }}
           />
           <Typography variant="body2" color="text.secondary">
-            {hueco.employee_label} · {MOTIVO[hueco.reason] ?? hueco.detail}
+            {hueco.employee_label} · {MOTIVO[hueco.reason] ? t(MOTIVO[hueco.reason]) : hueco.detail}
           </Typography>
         </Stack>
 
         {hueco.candidates.length === 0 ? (
           <Alert severity="warning" variant="outlined">
-            No hay nadie más en la empresa a quien ofrecérselo.
+            {t('No hay nadie más en la empresa a quien ofrecérselo.')}
           </Alert>
         ) : (
           <Stack
@@ -66,12 +69,16 @@ function Hueco({ hueco, onCubrir, guardando }) {
             <TextField
               select
               size="small"
-              label="Quién lo cubre"
+              label={t('Quién lo cubre')}
               // Igual que el botón: doce desplegables con la misma etiqueta no
               // dicen de cuál son.
               slotProps={{
                 htmlInput: {
-                  'aria-label': `Quién cubre el ${diaLegible} el turno de ${hueco.starts_at} a ${hueco.ends_at}`,
+                  'aria-label': t('Quién cubre el {{dia}} el turno de {{desde}} a {{hasta}}', {
+                    dia: diaLegible,
+                    desde: hueco.starts_at,
+                    hasta: hueco.ends_at,
+                  }),
                 },
               }}
               value={quien}
@@ -79,8 +86,12 @@ function Hueco({ hueco, onCubrir, guardando }) {
               sx={{ minWidth: 260 }}
               helperText={
                 viables.length
-                  ? `${viables.length} puede${viables.length === 1 ? '' : 'n'} sin incumplir nada`
-                  : 'Nadie puede sin incumplir algo'
+                  ? plural(
+                      viables.length,
+                      t('{{cuantas}} puede sin incumplir nada', { cuantas: viables.length }),
+                      t('{{cuantas}} pueden sin incumplir nada', { cuantas: viables.length }),
+                    )
+                  : t('Nadie puede sin incumplir algo')
               }
             >
               {hueco.candidates.map((c) => (
@@ -108,11 +119,19 @@ function Hueco({ hueco, onCubrir, guardando }) {
                   persona distinta. */}
               <Button
                 variant="contained"
-                aria-label={`Asignar el ${diaLegible} el turno de ${hueco.starts_at} a ${hueco.ends_at} que cubre a ${hueco.employee_label}`}
+                aria-label={t(
+                  'Asignar el {{dia}} el turno de {{desde}} a {{hasta}} que cubre a {{quien}}',
+                  {
+                    dia: diaLegible,
+                    desde: hueco.starts_at,
+                    hasta: hueco.ends_at,
+                    quien: hueco.employee_label,
+                  },
+                )}
                 disabled={!elegido?.viable || guardando}
                 onClick={() => onCubrir(hueco, elegido)}
               >
-                Asignar
+                {t('Asignar')}
               </Button>
             </Box>
           </Stack>
@@ -130,6 +149,7 @@ function Hueco({ hueco, onCubrir, guardando }) {
  *  juntas y se resuelve en el sitio.
  */
 export default function CoberturaPendiente({ from, to }) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [error, setError] = useState(null)
 
@@ -158,11 +178,12 @@ export default function CoberturaPendiente({ from, to }) {
     <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
       <Stack sx={{ gap: 1.5 }}>
         <Typography variant="h3" sx={{ fontSize: '1rem' }}>
-          Cobertura pendiente ({huecos.length})
+          {t('Cobertura pendiente ({{cuantos}})', { cuantos: huecos.length })}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Turnos asignados a quien no los va a trabajar. Mientras sigan así, esa persona saldrá cada
-          día como ausencia sin justificar.
+          {t(
+            'Turnos asignados a quien no los va a trabajar. Mientras sigan así, esa persona saldrá cada día como ausencia sin justificar.',
+          )}
         </Typography>
 
         <ErrorNote error={error} onClose={() => setError(null)} />

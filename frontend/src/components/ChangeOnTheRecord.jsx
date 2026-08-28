@@ -16,14 +16,18 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt'
 
+import { useTranslation } from 'react-i18next'
+
+import { alCatalogo } from '../i18n/index.js'
 import { dateOf, timeOf } from './format.js'
 
-const TIPO = { IN: 'Entrada', OUT: 'Salida' }
+const TIPO = { IN: alCatalogo('Entrada'), OUT: alCatalogo('Salida') }
 
 /** «Salida de las 17:00 del 12 ago», o un guion si no hay tal fichaje. */
 function Sello({ punch, tipo, hora, zone }) {
+  const { t } = useTranslation()
   const cuando = punch?.timestamp ?? hora
-  const clase = TIPO[punch?.punch_type ?? tipo] ?? ''
+  const clase = t(TIPO[punch?.punch_type ?? tipo] ?? '')
 
   if (!cuando) return <Box component="span">—</Box>
 
@@ -36,6 +40,7 @@ function Sello({ punch, tipo, hora, zone }) {
 }
 
 export default function ChangeOnTheRecord({ correction, zone }) {
+  const { t } = useTranslation()
   const {
     kind,
     target_detail: actual,
@@ -52,14 +57,14 @@ export default function ChangeOnTheRecord({ correction, zone }) {
     <Stack
       direction="row"
       sx={{ gap: 1, alignItems: 'center', flexWrap: 'wrap', mt: 0.75 }}
-      aria-label="Qué cambia en el registro"
+      aria-label={t('Qué cambia en el registro')}
     >
       <Typography variant="body2" color="text.secondary">
         {actual ? (
           <Sello punch={actual} zone={zone} />
         ) : (
           <Box component="span" sx={{ fontStyle: 'italic' }}>
-            no hay fichaje
+            {t('no hay fichaje')}
           </Box>
         )}
       </Typography>
@@ -67,7 +72,7 @@ export default function ChangeOnTheRecord({ correction, zone }) {
       <ArrowRightAltIcon fontSize="small" sx={{ color: 'text.disabled' }} />
 
       <Typography variant="body2" color={anula ? 'secondary.main' : 'text.primary'}>
-        {anula ? 'queda anulado' : <Sello tipo={tipo} hora={propuesta} zone={zone} />}
+        {anula ? t('queda anulado') : <Sello tipo={tipo} hora={propuesta} zone={zone} />}
       </Typography>
     </Stack>
   )

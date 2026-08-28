@@ -48,6 +48,7 @@ import {
   hhmm,
   monthBounds,
   monthName,
+  plural,
   timeOf,
 } from '../../components/format.js'
 import ChangeOnTheRecord from '../../components/ChangeOnTheRecord.jsx'
@@ -325,7 +326,7 @@ function CorrectionRow({ correction, zone, onAccept, onDispute, busy }) {
               autorizar «un fichaje» sin saber cuál. */}
           <ChangeOnTheRecord correction={correction} zone={zone} />
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-            Pedida el {dateOf(correction.created_at)}
+            {t('Pedida el {{fecha}}', { fecha: dateOf(correction.created_at) })}
           </Typography>
           {correction.reason && (
             <Typography
@@ -368,7 +369,7 @@ function CorrectionRow({ correction, zone, onAccept, onDispute, busy }) {
               // discrepancia registrada") and the line underneath already says
               // that in full. The rest keep the server's.
               saidNo
-                ? 'Has dicho que no'
+                ? t('Has dicho que no')
                 : ['AWAITING_EMPLOYEE', 'DISPUTED'].includes(correction.status)
                   ? undefined
                   : correction.status_display
@@ -537,7 +538,7 @@ export default function MyTime() {
               disabled={bajar.isPending}
               onClick={() => bajar.mutate('pdf')}
             >
-              Descargar {monthName(month)}
+              {t('Descargar {{mes}}', { mes: monthName(month) })}
             </Button>
             <Button variant="outlined" startIcon={<EditNoteIcon />} onClick={() => setAsking(true)}>
               {t('Pedir una corrección')}
@@ -560,7 +561,10 @@ export default function MyTime() {
       {resumen && (
         <Panel
           title={t('Lo que va del periodo de nómina')}
-          hint={`${resumen.period?.label ?? ''}. Es el resumen que acompaña a tu nómina: el periodo lo fija la empresa, no esta pantalla.`}
+          hint={t(
+            '{{periodo}}. Es el resumen que acompaña a tu nómina: el periodo lo fija la empresa, no esta pantalla.',
+            { periodo: resumen.period?.label ?? '' },
+          )}
           sx={{ mb: 3 }}
         >
           <Stack direction="row" sx={{ gap: 3, flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -569,7 +573,10 @@ export default function MyTime() {
                 {hhmm(resumen.total_seconds)}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                trabajadas en {resumen.days} {resumen.days === 1 ? 'día' : 'días'}
+                {t('trabajadas en {{cuantos}} {{unidad}}', {
+                  cuantos: resumen.days,
+                  unidad: plural(resumen.days, t('día'), t('días')),
+                })}
               </Typography>
             </Box>
             {resumen.overtime_seconds > 0 && (
@@ -578,7 +585,7 @@ export default function MyTime() {
                   {hhmm(resumen.overtime_seconds)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  de más sobre lo previsto
+                  {t('de más sobre lo previsto')}
                 </Typography>
               </Box>
             )}
@@ -597,8 +604,10 @@ export default function MyTime() {
 
       {waiting.length > 0 && (
         <Panel
-          title={waiting.length === 1 ? 'Un cambio en tu registro' : 'Cambios en tu registro'}
-          hint="La empresa propone cambiar lo que quedó registrado. Sin tu conformidad no se aplica todavía, y si finalmente se aplica constará que fue sin acuerdo."
+          title={waiting.length === 1 ? t('Un cambio en tu registro') : t('Cambios en tu registro')}
+          hint={t(
+            'La empresa propone cambiar lo que quedó registrado. Sin tu conformidad no se aplica todavía, y si finalmente se aplica constará que fue sin acuerdo.',
+          )}
           sx={{ mb: 3 }}
         >
           <Stack sx={{ gap: 1 }}>
@@ -666,7 +675,7 @@ export default function MyTime() {
       {isLoading ? (
         <Loading rows={5} />
       ) : days.length === 0 ? (
-        <Empty>No hay fichajes en {monthName(month)}.</Empty>
+        <Empty>{t('No hay fichajes en {{mes}}.', { mes: monthName(month) })}</Empty>
       ) : (
         <Stack sx={{ gap: 1.5 }}>
           {days.map(([day, events]) => {
@@ -716,7 +725,7 @@ export default function MyTime() {
                       color="success.main"
                       sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}
                     >
-                      {timeOf(summary.openSince, zone)} – sin cerrar
+                      {t('{{hora}} – sin cerrar', { hora: timeOf(summary.openSince, zone) })}
                     </Typography>
                   )}
                 </Stack>
