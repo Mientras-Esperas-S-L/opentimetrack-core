@@ -491,6 +491,17 @@ export const createActivityPeriod = (payload) => post('/activity-periods/', payl
 export const deleteActivityPeriod = async (id) =>
   (await api.delete(`/activity-periods/${id}/`)).data
 
+/** Las solicitudes de adaptación de jornada (art. 34.8 ET).
+ *
+ *  Sin `employee` son las propias: quien no gestiona solo ve las suyas, y al
+ *  crearla sin decir de quién es, es la suya.
+ */
+export const getScheduleAdaptations = async (params) =>
+  page(await get('/schedule-adaptations/', params))
+export const createScheduleAdaptation = (payload) => post('/schedule-adaptations/', payload)
+export const answerScheduleAdaptation = async (id, payload) =>
+  (await api.patch(`/schedule-adaptations/${id}/`, payload)).data
+
 /** El acuerdo de trabajo a distancia (art. 5 de la Ley 10/2021). */
 export const getRemoteWorkAgreements = async (employee) =>
   page(await get('/remote-work-agreements/', { employee }))

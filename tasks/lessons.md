@@ -5217,3 +5217,55 @@ Un `assert` dice que el ancla es única. No dice que el sitio sea el que uno cre
 **La regla:** antes de insertar en una estructura, **leer las cinco líneas de
 alrededor**, no solo la del ancla. Un `sed -n 'N,Mp'` cuesta un segundo y es la
 diferencia entre insertar un elemento y romper el que había.
+
+## 306. «Ya no hay que acordarse» al lado de un sitio donde sí hay que acordarse
+
+«Por decidir» se caía entera al abrir la pestaña que acababa de añadir, con un
+`Cannot read properties of undefined (reading 'pick')`. La causa: un array
+indexado por número de pestaña que da la selección múltiple de cada cola, y una
+cola nueva que no tiene selección.
+
+Lo interesante es el comentario que había justo encima:
+
+> «En un sitio y no repartido por cinco condicionales […] Antes solo cubría las
+> dos primeras colas con un `tab < 2` **que había que acordarse de ampliar**.»
+
+Alguien ya había arreglado este mismo problema. El arreglo mejoró el síntoma
+---antes se olvidaba una casilla, ahora se cae la pantalla--- y **no quitó la
+obligación de acordarse**, que era lo que el comentario prometía.
+
+**La regla:** un arreglo que sustituye «acuérdate de ampliar el `if`» por
+«acuérdate de ampliar el array» no ha arreglado nada, solo ha movido el olvido. Se
+sale de ahí haciendo que **la ausencia sea una respuesta válida**: `undefined`
+ahora significa «esta cola no tiene selección», y la siguiente cola no tiene que
+inventarse una para poder existir.
+
+Y la señal para detectarlo: cuando un comentario diga que algo ya no hay que
+recordarlo, **probar a añadir el caso siguiente**. Si hay que tocar el sitio, el
+comentario miente.
+
+## 307. `storageState({ path })` guarda; no carga
+
+En una prueba de navegador con dos personas escribí:
+
+    await page.context().storageState({ path: 'e2e/.sesiones/operario.json' })
+
+creyendo que cargaba esa sesión. Hace lo contrario: **vuelca** el estado actual a
+ese fichero. La prueba habría corrido con la sesión de administración ---la del
+`test.use` del fichero--- creyendo que era la de quien trabaja, y habría pasado.
+
+Peor todavía: **sobrescribe el fichero de sesión del operario** con la de
+administración, así que las demás pruebas que lo usan habrían empezado a fallar
+por un motivo sin relación aparente.
+
+Una sesión distinta se carga creando un contexto:
+
+    const suyo = await browser.newContext({ storageState: 'e2e/.sesiones/operario.json' })
+    const page = await suyo.newPage()
+
+**La regla, que es más general:** cuando una API usa el mismo nombre para leer y
+para escribir ---`storageState()` devuelve, `storageState({path})` guarda--- la
+dirección la marca el argumento, y ahí es donde hay que mirar dos veces. Y en una
+prueba con dos actores, comprobar que cada uno **es quien se dice**: aquí bastaba
+mirar de quién sale la solicitud en el servidor, que es lo que la prueba hace
+ahora.

@@ -20,16 +20,17 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 
 import {
+  PAGE_SIZE,
   applyCorrectionAnyway,
   approveAbsence,
   approveCorrection,
   confirmHolidayRecovery,
   decideOvertime,
-  getHolidayRecoveries,
   getCorrections,
+  getHolidayRecoveries,
   getPendingAbsences,
   getPendingOvertime,
-  PAGE_SIZE,
+  getScheduleAdaptations,
   rejectAbsence,
   rejectCorrection,
 } from '../../services/api.js'
@@ -52,6 +53,7 @@ import {
   plural,
   timeOf,
 } from '../../components/format.js'
+import AdaptationQueue from '../../components/AdaptationQueue.jsx'
 import ChangeOnTheRecord from '../../components/ChangeOnTheRecord.jsx'
 import { FilterBar, PickFilter, SearchField } from '../../components/filters.jsx'
 import { matches, peopleIn } from '../../components/filtering.js'
@@ -494,6 +496,14 @@ export default function Decisions() {
     queryFn: getHolidayRecoveries,
   })
 
+  // Art. 34.8: las adaptaciones de jornada sin contestar. Aquí y no en una
+  // pantalla propia porque es lo mismo que las demás colas ---algo que espera a
+  // que alguien decida--- y porque el plazo corre: quince días.
+  const adaptations = useQuery({
+    queryKey: ['schedule-adaptations', 'pending'],
+    queryFn: () => getScheduleAdaptations({ status: 'PENDING' }),
+  })
+
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ['absences'] })
     queryClient.invalidateQueries({ queryKey: ['punches'] })
@@ -625,6 +635,7 @@ export default function Decisions() {
   // the silent ones are still inside their window to reply.
   const overtimeRows = overtime.data ?? []
   const recoveryRows = recoveries.data ?? []
+  const adaptationRows = adaptations.data?.rows ?? []
   // Por persona, y quien más tiempo acumula primero: la cola es de excepciones
   // y la excepción grande no puede quedar debajo de treinta días de cinco
   // minutos. Los días llegan ya ordenados por fecha desde el servidor.
@@ -686,6 +697,17 @@ export default function Decisions() {
    *  necesita saber de qué cola habla. Antes solo cubría las dos primeras
    *  colas ---las únicas que tenían selección--- con un `tab < 2` que había
    *  que acordarse de ampliar.
+   *
+   *  Y seguía habiendo que acordarse: al añadir la sexta cola ---las
+   *  adaptaciones de jornada, que se contestan de una en una--- este índice
+   *  devolvió `undefined` y la pantalla entera se cayó con un
+   *  `Cannot read properties of undefined`. Un comentario que dice «ya no hay
+   *  que acordarse» al lado de un sitio donde sí hay que acordarse es peor que
+   *  no tener el comentario.
+   *
+   *  **`undefined` aquí significa «esta cola no tiene selección», y es una
+   *  respuesta válida**: no toda cola la necesita, y obligar a inventarle una a
+   *  la siguiente sería pedirle que se parezca a las demás para poder existir.
    */
   const colaActual = [
     { pick: absencePick, filas: shownAbsences },
@@ -778,13 +800,25 @@ export default function Decisions() {
             </Badge>
           }
         />
+        <Tab
+          label={
+            <Badge
+              max={999}
+              badgeContent={cuantasHay(adaptations, adaptationRows)}
+              color="secondary"
+              sx={{ pr: 1.5 }}
+            >
+              {t('Adaptaciones de jornada')}
+            </Badge>
+          }
+        />
       </Tabs>
 
       {/* Filtrar y seleccionar van juntos: «aprobar todo» sobre veinte cosas
           mezcladas da miedo con razón; sobre las cuatro de una persona es
           justo lo que alguien quiere hacer. */}
       <FilterBar>
-        <SelectAllBox selection={colaActual.pick} count={colaActual.filas.length} />
+        {colaActual && <SelectAllBox selection={colaActual.pick} count={colaActual.filas.length} />}
         <SearchField
           value={search}
           onChange={setSearch}
@@ -1355,6 +1389,8 @@ export default function Decisions() {
             />
           </Stack>
         ))}
+
+      {tab === 5 && <AdaptationQueue rows={adaptationRows} loading={adaptations.isLoading} />}
 
       <ConfirmDialog
         request={confirming}

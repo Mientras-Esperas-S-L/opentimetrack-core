@@ -88,7 +88,7 @@ empresa de trabajo temporal.
 | Trabajo nocturno | art. 36.1 | **Cubierto**: la condición, el promedio de 8 h en 15 días y el tope de dos semanas |
 | Jornada reducida por guarda legal | art. 37.6 | **Cubierto.** Se pide como cualquier otra solicitud, con **cuánto se reduce** y entre qué fechas. El cuadrante y el cotejo pasan a medirse contra la jornada reducida, y **se acaba sola** el día que termina el derecho. Si la reducción se sale de la horquilla del artículo ---de un octavo a la mitad--- se avisa, no se impide |
 | Distribución irregular | art. 34.2 | **A medias.** Se marca el fichaje, pero no hay saldo: el 10 % se compensa en 12 meses y nadie lleva la cuenta |
-| Adaptación de jornada | art. 34.8 | **A medias.** El expediente ya existe: la solicitud, el plazo de quince días ---que se avisa al pasarse--- y la respuesta, que **no se puede guardar sin motivo** si es una negativa o una alternativa. **Falta la pantalla**: hoy solo por API, y quien pide todavía no puede pedirlo por su cuenta |
+| Adaptación de jornada | art. 34.8 | **Cubierto.** Se pide desde «Mi jornada» y se contesta desde «Por decidir», con el plazo de quince días a la vista. La respuesta que no es un sí ---también la alternativa--- **pide el motivo antes de mandarla**, y el servidor lo exige igual. Retirar la propia es de quien la pidió |
 | Horas extraordinarias | art. 35 | **Cubierto.** Se marcan, se dice cómo se saldan y el tope anual se contrasta con lo autorizado: la pantalla de decisiones avisa al pasarse, descontando las compensadas con descanso y las de fuerza mayor |
 | Horas complementarias | art. 12.5 | **Cubierto.** El tope se acumula contra lo trabajado y se avisa al pasarse. Va sobre **el periodo del contrato** ---semana, mes o año---, que es lo que dice el art. 12.5.c: el 30 % de «las horas ordinarias objeto del contrato». Un contrato de 800 h al año tiene 240 complementarias al año, no 20 al mes |
 | Trabajo a distancia | Ley 10/2021 | **Cubierto.** El umbral del art. 1 se calcula ---el 30 % de la jornada en tres meses--- y se avisa a quien lo pasa sin acuerdo, o con uno firmado después de empezar (art. 5.1). El acuerdo se registra desde la ficha de la persona, con sus fechas y su porcentaje. Lo que no se guarda aquí es el contenido del art. 7: eso es el documento firmado |
@@ -372,8 +372,7 @@ sirve para comparar entre líneas, no para prometer una fecha.
 
 ### Hecho desde que se escribió esta lista
 
-- **El expediente de la adaptación de jornada** (art. 34.8, 28/08/2026), *a
-  falta de las pantallas*. El producto sabía la consecuencia ---un fichaje puede
+- **La adaptación de jornada** (art. 34.8, 28/08/2026), en dos tandas. El producto sabía la consecuencia ---un fichaje puede
   marcarse como trabajado bajo una adaptación, art. 3.i--- y no tenía dónde
   mirar la obligación: quince días de negociación como máximo y respuesta por
   escrito, motivada si no es un sí. El plazo se avisa y la motivación se exige,

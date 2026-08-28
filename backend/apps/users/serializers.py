@@ -674,6 +674,11 @@ class PasswordSetSerializer(serializers.Serializer):
 class ScheduleAdaptationSerializer(serializers.ModelSerializer):
     """Una solicitud de adaptación de jornada (art. 34.8 ET) y su respuesta."""
 
+    #: Opcional porque **la solicitud la abre quien la ejerce**: sin decir nada
+    #: es la suya. Administración sí lo manda, para registrar la de otra persona.
+    employee = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=False, allow_null=True
+    )
     employee_name = serializers.SerializerMethodField()
     days_waiting = serializers.SerializerMethodField()
     out_of_time = serializers.SerializerMethodField()

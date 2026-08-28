@@ -238,3 +238,122 @@ def test_no_se_cuela_la_solicitud_de_otra_empresa(company, admin, quien):
 
         assert quien.id in de_quien, "el aviso de la propia empresa tiene que salir"
         assert suya.id not in de_quien
+
+
+# ------------------------------------------------- quién puede qué, art. 34.8
+
+
+@pytest.mark.django_db
+def test_la_pide_quien_trabaja_para_si_mismo(company, quien):
+    """El derecho es suyo, así que el expediente lo abre quien lo ejerce.
+
+    Antes de la parte B esto daba 403: el recurso escribía solo administración.
+    Un expediente que solo pudiera abrir la empresa dejaría sin rastro justo lo
+    que hay que poder mirar ---si se pidió y cuándo---.
+    """
+    with tenant_context(company.id):
+        client = como(quien)
+        respuesta = client.post(
+            "/api/schedule-adaptations/",
+            {
+                "requested_on": PIDIÓ.isoformat(),
+                "asked_for": "Entrar a las 9:30 para llevar al niño al colegio.",
+            },
+            format="json",
+        )
+        assert respuesta.status_code == 201, respuesta.json()
+        assert respuesta.json()["employee"] == str(quien.id)
+
+
+@pytest.mark.django_db
+def test_nadie_pide_por_otra_persona(company, quien):
+    """El contraste del anterior. Sin esta regla, cualquiera abriría expedientes
+    de conciliación a nombre de un compañero."""
+    with tenant_context(company.id):
+        otra = User.objects.create_user(
+            email="otra@concilia.example", password=PASSWORD, tenant=company, first_name="Otra"
+        )
+        respuesta = como(quien).post(
+            "/api/schedule-adaptations/",
+            {
+                "employee": str(otra.id),
+                "requested_on": PIDIÓ.isoformat(),
+                "asked_for": "Lo que sea.",
+            },
+            format="json",
+        )
+        # 403: es quién eres, no en qué estado está la solicitud.
+        assert respuesta.status_code == 403, respuesta.json()
+
+
+@pytest.mark.django_db
+def test_quien_trabaja_no_se_contesta_a_si_mismo(company, quien):
+    """Aceptar la propia solicitud sería resolver en causa propia."""
+    with tenant_context(company.id):
+        suya = ScheduleAdaptation.objects.create(
+            tenant=company, employee=quien, requested_on=PIDIÓ, asked_for="Entrar más tarde."
+        )
+        respuesta = como(quien).patch(
+            f"/api/schedule-adaptations/{suya.id}/",
+            {"status": AdaptationStatus.ACCEPTED, "answered_on": "2026-08-06"},
+            format="json",
+        )
+        assert respuesta.status_code == 403, respuesta.json()
+
+
+@pytest.mark.django_db
+def test_retirar_la_propia_solicitud_sí_es_suyo(company, quien):
+    """Dejar de pedir algo no es decidir sobre ello.
+
+    El mismo criterio que en las ausencias: retirar una petición propia que
+    nadie ha resuelto es arrepentirse de pedir, y exigir a administración para
+    eso convertiría en trámite lo que no lo es.
+    """
+    with tenant_context(company.id):
+        suya = ScheduleAdaptation.objects.create(
+            tenant=company, employee=quien, requested_on=PIDIÓ, asked_for="Entrar más tarde."
+        )
+        respuesta = como(quien).patch(
+            f"/api/schedule-adaptations/{suya.id}/",
+            {"status": AdaptationStatus.WITHDRAWN},
+            format="json",
+        )
+        assert respuesta.status_code == 200, respuesta.json()
+        assert respuesta.json()["status"] == AdaptationStatus.WITHDRAWN
+
+
+@pytest.mark.django_db
+def test_no_se_puede_retirar_la_de_otra_persona(company, quien):
+    """El contraste del anterior: «retirar es de quien la pidió», no de
+    cualquiera que pase por ahí."""
+    with tenant_context(company.id):
+        otra = User.objects.create_user(
+            email="tercera@concilia.example", password=PASSWORD, tenant=company, first_name="Ter"
+        )
+        suya_de_otra = ScheduleAdaptation.objects.create(
+            tenant=company, employee=otra, requested_on=PIDIÓ, asked_for="Lo suyo."
+        )
+        respuesta = como(quien).patch(
+            f"/api/schedule-adaptations/{suya_de_otra.id}/",
+            {"status": AdaptationStatus.WITHDRAWN},
+            format="json",
+        )
+        # No la ve siquiera: para quien no gestiona, el listado son las suyas.
+        assert respuesta.status_code == 404
+
+
+@pytest.mark.django_db
+def test_quien_no_gestiona_solo_ve_las_suyas(company, quien):
+    with tenant_context(company.id):
+        otra = User.objects.create_user(
+            email="cuarta@concilia.example", password=PASSWORD, tenant=company, first_name="Cua"
+        )
+        ScheduleAdaptation.objects.create(
+            tenant=company, employee=quien, requested_on=PIDIÓ, asked_for="La mía."
+        )
+        ScheduleAdaptation.objects.create(
+            tenant=company, employee=otra, requested_on=PIDIÓ, asked_for="La suya."
+        )
+
+        listado = como(quien).get("/api/schedule-adaptations/").json()
+        assert [f["employee"] for f in listado["results"]] == [str(quien.id)]

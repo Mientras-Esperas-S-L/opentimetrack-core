@@ -46,7 +46,7 @@ from apps.common.clock import local_today
 from apps.common.models import tenant_context
 from apps.shifts.models import Shift, ShiftPattern
 from apps.tenants.models import Tenant
-from apps.users.models import Department, Role, User, Workplace
+from apps.users.models import Department, Role, ScheduleAdaptation, User, Workplace
 
 PASSWORD = "a-sufficiently-long-password"
 
@@ -81,6 +81,14 @@ def mundo(db):
                 segments=[{"start": "08:00", "end": "16:00"}],
             ),
             "permiso": LeaveType.objects.filter(tenant=empresa).first(),
+            # Una adaptación de jornada ya pedida, para comprobar quién la
+            # puede contestar.
+            "adaptacion": ScheduleAdaptation.objects.create(
+                tenant=empresa,
+                employee=User.objects.get(email="curro@example.com"),
+                requested_on=local_today(empresa),
+                asked_for="Entrar media hora más tarde.",
+            ),
         }
 
 
@@ -144,14 +152,14 @@ def _solo_administracion(m):
         # organiza el trabajo; contestar por escrito a una petición de
         # conciliación ---y que quede su nombre firmándola--- es de quien lleva
         # los contratos.
+        #
+        # **Se comprueba contestar, no pedir**: pedirla sí puede, como cualquiera,
+        # porque el derecho del art. 34.8 es de quien trabaja y un responsable
+        # también trabaja. Lo que no puede es responderla.
         (
-            "POST",
-            "/api/schedule-adaptations/",
-            {
-                "employee": str(curro),
-                "requested_on": "2027-01-15",
-                "asked_for": "Entrar media hora más tarde.",
-            },
+            "PATCH",
+            f"/api/schedule-adaptations/{m['adaptacion'].id}/",
+            {"status": "REFUSED", "answered_on": "2027-01-20", "answer": "No puede ser."},
         ),
     ]
 
@@ -303,6 +311,7 @@ def test_ninguna_ruta_con_control_de_rol_se_queda_sin_barrer():
         "centro": type("X", (), {"id": "1"})(),
         "patron": type("X", (), {"id": "1"})(),
         "turno": type("X", (), {"id": "1"})(),
+        "adaptacion": type("X", (), {"id": "1"})(),
         "permiso": None,
     }
     nombradas = {

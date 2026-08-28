@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -923,19 +924,37 @@ class PasswordSetView(APIView):
 class ScheduleAdaptationViewSet(StructureTrail, viewsets.ModelViewSet):
     """Las solicitudes de adaptación de jornada del art. 34.8 y sus respuestas.
 
-    **Lee quien gestiona y escribe quien administra**, igual que los otros dos
-    expedientes de esta aplicación. Que la solicitud la origine la persona
-    trabajadora no cambia quién la registra aquí: lo que este modelo guarda es el
-    expediente ---qué se pidió, cuándo, qué se contestó y por qué--- y eso lo
-    lleva quien responde. La pantalla para que la pida cada cual llega en la
-    tanda siguiente.
+    **Dos actores con papeles distintos**, y por eso no vale ninguno de los
+    permisos de una pieza que usan los otros expedientes de esta aplicación:
+
+    - **La pide quien trabaja**, para sí y para nadie más. El art. 34.8 es un
+      derecho suyo; un expediente que solo pudiera abrir la empresa dejaría sin
+      rastro justo lo que hay que poder mirar, que es si se pidió y cuándo.
+    - **La contesta quien administra**, y su nombre queda en la respuesta.
+    - **Retirarla es de quien la pidió.** Dejar de pedir algo no es decidir sobre
+      ello, y el mismo criterio ya estaba tomado en las ausencias.
+
+    Se lee lo propio, o el ámbito de quien gestiona, y eso **ya lo resuelve
+    `visible_people`**: para quien no gestiona devuelve su propia fila. Escribí
+    encima un filtro extra «por si acaso» y el contraste lo delató ---quitarlo no
+    ponía roja ninguna prueba---, así que sobraba, y su comentario decía además
+    algo falso.
     """
 
     queryset = ScheduleAdaptation.objects.none()
     serializer_class = ScheduleAdaptationSerializer
-    permission_classes = [ReadForAllWriteForAdmin]
+    permission_classes = [IsAuthenticatedInTenant]
     filterset_fields = ["employee", "status"]
     trail_fields = ("requested_on", "status", "answered_on", "answer")
+
+    #: Lo que solo puede tocar quien administra: la respuesta.
+    CAMPOS_DE_LA_RESPUESTA = {"status", "answered_on", "answer"}
+
+    RESUELTAS = {
+        AdaptationStatus.ACCEPTED,
+        AdaptationStatus.ALTERNATIVE,
+        AdaptationStatus.REFUSED,
+    }
 
     def get_queryset(self):
         qs = ScheduleAdaptation.objects.select_related("employee")
@@ -945,20 +964,45 @@ class ScheduleAdaptationViewSet(StructureTrail, viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        self.anotar(serializer.save(tenant=self.request.user.tenant), _("Added"))
+        pedida_para = serializer.validated_data.get("employee")
+        if (
+            pedida_para is not None
+            and pedida_para.id != self.request.user.id
+            and not self.request.user.is_admin
+        ):
+            # 403 y no 409: esto es **quién eres**, no en qué estado está la
+            # solicitud. El barrido de roles lo dio por fuga cuando contestaba
+            # un conflicto, y tenía razón: un permiso que se rechaza con el
+            # código de otra cosa no se distingue de una regla de negocio.
+            raise PermissionDenied(
+                _("A schedule adaptation can only be asked for by the person themselves.")
+            )
+        self.anotar(
+            serializer.save(
+                tenant=self.request.user.tenant,
+                employee=pedida_para or self.request.user,
+            ),
+            _("Added"),
+        )
 
     def perform_update(self, serializer):
+        """Contestar es de administración; retirar la propia, de quien la pidió."""
+        cambios = set(serializer.validated_data)
+        suya = serializer.instance.employee_id == self.request.user.id
+        pide_retirarla = serializer.validated_data.get(
+            "status"
+        ) == AdaptationStatus.WITHDRAWN and not cambios - {"status"}
+
+        if cambios & self.CAMPOS_DE_LA_RESPUESTA and not self.request.user.is_admin:
+            if not (pide_retirarla and suya):
+                raise PermissionDenied(_("Only an administrator answers a schedule adaptation."))
+
         # Quién contestó forma parte de la respuesta escrita que pide el
         # artículo: sin eso queda un texto sin firma.
-        resueltas = {
-            AdaptationStatus.ACCEPTED,
-            AdaptationStatus.ALTERNATIVE,
-            AdaptationStatus.REFUSED,
-        }
         objeto = serializer.save(
             answered_by=(
                 self.request.user
-                if serializer.validated_data.get("status") in resueltas
+                if serializer.validated_data.get("status") in self.RESUELTAS
                 else serializer.instance.answered_by
             )
         )

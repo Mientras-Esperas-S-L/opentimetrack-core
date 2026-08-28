@@ -369,6 +369,74 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 156 --- La adaptación de jornada, parte B: las dos pantallas (28/08)
+
+**7 de 13.** Cierra el art. 34.8: quien trabaja la pide desde «Mi jornada» y
+quien administra la contesta desde «Por decidir», en una sexta cola.
+
+**En «Mi jornada» y no en «Mis ausencias».** Pedir entrar media hora más tarde
+no es faltar un día. Mezclarlo con las ausencias habría sido más fácil de
+programar ---ahí ya está el flujo de pedir--- y peor de encontrar.
+
+**Y se ofrece sin condiciones previas.** El derecho es de quien tiene hijos
+menores de doce años o cuidados a su cargo, y el producto no sabe ---ni tiene por
+qué--- si es el caso. Poner una condición habría sido decidir sobre la vida de
+alguien con los datos de una nómina.
+
+**El reparto de papeles, que es lo que la parte A no tenía.** El recurso escribía
+solo administración, así que la persona no podía abrir su propio expediente. Ahora:
+
+- **La pide quien la ejerce**, para sí y para nadie más.
+- **La contesta quien administra**, y su nombre queda en la respuesta.
+- **Retirarla es de quien la pidió**: dejar de pedir algo no es decidir sobre
+  ello, y el criterio ya estaba tomado en las ausencias.
+
+---
+
+## Un defecto de la pantalla que solo apareció al añadir una cola
+
+Las pruebas fallaban y el motivo no era la prueba: **«Por decidir» entera se caía
+al abrir la pestaña nueva**, con un `Cannot read properties of undefined
+(reading 'pick')`. Los avisos y la cola no se veían; la aplicación volvía al
+resumen.
+
+La causa estaba en un array indexado por pestaña que da la selección múltiple de
+cada cola. La sexta no tiene selección ---una adaptación se contesta de una en
+una--- así que el índice devolvía `undefined`.
+
+Lo que hace esto digno de contar es **el comentario que había al lado**:
+
+> «En un sitio y no repartido por cinco condicionales […] Antes solo cubría las
+> dos primeras colas con un `tab < 2` que había que acordarse de ampliar.»
+
+O sea: alguien ya había arreglado exactamente este problema, y el arreglo
+**seguía obligando a acordarse**, solo que fallando de otra manera ---antes una
+casilla que no salía; ahora la pantalla entera---. Ahora `undefined` significa
+«esta cola no tiene selección», que es una respuesta válida: obligar a la
+siguiente cola a inventarse una selección para poder existir sería pedirle que se
+parezca a las demás.
+
+---
+
+**El barrido de roles me corrigió una decisión, y tenía razón.** Rechacé «contestar
+sin ser administración» con un `BusinessRuleError`, que contesta **409**, y el
+barrido lo dio por fuga porque espera 403. Es una cuestión de **quién eres**, no
+del estado de la solicitud: un permiso rechazado con el código de otra cosa no se
+distingue de una regla de negocio. Cambiado a 403.
+
+Y de paso el barrido comprobaba lo que no era: **pedir una adaptación sí puede un
+responsable** ---también trabaja, y el derecho es de quien trabaja---. Lo que no
+puede es contestarla, y eso es lo que comprueba ahora.
+
+**Un fallo mío en la prueba, del tipo que pasa desapercibido:** escribí
+`page.context().storageState({ path: '…/operario.json' })` creyendo que cargaba
+esa sesión. **Guarda** el estado, no lo carga. La prueba habría corrido con la
+sesión de administración creyendo que era la de quien trabaja, y habría pasado
+sin comprobar lo que dice su nombre.
+
+**Cifras al cerrar:** los ocho pasos del CI en verde, 1.397 pruebas de backend y
+310 de navegador.
+
 ### Vuelta 155 --- La adaptación de jornada, parte A (28/08)
 
 **Partida, y se dice.** Esta vuelta trae el expediente ---modelo, API, la regla

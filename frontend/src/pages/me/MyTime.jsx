@@ -51,6 +51,7 @@ import {
   plural,
   timeOf,
 } from '../../components/format.js'
+import MyAdaptations from '../../components/MyAdaptations.jsx'
 import ChangeOnTheRecord from '../../components/ChangeOnTheRecord.jsx'
 import RemindersControl from '../../components/RemindersControl.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -755,6 +756,8 @@ export default function MyTime() {
         }}
         onSubmit={ask.mutate}
       />
+
+      <MyAdaptations />
 
       <DisputeDialog
         open={Boolean(disputing)}
