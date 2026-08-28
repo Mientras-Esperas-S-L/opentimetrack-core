@@ -59,6 +59,7 @@ import { SelectionBar } from '../../components/selection.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useDebounced } from '../../hooks/useDebounced.js'
 import { plural } from '../../components/format.js'
+import SeasonsDialog from '../../components/SeasonsDialog.jsx'
 import { alCatalogo, IDIOMAS_QUE_SE_OFRECEN } from '../../i18n/index.js'
 import { useSelection } from '../../hooks/useSelection.js'
 
@@ -474,6 +475,9 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
               {t(
                 'Art. 16 ET: el trabajo viene por temporadas. Fuera de ellas no se espera jornada.',
               )}
+              {form.seasonal && person && (
+                <> {t('Las temporadas se cargan desde «Más acciones», en su fila.')}</>
+              )}
             </Typography>
 
             <Divider textAlign="left" sx={{ mt: 1 }}>
@@ -606,6 +610,7 @@ function RowActions({
   onReactivate,
   onDeactivate,
   onErase,
+  onSeasons,
 }) {
   const { t } = useTranslation()
   // Una sola vez: se usa en cuatro rótulos accesibles de esta fila y estaba
@@ -663,6 +668,10 @@ function RowActions({
         <MenuItem onClick={pick(onDeliver)} disabled={busy || !person.email}>
           {t('Enviarle su registro')}
         </MenuItem>
+        {/* Solo a quien lo es. Sin la marca de fijo discontinuo un periodo
+            de actividad no hace nada ---el servidor lo rechaza--- y ofrecerlo
+            sería invitar a escribir un dato que no sirve. */}
+        {person.seasonal && <MenuItem onClick={pick(onSeasons)}>{t('Temporadas')}</MenuItem>}
         {person.is_active && <MenuItem onClick={pick(onDeactivate)}>{t('Dar de baja')}</MenuItem>}
         {/* Un alta equivocada: el correo mal escrito, la persona duplicada, la
             que se creó en la empresa que no era. Solo se ofrece con la cuenta ya
@@ -688,6 +697,7 @@ export default function People() {
   const [editing, setEditing] = useState(undefined) // undefined = closed, null = new
   const [error, setError] = useState(null)
   const [sent, setSent] = useState(null) // address the last link went to
+  const [seasons, setSeasons] = useState(null) // de quién se están viendo las temporadas
   const [confirming, setConfirming] = useState(null)
   // Turnos que la última baja ha dejado sin nadie. Se enseña aquí y no solo en
   // el cuadrante porque quien acaba de dar la baja es quien tiene que ir a
@@ -1143,6 +1153,7 @@ export default function People() {
                         onEdit={() => setEditing(person)}
                         onInvite={() => invite.mutate(person.id)}
                         onDeliver={() => deliver.mutate(person.id)}
+                        onSeasons={() => setSeasons(person)}
                         onErase={() =>
                           setConfirming({
                             title: t('Borrar definitivamente'),
@@ -1225,6 +1236,8 @@ export default function People() {
           </MenuItem>
         ))}
       </Menu>
+
+      <SeasonsDialog person={seasons} onClose={() => setSeasons(null)} />
 
       <ConfirmDialog
         request={confirming}

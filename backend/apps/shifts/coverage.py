@@ -39,6 +39,12 @@ from apps.shifts.models import Shift
 #: Por qué un turno se ha quedado sin nadie.
 SE_FUE = "left_the_company"
 DE_BAJA = "on_leave"
+#: Fuera de temporada, para el fijo discontinuo (art. 16). Motivo propio y no
+#: `SE_FUE`, que es lo que salía antes: decirle a quien organiza que alguien
+#: «dejó la empresa» cuando lo que pasa es que su campaña no ha empezado es
+#: decir algo falso, y además manda a reasignar un turno que a lo mejor solo
+#: hay que mover unos días.
+FUERA_DE_TEMPORADA = "outside_the_season"
 
 
 @dataclass(frozen=True)
@@ -127,11 +133,16 @@ def uncovered(*, company, first: date, last: date) -> list[SinCubrir]:
         quien = shift.employee
 
         if not quien.is_engaged_on(shift.day) or not quien.is_active:
+            de_temporada = quien.seasonal and quien.is_active and quien.temporadas
             fuera.append(
                 SinCubrir(
                     shift=shift,
-                    reason=SE_FUE,
-                    detail=_("Their contract does not cover this day."),
+                    reason=FUERA_DE_TEMPORADA if de_temporada else SE_FUE,
+                    detail=(
+                        _("Outside their periods of activity (art. 16 ET).")
+                        if de_temporada
+                        else _("Their contract does not cover this day.")
+                    ),
                 )
             )
             continue

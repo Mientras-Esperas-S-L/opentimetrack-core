@@ -484,6 +484,13 @@ export const downloadJustification = async (id, filename = 'justificante') => {
 
 // ---------------------------------------------------------------------- people
 
+/** Los periodos de actividad de un fijo discontinuo (art. 16 ET). */
+export const getActivityPeriods = async (employee) =>
+  page(await get('/activity-periods/', { employee }))
+export const createActivityPeriod = (payload) => post('/activity-periods/', payload)
+export const deleteActivityPeriod = async (id) =>
+  (await api.delete(`/activity-periods/${id}/`)).data
+
 export const getEmployees = async (params) => page(await get('/employees/', params))
 export const getEmployee = (id) => get(`/employees/${id}/`)
 export const createEmployee = (payload) => post('/employees/', payload)

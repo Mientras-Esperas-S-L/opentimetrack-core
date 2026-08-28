@@ -24,10 +24,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.absences.models import Absence, AbsenceStatus
 from apps.common.models import tenant_context
-from apps.shifts.coverage import DE_BAJA, SE_FUE, uncovered, who_can_cover
+from apps.shifts.coverage import DE_BAJA, FUERA_DE_TEMPORADA, SE_FUE, uncovered, who_can_cover
 from apps.shifts.models import Shift
 from apps.tenants.models import Tenant
-from apps.users.models import Role, User
+from apps.users.models import ActivityPeriod, Role, User
 
 PASSWORD = "a-sufficiently-long-password"
 LUNES = date(2026, 9, 7)
@@ -58,6 +58,55 @@ def test_el_turno_de_quien_dejo_la_empresa_sale_como_hueco(empresa):
         se_fue.contract_end = LUNES - timedelta(days=1)
         se_fue.is_active = False
         se_fue.save(update_fields=["contract_end", "is_active"])
+
+        huecos = uncovered(company=empresa, first=LUNES, last=LUNES)
+
+    assert len(huecos) == 1
+    assert huecos[0].reason == SE_FUE
+
+
+@pytest.mark.django_db
+def test_fuera_de_temporada_tiene_su_propio_motivo(empresa):
+    """Y no «dejó la empresa», que es lo que salía antes.
+
+    No se resuelven igual: a quien se fue hay que reasignarle el turno, y a
+    quien está fuera de temporada a lo mejor solo hay que moverlo unos días
+    ---o ampliar la campaña---. Decirle a quien organiza que alguien se fue
+    cuando lo que pasa es que su temporada no ha empezado es decir algo falso.
+    """
+    with tenant_context(empresa.id):
+        temporero = _persona(empresa, "Nico", "nico@example.com", seasonal=True)
+        ActivityPeriod.objects.create(
+            tenant=empresa,
+            employee=temporero,
+            start_date=LUNES + timedelta(days=30),
+            end_date=LUNES + timedelta(days=120),
+        )
+        _turno(empresa, temporero, LUNES)
+
+        huecos = uncovered(company=empresa, first=LUNES, last=LUNES)
+
+    assert len(huecos) == 1
+    assert huecos[0].reason == FUERA_DE_TEMPORADA
+    assert "16" in huecos[0].detail, "el detalle no cita el artículo"
+
+
+@pytest.mark.django_db
+def test_quien_se_fue_de_verdad_sigue_diciendo_que_se_fue(empresa):
+    """El contraste del de arriba: si el motivo nuevo se aplicara a cualquiera,
+    aquel pasaría igual y este distingue que no ha pasado eso."""
+    with tenant_context(empresa.id):
+        temporero = _persona(empresa, "Nico", "nico2@example.com", seasonal=True)
+        ActivityPeriod.objects.create(
+            tenant=empresa,
+            employee=temporero,
+            start_date=LUNES - timedelta(days=10),
+            end_date=LUNES + timedelta(days=10),
+        )
+        _turno(empresa, temporero, LUNES)
+        # Dentro de su temporada, pero ya no trabaja aquí.
+        temporero.is_active = False
+        temporero.save(update_fields=["is_active"])
 
         huecos = uncovered(company=empresa, first=LUNES, last=LUNES)
 
