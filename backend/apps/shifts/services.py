@@ -13,6 +13,7 @@ claim they were not told.
 
 from __future__ import annotations
 
+from calendar import monthrange
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta
 from datetime import time as dt_time
@@ -287,6 +288,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     findings.extend(_check_adaptation_deadline(company, first, last, employee))
     findings.extend(_check_relief_contracts(company, rules, first, last, employee))
     findings.extend(_check_irregular_balance(company, first, last, employee))
+    findings.extend(_check_standby_average(company, first, last, employee))
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -1065,6 +1067,96 @@ JUBILACION_MAXIMA_CON_RELEVO_ENTERO = 75.0
 
 #: El código con el que el catálogo español siembra la jubilación parcial.
 JUBILACION_PARCIAL = "es.partial_retirement"
+
+
+def _check_standby_average(company, first, last, employee) -> list[Finding]:
+    """El tope de tiempo de presencia del transporte por carretera.
+
+    «El tiempo de presencia no podrá exceder en ningún caso de veinte horas
+    semanales de promedio en un periodo de referencia de un mes» ---art. 8.b RD
+    1561/1995---.
+
+    **Tiempo de presencia** es estar a disposición sin trabajo efectivo: esperas,
+    viajes sin servicio, averías, comidas en ruta. El producto ya sabía
+    anotarlo ---`PunchInterval.STANDBY`, que es el art. 3.g--- y no lo contaba
+    contra nada.
+
+    **Solo cuando el régimen declarado es el de transporte.** Las veinte horas
+    son de ese sector, y aplicárselas a una oficina sería inventarle un límite
+    que su sector no tiene. Es justo lo contrario de lo que hace el resto de
+    esta revisión, que mide contra el Estatuto porque el Estatuto es de todos.
+
+    El promedio va sobre el **mes natural**: la ley da un periodo de referencia
+    de un mes y una ventana móvil daría un tope que cambia cada mañana.
+    """
+    from apps.punches.models import Punch, PunchInterval, PunchType
+    from apps.tenants.rules import SpecialRegime, WorkingTimeRules
+    from apps.users.models import User
+
+    rules = WorkingTimeRules.for_company(company)
+    if rules.special_regime != SpecialRegime.ROAD_TRANSPORT or not rules.standby_weekly_hours:
+        return []
+
+    # El mes natural que contiene el último día mirado.
+    primero = last.replace(day=1)
+    dias = monthrange(last.year, last.month)[1]
+    ultimo = last.replace(day=dias)
+    semanas = dias / 7
+
+    zone = company.tzinfo
+    quienes = User.objects.filter(
+        tenant=company,
+        is_active=True,
+        punches__interval=PunchInterval.STANDBY,
+        punches__timestamp__gte=datetime.combine(primero, dt_time.min, tzinfo=zone),
+        punches__timestamp__lt=datetime.combine(
+            ultimo + timedelta(days=1), dt_time.min, tzinfo=zone
+        ),
+        punches__is_active=True,
+    ).distinct()
+    if employee is not None:
+        quienes = quienes.filter(pk=employee.pk)
+
+    found: list[Finding] = []
+    for person in quienes:
+        eventos = Punch.objects.filter(
+            employee=person,
+            timestamp__gte=datetime.combine(primero, dt_time.min, tzinfo=zone),
+            timestamp__lt=datetime.combine(ultimo + timedelta(days=1), dt_time.min, tzinfo=zone),
+            is_active=True,
+        ).order_by("timestamp")
+
+        presencia = timedelta()
+        opening = None
+        for punch in eventos:
+            if punch.punch_type == PunchType.IN:
+                opening = punch
+            elif opening is not None:
+                if opening.interval == PunchInterval.STANDBY:
+                    presencia += punch.timestamp - opening.timestamp
+                opening = None
+
+        horas = presencia.total_seconds() / 3600
+        promedio = horas / semanas
+        if promedio <= rules.standby_weekly_hours:
+            continue
+        found.append(
+            Finding(
+                day=last,
+                employee_id=person.id,
+                code="standby_over_the_average",
+                message=_(
+                    "%(hours)s h of on-call time that month, %(average)s h a week on "
+                    "average, over the %(limit)s allowed."
+                )
+                % {
+                    "hours": f"{horas:.1f}",
+                    "average": f"{promedio:.1f}",
+                    "limit": f"{rules.standby_weekly_hours:g}",
+                },
+            )
+        )
+    return found
 
 
 def _check_irregular_balance(company, first, last, employee) -> list[Finding]:

@@ -5344,3 +5344,45 @@ una suposición.
 Y la señal para verlo a tiempo: el número convertido salía **redondo y grande**
 ---2.080--- donde el real es irregular y menor. Un total que nadie reconocería al
 verlo es un total que no es de nadie.
+
+## 311. Una prueba puede pasar por el sitio equivocado
+
+Saboteé la suma del tiempo de presencia para que contara **todo** el tiempo y no
+solo la espera. Las ocho pruebas siguieron en verde, incluida la que se llama
+`test_el_trabajo_efectivo_no_cuenta_como_presencia`.
+
+La razón: esa prueba le daba a la persona **solo** trabajo efectivo. Y el código
+recorta antes de sumar ---mira únicamente a quien tenga algún tramo marcado como
+espera--- así que la persona ni entraba en la cuenta. La prueba pasaba por el
+recorte, no por la suma, y el nombre decía otra cosa.
+
+El caso real es el que mezcla: **quien conduce tiene esperas y conduce**. Con
+cuarenta horas de espera y ciento cuatro al volante, contar las dos juntas sí
+pone la prueba roja.
+
+**La regla:** cuando una prueba dice «X no cuenta», el sujeto tiene que tener X
+**y** lo que sí cuenta. Un sujeto que solo tiene X puede estar saliéndose por un
+filtro anterior, y entonces la prueba demuestra que el filtro existe, no que la
+suma distinga.
+
+Y la manera de detectarlo es la de siempre: **el contraste**. Sin él, la prueba
+habría quedado como guardia de algo que no guardaba, con un nombre que decía que
+sí.
+
+## 312. Avisar de una norma que no le toca es tan malo como no avisar
+
+Toda esta revisión mide contra el Estatuto, que es de todos, y cada vuelta ha ido
+persiguiendo lo mismo: cosas que la ley pide y el producto no comprobaba.
+
+El tope de tiempo de presencia es la primera que **no es para todo el mundo**:
+veinte horas semanales de promedio, y solo en transporte por carretera. Avisar de
+eso a una oficina no es un exceso de celo, es **inventarle una norma de otro
+sector** --- y quien lo lea no tiene manera de saber que no le toca, porque el
+aviso vendrá con su artículo y todo.
+
+Es el error simétrico del que se busca, y sale igual de caro: un aviso falso
+gasta la confianza de todos los demás.
+
+Por eso hay un régimen declarado y por eso la prueba principal del fichero es la
+que comprueba que **sin declararlo no se avisa**. La regla general se presume; la
+excepción sectorial, se pregunta.

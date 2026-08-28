@@ -29,6 +29,42 @@ from django.utils.translation import gettext_lazy as _
 from apps.common.models import BaseModel
 
 
+class SpecialRegime(models.TextChoices):
+    """Los regímenes de jornada especial del RD 1561/1995.
+
+    **No cambian ninguna cifra por su cuenta.** Este producto ya deja que la
+    empresa ajuste sus números y avisa cuando se apartan de la regla general;
+    lo que faltaba era **por qué** se apartan. Un descanso diario de diez horas
+    en vez de doce no dice nada por sí solo: dicho junto a «transporte por
+    carretera», dice que es el art. 8.3 y no un descuido.
+
+    Meter aquí las quince cifras de los quince regímenes sería otra cosa, mucho
+    más grande y bastante peor: cada sector tiene además su convenio, y un
+    número nuestro pisando el suyo se leería como la ley.
+
+    El de **ampliación** y el de **limitación** están en la misma lista a
+    propósito: los dos son razones para apartarse de la regla general, solo que
+    en direcciones contrarias.
+    """
+
+    NONE = "", _("General rules")
+    # Ampliaciones (arts. 4 a 10).
+    URBAN_PROPERTY = "URBAN_PROPERTY", _("Caretaking of urban property")
+    GUARDS = "GUARDS", _("Guards and security")
+    FARMING = "FARMING", _("Farm work")
+    RETAIL_HOSPITALITY = "RETAIL_HOSPITALITY", _("Retail and hospitality")
+    ROAD_TRANSPORT = "ROAD_TRANSPORT", _("Road transport")
+    RAIL = "RAIL", _("Rail transport")
+    SEA = "SEA", _("Work at sea")
+    AIR = "AIR", _("Air transport")
+    HEALTHCARE = "HEALTHCARE", _("Healthcare, with on-call duty")
+    # Limitaciones (arts. 23 a 34).
+    HAZARDOUS = "HAZARDOUS", _("Exposure to environmental hazards")
+    COLD_STORAGE = "COLD_STORAGE", _("Cold storage rooms")
+    MINING = "MINING", _("Mining and underground work")
+    CONSTRUCTION = "CONSTRUCTION", _("Construction and public works")
+
+
 class WorkingTimeRules(BaseModel):
     """The figures a company works to, with the article each one comes from."""
 
@@ -164,6 +200,35 @@ class WorkingTimeRules(BaseModel):
         _("notice for roster changes (days)"),
         default=5,
         help_text=_("Days of notice before a roster change."),
+    )
+
+    #: El régimen del RD 1561/1995 bajo el que trabaja esta empresa, si alguno.
+    #:
+    #: Vacío es «las reglas generales», que es lo que le toca a la mayoría. Lo
+    #: que aporta declararlo no es cambiar cifras ---no cambia ninguna--- sino
+    #: dejar dicho **por qué** las de esta empresa se apartan de las del Estatuto.
+    special_regime = models.CharField(
+        _("special working time regime"),
+        max_length=20,
+        choices=SpecialRegime,
+        blank=True,
+        default="",
+        help_text=_("RD 1561/1995. It changes no figure by itself: it says why yours differ."),
+    )
+
+    #: Tope de tiempo de presencia, en horas semanales de promedio al mes.
+    #:
+    #: «El tiempo de presencia no podrá exceder en ningún caso de veinte horas
+    #: semanales de promedio en un periodo de referencia de un mes» (art. 8.b
+    #: RD 1561/1995). Es de transporte por carretera, y por eso solo se
+    #: comprueba cuando ese es el régimen declarado: aplicarlo a una oficina
+    #: sería inventarle un límite que su sector no tiene.
+    #:
+    #: Un cero lo apaga, para el convenio que fije el promedio de otra forma.
+    standby_weekly_hours = models.PositiveSmallIntegerField(
+        _("on-call hours a week, monthly average"),
+        default=20,
+        help_text=_("Art. 8.b RD 1561/1995, road transport only. 0 turns it off."),
     )
 
     #: En cuánto tiempo hay que compensar lo que se trabaja de más o de menos

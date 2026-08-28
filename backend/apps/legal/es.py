@@ -151,6 +151,13 @@ ESPANA = LegalFramework(
         # No es un incumplimiento: las horas por encima de lo pactado en jornada
         # parcial son complementarias, lícitas y con su propio tope.
         "over_contracted_hours": Citation("Art. 12.5 ET"),
+        "standby_over_the_average": Citation(
+            "Art. 8.b RD 1561/1995",
+            "Veinte horas semanales de promedio en un periodo de referencia de un "
+            "mes. Es del transporte por carretera, así que solo se comprueba "
+            "cuando la empresa declara ese régimen: aplicarlo a una oficina sería "
+            "inventarle un límite que su sector no tiene.",
+        ),
         "irregular_hours_unsettled": Citation(
             "Art. 34.2 ET",
             "«Las diferencias derivadas de la distribución irregular de la "

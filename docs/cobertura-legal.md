@@ -93,8 +93,8 @@ empresa de trabajo temporal.
 | Horas complementarias | art. 12.5 | **Cubierto.** El tope se acumula contra lo trabajado y se avisa al pasarse. Va sobre **el periodo del contrato** ---semana, mes o año---, que es lo que dice el art. 12.5.c: el 30 % de «las horas ordinarias objeto del contrato». Un contrato de 800 h al año tiene 240 complementarias al año, no 20 al mes |
 | Trabajo a distancia | Ley 10/2021 | **Cubierto.** El umbral del art. 1 se calcula ---el 30 % de la jornada en tres meses--- y se avisa a quien lo pasa sin acuerdo, o con uno firmado después de empezar (art. 5.1). El acuerdo se registra desde la ficha de la persona, con sus fechas y su porcentaje. Lo que no se guarda aquí es el contenido del art. 7: eso es el documento firmado |
 | Guardias y atención continuada | RD 1561/1995 | **Falta.** Sanidad: presencia frente a trabajo efectivo |
-| Tiempo de presencia | RD 1561/1995 | **Falta.** Transporte: hasta 20 h semanales de promedio que no son jornada ordinaria |
-| Jornadas especiales por sector | RD 1561/1995 | **Falta.** Hoy la empresa ajusta las cifras a mano, lo cual funciona, pero no deja dicho **por qué** se apartó de la regla general |
+| Tiempo de presencia | RD 1561/1995 | **Cubierto.** El promedio del art. 8.b ---20 h semanales en un mes--- se cuenta sobre lo marcado como espera (art. 3.g) y se avisa al pasarse. **Solo si la empresa declara el régimen de transporte por carretera**: aplicárselo a una oficina sería inventarle un límite de otro sector |
+| Jornadas especiales por sector | RD 1561/1995 | **A medias.** La empresa ya puede **declarar su régimen** ---trece, de ampliación y de limitación--- y eso es lo que faltaba para que sus cifras dejen de parecer un descuido. Lo que aún no hace es que cada aviso de cifra apartada **cite el régimen declarado**, ni trae las cifras de cada sector: eso sería pisar el convenio |
 
 Las jornadas especiales del RD 1561/1995 son de dos clases. **Ampliaciones**:
 fincas urbanas, guardas y vigilantes, campo, comercio y hostelería, transporte
@@ -368,9 +368,16 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 3 | **Vacaciones**: devengo proporcional y traslado por IT | **3-4 días.** El devengo por fecha de alta y el traslado con el tope de 18 meses del art. 38.3 |
 | 4 | **Historia de la adscripción a departamento**, cuando el informe empiece a mentir | **2-3 días.** Una tabla de vigencias y los informes leyendo de ella |
 | 5 | **Las otras reducciones por cuidados** (arts. 37.4, 37.5 y 37.8): lactancia, hospitalización de un recién nacido y cuidado de menor con enfermedad grave. La mecánica de la fracción y las fechas **ya está** ---la puso el art. 37.6---; falta que cada una entre en el catálogo con su regla propia | **2-3 días.** Son tres artículos con cifras distintas sobre la misma maquinaria |
-| 6 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
+| 6 | **Que los avisos citen el régimen declarado** (RD 1561/1995). Desde el 28/08 la empresa dice bajo qué régimen trabaja; falta que un descanso de diez horas se lea «por el art. 8.3, transporte» en vez de a secas. Y las cifras de cada sector siguen sin traerse a propósito: pisarían al convenio | **2-3 días** lo primero. Lo segundo son semanas, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
 
 ### Hecho desde que se escribió esta lista
+
+- **El tiempo de presencia del transporte** (art. 8.b RD 1561/1995, 28/08/2026),
+  y con él **el régimen especial declarado**, que era lo que faltaba para las
+  jornadas por sector. Es la única comprobación de toda la revisión que **no** es
+  para todo el mundo: las veinte horas son de un sector, y avisar a quien no lo
+  tiene sería inventarle una norma ajena ---el error contrario al que esta
+  auditoría persigue, y uno igual de malo---.
 
 - **El saldo de la distribución irregular** (art. 34.2, 28/08/2026), *la mitad
   que se puede calcular*. Estaba descartado por dos motivos y uno se ha caído:

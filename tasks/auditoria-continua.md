@@ -369,6 +369,49 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 159 --- El tiempo de presencia, y el régimen que faltaba (28/08)
+
+**11 de 13**, y una de ellas ---las jornadas por sector--- baja de «Falta» a «A
+medias» con lo que le faltaba escrito.
+
+**Lo que las tres filas del RD 1561/1995 tenían en común** no era una cifra: era
+que el producto **no sabía en qué sector está la empresa**. Y esa es justo la
+razón por la que toda esta revisión avisa en vez de bloquear, escrita en la
+cabecera de `es.py` desde hace mucho: «El RD 1561/1995 modifica varias cifras en
+sectores concretos, y un producto que se negara a guardar sería inservible en
+transporte o en sanidad».
+
+O sea: el producto ya dejaba que la empresa se apartara de la regla general, y no
+tenía dónde dijera **por qué**. Un descanso diario de diez horas no dice nada por
+sí solo; junto a «transporte por carretera» dice que es el art. 8.3 y no un
+descuido. Eso es lo que faltaba, y es más pequeño que traer quince regímenes de
+cifras ---que además pisarían al convenio de cada sector---.
+
+**Con el régimen declarado, la cifra que sí se puede comprobar:** «el tiempo de
+presencia no podrá exceder en ningún caso de veinte horas semanales de promedio
+en un periodo de referencia de un mes» (art. 8.b). El dato ya estaba
+---`PunchInterval.STANDBY`, que es el art. 3.g--- y no se contaba contra nada.
+
+**Esta es la única comprobación de toda la revisión que no es para todo el
+mundo**, y por eso la prueba que más vale es la que comprueba que **sin declarar
+el régimen no se avisa**. Las veinte horas son de un sector; aplicárselas a una
+oficina sería inventarle una norma ajena. Es el error contrario al que esta
+auditoría persigue, y uno igual de malo.
+
+**Y un contraste que no contrastó, con lo que dijo.** Saboteé la suma para que
+contara todo el tiempo y no solo la presencia, y las ocho pruebas siguieron en
+verde. La de «el trabajo efectivo no cuenta» daba a alguien **solo** trabajo
+efectivo, así que el recorte de arriba ---que solo mira a quien tenga algo
+marcado como espera--- la dejaba fuera antes de llegar a la suma. Pasaba por el
+sitio equivocado.
+
+Quien conduce tiene las dos cosas, y esa mezcla es la que había que probar: ahora
+son cuarenta horas de espera y ciento cuatro de conducción, y contar las dos
+juntas sí pone la prueba roja.
+
+**Cifras al cerrar:** los ocho pasos del CI en verde, 1.426 pruebas de backend y
+310 de navegador.
+
 ### Vuelta 158 --- El saldo del art. 34.2, y qué parte del descarte seguía en pie (28/08)
 
 La fila estaba **descartada a propósito** desde hace vueltas, así que lo primero
