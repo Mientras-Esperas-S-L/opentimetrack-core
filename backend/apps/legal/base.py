@@ -265,6 +265,39 @@ class LeaveKind:
 
 
 @dataclass(frozen=True)
+class RepresentationCredit:
+    """Las horas mensuales que tiene quien representa a la plantilla.
+
+    Art. 68.e ET: «un crédito de horas mensuales retribuidas cada uno de los
+    miembros del comité o delegado de personal **en cada centro de trabajo**»,
+    con una escala por tamaño.
+
+    **Por centro y no por empresa**, que es lo que más se confunde: el comité es
+    del centro, así que una empresa de seiscientas personas repartidas en cuatro
+    naves de ciento cincuenta da veinte horas a cada representante, no treinta y
+    cinco.
+
+    Es un **suelo**: «podrá pactarse en convenio colectivo la acumulación de
+    horas», y ampliarlo es corriente. Por eso la cifra que manda es la de la
+    empresa cuando la tiene, y esta escala solo entra cuando no la ha puesto ---y
+    avisa cuando la puesta se queda por debajo---.
+    """
+
+    #: `(hasta cuántas personas, horas al mes)`, en orden. El último tramo lleva
+    #: `None` porque el artículo dice «de setecientos cincuenta y uno en
+    #: adelante» y un número grande cualquiera sería una invención.
+    scale: tuple[tuple[int | None, float], ...]
+    basis: str = ""
+
+    def hours_for(self, headcount: int) -> float:
+        """Las horas que corresponden a un centro de ese tamaño."""
+        for hasta, horas in self.scale:
+            if hasta is None or headcount <= hasta:
+                return horas
+        return self.scale[-1][1]
+
+
+@dataclass(frozen=True)
 class LegalFramework:
     """One country's answer to "what does the law say here"."""
 
@@ -286,6 +319,8 @@ class LegalFramework:
 
     minors: MinorProtections
     complementary: ComplementaryHours | None = None
+    #: El crédito horario de la representación legal, si el país lo fija.
+    representation: RepresentationCredit | None = None
     #: The country's catalogue of leave, copied into each company on setup.
     #: Empty is legitimate: a country whose leave is entirely a matter of
     #: contract has nothing statutory to seed.

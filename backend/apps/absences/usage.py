@@ -155,9 +155,35 @@ def leave_usage(employee, leave_type, company, on: date | None = None) -> LeaveU
         period_end=last,
         used=round(used, 2),
         requests=rows.count(),
-        allowance=float(leave_type.amount) if leave_type.amount is not None else None,
+        allowance=_allowance_for(employee, leave_type, company),
         estimated=estimated,
     )
+
+
+def _allowance_for(employee, leave_type, company) -> float | None:
+    """Cuánto concede este permiso **a esta persona**.
+
+    Casi siempre es lo que dice el catálogo, que es de la empresa. La excepción
+    es el crédito horario de la representación legal: el art. 68.e lo fija por
+    tamaño del **centro de trabajo**, así que dos personas de la misma empresa
+    con el mismo permiso pueden tener topes distintos, y el catálogo no tiene
+    dónde guardar eso.
+
+    La cifra de la empresa manda cuando la ha puesto ---el convenio amplía este
+    crédito a menudo, y forzar el suelo legal encima sería quitarle horas a
+    alguien---. La escala entra cuando el catálogo no dice nada, que es como
+    viene de fábrica.
+    """
+    if leave_type.amount is not None:
+        return float(leave_type.amount)
+
+    from apps.absences.representation import FUNCIONES_DE_REPRESENTACION, representation_hours
+
+    if leave_type.code != FUNCIONES_DE_REPRESENTACION:
+        return None
+
+    credito = representation_hours(employee, company)
+    return credito["hours"] if credito else None
 
 
 def _whole_day_hours(absence, company) -> tuple[float, bool]:

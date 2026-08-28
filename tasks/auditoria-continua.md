@@ -369,6 +369,58 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 167 --- El crédito horario del art. 68.e (29/08)
+
+Al empezar: 4 «A medias» y 7 «Falta».
+
+**Elegido porque su escala es de la ley, no del convenio**, y traerla no pisa a
+nadie: quince horas al mes hasta cien personas, veinte hasta doscientas
+cincuenta, treinta hasta quinientas, treinta y cinco hasta setecientas cincuenta
+y cuarenta de ahí en adelante. Lo que sí es del convenio es **ampliarla**, y por
+eso la cifra de la empresa manda cuando la ha puesto y la escala entra cuando no.
+
+**El matiz que decide si la cifra está bien: va por centro de trabajo.** El
+comité es del centro, no de la empresa. Una empresa de seiscientas personas
+repartidas en cuatro naves de ciento cincuenta da **veinte** horas a cada
+representante, no treinta y cinco. Contarlo por empresa serían quince horas al
+mes de más para cada uno, todos los meses, y no se notaría hasta una inspección.
+
+**Dónde vive cada cosa.** La escala es una cifra del país, así que está en el
+marco legal junto a las protecciones de menores y el tope de complementarias. El
+tope **no cabe en el catálogo**: depende del centro de cada persona, de modo que
+dos compañeros de la misma empresa con el mismo permiso pueden tener cifras
+distintas, y el catálogo guarda una por permiso. Lo calcula el saldo, por persona.
+
+**Sin centro asignado se cuenta la empresa entera y se dice.** No hay tramo que
+mirar sin inventarlo; contar la empresa es lo más parecido, y marcar que se ha
+hecho convierte una cifra que podría estar mal en un dato con su salvedad.
+
+**Un defecto de UX:** la pantalla decía que este permiso duraba «el tiempo
+indispensable». Es la frase de los que **paran** la jornada por el rato que haga
+falta ---una consulta, un examen--- y aquí hace pensar que no tiene tope ninguno.
+Ahora dice que la cuantía sale de la escala legal según el tamaño del centro.
+
+**Seis contrastes, y uno no contrastó.** Quitar el filtro `is_worker_representative`
+del aviso no rompe nada: `representation_hours` ya contesta `None` a quien no lo
+es, así que ese filtro es **rendimiento y no corrección**. Se queda ---evita
+recorrer la plantilla entera--- con el comentario diciendo lo que es, para que
+nadie lo tome por la condición.
+
+**Y una prueba que tardaba minuto y medio.** La de la escala daba de alta hasta
+novecientas personas para comprobar en qué tramo caían. La escala es aritmética
+pura: se prueba sin base de datos, con los once bordes, y la integración ---que la
+cuenta salga del centro correcto--- se prueba aparte con la gente justa. De 85 s a
+17 s.
+
+**Repetí un error de la vuelta 163.** Restauré `apps/legal/base.py` con `git
+checkout` en mitad de un sabotaje, y me llevé por delante la clase nueva, que no
+estaba commiteada. Lo vi porque fui a comprobarlo justo después; la lección estaba
+escrita hace cuatro vueltas y no la seguí.
+
+**Cierre:** ocho pasos del CI en verde con 1.520 pruebas, suite de navegador
+aparte, una fila movida a Cubierto, dossier en la 1.36. El recuento pasa de
+100/4/7 a **101/3/7 de 111**, contado de las filas.
+
 ### Vuelta 166 --- El festivo trabajado, segunda fuente del saldo (28/08)
 
 Al empezar: 4 «A medias» y 9 «Falta».

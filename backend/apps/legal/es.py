@@ -26,6 +26,7 @@ from apps.legal.base import (
     LegalFramework,
     MinorProtections,
     NightWork,
+    RepresentationCredit,
     ShiftWork,
 )
 
@@ -151,6 +152,14 @@ ESPANA = LegalFramework(
         # No es un incumplimiento: las horas por encima de lo pactado en jornada
         # parcial son complementarias, lícitas y con su propio tope.
         "over_contracted_hours": Citation("Art. 12.5 ET"),
+        "representation_credit_below_the_floor": Citation(
+            "Art. 68.e ET",
+            "El crédito horario de la representación legal va por tamaño del centro "
+            "de trabajo, no de la empresa: quince horas al mes hasta cien personas, "
+            "veinte hasta doscientas cincuenta, treinta hasta quinientas, treinta y "
+            "cinco hasta setecientas cincuenta y cuarenta de ahí en adelante. El "
+            "convenio puede ampliarlo, y a menudo lo hace.",
+        ),
         "serious_illness_reduction_too_small": Citation(
             "Art. 37.6 ET, párrafo 3.º",
             "Para el cuidado de un menor a cargo con cáncer o con otra enfermedad "
@@ -297,6 +306,18 @@ ESPANA = LegalFramework(
     #
     # Art. 12.5.h: «se registrarán día a día y se totalizarán mensualmente»,
     # que es de dónde sale el periodo.
+    # La escala del art. 68.e, por **centro de trabajo**. Es un suelo: el
+    # convenio puede ampliarla, y lo hace a menudo.
+    representation=RepresentationCredit(
+        scale=(
+            (100, 15),
+            (250, 20),
+            (500, 30),
+            (750, 35),
+            (None, 40),
+        ),
+        basis="Art. 68.e ET",
+    ),
     complementary=ComplementaryHours(
         max_share=0.30,
         period_months=1,

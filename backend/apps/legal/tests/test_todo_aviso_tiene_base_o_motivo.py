@@ -52,6 +52,7 @@ SIN_CITA = {
         "on_call_over_the_weekly_maximum": "la guardia de sanidad, del ET con el TJUE",
         "overtime_rest_overdue": "el plazo del art. 35.1 para devolver el descanso",
         "serious_illness_reduction_too_small": "el mínimo del art. 37.6, párrafo 3.º",
+        "representation_credit_below_the_floor": "la escala del art. 68.e",
         "relief_hours_below_the_reduction": "el contrato de relevo es del ET",
         "relief_without_partial_retirement": "el contrato de relevo es del ET",
         "training_kind_not_stated": "los dos formativos son del ET",

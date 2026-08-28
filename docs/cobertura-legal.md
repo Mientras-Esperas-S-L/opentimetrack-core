@@ -158,7 +158,7 @@ suelo legal y el convenio mejora cualquiera.
 | Cuidado de menor con cáncer o enfermedad grave: reducción de al menos la mitad | 37.6 | **Cubierto.** Y con el matiz que lo separa del otro párrafo del mismo artículo: aquí la mitad es el **mínimo** ---«al menos la mitad»--- y en la guarda legal es el máximo. Se avisa cuando la reducción se queda corta, y el aviso de la guarda legal **no le aplica**: sin esa separación, reducir un 60 % ---que es exactamente lo que la ley concede--- saldría marcado como incumplimiento |
 | Permiso parental de 8 semanas, **no retribuido**, hasta los 8 años | 48 bis | **Cubierto.** Ocho semanas hasta que el menor cumple ocho años, marcadas **sin sueldo**, que es lo que más se confunde de este permiso |
 | Víctimas de violencia de género o sexual: reducción, reordenación, horario flexible | 37.8 | **Cubierto.** Reducción de jornada o reordenación del tiempo de trabajo, **sin rango**: lo concreta quien lo ejerce y no hay cifra que comprobar. **No pide justificante**, a propósito: la acreditación se hace ante quien corresponde, no colgando un documento en una herramienta de fichaje. Es distinta de la suspensión del art. 45.1.n, que ya estaba y es para quien deja de trabajar |
-| Crédito horario de representantes | 68.e | **A medias.** El permiso está en el catálogo y se cuenta en horas al mes; lo que no trae es **la escala del art. 68.e** ---quince, veinte, treinta, treinta y cinco o cuarenta horas según el tamaño de la plantilla---, que hoy la pone la empresa a mano. Esa escala es suelo legal y no una cifra de convenio, así que traerla no pisaría a nadie |
+| Crédito horario de representantes | 68.e | **Cubierto.** La escala del artículo, **por tamaño del centro de trabajo y no de la empresa**: quince horas al mes hasta cien personas, veinte hasta doscientas cincuenta, treinta hasta quinientas, treinta y cinco hasta setecientas cincuenta y cuarenta de ahí en adelante. Ese matiz es el que más se confunde: una empresa de seiscientas personas en cuatro naves de ciento cincuenta da veinte horas a cada representante, no treinta y cinco. Es un **suelo** ---«podrá pactarse en convenio colectivo la acumulación de horas»---, así que la cifra de la empresa manda cuando la ha puesto y se avisa si se queda por debajo. Sin centro asignado se cuenta la empresa entera **y se dice**, en vez de inventar el tramo |
 | Búsqueda de empleo durante el preaviso de despido objetivo, 6 h/semana | 53.2 | **Cubierto.** Seis horas semanales, con la nota de que solo corren durante el preaviso de un despido por causas objetivas |
 | Exámenes de formación reglada | 23.1.a | **Cubierto.** El tiempo indispensable, con justificante |
 
@@ -378,6 +378,23 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 6 | **Las cifras de cada sector** (RD 1561/1995). Lo que quedaba de esta fila y sigue fuera a propósito: quince cifras por cada uno de los trece regímenes, cada sector con su convenio encima. Que los avisos citen el régimen declarado **ya está** desde el 28/08 | **Semanas**, y conviene partirlo por sector empezando por el que tenga un cliente esperando. No es trabajo pendiente sino una decisión de producto: mientras no haya un cliente de un sector concreto, traer sus cifras es inventar |
 
 ### Hecho desde que se escribió esta lista
+
+- **El crédito horario de la representación legal** (art. 68.e, 29/08/2026).
+
+  La escala es del artículo, no del convenio, así que traerla no pisa a nadie: lo
+  que sí es del convenio es ampliarla, y por eso la cifra de la empresa manda
+  cuando la ha puesto y la escala entra cuando no.
+
+  **Va por centro de trabajo, no por empresa**, y ese es el matiz que decide si la
+  cifra está bien: el comité es del centro. Una empresa de seiscientas personas en
+  cuatro naves de ciento cincuenta da veinte horas a cada representante, no treinta
+  y cinco; contarlo por empresa serían quince horas al mes de más para cada uno,
+  todos los meses, sin que nadie lo notara.
+
+  El tope no cabe en el catálogo ---dos personas de la misma empresa pueden tener
+  cifras distintas--- así que el saldo lo calcula por persona. Y la pantalla decía
+  que este permiso duraba «el tiempo indispensable», que hace pensar que no tiene
+  tope ninguno.
 
 - **La compensación por festivo trabajado** (art. 37.2, 28/08/2026), segunda
   fuente del saldo de descanso.

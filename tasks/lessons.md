@@ -2,6 +2,57 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Volví a hacer `git checkout` sobre trabajo sin commitear (29/08/2026)
+
+La lección estaba escrita hace cuatro vueltas, con su título y su «cómo
+evitarlo»: para restaurar tras un sabotaje, `cp` de una copia hecha antes, nunca
+`git checkout`. La repetí igual, sobre `apps/legal/base.py`, y me llevé por
+delante una clase que no estaba commiteada.
+
+Lo que falló no fue el conocimiento sino el momento: el `git checkout` salió como
+salida de emergencia al final de una tanda de sabotajes, cuando el fichero que
+tocaba restaurar no era el que tenía copia. Ahí es justo donde hace falta la
+regla, y ahí es donde no la miré.
+
+**Cómo evitarlo, de verdad esta vez:** la copia se hace **de todos los ficheros
+que la tanda va a tocar**, antes de empezar, no del que se sabotea primero. Si
+aparece uno sin copia a mitad, se hace la copia entonces ---cuesta un `cp`--- y
+nunca se restaura con git. Y al terminar la tanda, comprobar el número de pruebas:
+si no vuelve al de antes, algo se ha perdido.
+
+## Una escala legal se prueba sin base de datos (29/08/2026)
+
+Las pruebas de la escala del art. 68.e daban de alta hasta novecientas personas
+para comprobar en qué tramo caía cada tamaño. Tardaban minuto y medio y probaban
+una comparación de enteros.
+
+La escala es aritmética pura: `hours_for(751) == 40` no necesita ninguna persona.
+Lo que sí necesita base de datos es otra cosa ---que la cuenta salga del **centro**
+y no de la empresa--- y eso se prueba con cuatro naves de sesenta, no de ciento
+cincuenta: el salto de tramo es el mismo y la prueba tarda una décima parte.
+
+**Cómo evitarlo:** separar «la tabla dice esto» de «la cuenta sale de aquí». La
+primera va sin base de datos y cubre todos los bordes; la segunda va con los datos
+mínimos que hagan visible el error. Mezclarlas produce pruebas lentas que además
+cubren peor los bordes, porque nadie da de alta a novecientas personas once veces.
+
+## Un filtro que no cambia ningún resultado es rendimiento, no corrección (29/08/2026)
+
+El aviso del crédito horario recorre solo a quien está marcado como
+representante. Al sabotearlo ---quitando el filtro--- no se puso roja ni una
+prueba: `representation_hours` ya contesta `None` a quien no lo es, así que el
+bucle lo salta igual.
+
+El filtro está bien y se queda: evita recorrer la plantilla entera de una empresa
+grande. Lo que estaba mal era el comentario, que lo presentaba como la razón por
+la que no se avisa de más. Quien leyera eso y tocara la condición de verdad
+---la de `representation_hours`--- pensaría que el filtro le cubría.
+
+**Cómo evitarlo:** cuando un contraste no se pone rojo, la primera pregunta no es
+«¿está mal la prueba?» sino «¿qué hace realmente esta línea?». Si resulta que no
+cambia el resultado, decirlo en el comentario: **rendimiento** y no corrección, y
+dónde está la condición que sí lo es.
+
 ## La segunda fuente de un saldo cambia el diseño de la primera (28/08/2026)
 
 Con una sola fuente de deuda, restar lo devuelto dentro de ella era correcto y

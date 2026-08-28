@@ -292,6 +292,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     findings.extend(_check_on_call_counts_as_work(company, rules, first, last, employee))
     findings.extend(_check_overtime_rest_overdue(company, rules, first, last, employee))
     findings.extend(_check_serious_illness_reduction(company, first, last, employee))
+    findings.extend(_check_representation_credit(company, first, last, employee))
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -1085,6 +1086,68 @@ JUBILACION_PARCIAL = "es.partial_retirement"
 #: diferencia de las veinte horas de presencia del transporte, que sí son
 #: disponibles para el convenio---.
 MAXIMO_SEMANAL_UE = 48
+
+
+def _check_representation_credit(company, first, last, employee) -> list[Finding]:
+    """Que el crédito horario puesto en el catálogo llegue al suelo del art. 68.e.
+
+    La escala del artículo va por tamaño del **centro de trabajo**: quince horas
+    hasta cien personas, veinte hasta doscientas cincuenta, y así. «Podrá
+    pactarse en convenio colectivo la acumulación de horas», de modo que la cifra
+    de la empresa manda ---ampliarla es corriente--- pero por debajo no puede ir:
+    eso es lo que hace un suelo.
+
+    **Avisa, no impide.** Puede haber acuerdos que repartan el crédito de otra
+    forma, y un producto que se negara a guardar la cifra dejaría a la empresa
+    sin poder registrar lo que ya ha pactado.
+
+    Solo para quien está marcado como representante: el permiso existe en el
+    catálogo de todas las empresas, y comparar su cifra con la escala en una
+    empresa sin representación sería avisar de algo que no aplica a nadie.
+
+    **Ese filtro es por rendimiento, no por corrección**, y conviene no
+    confundirse: quitarlo no cambia ni un aviso, porque `representation_hours`
+    contesta `None` a quien no es representante y el bucle lo salta igual. Lo
+    que evita es recorrer la plantilla entera de una empresa grande para
+    descartarla persona a persona. La condición de verdad está allí, y allí es
+    donde hay que tocarla si algún día cambia.
+    """
+    from apps.absences.models import LeaveType
+    from apps.absences.representation import FUNCIONES_DE_REPRESENTACION, representation_hours
+    from apps.users.models import User
+
+    tipo = LeaveType.objects.filter(code=FUNCIONES_DE_REPRESENTACION).first()
+    if tipo is None or tipo.amount is None:
+        # Sin cifra puesta no hay nada por debajo de nada: el saldo usa la
+        # escala directamente.
+        return []
+
+    quienes = User.objects.filter(tenant=company, is_active=True, is_worker_representative=True)
+    if employee is not None:
+        quienes = quienes.filter(pk=employee.pk)
+
+    found: list[Finding] = []
+    for person in quienes:
+        credito = representation_hours(person, company)
+        if not credito or float(tipo.amount) >= credito["hours"]:
+            continue
+        found.append(
+            Finding(
+                day=last,
+                employee_id=person.id,
+                code="representation_credit_below_the_floor",
+                message=_(
+                    "%(given)s h a month of representation credit, and art. 68.e gives "
+                    "%(due)s h for a workplace of %(people)s people."
+                )
+                % {
+                    "given": f"{float(tipo.amount):g}",
+                    "due": f"{credito['hours']:g}",
+                    "people": credito["headcount"],
+                },
+            )
+        )
+    return found
 
 
 def _check_serious_illness_reduction(company, first, last, employee) -> list[Finding]:

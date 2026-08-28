@@ -178,6 +178,16 @@ class LeaveTypeSerializer(serializers.ModelSerializer):
             # mitad de la jornada, y lo que dice el artículo lo pone la nota.
             if obj.can_reduce_the_day:
                 return str(_("the part of the working day that is agreed"))
+            # El crédito de la representación legal tampoco dura «el tiempo
+            # indispensable»: son horas al mes por una escala que depende del
+            # tamaño del **centro**, así que no cabe una cifra sola en el
+            # catálogo ---dos personas de la misma empresa pueden tener topes
+            # distintos--- pero decir «el tiempo que haga falta» es peor: hace
+            # pensar que no hay tope ninguno.
+            from apps.absences.representation import FUNCIONES_DE_REPRESENTACION
+
+            if obj.code == FUNCIONES_DE_REPRESENTACION:
+                return str(_("by the statutory scale, on the size of the workplace"))
             return str(_("the time it takes"))
         amount = f"{obj.amount.normalize():f}".rstrip(".")
         # La unidad concuerda con la cifra: «1 hora», no «1 horas».
