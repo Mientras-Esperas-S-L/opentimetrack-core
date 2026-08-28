@@ -278,6 +278,9 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     findings.extend(_check_rostered_on_a_holiday(by_person, first, last))
     findings.extend(_check_outside_the_contract(by_person))
     findings.extend(_check_time_actually_worked(company, rules, first, last, employee, reducciones))
+    findings.extend(
+        _check_complementary_cap(company, framework.complementary, first, last, employee)
+    )
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -1018,6 +1021,85 @@ def _check_under_eighteen(roster, rules, minors, first, last) -> list[Finding]:
                 )
             )
 
+    return found
+
+
+def _check_complementary_cap(company, complementary, first, last, employee) -> list[Finding]:
+    """El tope de horas complementarias del art. 12.5.c, contra el registro.
+
+    El aviso de `_check_weekly_hours` lleva tiempo diciendo que las horas por
+    encima del contrato «cuentan para su propio límite», y **ese límite no lo
+    llevaba nadie**: era una promesa que el producto hacía y no cumplía.
+
+    Va sobre el periodo del contrato ---semana, mes o año--- y no sobre el mes,
+    porque el artículo lo ata a «las horas ordinarias de trabajo objeto del
+    contrato» y el objeto se pacta en el cómputo que sea. Ver
+    `apps.punches.complementary`.
+
+    Las personas salen del **registro**, no del cuadrante: quien no tiene turnos
+    planificados es justo quien más fácilmente se pasa sin que nadie mire, y es
+    el agujero que `_check_time_actually_worked` existe para tapar. Repetirlo
+    aquí habría dejado fuera al mismo grupo.
+    """
+    from apps.punches.complementary import complementary_used
+    from apps.users.models import HoursPeriod, User, WorkingTimeRegime
+
+    # Donde el marco no define las complementarias, no las hay. La directiva
+    # europea no las conoce ---son una construcción del ET--- y emitir aquí un
+    # aviso con un porcentaje español sería inventarle a otro país un límite que
+    # su ley no tiene.
+    if complementary is None:
+        return []
+
+    zone = company.tzinfo
+    quienes = User.objects.filter(
+        # `User.objects` no acota por empresa ---no es un `TenantOwnedModel`--- y
+        # el filtro por fichajes tampoco lo hace: el `join` no arrastra el
+        # contexto. Sin este `tenant=` la revisión de un cuadrante podía traer a
+        # gente del cliente de al lado.
+        tenant=company,
+        regime=WorkingTimeRegime.PART_TIME,
+        is_active=True,
+        punches__timestamp__gte=datetime.combine(first, dt_time.min, tzinfo=zone),
+        punches__timestamp__lt=datetime.combine(last + timedelta(days=1), dt_time.min, tzinfo=zone),
+        punches__is_active=True,
+    ).distinct()
+    if employee is not None:
+        quienes = quienes.filter(pk=employee.pk)
+
+    cuanto_dura = {
+        HoursPeriod.WEEK: _("that week"),
+        HoursPeriod.MONTH: _("that month"),
+        HoursPeriod.YEAR: _("that year"),
+    }
+
+    found: list[Finding] = []
+    for person in quienes:
+        used = complementary_used(employee=person, company=company, day=last)
+        if not used or not used["over_the_cap"]:
+            continue
+        found.append(
+            Finding(
+                # El último día mirado, que es el que la pantalla tiene a la
+                # vista. La ventana del contrato puede ser el año entero y
+                # fechar el aviso en enero lo sacaría del cuadrante que se está
+                # revisando.
+                day=last,
+                employee_id=person.id,
+                code="complementary_hours_cap",
+                message=_(
+                    "%(over)s h over the contract %(when)s, and only %(cap)s are allowed: "
+                    "%(share)s %% of the %(agreed)s h agreed."
+                )
+                % {
+                    "over": f"{used['complementary_hours']:.1f}",
+                    "when": cuanto_dura.get(used["period"], ""),
+                    "cap": f"{used['cap_hours']:.1f}",
+                    "share": used["share"],
+                    "agreed": f"{used['contracted_hours']:g}",
+                },
+            )
+        )
     return found
 
 

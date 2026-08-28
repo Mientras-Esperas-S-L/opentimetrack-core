@@ -144,6 +144,12 @@ ESPANA = LegalFramework(
         # No es un incumplimiento: las horas por encima de lo pactado en jornada
         # parcial son complementarias, lícitas y con su propio tope.
         "over_contracted_hours": Citation("Art. 12.5 ET"),
+        "complementary_hours_cap": Citation(
+            "Art. 12.5.c ET",
+            "El tope va sobre las horas ordinarias objeto del contrato, y el objeto "
+            "se pacta por semana, por mes o por año (art. 12.1). Un contrato de 800 "
+            "horas al año tiene 240 complementarias al año, no 20 al mes.",
+        ),
         "no_agreed_weekly_hours": Citation(""),
         # Tampoco incumple un artículo: es un error de planificación, como el de
         # poner a alguien de vacaciones.

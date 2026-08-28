@@ -90,7 +90,7 @@ empresa de trabajo temporal.
 | Distribución irregular | art. 34.2 | **A medias.** Se marca el fichaje, pero no hay saldo: el 10 % se compensa en 12 meses y nadie lleva la cuenta |
 | Adaptación de jornada | art. 34.8 | **A medias.** Se marca en el fichaje; la solicitud y su respuesta no se tramitan |
 | Horas extraordinarias | art. 35 | **Cubierto.** Se marcan, se dice cómo se saldan y el tope anual se contrasta con lo autorizado: la pantalla de decisiones avisa al pasarse, descontando las compensadas con descanso y las de fuerza mayor |
-| Horas complementarias | art. 12.5 | **A medias.** El cuadrante avisa; el tope mensual del 30 % no se acumula |
+| Horas complementarias | art. 12.5 | **Cubierto.** El tope se acumula contra lo trabajado y se avisa al pasarse. Va sobre **el periodo del contrato** ---semana, mes o año---, que es lo que dice el art. 12.5.c: el 30 % de «las horas ordinarias objeto del contrato». Un contrato de 800 h al año tiene 240 complementarias al año, no 20 al mes |
 | Trabajo a distancia | Ley 10/2021 | **A medias.** El fichaje registra la modalidad; el acuerdo y el umbral del 30 %, no |
 | Guardias y atención continuada | RD 1561/1995 | **Falta.** Sanidad: presencia frente a trabajo efectivo |
 | Tiempo de presencia | RD 1561/1995 | **Falta.** Transporte: hasta 20 h semanales de promedio que no son jornada ordinaria |
@@ -366,13 +366,21 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 1 | **Transcribir la resolución del BOE de 2026**, que es lo único que le falta al calendario para estar completo | **½ día.** Es copiar un boletín a un YAML versionado y verificarlo |
 | 2 | **Saldos de devolución**: horas extra compensadas, relevo de turno, distribución irregular. Convertir los avisos en una cuenta | **5-8 días.** Es una pieza, no tres: un saldo con su plazo por concepto ---4 meses el art. 35.1, 4 semanas el relevo, 12 meses la distribución irregular---, su pantalla y su columna en el informe. Arregla **tres filas del inventario de golpe** |
 | 3 | **Vacaciones**: devengo proporcional y traslado por IT | **3-4 días.** El devengo por fecha de alta y el traslado con el tope de 18 meses del art. 38.3 |
-| 4 | **Topes que se guardan y no se comprueban**: 30 % de complementarias al mes y 65/85 % del contrato formativo | **2 días.** El patrón ya existe: el de 80 horas extra al año se contrasta desde agosto y esto es acumular y avisar igual |
+| 4 | **El tope del contrato formativo**: 65 % de la jornada el primer año y 85 % el segundo, formación incluida | **1-2 días.** El patrón ya existe: el de complementarias se acumula desde el 28/08 y esto es la misma forma sobre otra cifra |
 | 5 | **Historia de la adscripción a departamento**, cuando el informe empiece a mentir | **2-3 días.** Una tabla de vigencias y los informes leyendo de ella |
 | 6 | **Reducciones de jornada por cuidados** (arts. 37.4, 37.5, 37.6 y 37.8). El permiso está catalogado; falta la mecánica de la fracción ---de ⅛ a ½ de la jornada, con sus fechas--- y su efecto en el cuadrante y en el cotejo | **4-6 días.** Son cuatro artículos con reglas distintas, y toca el cálculo de lo esperado |
 | 7 | **El acuerdo de trabajo a distancia y su umbral** (Ley 10/2021). El fichaje ya dice desde dónde se trabajó; no consta el acuerdo ni si se pasa del 30 % que lo hace obligatorio | **2-3 días.** El documento con sus fechas y el porcentaje calculado sobre lo trabajado |
 | 8 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
 
 ### Hecho desde que se escribió esta lista
+
+- **El tope de horas complementarias** (art. 12.5.c, 28/08/2026). El aviso del
+  cuadrante llevaba tiempo diciendo que las horas por encima del contrato
+  «cuentan para su propio límite» y **ese límite no lo llevaba nadie**. Ahora se
+  acumula contra lo trabajado y se avisa al pasarse, sobre el periodo del
+  contrato y no sobre el mes. Las personas salen del registro y no del cuadrante,
+  para que no se quede fuera quien no tiene turnos planificados ---que es quien
+  más fácilmente se pasa sin que nadie mire---.
 
 - **El llamamiento del fijo discontinuo** (art. 16, 28/08/2026). Estaba
   estimado en 2-3 días y salió en dos tandas. Periodos de actividad con su fecha
