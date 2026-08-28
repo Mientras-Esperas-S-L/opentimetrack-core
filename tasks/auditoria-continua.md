@@ -369,6 +369,71 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 152 --- El umbral del trabajo a distancia, parte A (28/08)
+
+**Partida, y se dice.** Esta vuelta trae la cuenta, el acuerdo y los avisos; la
+pantalla para registrar el acuerdo queda para la siguiente, como pasó con el fijo
+discontinuo. Hoy se puede por API y eso no es «cubierto».
+
+**Lo primero que hay que entender del art. 1:** la Ley 10/2021 no regula «el
+teletrabajo». Fija **cuándo se aplica** ---trabajo a distancia de al menos el 30 %
+de la jornada en un periodo de referencia de tres meses--- y por debajo de ese
+umbral no exige nada. Por encima entra entera: acuerdo por escrito y **previo**
+(art. 5.1), con el contenido mínimo del art. 7.
+
+Eso convierte una pregunta jurídica en una cuenta, y la cuenta es de las que este
+producto puede hacer porque el dato ya estaba: cada fichaje dice si ese tramo fue
+presencial o a distancia (art. 3.e).
+
+**Y aquí la diferencia con la vuelta 150.** Con las horas complementarias resultó
+que `hours_nature` no lo mandaba **ninguna** pantalla, así que la cuenta habría
+sido cero para siempre y hubo que derivarlas. Con el modo de trabajo no: `Clock.jsx`
+lo ofrece al fichar y `api.js` lo manda. Lo comprobé antes de escribir nada,
+precisamente por lo de la vuelta anterior.
+
+Lo que sí pasaba es que **la demostración no lo enseñaba**: mil cuarenta y nueve
+fichajes, todos presenciales, y las 699 personas con «presencial» por defecto. La
+misma forma de hueco que las pausas de la vuelta 149.
+
+**Dos avisos y no uno,** porque son dos incumplimientos que se arreglan distinto:
+no tener acuerdo, y tenerlo firmado después de haber empezado. Mandar a quien
+tiene el papel con la fecha corrida a que «firme un acuerdo» sería mandarle a
+resolver un problema que no es el suyo, y una firma no se puede correr hacia
+atrás.
+
+**La ventana es móvil, y es lo contrario de lo que decidí hace dos vueltas.** En
+el tope de complementarias razoné que las ventanas naturales son mejores porque
+un tope que cambia cada mañana no se puede comprobar en un calendario. Aquí no:
+aquel es **un límite que no se puede rebasar** y este es **un umbral que dice si
+una ley aplica hoy**. La ley habla de «un periodo de referencia de tres meses»
+sin atarlo al calendario, y lo que interesa es si ahora mismo hace falta acuerdo.
+
+**Tres meses no son noventa días.** El 31 de mayo menos tres meses no es el 31 de
+febrero: se retrocede al último día del mes que toque. Restar noventa días habría
+sido una línea y habría dado el 2 de marzo, que no es tres meses antes de nada.
+Hay prueba con el 31 de mayo y con su versión bisiesta.
+
+**Un `0 %` sobre una ventana vacía no se contesta.** Cero de cero no es «esta
+persona no teletrabaja», es que no consta nada, y la diferencia importa cuando lo
+que se decide es si una ley aplica.
+
+**Un tropiezo mío:** metí la tabla de quién teletrabaja como constante de módulo
+**en medio de la clase** de la semilla, lo que corta la clase por ahí. `ruff` no
+lo dijo ---el fichero no llegaba a parsearse--- y lo vi al comprobarlo con `ast`.
+Y usé `WorkMode` y `RemoteWorkAgreement` sin importarlos, que es la 252 otra vez;
+esta vez los importé en el mismo paso, antes de correr nada.
+
+**La demostración ya lo enseña, y enseña las dos caras:** Ana teletrabaja el 41,6 %
+con su acuerdo firmado dos semanas antes de empezar ---la ley aplica y está
+cumplida--- y Luis el 63,4 % sin ninguno, que es lo que la revisión del cuadrante
+saca. Sin el segundo, la demostración enseñaría la ley cumplida y no enseñaría
+para qué sirve mirarla.
+
+**Cifras al cerrar:** 1.369 pruebas de backend y 304 de navegador en verde,
+linters limpios, `i18n:check` en verde, sin migraciones pendientes, y los tres
+catálogos del servidor sin cadena visible pendiente ni dudosa ---el guard de
+`fuzzy` cazó cinco hoy---.
+
 ### Vuelta 151 --- La reducción por guarda legal, que el producto rechazaba (28/08)
 
 **3 de 13.** Cambié la que había anunciado. Dije que tocaba el tope del contrato

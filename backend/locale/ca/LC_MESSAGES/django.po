@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 10:40+0000\n"
+"POT-Creation-Date: 2026-08-28 11:02+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan\n"
@@ -202,6 +202,7 @@ msgstr ""
 #: apps/audit/models.py:191 apps/punches/models.py:538
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:341 apps/tenants/rules.py:425 apps/users/models.py:801
+#: apps/users/models.py:879
 msgid "note"
 msgstr ""
 
@@ -244,7 +245,7 @@ msgstr "Cancel·lada"
 #: apps/notifications/models.py:34 apps/punches/corrections.py:80
 #: apps/punches/models.py:150 apps/punches/models.py:485
 #: apps/punches/models.py:527 apps/reports/payroll.py:97
-#: apps/shifts/models.py:111 apps/users/models.py:783
+#: apps/shifts/models.py:111 apps/users/models.py:783 apps/users/models.py:855
 msgid "employee"
 msgstr "persona treballadora"
 
@@ -483,11 +484,13 @@ msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-28
 #: apps/absences/services.py:412
+#, python-format
 msgid ""
 "«%(kind)s» cannot reduce the working day. For fewer hours by agreement, "
 "change the contracted figure on the person."
-msgstr "«%(kind)s» no pot reduir la jornada. Per a menys hores per acord, canvia "
-"la jornada contractada de la persona."
+msgstr ""
+"«%(kind)s» no pot reduir la jornada. Per a menys hores per acord, canvia la "
+"jornada contractada de la persona."
 
 #: apps/absences/services.py:422
 msgid ""
@@ -2128,11 +2131,11 @@ msgstr "Algú d'aquesta llista no pertany a aquesta empresa."
 msgid "That shift pattern does not exist."
 msgstr "Aquest torn no existeix."
 
-#: apps/shifts/services.py:360
+#: apps/shifts/services.py:361
 msgid "Rostered the same day."
 msgstr "Posat al quadrant el mateix dia."
 
-#: apps/shifts/services.py:363
+#: apps/shifts/services.py:364
 #, python-format
 msgid "Rostered %(days)s day ahead, under the %(floor)s the company asks for."
 msgid_plural ""
@@ -2144,7 +2147,7 @@ msgstr[1] ""
 "Posat amb %(days)s dies d'antelació, per sota dels %(floor)s que demana "
 "l'empresa."
 
-#: apps/shifts/services.py:414
+#: apps/shifts/services.py:415
 #, python-format
 msgid ""
 "%(hours)s h of rest at a shift changeover, which is allowed. The %(owed)s h "
@@ -2155,13 +2158,13 @@ msgstr ""
 "setmanes."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/shifts/services.py:441
+#: apps/shifts/services.py:442
 msgid "The clocks went forward that night, so the shifts are an hour closer."
 msgstr ""
 "Aquella nit els rellotges es van avançar, així que els torns queden una hora "
 "més a prop."
 
-#: apps/shifts/services.py:453
+#: apps/shifts/services.py:454
 #, python-format
 msgid ""
 "Only %(hours)s h of rest since the previous shift, under the %(floor)s h a "
@@ -2170,19 +2173,19 @@ msgstr ""
 "Només %(hours)s h de descans des del torn anterior, per sota de les "
 "%(floor)s h a què pot baixar un relleu."
 
-#: apps/shifts/services.py:457
+#: apps/shifts/services.py:458
 #, python-format
 msgid "Only %(hours)s h of rest since the previous shift."
 msgstr "Només %(hours)s h de descans des del torn anterior."
 
-#: apps/shifts/services.py:558
+#: apps/shifts/services.py:559
 #, python-format
 msgid "%(hours)s h rostered that week, over the %(limit)s h configured."
 msgstr ""
 "%(hours)s h planificades aquella setmana, per damunt de les %(limit)s h "
 "configurades."
 
-#: apps/shifts/services.py:571
+#: apps/shifts/services.py:572
 #, python-format
 msgid ""
 "%(hours)s h rostered that week against %(agreed)s h contracted. The "
@@ -2192,7 +2195,7 @@ msgstr ""
 "contractades. Les %(extra)s h de més són hores complementàries i compten per "
 "al seu propi límit."
 
-#: apps/shifts/services.py:593
+#: apps/shifts/services.py:594
 msgid ""
 "No agreed weekly hours on this contract, so the weekly total is not checked. "
 "Only the legal maximum applies."
@@ -2200,14 +2203,14 @@ msgstr ""
 "Aquest contracte no té hores setmanals pactades, així que no es comprova el "
 "total de la setmana. Només regeix el màxim legal."
 
-#: apps/shifts/services.py:693
+#: apps/shifts/services.py:694
 #, python-format
 msgid "A continuous day of %(hours)s h needs a break of %(minutes)s min."
 msgstr ""
 "Una jornada continuada de %(hours)s h necessita un descans de %(minutes)s "
 "min."
 
-#: apps/shifts/services.py:764
+#: apps/shifts/services.py:765
 #, python-format
 msgid ""
 "The longest break in those %(days)s days is %(hours)s h, under the "
@@ -2216,7 +2219,7 @@ msgstr ""
 "El descans més llarg d'aquests %(days)s dies és de %(hours)s h, per sota de "
 "les %(minimum)s h configurades."
 
-#: apps/shifts/services.py:825
+#: apps/shifts/services.py:826
 #, python-format
 msgid ""
 "%(count)s of %(total)s days with %(hours)s h or more at night. If the person "
@@ -2229,7 +2232,7 @@ msgstr ""
 "en %(days)s dies, la prohibició d'hores extraordinàries i una avaluació de "
 "salut. Ningú no ha deixat constància de si la té."
 
-#: apps/shifts/services.py:894
+#: apps/shifts/services.py:895
 #, python-format
 msgid ""
 "A night worker averaging %(average)s h a day over %(days)s days, above the "
@@ -2238,7 +2241,7 @@ msgstr ""
 "Un treballador nocturn amb una mitjana de %(average)s h diàries en %(days)s "
 "dies, per damunt de les %(limit)s h permeses."
 
-#: apps/shifts/services.py:899
+#: apps/shifts/services.py:900
 #, python-format
 msgid ""
 "Averaging %(average)s h a day over %(days)s days. The roster reads like "
@@ -2249,7 +2252,7 @@ msgstr ""
 "com a treball nocturn, i si li correspon aquesta condició això supera les "
 "%(limit)s h de l'art. 36.1 ET."
 
-#: apps/shifts/services.py:946
+#: apps/shifts/services.py:947
 #, python-format
 msgid ""
 "%(weeks)s consecutive weeks on the night shift, over the %(limit)s allowed. "
@@ -2259,7 +2262,7 @@ msgstr ""
 "permeses. Per a més cal que la persona s'hi hagi adscrit voluntàriament, i "
 "això és un camp de la seva fitxa."
 
-#: apps/shifts/services.py:987
+#: apps/shifts/services.py:988
 #, python-format
 msgid ""
 "%(hours)s h rostered for somebody under eighteen. The limit is %(limit)s h a "
@@ -2268,7 +2271,7 @@ msgstr ""
 "%(hours)s h planificades a una persona menor de divuit anys. El límit són "
 "%(limit)s h diàries i cap conveni no el pot apujar."
 
-#: apps/shifts/services.py:1001
+#: apps/shifts/services.py:1002
 #, python-format
 msgid ""
 "A continuous day of %(hours)s h for somebody under eighteen needs a break of "
@@ -2277,7 +2280,7 @@ msgstr ""
 "Una jornada continuada de %(hours)s h d'una persona menor de divuit anys "
 "necessita un descans de %(minutes)s min, a partir de %(after)s h."
 
-#: apps/shifts/services.py:1019
+#: apps/shifts/services.py:1020
 msgid ""
 "Night shift rostered for somebody under eighteen. Art. 6.2 ET forbids it "
 "outright: there is no permitted amount."
@@ -2286,31 +2289,52 @@ msgstr ""
 "prohibeix sense més: no hi ha cap quantitat permesa."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1083
+#: apps/shifts/services.py:1100
+#, python-format
+msgid ""
+"%(share)s %% of the time worked in the last three months was remote, over "
+"the %(threshold)s %% that makes Law 10/2021 apply, and no agreement is on "
+"record."
+msgstr "El %(share)s %% del temps treballat en els últims tres mesos va ser a "
+"distància, per damunt del %(threshold)s %% que fa aplicable la Llei "
+"10/2021, i no consta cap acord."
+
+# revisar: traducido sin hablante nativo el 2026-08-28
+#: apps/shifts/services.py:1117
+#, python-format
+msgid ""
+"The remote work agreement was signed on %(signed)s and the remote work began "
+"on %(started)s."
+msgstr "L'acord de treball a distància es va signar el %(signed)s i el treball a "
+"distància va començar el %(started)s."
+
+# revisar: traducido sin hablante nativo el 2026-08-28
+#: apps/shifts/services.py:1168
 #, python-format
 msgid ""
 "The working day is cut by %(share)s %%, and art. 37.6 runs from an eighth to "
 "a half --- between %(min)s %% and %(max)s %%."
-msgstr "La jornada es redueix un %(share)s %%, i l'art. 37.6 va d'un vuitè a la "
+msgstr ""
+"La jornada es redueix un %(share)s %%, i l'art. 37.6 va d'un vuitè a la "
 "meitat: entre el %(min)s %% i el %(max)s %%."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1140
+#: apps/shifts/services.py:1225
 msgid "that week"
 msgstr "aquella setmana"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1141
+#: apps/shifts/services.py:1226
 msgid "that month"
 msgstr "aquell mes"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1142
+#: apps/shifts/services.py:1227
 msgid "that year"
 msgstr "aquell any"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1160
+#: apps/shifts/services.py:1245
 #, python-format
 msgid ""
 "%(over)s h over the contract %(when)s, and only %(cap)s are allowed: "
@@ -2319,7 +2343,7 @@ msgstr ""
 "%(over)s h per damunt del contracte %(when)s, i només se'n permeten %(cap)s: "
 "el %(share)s %% de les %(agreed)s h pactades."
 
-#: apps/shifts/services.py:1253
+#: apps/shifts/services.py:1338
 #, python-format
 msgid ""
 "%(hours)s h actually worked that week, over the %(limit)s h maximum. This is "
@@ -2328,22 +2352,22 @@ msgstr ""
 "%(hours)s h realment treballades aquella setmana, per damunt del màxim de "
 "%(limit)s h. Això és el registre, no el quadrant."
 
-#: apps/shifts/services.py:1266
+#: apps/shifts/services.py:1351
 #, python-format
 msgid "%(hours)s h actually worked against %(agreed)s h contracted."
 msgstr ""
 "%(hours)s h treballades de veritat davant de %(agreed)s h contractades."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1303
+#: apps/shifts/services.py:1388
 msgid "Rostered outside their periods of activity (art. 16 ET)."
 msgstr "Al quadrant fora dels seus períodes d'activitat (art. 16 ET)."
 
-#: apps/shifts/services.py:1305
+#: apps/shifts/services.py:1390
 msgid "Rostered on a day outside the dates of their contract."
 msgstr "Al quadrant un dia fora de les dates del seu contracte."
 
-#: apps/shifts/services.py:1349
+#: apps/shifts/services.py:1434
 msgid ""
 "Rostered on a public holiday. It is allowed, and it earns compensation in "
 "rest or in pay under the agreement."
@@ -2351,7 +2375,7 @@ msgstr ""
 "Planificat en un festiu. És permès, i genera compensació en descans o en "
 "diners segons el conveni."
 
-#: apps/shifts/services.py:1388
+#: apps/shifts/services.py:1473
 #, python-format
 msgid "Rostered on a day of approved %(kind)s."
 msgstr "Amb torn assignat en un dia de %(kind)s aprovada."
@@ -3571,6 +3595,54 @@ msgstr "període d'activitat"
 #: apps/users/models.py:805
 msgid "periods of activity"
 msgstr "períodes d'activitat"
+
+# revisar: traducido sin hablante nativo el 2026-08-28
+#: apps/users/models.py:858
+msgid "signed on"
+msgstr "signat el"
+
+# revisar: traducido sin hablante nativo el 2026-08-28
+#: apps/users/models.py:859
+msgid "Art. 5.1: the agreement comes before the remote work starts."
+msgstr "Art. 5.1: l'acord va abans que comenci el treball a distància."
+
+# revisar: traducido sin hablante nativo el 2026-08-28
+#: apps/users/models.py:861
+msgid "remote work starts"
+msgstr "el treball a distància comença"
+
+# revisar: traducido sin hablante nativo el 2026-08-28
+#: apps/users/models.py:863
+msgid "remote work ends"
+msgstr "el treball a distància acaba"
+
+# revisar: traducido sin hablante nativo el 2026-08-28
+#: apps/users/models.py:866
+msgid "Empty for an open-ended agreement, which is the usual one."
+msgstr "Buit per a un acord sense data de fi, que és el corrent."
+
+# revisar: traducido sin hablante nativo el 2026-08-28
+#: apps/users/models.py:869
+msgid "share agreed (%)"
+msgstr "percentatge pactat (%)"
+
+# revisar: traducido sin hablante nativo el 2026-08-28
+#: apps/users/models.py:875
+msgid ""
+"Art. 7.f asks the agreement to state it. Left empty it is not checked "
+"against what is actually worked: the figure that binds is on paper."
+msgstr "L'art. 7.f demana que l'acord ho digui. Buit no es contrasta amb el que "
+"es treballa de debò: la xifra que obliga és la del paper."
+
+# revisar: traducido sin hablante nativo el 2026-08-28
+#: apps/users/models.py:882
+msgid "remote work agreement"
+msgstr "acord de treball a distància"
+
+# revisar: traducido sin hablante nativo el 2026-08-28
+#: apps/users/models.py:883
+msgid "remote work agreements"
+msgstr "acords de treball a distància"
 
 #: apps/users/passwords.py:138
 #, python-format

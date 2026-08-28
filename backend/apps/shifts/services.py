@@ -282,6 +282,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
         _check_complementary_cap(company, framework.complementary, first, last, employee)
     )
     findings.extend(_check_reduction_within_the_right(company, first, last, employee))
+    findings.extend(_check_remote_work_agreement(company, first, last, employee))
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -1039,6 +1040,90 @@ GUARDA_LEGAL_MAXIMO = 50.0
 #: código y no el nombre porque la empresa edita su copia ---puede llamarlo
 #: «Reducción por cuidado de hijos» y sigue siendo el mismo derecho---.
 GUARDA_LEGAL = "es.childcare_reduced_hours"
+
+
+def _check_remote_work_agreement(company, first, last, employee) -> list[Finding]:
+    """Quien pasa del 30 % a distancia y no tiene acuerdo, o lo firmó tarde.
+
+    El art. 1 de la Ley 10/2021 fija **cuándo se aplica**: trabajo a distancia
+    de al menos el 30 % de la jornada en un periodo de tres meses. Cruzado ese
+    umbral la ley entra entera, y lo primero que exige es acuerdo por escrito y
+    **previo** (art. 5.1).
+
+    Son dos avisos y no uno porque son dos incumplimientos distintos: no tener
+    acuerdo, y tenerlo firmado después de haber empezado. El segundo se arregla
+    de otra manera ---no se puede firmar hacia atrás--- y decir «falta acuerdo»
+    a quien tiene uno con la fecha corrida sería mandarle a resolver un problema
+    que no es el suyo.
+
+    Las personas salen del registro, como en el tope de complementarias: quien
+    teletrabaja no siempre tiene cuadrante.
+    """
+    from apps.punches.models import WorkMode
+    from apps.punches.remote import remote_share
+    from apps.users.models import RemoteWorkAgreement, User
+
+    zone = company.tzinfo
+    quienes = User.objects.filter(
+        tenant=company,
+        is_active=True,
+        punches__timestamp__gte=datetime.combine(first, dt_time.min, tzinfo=zone),
+        punches__timestamp__lt=datetime.combine(last + timedelta(days=1), dt_time.min, tzinfo=zone),
+        punches__is_active=True,
+        # Solo quien haya marcado algo a distancia. Sin esto habría que hacer la
+        # cuenta de los tres meses para toda la plantilla en cada revisión de
+        # cuadrante, y la respuesta sería «0 %» para casi todos.
+        punches__work_mode=WorkMode.REMOTE,
+    ).distinct()
+    if employee is not None:
+        quienes = quienes.filter(pk=employee.pk)
+
+    found: list[Finding] = []
+    for person in quienes:
+        cuenta = remote_share(employee=person, company=company, day=last)
+        if not cuenta or not cuenta["law_applies"]:
+            continue
+
+        acuerdo = (
+            RemoteWorkAgreement.objects.filter(employee=person, starts_on__lte=last)
+            .filter(Q(ends_on__isnull=True) | Q(ends_on__gte=last))
+            .order_by("-starts_on")
+            .first()
+        )
+        if acuerdo is None:
+            found.append(
+                Finding(
+                    day=last,
+                    employee_id=person.id,
+                    code="remote_work_without_agreement",
+                    message=_(
+                        "%(share)s %% of the time worked in the last three months was "
+                        "remote, over the %(threshold)s %% that makes Law 10/2021 apply, "
+                        "and no agreement is on record."
+                    )
+                    % {
+                        "share": f"{cuenta['share']:g}",
+                        "threshold": f"{cuenta['threshold']:g}",
+                    },
+                )
+            )
+        elif acuerdo.signed_late:
+            found.append(
+                Finding(
+                    day=last,
+                    employee_id=person.id,
+                    code="remote_agreement_signed_late",
+                    message=_(
+                        "The remote work agreement was signed on %(signed)s and the "
+                        "remote work began on %(started)s."
+                    )
+                    % {
+                        "signed": acuerdo.signed_on.isoformat(),
+                        "started": acuerdo.starts_on.isoformat(),
+                    },
+                )
+            )
+    return found
 
 
 def _check_reduction_within_the_right(company, first, last, employee) -> list[Finding]:

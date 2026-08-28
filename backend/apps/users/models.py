@@ -821,3 +821,86 @@ class ActivityPeriod(TenantOwnedModel):
         if day < self.start_date:
             return False
         return self.end_date is None or day <= self.end_date
+
+
+class RemoteWorkAgreement(TenantOwnedModel):
+    """El acuerdo de trabajo a distancia del art. 5 de la Ley 10/2021.
+
+    La ley se aplica cuando se trabaja a distancia al menos el 30 % de la
+    jornada en un periodo de tres meses (art. 1), y entonces exige acuerdo
+    **por escrito y previo** al inicio. Sin él, la empresa está incumpliendo
+    aunque todo lo demás esté bien.
+
+    **Lo que este modelo guarda, y lo que no.** El contenido mínimo del art. 7
+    ---inventario de medios, gastos y su compensación, horario, porcentaje y
+    distribución, centro de trabajo al que queda adscrita la persona, medios de
+    control, procedimiento de reversibilidad--- es un documento, y un documento
+    no se sustituye por siete campos: quien tenga que enseñarlo en una
+    inspección enseña el papel firmado, no una pantalla.
+
+    Lo que aquí hace falta es **saber si existe y desde cuándo**, porque eso es
+    lo que convierte «esta persona teletrabaja el 45 %» en «esta persona
+    teletrabaja el 45 % y no consta acuerdo», que es la frase que sirve de algo.
+
+    **`signed_on` y `starts_on` son dos fechas distintas a propósito.** El art.
+    5.1 dice que el acuerdo es previo, así que firmar después de empezar es
+    precisamente el defecto que hay que poder ver. Con una sola fecha no se
+    podría.
+    """
+
+    employee = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="remote_work_agreements",
+        verbose_name=_("employee"),
+    )
+    signed_on = models.DateField(
+        _("signed on"),
+        help_text=_("Art. 5.1: the agreement comes before the remote work starts."),
+    )
+    starts_on = models.DateField(_("remote work starts"))
+    ends_on = models.DateField(
+        _("remote work ends"),
+        null=True,
+        blank=True,
+        help_text=_("Empty for an open-ended agreement, which is the usual one."),
+    )
+    agreed_share = models.DecimalField(
+        _("share agreed (%)"),
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_(
+            "Art. 7.f asks the agreement to state it. Left empty it is not checked "
+            "against what is actually worked: the figure that binds is on paper."
+        ),
+    )
+    note = models.TextField(_("note"), blank=True, validators=[validate_texto_legible])
+
+    class Meta:
+        verbose_name = _("remote work agreement")
+        verbose_name_plural = _("remote work agreements")
+        ordering = ["-starts_on"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(ends_on__isnull=True)
+                | models.Q(ends_on__gte=models.F("starts_on")),
+                name="remote_agreement_ends_after_it_starts",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        hasta = self.ends_on.isoformat() if self.ends_on else "…"
+        return f"{self.starts_on.isoformat()} → {hasta}"
+
+    def covers(self, day) -> bool:
+        """Si ese día está amparado por este acuerdo."""
+        if day < self.starts_on:
+            return False
+        return self.ends_on is None or day <= self.ends_on
+
+    @property
+    def signed_late(self) -> bool:
+        """Firmado después de empezar, que es lo que el art. 5.1 no admite."""
+        return self.signed_on > self.starts_on

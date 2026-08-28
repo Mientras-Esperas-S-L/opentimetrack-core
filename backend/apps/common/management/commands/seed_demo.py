@@ -48,11 +48,19 @@ from apps.punches.corrections import (
     propose_correction,
     request_correction,
 )
-from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource, PunchType
+from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource, PunchType, WorkMode
 from apps.shifts.models import Shift, ShiftPattern
 from apps.tenants.models import Tenant
 from apps.tenants.rules import WorkingTimeRules
-from apps.users.models import Department, HoursPeriod, Role, User, WorkingTimeRegime, Workplace
+from apps.users.models import (
+    Department,
+    HoursPeriod,
+    RemoteWorkAgreement,
+    Role,
+    User,
+    WorkingTimeRegime,
+    Workplace,
+)
 
 # Sample data, DEBUG only. `random` is fine here and bandit is told so once:
 # these are demo timings, not anything anybody has to be unable to predict ---
@@ -70,6 +78,24 @@ NEIGHBOUR_TAX_ID = "B00000002"
 #: Fixed so two runs produce the same company. A demo that differs every time
 #: is one where "it looked different yesterday" is never a real observation.
 SEED = 20260812
+
+
+#: Quién trabaja desde casa y qué días de la semana, para que la demostración
+#: enseñe la Ley 10/2021 ---que hasta ahora no salía por ninguna parte: los mil
+#: fichajes eran presenciales sin excepción---.
+#:
+#: Los dos casos que hay que ver son distintos a propósito. Ana teletrabaja dos
+#: días de cinco, el 40 %, **con acuerdo firmado antes de empezar**: la ley se
+#: aplica y está cumplida. Luis, tres de cinco, el 60 % y **sin acuerdo**: la ley
+#: se aplica y no está cumplida, que es justo lo que la revisión del cuadrante
+#: tiene que sacar.
+DESDE_CASA = {
+    ("admin", 1): WorkMode.REMOTE,  # Ana, martes
+    ("admin", 3): WorkMode.REMOTE,  # y jueves
+    ("manager", 0): WorkMode.REMOTE,  # Luis, lunes
+    ("manager", 2): WorkMode.REMOTE,  # miércoles
+    ("manager", 4): WorkMode.REMOTE,  # y viernes
+}
 
 
 class Command(BaseCommand):
@@ -745,6 +771,7 @@ class Command(BaseCommand):
                     zone,
                     jitter,
                     rest=rest if rest and random.random() < 0.85 else None,
+                    mode=DESDE_CASA.get((key, day.weekday()), WorkMode.ONSITE),
                 )
 
         # Somebody flexible: no roster, hours all over the place, and a week
@@ -768,7 +795,18 @@ class Command(BaseCommand):
         )
 
     def _pair(
-        self, company, person, day, opens, closes, source, zone, jitter=timedelta(), *, rest=None
+        self,
+        company,
+        person,
+        day,
+        opens,
+        closes,
+        source,
+        zone,
+        jitter=timedelta(),
+        *,
+        rest=None,
+        mode=WorkMode.ONSITE,
     ):
         """Un día de trabajo: entrada, la pausa si la hubo, y salida.
 
@@ -785,6 +823,9 @@ class Command(BaseCommand):
             timestamp=entered,
             punch_type=PunchType.IN,
             source=source,
+            # Art. 3.e. Va en el evento que **abre** el tramo, como todo lo
+            # descriptivo: es el que dice qué es ese rato.
+            work_mode=mode,
         )
         if rest:
             starts, ends = rest
@@ -851,6 +892,29 @@ class Command(BaseCommand):
 
         self._partial_absences(company, people, today)
         self._suspensions(company, people, today)
+        self._remote_agreements(company, people, today)
+
+    def _remote_agreements(self, company, people, today):
+        """El acuerdo de Ana, y el que Luis no tiene.
+
+        La Ley 10/2021 se aplica desde el 30 % de la jornada a distancia en tres
+        meses (art. 1), y entonces exige acuerdo por escrito y **previo** (art.
+        5.1). Los dos casos están a propósito: Ana teletrabaja el 40 % y tiene el
+        suyo firmado dos semanas antes de empezar; Luis el 60 % y no tiene
+        ninguno, que es lo que la revisión del cuadrante saca a la luz.
+
+        Sin el segundo, la demostración enseñaría la ley cumplida y no enseñaría
+        para qué sirve mirarla.
+        """
+        empieza = today - timedelta(days=120)
+        RemoteWorkAgreement.objects.create(
+            tenant=company,
+            employee=people["admin"],
+            signed_on=empieza - timedelta(days=14),
+            starts_on=empieza,
+            agreed_share=40,
+            note="Martes y jueves desde casa. Medios y gastos, en el anexo del contrato.",
+        )
 
     def _suspensions(self, company, people, today):
         """Tres: una que para el contrato y dos que lo encogen.

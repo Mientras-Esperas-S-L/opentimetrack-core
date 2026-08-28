@@ -5032,3 +5032,33 @@ Y el sembrado no era opcional: el campo nace en `False`, así que sin él el ERT
 habría dejado de poder reducir la jornada en cuanto se aplicara la migración. Una
 regresión que no rompe ninguna prueba ---las fixtures siembran del catálogo, no
 del historial--- y que solo se ve en una base que ya existía.
+
+## 299. Una constante de módulo en medio de una clase la parte en dos
+
+Inserté la tabla `DESDE_CASA` justo antes de un método, con la indentación de
+módulo. Lo que queda es esto:
+
+    class Command(BaseCommand):
+        def _roster(self, ...):
+            ...
+
+    DESDE_CASA = {...}
+
+        def _history(self, ...):     # <-- IndentationError
+
+La clase se acaba en la constante y lo que viene detrás es un bloque suelto. El
+fichero **no parsea**, así que `ruff check` no dijo nada útil ---no puede revisar
+lo que no puede leer--- y la prueba habría fallado con un error que no señala la
+causa.
+
+Lo vi con lo que cuesta un comando:
+
+    python3 -c "import ast; ast.parse(open('fichero.py').read())"
+
+**La regla:** después de insertar un bloque en un fichero con un script ---que es
+como hago casi todas las ediciones grandes--- comprobar que el fichero sigue
+parseando, antes de correr nada más. Un `assert` de que el texto encajó dice que
+el reemplazo se hizo; no dice que el resultado sea Python.
+
+Y la de fondo: una constante va **antes de la clase**, no dentro de ella. Si al
+insertar algo hay que elegir indentación, esa duda ya es la señal.

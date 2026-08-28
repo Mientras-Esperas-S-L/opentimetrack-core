@@ -144,6 +144,18 @@ ESPANA = LegalFramework(
         # No es un incumplimiento: las horas por encima de lo pactado en jornada
         # parcial son complementarias, lícitas y con su propio tope.
         "over_contracted_hours": Citation("Art. 12.5 ET"),
+        "remote_work_without_agreement": Citation(
+            "Arts. 1 y 5.1 de la Ley 10/2021",
+            "La ley se aplica desde el 30 % de la jornada a distancia en tres "
+            "meses, y entonces exige acuerdo por escrito y previo. Por debajo "
+            "del umbral se puede trabajar desde casa sin nada de esto.",
+        ),
+        "remote_agreement_signed_late": Citation(
+            "Art. 5.1 de la Ley 10/2021",
+            "El acuerdo es previo al inicio del trabajo a distancia. Se avisa "
+            "aparte de la falta de acuerdo porque no se arregla igual: una firma "
+            "no se puede correr hacia atrás.",
+        ),
         "reduction_outside_the_right": Citation(
             "Art. 37.6 ET",
             "«Entre, al menos, un octavo y un máximo de la mitad de la duración de "
