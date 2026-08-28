@@ -248,3 +248,86 @@ def test_el_lector_de_dudosas_sabe_encontrarlas():
             assert "lo seguro" not in _marcadas_dudosas("xx")
         finally:
             settings.BASE_DIR = original
+
+
+# ------------------------------------------------- lo que ni gettext comprueba
+
+
+def _con_huecos_distintos(idioma: str) -> list[tuple[str, set, set]]:
+    """Entradas cuya traducción no usa los mismos `%(nombre)s` que el original.
+
+    Devuelve `(msgid, los del original, los de la traducción)`.
+    """
+    ruta = Path(settings.BASE_DIR) / "locale" / idioma / "LC_MESSAGES" / "django.po"
+    huecos = re.compile(r"%\((\w+)\)s")
+    malas = []
+    for bloque in ruta.read_text(encoding="utf-8").split("\n\n"):
+        if "Project-Id-Version" in bloque:
+            continue
+        cabeza = re.search(r"^msgid (.*?)(?=^msgstr )", bloque + "\nmsgstr ", re.M | re.S)
+        cola = re.search(r"^msgstr (.*)$", bloque, re.M | re.S)
+        if not cabeza or not cola:
+            continue
+
+        def junta(trozo: str) -> str:
+            return "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', trozo))
+
+        original, traducida = junta(cabeza.group(1)), junta(cola.group(1))
+        if not traducida:
+            continue
+        suyos, otros = set(huecos.findall(original)), set(huecos.findall(traducida))
+        if suyos != otros:
+            malas.append((original, suyos, otros))
+    return malas
+
+
+@pytest.mark.parametrize("idioma", (*IDIOMAS, "es"))
+def test_las_traducciones_usan_los_mismos_huecos(idioma):
+    """Una traducción heredada de otra cadena parecida se cuela sin marca.
+
+    Pasó el 28/08 con dos: al añadir el aviso del tope del contrato formativo,
+    `makemessages` le dejó puesta la traducción del aviso de horas
+    complementarias, que habla de `%(over)s` y `%(when)s` --- huecos que el
+    mensaje nuevo no tiene ---. Y al del solape de acuerdos le dejó la del solape
+    de temporadas.
+
+    **Ninguno estaba marcado `fuzzy`**, así que el guard de dudosas no los veía;
+    y `msgfmt --check-format` tampoco dijo nada. Se quedan ahí: una cadena
+    diciendo algo que no le corresponde, y con huecos que quien la formatee no va
+    a poder rellenar.
+
+    Comprobar los huecos es barato y no depende de saber el idioma: si el
+    original dice `%(cap)s` y la traducción no, alguien copió de otro sitio.
+    """
+    malas = _con_huecos_distintos(idioma)
+
+    assert malas == [], (
+        f"{len(malas)} traducción(es) en {idioma} con huecos que no son los del original:\n\n  "
+        + "\n  ".join(
+            f"{original[:70]!r}\n      original: {sorted(suyos)}  traducción: {sorted(otros)}"
+            for original, suyos, otros in malas[:10]
+        )
+    )
+
+
+def test_el_lector_de_huecos_sabe_encontrarlos():
+    """El contraste, sobre un catálogo escrito aquí: los del proyecto están sanos."""
+    catalogo = (
+        'msgid ""\nmsgstr ""\n"Project-Id-Version: x\\n"\n\n'
+        'msgid "hay %(cuantos)s cosas"\nmsgstr "hi ha %(otros)s coses"\n\n'
+        'msgid "hay %(cuantos)s más"\nmsgstr "n\'hi ha %(cuantos)s més"\n'
+    )
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as carpeta:
+        destino = Path(carpeta) / "locale" / "xx" / "LC_MESSAGES"
+        destino.mkdir(parents=True)
+        (destino / "django.po").write_text(catalogo, encoding="utf-8")
+
+        original = settings.BASE_DIR
+        try:
+            settings.BASE_DIR = carpeta
+            malas = _con_huecos_distintos("xx")
+            assert [m[0] for m in malas] == ["hay %(cuantos)s cosas"]
+        finally:
+            settings.BASE_DIR = original

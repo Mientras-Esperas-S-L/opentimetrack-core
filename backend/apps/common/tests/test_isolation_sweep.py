@@ -34,7 +34,7 @@ from apps.punches.services import register_punch
 from apps.shifts.models import Shift, ShiftPattern
 from apps.tenants.holidays import PublicHoliday
 from apps.tenants.models import Tenant
-from apps.users.models import ActivityPeriod, RemoteWorkAgreement, Department, Role, User, Workplace
+from apps.users.models import ActivityPeriod, Department, RemoteWorkAgreement, Role, User, Workplace
 
 PASSWORD = "a-sufficiently-long-password"
 

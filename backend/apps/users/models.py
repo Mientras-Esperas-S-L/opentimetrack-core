@@ -176,7 +176,20 @@ class WorkingTimeRegime(models.TextChoices):
     FULL_TIME = "FULL_TIME", _("Full time")
     PART_TIME = "PART_TIME", _("Part time")
     REDUCED = "REDUCED", _("Reduced working day")
-    TRAINING = "TRAINING", _("Training contract")
+    #: Art. 11.2: alterna trabajo y formación, y por eso trae un tope propio de
+    #: tiempo de trabajo efectivo ---65 % el primer año, 85 % el segundo---.
+    TRAINING_ALTERNATING = "TRAINING_ALT", _("Training contract, alternating")
+    #: Art. 11.3: para obtener práctica profesional. Comparte nombre con el
+    #: anterior y **no comparte el tope**: aquí la jornada es la ordinaria.
+    TRAINING_PRACTICE = "TRAINING_PRO", _("Training contract, work practice")
+    #: El valor que había antes de separarlos, y que se queda a propósito.
+    #:
+    #: Los contratos formativos que ya estaban guardados no dicen cuál de los
+    #: dos son, y mandarlos a uno u otro sería decidirlo por quien los firmó:
+    #: al primero les inventaría un tope que quizá no les toca, y al segundo les
+    #: quitaría uno que quizá sí. Se quedan aquí, nombrando el hueco, y la
+    #: revisión del cuadrante pide que se concrete.
+    TRAINING = "TRAINING", _("Training contract, kind not stated")
     VARIABLE = "VARIABLE", _("No agreed figure")
 
 

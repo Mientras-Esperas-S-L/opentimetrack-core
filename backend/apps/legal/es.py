@@ -144,6 +144,18 @@ ESPANA = LegalFramework(
         # No es un incumplimiento: las horas por encima de lo pactado en jornada
         # parcial son complementarias, lícitas y con su propio tope.
         "over_contracted_hours": Citation("Art. 12.5 ET"),
+        "training_hours_over_the_cap": Citation(
+            "Art. 11.2.b ET",
+            "El tiempo de trabajo efectivo no pasa del 65 % el primer año ni del "
+            "85 % el segundo, y se mide contra **la jornada máxima** del convenio "
+            "o de la ley, no contra lo que el propio contrato pactara.",
+        ),
+        "training_kind_not_stated": Citation(
+            "Arts. 11.2 y 11.3 ET",
+            "Son dos contratos distintos y solo el primero tiene tope de jornada. "
+            "Los guardados antes de separarlos no dicen cuál son, y adivinarlo "
+            "inventaría un incumplimiento o taparía uno.",
+        ),
         "remote_work_without_agreement": Citation(
             "Arts. 1 y 5.1 de la Ley 10/2021",
             "La ley se aplica desde el 30 % de la jornada a distancia en tres "

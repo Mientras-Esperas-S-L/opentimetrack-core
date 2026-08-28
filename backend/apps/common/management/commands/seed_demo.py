@@ -402,10 +402,19 @@ class Command(BaseCommand):
                 Role.EMPLOYEE,
                 gardening,
                 "EMP-0011",
-                WorkingTimeRegime.TRAINING,
+                # En alternancia, concreto: el art. 11.2.b le pone un tope de
+                # trabajo efectivo ---65 % de la jornada máxima el primer año---
+                # que el otro formativo, el de práctica profesional, no tiene.
+                # Veinte horas sobre cuarenta son el 50 %, así que va holgado, y
+                # la fecha de contrato es lo que decide si el tope es el 65 o el
+                # 85.
+                WorkingTimeRegime.TRAINING_ALTERNATING,
                 20,
                 HoursPeriod.WEEK,
-                {"date_of_birth": today - timedelta(days=365 * 17 + 100)},
+                {
+                    "date_of_birth": today - timedelta(days=365 * 17 + 100),
+                    "contract_start": today - timedelta(days=200),
+                },
             ),
             # Fixed-term, already finished: rostered anyway, on purpose.
             (

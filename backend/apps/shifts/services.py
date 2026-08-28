@@ -283,6 +283,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     )
     findings.extend(_check_reduction_within_the_right(company, first, last, employee))
     findings.extend(_check_remote_work_agreement(company, first, last, employee))
+    findings.extend(_check_training_contract(company, rules, first, last, employee))
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -1040,6 +1041,98 @@ GUARDA_LEGAL_MAXIMO = 50.0
 #: código y no el nombre porque la empresa edita su copia ---puede llamarlo
 #: «Reducción por cuidado de hijos» y sigue siendo el mismo derecho---.
 GUARDA_LEGAL = "es.childcare_reduced_hours"
+
+
+#: Art. 11.2.b: el tiempo de trabajo efectivo del formativo en alternancia no
+#: pasa del 65 % el primer año ni del 85 % el segundo, **de la jornada máxima**
+#: del convenio o, en su defecto, de la legal. No de lo que se pactara: el tope
+#: mide contra el máximo, así que un contrato de veinte horas sobre una jornada
+#: de cuarenta va sobrado aunque él mismo diga cuarenta.
+FORMATIVO_PRIMER_ANO = 65.0
+FORMATIVO_SEGUNDO_ANO = 85.0
+
+
+def _check_training_contract(company, rules, first, last, employee) -> list[Finding]:
+    """El tope del contrato formativo en alternancia, y el que no dice cuál es.
+
+    Dos avisos, y el segundo es el que más se va a ver al principio: los
+    contratos formativos que ya estaban guardados no dicen si son de alternancia
+    (art. 11.2) o para práctica profesional (art. 11.3), porque hasta hoy eran el
+    mismo valor. **Sin saberlo no se puede decir si les toca el tope**, y
+    adivinarlo sería inventar un incumplimiento o tapar uno.
+
+    El del tope mira **lo contratado**, no lo trabajado. Un formativo en
+    alternancia con cuarenta horas pactadas sobre una jornada de cuarenta nace ya
+    fuera del artículo, y eso se sabe sin esperar a que fiche: decirlo cuando ya
+    ha trabajado seis meses de más es llegar tarde a lo que se podía haber visto
+    el primer día.
+    """
+    from apps.users.models import HoursPeriod, User, WorkingTimeRegime
+
+    quienes = User.objects.filter(
+        tenant=company,
+        is_active=True,
+        regime__in=[
+            WorkingTimeRegime.TRAINING,
+            WorkingTimeRegime.TRAINING_ALTERNATING,
+        ],
+    )
+    if employee is not None:
+        quienes = quienes.filter(pk=employee.pk)
+
+    maxima = float(rules.weekly_hours or 0)
+    found: list[Finding] = []
+    for person in quienes:
+        if person.regime == WorkingTimeRegime.TRAINING:
+            found.append(
+                Finding(
+                    day=last,
+                    employee_id=person.id,
+                    code="training_kind_not_stated",
+                    message=_(
+                        "This training contract does not say whether it is alternating "
+                        "(art. 11.2) or for work practice (art. 11.3), and only the first "
+                        "one has a cap on working time."
+                    ),
+                )
+            )
+            continue
+
+        pactadas = person.agreed_hours(rules)
+        if not maxima or pactadas is None or pactadas[1] != HoursPeriod.WEEK:
+            # Sin jornada máxima de la empresa, o con la del contrato en otro
+            # cómputo, no hay dos cifras comparables. Se calla en vez de
+            # convertir: dividir un año entre 52 daría un tope que nadie pactó.
+            continue
+
+        # Primer o segundo año, contando desde que empezó el contrato. Sin esa
+        # fecha se usa el tope **más laxo**: acusar de pasarse del 65 % a quien
+        # podría estar en su segundo año sería una acusación construida sobre un
+        # dato que falta, y quien se pasa del 85 % se pasa en cualquier año.
+        sin_fecha = person.contract_start is None
+        segundo_ano = sin_fecha or (last - person.contract_start).days >= 365
+        tope_pct = FORMATIVO_SEGUNDO_ANO if segundo_ano else FORMATIVO_PRIMER_ANO
+        tope = maxima * tope_pct / 100
+
+        if pactadas[0] > tope:
+            found.append(
+                Finding(
+                    day=last,
+                    employee_id=person.id,
+                    code="training_hours_over_the_cap",
+                    message=_(
+                        "%(agreed)s h agreed against a cap of %(cap)s: art. 11.2.b allows "
+                        "%(share)s %% of the %(max)s h maximum working week."
+                    )
+                    % {
+                        "agreed": f"{pactadas[0]:g}",
+                        "cap": f"{tope:.1f}",
+                        "share": f"{tope_pct:g}",
+                        "max": f"{maxima:g}",
+                    },
+                )
+            )
+    return found
 
 
 def _check_remote_work_agreement(company, first, last, employee) -> list[Finding]:

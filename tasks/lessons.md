@@ -5113,3 +5113,60 @@ Dos cosas que salvaron el fichero, y conviene mantenerlas:
   en los dos sitios y uno habría quedado mal.
 - **El script escribe al final**, no según avanza. El `assert` paró en el paso 4
   de 6 y el fichero se quedó intacto, no a medio parchear.
+
+## 302. Verificaba a conciencia, y no lo que verifica el CI
+
+El CI de OpenTimeTrack lleva días en rojo mientras yo cierro cada vuelta con «las
+dos suites en verde, linters limpios». Las dos cosas eran ciertas a la vez, y
+esta es la explicación:
+
+| Yo corría | El CI corre |
+|---|---|
+| `ruff check apps/` | `ruff check .` --- también `config/`, `manage.py`, `scripts/` |
+| los linters, y luego seguía tocando | los linters sobre lo que se subió |
+| — | `manage.py spectacular --fail-on-warn` |
+| — | `npm run build` |
+
+Los dos últimos **no los había corrido nunca**. Y el segundo es el más tonto de
+todos: pasaba `ruff check`, después escribía el barrido de aislamiento, y
+empujaba. Lo último que toco es justo lo que viaja sin revisar.
+
+Lo que no falla es lo que se ejecuta, así que ahora hay `scripts/como-el-ci.sh`
+con los ocho pasos del fichero de CI, en su orden y con sus rutas. **Al
+estrenarlo encontró seis cadenas sin traducir** que iban a subir en ese mismo
+commit.
+
+**La regla, y es más general que este repositorio:** cuando existe una
+comprobación automática de referencia ---un CI, un `pre-commit`, un `make
+check`--- lo que hay que correr en local es **eso**, no una aproximación propia
+por buena que sea. Una aproximación se desvía en cuanto uno de los dos cambia, y
+la desviación no avisa: sale verde en local y rojo donde importa.
+
+## 303. Una traducción heredada sin marca de dudosa
+
+Dos entradas del catálogo castellano tenían la traducción de **otra** cadena
+parecida, y ninguna estaba marcada `#, fuzzy`. Al aviso del tope del contrato
+formativo le había quedado el texto del aviso de horas complementarias:
+
+    msgid  "%(agreed)s h agreed against a cap of %(cap)s: art. 11.2.b allows …"
+    msgstr "%(over)s h por encima del contrato %(when)s, y solo se permiten …"
+
+Los huecos no coinciden: la traducción pide `%(over)s` y `%(when)s`, que el
+mensaje nuevo no tiene.
+
+Lo que **no** lo cazó, y conviene saberlo:
+
+- El guard de dudosas de la [[293]]: mira las marcadas `fuzzy`, y estas no lo
+  estaban.
+- `msgfmt --check-format`: salió con cero.
+- El guard de «sin traducir»: tiene `msgstr`, así que cuenta como traducida.
+
+Lo que sí lo caza es comparar los `%(nombre)s` de los dos lados, que es barato y
+no requiere saber el idioma: si el original dice `%(cap)s` y la traducción no,
+alguien copió de otro sitio. Está en
+`test_las_traducciones_usan_los_mismos_huecos`, con su contraste.
+
+**La forma del error se repite** ---es la tercera vez en tres días--- y siempre
+igual: `makemessages` empareja por parecido, y el emparejamiento es **una
+sugerencia** que el fichero guarda como si fuera una decisión. Cada vez que se
+añada una cadena parecida a otra, mirar qué le puso.

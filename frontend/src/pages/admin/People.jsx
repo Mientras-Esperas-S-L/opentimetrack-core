@@ -99,7 +99,25 @@ const REGIMES = [
       'Art. 37.6 ET: guarda legal o cuidados. No es parcial, conserva las horas extra.',
     ),
   },
-  { value: 'TRAINING', label: alCatalogo('Contrato formativo'), hint: alCatalogo('Art. 11 ET.') },
+  {
+    value: 'TRAINING_ALT',
+    label: alCatalogo('Formativo en alternancia'),
+    hint: alCatalogo(
+      'Art. 11.2 ET. El trabajo efectivo no pasa del 65 % el primer año ni del 85 % el segundo.',
+    ),
+  },
+  {
+    value: 'TRAINING_PRO',
+    label: alCatalogo('Formativo para práctica profesional'),
+    hint: alCatalogo('Art. 11.3 ET. Jornada ordinaria: no lleva el tope del anterior.'),
+  },
+  {
+    value: 'TRAINING',
+    label: alCatalogo('Contrato formativo, sin concretar'),
+    hint: alCatalogo(
+      'Art. 11 ET. Hasta que se diga cuál de los dos es, no se puede saber si le toca el tope.',
+    ),
+  },
   {
     value: 'VARIABLE',
     label: alCatalogo('Sin cifra pactada'),
@@ -121,7 +139,8 @@ const NIGHT_STATUS = [
 
 /** Whether the regime has a figure to go with it, which decides three fields. */
 const takesHours = (regime) => regime !== 'VARIABLE'
-const needsHours = (regime) => regime === 'PART_TIME' || regime === 'TRAINING'
+const FORMATIVOS = ['TRAINING', 'TRAINING_ALT', 'TRAINING_PRO']
+const needsHours = (regime) => regime === 'PART_TIME' || FORMATIVOS.includes(regime)
 
 const EMPTY_FORM = {
   first_name: '',

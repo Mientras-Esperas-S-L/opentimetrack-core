@@ -369,6 +369,71 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 154 --- Los dos formativos, y por qué el CI llevaba días en rojo (28/08)
+
+**6 de 13.** Dos filas de golpe, y no por ir deprisa: eran el mismo problema. El
+art. 11 tiene **dos** contratos formativos ---en alternancia (11.2) y para
+práctica profesional (11.3)--- y solo el primero lleva tope de jornada. El
+producto los tenía en un único `TRAINING`, así que no se le podía poner el tope a
+uno sin ponérselo al otro.
+
+**El valor viejo se queda a propósito.** Los contratos ya guardados no dicen cuál
+de los dos son. Repartirlos sería decidirlo por quien los firmó: al primero les
+inventaría un tope que quizá no les toca; al segundo les quitaría uno que quizá
+sí. Se quedan nombrando el hueco ---«formativo, sin concretar»--- y la revisión
+pide que se diga. Es lo mismo que hacía `is_engaged_on` con el fijo discontinuo
+antes de la vuelta 147.
+
+**El tope va contra la jornada máxima, no contra lo pactado.** Medirlo contra lo
+que el propio contrato dijera sería una tautología: todo contrato cumple el 100 %
+de sí mismo y el tope no diría nada nunca. Hay prueba que lo fija bajando la
+jornada máxima de la empresa sin tocar el contrato.
+
+**Y sin fecha de contrato se usa el tope más laxo.** El 65 % es del primer año y
+el 85 % del segundo; sin `contract_start` no se sabe en cuál va, y acusar de
+pasarse del 65 % a quien podría estar en su segundo año es una acusación
+construida sobre un dato que falta. Con el 85 % se habla solo de quien se pasa en
+cualquier caso.
+
+---
+
+## Por qué el CI llevaba días en rojo
+
+Lo preguntó Francisco a media vuelta y resultó ser lo más útil del día.
+
+**Los rojos eran míos, todos, y siempre por la misma razón: yo comprobaba otra
+cosa que el CI.** Cuatro diferencias, y cada una explica una tanda de fallos:
+
+1. **`ruff check apps/` contra `ruff check .`** El CI mira también `config/`,
+   `manage.py` y los scripts.
+2. **Corría los linters antes del último cambio.** El barrido de aislamiento de
+   la vuelta 153 lo escribí *después* de haber pasado `ruff check`, así que viajó
+   sin revisar ---y con un import fuera de orden alfabético---.
+3. **`python manage.py spectacular --fail-on-warn`**, que comprueba que el
+   esquema OpenAPI compile sin avisos. **No lo he corrido nunca.**
+4. **`npm run build`.** Tampoco.
+
+Las dos suites en verde no dicen nada de ninguna de las cuatro. De ahí que el CI
+se pusiera rojo con el trabajo terminado y verificado.
+
+**Arreglado con un script**, `scripts/como-el-ci.sh`, que corre los ocho pasos
+del fichero de CI en el mismo orden y con las mismas rutas. Y lo primero que hizo
+al estrenarlo fue encontrar **seis cadenas del frontend sin traducir** que iban a
+subir: el guard que se puso ayer funcionando, pero en un paso que yo no corría.
+
+**Un segundo hallazgo, del mismo hilo:** dos traducciones del castellano tenían
+texto heredado de otras cadenas parecidas, **sin marca de `fuzzy`**. Al aviso del
+tope formativo le había quedado la traducción del de complementarias, con huecos
+---`%(over)s`, `%(when)s`--- que el mensaje nuevo no tiene.
+
+Ni el guard de dudosas lo veía ---no estaba marcada--- ni `msgfmt --check-format`
+dijo nada. Cerrado con `test_las_traducciones_usan_los_mismos_huecos`, que
+compara los `%(nombre)s` del original con los de la traducción: es barato, no
+depende de saber el idioma, y **puesto contra el catálogo de esta mañana lo caza**.
+
+**Cifras al cerrar:** los ocho pasos del CI en verde, 1.377 pruebas de backend y
+307 de navegador.
+
 ### Vuelta 153 --- El acuerdo de trabajo a distancia, parte B (28/08)
 
 **4 de 13.** Cierra lo que la vuelta anterior dejó abierto: el diálogo del

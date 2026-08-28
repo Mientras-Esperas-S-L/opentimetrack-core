@@ -61,8 +61,8 @@ registro no la pide. Sí importan las dos que traen límites propios.
 | Tiempo parcial | art. 12 | **Cubierto**, con horas y periodo |
 | Indefinido adscrito a obra | Ley 32/2006 | **Cubierto.** A efectos de jornada es un indefinido |
 | Fijo discontinuo | art. 16 | **Cubierto.** Periodos de actividad con su fecha de llamamiento, que se cargan desde la ficha de la persona. Fuera de ellos no se espera jornada, el cuadrante avisa si se asigna un turno y la cobertura pendiente lo distingue de quien dejó la empresa |
-| Formativo en alternancia | art. 11.2 | **A medias.** Falta el tope del art. 11.2.b: 65 % de la jornada máxima el primer año, 85 % el segundo, formación incluida |
-| Formativo para práctica profesional | art. 11.3 | **A medias.** Comparte régimen con el anterior y son cosas distintas |
+| Formativo en alternancia | art. 11.2 | **Cubierto.** Régimen propio, y el tope del art. 11.2.b contrastado contra **la jornada máxima** ---no contra lo que el contrato pactara---: 65 % el primer año, 85 % el segundo, según la fecha de inicio |
+| Formativo para práctica profesional | art. 11.3 | **Cubierto.** Régimen propio y separado del anterior, que es lo que permite **no** aplicarle un tope que no tiene |
 | Contrato de relevo | art. 12.7 | **Falta.** La jornada del relevista debe cubrir al menos la reducción de quien se jubila parcialmente |
 | Jubilación parcial | art. 12.6 | **Falta.** Es una jornada reducida con regla propia |
 
@@ -366,12 +366,19 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 1 | **Transcribir la resolución del BOE de 2026**, que es lo único que le falta al calendario para estar completo | **½ día.** Es copiar un boletín a un YAML versionado y verificarlo |
 | 2 | **Saldos de devolución**: horas extra compensadas, relevo de turno, distribución irregular. Convertir los avisos en una cuenta | **5-8 días.** Es una pieza, no tres: un saldo con su plazo por concepto ---4 meses el art. 35.1, 4 semanas el relevo, 12 meses la distribución irregular---, su pantalla y su columna en el informe. Arregla **tres filas del inventario de golpe** |
 | 3 | **Vacaciones**: devengo proporcional y traslado por IT | **3-4 días.** El devengo por fecha de alta y el traslado con el tope de 18 meses del art. 38.3 |
-| 4 | **El tope del contrato formativo**: 65 % de la jornada el primer año y 85 % el segundo, formación incluida | **1-2 días.** El patrón ya existe: el de complementarias se acumula desde el 28/08 y esto es la misma forma sobre otra cifra |
-| 5 | **Historia de la adscripción a departamento**, cuando el informe empiece a mentir | **2-3 días.** Una tabla de vigencias y los informes leyendo de ella |
-| 6 | **Las otras reducciones por cuidados** (arts. 37.4, 37.5 y 37.8): lactancia, hospitalización de un recién nacido y cuidado de menor con enfermedad grave. La mecánica de la fracción y las fechas **ya está** ---la puso el art. 37.6---; falta que cada una entre en el catálogo con su regla propia | **2-3 días.** Son tres artículos con cifras distintas sobre la misma maquinaria |
-| 7 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
+| 4 | **Historia de la adscripción a departamento**, cuando el informe empiece a mentir | **2-3 días.** Una tabla de vigencias y los informes leyendo de ella |
+| 5 | **Las otras reducciones por cuidados** (arts. 37.4, 37.5 y 37.8): lactancia, hospitalización de un recién nacido y cuidado de menor con enfermedad grave. La mecánica de la fracción y las fechas **ya está** ---la puso el art. 37.6---; falta que cada una entre en el catálogo con su regla propia | **2-3 días.** Son tres artículos con cifras distintas sobre la misma maquinaria |
+| 6 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
 
 ### Hecho desde que se escribió esta lista
+
+- **Los dos contratos formativos** (arts. 11.2 y 11.3, 28/08/2026). Eran el
+  mismo régimen, y por eso no se le podía poner el tope a uno sin ponérselo al
+  otro: las dos filas eran el mismo problema. Ahora cada uno tiene el suyo, y el
+  de alternancia lleva el tope del art. 11.2.b contra la jornada máxima. **El
+  valor viejo se queda a propósito**: los contratos ya guardados no dicen cuál
+  de los dos son, repartirlos sería decidirlo por quien los firmó, y la revisión
+  pide que se concrete.
 
 - **El trabajo a distancia** (Ley 10/2021, 28/08/2026), en dos tandas. La ley no regula «el teletrabajo» en general: fija
   cuándo se aplica, y por debajo del 30 % de la jornada en tres meses no exige

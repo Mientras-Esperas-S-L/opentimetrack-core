@@ -444,7 +444,16 @@ class UserWriteSerializer(DecimalesTolerantes, serializers.ModelSerializer):
                 }
             )
 
-        if regime in {WorkingTimeRegime.PART_TIME, WorkingTimeRegime.TRAINING} and hours is None:
+        # Los tres formativos, no solo el que había antes de separarlos: la
+        # obligación del art. 3.b es de todos, y dejar fuera a los nuevos por
+        # olvido habría abierto un hueco justo el día de la separación.
+        pide_horas = {
+            WorkingTimeRegime.PART_TIME,
+            WorkingTimeRegime.TRAINING,
+            WorkingTimeRegime.TRAINING_ALTERNATING,
+            WorkingTimeRegime.TRAINING_PRACTICE,
+        }
+        if regime in pide_horas and hours is None:
             raise serializers.ValidationError(
                 {"contracted_hours": _("Art. 3.b asks for the agreed hours on this regime.")}
             )
