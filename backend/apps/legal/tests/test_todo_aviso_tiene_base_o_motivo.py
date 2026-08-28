@@ -49,6 +49,7 @@ SIN_CITA = {
         "rostered_on_a_holiday": "los festivos los fija cada país",
         "no_agreed_weekly_hours": "falta el dato, no se incumple nada",
         "outside_the_contract": "error de planificación",
+        "outside_the_season": "el fijo discontinuo es una figura del ET, no de la directiva",
         "rostered_on_leave": "error de planificación",
     },
 }

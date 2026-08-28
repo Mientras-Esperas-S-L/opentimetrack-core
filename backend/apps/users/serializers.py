@@ -12,7 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps import legal
 from apps.common.campos import DecimalesTolerantes
 from apps.tenants.models import Tenant, validate_time_zone
-from apps.users.models import Department, Role, Workplace
+from apps.users.models import ActivityPeriod, Department, Role, Workplace
 
 User = get_user_model()
 
@@ -651,3 +651,82 @@ class PasswordSetSerializer(serializers.Serializer):
         except DjangoValidationError as exc:
             raise serializers.ValidationError(list(exc.messages)) from exc
         return value
+
+
+class ActivityPeriodSerializer(serializers.ModelSerializer):
+    """Un periodo de actividad de un fijo discontinuo (art. 16 ET)."""
+
+    employee_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ActivityPeriod
+        fields = [
+            "id",
+            "employee",
+            "employee_name",
+            "start_date",
+            "end_date",
+            "called_on",
+            "note",
+        ]
+
+    def get_employee_name(self, obj) -> str:
+        return f"{obj.employee.first_name} {obj.employee.last_name}".strip() or obj.employee.email
+
+    def validate_employee(self, value):
+        """De esta empresa, y fijo discontinuo.
+
+        Lo segundo no es quisquillosidad: un periodo de actividad sobre alguien
+        que no lo es no cambia nada ---`is_engaged_on` solo los mira si
+        `seasonal`--- así que aceptarlo sería guardar un dato que no hace nada y
+        que quien lo escribió cree que sí.
+        """
+        empresa = self.context["request"].user.tenant
+        if value.tenant_id != empresa.id:
+            raise serializers.ValidationError(_("That person is not in this company."))
+        if not value.seasonal:
+            raise serializers.ValidationError(
+                _("Periods of activity are for permanent-seasonal contracts (art. 16 ET).")
+            )
+        return value
+
+    def validate(self, attrs):
+        """Que el periodo tenga sentido y no pise a otro.
+
+        El solape se comprueba aquí y no con una restricción de la base porque
+        el mensaje importa: «se solapa con el del 3 de junio» se puede arreglar,
+        y un error de integridad no.
+        """
+        instancia = self.instance
+        inicio = attrs.get("start_date", getattr(instancia, "start_date", None))
+        fin = attrs.get("end_date", getattr(instancia, "end_date", None))
+        persona = attrs.get("employee", getattr(instancia, "employee", None))
+        llamado = attrs.get("called_on", getattr(instancia, "called_on", None))
+
+        if fin and inicio and fin < inicio:
+            raise serializers.ValidationError(
+                {"end_date": _("The season cannot end before it starts.")}
+            )
+
+        # El llamamiento es previo por definición: se llama para que vengan, no
+        # después de que hayan venido (art. 16.3).
+        if llamado and inicio and llamado > inicio:
+            raise serializers.ValidationError(
+                {"called_on": _("The call-up comes before the season starts, not after.")}
+            )
+
+        if persona and inicio:
+            otros = ActivityPeriod.objects.filter(employee=persona)
+            if instancia is not None:
+                otros = otros.exclude(pk=instancia.pk)
+            for otro in otros:
+                if (fin is None or otro.start_date <= fin) and (
+                    otro.end_date is None or inicio <= otro.end_date
+                ):
+                    raise serializers.ValidationError(
+                        {
+                            "start_date": _("It overlaps the period that starts on %(day)s.")
+                            % {"day": otro.start_date.isoformat()}
+                        }
+                    )
+        return attrs

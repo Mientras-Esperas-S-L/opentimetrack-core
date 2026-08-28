@@ -1127,11 +1127,18 @@ def _check_outside_the_contract(by_person) -> list[Finding]:
     which ended last Friday. Nothing else catches it: the person still exists,
     is still active, and every other check passes happily on a day they are not
     engaged for.
+
+    Y fuera de temporada, para el fijo discontinuo. El filtro de aquí abajo se
+    saltaba a quien no tiene ninguna fecha de contrato, que es **justo** el fijo
+    discontinuo indefinido: el aviso existía y no llegaba a quien más lo
+    necesita. Con periodos de actividad declarados, un turno fuera de ellos es
+    exactamente el caso que el art. 16 viene a distinguir.
     """
     found = []
     for _employee_id, roster in by_person.items():
         person = roster[0].employee
-        if not (person.contract_start or person.contract_end):
+        tiene_temporadas = person.seasonal and person.activity_periods.exists()
+        if not (person.contract_start or person.contract_end or tiene_temporadas):
             continue
         for shift in roster:
             if person.is_engaged_on(shift.day):
@@ -1140,8 +1147,12 @@ def _check_outside_the_contract(by_person) -> list[Finding]:
                 Finding(
                     day=shift.day,
                     employee_id=shift.employee_id,
-                    code="outside_the_contract",
-                    message=_("Rostered on a day outside the dates of their contract."),
+                    code="outside_the_season" if tiene_temporadas else "outside_the_contract",
+                    message=(
+                        _("Rostered outside their periods of activity (art. 16 ET).")
+                        if tiene_temporadas
+                        else _("Rostered on a day outside the dates of their contract.")
+                    ),
                 )
             )
     return found

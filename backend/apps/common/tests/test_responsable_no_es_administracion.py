@@ -123,6 +123,15 @@ def _solo_administracion(m):
         ),
         ("PATCH", f"/api/shift-patterns/{pat}/", {"name": "Cambiado"}),
         ("DELETE", f"/api/shift-patterns/{pat}/", None),
+        # Cuándo se llama a trabajar a un fijo discontinuo (art. 16). Un
+        # responsable organiza dentro de la temporada; decidir cuál **es** la
+        # temporada es decidir cuándo se le espera a alguien, y eso va con el
+        # contrato, no con el cuadrante.
+        (
+            "POST",
+            "/api/activity-periods/",
+            {"employee": str(curro), "start_date": "2027-06-01"},
+        ),
     ]
 
 

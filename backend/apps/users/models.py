@@ -22,6 +22,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 from django.db.models.functions import Lower
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from apps.common.models import BaseModel, TenantOwnedModel
@@ -667,16 +668,40 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         roster drawn for a period that ends mid-month has to know where it
         stops, and a single answer would either extend it or cut it short.
 
-        A permanent-seasonal contract is engaged whenever it is not ended: the
-        periods of activity within it are a separate thing, and the system does
-        not model the call-up yet --- which is a gap worth naming rather than a
-        question to answer wrongly.
+        Y para un fijo discontinuo, además, dentro de un periodo de actividad
+        (art. 16 ET). **Solo si los hay**: mientras no se haya declarado
+        ninguno, la relación cubre todo el contrato como cualquier otra. Es
+        deliberado --- una empresa que marca a alguien como fijo discontinuo y
+        todavía no ha cargado sus campañas no puede quedarse con una persona
+        que no está en activo ningún día del año.
         """
         if self.contract_start and day < self.contract_start:
             return False
         if self.contract_end and day > self.contract_end:
             return False
+        if self.seasonal and self.temporadas:
+            return any(p.covers(day) for p in self.temporadas)
         return True
+
+    @cached_property
+    def temporadas(self) -> list:
+        """Los periodos de actividad de esta persona, o una lista vacía.
+
+        Con `objects_all_tenants` y filtrando por la persona, que es el mismo
+        camino que toma `rastro_de`: el manager por defecto filtra por la
+        empresa **del contexto**, y esto se pregunta también desde donde no hay
+        contexto puesto ---el cotejo del cuadrante, una comprobación suelta---.
+        Filtrar por `self` acota tanto como la empresa, porque los periodos de
+        una persona son de su empresa por definición.
+
+        Cacheado porque `is_engaged_on` se pregunta **por día**: un mes de
+        cuadrante son treinta llamadas para la misma persona, y sin esto serían
+        treinta consultas. El precio es que una instancia viva no ve un periodo
+        añadido después, y eso está bien: cada petición reconstruye la suya.
+        """
+        if not self.seasonal:
+            return []
+        return list(ActivityPeriod.objects_all_tenants.filter(employee=self))
 
     @property
     def has_agreed_hours(self) -> bool:
@@ -724,3 +749,75 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     @property
     def is_admin(self) -> bool:
         return self.role == Role.ADMIN
+
+
+class ActivityPeriod(TenantOwnedModel):
+    """Cuándo se llama a trabajar a quien tiene contrato fijo discontinuo.
+
+    El art. 16 ET dice que el trabajo viene «en periodos de actividad», y hasta
+    ahora el sistema sabía que alguien era fijo discontinuo ---el campo
+    `seasonal` existe--- pero no **cuándo** lo estaba. `is_engaged_on` lo decía
+    en su propio texto: era un hueco que se nombraba en vez de contestarlo mal.
+
+    Lo que faltaba no era el cotejo. Lo esperado sale del cuadrante, así que
+    fuera de temporada, si nadie pone turnos, el sistema ya no espera jornada.
+    Faltaban tres cosas y esta las sostiene:
+
+    1. **Poder decirlo**, que es lo que hace este modelo.
+    2. **Que el cuadrante avise** si se asigna turno fuera de temporada. El
+       aviso existía para las fechas del contrato y se saltaba a quien no tiene
+       ninguna --- que es justo el fijo discontinuo indefinido.
+    3. **Que quede constancia del llamamiento.** El art. 16.3 lo pide por
+       escrito y con antelación, así que `called_on` es una fecha y no un
+       booleano: «se le llamó» sin decir cuándo no acredita la antelación.
+
+    El fin es opcional a propósito. Una campaña que empieza sabe cuándo empieza
+    y no siempre cuándo acaba, y obligar a inventarse una fecha de cierre
+    produciría un dato falso donde ahora hay un hueco honesto.
+    """
+
+    employee = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="activity_periods",
+        verbose_name=_("employee"),
+    )
+    start_date = models.DateField(_("activity starts"))
+    end_date = models.DateField(
+        _("activity ends"),
+        null=True,
+        blank=True,
+        help_text=_("Empty while the season is open: a campaign knows when it starts."),
+    )
+    called_on = models.DateField(
+        _("called up on"),
+        null=True,
+        blank=True,
+        help_text=_(
+            "Art. 16.3 ET: the call-up is in writing and with notice. The date is "
+            "what shows the notice was given; a tick would not."
+        ),
+    )
+    note = models.TextField(_("note"), blank=True, validators=[validate_texto_legible])
+
+    class Meta:
+        verbose_name = _("period of activity")
+        verbose_name_plural = _("periods of activity")
+        ordering = ["-start_date"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(end_date__isnull=True)
+                | models.Q(end_date__gte=models.F("start_date")),
+                name="activity_period_ends_after_it_starts",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        hasta = self.end_date.isoformat() if self.end_date else "…"
+        return f"{self.start_date.isoformat()} → {hasta}"
+
+    def covers(self, day) -> bool:
+        """Si ese día cae dentro del periodo."""
+        if day < self.start_date:
+            return False
+        return self.end_date is None or day <= self.end_date

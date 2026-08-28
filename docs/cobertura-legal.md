@@ -60,7 +60,7 @@ registro no la pide. Sí importan las dos que traen límites propios.
 | Temporal por sustitución | art. 15.3 | **Cubierto**, como fecha de fin |
 | Tiempo parcial | art. 12 | **Cubierto**, con horas y periodo |
 | Indefinido adscrito a obra | Ley 32/2006 | **Cubierto.** A efectos de jornada es un indefinido |
-| Fijo discontinuo | art. 16 | **A medias.** Hay casilla, pero no hay llamamiento ni periodos de actividad: fuera de temporada el sistema no sabe que no se espera jornada |
+| Fijo discontinuo | art. 16 | **A medias.** Ya se declaran los periodos de actividad con su fecha de llamamiento, y el cuadrante avisa si se asigna turno fuera de ellos. Falta la pantalla desde la que cargarlos: hoy es solo API |
 | Formativo en alternancia | art. 11.2 | **A medias.** Falta el tope del art. 11.2.b: 65 % de la jornada máxima el primer año, 85 % el segundo, formación incluida |
 | Formativo para práctica profesional | art. 11.3 | **A medias.** Comparte régimen con el anterior y son cosas distintas |
 | Contrato de relevo | art. 12.7 | **Falta.** La jornada del relevista debe cubrir al menos la reducción de quien se jubila parcialmente |

@@ -34,7 +34,7 @@ from apps.punches.services import register_punch
 from apps.shifts.models import Shift, ShiftPattern
 from apps.tenants.holidays import PublicHoliday
 from apps.tenants.models import Tenant
-from apps.users.models import Department, Role, User, Workplace
+from apps.users.models import ActivityPeriod, Department, Role, User, Workplace
 
 PASSWORD = "a-sufficiently-long-password"
 
@@ -102,6 +102,14 @@ def build_company(name, tax_id, email_domain):
             pattern=pattern,
             segments=pattern.segments,
         )
+        worker.seasonal = True
+        worker.save(update_fields=["seasonal"])
+        season = ActivityPeriod.objects.create(
+            tenant=company,
+            employee=worker,
+            start_date=date(2026, 6, 1),
+            end_date=date(2026, 9, 30),
+        )
         entry = AuditLog.objects.create(
             tenant=company,
             action=AuditAction.RECORD_VIEWED,
@@ -125,6 +133,7 @@ def build_company(name, tax_id, email_domain):
         "correction": correction,
         "pattern": pattern,
         "shift": shift,
+        "season": season,
         "audit": entry,
     }
 
@@ -161,11 +170,13 @@ def detail_urls(world):
         "shift": f"/api/shifts/{world['shift'].id}/",
         "shift pattern": f"/api/shift-patterns/{world['pattern'].id}/",
         "audit entry": f"/api/audit/{world['audit'].id}/",
+        "period of activity": f"/api/activity-periods/{world['season'].id}/",
     }
 
 
 COLLECTIONS = [
     "/api/punches/",
+    "/api/activity-periods/",
     "/api/absences/",
     "/api/corrections/",
     "/api/employees/",
@@ -281,6 +292,7 @@ def test_no_collection_shows_another_companys_rows(ours, theirs):
         "/api/leave-types/",
         "/api/shifts/",
         "/api/shift-patterns/",
+        "/api/activity-periods/",
         "/api/audit/",
     ]:
         body = intruder.get(url).json()
@@ -326,6 +338,14 @@ def test_they_cannot_change_or_resolve_anything_of_ours(ours, theirs):
         ("patch", f"/api/punches/{ours['punch'].id}/void/", {"reason": "porque sí"}),
         ("patch", f"/api/shift-patterns/{ours['pattern'].id}/", {"name": "Secuestrado"}),
         ("delete", f"/api/departments/{ours['department'].id}/", None),
+        # Cambiar la temporada de alguien de otra empresa es decidir cuándo se
+        # le espera: no es un ajuste de calendario.
+        (
+            "patch",
+            f"/api/activity-periods/{ours['season'].id}/",
+            {"start_date": "2026-01-01"},
+        ),
+        ("delete", f"/api/activity-periods/{ours['season'].id}/", None),
         # The workplace decides which local holidays apply and which zone the
         # day is measured in, so taking one over is not a cosmetic change.
         (
@@ -603,6 +623,8 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^employees/$",
         "api/^employees/(?P<pk>[^/.]+)/$",
         "api/^employees/(?P<pk>[^/.]+)/invite/$",
+        "api/^activity-periods/$",
+        "api/^activity-periods/(?P<pk>[^/.]+)/$",
         "api/^departments/$",
         "api/^departments/(?P<pk>[^/.]+)/$",
         "api/^workplaces/$",

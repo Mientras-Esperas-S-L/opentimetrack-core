@@ -148,6 +148,15 @@ ESPANA = LegalFramework(
         # Tampoco incumple un artículo: es un error de planificación, como el de
         # poner a alguien de vacaciones.
         "outside_the_contract": Citation(""),
+        # Este sí tiene artículo, y por eso va aparte del anterior aunque se
+        # parezcan: el fijo discontinuo trabaja «en periodos de actividad», así
+        # que un turno fuera de ellos no es un despiste de calendario sino un
+        # día en que a esa persona no se la ha llamado.
+        "outside_the_season": Citation(
+            "Art. 16 ET",
+            "El trabajo del fijo discontinuo viene en periodos de actividad, y el "
+            "llamamiento es por escrito y con antelación (art. 16.3).",
+        ),
         # Sobre lo fichado, no sobre lo planificado. El art. 34.1 habla de horas
         # trabajadas, y quien no tiene cuadrante ---horario flexible--- no tenía
         # ninguna comprobación.

@@ -369,7 +369,54 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
-### Vuelta 147 --- El fijo discontinuo, clasificado antes de tocarlo (28/08)
+### Vuelta 147 --- El fijo discontinuo, parte A (28/08)
+
+**Lo que se buscaba:** empezar por el llamamiento del fijo discontinuo (art. 16),
+la primera de las trece.
+
+**Lo que salió al mirarlo**, y cambia el diseño: **lo esperado no sale del
+contrato, sale del cuadrante**. `reconcile_day` devuelve `expected_minutes=0` y
+estado `NO_SHIFT` cuando no hay turno, así que fuera de temporada, si nadie le
+pone turnos, el sistema ya no espera jornada. El enunciado del inventario
+---«fuera de temporada el sistema no sabe que no se espera jornada»--- describe
+mal el hueco. El hueco real era poder decir **cuándo** es la temporada, que el
+cuadrante avise si se asigna fuera, y que quede constancia del llamamiento.
+
+**Hecho:** el modelo `ActivityPeriod` con su fecha de llamamiento, la API en
+`/api/activity-periods/`, `is_engaged_on` respetándolo y el aviso
+`outside_the_season` en el repaso del cuadrante. Diez pruebas y dos contrastes
+---quitar la regla, y aplicarla a quien no es fijo discontinuo---.
+
+**Tres decisiones que no eran obvias:**
+
+- **El fin del periodo es opcional.** Una campaña sabe cuándo empieza y no
+  siempre cuándo acaba; obligar a un cierre produciría un dato falso donde hay
+  un hueco honesto.
+- **El llamamiento es una fecha, no una casilla.** El art. 16.3 lo pide con
+  antelación, y «se le llamó» sin decir cuándo no acredita nada. Se rechaza si
+  es posterior al inicio.
+- **Sin periodos declarados, la relación cubre todo el contrato.** Si no, marcar
+  a alguien como fijo discontinuo lo dejaría sin un solo día en activo hasta que
+  alguien cargara sus campañas.
+
+**Y el aviso del cuadrante no llegaba a quien más lo necesita.**
+`_check_outside_the_contract` se saltaba a quien no tiene ninguna fecha de
+contrato, que es **justo** el fijo discontinuo indefinido.
+
+**Lo que encontraron los guards, que es lo que hace que valgan:**
+
+- El barrido de aislamiento vio que **un compañero podía leer la temporada de
+  otro**. Lo había dejado como el catálogo de permisos o los centros, que los ve
+  toda la empresa porque son su armazón; un periodo de actividad no es armazón,
+  es un dato de una persona. Ahora se lee acotado con `visible_people`.
+- El barrido de roles pidió decidir si un responsable puede fijar temporadas. No:
+  organiza dentro de la temporada, pero decidir cuál es va con el contrato.
+- Y el guard de avisos exigió base legal para `outside_the_season`. La tiene
+  ---art. 16--- así que va citado y no en la lista de los que no la necesitan. En
+  la directiva sí va exento: el fijo discontinuo es una figura del ET.
+
+**Queda la parte B:** la pantalla para cargarlos, en los tres idiomas, y el
+efecto en la cobertura pendiente.
 
 **Lo que se buscaba:** empezar por el llamamiento del fijo discontinuo (art. 16),
 la primera de las trece.

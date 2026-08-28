@@ -30,12 +30,13 @@ from apps.common.permissions import (
     IsManagerOrAdmin,
     ReadForAllWriteForAdmin,
 )
-from apps.common.scope import people_queryset
+from apps.common.scope import people_queryset, visible_people
 from apps.reports.delivery import send_delivery_email
 from apps.users.erase import rastro_de
-from apps.users.models import Department, Role, Workplace
+from apps.users.models import ActivityPeriod, Department, Role, Workplace
 from apps.users.passwords import resolve_token, revoke_sessions, send_account_email
 from apps.users.serializers import (
+    ActivityPeriodSerializer,
     DepartmentSerializer,
     PasswordResetRequestSerializer,
     PasswordSetSerializer,
@@ -592,14 +593,13 @@ class UserViewSet(viewsets.ModelViewSet):
 
         rastro = rastro_de(person)
         if rastro.hay:
+
             def enumera(cuenta):
                 return ", ".join(f"{n} {k!s}" for k, n in cuenta.items())
 
             partes = []
             if rastro.suyo:
-                partes.append(
-                    _("what is theirs: %(cosas)s") % {"cosas": enumera(rastro.suyo)}
-                )
+                partes.append(_("what is theirs: %(cosas)s") % {"cosas": enumera(rastro.suyo)})
             if rastro.decidido:
                 partes.append(
                     _("what they decided about other people: %(cosas)s")
@@ -892,3 +892,40 @@ class PasswordSetView(APIView):
                 "tenant": TenantSerializer(user.tenant).data if user.tenant else None,
             }
         )
+
+
+class ActivityPeriodViewSet(StructureTrail, viewsets.ModelViewSet):
+    """Los periodos de actividad de quien tiene contrato fijo discontinuo.
+
+    Recurso propio y no anidado en la persona: se consultan por temporada
+    ---«quién está en activo en agosto»--- tanto como por persona, y un recurso
+    anidado obliga a saber de quién antes de poder preguntar.
+
+    Escribe quien administra, lee quien gestiona: decidir la temporada de
+    alguien es decidir cuándo se le espera, y eso no es un ajuste de calendario.
+
+    **Se lee acotado, no en abierto.** El primer intento lo dejó como el
+    catálogo de permisos o los centros de trabajo, que los ve toda la empresa
+    porque son su armazón. Un periodo de actividad no es armazón: es un dato de
+    una persona ---cuándo se la llama a trabajar--- y un compañero no tiene por
+    qué saberlo. Lo pilló el barrido de aislamiento, no la revisión.
+    """
+
+    queryset = ActivityPeriod.objects.none()
+    serializer_class = ActivityPeriodSerializer
+    permission_classes = [ReadForAllWriteForAdmin]
+    filterset_fields = ["employee"]
+    trail_fields = ("start_date", "end_date", "called_on")
+
+    def get_queryset(self):
+        qs = ActivityPeriod.objects.select_related("employee")
+        # Los propios si no gestiona; los de su gente si sí. `visible_people`
+        # devuelve None para «sin restricción», así que administración no añade
+        # ninguna unión.
+        scope = visible_people(self.request.user)
+        if scope is not None:
+            qs = qs.filter(employee__in=scope)
+        return qs
+
+    def perform_create(self, serializer):
+        self.anotar(serializer.save(tenant=self.request.user.tenant), _("Added"))

@@ -28,6 +28,7 @@ from apps.tenants.attendance_api import ApplicationAttendanceView
 from apps.tenants.people_api import ApplicationPeopleView, ApplicationPersonView
 from apps.tenants.views import CompanyView, PublicHolidayViewSet, RecordArrangementView
 from apps.users.views import (
+    ActivityPeriodViewSet,
     DepartmentViewSet,
     MeView,
     PasswordResetRequestView,
@@ -43,6 +44,7 @@ from apps.users.views import (
 router = DefaultRouter()
 router.register("employees", UserViewSet, basename="employee")
 router.register("departments", DepartmentViewSet, basename="department")
+router.register("activity-periods", ActivityPeriodViewSet, basename="activity-period")
 router.register("punches", PunchViewSet, basename="punch")
 router.register("corrections", CorrectionViewSet, basename="correction")
 router.register("absences", AbsenceViewSet, basename="absence")
