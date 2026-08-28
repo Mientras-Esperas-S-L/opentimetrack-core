@@ -255,6 +255,15 @@ class WorkingTimeRules(BaseModel):
         ),
     )
 
+    overtime_rest_days = models.PositiveSmallIntegerField(
+        _("give back overtime rest within (days)"),
+        default=120,
+        help_text=_(
+            "Art. 35.1 ET gives four months from the day the overtime was worked, "
+            "unless the collective agreement says otherwise. 0 turns it off."
+        ),
+    )
+
     # La frontera entre «cerró tarde» y «se olvidó de fichar la salida». No la
     # fija ningún artículo, y por eso es de la empresa y no nuestra.
     #

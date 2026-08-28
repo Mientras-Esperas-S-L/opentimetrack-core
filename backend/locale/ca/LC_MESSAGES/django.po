@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 19:36+0000\n"
+"POT-Creation-Date: 2026-08-28 20:22+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan\n"
@@ -221,7 +221,7 @@ msgstr ""
 #: apps/absences/models.py:203 apps/absences/models.py:559
 #: apps/audit/models.py:191 apps/punches/models.py:538
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
-#: apps/tenants/rules.py:430 apps/tenants/rules.py:514 apps/users/models.py:835
+#: apps/tenants/rules.py:439 apps/tenants/rules.py:523 apps/users/models.py:835
 #: apps/users/models.py:913
 msgid "note"
 msgstr ""
@@ -352,7 +352,7 @@ msgstr "absències"
 msgid "The end date cannot precede the start date."
 msgstr "La data final no pot anar abans que la inicial."
 
-#: apps/absences/models.py:443 apps/absences/views.py:331
+#: apps/absences/models.py:443 apps/absences/views.py:332
 msgid "Give both times, or neither: half of a range is not one."
 msgstr "Posa les dues hores o cap: mitja franja no és una franja."
 
@@ -553,23 +553,23 @@ msgstr ""
 msgid "The file is %(size).1f MB and the limit is %(limit)s MB."
 msgstr "El fitxer fa %(size).1f MB i el límit és %(limit)s MB."
 
-#: apps/absences/views.py:172
+#: apps/absences/views.py:173
 msgid "the time it takes"
 msgstr "el temps indispensable"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/absences/views.py:200 apps/shifts/views.py:204
+#: apps/absences/views.py:201 apps/shifts/views.py:204
 #: apps/tenants/views.py:181 apps/users/views.py:757 apps/users/views.py:827
 #: apps/users/views.py:985 apps/users/views.py:1036 apps/users/views.py:1073
 msgid "Added"
 msgstr "Afegit"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/absences/views.py:228 apps/audit/trail.py:74 apps/users/views.py:1009
+#: apps/absences/views.py:229 apps/audit/trail.py:74 apps/users/views.py:1009
 msgid "Changed"
 msgstr "Canviat"
 
-#: apps/absences/views.py:246
+#: apps/absences/views.py:247
 #, python-format
 msgid ""
 "%(count)s absences use it. Deactivate it instead: deleting would take the "
@@ -579,26 +579,26 @@ msgstr ""
 "lo trauria el motiu a registres que han de durar quatre anys."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/absences/views.py:252 apps/audit/trail.py:78
+#: apps/absences/views.py:253 apps/audit/trail.py:78
 msgid "Deleted"
 msgstr "Esborrat"
 
-#: apps/absences/views.py:273 apps/absences/views.py:500
+#: apps/absences/views.py:274 apps/absences/views.py:501
 #: apps/punches/correction_views.py:246 apps/reports/views.py:405
 #: apps/users/serializers.py:480 apps/users/serializers.py:732
 #: apps/users/serializers.py:806 apps/users/serializers.py:894
 msgid "That person is not in this company."
 msgstr "Aquesta persona no pertany a aquesta empresa."
 
-#: apps/absences/views.py:409
+#: apps/absences/views.py:410
 msgid "Leave can only be requested for yourself."
 msgstr "Només pots sol·licitar absències per a tu."
 
-#: apps/absences/views.py:419
+#: apps/absences/views.py:420
 msgid "That leave type does not exist or is no longer in use."
 msgstr "Aquest tipus de permís no existeix o ja no s'utilitza."
 
-#: apps/absences/views.py:430
+#: apps/absences/views.py:431
 msgid ""
 "This kind of leave is recorded by the company, not requested. Talk to "
 "whoever manages your working time."
@@ -606,15 +606,15 @@ msgstr ""
 "Aquest tipus d'absència la registra l'empresa, no se sol·licita. Parla amb "
 "qui gestioni la teva jornada."
 
-#: apps/absences/views.py:614
+#: apps/absences/views.py:615
 msgid "You can only see your own balance."
 msgstr "Només pots consultar el teu propi saldo."
 
-#: apps/absences/views.py:628
+#: apps/absences/views.py:629
 msgid "`until` has to be a date, as YYYY-MM-DD."
 msgstr "«until» ha de ser una data, escrita com AAAA-MM-DD."
 
-#: apps/absences/views.py:676 apps/shifts/views.py:264
+#: apps/absences/views.py:682 apps/shifts/views.py:264
 msgid "Give 'from' and 'to' as YYYY-MM-DD."
 msgstr "Indica 'from' i 'to' amb el format AAAA-MM-DD."
 
@@ -803,7 +803,7 @@ msgstr ""
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/audit/models.py:163 apps/common/models.py:117
 #: apps/tenants/models.py:169 apps/tenants/models.py:197
-#: apps/tenants/rules.py:75 apps/tenants/rules.py:407 apps/tenants/rules.py:492
+#: apps/tenants/rules.py:75 apps/tenants/rules.py:416 apps/tenants/rules.py:501
 #: apps/users/models.py:288
 msgid "company"
 msgstr "empresa"
@@ -2158,11 +2158,11 @@ msgstr "Algú d'aquesta llista no pertany a aquesta empresa."
 msgid "That shift pattern does not exist."
 msgstr "Aquest torn no existeix."
 
-#: apps/shifts/services.py:368
+#: apps/shifts/services.py:369
 msgid "Rostered the same day."
 msgstr "Posat al quadrant el mateix dia."
 
-#: apps/shifts/services.py:371
+#: apps/shifts/services.py:372
 #, python-format
 msgid "Rostered %(days)s day ahead, under the %(floor)s the company asks for."
 msgid_plural ""
@@ -2174,7 +2174,7 @@ msgstr[1] ""
 "Posat amb %(days)s dies d'antelació, per sota dels %(floor)s que demana "
 "l'empresa."
 
-#: apps/shifts/services.py:422
+#: apps/shifts/services.py:423
 #, python-format
 msgid ""
 "%(hours)s h of rest at a shift changeover, which is allowed. The %(owed)s h "
@@ -2185,13 +2185,13 @@ msgstr ""
 "setmanes."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/shifts/services.py:449
+#: apps/shifts/services.py:450
 msgid "The clocks went forward that night, so the shifts are an hour closer."
 msgstr ""
 "Aquella nit els rellotges es van avançar, així que els torns queden una hora "
 "més a prop."
 
-#: apps/shifts/services.py:461
+#: apps/shifts/services.py:462
 #, python-format
 msgid ""
 "Only %(hours)s h of rest since the previous shift, under the %(floor)s h a "
@@ -2200,19 +2200,19 @@ msgstr ""
 "Només %(hours)s h de descans des del torn anterior, per sota de les "
 "%(floor)s h a què pot baixar un relleu."
 
-#: apps/shifts/services.py:465
+#: apps/shifts/services.py:466
 #, python-format
 msgid "Only %(hours)s h of rest since the previous shift."
 msgstr "Només %(hours)s h de descans des del torn anterior."
 
-#: apps/shifts/services.py:566
+#: apps/shifts/services.py:567
 #, python-format
 msgid "%(hours)s h rostered that week, over the %(limit)s h configured."
 msgstr ""
 "%(hours)s h planificades aquella setmana, per damunt de les %(limit)s h "
 "configurades."
 
-#: apps/shifts/services.py:579
+#: apps/shifts/services.py:580
 #, python-format
 msgid ""
 "%(hours)s h rostered that week against %(agreed)s h contracted. The "
@@ -2222,7 +2222,7 @@ msgstr ""
 "contractades. Les %(extra)s h de més són hores complementàries i compten per "
 "al seu propi límit."
 
-#: apps/shifts/services.py:601
+#: apps/shifts/services.py:602
 msgid ""
 "No agreed weekly hours on this contract, so the weekly total is not checked. "
 "Only the legal maximum applies."
@@ -2230,14 +2230,14 @@ msgstr ""
 "Aquest contracte no té hores setmanals pactades, així que no es comprova el "
 "total de la setmana. Només regeix el màxim legal."
 
-#: apps/shifts/services.py:701
+#: apps/shifts/services.py:702
 #, python-format
 msgid "A continuous day of %(hours)s h needs a break of %(minutes)s min."
 msgstr ""
 "Una jornada continuada de %(hours)s h necessita un descans de %(minutes)s "
 "min."
 
-#: apps/shifts/services.py:772
+#: apps/shifts/services.py:773
 #, python-format
 msgid ""
 "The longest break in those %(days)s days is %(hours)s h, under the "
@@ -2246,7 +2246,7 @@ msgstr ""
 "El descans més llarg d'aquests %(days)s dies és de %(hours)s h, per sota de "
 "les %(minimum)s h configurades."
 
-#: apps/shifts/services.py:833
+#: apps/shifts/services.py:834
 #, python-format
 msgid ""
 "%(count)s of %(total)s days with %(hours)s h or more at night. If the person "
@@ -2259,7 +2259,7 @@ msgstr ""
 "en %(days)s dies, la prohibició d'hores extraordinàries i una avaluació de "
 "salut. Ningú no ha deixat constància de si la té."
 
-#: apps/shifts/services.py:902
+#: apps/shifts/services.py:903
 #, python-format
 msgid ""
 "A night worker averaging %(average)s h a day over %(days)s days, above the "
@@ -2268,7 +2268,7 @@ msgstr ""
 "Un treballador nocturn amb una mitjana de %(average)s h diàries en %(days)s "
 "dies, per damunt de les %(limit)s h permeses."
 
-#: apps/shifts/services.py:907
+#: apps/shifts/services.py:908
 #, python-format
 msgid ""
 "Averaging %(average)s h a day over %(days)s days. The roster reads like "
@@ -2279,7 +2279,7 @@ msgstr ""
 "com a treball nocturn, i si li correspon aquesta condició això supera les "
 "%(limit)s h de l'art. 36.1 ET."
 
-#: apps/shifts/services.py:954
+#: apps/shifts/services.py:955
 #, python-format
 msgid ""
 "%(weeks)s consecutive weeks on the night shift, over the %(limit)s allowed. "
@@ -2289,7 +2289,7 @@ msgstr ""
 "permeses. Per a més cal que la persona s'hi hagi adscrit voluntàriament, i "
 "això és un camp de la seva fitxa."
 
-#: apps/shifts/services.py:995
+#: apps/shifts/services.py:996
 #, python-format
 msgid ""
 "%(hours)s h rostered for somebody under eighteen. The limit is %(limit)s h a "
@@ -2298,7 +2298,7 @@ msgstr ""
 "%(hours)s h planificades a una persona menor de divuit anys. El límit són "
 "%(limit)s h diàries i cap conveni no el pot apujar."
 
-#: apps/shifts/services.py:1009
+#: apps/shifts/services.py:1010
 #, python-format
 msgid ""
 "A continuous day of %(hours)s h for somebody under eighteen needs a break of "
@@ -2307,7 +2307,7 @@ msgstr ""
 "Una jornada continuada de %(hours)s h d'una persona menor de divuit anys "
 "necessita un descans de %(minutes)s min, a partir de %(after)s h."
 
-#: apps/shifts/services.py:1027
+#: apps/shifts/services.py:1028
 msgid ""
 "Night shift rostered for somebody under eighteen. Art. 6.2 ET forbids it "
 "outright: there is no permitted amount."
@@ -2315,7 +2315,16 @@ msgstr ""
 "Torn nocturn planificat a una persona menor de divuit anys. L'art. 6.2 ET ho "
 "prohibeix sense més: no hi ha cap quantitat permesa."
 
-#: apps/shifts/services.py:1172
+#: apps/shifts/services.py:1126
+#, python-format
+msgid ""
+"%(hours)s h of overtime to be given back as rest are past the %(days)s-day "
+"deadline."
+msgstr ""
+"%(hours)s h d'hores extraordinàries per tornar en descans han passat del "
+"termini de %(days)s dies."
+
+#: apps/shifts/services.py:1226
 #, python-format
 msgid ""
 "%(hours)s h that week counting on-call time on the premises, over the "
@@ -2326,7 +2335,7 @@ msgstr ""
 "màxim de %(limit)s h: una guàrdia al centre de treball és temps de treball "
 "en la seva totalitat."
 
-#: apps/shifts/services.py:1259
+#: apps/shifts/services.py:1313
 #, python-format
 msgid ""
 "%(hours)s h of on-call time that month, %(average)s h a week on average, "
@@ -2335,7 +2344,7 @@ msgstr ""
 "%(hours)s h de temps de presència aquell mes, %(average)s h setmanals de "
 "mitjana, per damunt de les %(limit)s permeses."
 
-#: apps/shifts/services.py:1310
+#: apps/shifts/services.py:1364
 #, python-format
 msgid ""
 "%(hours)s h over the %(agreed)s h agreed for %(year)s, and art. 34.2 gives "
@@ -2344,7 +2353,7 @@ msgstr ""
 "%(hours)s h per damunt de les %(agreed)s h pactades per a %(year)s, i l'art. "
 "34.2 dóna %(months)s mesos per a compensar la diferència."
 
-#: apps/shifts/services.py:1315
+#: apps/shifts/services.py:1369
 #, python-format
 msgid ""
 "%(hours)s h under the %(agreed)s h agreed for %(year)s, and art. 34.2 gives "
@@ -2354,7 +2363,7 @@ msgstr ""
 "34.2 dóna %(months)s mesos per a compensar la diferència."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1397
+#: apps/shifts/services.py:1451
 #, python-format
 msgid ""
 "The working day is cut by %(share)s %% for partial retirement, and art. 12.6 "
@@ -2364,7 +2373,7 @@ msgstr ""
 "va del %(min)s %% al %(max)s %%."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1417
+#: apps/shifts/services.py:1471
 msgid ""
 "This relief contract stands in for somebody with no partial retirement on "
 "record, so there is nothing to measure it against."
@@ -2373,7 +2382,7 @@ msgstr ""
 "registrada, així que no hi ha contra què mesurar-lo."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1441
+#: apps/shifts/services.py:1495
 #, python-format
 msgid ""
 "%(hours)s h agreed, and art. 12.7 asks for at least %(needed)s: the hours "
@@ -2383,7 +2392,7 @@ msgstr ""
 "hores que deixa de treballar la persona rellevada."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1488
+#: apps/shifts/services.py:1542
 #, python-format
 msgid ""
 "Asked for on %(day)s and still unanswered %(days)s days later: art. 34.8 "
@@ -2393,7 +2402,7 @@ msgstr ""
 "en dóna quinze."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1538
+#: apps/shifts/services.py:1592
 msgid ""
 "This training contract does not say whether it is alternating (art. 11.2) or "
 "for work practice (art. 11.3), and only the first one has a cap on working "
@@ -2403,7 +2412,7 @@ msgstr ""
 "pràctica professional (art. 11.3), i només el primer té topall de jornada."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1569
+#: apps/shifts/services.py:1623
 #, python-format
 msgid ""
 "%(agreed)s h agreed against a cap of %(cap)s: art. 11.2.b allows %(share)s "
@@ -2413,7 +2422,7 @@ msgstr ""
 "%(share)s %% de les %(max)s h de jornada màxima."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1638
+#: apps/shifts/services.py:1692
 #, python-format
 msgid ""
 "%(share)s %% of the time worked in the last three months was remote, over "
@@ -2425,7 +2434,7 @@ msgstr ""
 "i no consta cap acord."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1655
+#: apps/shifts/services.py:1709
 #, python-format
 msgid ""
 "The remote work agreement was signed on %(signed)s and the remote work began "
@@ -2435,7 +2444,7 @@ msgstr ""
 "distància va començar el %(started)s."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1706
+#: apps/shifts/services.py:1760
 #, python-format
 msgid ""
 "The working day is cut by %(share)s %%, and art. 37.6 runs from an eighth to "
@@ -2445,22 +2454,22 @@ msgstr ""
 "meitat: entre el %(min)s %% i el %(max)s %%."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1763
+#: apps/shifts/services.py:1817
 msgid "that week"
 msgstr "aquella setmana"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1764
+#: apps/shifts/services.py:1818
 msgid "that month"
 msgstr "aquell mes"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1765
+#: apps/shifts/services.py:1819
 msgid "that year"
 msgstr "aquell any"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1783
+#: apps/shifts/services.py:1837
 #, python-format
 msgid ""
 "%(over)s h over the contract %(when)s, and only %(cap)s are allowed: "
@@ -2469,7 +2478,7 @@ msgstr ""
 "%(over)s h per damunt del contracte %(when)s, i només se'n permeten %(cap)s: "
 "el %(share)s %% de les %(agreed)s h pactades."
 
-#: apps/shifts/services.py:1876
+#: apps/shifts/services.py:1930
 #, python-format
 msgid ""
 "%(hours)s h actually worked that week, over the %(limit)s h maximum. This is "
@@ -2478,22 +2487,22 @@ msgstr ""
 "%(hours)s h realment treballades aquella setmana, per damunt del màxim de "
 "%(limit)s h. Això és el registre, no el quadrant."
 
-#: apps/shifts/services.py:1889
+#: apps/shifts/services.py:1943
 #, python-format
 msgid "%(hours)s h actually worked against %(agreed)s h contracted."
 msgstr ""
 "%(hours)s h treballades de veritat davant de %(agreed)s h contractades."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/shifts/services.py:1926
+#: apps/shifts/services.py:1980
 msgid "Rostered outside their periods of activity (art. 16 ET)."
 msgstr "Al quadrant fora dels seus períodes d'activitat (art. 16 ET)."
 
-#: apps/shifts/services.py:1928
+#: apps/shifts/services.py:1982
 msgid "Rostered on a day outside the dates of their contract."
 msgstr "Al quadrant un dia fora de les dates del seu contracte."
 
-#: apps/shifts/services.py:1972
+#: apps/shifts/services.py:2026
 msgid ""
 "Rostered on a public holiday. It is allowed, and it earns compensation in "
 "rest or in pay under the agreement."
@@ -2501,7 +2510,7 @@ msgstr ""
 "Planificat en un festiu. És permès, i genera compensació en descans o en "
 "diners segons el conveni."
 
-#: apps/shifts/services.py:2011
+#: apps/shifts/services.py:2065
 #, python-format
 msgid "Rostered on a day of approved %(kind)s."
 msgstr "Amb torn assignat en un dia de %(kind)s aprovada."
@@ -3134,7 +3143,7 @@ msgid "break (minutes)"
 msgstr "descans (minuts)"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:129 apps/tenants/rules.py:498
+#: apps/tenants/rules.py:129 apps/tenants/rules.py:507
 msgid "the break counts as working time"
 msgstr "el descans compta com a temps de treball"
 
@@ -3283,13 +3292,23 @@ msgid ""
 "Art. 34.2 ET, unless the collective agreement says otherwise. 0 turns it off."
 msgstr ""
 
+#: apps/tenants/rules.py:259
+msgid "give back overtime rest within (days)"
+msgstr ""
+
+#: apps/tenants/rules.py:262
+msgid ""
+"Art. 35.1 ET gives four months from the day the overtime was worked, unless "
+"the collective agreement says otherwise. 0 turns it off."
+msgstr ""
+
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:272 apps/tenants/rules.py:500
+#: apps/tenants/rules.py:281 apps/tenants/rules.py:509
 msgid "longest a working day may stay open (hours)"
 msgstr "temps màxim que una jornada pot quedar oberta (hores)"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:281
+#: apps/tenants/rules.py:290
 msgid ""
 "After this, an unclosed working day is read as a forgotten clock-out rather "
 "than a shift still running. Raise it for 24-hour on-call rosters."
@@ -3298,62 +3317,62 @@ msgstr ""
 "no com un torn que encara dura. Puja-ho per a guàrdies de 24 hores."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:287 apps/tenants/rules.py:288
+#: apps/tenants/rules.py:296 apps/tenants/rules.py:297
 msgid "working time rules"
 msgstr "normes de jornada"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:381
+#: apps/tenants/rules.py:390
 msgid "collective agreement"
 msgstr "conveni col·lectiu"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:382
+#: apps/tenants/rules.py:391
 msgid "company-level agreement"
 msgstr "acord d'empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:383
+#: apps/tenants/rules.py:392
 msgid "employer decision after consulting the representatives"
 msgstr "decisió empresarial després de consultar la representació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:411
+#: apps/tenants/rules.py:420
 msgid "how it was organised"
 msgstr "com es va organitzar"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:415
+#: apps/tenants/rules.py:424
 msgid "Art. 34.9 ET. Empty means it has not been declared yet."
 msgstr "Art. 34.9 ET. Buit vol dir que encara no s'ha declarat."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:420
+#: apps/tenants/rules.py:429
 msgid "which one"
 msgstr "quina"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:425 apps/tenants/rules.py:495
+#: apps/tenants/rules.py:434 apps/tenants/rules.py:504
 msgid "in force since"
 msgstr "en vigor des de"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:428
+#: apps/tenants/rules.py:437
 msgid "representatives consulted on"
 msgstr "representació consultada el"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:436
+#: apps/tenants/rules.py:445
 msgid "record arrangement"
 msgstr "organització del registre"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:437
+#: apps/tenants/rules.py:446
 msgid "record arrangements"
 msgstr "organitzacions del registre"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:496
+#: apps/tenants/rules.py:505
 msgid ""
 "The day this way of counting starts to apply. Days before it keep theirs."
 msgstr ""
@@ -3361,22 +3380,22 @@ msgstr ""
 "anteriors conserven la seva."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:511
+#: apps/tenants/rules.py:520
 msgid "declared by"
 msgstr "declarat per"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:517
+#: apps/tenants/rules.py:526
 msgid "What agreement or decision this comes from."
 msgstr "De quin acord o de quina decisió surt."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:522
+#: apps/tenants/rules.py:531
 msgid "change in how time is counted"
 msgstr "canvi en la manera de comptar el temps"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/rules.py:523
+#: apps/tenants/rules.py:532
 msgid "changes in how time is counted"
 msgstr "canvis en la manera de comptar el temps"
 

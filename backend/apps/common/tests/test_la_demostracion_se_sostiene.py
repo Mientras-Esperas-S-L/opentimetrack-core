@@ -28,7 +28,7 @@ from django.test import override_settings
 from django.utils import timezone
 
 from apps.common.models import tenant_context
-from apps.punches.models import Punch, PunchInterval
+from apps.punches.models import HoursNature, Punch, PunchInterval, PunchType
 from apps.punches.services import build_day_status
 from apps.tenants.models import Tenant
 from apps.users.models import User
@@ -125,3 +125,34 @@ def test_ningun_tramo_se_queda_abierto_en_dias_pasados(sembrada):
                     if tramo.end is None:
                         abiertos.append(f"{quien.email} {dia} {tramo.interval or 'WORK'}")
         assert abiertos == [], "tramos sin cerrar en días pasados:\n  " + "\n  ".join(abiertos[:10])
+
+
+@pytest.mark.django_db
+def test_las_horas_marcadas_se_ven_de_verdad(sembrada):
+    """Marcar la naturaleza de las horas donde nadie la lee es no marcarla.
+
+    Todo lo descriptivo de un tramo viaja en el evento que lo **abre**: `_span`
+    copia de ahí el intervalo, el modo de trabajo y la naturaleza de las horas.
+    La semilla las ponía en el evento de **salida** hasta el 28/08/2026, así que
+    las complementarias de la demostración salían como ordinarias y el tope del
+    art. 12.5.c no tenía nada que contar.
+
+    Medido antes de arreglarlo: marcada en la salida, el tramo dice `ORDINARY`;
+    marcada en la entrada, `COMPLEMENTARY`. Es el mismo error que las pausas al
+    revés, en otro campo.
+    """
+    with tenant_context(sembrada.id):
+        marcadas = set(
+            Punch.objects.filter(punch_type=PunchType.IN)
+            .exclude(hours_nature=HoursNature.ORDINARY)
+            .values_list("hours_nature", flat=True)
+        )
+        assert marcadas, "ninguna hora especial en las entradas: no se verían"
+
+        # Y en las salidas, ninguna: ahí no las lee nadie.
+        en_salidas = (
+            Punch.objects.filter(punch_type=PunchType.OUT)
+            .exclude(hours_nature=HoursNature.ORDINARY)
+            .count()
+        )
+        assert en_salidas == 0, f"{en_salidas} marcadas en la salida, donde no se leen"

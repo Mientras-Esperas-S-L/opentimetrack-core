@@ -43,6 +43,57 @@ import { dateOf, dayRange, leaveLabel, leaveLength, plural } from '../../compone
 import { FilterBar, PickFilter } from '../../components/filters.jsx'
 import { alCatalogo } from '../../i18n/index.js'
 
+/** Lo que se debe en descanso por horas extra, y hasta cuándo hay para devolverlo.
+ *
+ *  Solo aparece cuando hay alguna hora extra marcada para compensar con descanso:
+ *  un saldo a cero de algo que no ha pasado nunca ocupa sitio y no dice nada.
+ *
+ *  La fecha es la mitad del asunto. «Te quedan 4 h» no sirve para nada sin «antes
+ *  del 9 de septiembre», que es lo que permite no llegar tarde ---y llegar tarde
+ *  aquí no se arregla: pasado el plazo, el art. 35.1 está incumplido---.
+ */
+function DeudaDeDescanso({ deuda }) {
+  const { t } = useTranslation()
+  const vencidas = Number(deuda.overdue_hours) > 0
+  const quedan = Number(deuda.remaining_hours)
+
+  return (
+    <Alert severity={vencidas ? 'warning' : 'info'} variant="outlined" sx={{ mb: 2 }}>
+      {vencidas &&
+        t(
+          'Hay {{horas}} h de horas extra que tenías que recuperar con descanso y se ha pasado el plazo de {{dias}} días (art. 35.1 ET).',
+          { horas: deuda.overdue_hours, dias: deuda.days },
+        )}
+      {!vencidas &&
+        quedan > 0 &&
+        t('Te quedan {{horas}} h de descanso por disfrutar, hasta el {{fecha}} (art. 35.1 ET).', {
+          horas: quedan,
+          fecha: dateOf(deuda.due_on, { year: 'numeric' }),
+        })}
+      {!vencidas && quedan <= 0 && t('No queda descanso por recuperar de tus horas extra.')}
+      {quedan > 0 && (
+        <Box component="span" sx={{ display: 'block', mt: 0.5 }}>
+          {/* Un aviso que dice lo que debes y no el siguiente paso obliga a
+              adivinar por qué puerta se devuelve. El permiso se llama así en la
+              lista de «Solicitar», y decirlo cuesta una frase. */}
+          {t('Para disfrutarlo, pídelo como «Descanso compensatorio».')}
+        </Box>
+      )}
+      {Number(deuda.unconverted_days) > 0 && (
+        <Box component="span" sx={{ display: 'block', mt: 0.5 }}>
+          {/* No se estima lo que no se sabe: un día sin turno previsto no dice
+              cuántas horas devuelve, y ponerle una jornada tipo haría que el
+              saldo pareciera saldado sin estarlo. */}
+          {t(
+            'Hay {{dias}} día(s) de descanso sin turno previsto, así que no se han podido contar en horas.',
+            { dias: deuda.unconverted_days },
+          )}
+        </Box>
+      )}
+    </Alert>
+  )
+}
+
 /** The balance, as a bar plus the three numbers behind it.
  *
  *  Pending days are drawn separately from taken ones: they are not spent yet,
@@ -203,6 +254,8 @@ export default function MyLeave() {
       <ErrorNote error={error} onClose={() => setError(null)} />
 
       {balance ? <Balance balance={balance} /> : <LinearProgress sx={{ mb: 2 }} />}
+
+      {balance?.rest_debt && <DeudaDeDescanso deuda={balance.rest_debt} />}
 
       <Typography variant="h2" sx={{ fontSize: '1rem', mt: 3, mb: 1.5 }}>
         {t('Historial')}

@@ -279,17 +279,24 @@ con más frecuencia: la regla se comprueba, pero **el saldo no se lleva**.
 | Descanso en jornada continuada, 15 min desde 6 h | 34.4 | — | **Cubierto** |
 | Descanso de menores, 30 min desde 4,5 h | 34.4 | — | **Cubierto** |
 | Acumulación del descanso semanal a turnos | 19.b RD 1561/1995 | 4 semanas | **Cubierto** |
-| Reducción del descanso en relevo de turno | 19.a RD 1561/1995 | 4 semanas | **A medias.** Se avisa de la diferencia; no se lleva el saldo |
-| Compensación de horas extra con descanso | 35.1 | 4 meses | **A medias.** Se marca cómo se salda, no si se saldó |
-| Compensación de la distribución irregular | 34.2 | 12 meses | **Falta** |
-| Compensación de nocturnidad con descansos | 36.2 | Convenio | **Falta** |
-| Compensación por festivo trabajado | 37.2 | Convenio | **Falta** |
-| Descanso compensatorio por ampliación sectorial | RD 1561/1995 | Según sector | **Falta** |
+| Reducción del descanso en relevo de turno | 19.a RD 1561/1995 | 4 semanas | **A medias.** Se avisa de la diferencia; no se lleva el saldo. El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
+| Compensación de horas extra con descanso | 35.1 | 4 meses | **Cubierto.** Lo que se debe sale de los fichajes ---cada hora extra dice desde el primer día si se salda con dinero o con descanso, art. 3.f--- y lo devuelto se anota como **descanso compensatorio**. El saldo dice cuánto queda **y hasta cuándo**, y avisa cuando el plazo pasó. Un día entero de descanso vale lo que ese día tocaba trabajar, leído del cuadrante; sin turno previsto **no se estima**, se dice cuántos días quedaron sin convertir. El plazo lo declara la empresa y un cero lo apaga |
+| Compensación de la distribución irregular | 34.2 | 12 meses | **Falta.** El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
+| Compensación de nocturnidad con descansos | 36.2 | Convenio | **Falta.** El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
+| Compensación por festivo trabajado | 37.2 | Convenio | **Falta.** El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
+| Descanso compensatorio por ampliación sectorial | RD 1561/1995 | Según sector | **Falta.** El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
 
-El patrón se repite: sabemos decir «esto se aparta de la regla» y no sabemos
-decir «y quedan cuatro horas por devolver antes del 9 de septiembre». Lo segundo
-es lo que una empresa necesita para cumplir; lo primero solo sirve para saber
-que no cumple.
+El patrón se repetía en las seis: sabíamos decir «esto se aparta de la regla» y
+no «y quedan cuatro horas por devolver antes del 9 de septiembre». Lo segundo es
+lo que una empresa necesita para cumplir; lo primero solo sirve para saber que no
+cumple.
+
+**Desde el 28/08/2026 el mecanismo existe**, con las horas extra del art. 35.1 de
+primera fuente: la deuda se deriva de los fichajes, lo devuelto se anota con el
+permiso de **descanso compensatorio**, y el saldo dice cuánto queda y hasta
+cuándo. Las otras cinco se enganchan ahí, y lo que falta en cada una no es la
+maquinaria sino decidir **cuánto** se debe ---una pregunta distinta en cada
+artículo, y en tres de ellas la respuesta la da el convenio---.
 
 > Los días de descanso de más que suele tener un turno de noche no salen del
 > Estatuto: salen del convenio, o del art. 36.2, que permite compensar la
@@ -371,6 +378,27 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 6 | **Las cifras de cada sector** (RD 1561/1995). Lo que quedaba de esta fila y sigue fuera a propósito: quince cifras por cada uno de los trece regímenes, cada sector con su convenio encima. Que los avisos citen el régimen declarado **ya está** desde el 28/08 | **Semanas**, y conviene partirlo por sector empezando por el que tenga un cliente esperando. No es trabajo pendiente sino una decisión de producto: mientras no haya un cliente de un sector concreto, traer sus cifras es inventar |
 
 ### Hecho desde que se escribió esta lista
+
+- **El saldo de descanso que se debe** (art. 35.1, 28/08/2026), que es el
+  mecanismo que faltaba para toda la familia de las compensaciones.
+
+  El producto sabía desde el primer día **cómo** se salda cada hora extra ---con
+  dinero o con descanso, porque el art. 3.f obliga a decirlo--- y no sabía **si**
+  se había saldado: no existía forma de anotar el descanso devuelto. Ahora hay un
+  permiso de descanso compensatorio, y el saldo se deriva de las dos cosas en vez
+  de guardarse aparte: la deuda está en los fichajes, lo devuelto en las
+  ausencias, y sumarlas cuando alguien pregunta no puede quedarse viejo.
+
+  Dos decisiones que se ven mejor en las pruebas: **un día entero de descanso
+  vale lo que ese día tocaba trabajar**, leído del cuadrante; y si no hay turno
+  previsto **no se estima**, se dice cuántos días quedaron sin convertir, porque
+  una jornada inventada haría que un saldo pareciera devuelto sin estarlo.
+
+  De paso se arregló un defecto de la demostración del mismo tipo que las pausas
+  al revés: la naturaleza de las horas se marcaba en el fichaje de **salida**, y
+  todo lo descriptivo se lee del que **abre**. Medido: marcada en la salida, el
+  tramo dice «ordinaria». Las horas complementarias de la demostración no
+  existían para el producto.
 
 - **La lactancia como reducción de jornada** (art. 37.4, 28/08/2026), y con ella
   **el campo de la fracción deja de adivinarse**.

@@ -290,6 +290,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     findings.extend(_check_irregular_balance(company, first, last, employee))
     findings.extend(_check_standby_average(company, first, last, employee))
     findings.extend(_check_on_call_counts_as_work(company, rules, first, last, employee))
+    findings.extend(_check_overtime_rest_overdue(company, rules, first, last, employee))
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -1076,6 +1077,59 @@ JUBILACION_PARCIAL = "es.partial_retirement"
 #: diferencia de las veinte horas de presencia del transporte, que sí son
 #: disponibles para el convenio---.
 MAXIMO_SEMANAL_UE = 48
+
+
+def _check_overtime_rest_overdue(company, rules, first, last, employee) -> list[Finding]:
+    """Horas extra que había que devolver en descanso y se ha pasado el plazo.
+
+    «Deberán ser compensadas mediante descanso dentro de los cuatro meses
+    siguientes a su realización» (art. 35.1 ET), en defecto de pacto en convenio.
+
+    El producto sabía desde el primer día **cómo** se salda cada hora extra
+    ---con dinero o con descanso, porque el art. 3.f obliga a decirlo--- y no
+    sabía **si** se había saldado. Ese es el patrón que más se repetía en lo que
+    quedaba del inventario: decir «esto se aparta de la regla» y no decir «y
+    quedan cuatro horas por devolver antes del 9 de septiembre».
+
+    Avisa cuando el plazo ya pasó, no antes: mientras quede tiempo no hay nada
+    que reprochar, y un aviso que sale desde el primer día por algo que se cumple
+    a los cuatro meses es ruido durante cuatro meses.
+    """
+    from apps.punches.models import HoursNature, OvertimeSettlement, Punch
+    from apps.punches.rest_debt import RUIDO_HORAS, overtime_rest_debt
+    from apps.users.models import User
+
+    quienes = User.objects.filter(
+        tenant=company,
+        is_active=True,
+        id__in=Punch.objects.filter(
+            tenant=company,
+            hours_nature=HoursNature.OVERTIME,
+            overtime_settlement=OvertimeSettlement.REST,
+            is_active=True,
+        ).values("employee_id"),
+    )
+    if employee is not None:
+        quienes = quienes.filter(pk=employee.pk)
+
+    found: list[Finding] = []
+    for person in quienes:
+        saldo = overtime_rest_debt(employee=person, company=company, day=last)
+        if not saldo or saldo["overdue_hours"] <= RUIDO_HORAS:
+            continue
+        found.append(
+            Finding(
+                day=last,
+                employee_id=person.id,
+                code="overtime_rest_overdue",
+                message=_(
+                    "%(hours)s h of overtime to be given back as rest are past the "
+                    "%(days)s-day deadline."
+                )
+                % {"hours": f"{saldo['overdue_hours']:.1f}", "days": saldo["days"]},
+            )
+        )
+    return found
 
 
 def _check_on_call_counts_as_work(company, rules, first, last, employee) -> list[Finding]:

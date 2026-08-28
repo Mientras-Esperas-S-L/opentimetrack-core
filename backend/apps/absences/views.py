@@ -51,6 +51,7 @@ from apps.common.permissions import (
 )
 from apps.common.scope import person_in_scope, visible_people
 from apps.common.texto import validate_texto_legible
+from apps.punches.rest_debt import overtime_rest_debt
 
 
 class AbsenceSerializer(serializers.ModelSerializer):
@@ -637,6 +638,11 @@ class AbsenceViewSet(
                 # para quien no tiene fecha de fin, que es casi todo el mundo:
                 # la pantalla decide con eso si hay algo que enseñar.
                 "settlement": leave_settlement(employee, request.user.tenant, until=hasta),
+                # Y lo que se debe en descanso por horas extra (art. 35.1).
+                # `None` para quien no tiene ninguna marcada para compensar así,
+                # que es casi todo el mundo: la pantalla decide con eso si hay
+                # algo que enseñar, igual que con la liquidación.
+                "rest_debt": overtime_rest_debt(employee=employee, company=request.user.tenant),
             }
         )
 

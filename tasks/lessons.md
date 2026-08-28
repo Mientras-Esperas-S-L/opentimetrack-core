@@ -2,6 +2,57 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Lo descriptivo de un tramo viaja en el evento que lo abre (28/08/2026)
+
+La semilla marcaba la naturaleza de las horas ---ordinarias, complementarias,
+extraordinarias--- en el fichaje de **salida**. `_span` copia todo lo descriptivo
+del evento que **abre**: el intervalo, el modo de trabajo, la naturaleza, cómo se
+salda. Medido antes de tocar nada:
+
+```
+  marcado solo en la SALIDA -> el tramo dice: ['ORDINARY']
+  marcado en la ENTRADA     -> el tramo dice: ['COMPLEMENTARY']
+```
+
+Las horas complementarias de la demostración no existían para el producto. Es
+exactamente el mismo error que las pausas al revés, en otro campo: el dato está,
+se ve en la lista de fichajes, y la pieza que lo lee mira a otro sitio.
+
+**Cómo evitarlo:** al escribir un `Punch` con cualquier campo que describa **qué
+es ese rato**, ponerlo en el `IN`. La regla está escrita en `_span` ---«everything
+descriptive travels on the opening»--- y se olvida en cuanto uno escribe el
+`OUT` y tiene el dato a mano.
+
+## Un saldo que se deriva no puede quedarse viejo (28/08/2026)
+
+Para llevar la cuenta de las horas extra pendientes de devolver en descanso, la
+primera idea fue un libro de apuntes: un modelo con la deuda, el plazo y lo
+saldado. No hacía falta. La deuda ya está en los fichajes ---cada hora extra dice
+si se salda con dinero o con descanso--- y lo devuelto está en las ausencias.
+Sumarlas cuando alguien pregunta no puede desincronizarse de aquello que cuenta;
+un libro aparte sí, y desde el día en que alguien corrige un fichaje sin tocar el
+apunte.
+
+**Cómo evitarlo:** antes de crear una tabla de saldos, mirar si los dos lados de
+la cuenta ya están registrados en otro sitio. Si lo están, derivar. Guardar solo
+cuando el dato **no** se puede reconstruir ---una decisión de alguien, un acuerdo,
+una fecha que nadie más sabe---.
+
+## No estimar lo que no se sabe, y decir que no se sabe (28/08/2026)
+
+Un día entero de descanso compensatorio devuelve las horas que ese día tocaba
+trabajar. Cuando no hay turno previsto, la tentación es poner una jornada tipo:
+ocho horas, o la semanal partida por cinco. Eso haría que un saldo pareciera
+devuelto sin estarlo, y quien lo mirara vería cero teniendo deuda.
+
+La respuesta es contar esos días aparte y decirlos: «hay 2 días de descanso sin
+turno previsto, así que no se han podido contar en horas». Un hueco declarado es
+un dato; un hueco rellenado con una estimación se lee como un hecho.
+
+**Cómo evitarlo:** cuando falte un dato para completar una cifra, la salida lleva
+la cifra **y** cuánto se quedó fuera. Es el mismo criterio que hizo descartar el
+10 % del art. 34.2 y el que dejó fuera las cifras de los trece regímenes.
+
 ## Una pantalla que adivina un dato que el servidor tiene y no manda (28/08/2026)
 
 El diálogo de ausencias decidía si ofrecer el campo de la fracción de jornada con

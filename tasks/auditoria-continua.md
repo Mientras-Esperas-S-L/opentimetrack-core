@@ -369,6 +369,72 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 164 --- El saldo de descanso, que es el mecanismo de toda una familia (28/08)
+
+Al empezar: 5 «A medias» y 12 «Falta».
+
+**El encargo pedía mirar si un mecanismo único cerraba varias, y lo cerraba.** El
+propio inventario nombraba lo que faltaba: «sabemos decir *esto se aparta de la
+regla* y no sabemos decir *y quedan cuatro horas por devolver antes del 9 de
+septiembre*». Seis filas repetían el mismo patrón.
+
+**La clasificación encontró la mitad hecha.** Cada hora extra dice desde el primer
+día **cómo** se salda ---con dinero o con descanso, porque el art. 3.f del real
+decreto de registro obliga a decirlo---, así que la deuda del art. 35.1 ya estaba
+anotada. Lo que no existía era **el otro lado**: ninguna forma de decir «hoy he
+descansado cuatro horas para saldar aquellas extra». No había permiso para eso en
+el catálogo.
+
+**Se deriva, no se guarda.** Un libro de apuntes aparte sería otro sitio donde la
+misma verdad puede quedarse vieja. La deuda está en los fichajes, lo devuelto en
+las ausencias, y sumarlas cuando alguien pregunta no puede desincronizarse de
+aquello que cuenta.
+
+**Dos decisiones que se ven mejor en las pruebas que en el código:**
+
+1. **Un día entero de descanso vale lo que ese día tocaba trabajar**, leído del
+   cuadrante. `Absence.hours` contesta cero para los días completos y hace bien
+   ---cuánto dura un día depende del turno, del contrato y de la persona--- así
+   que sin leer el cuadrante un día libre no devolvería nada.
+2. **Sin turno previsto no se estima.** Ponerle una jornada tipo daría por
+   devueltas ocho horas que quizá fueran cuatro, y el saldo diría cero teniendo
+   deuda. Se cuentan esos días y se dicen.
+
+**Y un defecto de la demostración, del mismo tipo que las pausas al revés.** La
+naturaleza de las horas se marcaba en el fichaje de **salida**, y todo lo
+descriptivo se lee del que **abre** ---`_span` copia de ahí---. Medido antes de
+tocar nada:
+
+```
+  marcado solo en la SALIDA -> el tramo dice: ['ORDINARY']
+  marcado en la ENTRADA     -> el tramo dice: ['COMPLEMENTARY']
+```
+
+Las horas complementarias de la demostración no existían para el producto, y el
+tope del art. 12.5.c no tenía nada que contar. Arreglado, con guard, y de paso la
+semilla genera alguna hora extra a compensar con descanso: sin una sola, esta
+pantalla no aparece nunca y la función no se ve en ninguna demostración.
+
+**Un defecto de UX, arreglado en la vuelta.** El aviso decía lo que se debe y no
+el siguiente paso, así que había que adivinar por qué puerta se devuelve. Ahora
+dice cómo se pide, y hay prueba de que ese permiso existe en la lista ---decirle a
+alguien que pida algo que no está es peor que no decirle nada---.
+
+**Ocho contrastes, los ocho rojos.** Y **dos guards del proyecto me cazaron en el
+CI**: `date.today()` está prohibido ---devuelve la fecha UTC del contenedor y el
+plazo se cuenta en el calendario de la empresa--- y el guard de mensajes sin
+extraer, escrito hace dos horas en la vuelta anterior, cazó el aviso nuevo antes
+de que subiera sin traducir.
+
+**Lo que queda de la familia y por qué no cabía hoy:** las otras cinco
+compensaciones se enganchan al mismo mecanismo, y lo que falta en cada una no es
+maquinaria sino decidir **cuánto** se debe ---una pregunta distinta en cada
+artículo, y en tres de ellas la respuesta la da el convenio---.
+
+**Cierre:** ocho pasos del CI en verde con 1.476 pruebas, suite de navegador
+aparte, seis filas del inventario actualizadas y una movida a Cubierto, dossier en
+la 1.33. El recuento pasa de 94/5/12 a **95/4/12 de 111**, contado de las filas.
+
 ### Vuelta 163 --- La lactancia, y el campo de la fracción que se adivinaba (28/08)
 
 Al empezar: 4 «A medias» y 17 «Falta».

@@ -151,6 +151,12 @@ ESPANA = LegalFramework(
         # No es un incumplimiento: las horas por encima de lo pactado en jornada
         # parcial son complementarias, lícitas y con su propio tope.
         "over_contracted_hours": Citation("Art. 12.5 ET"),
+        "overtime_rest_overdue": Citation(
+            "Art. 35.1 ET",
+            "Las horas extraordinarias que se compensan con descanso se devuelven "
+            "dentro de los cuatro meses siguientes a su realización, en defecto de "
+            "pacto en convenio. El plazo lo declara la empresa y un cero lo apaga.",
+        ),
         "on_call_over_the_weekly_maximum": Citation(
             "Art. 34.1 ET, leído con SIMAP (C-303/98) y Jaeger (C-151/02)",
             "La guardia de presencia física en el centro es tiempo de trabajo en "
@@ -444,6 +450,25 @@ ESPANA = LegalFramework(
             "elige quien trabaja**, no la empresa. Si se pide como reducción, pon "
             "cuánto se reduce y las fechas. Acumulable en jornadas completas cuando lo "
             "permita el convenio.",
+        ),
+        LeaveKind(
+            code="es.compensatory_rest",
+            name="Descanso compensatorio",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 35.1 ET",
+            # El tiempo que se devuelve lo fija lo que se debe, no el artículo:
+            # cuatro horas extra son cuatro horas de descanso. Poner una cifra
+            # aquí sería inventar un tope que la ley no da.
+            amount=None,
+            unit="HOURS",
+            per="EVENT",
+            # Se cobra: las horas ya se trabajaron y ya están en la nómina. Lo
+            # que se devuelve es el tiempo, no el dinero.
+            paid=True,
+            note="Para devolver horas extra compensadas con descanso, y cualquier otro "
+            "descanso que se deba. El art. 35.1 da **cuatro meses** desde que se hicieron, "
+            "en defecto de pacto; el convenio puede dar otro plazo. Sin anotar el descanso "
+            "aquí, el producto sabe lo que se debe y no lo que se ha devuelto.",
         ),
         LeaveKind(
             code="es.exams",

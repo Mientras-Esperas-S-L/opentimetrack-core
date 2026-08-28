@@ -50,6 +50,7 @@ SIN_CITA = {
         "irregular_hours_unsettled": "el plazo de compensación es del ET",
         "standby_over_the_average": "el tope de presencia es del RD español",
         "on_call_over_the_weekly_maximum": "la guardia de sanidad, del ET con el TJUE",
+        "overtime_rest_overdue": "el plazo del art. 35.1 para devolver el descanso",
         "relief_hours_below_the_reduction": "el contrato de relevo es del ET",
         "relief_without_partial_retirement": "el contrato de relevo es del ET",
         "training_kind_not_stated": "los dos formativos son del ET",

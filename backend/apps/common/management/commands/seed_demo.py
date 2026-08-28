@@ -48,7 +48,15 @@ from apps.punches.corrections import (
     propose_correction,
     request_correction,
 )
-from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource, PunchType, WorkMode
+from apps.punches.models import (
+    HoursNature,
+    OvertimeSettlement,
+    Punch,
+    PunchInterval,
+    PunchSource,
+    PunchType,
+    WorkMode,
+)
 from apps.shifts.models import Shift, ShiftPattern
 from apps.tenants.models import Tenant
 from apps.tenants.rules import WorkingTimeRules
@@ -863,6 +871,19 @@ class Command(BaseCommand):
         """
         entered = datetime.combine(day, opens, tzinfo=zone) + jitter
         left = datetime.combine(day, closes, tzinfo=zone) + jitter
+
+        # Unas cuantas horas declaradas como complementarias en los contratos a
+        # tiempo parcial, que es de lo que va el tope del art. 12.5.c. Y alguna
+        # extraordinaria **a compensar con descanso**, para que la demostración
+        # enseñe el saldo del art. 35.1: sin una sola hora así, esa pantalla no
+        # aparece nunca y la función no se ve en ninguna demostración.
+        nature = HoursNature.ORDINARY
+        settlement = ""
+        if person.part_time and random.random() < 0.15:
+            nature = HoursNature.COMPLEMENTARY
+        elif not person.part_time and random.random() < 0.06:
+            nature = HoursNature.OVERTIME
+            settlement = OvertimeSettlement.REST
         Punch.objects.create(
             tenant=company,
             employee=person,
@@ -872,6 +893,13 @@ class Command(BaseCommand):
             # Art. 3.e. Va en el evento que **abre** el tramo, como todo lo
             # descriptivo: es el que dice qué es ese rato.
             work_mode=mode,
+            # Y la naturaleza de las horas, por lo mismo. Estuvo en el evento de
+            # salida hasta el 28/08/2026, que es donde **nadie la lee**: `_span`
+            # copia del que abre, así que las complementarias de la demostración
+            # salían como ordinarias. Medido: marcada en la salida, el tramo dice
+            # `ORDINARY`; marcada en la entrada, `COMPLEMENTARY`.
+            hours_nature=nature,
+            overtime_settlement=settlement,
         )
         if rest:
             starts, ends = rest
@@ -900,13 +928,6 @@ class Command(BaseCommand):
             timestamp=left,
             punch_type=PunchType.OUT,
             source=source,
-            # A few hours declared as complementary on the part-time contracts,
-            # which is what the cap is about.
-            hours_nature=(
-                HoursNature.COMPLEMENTARY
-                if person.part_time and random.random() < 0.15
-                else HoursNature.ORDINARY
-            ),
         )
 
     # ---------------------------------------------------------------- absences
