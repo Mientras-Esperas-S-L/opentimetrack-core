@@ -16,6 +16,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.settings import api_settings as jwt_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.audit.models import AuditAction
@@ -202,6 +203,21 @@ class RefreshView(APIView):
             raise BusinessRuleError(code="no_refresh_token", message=_("No session to renew."))
         try:
             refresh = RefreshToken(token)
+            # Quien ya no está de alta no renueva. El token bien firmado decía
+            # que sí: contestaba 200 con un acceso recién emitido para alguien
+            # dado de baja o borrado de la base.
+            #
+            # Nadie entraba con él ---la autenticación sí mira `is_active`, y
+            # todo respondía 401---, así que el daño no era acceso indebido
+            # sino una respuesta que dice «bien». Y eso tiene coste: la propia
+            # suite dio por buena una sesión guardada de una base resembrada y
+            # siete pruebas de aislamiento fallaron señalando al producto.
+            #
+            # Se contesta lo mismo que a un token caducado o falso, a propósito:
+            # distinguirlos diría si esa cuenta llegó a existir.
+            quien = refresh.payload.get(jwt_settings.USER_ID_CLAIM)
+            if not User.objects.filter(pk=quien, is_active=True).exists():
+                raise TokenError("the account behind this token is no longer active")
             access = str(refresh.access_token)
             if settings.SIMPLE_JWT.get("ROTATE_REFRESH_TOKENS"):
                 if settings.SIMPLE_JWT.get("BLACKLIST_AFTER_ROTATION"):

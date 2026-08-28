@@ -71,6 +71,10 @@ class PunchViewSet(
     serializer_class = PunchSerializer
     permission_classes = [IsAuthenticatedInTenant]
     filterset_class = PunchFilter
+    # Por nombre, apellido y número de empleado: es lo que se teclea buscando
+    # «los fichajes de Hugo». El filtro global ignoraba `?search=` aquí ---no
+    # había campos declarados--- y devolvía la empresa entera con un 200.
+    search_fields = ["employee__first_name", "employee__last_name", "employee__employee_id"]
     ordering_fields = ["timestamp"]
 
     def list(self, request, *args, **kwargs):

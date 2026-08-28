@@ -33,17 +33,19 @@ PASSWORD = "a-sufficiently-long-password"
 
 @pytest.fixture
 def empresa(db):
-    return Tenant.objects.create(
-        name="Altas SL", tax_id="B61616161", time_zone="Europe/Madrid"
-    )
+    return Tenant.objects.create(name="Altas SL", tax_id="B61616161", time_zone="Europe/Madrid")
 
 
 @pytest.fixture
 def jefa(empresa):
     with tenant_context(empresa.id):
         yield User.objects.create_user(
-            email="jefa@example.com", password=PASSWORD, tenant=empresa,
-            first_name="Jefa", last_name="Uno", role=Role.ADMIN,
+            email="jefa@example.com",
+            password=PASSWORD,
+            tenant=empresa,
+            first_name="Jefa",
+            last_name="Uno",
+            role=Role.ADMIN,
         )
 
 
@@ -52,8 +54,12 @@ def otra_admin(empresa):
     """Una segunda, para que borrar a la primera no deje la empresa sin nadie."""
     with tenant_context(empresa.id):
         yield User.objects.create_user(
-            email="segunda@example.com", password=PASSWORD, tenant=empresa,
-            first_name="Segunda", last_name="Dos", role=Role.ADMIN,
+            email="segunda@example.com",
+            password=PASSWORD,
+            tenant=empresa,
+            first_name="Segunda",
+            last_name="Dos",
+            role=Role.ADMIN,
         )
 
 
@@ -62,8 +68,11 @@ def equivocada(empresa):
     """El alta que no debería existir: se creó y nadie la usó."""
     with tenant_context(empresa.id):
         yield User.objects.create_user(
-            email="equivocada@example.com", password=PASSWORD, tenant=empresa,
-            first_name="Equi", last_name="Vocada",
+            email="equivocada@example.com",
+            password=PASSWORD,
+            tenant=empresa,
+            first_name="Equi",
+            last_name="Vocada",
         )
 
 
@@ -79,8 +88,11 @@ def _borrar(quien, a_quien):
 
 def _fichaje(empresa, persona):
     p = Punch(
-        tenant=empresa, employee=persona, punch_type="IN",
-        timestamp=dt.datetime(2026, 5, 4, 8, tzinfo=dt.UTC), source=PunchSource.WEB,
+        tenant=empresa,
+        employee=persona,
+        punch_type="IN",
+        timestamp=dt.datetime(2026, 5, 4, 8, tzinfo=dt.UTC),
+        source=PunchSource.WEB,
     )
     p.hash_version = CURRENT_HASH_VERSION
     p.hash_integrity = p.compute_hash()
@@ -136,8 +148,11 @@ def test_con_una_ausencia_tampoco(empresa, jefa, equivocada):
     hueco en una nómina de 2021."""
     with tenant_context(empresa.id):
         Absence.objects.create(
-            tenant=empresa, employee=equivocada, absence_type=AbsenceType.VACATION,
-            start_date=dt.date(2026, 5, 4), end_date=dt.date(2026, 5, 6),
+            tenant=empresa,
+            employee=equivocada,
+            absence_type=AbsenceType.VACATION,
+            start_date=dt.date(2026, 5, 4),
+            end_date=dt.date(2026, 5, 6),
             status=AbsenceStatus.APPROVED,
         )
 
@@ -151,9 +166,13 @@ def test_haber_decidido_sobre_otra_persona_lo_impide(empresa, jefa, otra_admin, 
     aprobación sin nombre. Y una aprobación sin nombre no vale como aprobación."""
     with tenant_context(empresa.id):
         Absence.objects.create(
-            tenant=empresa, employee=equivocada, absence_type=AbsenceType.VACATION,
-            start_date=dt.date(2026, 5, 4), end_date=dt.date(2026, 5, 6),
-            status=AbsenceStatus.APPROVED, approved_by=jefa,
+            tenant=empresa,
+            employee=equivocada,
+            absence_type=AbsenceType.VACATION,
+            start_date=dt.date(2026, 5, 4),
+            end_date=dt.date(2026, 5, 6),
+            status=AbsenceStatus.APPROVED,
+            approved_by=jefa,
         )
 
     # A la que pidió la ausencia no se la puede borrar ---es suya---, y a **quien
@@ -217,8 +236,11 @@ def test_la_empresa_no_puede_quedarse_sin_administracion(empresa, jefa, equivoca
 def test_una_persona_normal_no_puede_borrar_a_nadie(empresa, equivocada):
     with tenant_context(empresa.id):
         cualquiera = User.objects.create_user(
-            email="peon@example.com", password=PASSWORD, tenant=empresa,
-            first_name="Peón", last_name="Tres",
+            email="peon@example.com",
+            password=PASSWORD,
+            tenant=empresa,
+            first_name="Peón",
+            last_name="Tres",
         )
 
     respuesta = _borrar(cualquiera, equivocada)
@@ -234,8 +256,11 @@ def test_no_se_alcanza_a_la_empresa_de_al_lado(empresa, jefa):
     otra = Tenant.objects.create(name="Vecina SL", tax_id="B71717171", time_zone="Europe/Madrid")
     with tenant_context(otra.id):
         suya = User.objects.create_user(
-            email="suya@vecina.example", password=PASSWORD, tenant=otra,
-            first_name="De", last_name="Enfrente",
+            email="suya@vecina.example",
+            password=PASSWORD,
+            tenant=otra,
+            first_name="De",
+            last_name="Enfrente",
         )
 
     assert _borrar(jefa, suya).status_code == 404
@@ -252,9 +277,13 @@ def test_el_rastro_separa_lo_suyo_de_lo_que_decidio(empresa, jefa, equivocada):
     with tenant_context(empresa.id):
         _fichaje(empresa, equivocada)
         Absence.objects.create(
-            tenant=empresa, employee=jefa, absence_type=AbsenceType.VACATION,
-            start_date=dt.date(2026, 5, 4), end_date=dt.date(2026, 5, 6),
-            status=AbsenceStatus.APPROVED, approved_by=equivocada,
+            tenant=empresa,
+            employee=jefa,
+            absence_type=AbsenceType.VACATION,
+            start_date=dt.date(2026, 5, 4),
+            end_date=dt.date(2026, 5, 6),
+            status=AbsenceStatus.APPROVED,
+            approved_by=equivocada,
         )
 
         rastro = rastro_de(equivocada)

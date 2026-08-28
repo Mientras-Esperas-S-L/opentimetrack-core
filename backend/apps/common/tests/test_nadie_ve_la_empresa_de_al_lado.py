@@ -140,6 +140,10 @@ SIN_EMPRESA_A_PROPOSITO = {
     ("users/backends.py", "lookup"): "autenticar: todavía no se sabe de qué empresa es",
     ("users/backends.py", "pk=user_id"): "recuperar la sesión por su propio id",
     ("users/views.py", "email__iexact"): "recuperar contraseña va por correo, sin empresa",
+    (
+        "users/views.py",
+        "pk=quien, is_active=True",
+    ): "renovar la sesión es anónimo: el token trae el id y todavía no hay empresa",
     ("common/scope.py", "pk=user.pk"): "uno mismo, no hay nada que fugar",
     ("common/management/commands/seed_demo.py", ""): "comando de demostración, no una petición",
     (

@@ -105,19 +105,25 @@ test.describe('Aislamiento entre empresas', () => {
     })
     expect(creado.status).toBe(201)
 
-    // Cayó en la empresa de quien llama, no en la que decía el cuerpo: la
-    // empresa sale de quién eres, nunca de lo que mandas.
-    const desdeLaVecina = await browser.newContext({
-      storageState: 'e2e/.sesiones/vecina.json',
-    })
-    const suPagina = await desdeLaVecina.newPage()
-    await suPagina.goto('/panel')
-    const susDepartamentos = await api(suPagina, '/departments/')
-    const nombres = susDepartamentos.body.results.map((d) => d.name)
-    expect(nombres.some((n) => n.startsWith('Colado'))).toBe(false)
-    await desdeLaVecina.close()
-
-    await api(page, `/departments/${creado.body.id}/`, { method: 'DELETE' })
+    // El borrado va en `finally` y no al final del cuerpo: cuando esta prueba
+    // falló ---por una sesión guardada que el servidor daba por buena--- el
+    // departamento se quedó, y quien avisó fue `zz-sin-residuos`, dos pruebas y
+    // doce minutos después, sin poder decir quién lo había dejado.
+    try {
+      // Cayó en la empresa de quien llama, no en la que decía el cuerpo: la
+      // empresa sale de quién eres, nunca de lo que mandas.
+      const desdeLaVecina = await browser.newContext({
+        storageState: 'e2e/.sesiones/vecina.json',
+      })
+      const suPagina = await desdeLaVecina.newPage()
+      await suPagina.goto('/panel')
+      const susDepartamentos = await api(suPagina, '/departments/')
+      const nombres = susDepartamentos.body.results.map((d) => d.name)
+      expect(nombres.some((n) => n.startsWith('Colado'))).toBe(false)
+      await desdeLaVecina.close()
+    } finally {
+      await api(page, `/departments/${creado.body.id}/`, { method: 'DELETE' })
+    }
   })
 
   test('los fichajes y las ausencias ajenas no salen ni preguntando por su persona', async ({

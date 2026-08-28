@@ -4775,3 +4775,114 @@ Así que el guard mira **en las dos direcciones**. Si una exención ya no le
 corresponde a ninguna cadena, se señala y hay que quitarla. Es la misma idea que el
 contraste ---«¿esta comprobación puede ponerse roja?»--- aplicada a la lista de lo
 que se perdona: **¿esta excepción sigue excepcionando algo?**
+
+## 289. Un sabotaje que no encaja se lee como un contraste que pasa
+
+Para comprobar que una prueba nueva sirve, la rompo a propósito y miro que se ponga
+roja. Esta vez el sabotaje era un `replace` de `{person.seasonal && (` sobre un
+fichero que **prettier había compactado a una sola línea**. La cadena no estaba, el
+`replace` no cambió nada, la prueba corrió contra el código bueno y pasó.
+
+Y yo leí ese verde como «el contraste funciona». Es el fallo exacto que los
+contrastes existen para evitar, cometido **dentro del contraste**.
+
+**La regla**: el sabotaje se afirma igual que se afirma un reemplazo. Un
+`assert t.count(viejo) == 1` antes de escribir, y si no encaja, para. Lo mismo que
+ya hace `edita.py` para el código de verdad --- el código de mentira merece el mismo
+cuidado, porque de él depende creerse todo lo demás.
+
+Corolario: cuando un contraste «pasa a la primera» sin que la prueba se ponga roja,
+sospechar del sabotaje antes que celebrar la prueba.
+
+## 290. La lección escrita no es la lección aprendida
+
+La 252 dice, desde hace cuatro días: importé un icono de MUI que no existe, Vite
+puso un overlay a pantalla completa y perseguí tres hipótesis antes de mirar la
+captura.
+
+Hoy he importado `@mui/icons-material/DeleteOutline`, que tampoco existe, y he
+vuelto a perder el rato con un 500 opaco.
+
+Lo que falla no es no saberlo: es que **saberlo no se activa en el momento**. Un
+icono se escribe en medio de veinte líneas de importaciones y no hay nada que
+pregunte «¿este existe?». Lo que sí funciona es la comprobación mecánica, que ahora
+cuesta un comando:
+
+    for i in $(grep -rho "icons-material/[A-Za-z]*" src/ | sort -u | sed 's|.*/||'); do
+      [ -f "node_modules/@mui/icons-material/$i.js" ] || echo "NO EXISTE: $i"
+    done
+
+**La regla**: cuando una lección se repite, deja de ser un recordatorio y pasa a ser
+un guard. Escribirla otra vez con más énfasis no cambia nada; ejecutarla, sí.
+
+## 291. Cuatro pruebas en verde que se apoyaban en la basura
+
+Resembrar la demostración ---con permiso, y para que las capturas del dossier
+fueran presentables--- puso en rojo cuatro pruebas de navegador que llevaban
+meses en verde. Ninguna era una regresión: las cuatro se sostenían sobre el
+sedimento que dejan las propias corridas.
+
+- Dos necesitan un mes con más de cincuenta fichajes de una persona, y la
+  semilla genera **dos por día**: veintidós laborables son cuarenta y cuatro, y
+  nunca han llegado. Lo que pasaba de cincuenta era la acumulación de meses de
+  ejecuciones.
+- Una necesita fichajes propios de la administradora, y en la semilla **quien
+  administra no ficha**. Los suyos los habían creado otras pruebas.
+- La cuarta tapaba un defecto de verdad, que es la [[292]].
+
+La forma de no volver a caer: cuando una prueba necesita cierta cantidad o
+cierta forma de dato, **o se lo fabrica ella o la semilla lo produce a
+propósito**. Lo que hay en la base de tanto correr no es un dato, es un residuo,
+y un residuo no se puede citar en una aserción.
+
+Y el lado bueno, que conviene aprovechar: **resembrar es una auditoría barata de
+la suite**. Lo que se cae al limpiar es exactamente lo que no se sostenía solo.
+Vale la pena hacerlo a propósito de vez en cuando y no solo cuando toca.
+
+De paso salieron dos huecos de la demostración que también eran del producto: no
+enseñaba **ninguna pausa** ---el art. 3.d, que el producto sí registra--- y quien
+entraba como administradora veía su «Mi jornada» en blanco, que es la primera
+pantalla de quien va a probarlo.
+
+## 292. Un parámetro que se acepta y se ignora es peor que un error
+
+`/punches/?search=Hugo` devolvía **583 fichajes de diez personas** con un 200.
+
+El filtro de búsqueda está declarado globalmente, así que el parámetro se acepta
+en los once listados de la API; pero DRF solo busca donde el listado declara
+`search_fields`, y **siete de los once no los declaraban**. Ni un error, ni un
+aviso: la tabla entera.
+
+Lo que más enseña es por qué no salió antes. La prueba lo comprobaba **a
+propósito** ---su comentario dice, literalmente, que un filtro que ignora el
+término contesta 200 con la empresa entera y que por eso mira lo que trae---, y
+aun así pasó durante meses: miraba los primeros resultados, y una persona con
+casi mil fichajes llenaba ella sola la primera página. La intención era
+correcta y la muestra no.
+
+Dos reglas:
+
+- **Donde un parámetro no se atiende, se rechaza.** El silencio se parece a una
+  respuesta correcta, y por eso quien integra no lo mira. En un producto cuyo
+  objeto es el registro de jornada, además, entregar de más es entregar el
+  registro de quien no se preguntó.
+- **Una comprobación de «filtra bien» necesita datos de al menos dos sujetos
+  repartidos.** Con un sujeto dominante, «devuelve todo» y «filtra» dan el mismo
+  resultado.
+
+## 293. El backend no tiene guard de catálogo, y se le nota
+
+El frontend está entero en tres idiomas porque hay un guard que lo exige. El
+backend depende de que me acuerde de correr `makemessages`, y al correrlo hoy
+aparecieron **doce cadenas mías sin traducir y cuatro `fuzzy`** en un proyecto
+que tenía los tres catálogos a cero.
+
+Los huecos son lo de menos. Los `fuzzy` son lo que hay que mirar: no son texto
+ausente, son **texto equivocado que se muestra**. gettext había emparejado
+«activity starts» con «Registro de actividad» y «activity ends» con «activo»,
+por parecido, y eso es lo que habría salido en pantalla.
+
+Queda propuesto en el cuaderno un trinquete: que el número de cadenas sin
+traducir **no suba** y que los `fuzzy` sigan a cero. No puede exigir cero hoy
+---hay 143 huecos viejos en catalán--- pero sí puede impedir que crezca, que es
+lo que ha pasado estas vueltas.

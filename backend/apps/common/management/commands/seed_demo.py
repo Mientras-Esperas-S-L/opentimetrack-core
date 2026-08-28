@@ -48,7 +48,7 @@ from apps.punches.corrections import (
     propose_correction,
     request_correction,
 )
-from apps.punches.models import HoursNature, Punch, PunchSource, PunchType
+from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource, PunchType
 from apps.shifts.models import Shift, ShiftPattern
 from apps.tenants.models import Tenant
 from apps.tenants.rules import WorkingTimeRules
@@ -690,29 +690,58 @@ class Command(BaseCommand):
         today = timezone.localdate()
         start = today - timedelta(weeks=weeks)
 
+        # El quinto elemento es el descanso de bocadillo, cuando lo hay: art.
+        # 3.d pide anotar el principio y el final de las pausas que no son
+        # tiempo de trabajo, el producto las registra y esta demostración no
+        # enseñaba **ninguna**. Quien hace jornada partida larga la tiene; las
+        # de media jornada, no, que es lo que pasa de verdad.
         clocking = [
-            ("worker", time(7, 0), time(15, 0), PunchSource.MOBILE),
-            ("delegate", time(7, 5), time(15, 10), PunchSource.MOBILE),
-            ("parttime", time(8, 0), time(13, 0), PunchSource.TERMINAL),
-            ("parttime2", time(9, 0), time(14, 0), PunchSource.WEB),
-            ("reduced", time(9, 0), time(15, 0), PunchSource.WEB),
-            ("annual", time(7, 0), time(16, 0), PunchSource.MOBILE),
-            ("minor", time(7, 0), time(13, 0), PunchSource.TERMINAL),
-            ("seasonal", time(7, 0), time(15, 0), PunchSource.MOBILE),
-            ("federated", time(8, 0), time(16, 0), PunchSource.WEB),
+            # La oficina ficha como todo el mundo: en una empresa de catorce
+            # personas quien lleva la administración también trabaja, y la
+            # demostración enseñaba su «Mi jornada» **en blanco**, que es la
+            # primera pantalla que ve quien entra a probar el producto.
+            ("admin", time(9, 0), time(17, 0), PunchSource.WEB, (time(14, 0), time(14, 30))),
+            ("manager", time(8, 30), time(17, 0), PunchSource.WEB, (time(14, 0), time(14, 30))),
+            ("worker", time(7, 0), time(15, 0), PunchSource.MOBILE, (time(10, 0), time(10, 20))),
+            (
+                "delegate",
+                time(7, 5),
+                time(15, 10),
+                PunchSource.MOBILE,
+                (time(10, 30), time(10, 50)),
+            ),
+            ("parttime", time(8, 0), time(13, 0), PunchSource.TERMINAL, None),
+            ("parttime2", time(9, 0), time(14, 0), PunchSource.WEB, None),
+            ("reduced", time(9, 0), time(15, 0), PunchSource.WEB, None),
+            ("annual", time(7, 0), time(16, 0), PunchSource.MOBILE, (time(11, 0), time(11, 30))),
+            ("minor", time(7, 0), time(13, 0), PunchSource.TERMINAL, None),
+            ("seasonal", time(7, 0), time(15, 0), PunchSource.MOBILE, (time(10, 0), time(10, 15))),
+            ("federated", time(8, 0), time(16, 0), PunchSource.WEB, (time(12, 0), time(12, 30))),
         ]
 
         for offset in range((today - start).days):
             day = start + timedelta(days=offset)
             if day.weekday() >= 5:
                 continue
-            for key, opens, closes, source in clocking:
+            for key, opens, closes, source, rest in clocking:
                 # Not everybody every day: a record with no gaps is a record
                 # nobody has to interpret, and interpreting is the job.
                 if random.random() < 0.06:
                     continue
                 jitter = timedelta(minutes=random.randint(-7, 12))
-                self._pair(company, people[key], day, opens, closes, source, zone, jitter)
+                # Y la pausa tampoco todos los días, por lo mismo: un día que
+                # se sale corriendo también existe y hay que saber leerlo.
+                self._pair(
+                    company,
+                    people[key],
+                    day,
+                    opens,
+                    closes,
+                    source,
+                    zone,
+                    jitter,
+                    rest=rest if rest and random.random() < 0.85 else None,
+                )
 
         # Somebody flexible: no roster, hours all over the place, and a week
         # well over the maximum that nothing was checking.
@@ -734,7 +763,16 @@ class Command(BaseCommand):
             source=PunchSource.MOBILE,
         )
 
-    def _pair(self, company, person, day, opens, closes, source, zone, jitter=timedelta()):
+    def _pair(
+        self, company, person, day, opens, closes, source, zone, jitter=timedelta(), *, rest=None
+    ):
+        """Un día de trabajo: entrada, la pausa si la hubo, y salida.
+
+        Los dos eventos de una pausa llevan `interval=BREAK` --- el que la abre
+        y el que la cierra ---, que es como el resto del producto la reconoce:
+        `_add_span` mira el intervalo del evento que abrió para saber en qué
+        cubo va el tramo.
+        """
         entered = datetime.combine(day, opens, tzinfo=zone) + jitter
         left = datetime.combine(day, closes, tzinfo=zone) + jitter
         Punch.objects.create(
@@ -744,6 +782,20 @@ class Command(BaseCommand):
             punch_type=PunchType.IN,
             source=source,
         )
+        if rest:
+            starts, ends = rest
+            for moment, kind in (
+                (starts, PunchType.OUT),  # sale a desayunar
+                (ends, PunchType.IN),  # y vuelve
+            ):
+                Punch.objects.create(
+                    tenant=company,
+                    employee=person,
+                    timestamp=datetime.combine(day, moment, tzinfo=zone) + jitter,
+                    punch_type=kind,
+                    source=source,
+                    interval=PunchInterval.BREAK,
+                )
         Punch.objects.create(
             tenant=company,
             employee=person,

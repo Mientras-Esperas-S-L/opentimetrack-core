@@ -20,6 +20,7 @@ from datetime import datetime, time, timedelta
 
 import django_filters
 from django.utils.translation import gettext_lazy as _
+from rest_framework.exceptions import ValidationError
 from rest_framework.filters import SearchFilter
 
 from apps.common.rangos import refuse_inverted_range, refuse_wrong_period_names
@@ -116,6 +117,32 @@ class BusquedaSinAcentos(SearchFilter):
     no millones--- y la alternativa (una columna normalizada con su índice)
     solo hace falta si algún día esto se queda corto.
     """
+
+    def filter_queryset(self, request, queryset, view):
+        """Un `?search=` que este listado no atiende se rechaza, no se ignora.
+
+        DRF se calla cuando el listado no declara `search_fields`: contesta 200
+        con la tabla entera. **Siete de los once listados de esta API estaban
+        así**, y el fallo no se ve mirando el código de cada uno ---el filtro es
+        global, así que el parámetro se acepta en todos--- sino comparando lo
+        que se pidió con lo que llega.
+
+        Aquí lo tapó meses una persona con tantos fichajes que llenaba ella sola
+        la primera página: la prueba miraba los primeros resultados, salían
+        todos suyos y parecía que el filtro funcionaba. Se destapó al resembrar
+        la demostración, con los fichajes repartidos.
+
+        Entregar la empresa entera cuando se pidió un recorte no es una molestia
+        de integración: es entregar el registro de quien no se preguntó, que es
+        justo lo que el art. 34.9 acota. Y se parece a una respuesta correcta,
+        que es lo que lo hace peor que un error.
+        """
+        pedido = request.query_params.get(self.search_param)
+        if pedido and not self.get_search_fields(view, request):
+            raise ValidationError(
+                {self.search_param: _("This listing does not support searching by text.")}
+            )
+        return super().filter_queryset(request, queryset, view)
 
     def get_search_terms(self, request):
         return [_sin_acentos(t) for t in super().get_search_terms(request)]

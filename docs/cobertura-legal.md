@@ -60,7 +60,7 @@ registro no la pide. Sí importan las dos que traen límites propios.
 | Temporal por sustitución | art. 15.3 | **Cubierto**, como fecha de fin |
 | Tiempo parcial | art. 12 | **Cubierto**, con horas y periodo |
 | Indefinido adscrito a obra | Ley 32/2006 | **Cubierto.** A efectos de jornada es un indefinido |
-| Fijo discontinuo | art. 16 | **A medias.** Ya se declaran los periodos de actividad con su fecha de llamamiento, y el cuadrante avisa si se asigna turno fuera de ellos. Falta la pantalla desde la que cargarlos: hoy es solo API |
+| Fijo discontinuo | art. 16 | **Cubierto.** Periodos de actividad con su fecha de llamamiento, que se cargan desde la ficha de la persona. Fuera de ellos no se espera jornada, el cuadrante avisa si se asigna un turno y la cobertura pendiente lo distingue de quien dejó la empresa |
 | Formativo en alternancia | art. 11.2 | **A medias.** Falta el tope del art. 11.2.b: 65 % de la jornada máxima el primer año, 85 % el segundo, formación incluida |
 | Formativo para práctica profesional | art. 11.3 | **A medias.** Comparte régimen con el anterior y son cosas distintas |
 | Contrato de relevo | art. 12.7 | **Falta.** La jornada del relevista debe cubrir al menos la reducción de quien se jubila parcialmente |
@@ -366,14 +366,21 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 1 | **Transcribir la resolución del BOE de 2026**, que es lo único que le falta al calendario para estar completo | **½ día.** Es copiar un boletín a un YAML versionado y verificarlo |
 | 2 | **Saldos de devolución**: horas extra compensadas, relevo de turno, distribución irregular. Convertir los avisos en una cuenta | **5-8 días.** Es una pieza, no tres: un saldo con su plazo por concepto ---4 meses el art. 35.1, 4 semanas el relevo, 12 meses la distribución irregular---, su pantalla y su columna en el informe. Arregla **tres filas del inventario de golpe** |
 | 3 | **Vacaciones**: devengo proporcional y traslado por IT | **3-4 días.** El devengo por fecha de alta y el traslado con el tope de 18 meses del art. 38.3 |
-| 4 | **Llamamiento del fijo discontinuo** (art. 16), ya señalado en el código | **2-3 días.** Periodos de actividad, y que fuera de ellos el cuadrante no espere jornada |
-| 5 | **Topes que se guardan y no se comprueban**: 30 % de complementarias al mes y 65/85 % del contrato formativo | **2 días.** El patrón ya existe: el de 80 horas extra al año se contrasta desde agosto y esto es acumular y avisar igual |
-| 6 | **Historia de la adscripción a departamento**, cuando el informe empiece a mentir | **2-3 días.** Una tabla de vigencias y los informes leyendo de ella |
-| 7 | **Reducciones de jornada por cuidados** (arts. 37.4, 37.5, 37.6 y 37.8). El permiso está catalogado; falta la mecánica de la fracción ---de ⅛ a ½ de la jornada, con sus fechas--- y su efecto en el cuadrante y en el cotejo | **4-6 días.** Son cuatro artículos con reglas distintas, y toca el cálculo de lo esperado |
-| 8 | **El acuerdo de trabajo a distancia y su umbral** (Ley 10/2021). El fichaje ya dice desde dónde se trabajó; no consta el acuerdo ni si se pasa del 30 % que lo hace obligatorio | **2-3 días.** El documento con sus fechas y el porcentaje calculado sobre lo trabajado |
-| 9 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
+| 4 | **Topes que se guardan y no se comprueban**: 30 % de complementarias al mes y 65/85 % del contrato formativo | **2 días.** El patrón ya existe: el de 80 horas extra al año se contrasta desde agosto y esto es acumular y avisar igual |
+| 5 | **Historia de la adscripción a departamento**, cuando el informe empiece a mentir | **2-3 días.** Una tabla de vigencias y los informes leyendo de ella |
+| 6 | **Reducciones de jornada por cuidados** (arts. 37.4, 37.5, 37.6 y 37.8). El permiso está catalogado; falta la mecánica de la fracción ---de ⅛ a ½ de la jornada, con sus fechas--- y su efecto en el cuadrante y en el cotejo | **4-6 días.** Son cuatro artículos con reglas distintas, y toca el cálculo de lo esperado |
+| 7 | **El acuerdo de trabajo a distancia y su umbral** (Ley 10/2021). El fichaje ya dice desde dónde se trabajó; no consta el acuerdo ni si se pasa del 30 % que lo hace obligatorio | **2-3 días.** El documento con sus fechas y el porcentaje calculado sobre lo trabajado |
+| 8 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
 
 ### Hecho desde que se escribió esta lista
+
+- **El llamamiento del fijo discontinuo** (art. 16, 28/08/2026). Estaba
+  estimado en 2-3 días y salió en dos tandas. Periodos de actividad con su fecha
+  de llamamiento, cargados desde la ficha de la persona; fuera de ellos no se
+  espera jornada, el cuadrante avisa si se asigna un turno y la cobertura
+  pendiente lo distingue de quien dejó la empresa ---que no se resuelven igual:
+  a quien se fue hay que reasignarle el turno, a quien está entre campañas a lo
+  mejor basta con moverlo unos días---.
 
 - **La interfaz en catalán y gallego** (28/08/2026). Estaba estimada en 4-6 días
   para unas 330 cadenas; fueron **898 en 917** y doce tandas, porque la cuenta

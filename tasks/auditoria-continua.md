@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 147 · La interfaz habla los tres idiomas entera. Ahora **las trece situaciones de cobertura legal** que marcó Francisco el 28/08. La auditoría exploratoria queda para después: el contador de vueltas en blanco está en 2 de 3. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 148 · La interfaz habla los tres idiomas entera. Ahora **las trece situaciones de cobertura legal** que marcó Francisco el 28/08: **una cubierta, doce por delante**. La auditoría exploratoria queda para después: el contador de vueltas en blanco está en 2 de 3. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,134 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 149 --- Lo que salió al limpiar la base (28/08)
+
+Esta vuelta no estaba en la lista: la abrieron cuatro pruebas de navegador que
+se pusieron rojas al **resembrar la demostración** para las capturas del
+dossier. Ninguna era una regresión. Las cuatro llevaban meses en verde apoyadas
+en el poso que dejan las propias ejecuciones, y **una tapaba un defecto de
+verdad**.
+
+**El defecto: `?search=` no filtraba y contestaba 200.**
+
+`/punches/?search=Hugo` devolvía 583 fichajes de diez personas. El filtro de
+búsqueda está declarado globalmente, así que el parámetro se acepta en los once
+listados de la API; pero DRF solo busca donde el listado declara
+`search_fields`, y **siete de los once no los declaraban**. Ni error ni aviso:
+la tabla entera.
+
+Lo interesante es por qué no salió antes. La prueba lo comprobaba a propósito
+---su comentario dice que un filtro que ignora el término contesta 200 con la
+empresa entera y que por eso mira lo que trae--- y aun así pasaba: miraba los
+primeros resultados y una persona con casi mil fichajes llenaba ella sola la
+primera página. La intención estaba bien y la muestra no.
+
+Arreglado en los dos sentidos: los fichajes se buscan por nombre, apellido y
+número de empleado ---sin acentos, como el resto---, y **un `search` que el
+listado no atiende se rechaza con un 400 que lo dice**, en lugar de ignorarse.
+Cuatro listados quedan así a propósito (festivos, tipos de ausencia, turnos y
+patrones); si algún día han de buscar, la prueba lo señala sola.
+
+**El segundo: renovar la sesión no miraba a la persona.**
+
+Salió tirando del hilo de por qué siete pruebas de aislamiento fallaban con la
+base recién sembrada. Los ficheros de sesión de la suite guardaban tokens de
+personas que el resembrado había sustituido, y la comprobación de «¿sigue
+valiendo?» ---que renueva contra el servidor **a propósito**, para no fiarse de
+la fecha--- contestaba que sí: `/auth/refresh/` devolvía **200 y un acceso
+nuevo** para alguien dado de baja, y también para alguien borrado de la base.
+
+Medido antes de arreglarlo, porque cambia lo que es: **con ese token no se entra
+a nada**. La autenticación sí comprueba `is_active` y todo responde 401. No era
+acceso indebido; era una respuesta que dice «bien». El coste, aun así, fue real:
+siete pruebas rojas señalando al producto por algo que no era suyo.
+
+Ahora contesta lo mismo que a un token caducado o falso ---no se distinguen, que
+diría si esa cuenta llegó a existir---. Y arregló los siete fallos **solo**: el
+arranque pide la renovación, le dicen que no, y vuelve a entrar.
+
+**Lo que le faltaba a la demostración,** que era la causa de dos de los cuatro
+fallos y también un hueco del producto enseñado:
+
+- **Ninguna pausa.** El art. 3.d pide anotar el principio y el final de las
+  pausas que no son tiempo de trabajo, el producto las registra desde hace
+  vueltas y la demostración no tenía **ni una**. Ahora las tiene quien hace
+  jornada larga, el 85 % de los días. De paso, un mes pasa de una página ---de
+  44 fichajes a unos 70---, que es lo que dos de las pruebas necesitaban y la
+  semilla no había dado nunca.
+- **Quien administra no fichaba.** Al entrar como administradora, «Mi jornada»
+  salía en blanco: la primera pantalla de quien va a probar el producto.
+
+**Y una prueba que pedía un imposible.** `44-el-dia-no-se-parte` buscaba a
+alguien con **más de cincuenta fichajes en un solo día**. Nadie ficha cincuenta
+veces en un día: eran fichajes que otras pruebas habían ido apilando sobre la
+misma persona y el mismo día. Solo podía correr sobre una base sucia. El defecto
+que vigila ---que un día no salga partido entre dos páginas--- no necesita ese
+disparate: basta con que el periodo pedido pase de una página, y un mes de
+alguien que hace pausas lo pasa de sobra.
+
+**Otras dos correcciones de la suite:**
+
+- `11-resto-de-pantallas` daba por bueno el filtro si quedaban **menos filas**.
+  Con una persona elegida la pantalla trae el periodo entero en vez de la
+  primera página ---la unidad que se lee ahí es la jornada---, así que filtrar
+  puede acabar enseñando **más** filas. Contaba el tamaño de la página, no el
+  filtro. Ahora se mide contra lo que el servidor dice de esa persona **en el
+  rango que la pantalla tiene puesto**, que fue el segundo tropiezo: preguntar
+  por todos sus fichajes daba su histórico entero, 106, contra los 66 del mes a
+  la vista.
+- `02-aislamiento` borraba el departamento que creaba **al final del cuerpo**,
+  no en un `finally`. Cuando la prueba falló, el departamento se quedó, y quien
+  avisó fue `zz-sin-residuos` doce minutos después sin poder decir quién lo
+  había dejado. Es la lección de la vuelta 148 repetida.
+
+**Deuda de traducción que destapó `makemessages`:** doce cadenas mías sin
+traducir y **cuatro `fuzzy`** en un proyecto que tenía los tres catálogos a cero.
+Los huecos son lo de menos; los `fuzzy` son texto **equivocado que se muestra**
+---gettext había emparejado «activity starts» con «Registro de actividad»---.
+Traducidas las doce a los tres idiomas y los catálogos vuelven a su estado
+exacto de antes: 22, 143 y 142 huecos viejos, cero `fuzzy`.
+
+**El guard de aislamiento hizo su trabajo:** el `User.objects` que añadí al
+renovar la sesión no acota por empresa, y me obligó a declararlo con su motivo
+---la renovación es anónima: el token trae el identificador y todavía no hay
+empresa--- en vez de dejarlo pasar.
+
+**Queda anotado, sin tocar:** otras tres pruebas borran lo que crean fuera de un
+`finally` ---`04-personas`, `08-formularios-gestion` y `12-acciones-masivas`---.
+Hoy no fallan; el guard de residuos las cazaría igual, tarde y sin nombre.
+
+**Cifras al cerrar:** 1.335 pruebas de backend y 304 de navegador en verde,
+`ruff` y `ruff format` limpios, `eslint` y `prettier` limpios, `i18n:check` en
+verde con 915 cadenas y 19 exentas.
+
+### Vuelta 148 --- El fijo discontinuo, parte B: la pantalla (28/08)
+
+**Hecho:** el diálogo de temporadas, que se abre desde «Más acciones» en la fila
+de la persona y **solo si es fija discontinua**. Tres pruebas de navegador con su
+contraste, y las quince cadenas nuevas traducidas a catalán y gallego en el mismo
+paso.
+
+**Y la cobertura pendiente decía algo falso.** `uncovered` ya detectaba el turno
+fuera de temporada ---`is_engaged_on` se lo daba hecho--- pero lo etiquetaba
+`left_the_company`: «dejó la empresa» de alguien que solo está esperando su
+campaña. No se resuelven igual, que es justo lo que dice el docstring de esa
+función: a quien se fue hay que reasignarle el turno; a quien está fuera de
+temporada a lo mejor solo hay que moverlo unos días. Ahora tiene motivo propio.
+
+**Tres tropiezos, y los tres míos:**
+
+1. **Importé un icono que no existe** en MUI 9 ---`DeleteOutline`--- y Vite
+   devolvió un 500 que dejó la pantalla en blanco. Es **la lección 252 repetida
+   entera**. Se comprueba con un `ls` del paquete y no lo hice.
+2. **Leí `.results` de algo que ya venía normalizado.** `page()` devuelve
+   `{rows, count, hasMore}`, así que la lista salía vacía con el servidor
+   contestando 200 y 201: todo parecía bien y no había nada.
+3. **Un contraste que no contrastó.** Saboteé `{person.seasonal && (` con un
+   `replace` que no encajaba ---prettier lo había compactado a una línea--- y la
+   prueba corrió contra el código bueno. Pasó, y lo leí como «el contraste
+   funciona».
 
 ### Vuelta 147 --- El fijo discontinuo, parte A (28/08)
 

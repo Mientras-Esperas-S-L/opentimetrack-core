@@ -14,6 +14,19 @@ import { expect, test } from '@playwright/test'
 
 import { api, huecosVisibles, irA, marca, vigilarConsola } from './apoyo.js'
 
+/** El identificador de quien se llama así, preguntándoselo al servidor.
+ *
+ *  La pantalla enseña nombres y la API filtra por identificador, y escribirlo a
+ *  mano en la prueba lo ata a una semilla concreta: en cuanto se resiembra, el
+ *  identificador es otro.
+ */
+async function idDe(page, nombre) {
+  const { status, body } = await api(page, `/employees/?search=${encodeURIComponent(nombre)}`)
+  expect(status).toBe(200)
+  expect(body.results.length, `no hay nadie que se llame ${nombre}`).toBeGreaterThan(0)
+  return body.results[0].id
+}
+
 test.describe('Fichajes', () => {
   test.use({ storageState: 'e2e/.sesiones/admin.json' })
 
@@ -26,8 +39,6 @@ test.describe('Fichajes', () => {
     const filas = () => page.getByRole('row').filter({ hasNotText: 'Origen' })
     await expect(filas().first()).toBeVisible()
 
-    const antes = await filas().count()
-
     await page.getByRole('combobox', { name: /Persona/ }).fill('Hugo')
     await page.getByRole('option', { name: /Hugo Bermejo/ }).click()
 
@@ -37,12 +48,37 @@ test.describe('Fichajes', () => {
     // era una carrera: 900 ms bastaban casi siempre y fallaban cuando la API
     // tardaba más, y el fallo salía como «filtrar no quitó nada», acusando al
     // producto de un defecto que no tenía. Se espera por la condición.
-    await expect
-      .poll(() => filas().count(), { message: 'filtrar no quitó nada' })
-      .toBeLessThan(antes)
+    // **No** «quedan menos filas»: con una persona elegida la pantalla trae el
+    // periodo entero en vez de la primera página ---la unidad que se lee ahí es
+    // la jornada, y partirla era el defecto que arregló `44-el-dia-no-se-parte`
+    // ---, así que filtrar puede acabar enseñando **más** filas que la vista
+    // sin filtrar. Contar filas medía el tamaño de la página, no el filtro.
+    //
+    // Se mide contra lo que el servidor dice que tiene esa persona, que es la
+    // única vara que no cambia con la paginación.
+    // Con el mismo rango que tiene puesto la pantalla: preguntar por todos sus
+    // fichajes daba su histórico entero ---106--- contra los 66 del mes que se
+    // está viendo, y el desajuste parecía un fallo de la tabla.
+    const desde = await page.getByLabel('Desde').inputValue()
+    const hasta = await page.getByLabel('Hasta').inputValue()
+    const rango = [
+      `employee=${await idDe(page, 'Hugo')}`,
+      desde && `date_from=${desde}`,
+      hasta && `date_to=${hasta}`,
+    ]
+      .filter(Boolean)
+      .join('&')
 
-    // Y que no pasó por quedarse vacía a medio pintar, que también es «menos».
-    await expect(filas().first()).toBeVisible()
+    const losDeHugo = await api(page, `/punches/?${rango}`)
+    expect(losDeHugo.status).toBe(200)
+    expect(losDeHugo.body.count, 'Hugo no tiene fichajes en el periodo').toBeGreaterThan(0)
+
+    // Las filas incluyen el encabezado de cada día, así que son unas cuantas
+    // más que los fichajes; lo que se comprueba es que están **todos**, no que
+    // la tabla se quedó en la primera página.
+    await expect
+      .poll(() => filas().count(), { message: 'la tabla no acabó de traer los suyos' })
+      .toBeGreaterThanOrEqual(losDeHugo.body.count)
 
     // Filtrado por una persona, la columna «Persona» desaparece: repetir el
     // mismo nombre en cada fila no informa de nada. Está bien pensado, y por
