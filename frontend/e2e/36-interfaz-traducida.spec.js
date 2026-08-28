@@ -75,12 +75,12 @@ test.describe('El idioma de la interfaz', () => {
    *  verde es peor que no tenerla.
    *
    *  Historial de muestras: «Ver también las bajas» (Personas), traducida el
-   *  27/08/2026.
+   *  27/08/2026; «Qué contiene y qué no» (Informes), traducida el 28/08/2026.
    */
   const SIN_TRADUCIR = {
-    ruta: '/panel/informes',
-    titulo: 'Informes',
-    texto: 'Qué contiene y qué no',
+    ruta: '/panel/turnos',
+    titulo: 'Turnos',
+    texto: 'Las formas de jornada que se repiten',
   }
 
   test('y lo que todavía no está traducido sale en castellano, no en inglés', async ({ page }) => {

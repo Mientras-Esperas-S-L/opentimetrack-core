@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -58,12 +58,14 @@ import {
 import { SelectionBar } from '../../components/selection.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useDebounced } from '../../hooks/useDebounced.js'
+import { plural } from '../../components/format.js'
+import { alCatalogo, IDIOMAS_QUE_SE_OFRECEN } from '../../i18n/index.js'
 import { useSelection } from '../../hooks/useSelection.js'
 
 const ROLES = [
-  { value: 'EMPLOYEE', label: 'Persona trabajadora' },
-  { value: 'MANAGER', label: 'Responsable' },
-  { value: 'ADMIN', label: 'Administración' },
+  { value: 'EMPLOYEE', label: alCatalogo('Persona trabajadora') },
+  { value: 'MANAGER', label: alCatalogo('Responsable') },
+  { value: 'ADMIN', label: alCatalogo('Administración') },
 ]
 
 const roleLabel = (value) => ROLES.find((r) => r.value === value)?.label ?? value
@@ -78,59 +80,46 @@ const roleLabel = (value) => ROLES.find((r) => r.value === value)?.label ?? valu
  *  never got saved.
  */
 const REGIMES = [
-  { value: 'FULL_TIME', label: 'Jornada completa', hint: 'La de la empresa.' },
+  {
+    value: 'FULL_TIME',
+    label: alCatalogo('Jornada completa'),
+    hint: alCatalogo('La de la empresa.'),
+  },
   {
     value: 'PART_TIME',
-    label: 'Jornada parcial',
-    hint: 'Sin horas extraordinarias (art. 12.4.c ET). Las de más son complementarias.',
+    label: alCatalogo('Jornada parcial'),
+    hint: alCatalogo('Sin horas extraordinarias (art. 12.4.c ET). Las de más son complementarias.'),
   },
   {
     value: 'REDUCED',
-    label: 'Jornada reducida',
-    hint: 'Art. 37.6 ET: guarda legal o cuidados. No es parcial, conserva las horas extra.',
+    label: alCatalogo('Jornada reducida'),
+    hint: alCatalogo(
+      'Art. 37.6 ET: guarda legal o cuidados. No es parcial, conserva las horas extra.',
+    ),
   },
-  { value: 'TRAINING', label: 'Contrato formativo', hint: 'Art. 11 ET.' },
+  { value: 'TRAINING', label: alCatalogo('Contrato formativo'), hint: alCatalogo('Art. 11 ET.') },
   {
     value: 'VARIABLE',
-    label: 'Sin cifra pactada',
-    hint: 'Horas sueltas, llamamiento. Solo se le aplica el máximo legal.',
+    label: alCatalogo('Sin cifra pactada'),
+    hint: alCatalogo('Horas sueltas, llamamiento. Solo se le aplica el máximo legal.'),
   },
 ]
 
 const PERIODS = [
-  { value: 'WEEK', label: 'a la semana' },
-  { value: 'MONTH', label: 'al mes' },
-  { value: 'YEAR', label: 'al año' },
+  { value: 'WEEK', label: alCatalogo('a la semana') },
+  { value: 'MONTH', label: alCatalogo('al mes') },
+  { value: 'YEAR', label: alCatalogo('al año') },
 ]
 
 const NIGHT_STATUS = [
-  { value: 'AUTO', label: 'Según el cuadrante' },
-  { value: 'YES', label: 'Sí' },
-  { value: 'NO', label: 'No' },
+  { value: 'AUTO', label: alCatalogo('Según el cuadrante') },
+  { value: 'YES', label: alCatalogo('Sí') },
+  { value: 'NO', label: alCatalogo('No') },
 ]
 
 /** Whether the regime has a figure to go with it, which decides three fields. */
 const takesHours = (regime) => regime !== 'VARIABLE'
 const needsHours = (regime) => regime === 'PART_TIME' || regime === 'TRAINING'
-
-/** Los idiomas que de verdad existen.
- *
- *  Cinco, y cada uno con su catálogo. Lo que no está traducido cae al
- *  castellano, no al inglés: `LANGUAGE_CODE` es `es` y Django encadena por ahí.
- *  Por eso un catálogo a medias es utilizable ---catalán donde llega a las
- *  personas, castellano en las etiquetas internas--- y no una mezcla con inglés.
- *
- *  Euskera, francés, portugués y alemán siguen fuera. El euskera llegó a
- *  tener catálogo y se retiró: iba incompleto ---faltaban los párrafos
- *  largos de derecho laboral--- y medio idioma en un producto que explica
- *  obligaciones legales no es medio bueno, es confuso.
- */
-const IDIOMAS = [
-  ['es', 'Español'],
-  ['ca', 'Català'],
-  ['gl', 'Galego'],
-  ['en', 'Inglés'],
-]
 
 const EMPTY_FORM = {
   first_name: '',
@@ -226,7 +215,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <form onSubmit={submit}>
-        <DialogTitle>{person ? 'Editar persona' : 'Dar de alta'}</DialogTitle>
+        <DialogTitle>{person ? t('Editar persona') : t('Dar de alta')}</DialogTitle>
         <DialogContent>
           <ErrorNote error={error} />
           <Stack sx={{ gap: 2, pt: 1 }}>
@@ -273,7 +262,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
               >
                 {ROLES.map((role) => (
                   <MenuItem key={role.value} value={role.value}>
-                    {role.label}
+                    {t(role.label)}
                   </MenuItem>
                 ))}
               </TextField>
@@ -316,7 +305,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                 helperText={t('Vacío = el de la empresa.')}
               >
                 <MenuItem value="">{t('El de la empresa')}</MenuItem>
-                {IDIOMAS.map(([codigo, nombre]) => (
+                {IDIOMAS_QUE_SE_OFRECEN.map(([codigo, nombre]) => (
                   <MenuItem key={codigo} value={codigo}>
                     {nombre}
                   </MenuItem>
@@ -336,8 +325,8 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
               onChange={set('workplace')}
               helperText={
                 workplaces.length === 0
-                  ? 'Todavía no hay centros. Se crean en Centros.'
-                  : 'Decide sus festivos locales y la zona horaria de su jornada.'
+                  ? t('Todavía no hay centros. Se crean en Centros.')
+                  : t('Decide sus festivos locales y la zona horaria de su jornada.')
               }
             >
               <MenuItem value="">{t('Sin asignar')}</MenuItem>
@@ -399,11 +388,11 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                     contracted_hours: takesHours(event.target.value) ? form.contracted_hours : '',
                   })
                 }
-                helperText={REGIMES.find((r) => r.value === form.regime)?.hint}
+                helperText={t(REGIMES.find((r) => r.value === form.regime)?.hint ?? '')}
               >
                 {REGIMES.map((regime) => (
                   <MenuItem key={regime.value} value={regime.value}>
-                    {regime.label}
+                    {t(regime.label)}
                   </MenuItem>
                 ))}
               </TextField>
@@ -419,8 +408,8 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                     slotProps={{ htmlInput: { min: 0.5, step: 0.5 } }}
                     helperText={
                       needsHours(form.regime)
-                        ? 'Art. 3.b: obligatorias en este régimen.'
-                        : 'Vacío = la jornada de la empresa.'
+                        ? t('Art. 3.b: obligatorias en este régimen.')
+                        : t('Vacío = la jornada de la empresa.')
                     }
                   />
                   <TextField
@@ -432,7 +421,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                   >
                     {PERIODS.map((period) => (
                       <MenuItem key={period.value} value={period.value}>
-                        {period.label}
+                        {t(period.label)}
                       </MenuItem>
                     ))}
                   </TextField>
@@ -504,7 +493,7 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
               >
                 {NIGHT_STATUS.map((status) => (
                   <MenuItem key={status.value} value={status.value}>
-                    {status.label}
+                    {t(status.label)}
                   </MenuItem>
                 ))}
               </TextField>
@@ -635,18 +624,22 @@ function RowActions({
         // Con el nombre dentro del rótulo accesible: una lista de diecinueve
         // botones «Editar» no le dice a nadie cuál es cuál, y quien navega con
         // lector de pantalla oye exactamente eso.
-        <Button size="small" aria-label={`Editar ${quien}`} onClick={onEdit}>
+        <Button size="small" aria-label={t('Editar {{quien}}', { quien })} onClick={onEdit}>
           {t('Editar')}
         </Button>
       ) : (
-        <Button size="small" aria-label={`Volver a dar de alta a ${quien}`} onClick={onReactivate}>
+        <Button
+          size="small"
+          aria-label={t('Volver a dar de alta a {{quien}}', { quien })}
+          onClick={onReactivate}
+        >
           {t('Volver a dar de alta')}
         </Button>
       )}
 
       <IconButton
         size="small"
-        aria-label={`Más acciones para ${quien}`}
+        aria-label={t('Más acciones para {{quien}}', { quien })}
         onClick={(event) => setAnchor(event.currentTarget)}
       >
         <MoreVertIcon fontSize="small" />
@@ -850,7 +843,11 @@ export default function People() {
 
     if (fallos.length) {
       setError({
-        message: `${gente.length - fallos.length} de ${gente.length}. No se pudo con: ${fallos.join(', ')}.`,
+        message: t('{{hechas}} de {{total}}. No se pudo con: {{fallidas}}.', {
+          hechas: gente.length - fallos.length,
+          total: gente.length,
+          fallidas: fallos.join(', '),
+        }),
       })
     }
   }
@@ -889,15 +886,22 @@ export default function People() {
             </Button>
           }
         >
-          Le quedaban {colgando} {colgando === 1 ? 'turno asignado' : 'turnos asignados'} después de
-          hoy. No se han borrado: hay que ponerles a otra persona, o esos días saldrán como ausencia
-          sin justificar.
+          {t(
+            'Le quedaban {{turnos}} después de hoy. No se han borrado: hay que ponerles a otra persona, o esos días saldrán como ausencia sin justificar.',
+            {
+              turnos: `${colgando} ${plural(colgando, t('turno asignado'), t('turnos asignados'))}`,
+            },
+          )}
         </Alert>
       )}
 
       {sent && (
         <Alert severity="success" onClose={() => setSent(null)} sx={{ mb: 2 }}>
-          Enlace enviado a <strong>{sent}</strong>. Caduca en 24 horas.
+          <Trans
+            i18nKey="Enlace enviado a <destinatario>{{correo}}</destinatario>. Caduca en 24 horas."
+            values={{ correo: sent }}
+            components={{ destinatario: <strong /> }}
+          />
         </Alert>
       )}
 
@@ -997,15 +1001,15 @@ export default function People() {
       {isAdmin && (
         <SelectionBar
           selection={pick}
-          noun={{ singular: 'persona', plural: 'personas' }}
+          noun={{ singular: alCatalogo('persona'), plural: alCatalogo('personas') }}
           busy={Boolean(enCurso)}
           actions={[
             {
-              label: 'Mover a departamento…',
+              label: t('Mover a departamento…'),
               onClick: (event) => setMoviendo({ que: 'department', ancla: event.currentTarget }),
             },
             {
-              label: 'Cambiar de centro…',
+              label: t('Cambiar de centro…'),
               variant: 'outlined',
               onClick: (event) => setMoviendo({ que: 'workplace', ancla: event.currentTarget }),
             },
@@ -1013,7 +1017,7 @@ export default function People() {
               // Lo irreversible pregunta, y la pregunta dice el número.
               // «¿Estás seguro?» no es una pregunta: no dice a cuánta gente
               // afecta.
-              label: 'Dar de baja',
+              label: t('Dar de baja'),
               variant: 'text',
               color: 'inherit',
               onClick: () =>
@@ -1031,7 +1035,7 @@ export default function People() {
                     'Dejan de poder fichar. No se borra nada: sus registros se conservan los años que diga la empresa, y volver a darles de alta es inmediato.',
                   ),
                   verb: t('Dar de baja'),
-                  run: () => enLote('Dando de baja', { is_active: false }),
+                  run: () => enLote(t('Dando de baja'), { is_active: false }),
                 }),
             },
           ]}
@@ -1042,7 +1046,7 @@ export default function People() {
         <Loading rows={5} />
       ) : rows.length === 0 ? (
         <Empty>
-          {search ? 'Nadie coincide con esa búsqueda.' : 'Todavía no hay nadie dado de alta.'}
+          {search ? t('Nadie coincide con esa búsqueda.') : t('Todavía no hay nadie dado de alta.')}
         </Empty>
       ) : (
         <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
@@ -1057,7 +1061,7 @@ export default function People() {
                     <Checkbox
                       size="small"
                       slotProps={{
-                        input: { 'aria-label': 'Seleccionar todas las de esta página' },
+                        input: { 'aria-label': t('Seleccionar todas las de esta página') },
                       }}
                       checked={pick.allSelected}
                       indeterminate={pick.someSelected}
@@ -1087,7 +1091,10 @@ export default function People() {
                           size="small"
                           slotProps={{
                             input: {
-                              'aria-label': `Seleccionar a ${`${person.first_name} ${person.last_name}`.trim() || person.email}`,
+                              'aria-label': t('Seleccionar a {{quien}}', {
+                                quien:
+                                  `${person.first_name} ${person.last_name}`.trim() || person.email,
+                              }),
                             },
                           }}
                           checked={pick.isSelected(person)}
@@ -1121,7 +1128,7 @@ export default function People() {
                     <Chip
                       size="small"
                       variant="outlined"
-                      label={roleLabel(person.role)}
+                      label={t(roleLabel(person.role))}
                       color={person.role === 'EMPLOYEE' ? 'default' : 'primary'}
                     />
                   </TableCell>
@@ -1140,8 +1147,9 @@ export default function People() {
                           setConfirming({
                             title: t('Borrar definitivamente'),
                             body: `${person.first_name} ${person.last_name}`.trim() || person.email,
-                            detail:
+                            detail: t(
                               'Se retira de la lista y no se puede deshacer. Solo funciona si no dejó nada que explicar: ni fichajes, ni ausencias, ni decisiones sobre otras personas. Si dejó algo, no se borra y se te dice qué.',
+                            ),
                             verb: t('Borrar'),
                             run: () => erase.mutate(person.id),
                           })
@@ -1151,8 +1159,9 @@ export default function People() {
                           setConfirming({
                             title: t('Dar de baja'),
                             body: `${person.first_name} ${person.last_name}`.trim() || person.email,
-                            detail:
+                            detail: t(
                               'Deja de poder fichar y de entrar. Sus registros se conservan y puede volver a darse de alta cuando haga falta.',
+                            ),
                             verb: t('Dar de baja'),
                             run: () => deactivate.mutate(person.id),
                           })
@@ -1198,17 +1207,17 @@ export default function People() {
       >
         <MenuItem
           onClick={() => {
-            enLote('Moviendo', { [moviendo.que]: null })
+            enLote(t('Moviendo'), { [moviendo.que]: null })
             setMoviendo(null)
           }}
         >
-          {moviendo?.que === 'workplace' ? 'Sin centro' : 'Sin departamento'}
+          {moviendo?.que === 'workplace' ? t('Sin centro') : t('Sin departamento')}
         </MenuItem>
         {(moviendo?.que === 'workplace' ? workplaces : departments).map((destino) => (
           <MenuItem
             key={destino.id}
             onClick={() => {
-              enLote('Moviendo', { [moviendo.que]: destino.id })
+              enLote(t('Moviendo'), { [moviendo.que]: destino.id })
               setMoviendo(null)
             }}
           >

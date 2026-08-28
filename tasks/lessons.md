@@ -4652,3 +4652,50 @@ Es la misma forma de la lección 265 y de la muestra «sin traducir» de la prue
 cuando algo depende de un estado transitorio del proyecto, o se escribe para que
 sobreviva al cambio, o se deja escrito **cuándo** va a romperse y qué hacer entonces.
 Lo que no vale es dejarlo mudo.
+
+## 283. Dos copias de una lista divergen; la pregunta no es si, es cuándo
+
+La lista de idiomas estaba escrita dos veces: en los ajustes de la empresa y en la
+ficha de cada persona. Ayer arreglé el criterio en una ---«English» y no «Inglés»---
+y no supe que había otra. **Doce horas** entre el arreglo y el descubrimiento, y solo
+lo vi porque me tocó traducir el segundo fichero.
+
+Lo que hace este caso peor de lo que parece es que **ninguna prueba podía verlo**.
+Las dos listas eran correctas por separado, ninguna estaba rota, y nadie compara la
+lista de Ajustes con la de Personas. Un defecto que no vive en ninguno de los dos
+sitios sino en la relación entre ellos.
+
+**La regla**: al cambiar el criterio de una lista de datos ---no de código: datos---,
+buscar si hay otra copia **antes** de tocar la primera. Un `grep` del primer elemento
+(«Català» aquí) cuesta diez segundos y es la diferencia entre un arreglo y media
+divergencia.
+
+Y al unificarlas, el razonamiento se va con la lista: si el «por qué son cuatro y no
+ocho» se queda en la pantalla que ya no la tiene, la próxima persona la vuelve a
+escribir en su sitio.
+
+## 284. Una prueba que depende de que el reloj no se repita falla sola
+
+Al quitar de en medio las personas que una prueba creaba en cada pasada, la sustituí
+por fechas derivadas del instante: «el minuto en que corre, así que dos tandas
+seguidas caen en semanas distintas». Escribí incluso el aviso de que dos que
+arrancaran el mismo minuto colisionarían, y que la suite tarda doce, así que no
+pasaría.
+
+**Falló en la ejecución siguiente**, dentro del mismo segundo, porque estaba
+probando solo esa prueba y no la suite entera.
+
+Lo que falla ahí no es el cálculo del minuto: es haber calculado en vez de
+preguntar. El servidor sabe si esas fechas están ocupadas y lo dice con un código de
+error; pedir los días y probar los siguientes si están cogidos es lo que haría
+cualquiera, y no depende de nada.
+
+**La regla**: cuando una prueba necesita un hueco ---unas fechas, un nombre, un
+número--- pedirlo y reaccionar a la respuesta, no calcularlo y confiar. Un cálculo
+que «casi nunca» choca produce un rojo cada muchas tandas, sin relación con lo que
+se estaba tocando, y eso enseña a mirar los rojos de reojo --- que es el peor daño
+que se le puede hacer a una suite.
+
+Y el detalle que lo delata: **escribí el modo de fallo en el propio comentario** y
+seguí adelante igual. Cuando uno se descubre documentando por qué algo podría
+romperse, eso no es una nota al pie: es la lista de lo que falta por arreglar.

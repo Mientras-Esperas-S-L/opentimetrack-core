@@ -145,6 +145,21 @@ const PANTALLAS = [
       gl: 'revogable sen tocar a conta de ninguén',
     },
   },
+  {
+    ruta: '/panel/informes',
+    titulo: { es: 'Informes', ca: 'Informes', gl: 'Informes' },
+    propio: {
+      es: 'El documento que se entrega a la Inspección',
+      ca: 'El document que es lliura a la Inspecció',
+      gl: 'O documento que se entrega á Inspección',
+    },
+    control: {
+      es: 'Descargar PDF',
+      ca: 'Descarregar el PDF',
+      gl: 'Descargar o PDF',
+    },
+    rol: 'button',
+  },
 ]
 
 test.describe('La pantalla, en los tres idiomas', () => {

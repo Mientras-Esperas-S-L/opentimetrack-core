@@ -51,7 +51,16 @@ const DE_PRUEBA =
  *  sujeto se reutiliza; si una prueba necesita uno nuevo cada vez, lo que toca
  *  es que lo retire, no ampliar esta lista.
  */
-const REUTILIZADOS = ['cobertura.prueba@example.com', 'extremos.prueba@example.com']
+const REUTILIZADOS = [
+  'cobertura.prueba@example.com',
+  'extremos.prueba@example.com',
+  // Los dos de `14-decidir-en-bloque`. Esa prueba **aprueba** ausencias, y una
+  // aprobada no se cancela, así que quien la tiene ya no se puede borrar. Antes
+  // creaba gente nueva cada pasada para estrenar calendario y dejaba dos
+  // irrecuperables por tanda; ahora reutiliza estos dos y se mueve de fechas.
+  'bloque.uno@demo.local',
+  'bloque.dos@demo.local',
+]
 
 /** Qué hacer cuando esto falla, dicho en el propio fallo. */
 const COMO_SE_ARREGLA =
@@ -64,18 +73,32 @@ const COMO_SE_ARREGLA =
  *  defecto habría bastado ---por eso pasó en verde a la primera---. Pero el
  *  sedimento crece: en cuanto pasara de veinte, el guard estaría mirando las
  *  veinte primeras y callándose sobre el resto, ciego justo cuando hace falta.
- *  Así que se pide todo y se comprueba que de verdad vino todo.
+ *
+ *  **Recorre las páginas**, y no se conforma con pedir `page_size=1000`: el
+ *  servidor tiene su propio tope y devuelve lo que quiere, no lo que se le
+ *  pide. Pedir mil y comprobar que no hay una segunda página se ponía rojo a
+ *  las cincuenta y una bajas ---por debajo del tope de sesenta que este guard
+ *  dice vigilar---, así que el guard no podía llegar a medir su propio límite.
+ *  Un tope que no se alcanza nunca no es un tope: es un rojo que llega antes.
  */
 async function listaEntera(page, ruta, filtro = '') {
-  const { body } = await api(page, `${ruta}?page_size=1000${filtro}`)
-  const filas = body?.results ?? (Array.isArray(body) ? body : [])
-  expect(
-    body?.next ?? null,
-    `${ruta} devolvió más de una página: esta comprobación estaría mirando solo ` +
-      'la primera y dando por limpio lo que no ha visto',
-  ).toBeNull()
-  return filas
+  const filas = []
+  for (let pagina = 1; pagina <= PAGINAS_COMO_MUCHO; pagina += 1) {
+    const { body } = await api(page, `${ruta}?page_size=1000&page=${pagina}${filtro}`)
+    filas.push(...(body?.results ?? (Array.isArray(body) ? body : [])))
+    if (!body?.next) return filas
+  }
+  // Y si se agotan las páginas, se dice: callarlo sería exactamente lo que este
+  // recorrido existe para evitar.
+  throw new Error(
+    `${ruta} tiene más de ${PAGINAS_COMO_MUCHO} páginas. Esta comprobación estaría ` +
+      'mirando una parte y dando por limpio lo que no ha visto.',
+  )
 }
+
+/** Un tope al recorrido, no a la lista: si algo devolviera `next` para siempre,
+ *  la suite se quedaría dando vueltas en vez de fallar. */
+const PAGINAS_COMO_MUCHO = 40
 
 test.use({ storageState: 'e2e/.sesiones/admin.json' })
 

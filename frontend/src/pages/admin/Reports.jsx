@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
@@ -17,7 +18,7 @@ import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { ErrorNote, PageHeader, Panel } from '../../components/common.jsx'
 import { save } from '../../services/download.js'
 import { useAuth } from '../../hooks/useAuth.js'
-import { today } from '../../components/format.js'
+import { plural, today } from '../../components/format.js'
 
 // En fecha local, no en UTC: con `toISOString()` el periodo por defecto
 // empezaba y acababa un día antes durante toda la madrugada, y el informe que
@@ -29,6 +30,7 @@ const isoDaysAgo = (days) => {
 }
 
 export default function Reports() {
+  const { t } = useTranslation()
   const { session } = useAuth()
 
   // Empty until the list arrives. Seeding it with the current user's id makes
@@ -96,29 +98,31 @@ export default function Reports() {
   return (
     <>
       <PageHeader
-        title="Informes"
-        subtitle="El documento que se entrega a la Inspección. Recoge el registro de una persona en un periodo, con su origen y las correcciones señaladas."
+        title={t('Informes')}
+        subtitle={t(
+          'El documento que se entrega a la Inspección. Recoge el registro de una persona en un periodo, con su origen y las correcciones señaladas.',
+        )}
       />
 
       <ErrorNote error={error} onClose={() => setError(null)} />
 
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: '1.2fr 1fr' } }}>
-        <Panel title="Registro de jornada">
+        <Panel title={t('Registro de jornada')}>
           <Stack sx={{ gap: 2 }}>
             <TextField
               select
               fullWidth
-              label="De quién"
+              label={t('De quién')}
               value={scope}
               onChange={(event) => setScope(event.target.value)}
               helperText={
                 scope === 'person'
-                  ? 'Un documento.'
-                  : 'Un PDF por persona dentro de un zip, o un CSV con todo el mundo.'
+                  ? t('Un documento.')
+                  : t('Un PDF por persona dentro de un zip, o un CSV con todo el mundo.')
               }
             >
-              <MenuItem value="person">Una persona</MenuItem>
-              <MenuItem value="company">Toda la empresa</MenuItem>
+              <MenuItem value="person">{t('Una persona')}</MenuItem>
+              <MenuItem value="company">{t('Toda la empresa')}</MenuItem>
               {departments.length > 0 && <Divider />}
               {departments.map((department) => (
                 <MenuItem key={department.id} value={department.id}>
@@ -131,7 +135,7 @@ export default function Reports() {
               <EmployeePicker
                 value={employee}
                 onChange={setEmployee}
-                helperText="Escribe para buscar."
+                helperText={t('Escribe para buscar.')}
               />
             )}
 
@@ -139,7 +143,7 @@ export default function Reports() {
               <TextField
                 fullWidth
                 type="date"
-                label="Desde"
+                label={t('Desde')}
                 value={dateFrom}
                 onChange={(event) => setDateFrom(event.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
@@ -147,12 +151,14 @@ export default function Reports() {
               <TextField
                 fullWidth
                 type="date"
-                label="Hasta"
+                label={t('Hasta')}
                 value={dateTo}
                 onChange={(event) => setDateTo(event.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
                 error={invalidRange}
-                helperText={invalidRange ? 'La fecha final no puede ir antes que la inicial.' : ' '}
+                helperText={
+                  invalidRange ? t('La fecha final no puede ir antes que la inicial.') : ' '
+                }
               />
             </Stack>
 
@@ -163,7 +169,7 @@ export default function Reports() {
                 disabled={(scope === 'person' && !employee) || invalidRange || build.isPending}
                 onClick={() => build.mutate('pdf')}
               >
-                Descargar PDF
+                {t('Descargar PDF')}
               </Button>
               <Button
                 variant="outlined"
@@ -171,13 +177,13 @@ export default function Reports() {
                 disabled={(scope === 'person' && !employee) || invalidRange || build.isPending}
                 onClick={() => build.mutate('csv')}
               >
-                Descargar CSV
+                {t('Descargar CSV')}
               </Button>
             </Stack>
 
             {lastFingerprint && (
               <Alert severity="success" sx={{ mt: 1 }}>
-                <Typography variant="body2">Descargado. Huella del documento:</Typography>
+                <Typography variant="body2">{t('Descargado. Huella del documento:')}</Typography>
                 <Typography
                   variant="caption"
                   sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}
@@ -189,21 +195,23 @@ export default function Reports() {
           </Stack>
         </Panel>
 
-        <Panel title="Qué contiene y qué no">
+        <Panel title={t('Qué contiene y qué no')}>
           <Stack sx={{ gap: 1.5 }}>
             <Typography variant="body2">
-              Recoge cada evento con su hora, su tipo y <strong>cómo llegó al sistema</strong>. Un
-              fichaje que hizo la persona y uno que hizo una aplicación en su nombre son los dos
-              válidos, pero no son lo mismo, y quien lee el informe tiene derecho a distinguirlos.
+              <Trans
+                i18nKey="Recoge cada evento con su hora, su tipo y <destacado>cómo llegó al sistema</destacado>. Un fichaje que hizo la persona y uno que hizo una aplicación en su nombre son los dos válidos, pero no son lo mismo, y quien lee el informe tiene derecho a distinguirlos."
+                components={{ destacado: <strong /> }}
+              />
             </Typography>
             <Typography variant="body2">
-              Los días con eventos corregidos van señalados, y los fichajes anulados siguen
-              apareciendo. Un informe que ocultara las correcciones no serviría de prueba.
+              {t(
+                'Los días con eventos corregidos van señalados, y los fichajes anulados siguen apareciendo. Un informe que ocultara las correcciones no serviría de prueba.',
+              )}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              La huella SHA-256 permite comprobar que el documento no se ha alterado después de
-              descargarlo. No acredita por sí sola que el registro nunca se tocara: para eso harían
-              falta garantías adicionales.
+              {t(
+                'La huella SHA-256 permite comprobar que el documento no se ha alterado después de descargarlo. No acredita por sí sola que el registro nunca se tocara: para eso harían falta garantías adicionales.',
+              )}
             </Typography>
           </Stack>
         </Panel>
@@ -212,18 +220,20 @@ export default function Reports() {
             el backend, con su periodo atado al ciclo de pago de la empresa, y
             no había ninguna pantalla desde la que generarlo. */}
         <Panel
-          title="Resumen para la nómina"
-          hint="Art. 6.1: se entrega junto al recibo de salarios. El periodo lo fija el ciclo de pago de la empresa, no esta pantalla."
+          title={t('Resumen para la nómina')}
+          hint={t(
+            'Art. 6.1: se entrega junto al recibo de salarios. El periodo lo fija el ciclo de pago de la empresa, no esta pantalla.',
+          )}
         >
           <Stack sx={{ gap: 2 }}>
             <TextField
               fullWidth
               type="date"
-              label="Un día del periodo"
+              label={t('Un día del periodo')}
               value={payrollDay}
               onChange={(event) => setPayrollDay(event.target.value)}
               slotProps={{ inputLabel: { shrink: true } }}
-              helperText="Cualquier día dentro del periodo que se quiere cerrar."
+              helperText={t('Cualquier día dentro del periodo que se quiere cerrar.')}
             />
 
             <Button
@@ -232,20 +242,27 @@ export default function Reports() {
               disabled={generate.isPending}
               onClick={() => generate.mutate(payrollDay)}
             >
-              Generar los de toda la plantilla
+              {t('Generar los de toda la plantilla')}
             </Button>
 
             {generate.data && (
               <Alert severity="success" onClose={() => generate.reset()}>
-                {generate.data.generated}{' '}
-                {generate.data.generated === 1 ? 'resumen generado' : 'resúmenes generados'} para{' '}
-                {generate.data.period.from} → {generate.data.period.to}.
+                {t('{{cuantos}} para {{desde}} → {{hasta}}.', {
+                  cuantos: `${generate.data.generated} ${plural(
+                    generate.data.generated,
+                    t('resumen generado'),
+                    t('resúmenes generados'),
+                  )}`,
+                  desde: generate.data.period.from,
+                  hasta: generate.data.period.to,
+                })}
                 {generate.data.without_hours.length > 0 && (
                   <Box component="span" sx={{ display: 'block', mt: 0.5 }}>
                     {/* Quién queda fuera es la pregunta que se hace quien cierra
                         la nómina, así que se dice y no se calla. */}
-                    Sin horas en el periodo, y por tanto sin resumen:{' '}
-                    {generate.data.without_hours.join(', ')}.
+                    {t('Sin horas en el periodo, y por tanto sin resumen: {{quienes}}.', {
+                      quienes: generate.data.without_hours.join(', '),
+                    })}
                   </Box>
                 )}
               </Alert>

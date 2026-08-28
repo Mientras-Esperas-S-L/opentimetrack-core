@@ -42,7 +42,12 @@ MARCA = re.compile(
 
 #: Sujetos fijos que la suite reutiliza a propósito. No son sedimento: son el
 #: mismo de una tanda a la siguiente, y su correo está escrito en la prueba.
-RESPETAR = {"rosa@vacia.local"}
+RESPETAR = {
+    "rosa@vacia.local",
+    # Los dos que `14-decidir-en-bloque` reutiliza en cada pasada.
+    "bloque.uno@demo.local",
+    "bloque.dos@demo.local",
+}
 
 
 class Command(BaseCommand):

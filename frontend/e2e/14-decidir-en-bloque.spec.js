@@ -19,41 +19,89 @@
 
 import { expect, test } from '@playwright/test'
 
-import { api, huecosVisibles, irA, marca, vigilarConsola } from './apoyo.js'
+import { api, huecosVisibles, irA, vigilarConsola } from './apoyo.js'
 
 /** Dos personas recién creadas, solo para esta pasada.
  *
- *  No se reutiliza la plantilla de demostración, y el motivo es que esta prueba
- *  **aprueba** lo que crea --- y una ausencia aprobada ya no se puede cancelar:
- *  el producto responde `already_resolved`, y hace bien, una decisión tomada no
- *  se deshace borrándola.
+ *  Esta prueba **aprueba** lo que crea, y una ausencia aprobada ya no se puede
+ *  cancelar: el producto responde `already_resolved`, y hace bien, una decisión
+ *  tomada no se deshace borrándola. Así que deja rastro por diseño.
  *
- *  Así que deja rastro por diseño. Con gente de la casa eso significa ir
- *  llenando el calendario de días ocupados hasta que una pasada choca con lo
- *  que dejó otra ---pasó en la primera tanda del bucle--- y el rojo apunta a
- *  donde no es. Con personas nuevas cada vez, no hay con qué chocar: estrenan
- *  calendario.
+ *  Durante un tiempo eso se resolvió creando gente nueva cada pasada, para que
+ *  estrenara calendario. Funcionaba y salía caro: esas personas no se pueden
+ *  borrar ---tienen una ausencia que explicar--- así que solo cabía darlas de
+ *  baja, y se acumulaban a dos por tanda. El guard del sedimento saltó dos
+ *  veces en dos días.
  *
- *  Se las da de baja al terminar, que es todo lo que el producto permite y todo
- *  lo que hace falta para que no salgan en las listas.
+ *  Lo que hacía falta no era gente nueva sino **calendario libre**, y eso
+ *  también se consigue moviéndose de fechas. Dos personas fijas, creadas la
+ *  primera vez y reutilizadas después, y unos días distintos en cada pasada.
  */
-async function genteDeUsarYTirar(page, cuantas = 2) {
-  const creadas = []
-  for (let i = 0; i < cuantas; i += 1) {
-    const sufijo = `${marca()}${i}`
+const LOS_DOS = [
+  { email: 'bloque.uno@demo.local', last_name: 'Bloque Uno' },
+  { email: 'bloque.dos@demo.local', last_name: 'Bloque Dos' },
+]
+
+async function losDosDeSiempre(page) {
+  const gente = []
+  for (const quien of LOS_DOS) {
+    const busca = await api(page, `/employees/?search=${encodeURIComponent(quien.email)}`)
+    const ya = (busca.body?.results ?? []).find((p) => p.email === quien.email)
+    if (ya) {
+      gente.push(ya)
+      continue
+    }
     const alta = await api(page, '/employees/', {
       method: 'POST',
-      body: {
-        first_name: 'Prueba',
-        last_name: `Bloque ${sufijo}`,
-        email: `bloque-${sufijo}@demo.local`,
-        role: 'EMPLOYEE',
-      },
+      body: { first_name: 'Prueba', role: 'EMPLOYEE', ...quien },
     })
     expect([200, 201], JSON.stringify(alta.body)).toContain(alta.status)
-    creadas.push(alta.body)
+    gente.push(alta.body)
   }
-  return creadas
+  return gente
+}
+
+/** Dos días de 2027, repartidos por el instante y por el intento. */
+function dosDias(indice, intento) {
+  const dias = (Math.floor(Date.now() / 1000) % 300) + indice * 3 + intento * 7
+  const desde = new Date(Date.UTC(2027, 0, 1) + dias * 86_400_000)
+  return [
+    desde.toISOString().slice(0, 10),
+    new Date(desde.getTime() + 86_400_000).toISOString().slice(0, 10),
+  ]
+}
+
+/** Pide unas vacaciones en los primeros días que estén libres.
+ *
+ *  **Pregunta en vez de calcular**, y esa es toda la gracia. El primer intento
+ *  derivaba las fechas del reloj y confiaba en no repetirse; falló a la primera
+ *  ---dos pasadas seguidas dentro del mismo segundo--- con un
+ *  `overlapping_absence` que no apuntaba a ningún defecto del producto.
+ *
+ *  Una prueba que depende de que el reloj no se repita es una prueba que falla
+ *  sola de vez en cuando, y eso enseña a mirar los rojos de reojo. Si el sitio
+ *  está ocupado se prueba el siguiente, que es lo que haría cualquiera.
+ */
+async function pedirVacaciones(page, persona, tipo, indice) {
+  for (let intento = 0; intento < 20; intento += 1) {
+    const [desde, hasta] = dosDias(indice, intento)
+    const alta = await api(page, '/absences/', {
+      method: 'POST',
+      body: {
+        employee: persona.id,
+        leave_type: tipo.id,
+        start_date: desde,
+        end_date: hasta,
+        reason: `Prueba bloque ${indice}`,
+      },
+    })
+    if (alta.status === 200 || alta.status === 201) return alta.body
+    expect(
+      alta.body?.error?.code,
+      `el alta falló por algo que no es una fecha ocupada: ${JSON.stringify(alta.body)}`,
+    ).toBe('overlapping_absence')
+  }
+  throw new Error('veinte semanas de 2027 ocupadas: algo no está limpiando lo que crea')
 }
 
 test.use({ storageState: 'e2e/.sesiones/admin.json' })
@@ -146,21 +194,10 @@ test('resolver varias ausencias deja un apunte por cada una', async ({ page }) =
   )
   expect(vacaciones, 'hacía falta el permiso de vacaciones').toBeTruthy()
 
-  const gente = await genteDeUsarYTirar(page)
+  const gente = await losDosDeSiempre(page)
   const creadas = []
   for (const [indice, persona] of gente.entries()) {
-    const alta = await api(page, '/absences/', {
-      method: 'POST',
-      body: {
-        employee: persona.id,
-        leave_type: vacaciones.id,
-        start_date: `2027-03-0${2 + indice * 2}`,
-        end_date: `2027-03-0${3 + indice * 2}`,
-        reason: `Prueba bloque ${indice}`,
-      },
-    })
-    expect([200, 201], JSON.stringify(alta.body)).toContain(alta.status)
-    creadas.push(alta.body.id)
+    creadas.push((await pedirVacaciones(page, persona, vacaciones, indice)).id)
   }
 
   await abrirCola(page, 'Ausencias')
@@ -179,8 +216,7 @@ test('resolver varias ausencias deja un apunte por cada una', async ({ page }) =
     expect(linea.target_label, 'un apunte sin nombre').toBeTruthy()
   }
 
-  for (const persona of gente) {
-    await api(page, `/employees/${persona.id}/`, { method: 'DELETE' })
-  }
+  // No se dan de baja: se quedan de alta para la próxima pasada. Darlas de baja
+  // y volver a crearlas cada vez es exactamente lo que llenaba la lista.
   expect(ruido()).toEqual([])
 })

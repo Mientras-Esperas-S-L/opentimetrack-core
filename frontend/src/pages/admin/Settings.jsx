@@ -27,7 +27,7 @@ import { ErrorNote, Loading, PageHeader, Panel } from '../../components/common.j
 import { capitalised, plural } from '../../components/format.js'
 import { avisoDeAlcance } from './avisoDeAlcance.js'
 import { useAuth } from '../../hooks/useAuth.js'
-import { alCatalogo, localeDeFechas } from '../../i18n/index.js'
+import { alCatalogo, IDIOMAS_QUE_SE_OFRECEN, localeDeFechas } from '../../i18n/index.js'
 
 /** Spain spans two, and both are in daily use. The rest of the list is there
  *  because the product is not Spain-only, even if the rules currently are. */
@@ -74,19 +74,9 @@ const offsetOf = (zone) => {
  *  El inglés sí: los mensajes se escriben en inglés y el catálogo los traduce,
  *  así que quien lo elige recibe el original.
  *
- *  Cuando haya un catálogo más, esta lista crece con él y no antes.
- *
- *  **Cada uno con su propio nombre**, y por eso no pasan por `t()`: quien viene
- *  a esta lista puede no entender el idioma en el que está la pantalla ---es
- *  justo por eso por lo que viene--- y «Inglés» no le dice nada a quien busca
- *  «English». Antes iba a medias: dos en castellano y dos en el suyo.
+ *  Cuando haya un catálogo más, esa lista crece con él y no antes. Vive en
+ *  `i18n/index.js` porque la ficha de cada persona ofrece la misma.
  */
-const LANGUAGES = [
-  ['es', 'Español'],
-  ['ca', 'Català'],
-  ['gl', 'Galego'],
-  ['en', 'English'],
-]
 
 /** Los doce meses, en el idioma de quien mira.
  *
@@ -508,7 +498,7 @@ export default function Settings() {
               onChange={set('language')}
               helperText={t('Cada persona puede usar otro distinto.')}
             >
-              {LANGUAGES.map(([code, label]) => (
+              {IDIOMAS_QUE_SE_OFRECEN.map(([code, label]) => (
                 <MenuItem key={code} value={code}>
                   {label}
                 </MenuItem>
@@ -517,13 +507,14 @@ export default function Settings() {
                   valor sigue en la lista: un `select` con un valor que no está
                   entre sus opciones se pinta vacío y avisa por consola, y de
                   paso le borraría el ajuste al primer guardado. */}
-              {form.language && !LANGUAGES.some(([code]) => code === form.language) && (
-                <MenuItem value={form.language}>
-                  {t('{{codigo}} (ya no disponible; responde en español)', {
-                    codigo: form.language,
-                  })}
-                </MenuItem>
-              )}
+              {form.language &&
+                !IDIOMAS_QUE_SE_OFRECEN.some(([code]) => code === form.language) && (
+                  <MenuItem value={form.language}>
+                    {t('{{codigo}} (ya no disponible; responde en español)', {
+                      codigo: form.language,
+                    })}
+                  </MenuItem>
+                )}
             </TextField>
           </Stack>
         </Panel>

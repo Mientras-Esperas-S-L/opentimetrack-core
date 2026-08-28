@@ -43,6 +43,34 @@ import gl from './locales/gl.json'
 /** Los que tienen catálogo. El castellano no aparece porque **es** las claves. */
 export const IDIOMAS = ['es', 'ca', 'gl']
 
+/** Los que se pueden elegir, con su nombre.
+ *
+ *  Más que `IDIOMAS`: el inglés no tiene catálogo de pantalla pero sí de
+ *  servidor ---los mensajes se escriben en inglés y el catálogo los traduce---
+ *  así que quien lo elige recibe el original en los correos y en los errores.
+ *
+ *  **Cada uno con su propio nombre**, y por eso no pasan por `t()`: quien viene
+ *  a esta lista puede no entender el idioma en el que está la pantalla ---es
+ *  justo por eso por lo que viene--- y «Inglés» no le dice nada a quien busca
+ *  «English».
+ *
+ *  Euskera, francés, portugués y alemán siguen fuera. El euskera llegó a tener
+ *  catálogo y se retiró: iba incompleto ---faltaban los párrafos largos de
+ *  derecho laboral--- y medio idioma en un producto que explica obligaciones
+ *  legales no es medio bueno, es confuso.
+ *
+ *  Aquí y no en cada pantalla: estaba escrita dos veces, en los ajustes de la
+ *  empresa y en la ficha de cada persona, y al arreglar el criterio en una se
+ *  quedó la otra diciendo «Inglés». Dos copias de una lista divergen; la
+ *  pregunta no es si, es cuándo.
+ */
+export const IDIOMAS_QUE_SE_OFRECEN = [
+  ['es', 'Español'],
+  ['ca', 'Català'],
+  ['gl', 'Galego'],
+  ['en', 'English'],
+]
+
 export const POR_DEFECTO = 'es'
 
 /** El código corto, que es con lo que trabaja i18next.

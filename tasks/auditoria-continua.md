@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 141 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---556 de 937 cadenas, once pantallas enteras---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 142 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---623 de 923 cadenas, trece pantallas enteras---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,52 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 142 --- Personas e Informes, y la lista que ya había divergido (28/08)
+
+**Traducido:** los 49 que quedaban en Personas ---la vuelta 135 dio la pantalla
+por terminada--- e Informes entero. El catálogo: 514 → **572 claves**. Van 623
+de 923, trece pantallas.
+
+**El hallazgo, y es de ayer mismo:** la lista de idiomas estaba escrita **dos
+veces**, en los ajustes de la empresa y en la ficha de cada persona. Ayer
+arreglé el criterio en una ---cada idioma con su propio nombre, «English» y no
+«Inglés»--- y la otra se quedó como estaba. Doce horas de divergencia.
+
+Ninguna prueba lo habría visto: las dos listas son correctas por separado y
+nadie compara la de Ajustes con la de Personas. Ahora hay una sola, en
+`i18n/index.js`, con el razonamiento entero al lado ---por qué son cuatro y no
+ocho, por qué el euskera se retiró, por qué van en su idioma---.
+
+**Los cuatro mapas de Personas** ---roles, regímenes de jornada, periodos y
+condición de nocturno--- van con `alCatalogo`. El de regímenes lleva además la
+pista de cada uno, que es donde viven las citas del Estatuto: art. 12.4.c para
+la parcial, art. 37.6 para la reducida, art. 11 para la formativa.
+
+**Y la muestra de «sin traducir» se mueve otra vez.** La prueba 36 usaba
+Informes; ahora pasa a Turnos, con su historial en el comentario. Es la segunda
+vez que se mueve y está previsto en su propio texto: es un rojo que significa
+«se ha avanzado».
+
+**El sedimento, cerrado de raíz.** Volvió a saltar ---segunda vez en dos días---
+y esta vez se fue al fondo en vez de barrer y seguir.
+
+- **El guard no podía medir su propio tope.** Dice vigilar que no pase de
+  sesenta bajas, pero pedía la lista con `page_size=1000` y comprobaba que no
+  hubiera segunda página; el servidor tiene su propio tope y devuelve lo que
+  quiere, así que se ponía rojo a las **cincuenta y una**. Un tope que no se
+  alcanza nunca no es un tope: es un rojo que llega antes. Ahora recorre las
+  páginas, con su propio límite de recorrido para no dar vueltas si algo
+  devolviera `next` para siempre.
+- **La causa, resuelta.** `14-decidir-en-bloque` creaba dos personas por pasada
+  para estrenar calendario, y esas dos no se pueden borrar. Lo que necesitaba no
+  era gente nueva sino **días libres**, y eso también se consigue moviéndose de
+  fechas: dos personas fijas y unas fechas distintas cada vez.
+- **Y el primer intento de eso estaba mal.** Derivaba las fechas del reloj y
+  confiaba en no repetirse; **falló a la primera**, con dos pasadas dentro del
+  mismo segundo. Ahora **pregunta**: pide unos días y, si el servidor dice que
+  están ocupados, prueba los siguientes. Contrastado con tres pasadas seguidas,
+  que antes rompían en la segunda.
 
 ### Vuelta 141 --- Pedir una ausencia y Ajustes, y dos listas que no había que traducir (28/08)
 
