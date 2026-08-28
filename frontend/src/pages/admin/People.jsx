@@ -59,6 +59,7 @@ import { SelectionBar } from '../../components/selection.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useDebounced } from '../../hooks/useDebounced.js'
 import { plural } from '../../components/format.js'
+import RemoteWorkDialog from '../../components/RemoteWorkDialog.jsx'
 import SeasonsDialog from '../../components/SeasonsDialog.jsx'
 import { alCatalogo, IDIOMAS_QUE_SE_OFRECEN } from '../../i18n/index.js'
 import { useSelection } from '../../hooks/useSelection.js'
@@ -611,6 +612,7 @@ function RowActions({
   onDeactivate,
   onErase,
   onSeasons,
+  onRemoteWork,
 }) {
   const { t } = useTranslation()
   // Una sola vez: se usa en cuatro rótulos accesibles de esta fila y estaba
@@ -672,6 +674,7 @@ function RowActions({
             de actividad no hace nada ---el servidor lo rechaza--- y ofrecerlo
             sería invitar a escribir un dato que no sirve. */}
         {person.seasonal && <MenuItem onClick={pick(onSeasons)}>{t('Temporadas')}</MenuItem>}
+        <MenuItem onClick={pick(onRemoteWork)}>{t('Trabajo a distancia')}</MenuItem>
         {person.is_active && <MenuItem onClick={pick(onDeactivate)}>{t('Dar de baja')}</MenuItem>}
         {/* Un alta equivocada: el correo mal escrito, la persona duplicada, la
             que se creó en la empresa que no era. Solo se ofrece con la cuenta ya
@@ -698,6 +701,7 @@ export default function People() {
   const [error, setError] = useState(null)
   const [sent, setSent] = useState(null) // address the last link went to
   const [seasons, setSeasons] = useState(null) // de quién se están viendo las temporadas
+  const [remoteWork, setRemoteWork] = useState(null) // y de quién el acuerdo a distancia
   const [confirming, setConfirming] = useState(null)
   // Turnos que la última baja ha dejado sin nadie. Se enseña aquí y no solo en
   // el cuadrante porque quien acaba de dar la baja es quien tiene que ir a
@@ -1154,6 +1158,7 @@ export default function People() {
                         onInvite={() => invite.mutate(person.id)}
                         onDeliver={() => deliver.mutate(person.id)}
                         onSeasons={() => setSeasons(person)}
+                        onRemoteWork={() => setRemoteWork(person)}
                         onErase={() =>
                           setConfirming({
                             title: t('Borrar definitivamente'),
@@ -1238,6 +1243,7 @@ export default function People() {
       </Menu>
 
       <SeasonsDialog person={seasons} onClose={() => setSeasons(null)} />
+      <RemoteWorkDialog person={remoteWork} onClose={() => setRemoteWork(null)} />
 
       <ConfirmDialog
         request={confirming}

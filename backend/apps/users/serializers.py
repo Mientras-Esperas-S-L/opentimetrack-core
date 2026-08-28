@@ -12,7 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps import legal
 from apps.common.campos import DecimalesTolerantes
 from apps.tenants.models import Tenant, validate_time_zone
-from apps.users.models import ActivityPeriod, Department, Role, Workplace
+from apps.users.models import ActivityPeriod, Department, RemoteWorkAgreement, Role, Workplace
 
 User = get_user_model()
 
@@ -651,6 +651,90 @@ class PasswordSetSerializer(serializers.Serializer):
         except DjangoValidationError as exc:
             raise serializers.ValidationError(list(exc.messages)) from exc
         return value
+
+
+class RemoteWorkAgreementSerializer(serializers.ModelSerializer):
+    """El acuerdo de trabajo a distancia (art. 5 de la Ley 10/2021)."""
+
+    employee_name = serializers.SerializerMethodField()
+    signed_late = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = RemoteWorkAgreement
+        fields = [
+            "id",
+            "employee",
+            "employee_name",
+            "signed_on",
+            "starts_on",
+            "ends_on",
+            "agreed_share",
+            "signed_late",
+            "note",
+        ]
+
+    def get_employee_name(self, obj) -> str:
+        return f"{obj.employee.first_name} {obj.employee.last_name}".strip() or obj.employee.email
+
+    def validate_employee(self, value):
+        empresa = self.context["request"].user.tenant
+        if value.tenant_id != empresa.id:
+            raise serializers.ValidationError(_("That person is not in this company."))
+        return value
+
+    def validate_agreed_share(self, value):
+        """Entre cero y cien, que es lo que un porcentaje puede ser.
+
+        No se contrasta con lo que se trabaja de verdad, y es a propósito: el
+        art. 7.f pide que el acuerdo **diga** un porcentaje, y la cifra que
+        obliga es la del papel. Compararla con el registro y quejarse sería
+        inventar un incumplimiento que la ley no define.
+        """
+        if value is not None and not (0 <= value <= 100):
+            raise serializers.ValidationError(_("A share goes from 0 to 100."))
+        return value
+
+    def validate(self, attrs):
+        """Que las fechas tengan sentido y que no haya dos acuerdos a la vez.
+
+        **Firmar tarde no se rechaza.** El art. 5.1 pide que el acuerdo sea
+        previo, y un acuerdo firmado después de empezar es un incumplimiento
+        **que ya ha ocurrido**: negarse a guardarlo no lo deshace, deja el
+        registro peor ---sin rastro de un acuerdo que existe--- y empuja a poner
+        una fecha falsa para que el formulario pase. Se guarda y se avisa, que
+        es lo que hace la revisión del cuadrante.
+        """
+        instancia = self.instance
+        inicio = attrs.get("starts_on", getattr(instancia, "starts_on", None))
+        fin = attrs.get("ends_on", getattr(instancia, "ends_on", None))
+        persona = attrs.get("employee", getattr(instancia, "employee", None))
+
+        if fin and inicio and fin < inicio:
+            raise serializers.ValidationError(
+                {"ends_on": _("The agreement cannot end before it starts.")}
+            )
+
+        if persona is None or inicio is None:
+            return attrs
+
+        # Dos acuerdos solapados dirían dos cosas a la vez sobre los mismos
+        # días, y la revisión coge el más reciente: el otro quedaría guardado
+        # sin efecto y nadie sabría cuál manda.
+        otros = RemoteWorkAgreement.objects.filter(employee=persona)
+        if instancia is not None:
+            otros = otros.exclude(pk=instancia.pk)
+        for otro in otros:
+            if (otro.ends_on is None or otro.ends_on >= inicio) and (
+                fin is None or otro.starts_on <= fin
+            ):
+                raise serializers.ValidationError(
+                    {
+                        "starts_on": _("It overlaps the agreement that starts on %(day)s.")
+                        % {"day": otro.starts_on.isoformat()}
+                    }
+                )
+
+        return attrs
 
 
 class ActivityPeriodSerializer(serializers.ModelSerializer):

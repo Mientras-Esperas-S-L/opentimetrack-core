@@ -491,6 +491,13 @@ export const createActivityPeriod = (payload) => post('/activity-periods/', payl
 export const deleteActivityPeriod = async (id) =>
   (await api.delete(`/activity-periods/${id}/`)).data
 
+/** El acuerdo de trabajo a distancia (art. 5 de la Ley 10/2021). */
+export const getRemoteWorkAgreements = async (employee) =>
+  page(await get('/remote-work-agreements/', { employee }))
+export const createRemoteWorkAgreement = (payload) => post('/remote-work-agreements/', payload)
+export const deleteRemoteWorkAgreement = async (id) =>
+  (await api.delete(`/remote-work-agreements/${id}/`)).data
+
 export const getEmployees = async (params) => page(await get('/employees/', params))
 export const getEmployee = (id) => get(`/employees/${id}/`)
 export const createEmployee = (payload) => post('/employees/', payload)

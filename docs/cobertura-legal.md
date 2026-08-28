@@ -91,7 +91,7 @@ empresa de trabajo temporal.
 | Adaptación de jornada | art. 34.8 | **A medias.** Se marca en el fichaje; la solicitud y su respuesta no se tramitan |
 | Horas extraordinarias | art. 35 | **Cubierto.** Se marcan, se dice cómo se saldan y el tope anual se contrasta con lo autorizado: la pantalla de decisiones avisa al pasarse, descontando las compensadas con descanso y las de fuerza mayor |
 | Horas complementarias | art. 12.5 | **Cubierto.** El tope se acumula contra lo trabajado y se avisa al pasarse. Va sobre **el periodo del contrato** ---semana, mes o año---, que es lo que dice el art. 12.5.c: el 30 % de «las horas ordinarias objeto del contrato». Un contrato de 800 h al año tiene 240 complementarias al año, no 20 al mes |
-| Trabajo a distancia | Ley 10/2021 | **A medias.** El umbral del art. 1 se calcula ---el 30 % de la jornada en tres meses--- y se avisa a quien lo pasa sin acuerdo, o con uno firmado después de empezar (art. 5.1). El acuerdo se guarda con sus fechas y su porcentaje. **Falta la pantalla para registrarlo**: hoy solo por API |
+| Trabajo a distancia | Ley 10/2021 | **Cubierto.** El umbral del art. 1 se calcula ---el 30 % de la jornada en tres meses--- y se avisa a quien lo pasa sin acuerdo, o con uno firmado después de empezar (art. 5.1). El acuerdo se registra desde la ficha de la persona, con sus fechas y su porcentaje. Lo que no se guarda aquí es el contenido del art. 7: eso es el documento firmado |
 | Guardias y atención continuada | RD 1561/1995 | **Falta.** Sanidad: presencia frente a trabajo efectivo |
 | Tiempo de presencia | RD 1561/1995 | **Falta.** Transporte: hasta 20 h semanales de promedio que no son jornada ordinaria |
 | Jornadas especiales por sector | RD 1561/1995 | **Falta.** Hoy la empresa ajusta las cifras a mano, lo cual funciona, pero no deja dicho **por qué** se apartó de la regla general |
@@ -369,13 +369,11 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 4 | **El tope del contrato formativo**: 65 % de la jornada el primer año y 85 % el segundo, formación incluida | **1-2 días.** El patrón ya existe: el de complementarias se acumula desde el 28/08 y esto es la misma forma sobre otra cifra |
 | 5 | **Historia de la adscripción a departamento**, cuando el informe empiece a mentir | **2-3 días.** Una tabla de vigencias y los informes leyendo de ella |
 | 6 | **Las otras reducciones por cuidados** (arts. 37.4, 37.5 y 37.8): lactancia, hospitalización de un recién nacido y cuidado de menor con enfermedad grave. La mecánica de la fracción y las fechas **ya está** ---la puso el art. 37.6---; falta que cada una entre en el catálogo con su regla propia | **2-3 días.** Son tres artículos con cifras distintas sobre la misma maquinaria |
-| 7 | **La pantalla del acuerdo de trabajo a distancia** (Ley 10/2021). El umbral se calcula y el acuerdo se guarda con sus fechas desde el 28/08; falta poder registrarlo sin pasar por la API | **½-1 día.** Un diálogo en la ficha de la persona, como el de las temporadas del fijo discontinuo |
-| 8 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
+| 7 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
 
 ### Hecho desde que se escribió esta lista
 
-- **El umbral del trabajo a distancia** (Ley 10/2021, art. 1, 28/08/2026), *a
-  falta de la pantalla*. La ley no regula «el teletrabajo» en general: fija
+- **El trabajo a distancia** (Ley 10/2021, 28/08/2026), en dos tandas. La ley no regula «el teletrabajo» en general: fija
   cuándo se aplica, y por debajo del 30 % de la jornada en tres meses no exige
   nada. Cruzado el umbral entra entera, y lo primero que pide es acuerdo por
   escrito y previo. El producto ya sabía si cada tramo fue presencial o a

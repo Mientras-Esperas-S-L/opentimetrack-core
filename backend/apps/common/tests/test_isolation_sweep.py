@@ -34,7 +34,7 @@ from apps.punches.services import register_punch
 from apps.shifts.models import Shift, ShiftPattern
 from apps.tenants.holidays import PublicHoliday
 from apps.tenants.models import Tenant
-from apps.users.models import ActivityPeriod, Department, Role, User, Workplace
+from apps.users.models import ActivityPeriod, RemoteWorkAgreement, Department, Role, User, Workplace
 
 PASSWORD = "a-sufficiently-long-password"
 
@@ -110,6 +110,12 @@ def build_company(name, tax_id, email_domain):
             start_date=date(2026, 6, 1),
             end_date=date(2026, 9, 30),
         )
+        remote = RemoteWorkAgreement.objects.create(
+            tenant=company,
+            employee=worker,
+            signed_on=date(2026, 1, 15),
+            starts_on=date(2026, 2, 1),
+        )
         entry = AuditLog.objects.create(
             tenant=company,
             action=AuditAction.RECORD_VIEWED,
@@ -134,6 +140,7 @@ def build_company(name, tax_id, email_domain):
         "pattern": pattern,
         "shift": shift,
         "season": season,
+        "remote": remote,
         "audit": entry,
     }
 
@@ -171,12 +178,14 @@ def detail_urls(world):
         "shift pattern": f"/api/shift-patterns/{world['pattern'].id}/",
         "audit entry": f"/api/audit/{world['audit'].id}/",
         "period of activity": f"/api/activity-periods/{world['season'].id}/",
+        "remote work agreement": f"/api/remote-work-agreements/{world['remote'].id}/",
     }
 
 
 COLLECTIONS = [
     "/api/punches/",
     "/api/activity-periods/",
+    "/api/remote-work-agreements/",
     "/api/absences/",
     "/api/corrections/",
     "/api/employees/",
@@ -293,6 +302,7 @@ def test_no_collection_shows_another_companys_rows(ours, theirs):
         "/api/shifts/",
         "/api/shift-patterns/",
         "/api/activity-periods/",
+        "/api/remote-work-agreements/",
         "/api/audit/",
     ]:
         body = intruder.get(url).json()
@@ -346,6 +356,14 @@ def test_they_cannot_change_or_resolve_anything_of_ours(ours, theirs):
             {"start_date": "2026-01-01"},
         ),
         ("delete", f"/api/activity-periods/{ours['season'].id}/", None),
+        # El acuerdo dice desde cuándo alguien trabaja en su casa y qué parte
+        # de la jornada: es un dato suyo, no el armazón de la empresa.
+        (
+            "patch",
+            f"/api/remote-work-agreements/{ours['remote'].id}/",
+            {"starts_on": "2026-03-01"},
+        ),
+        ("delete", f"/api/remote-work-agreements/{ours['remote'].id}/", None),
         # The workplace decides which local holidays apply and which zone the
         # day is measured in, so taking one over is not a cosmetic change.
         (
@@ -625,6 +643,8 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^employees/(?P<pk>[^/.]+)/invite/$",
         "api/^activity-periods/$",
         "api/^activity-periods/(?P<pk>[^/.]+)/$",
+        "api/^remote-work-agreements/$",
+        "api/^remote-work-agreements/(?P<pk>[^/.]+)/$",
         "api/^departments/$",
         "api/^departments/(?P<pk>[^/.]+)/$",
         "api/^workplaces/$",

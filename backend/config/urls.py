@@ -34,6 +34,7 @@ from apps.users.views import (
     PasswordResetRequestView,
     PasswordSetView,
     RefreshView,
+    RemoteWorkAgreementViewSet,
     SignInView,
     SignOutView,
     SignUpView,
@@ -45,6 +46,9 @@ router = DefaultRouter()
 router.register("employees", UserViewSet, basename="employee")
 router.register("departments", DepartmentViewSet, basename="department")
 router.register("activity-periods", ActivityPeriodViewSet, basename="activity-period")
+router.register(
+    "remote-work-agreements", RemoteWorkAgreementViewSet, basename="remote-work-agreement"
+)
 router.register("punches", PunchViewSet, basename="punch")
 router.register("corrections", CorrectionViewSet, basename="correction")
 router.register("absences", AbsenceViewSet, basename="absence")

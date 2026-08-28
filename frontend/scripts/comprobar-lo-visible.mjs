@@ -30,7 +30,8 @@
  */
 
 import { ficherosDeLaAplicacion, loQueSeVe, RAIZ } from './lo-que-se-ve.mjs'
-import { relative } from 'node:path'
+import { readFileSync } from 'node:fs'
+import { join, relative } from 'node:path'
 
 /** `fichero: {cadena: por qué no se traduce}`. */
 const NO_SE_TRADUCE = {
@@ -81,12 +82,15 @@ let fuera = 0
 let dentro = 0
 let exentas = 0
 const sobran = []
+/** Todo lo que pasa por `t()`, para cotejarlo luego con los catálogos. */
+const enElCodigo = new Set()
 
 for (const ruta of ficherosDeLaAplicacion()) {
   const relativa = relative(RAIZ, ruta)
   const permitidas = NO_SE_TRADUCE[relativa] ?? {}
   const { dentro: hechas, fuera: pendientes } = loQueSeVe(ruta)
   dentro += hechas.length
+  for (const cadena of hechas) enElCodigo.add(cadena)
 
   const sinJustificar = pendientes.filter(([cadena]) => !(cadena in permitidas))
   if (sinJustificar.length) {
@@ -119,14 +123,47 @@ if (dentro < 500) {
   process.exit(2)
 }
 
+// Y que lo que pasa por `t()` esté **traducido**, que es la mitad que faltaba.
+//
+// `comprobar-catalogos.mjs` mira que no sobren traducciones; esto mira que no
+// falten. Su docstring decía que lo contrario no se comprobaba «a propósito,
+// porque la conversión va a medias por diseño», y eso dejó de ser cierto el
+// 28/08/2026, cuando la interfaz quedó entera en los tres idiomas. Nadie rehízo
+// el criterio, así que durante trece vueltas se podía añadir una pantalla nueva
+// sin traducir y `i18n:check` daba verde: la cadena cae al castellano y en
+// pantalla no se distingue de una traducción correcta.
+const IDIOMAS = ['ca', 'gl']
+const sinTraducir = []
+for (const idioma of IDIOMAS) {
+  const catalogo = JSON.parse(readFileSync(join(RAIZ, `src/i18n/locales/${idioma}.json`), 'utf8'))
+  const faltan = [...enElCodigo].filter((cadena) => !(cadena in catalogo))
+  if (faltan.length) sinTraducir.push([idioma, faltan])
+}
+
+if (sinTraducir.length) {
+  for (const [idioma, faltan] of sinTraducir) {
+    console.error(`\n${faltan.length} cadena(s) sin traducir en ${idioma}:`)
+    for (const cadena of faltan.slice(0, 20)) console.error(`  · ${JSON.stringify(cadena)}`)
+    if (faltan.length > 20) console.error(`  ... y ${faltan.length - 20} más`)
+  }
+  console.error(
+    '\nSe traducen en el mismo paso que se escriben. Si no hay quien lo revise,\n' +
+      'tradúcelo lo mejor que puedas: media pantalla en castellano dentro del\n' +
+      'catalán no se ve como un hueco, se ve como una traducción mala.',
+  )
+}
+
+// El consejo va con el problema que se ha encontrado. Aconsejar «envuélvelo en
+// `t()`» a quien lo tiene envuelto y sin traducir manda a mirar donde no es.
 if (fuera || sobran.length) {
   console.error(
     '\nLa clave **es** la cadena castellana, así que lo que no pasa por `t()` se lee\n' +
       'perfectamente en castellano y no lo delata nada hasta que alguien mira la\n' +
       'aplicación en catalán. Envuélvelo, o declara aquí por qué no se traduce.',
   )
-  process.exit(1)
 }
+
+if (fuera || sobran.length || sinTraducir.length) process.exit(1)
 
 console.log(
   `Nada visible fuera del catálogo: ${dentro} cadenas traducidas y ${exentas} exentas con motivo.`,

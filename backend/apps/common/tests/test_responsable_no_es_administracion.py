@@ -132,6 +132,14 @@ def _solo_administracion(m):
             "/api/activity-periods/",
             {"employee": str(curro), "start_date": "2027-06-01"},
         ),
+        # El acuerdo de trabajo a distancia (Ley 10/2021). Un responsable
+        # organiza el trabajo; firmar el acuerdo que dice desde cuándo alguien
+        # trabaja en su casa es de quien lleva los contratos.
+        (
+            "POST",
+            "/api/remote-work-agreements/",
+            {"employee": str(curro), "signed_on": "2027-01-15", "starts_on": "2027-02-01"},
+        ),
     ]
 
 

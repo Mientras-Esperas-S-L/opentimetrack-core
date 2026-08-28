@@ -369,6 +369,78 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 153 --- El acuerdo de trabajo a distancia, parte B (28/08)
+
+**4 de 13.** Cierra lo que la vuelta anterior dejó abierto: el diálogo del
+acuerdo en la ficha de la persona.
+
+**Y empieza corrigiendo lo que escribí ayer.** Puse en el dossier y en el
+inventario que el acuerdo «hoy solo se puede registrar por API». Era **falso por
+partida doble**: no había serializer, ni ViewSet, ni ruta, ni `admin.py` en la
+aplicación. La única forma de crear uno era abrir un shell de Django. Lo di por
+hecho porque había escrito el modelo y no comprobé qué había alrededor ---la
+misma forma de error que la [[293]], dos días seguidos---.
+
+**El hallazgo de la vuelta no es el diálogo: es que el guard de traducción tenía
+un agujero.**
+
+`npm run i18n:check` daba **verde** con trece cadenas nuevas sin traducir. Lo vi
+por casualidad, comprobando a mano si mis cadenas estaban en `ca.json`.
+
+La causa está escrita en el propio guard, y era razonable cuando se escribió:
+
+> «No comprueba lo contrario ---que todo lo del código esté traducido--- **a
+> propósito**: la conversión va a medias por diseño y lo no traducido cae al
+> castellano, que es correcto.»
+
+Eso dejó de ser verdad el 28/08, cuando la interfaz quedó entera en los tres
+idiomas. **Nadie rehízo el criterio.** Desde entonces había dos guards: uno que
+exige que todo lo visible pase por `t()`, y otro que exige que no sobren
+traducciones. Faltaba el tercero, que es el que sostiene la frase «la interfaz
+está entera en tres idiomas»: **que no falten**.
+
+Medido antes de arreglarlo, que es lo que evita exagerar: faltaban **trece
+cadenas, y las trece eran mías de esta vuelta**. La interfaz sí estaba entera
+hasta hoy. Pero el agujero llevaba abierto desde la vuelta 146 y lo que lo tapaba
+era la costumbre, no el guard.
+
+Ahora `comprobar-lo-visible.mjs` compara lo que pasa por `t()` con los dos
+catálogos y falla con código 1 si falta alguna. Con su contraste, y con el
+consejo separado: aconsejar «envuélvelo en `t()`» a quien lo tiene envuelto y sin
+traducir manda a mirar donde no es.
+
+**Dos decisiones de la pantalla que el servidor no puede tomar:**
+
+1. **Se ofrece a todo el mundo**, no solo a quien ya teletrabaja. El atajo
+   evidente era copiar el criterio de las temporadas del fijo discontinuo ---que
+   solo se ofrecen a quien lo es--- y habría sido justo al revés de lo que dice
+   el art. 5.1: un acuerdo se firma **antes** de empezar, así que exigir que ya
+   conste trabajo a distancia obliga a incumplir el artículo para poder
+   cumplirlo. Hay prueba, y comprueba las dos cosas a la vez ---que la acción de
+   distancia está y la de temporadas no--- porque si la segunda cayera, la
+   primera dejaría de significar nada.
+2. **Firmar tarde se avisa y se guarda.** El aviso sale **mientras se escribe**,
+   no después: decirlo cuando ya está guardado es tarde para quien todavía puede
+   mirar la fecha del papel. Y se guarda igual, porque es un incumplimiento que
+   ya ocurrió: negarse a registrarlo no lo deshace, deja el registro sin rastro
+   de un acuerdo que existe y empuja a escribir una fecha falsa para que el
+   formulario pase.
+
+**Los dos barridos de aislamiento hicieron su trabajo,** como en las tres vueltas
+anteriores: la ruta nueva no estaba en ninguno y las dos pruebas de cobertura se
+pusieron rojas hasta que la metí ---incluyendo que un responsable no pueda firmar
+el acuerdo de nadie, que es de quien lleva los contratos---.
+
+**Un tropiezo con los scripts de edición:** busqué `'    "/api/activity-periods/",'`
+con cuatro espacios y el `count` dio 2, porque esa cadena está **contenida** en la
+misma línea con ocho. El `assert` paró el script antes de escribir nada ---por
+suerte, porque escribe al final--- y se arregla anclando el salto de línea
+delante.
+
+**Cifras al cerrar:** 1.369 pruebas de backend y 307 de navegador en verde,
+linters limpios, `i18n:check` en verde **y ahora comprobando lo que decía
+comprobar**, sin migraciones pendientes.
+
 ### Vuelta 152 --- El umbral del trabajo a distancia, parte A (28/08)
 
 **Partida, y se dice.** Esta vuelta trae la cuenta, el acuerdo y los avisos; la

@@ -34,13 +34,14 @@ from apps.common.permissions import (
 from apps.common.scope import people_queryset, visible_people
 from apps.reports.delivery import send_delivery_email
 from apps.users.erase import rastro_de
-from apps.users.models import ActivityPeriod, Department, Role, Workplace
+from apps.users.models import ActivityPeriod, Department, RemoteWorkAgreement, Role, Workplace
 from apps.users.passwords import resolve_token, revoke_sessions, send_account_email
 from apps.users.serializers import (
     ActivityPeriodSerializer,
     DepartmentSerializer,
     PasswordResetRequestSerializer,
     PasswordSetSerializer,
+    RemoteWorkAgreementSerializer,
     SignInSerializer,
     SignUpSerializer,
     TenantSerializer,
@@ -908,6 +909,33 @@ class PasswordSetView(APIView):
                 "tenant": TenantSerializer(user.tenant).data if user.tenant else None,
             }
         )
+
+
+class RemoteWorkAgreementViewSet(StructureTrail, viewsets.ModelViewSet):
+    """El acuerdo de trabajo a distancia de cada persona (Ley 10/2021).
+
+    Escribe quien administra y lee quien gestiona, acotado a su gente: el
+    acuerdo dice desde cuándo alguien trabaja en su casa y qué parte de la
+    jornada, y eso es un dato suyo, no el armazón de la empresa. Mismo criterio
+    que los periodos de actividad, y por la misma razón: allí lo pilló el
+    barrido de aislamiento después de haberlo dejado en abierto.
+    """
+
+    queryset = RemoteWorkAgreement.objects.none()
+    serializer_class = RemoteWorkAgreementSerializer
+    permission_classes = [ReadForAllWriteForAdmin]
+    filterset_fields = ["employee"]
+    trail_fields = ("signed_on", "starts_on", "ends_on", "agreed_share")
+
+    def get_queryset(self):
+        qs = RemoteWorkAgreement.objects.select_related("employee")
+        scope = visible_people(self.request.user)
+        if scope is not None:
+            qs = qs.filter(employee__in=scope)
+        return qs
+
+    def perform_create(self, serializer):
+        self.anotar(serializer.save(tenant=self.request.user.tenant), _("Added"))
 
 
 class ActivityPeriodViewSet(StructureTrail, viewsets.ModelViewSet):

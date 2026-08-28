@@ -5062,3 +5062,54 @@ el reemplazo se hizo; no dice que el resultado sea Python.
 
 Y la de fondo: una constante va **antes de la clase**, no dentro de ella. Si al
 insertar algo hay que elegir indentación, esa duda ya es la señal.
+
+## 300. Un guard que no comprueba lo que su nombre promete
+
+`npm run i18n:check` daba verde con trece cadenas nuevas sin traducir. No es que
+fallara: **nunca miró eso**. Lo dice su propio comentario:
+
+> «No comprueba lo contrario ---que todo lo del código esté traducido--- a
+> propósito: la conversión va a medias por diseño y lo no traducido cae al
+> castellano, que es correcto.»
+
+Cuando se escribió era exacto. El 28/08 la interfaz quedó entera en los tres
+idiomas y **la premisa caducó**, pero el guard siguió igual, con su comentario
+explicando por qué no hacía falta comprobar justamente lo que a partir de
+entonces era lo único que había que comprobar.
+
+Lo peor: yo repetía «hay un guard que lo exige» en cada vuelta. Lo repetía
+porque lo ponía en el encargo, y lo daba por bueno porque el comando salía verde.
+Nadie mintió; simplemente nadie volvió a leer el guard después de que su motivo
+dejara de existir.
+
+**La regla:** cuando un supuesto cambia ---«esto va a medias», «esto es
+temporal», «de momento no hace falta»--- hay que ir a buscar **qué decisiones se
+tomaron apoyadas en él**. Suelen estar escritas, con su razonamiento al lado, y
+por eso son fáciles de encontrar y difíciles de ver: el comentario que explica
+por qué algo no se comprueba se lee como una decisión meditada, no como una
+caducada.
+
+Un `grep` de «a propósito», «por diseño» y «de momento» en los guards del
+proyecto es una revisión de media hora que vale la pena cada vez que se cierra
+una fase.
+
+## 301. Un patrón corto encaja dentro de uno largo
+
+Buscando dónde insertar en una lista, usé:
+
+    viejo = '    "/api/activity-periods/",\n'     # cuatro espacios
+    assert t.count(viejo) == 1
+
+y el `assert` saltó: había **dos**. La misma cadena aparecía en otra lista con
+ocho espacios, y la de cuatro está contenida en la de ocho.
+
+Se ancla con el salto de línea delante, que fija la indentación exacta:
+
+    viejo = '\n    "/api/activity-periods/",\n'
+
+Dos cosas que salvaron el fichero, y conviene mantenerlas:
+
+- **El `assert` antes de escribir**, que es la [[289]]. Sin él habría insertado
+  en los dos sitios y uno habría quedado mal.
+- **El script escribe al final**, no según avanza. El `assert` paró en el paso 4
+  de 6 y el fichero se quedó intacto, no a medio parchear.
