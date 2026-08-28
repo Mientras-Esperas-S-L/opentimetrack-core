@@ -8,7 +8,7 @@ enseñárselo a un cliente.
 | Qué | Catalán y gallego |
 |---|---|
 | Lo que responde el servidor: correos, errores, avisos legales, tipos y estados | **Traducido** ---558 de 711 mensajes; el resto son etiquetas de campo que se dejan a propósito--- |
-| La pantalla: botones, rótulos, textos de cada página | **En curso** ---464 de 953 cadenas al 28/08/2026. Enteras: Personas, Ajustes, Mi jornada, Centros de trabajo, Fichajes, Por decidir, Cuadrante, Permisos, Aplicaciones y todo lo compartido (menú, paginadores, filtros, estados, fechas)--- |
+| La pantalla: botones, rótulos, textos de cada página | **En curso** ---556 de 937 cadenas al 28/08/2026. Enteras: Personas, Ajustes, Mi jornada, Centros de trabajo, Fichajes, Por decidir, Cuadrante, Permisos, Aplicaciones, el formulario de pedir una ausencia y todo lo compartido (menú, paginadores, filtros, estados, fechas)--- |
 
 Así que una empresa catalana ve hoy el menú, los correos y los errores en
 catalán, seis pantallas en catalán y el resto en castellano. **Hasta que esté
@@ -69,6 +69,11 @@ sigue comparando contra el castellano y escribir en catalán no encuentra nada.
 ## Lo que no pasa por el catálogo
 
 Un catálogo al 100 % no significa que la pantalla hable un solo idioma.
+
+**Lo que no se traduce y no es un hueco.** Los nombres de los idiomas van cada
+uno en el suyo ---«English», no «Inglés»---: quien abre ese desplegable puede no
+entender el idioma en el que está la pantalla. Y los meses los da `Intl` con el
+locale, así que no hay tres listas de doce palabras que mantener.
 
 **Las fechas y las horas** salen de `toLocaleDateString`, no de `t()`. Iban con
 `'es-ES'` escrito a mano en nueve sitios, así que seis pantallas traducidas

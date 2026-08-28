@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
@@ -24,10 +24,10 @@ import {
   updateWorkingTimeRules,
 } from '../../services/api.js'
 import { ErrorNote, Loading, PageHeader, Panel } from '../../components/common.jsx'
-import { plural } from '../../components/format.js'
+import { capitalised, plural } from '../../components/format.js'
 import { avisoDeAlcance } from './avisoDeAlcance.js'
 import { useAuth } from '../../hooks/useAuth.js'
-import { localeDeFechas } from '../../i18n/index.js'
+import { alCatalogo, localeDeFechas } from '../../i18n/index.js'
 
 /** Spain spans two, and both are in daily use. The rest of the list is there
  *  because the product is not Spain-only, even if the rules currently are. */
@@ -75,28 +75,28 @@ const offsetOf = (zone) => {
  *  así que quien lo elige recibe el original.
  *
  *  Cuando haya un catálogo más, esta lista crece con él y no antes.
+ *
+ *  **Cada uno con su propio nombre**, y por eso no pasan por `t()`: quien viene
+ *  a esta lista puede no entender el idioma en el que está la pantalla ---es
+ *  justo por eso por lo que viene--- y «Inglés» no le dice nada a quien busca
+ *  «English». Antes iba a medias: dos en castellano y dos en el suyo.
  */
 const LANGUAGES = [
   ['es', 'Español'],
   ['ca', 'Català'],
   ['gl', 'Galego'],
-  ['en', 'Inglés'],
+  ['en', 'English'],
 ]
 
-const MONTHS = [
-  'enero',
-  'febrero',
-  'marzo',
-  'abril',
-  'mayo',
-  'junio',
-  'julio',
-  'agosto',
-  'septiembre',
-  'octubre',
-  'noviembre',
-  'diciembre',
-]
+/** Los doce meses, en el idioma de quien mira.
+ *
+ *  Estaban escritos a mano en castellano, así que el desplegable del periodo de
+ *  cómputo decía «enero» dentro de una pantalla en catalán. Salen del navegador
+ *  igual que el resto de fechas, y así no hay una lista más que traducir. */
+const meses = () =>
+  Array.from({ length: 12 }, (_, i) =>
+    new Date(2000, i, 1).toLocaleDateString(localeDeFechas(), { month: 'long' }),
+  )
 
 /** Cómo se llama cada ajuste en la pantalla.
  *
@@ -108,31 +108,31 @@ const MONTHS = [
  *  acaba», que fuera de su fila no dice nada.
  */
 const NOMBRES = {
-  name: 'Razón social',
-  language: 'Idioma',
-  time_zone: 'Zona horaria',
-  managers_see_everyone: 'Los responsables ven toda la empresa',
-  basis: 'Con qué amparo se organizó el registro',
-  reference: 'Cuál (convenio o acuerdo)',
-  in_force_since: 'En vigor desde',
-  consulted_on: 'Consulta a la representación',
-  annual_leave_days: 'Días de vacaciones al año',
-  annual_leave_in_working_days: 'Contar en días laborables',
-  leave_year_start_month: 'Mes en que empieza el periodo',
-  weekly_hours: 'Horas semanales',
-  daily_rest_hours: 'Descanso entre jornadas',
-  weekly_rest_hours: 'Descanso semanal',
-  annual_overtime_hours: 'Horas extra al año',
-  entry_tolerance_minutes: 'Margen de entrada',
-  exit_tolerance_minutes: 'Margen de salida',
-  max_open_hours: 'Jornada abierta como mucho',
-  break_after_hours: 'Descanso a partir de',
-  break_minutes: 'Minutos de descanso',
-  break_counts_as_work: 'El descanso computa como trabajo',
-  night_starts_at: 'El trabajo nocturno empieza',
-  night_ends_at: 'El trabajo nocturno acaba',
-  record_retention_years: 'Conservación del registro',
-  security_metadata_retention_days: 'Conservación de metadatos',
+  name: alCatalogo('Razón social'),
+  language: alCatalogo('Idioma'),
+  time_zone: alCatalogo('Zona horaria'),
+  managers_see_everyone: alCatalogo('Los responsables ven toda la empresa'),
+  basis: alCatalogo('Con qué amparo se organizó el registro'),
+  reference: alCatalogo('Cuál (convenio o acuerdo)'),
+  in_force_since: alCatalogo('En vigor desde'),
+  consulted_on: alCatalogo('Consulta a la representación'),
+  annual_leave_days: alCatalogo('Días de vacaciones al año'),
+  annual_leave_in_working_days: alCatalogo('Contar en días laborables'),
+  leave_year_start_month: alCatalogo('Mes en que empieza el periodo'),
+  weekly_hours: alCatalogo('Horas semanales'),
+  daily_rest_hours: alCatalogo('Descanso entre jornadas'),
+  weekly_rest_hours: alCatalogo('Descanso semanal'),
+  annual_overtime_hours: alCatalogo('Horas extra al año'),
+  entry_tolerance_minutes: alCatalogo('Margen de entrada'),
+  exit_tolerance_minutes: alCatalogo('Margen de salida'),
+  max_open_hours: alCatalogo('Jornada abierta como mucho'),
+  break_after_hours: alCatalogo('Descanso a partir de'),
+  break_minutes: alCatalogo('Minutos de descanso'),
+  break_counts_as_work: alCatalogo('El descanso computa como trabajo'),
+  night_starts_at: alCatalogo('El trabajo nocturno empieza'),
+  night_ends_at: alCatalogo('El trabajo nocturno acaba'),
+  record_retention_years: alCatalogo('Conservación del registro'),
+  security_metadata_retention_days: alCatalogo('Conservación de metadatos'),
 }
 
 /** Lo que se ha tocado y no se ha guardado todavía.
@@ -343,10 +343,16 @@ export default function Settings() {
     if (Number.isNaN(value)) return null
 
     if (c.floor != null && value < c.floor) {
-      return `Por debajo del mínimo de ${c.floor} que fija el ${c.basis}. Se guarda igual, pero debería ampararlo el convenio o una norma sectorial.`
+      return t(
+        'Por debajo del mínimo de {{limite}} que fija el {{articulo}}. Se guarda igual, pero debería ampararlo el convenio o una norma sectorial.',
+        { limite: c.floor, articulo: c.basis },
+      )
     }
     if (c.ceiling != null && value > c.ceiling) {
-      return `Por encima del máximo de ${c.ceiling} que fija el ${c.basis}. Se guarda igual, pero debería ampararlo el convenio.`
+      return t(
+        'Por encima del máximo de {{limite}} que fija el {{articulo}}. Se guarda igual, pero debería ampararlo el convenio.',
+        { limite: c.ceiling, articulo: c.basis },
+      )
     }
     return null
   }
@@ -380,8 +386,11 @@ export default function Settings() {
             disabled={save.isPending || cambios.length === 0}
           >
             {cambios.length === 0
-              ? 'Guardar cambios'
-              : `Guardar ${cambios.length} ${cambios.length === 1 ? 'cambio' : 'cambios'}`}
+              ? t('Guardar cambios')
+              : t('Guardar {{cuantos}} {{unidad}}', {
+                  cuantos: cambios.length,
+                  unidad: plural(cambios.length, t('cambio'), t('cambios')),
+                })}
           </Button>
         }
       />
@@ -416,10 +425,11 @@ export default function Settings() {
           Better said here, once, where it can be fixed. */}
       {representatives.data && representatives.data.count === 0 && (
         <Alert severity="warning" sx={{ mb: 2 }}>
-          No hay ninguna persona marcada como representante legal. El art. 4.b obliga a informarla
-          cuando alguien discrepa de un cambio en su registro, y sin nadie marcado ese aviso no
-          llega a ninguna parte. Se marca en la ficha de cada persona, en{' '}
-          <strong>{t('Personas')}</strong>.
+          <Trans
+            i18nKey="No hay ninguna persona marcada como representante legal. El art. 4.b obliga a informarla cuando alguien discrepa de un cambio en su registro, y sin nadie marcado ese aviso no llega a ninguna parte. Se marca en la ficha de cada persona, en <donde>{{pantalla}}</donde>."
+            values={{ pantalla: t('Personas') }}
+            components={{ donde: <strong /> }}
+          />
         </Alert>
       )}
       {saved && (
@@ -451,7 +461,7 @@ export default function Settings() {
 
         <Panel
           title={t('Zona horaria e idioma')}
-          hint="Las horas se guardan siempre en UTC. La zona solo decide cómo se muestran."
+          hint={t('Las horas se guardan siempre en UTC. La zona solo decide cómo se muestran.')}
         >
           <Stack sx={{ gap: 2 }}>
             <Autocomplete
@@ -484,7 +494,9 @@ export default function Settings() {
                 <TextField
                   {...params}
                   label={t('Zona horaria')}
-                  helperText={`Ahora mismo, ${offsetOf(form.time_zone || 'Europe/Madrid')}.`}
+                  helperText={t('Ahora mismo, {{desfase}}.', {
+                    desfase: offsetOf(form.time_zone || 'Europe/Madrid'),
+                  })}
                 />
               )}
             />
@@ -507,7 +519,9 @@ export default function Settings() {
                   paso le borraría el ajuste al primer guardado. */}
               {form.language && !LANGUAGES.some(([code]) => code === form.language) && (
                 <MenuItem value={form.language}>
-                  {form.language} (ya no disponible; responde en español)
+                  {t('{{codigo}} (ya no disponible; responde en español)', {
+                    codigo: form.language,
+                  })}
                 </MenuItem>
               )}
             </TextField>
@@ -516,7 +530,7 @@ export default function Settings() {
 
         <Panel
           title={t('Quién ve a quién')}
-          hint="Un responsable lee y resuelve por su gente. Administración ve toda la empresa."
+          hint={t('Un responsable lee y resuelve por su gente. Administración ve toda la empresa.')}
         >
           <Stack sx={{ gap: 2 }}>
             <FormControlLabel
@@ -532,8 +546,12 @@ export default function Settings() {
             />
             <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
               {form.managers_see_whole_company
-                ? 'Cualquier responsable lee el registro y las ausencias de toda la plantilla, lleve el departamento que lleve.'
-                : 'Cada responsable lee solo los departamentos que lleva. Se asigna en Departamentos.'}
+                ? t(
+                    'Cualquier responsable lee el registro y las ausencias de toda la plantilla, lleve el departamento que lleve.',
+                  )
+                : t(
+                    'Cada responsable lee solo los departamentos que lleva. Se asigna en Departamentos.',
+                  )}
             </Typography>
 
             {/* La una concesión de este diseño, dicha en voz alta: acotar por
@@ -564,13 +582,15 @@ export default function Settings() {
 
         <Panel
           title={t('Vacaciones')}
-          hint="Estos valores salen del convenio. El sistema no los conoce: los aplica."
+          hint={t('Estos valores salen del convenio. El sistema no los conoce: los aplica.')}
         >
           <Stack sx={{ gap: 2 }}>
             <TextField
               fullWidth
               type="number"
-              label={`Días al año, ${form.leave_days_are_working_days ? 'laborables' : 'naturales'}`}
+              label={t('Días al año, {{unidad}}', {
+                unidad: form.leave_days_are_working_days ? t('laborables') : t('naturales'),
+              })}
               value={form.annual_leave_days}
               onChange={set('annual_leave_days')}
               helperText={cite('annual_leave_days')}
@@ -592,9 +612,13 @@ export default function Settings() {
             />
             <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
               {form.leave_days_are_working_days
-                ? 'Solo se descuentan los días que la persona tenía que trabajar, según su cuadrante. Una quincena cuesta diez.'
-                : 'Se descuentan todos los días entre las dos fechas, fines de semana incluidos. La cifra de arriba debe ser la de días naturales del convenio.'}
-              {' Los festivos todavía no se descuentan: el sistema aún no los conoce.'}
+                ? t(
+                    'Solo se descuentan los días que la persona tenía que trabajar, según su cuadrante. Una quincena cuesta diez.',
+                  )
+                : t(
+                    'Se descuentan todos los días entre las dos fechas, fines de semana incluidos. La cifra de arriba debe ser la de días naturales del convenio.',
+                  )}{' '}
+              {t('Los festivos todavía no se descuentan: el sistema aún no los conoce.')}
             </Typography>
             <TextField
               select
@@ -604,9 +628,9 @@ export default function Settings() {
               onChange={set('leave_year_start_month')}
               helperText={t('Enero = año natural. El convenio puede fijar otro periodo.')}
             >
-              {MONTHS.map((month, index) => (
-                <MenuItem key={month} value={index + 1}>
-                  {month}
+              {meses().map((mes, indice) => (
+                <MenuItem key={mes} value={indice + 1}>
+                  {capitalised(mes)}
                 </MenuItem>
               ))}
             </TextField>
@@ -615,7 +639,9 @@ export default function Settings() {
 
         <Panel
           title={t('Reglas de jornada')}
-          hint="Con qué se compara el cuadrante. Cada valor lleva el artículo del que sale, y ninguno bloquea: se avisa y decide la empresa."
+          hint={t(
+            'Con qué se compara el cuadrante. Cada valor lleva el artículo del que sale, y ninguno bloquea: se avisa y decide la empresa.',
+          )}
         >
           {rules ? (
             <Stack sx={{ gap: 2 }}>
@@ -877,10 +903,10 @@ export default function Settings() {
           <Stack sx={{ gap: 1.5 }}>
             <Typography variant="body2">
               {permisos === undefined
-                ? 'Contando…'
+                ? t('Contando…')
                 : permisos === 0
-                  ? 'No hay ningún permiso configurado, así que nadie puede pedir ninguno.'
-                  : `${permisos} ${plural(permisos, 'permiso configurado', 'permisos configurados')}.`}
+                  ? t('No hay ningún permiso configurado, así que nadie puede pedir ninguno.')
+                  : `${permisos} ${plural(permisos, t('permiso configurado'), t('permisos configurados'))}.`}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {t(
@@ -890,8 +916,8 @@ export default function Settings() {
             {cargar.isSuccess && (
               <Alert severity="success" variant="outlined">
                 {cargar.data?.added
-                  ? `Añadidos ${cargar.data.added}.`
-                  : 'No faltaba ninguno: no se ha tocado nada.'}
+                  ? t('Añadidos {{cuantos}}.', { cuantos: cargar.data.added })
+                  : t('No faltaba ninguno: no se ha tocado nada.')}
               </Alert>
             )}
             <ErrorNote error={cargar.error} />

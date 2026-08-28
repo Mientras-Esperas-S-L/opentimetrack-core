@@ -4618,3 +4618,37 @@ Lo que faltaba era una tercera pieza que no existía: **la escoba**. Un comando 
 mantenimiento del entorno, fuera del producto, que se niega en producción y aplica la
 misma regla que la API. Cuando dos decisiones correctas producen residuo, el residuo
 es una tarea de mantenimiento, no una prueba de que una de las dos esté mal.
+
+## 281. Antes de traducir una lista, preguntar si tiene que traducirse
+
+Dos de las de esta vuelta no.
+
+**Los nombres de los idiomas** no se traducen: van en su propio idioma. Quien abre
+ese desplegable puede no entender el idioma en el que está la pantalla ---es
+exactamente por eso por lo que lo abre--- y «Inglés» no le dice nada a quien busca
+«English». Estaba a medias, con dos en castellano y dos en el suyo, y la salida no
+era pasarlos por `t()` sino terminar el criterio que ya había empezado.
+
+**Los doce meses** tampoco: los da el navegador con el locale, igual que las fechas.
+Estaban escritos a mano, y traducirlos habría sido mantener tres listas de doce
+palabras que `Intl` ya sabe.
+
+**La regla**: cuando una lista de rótulos aparece en la cuenta de lo pendiente,
+mirar antes si el idioma le aplica siquiera ---nombres propios, endónimos, unidades,
+símbolos--- y si el sistema ya la sabe. Traducirla es lo más caro de las tres
+salidas y a veces es la peor.
+
+## 282. Una prueba que depende de lo que falta por hacer lleva su caducidad escrita
+
+Para abrir el formulario de ausencias hay que pulsar un botón de la pantalla que lo
+contiene, y esa pantalla todavía no está traducida. Escrito a lo fácil, el selector
+habría sido «Solicitar» y se pondría rojo el día que a esa pantalla le toque su
+tanda --- un rojo por trabajo bien hecho, que es el peor de todos porque enseña a
+desconfiar de la suite.
+
+Acepta los dos rótulos, `/^(Solicitar|Demanar)$/`, con el motivo al lado.
+
+Es la misma forma de la lección 265 y de la muestra «sin traducir» de la prueba 36:
+cuando algo depende de un estado transitorio del proyecto, o se escribe para que
+sobreviva al cambio, o se deja escrito **cuándo** va a romperse y qué hacer entonces.
+Lo que no vale es dejarlo mudo.

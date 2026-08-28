@@ -27,13 +27,26 @@ test.describe('Idioma', () => {
     await page.getByRole('combobox', { name: 'Idioma' }).click()
     const opciones = await page.getByRole('option').allInnerTexts()
 
-    // Los cinco que tienen catálogo.
-    for (const real of ['Español', 'Català', 'Galego', 'Inglés']) {
+    // Los que tienen catálogo, **cada uno con su propio nombre**: quien abre
+    // esta lista puede no entender el idioma en el que está la pantalla, que es
+    // justo por lo que la abre. Por eso «English» y no «Inglés» --- antes iba a
+    // medias, con dos en castellano y dos en el suyo.
+    for (const real of ['Español', 'Català', 'Galego', 'English']) {
       expect(opciones, `falta ${real}`).toContain(real)
     }
-    // Y los tres que no lo tienen siguen fuera: ofrecerlos era prometer algo
-    // que no pasaba, porque se contestaba en castellano igual.
-    for (const sinCatalogo of ['Euskara', 'Francés', 'Portugués', 'Alemán']) {
+    // Y los que no lo tienen siguen fuera: ofrecerlos era prometer algo que no
+    // pasaba, porque se contestaba en castellano igual. Van escritos en las dos
+    // formas ---la suya y la castellana--- para que esto no dependa de con cuál
+    // se añadan el día que se añadan.
+    for (const sinCatalogo of [
+      'Euskara',
+      'Français',
+      'Francés',
+      'Português',
+      'Portugués',
+      'Deutsch',
+      'Alemán',
+    ]) {
       expect(opciones, `sigue ofreciendo ${sinCatalogo}`).not.toContain(sinCatalogo)
     }
     await page.keyboard.press('Escape')

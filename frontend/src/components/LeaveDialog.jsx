@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
@@ -18,6 +19,7 @@ import Typography from '@mui/material/Typography'
 import { getLeaveTypes, getLeaveUsage } from '../services/api.js'
 import EmployeePicker from './EmployeePicker.jsx'
 import { ErrorNote } from './common.jsx'
+import { alCatalogo } from '../i18n/index.js'
 import { plural, today } from './format.js'
 
 /** Pedir una ausencia, o registrarla la empresa. Un solo formulario.
@@ -34,25 +36,25 @@ import { plural, today } from './format.js'
  */
 
 const FAMILIES = {
-  VACATION: 'Vacaciones',
-  SICK_LEAVE: 'Bajas',
-  PAID_LEAVE: 'Permisos retribuidos',
-  UNPAID_LEAVE: 'Sin sueldo',
-  SUSPENSION: 'Suspensión del contrato',
+  VACATION: alCatalogo('Vacaciones'),
+  SICK_LEAVE: alCatalogo('Bajas'),
+  PAID_LEAVE: alCatalogo('Permisos retribuidos'),
+  UNPAID_LEAVE: alCatalogo('Sin sueldo'),
+  SUSPENSION: alCatalogo('Suspensión del contrato'),
 }
 
 const UNITS = {
-  DAYS_CALENDAR: 'días naturales',
-  DAYS_WORKING: 'días laborables',
-  HOURS: 'horas',
-  WEEKS: 'semanas',
+  DAYS_CALENDAR: alCatalogo('días naturales'),
+  DAYS_WORKING: alCatalogo('días laborables'),
+  HOURS: alCatalogo('horas'),
+  WEEKS: alCatalogo('semanas'),
 }
 
 const PERIODS = {
-  YEAR: 'este año',
-  MONTH: 'este mes',
-  WEEK: 'esta semana',
-  DAY: 'hoy',
+  YEAR: alCatalogo('este año'),
+  MONTH: alCatalogo('este mes'),
+  WEEK: alCatalogo('esta semana'),
+  DAY: alCatalogo('hoy'),
 }
 
 /** Sin decimales cuando no los tiene: «2 de 4», no «2,00 de 4,00». */
@@ -113,6 +115,7 @@ const EMPTY = {
 }
 
 export default function LeaveDialog({ open, onClose, onSubmit, saving, error, forPerson = false }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState(EMPTY)
   const [person, setPerson] = useState('')
   const [partial, setPartial] = useState(false)
@@ -227,14 +230,14 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
           })
         }}
       >
-        <DialogTitle>{forPerson ? 'Registrar ausencia' : 'Solicitar ausencia'}</DialogTitle>
+        <DialogTitle>{forPerson ? t('Registrar ausencia') : t('Solicitar ausencia')}</DialogTitle>
         <DialogContent>
           <ErrorNote error={error} />
           <Stack sx={{ gap: 2, pt: 1 }}>
             {forPerson && (
               <EmployeePicker
                 required
-                label="De quién"
+                label={t('De quién')}
                 value={person}
                 onChange={(id) => setPerson(id ?? '')}
               />
@@ -242,9 +245,11 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
 
             <Autocomplete
               options={[...types].sort((a, b) =>
-                (FAMILIES[a.family] ?? '').localeCompare(FAMILIES[b.family] ?? ''),
+                t(FAMILIES[a.family] ?? '').localeCompare(t(FAMILIES[b.family] ?? '')),
               )}
-              groupBy={(option) => FAMILIES[option.family] ?? 'Otros'}
+              groupBy={(option) =>
+                FAMILIES[option.family] ? t(FAMILIES[option.family]) : t('Otros')
+              }
               getOptionLabel={(option) => option.name}
               value={kind}
               onChange={(_, chosen) => pick(chosen)}
@@ -258,8 +263,10 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                       <Typography variant="caption" color="text.secondary">
                         {option.allowance}
                         {option.basis ? ` · ${option.basis}` : ''}
-                        {option.paid ? '' : ' · sin sueldo'}
-                        {option.initiated_by === 'COMPANY' ? ' · lo registra la empresa' : ''}
+                        {option.paid ? '' : ` ${t('· sin sueldo')}`}
+                        {option.initiated_by === 'COMPANY'
+                          ? ` ${t('· lo registra la empresa')}`
+                          : ''}
                       </Typography>
                     </Stack>
                   </li>
@@ -269,13 +276,15 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                 <TextField
                   {...params}
                   required
-                  label="Qué pides"
+                  label={t('Qué pides')}
                   helperText={
                     kind
                       ? [kind.allowance, kind.basis].filter(Boolean).join(' · ')
                       : forPerson
-                        ? 'Escribe para buscar. Incluye lo que registra la empresa: ERTE, huelga…'
-                        : 'Escribe para buscar entre los permisos de tu empresa.'
+                        ? t(
+                            'Escribe para buscar. Incluye lo que registra la empresa: ERTE, huelga…',
+                          )
+                        : t('Escribe para buscar entre los permisos de tu empresa.')
                   }
                 />
               )}
@@ -288,28 +297,43 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                 consulta responda para no acusar de vacío lo que aún no llegó. */}
             {typesLoaded && types.length === 0 && (
               <Alert severity="warning" variant="outlined">
-                Esta empresa no tiene permisos configurados, así que no se puede pedir ninguno.
-                Quien administre puede cargar el catálogo del país desde los ajustes de la empresa.
+                {t(
+                  'Esta empresa no tiene permisos configurados, así que no se puede pedir ninguno. Quien administre puede cargar el catálogo del país desde los ajustes de la empresa.',
+                )}
               </Alert>
             )}
 
             {companyRecorded && (
               <Alert severity="info" variant="outlined">
-                Esto no pasa por la cola: se registra directamente en vigor, como hecho o como
-                decisión de la empresa, y queda en la auditoría a tu nombre.
+                {t(
+                  'Esto no pasa por la cola: se registra directamente en vigor, como hecho o como decisión de la empresa, y queda en la auditoría a tu nombre.',
+                )}
               </Alert>
             )}
 
             {left && (
               <Alert severity={left.remaining <= 0 ? 'warning' : 'info'} variant="outlined">
-                {forPerson ? 'Lleva' : 'Llevas'} <strong>{formatAmount(left.used)}</strong> de{' '}
-                {formatAmount(left.allowance)} {UNITS[left.unit] ?? ''} {PERIODS[left.period] ?? ''}
-                .{' '}
+                <Trans
+                  i18nKey={
+                    forPerson
+                      ? 'Lleva <destacado>{{usado}}</destacado> de {{total}} {{unidad}} {{periodo}}.'
+                      : 'Llevas <destacado>{{usado}}</destacado> de {{total}} {{unidad}} {{periodo}}.'
+                  }
+                  values={{
+                    usado: formatAmount(left.used),
+                    total: formatAmount(left.allowance),
+                    unidad: UNITS[left.unit] ? t(UNITS[left.unit]) : '',
+                    periodo: PERIODS[left.period] ? t(PERIODS[left.period]) : '',
+                  }}
+                  components={{ destacado: <strong /> }}
+                />{' '}
                 {left.remaining > 0
-                  ? `${forPerson ? 'Le quedan' : 'Te quedan'} ${formatAmount(left.remaining)}.`
-                  : 'No queda nada de este permiso en este periodo.'}
+                  ? forPerson
+                    ? t('Le quedan {{cuanto}}.', { cuanto: formatAmount(left.remaining) })
+                    : t('Te quedan {{cuanto}}.', { cuanto: formatAmount(left.remaining) })
+                  : t('No queda nada de este permiso en este periodo.')}
                 {left.estimated &&
-                  ' La duración de la jornada se ha estimado: no hay cuadrante de ese día.'}
+                  ` ${t('La duración de la jornada se ha estimado: no hay cuadrante de ese día.')}`}
               </Alert>
             )}
 
@@ -324,8 +348,9 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
 
             {isSick && (
               <Typography variant="body2" color="text.secondary">
-                No hace falta adjuntar el parte, y el sistema no lo guarda. Desde 2023 lo recibe la
-                empresa directamente del INSS: basta con registrar las fechas.
+                {t(
+                  'No hace falta adjuntar el parte, y el sistema no lo guarda. Desde 2023 lo recibe la empresa directamente del INSS: basta con registrar las fechas.',
+                )}
               </Typography>
             )}
 
@@ -336,8 +361,8 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                 value={partial ? 'part' : 'whole'}
                 onChange={(_, next) => next && setPartial(next === 'part')}
               >
-                <ToggleButton value="whole">Días completos</ToggleButton>
-                <ToggleButton value="part">Parte de un día</ToggleButton>
+                <ToggleButton value="whole">{t('Días completos')}</ToggleButton>
+                <ToggleButton value="part">{t('Parte de un día')}</ToggleButton>
               </ToggleButtonGroup>
             )}
 
@@ -347,7 +372,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                   required
                   fullWidth
                   type="date"
-                  label="Día"
+                  label={t('Día')}
                   value={form.start_date}
                   onChange={set('start_date')}
                   slotProps={{ inputLabel: { shrink: true } }}
@@ -355,7 +380,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                 <TextField
                   required
                   type="time"
-                  label="Desde"
+                  label={t('Desde')}
                   value={form.start_time}
                   onChange={set('start_time')}
                   slotProps={{ inputLabel: { shrink: true } }}
@@ -363,7 +388,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                 <TextField
                   required
                   type="time"
-                  label="Hasta"
+                  label={t('Hasta')}
                   value={form.end_time}
                   onChange={set('end_time')}
                   slotProps={{ inputLabel: { shrink: true } }}
@@ -375,7 +400,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                   required
                   fullWidth
                   type="date"
-                  label="Desde"
+                  label={t('Desde')}
                   value={form.start_date}
                   onChange={set('start_date')}
                   slotProps={{ inputLabel: { shrink: true } }}
@@ -384,7 +409,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                   required
                   fullWidth
                   type="date"
-                  label="Hasta"
+                  label={t('Hasta')}
                   value={form.end_date}
                   onChange={set('end_date')}
                   slotProps={{ inputLabel: { shrink: true } }}
@@ -395,35 +420,51 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
             {partial
               ? hours > 0 && (
                   <Typography variant="body2" color="text.secondary">
-                    Son <strong>{hours.toString().replace('.', ',')}</strong>{' '}
-                    {hours === 1 ? 'hora' : 'horas'}.
+                    <Trans
+                      i18nKey="Son <destacado>{{cuantas}}</destacado> {{unidad}}."
+                      values={{
+                        cuantas: hours.toString().replace('.', ','),
+                        unidad: plural(hours, t('hora'), t('horas')),
+                      }}
+                      components={{ destacado: <strong /> }}
+                    />
                   </Typography>
                 )
               : days > 0 && (
                   <Typography variant="body2" color="text.secondary">
-                    Son <strong>{days}</strong> {days === 1 ? 'día' : 'días'}
-                    {asked != null && kind?.unit !== 'DAYS_CALENDAR' && (
-                      <>
-                        {' '}
-                        ({formatAmount(asked)} {UNITS[kind.unit]})
-                      </>
-                    )}
-                    .
+                    <Trans
+                      i18nKey="Son <destacado>{{cuantos}}</destacado> {{unidad}}{{aclaracion}}."
+                      values={{
+                        cuantos: days,
+                        unidad: plural(days, t('día'), t('días')),
+                        aclaracion:
+                          asked != null && kind?.unit !== 'DAYS_CALENDAR'
+                            ? ` (${formatAmount(asked)} ${t(UNITS[kind.unit])})`
+                            : '',
+                      }}
+                      components={{ destacado: <strong /> }}
+                    />
                     {kind?.family === 'VACATION' &&
-                      ' Del saldo solo salen los que se iban a trabajar: ni fines de semana ni festivos.'}
+                      ` ${t('Del saldo solo salen los que se iban a trabajar: ni fines de semana ni festivos.')}`}
                   </Typography>
                 )}
 
             {overAllowance && (
               <Alert severity="warning" variant="outlined">
-                {kind.name} da {kind.allowance}, y se están pidiendo {formatAmount(asked)}{' '}
-                {UNITS[kind.unit]}. No se impide: el convenio puede dar más de lo que consta aquí.
+                {t(
+                  '{{permiso}} da {{cuanto}}, y se están pidiendo {{pedido}} {{unidad}}. No se impide: el convenio puede dar más de lo que consta aquí.',
+                  {
+                    permiso: kind.name,
+                    cuanto: kind.allowance,
+                    pedido: formatAmount(asked),
+                    unidad: t(UNITS[kind.unit]),
+                  },
+                )}
                 {Number(kind.extra_when_travelling) > 0 &&
-                  ` Si hay desplazamiento, son ${Number(kind.extra_when_travelling)} ${plural(
-                    kind.extra_when_travelling,
-                    'día',
-                    'días',
-                  )} más.`}
+                  ` ${t('Si hay desplazamiento, son {{cuantos}} {{unidad}} más.', {
+                    cuantos: Number(kind.extra_when_travelling),
+                    unidad: plural(kind.extra_when_travelling, t('día'), t('días')),
+                  })}`}
               </Alert>
             )}
 
@@ -431,14 +472,17 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
               <TextField
                 fullWidth
                 type="number"
-                label="Reducción de jornada (%)"
+                label={t('Reducción de jornada (%)')}
                 value={form.reduction_share}
                 onChange={set('reduction_share')}
                 slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
                 helperText={
                   form.reduction_share === '' || Number(form.reduction_share) >= 100
-                    ? 'Vacío o 100 suspende el contrato entero: no se espera jornada.'
-                    : `Se sigue trabajando el ${100 - Number(form.reduction_share)} %. El cuadrante pasa a medirse contra esa jornada.`
+                    ? t('Vacío o 100 suspende el contrato entero: no se espera jornada.')
+                    : t(
+                        'Se sigue trabajando el {{porcentaje}} %. El cuadrante pasa a medirse contra esa jornada.',
+                        { porcentaje: 100 - Number(form.reduction_share) },
+                      )
                 }
               />
             )}
@@ -447,16 +491,16 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
               fullWidth
               multiline
               minRows={2}
-              label={kind?.needs_justification ? 'Motivo' : 'Motivo (opcional)'}
+              label={kind?.needs_justification ? t('Motivo') : t('Motivo (opcional)')}
               required={Boolean(kind?.needs_justification) && !isSick}
               value={form.reason}
               onChange={set('reason')}
               helperText={
                 isSick
-                  ? 'No hace falta indicar la dolencia.'
+                  ? t('No hace falta indicar la dolencia.')
                   : kind?.needs_justification
-                    ? 'Este permiso pide justificante.'
-                    : 'Lo verá quien resuelva la solicitud.'
+                    ? t('Este permiso pide justificante.')
+                    : t('Lo verá quien resuelva la solicitud.')
               }
             />
 
@@ -467,7 +511,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
             {kind?.needs_justification && !isSick && (
               <Box>
                 <Button component="label" variant="outlined" startIcon={<AttachFileIcon />}>
-                  {justificante ? 'Cambiar el justificante' : 'Adjuntar el justificante'}
+                  {justificante ? t('Cambiar el justificante') : t('Adjuntar el justificante')}
                   <input
                     hidden
                     type="file"
@@ -482,7 +526,9 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                 >
                   {justificante
                     ? justificante.name
-                    : 'PDF o foto, hasta 10 MB. Opcional ahora: la solicitud se puede enviar sin él.'}
+                    : t(
+                        'PDF o foto, hasta 10 MB. Opcional ahora: la solicitud se puede enviar sin él.',
+                      )}
                 </Typography>
               </Box>
             )}
@@ -490,14 +536,18 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="inherit">
-            Cancelar
+            {t('Cancelar')}
           </Button>
           <Button
             type="submit"
             variant="contained"
             disabled={saving || !form.leave_type || (forPerson && !person)}
           >
-            {forPerson ? (companyRecorded ? 'Registrar' : 'Registrar solicitud') : 'Solicitar'}
+            {forPerson
+              ? companyRecorded
+                ? t('Registrar')
+                : t('Registrar solicitud')
+              : t('Solicitar')}
           </Button>
         </DialogActions>
       </form>

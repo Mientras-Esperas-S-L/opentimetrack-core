@@ -80,7 +80,7 @@ const ES_CSS = [
   /^&/, // un selector anidado de emotion
   /\.Mui[A-Z]/, // ...y el que apunta a una pieza de MUI
   /^\(\s*(prefers|min-width|max-width|hover|pointer)/, // una consulta de medios
-  /\d+(px|rem|em|vh|vw|ch|%)\b/, // cualquier medida
+  /\d+(px|rem|em|vh|vw|ch|fr|%)\b/, // cualquier medida
   /\b(repeat|calc|rgba?|hsla?|var|linear-gradient|repeating-linear-gradient|translate|scale)\(/,
   /\b(solid|dashed|dotted|inset|ease-in-out|sans-serif|system-ui)\b/,
 ]

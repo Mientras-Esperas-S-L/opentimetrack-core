@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 140 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---464 de 953 cadenas, nueve pantallas enteras---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 141 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---556 de 937 cadenas, once pantallas enteras---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,31 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 141 --- Pedir una ausencia y Ajustes, y dos listas que no había que traducir (28/08)
+
+**Traducido:** `LeaveDialog.jsx` entero ---el fichero con más texto de todo el
+frontend, 55 cadenas: el saldo, los avisos de tope, las condiciones del
+convenio--- y los 51 que quedaban en Ajustes, de los que la vuelta 136 había
+dado por terminada la pantalla. El catálogo: 435 → **514 claves**. Van 556 de
+937.
+
+**Dos listas que se resolvieron sin traducir nada:**
+
+- **Los nombres de los idiomas.** Iban a medias ---«Español» e «Inglés» en
+  castellano, «Català» y «Galego» en el suyo--- y la salida no era pasarlos por
+  `t()`: **cada uno con su propio nombre**, «English» incluido. Quien viene a
+  esa lista puede no entender el idioma en el que está la pantalla, que es justo
+  por lo que viene, y «Inglés» no le dice nada a quien busca «English».
+- **Los doce meses**, escritos a mano en castellano, así que el desplegable del
+  periodo de cómputo decía «enero» dentro de una pantalla en catalán. Salen
+  ahora del navegador como el resto de fechas: una lista menos que mantener y
+  una menos que traducir.
+
+**La prueba del diálogo va aparte de la tabla**, porque no es una pantalla: hay
+que abrirlo. Y el botón que lo abre es de `MyLeave`, que todavía no está
+traducida, así que acepta los dos rótulos ---`/^(Solicitar|Demanar)$/`--- para
+no ponerse roja el día que le toque su tanda.
 
 ### Vuelta 140 --- Cuadrante, Permisos y Aplicaciones, y un hueco que me había hecho yo (28/08)
 

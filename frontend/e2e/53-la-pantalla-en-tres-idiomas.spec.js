@@ -249,6 +249,38 @@ test.describe('La pantalla, en los tres idiomas', () => {
     }
   })
 
+  /** El formulario de pedir una ausencia.
+   *
+   *  No es una pantalla y por eso no está en la tabla: hay que abrirlo. Y es el
+   *  fichero con más texto de todo el frontend ---cincuenta y cinco cadenas---,
+   *  con el saldo, los avisos de tope y las condiciones del convenio, así que
+   *  vale por varias pantallas de las de arriba.
+   */
+  test('el formulario de pedir una ausencia, entero', async ({ page }) => {
+    await page.goto('/')
+    const antes = (await api(page, '/auth/me/')).body?.locale ?? ''
+    try {
+      await api(page, '/auth/me/', { method: 'PATCH', body: { locale: 'ca' } })
+      await irA(page, '/mis-ausencias', /Mis ausencias|Les meves absències/)
+
+      // El botón que lo abre es de la pantalla, no del diálogo, y esa pantalla
+      // todavía no está traducida. Vale cualquiera de los dos rótulos para que
+      // esto no se ponga rojo el día que le toque su tanda.
+      await page.getByRole('button', { name: /^(Solicitar|Demanar)$/ }).click()
+
+      const dialogo = page.getByRole('dialog')
+      await expect(dialogo.getByText('Demanar una absència')).toBeVisible()
+      await expect(dialogo.getByLabel('Què demanes')).toBeVisible()
+      await expect(dialogo.getByText('Solicitar ausencia')).toHaveCount(0)
+      await expect(dialogo.getByLabel('Qué pides')).toHaveCount(0)
+
+      await page.keyboard.press('Escape')
+      await expect(page.getByRole('dialog')).toHaveCount(0)
+    } finally {
+      await api(page, '/auth/me/', { method: 'PATCH', body: { locale: antes } })
+    }
+  })
+
   /** Las fechas.
    *
    *  Se escribían con `'es-ES'` fijo en nueve sitios, así que una pantalla
