@@ -170,3 +170,81 @@ def test_el_lector_del_catalogo_ve_los_huecos():
             f"{idioma}: el lector encuentra solo {len(faltan)} huecos, y deberían "
             "quedar las etiquetas de campo sin traducir. ¿Se ha roto el parseo?"
         )
+
+
+# ------------------------------------------------------ el hueco que no se veía
+
+
+def _marcadas_dudosas(idioma: str) -> set[str]:
+    """Las entradas que gettext marcó `fuzzy` al reconstruir el catálogo."""
+    ruta = Path(settings.BASE_DIR) / "locale" / idioma / "LC_MESSAGES" / "django.po"
+    dudosas = set()
+    for bloque in ruta.read_text(encoding="utf-8").split("\n\n"):
+        if "Project-Id-Version" in bloque or not re.search(r"^#, fuzzy", bloque, re.M):
+            continue
+        cabeza = re.search(r"^msgid (.*?)(?=^msgstr )", bloque + "\nmsgstr ", re.M | re.S)
+        if cabeza:
+            texto = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', cabeza.group(1)))
+            dudosas.add(texto.replace("\\n", "\n").replace('\\"', '"'))
+    return dudosas
+
+
+@pytest.mark.parametrize("idioma", (*IDIOMAS, "es"))
+def test_ninguna_cadena_visible_se_queda_en_dudosa(idioma):
+    """Un `fuzzy` pasaba el guard de arriba sin estar traducido.
+
+    Cuando se añade una cadena parecida a otra, `makemessages` le pega la
+    traducción de la vieja y la marca `#, fuzzy`. Eso deja un `msgstr` **no
+    vacío**, así que `_sin_traducir` la da por hecha y la prueba de arriba pasa.
+
+    Lo que hace `msgfmt` con ella, comprobado y no supuesto: **la omite del
+    `.mo`**, de modo que la cadena sale en el idioma de partida. No enseña la
+    traducción equivocada ---que sería peor--- pero tampoco está traducida, y
+    nadie se entera.
+
+    Pasó de verdad: al añadir los periodos de actividad, `activity starts` heredó
+    «Registro de actividad» y `that week` heredó «a la semana». Las dos habrían
+    salido en castellano dentro del catalán sin que ningún guard dijera nada.
+
+    El castellano entra aquí aunque no esté en `IDIOMAS`: es el idioma al que cae
+    todo lo demás, así que un hueco suyo no cae a ningún sitio.
+    """
+    visibles = _visibles_del_codigo()
+    dudosas = sorted(visibles & _marcadas_dudosas(idioma))
+
+    assert dudosas == [], (
+        f"{len(dudosas)} mensajes visibles están marcados `fuzzy` en {idioma}, "
+        "así que salen sin traducir:\n\n  "
+        + "\n  ".join(repr(d[:90]) for d in dudosas[:15])
+        + "\n\nRevisa la traducción heredada, corrígela y quita la línea "
+        "`#, fuzzy` junto con el `#| msgid` que la acompaña."
+    )
+
+
+def test_el_lector_de_dudosas_sabe_encontrarlas():
+    """El contraste. Sin él, un parseo roto daría verde para siempre.
+
+    Se comprueba contra un catálogo escrito aquí, y no contra los del proyecto:
+    hoy no tienen ni una dudosa ---esa es la idea--- así que no sirven de patrón
+    positivo.
+    """
+    catalogo = (
+        'msgid ""\nmsgstr ""\n"Project-Id-Version: x\\n"\n\n'
+        '#, fuzzy\n#| msgid "lo viejo"\nmsgid "lo nuevo"\nmsgstr "traducción heredada"\n\n'
+        'msgid "lo seguro"\nmsgstr "traducción buena"\n'
+    )
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as carpeta:
+        destino = Path(carpeta) / "locale" / "xx" / "LC_MESSAGES"
+        destino.mkdir(parents=True)
+        (destino / "django.po").write_text(catalogo, encoding="utf-8")
+
+        original = settings.BASE_DIR
+        try:
+            settings.BASE_DIR = carpeta
+            assert _marcadas_dudosas("xx") == {"lo nuevo"}
+            # Y que no se lleva por delante la que está bien.
+            assert "lo seguro" not in _marcadas_dudosas("xx")
+        finally:
+            settings.BASE_DIR = original

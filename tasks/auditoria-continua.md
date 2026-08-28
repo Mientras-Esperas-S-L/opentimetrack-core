@@ -369,6 +369,88 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 150 --- El tope de las horas complementarias (28/08)
+
+**2 de 13.** Elegida por lo que más se nota: las complementarias son la única
+protección que el trabajo a tiempo parcial tiene de verdad ---el art. 12.4.c
+prohíbe las horas extraordinarias en un contrato parcial--- y tocan a media
+plantilla en hostelería, comercio o limpieza.
+
+**El enunciado contaba mal dos veces**, y clasificar antes de escribir código
+volvió a ser lo que más ahorró.
+
+Decía: «A medias. El cuadrante avisa; el tope **mensual** del 30 % no se
+acumula».
+
+1. **No es mensual.** El art. 12.5.c habla del «treinta por ciento de las horas
+   ordinarias de trabajo objeto del contrato», y el objeto se pacta por semana,
+   por mes o por año (art. 12.1). Un contrato de 800 horas al año tiene 240
+   complementarias **al año**, no 20 al mes: repartirlas por meses inventa un
+   límite que nadie pactó, y es justo lo que este proyecto ya se negó a hacer en
+   `agreed_hours` ---dividir 1700 horas anuales entre 52 da una cifra que no
+   está en ningún contrato---. El contrato anual es precisamente el que deja
+   concentrar el trabajo en la temporada.
+
+2. **No había nada que acumular.** El campo `hours_nature` existe y la API lo
+   acepta, pero **ninguna pantalla lo manda**: nadie escribe esa marca nunca. Y
+   la semilla la escribía en el fichaje de **salida**, cuando todo lo descriptivo
+   viaja en el que abre el tramo ---`_span` lo dice con todas las letras---, así
+   que las siete horas complementarias de la demostración eran invisibles hasta
+   para el informe.
+
+**Cómo se ha hecho: derivándolas.** El art. 12.5.a las define por lo que son ---
+las realizadas como adición a las ordinarias pactadas---, así que salen de
+restar lo trabajado menos lo pactado en el periodo del contrato. Si la cuenta
+dependiera de la marca sería cero para siempre y el aviso no llegaría nunca.
+
+**Y cierra una promesa que el producto llevaba tiempo haciendo.** El aviso del
+cuadrante dice, desde hace vueltas, que las horas por encima del contrato
+«cuentan para su propio límite». Ese límite no lo llevaba nadie.
+
+**Las personas salen del registro, no del cuadrante.** Quien no tiene turnos
+planificados es quien más fácilmente se pasa sin que nadie mire, y es el agujero
+que `_check_time_actually_worked` existe para tapar: repetirlo aquí habría dejado
+fuera al mismo grupo. Hay prueba que lo fija sin crear ni un turno.
+
+**El aviso solo existe donde la figura existe.** Se lee del marco legal: la
+directiva europea no conoce las complementarias ---son una construcción del ET---
+y emitir allí un aviso con un porcentaje español sería inventarle a otro país un
+límite que su ley no tiene.
+
+**El guard de aislamiento volvió a pillarme, y esta vez con razón.** `User.objects`
+no acota por empresa ---su propio docstring lo dice--- y mi consulta de personas
+a tiempo parcial no llevaba `tenant=`. Ayer el mismo guard me paró en la
+renovación de sesión y allí la excepción era legítima; hoy era un fallo. La
+diferencia está en si hay empresa de la que tirar, y en el refresco no la hay.
+
+Al escribir la prueba salió un matiz que conviene no confundir: **quitando el
+`tenant=` la prueba sigue pasando**, porque `Punch.objects` corta la fuga más
+adentro. La defensa explícita se queda, y el docstring dice cuál de las dos hace
+hoy el trabajo en vez de afirmar una fuga que no se ha visto.
+
+**Tres cosas que corrigen lo escrito ayer:**
+
+- **El backend sí tiene guard de catálogo.** `test_los_dos_idiomas_van_al_dia.py`
+  existe desde el 27/08 y clasifica cada cadena en «visible» o «etiqueta de
+  campo» leyendo el AST. Ayer escribí que no existía sin buscarlo.
+- **Un `fuzzy` no enseña texto equivocado.** Comprobado con `msgfmt`: la entrada
+  se omite del `.mo` y la cadena sale en el idioma de partida. Lo que sí es
+  cierto, y es el agujero real, es que **el guard no la ve** ---mira si el
+  `msgstr` está vacío, y un `fuzzy` lo tiene lleno---. Cerrado hoy con
+  `test_ninguna_cadena_visible_se_queda_en_dudosa`, con contraste sobre un
+  catálogo escrito a mano porque los del proyecto no tienen ni una dudosa.
+- **Las cifras de deuda de traducción eran mías, no del proyecto.** Mi contador
+  de huecos leía el formato multilínea de gettext ---`msgstr ""` seguido del
+  texto--- como vacío. Los números reales: **0 sin traducir en castellano** y
+  **153 en catalán y gallego**, que son exactamente las etiquetas internas que el
+  dossier ya declaraba. Y el ruido tapaba un hueco de verdad: uno, mío, del
+  llamamiento del art. 16.3, que ya está traducido.
+
+**Cifras al cerrar:** 1.345 pruebas de backend y 304 de navegador en verde,
+`ruff` y `ruff format` limpios, `eslint` y `prettier` limpios, `i18n:check` en
+verde, los tres catálogos del servidor sin ninguna cadena visible pendiente ni
+dudosa.
+
 ### Vuelta 149 --- Lo que salió al limpiar la base (28/08)
 
 Esta vuelta no estaba en la lista: la abrieron cuatro pruebas de navegador que

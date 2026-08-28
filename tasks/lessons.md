@@ -4870,22 +4870,32 @@ Dos reglas:
   repartidos.** Con un sujeto dominante, «devuelve todo» y «filtra» dan el mismo
   resultado.
 
-## 293. El backend no tiene guard de catálogo, y se le nota
+## 293. Dos cosas que di por ciertas sin mirar ---corregida al día siguiente---
 
-El frontend está entero en tres idiomas porque hay un guard que lo exige. El
-backend depende de que me acuerde de correr `makemessages`, y al correrlo hoy
-aparecieron **doce cadenas mías sin traducir y cuatro `fuzzy`** en un proyecto
-que tenía los tres catálogos a cero.
+**Lo que escribí:** que el backend no tenía guard de catálogo y que los `fuzzy`
+son «texto equivocado que se muestra». Las dos son falsas, y las dos las escribí
+con la seguridad de quien ha comprobado algo.
 
-Los huecos son lo de menos. Los `fuzzy` son lo que hay que mirar: no son texto
-ausente, son **texto equivocado que se muestra**. gettext había emparejado
-«activity starts» con «Registro de actividad» y «activity ends» con «activo»,
-por parecido, y eso es lo que habría salido en pantalla.
+**Lo que hay.** `apps/common/tests/test_los_dos_idiomas_van_al_dia.py` existe
+desde el 27/08, clasifica cada cadena en «visible» o «etiqueta de campo» leyendo
+el AST, y exige que las visibles estén en catalán y gallego. Es más fino que el
+guard que yo proponía. No lo busqué: di por hecho que no estaba porque el
+frontend tiene el suyo y no recordaba uno aquí.
 
-Queda propuesto en el cuaderno un trinquete: que el número de cadenas sin
-traducir **no suba** y que los `fuzzy` sigan a cero. No puede exigir cero hoy
----hay 143 huecos viejos en catalán--- pero sí puede impedir que crezca, que es
-lo que ha pasado estas vueltas.
+**Lo que hace un `fuzzy`,** comprobado con `msgfmt` y no supuesto: la entrada
+**se omite del `.mo`**, así que la cadena sale en el idioma de partida. No enseña
+la traducción heredada. Lo que sí es cierto, y es el agujero de verdad, es que
+**el guard no la ve**: `_sin_traducir` mira si el `msgstr` está vacío, y un
+`fuzzy` lo tiene lleno. Una cadena visible marcada dudosa pasaba el guard y salía
+sin traducir.
+
+Cerrado el 28/08 con `test_ninguna_cadena_visible_se_queda_en_dudosa`, con su
+contraste sobre un catálogo escrito a mano ---los del proyecto no tienen ni una
+dudosa, así que no sirven de patrón positivo---.
+
+**La regla:** antes de escribir «esto no existe», buscarlo. Cuesta un `ls` del
+directorio de pruebas. Y antes de escribir qué hace una herramienta, ejecutarla:
+la de hoy costó seis líneas y un `.po` de tres entradas.
 
 ## 294. El guard mira el disco, no lo que subes
 
@@ -4902,3 +4912,66 @@ La comprobación cuesta un vistazo y la hago siempre **antes** del push, no
 después: `git status --short`. Si queda suelto el hermano de algo que acabo de
 subir, falta un `git add`. Aquí saltó a la vista porque el push imprimió el
 fichero pendiente justo debajo; no siempre va a ser tan amable.
+
+## 295. El instrumento contaba mal, y con él conté mal yo
+
+Escribí un contador de huecos de traducción así:
+
+    re.findall(r'msgid "..."\nmsgstr ""\n', texto)
+
+y con él afirmé, dos días seguidos, que quedaban «22 huecos en castellano, 143 en
+catalán y 142 en gallego». Las cifras entraron en el cuaderno, en la memoria del
+proyecto y en una lección.
+
+Las de verdad son **0 en castellano** y **153 en catalán y gallego**, que son
+exactamente las etiquetas internas que el dossier ya declaraba.
+
+El error: gettext parte los mensajes largos y los escribe así,
+
+    msgid "Empty while the season is open: a campaign knows when it starts."
+    msgstr ""
+    "Vacío mientras la temporada siga abierta: una campaña sabe cuándo empieza."
+
+o sea `msgstr ""` **seguido** del texto. Mi patrón leía esa línea suelta y las
+contaba todas como vacías. Y el lector del guard del proyecto, que junta las
+líneas de cadena antes de mirar, siempre estuvo bien.
+
+Lo peor no fue la cifra inflada: fue que el ruido **tapó un hueco de verdad**. El
+castellano tenía uno, mío, del llamamiento del art. 16.3, y yo lo di por parte de
+los 22 «viejos».
+
+**La regla,** que es la [[verificacion_falsos_negativos]] por el otro lado: una
+comprobación que devuelve un número también hay que validarla, no solo las que
+devuelven vacío. Y se valida con **un caso conocido de cada forma que el formato
+admite** --- aquí, una entrada corta y una multilínea ---. Dos ejemplos y treinta
+segundos habrían evitado tres días de cifras falsas.
+
+## 296. Un contraste que no contrasta dice algo, si se le hace caso
+
+Saboteé el cálculo del tope de complementarias para demostrar que la prueba del
+contrato anual se ponía roja. **Las cinco siguieron en verde.**
+
+El sabotaje cambiaba la ventana del año por la del mes, y la prueba no se
+inmutaba porque el tope se calcula sobre las horas del contrato, que yo no había
+tocado: 100 horas trabajadas seguían muy por debajo de las 800 pactadas.
+
+Lo fácil habría sido concluir «la prueba no vale». Lo que pasaba es que **mi
+sabotaje no era el error que la prueba vigila**. El error real es prorratear ---
+800 al año → 66,7 al mes, tope 20 ---, y con ese sí se pone roja de inmediato.
+
+**La regla:** cuando el contraste no contrasta, la pregunta no es «¿sirve la
+prueba?» sino «¿es este el error que puede ocurrir?». Un sabotaje que nadie
+cometería no prueba nada de la prueba. El que sí, se escribe pensando en cómo se
+equivocaría alguien de verdad --- y aquí estaba escrito en el propio enunciado
+del inventario, que decía «tope mensual».
+
+**Y hay una segunda respuesta posible**, que salió media hora después en la misma
+vuelta: que el sabotaje sea el correcto y **otra capa lo tape**. Quité el
+`tenant=` de la consulta de personas esperando ver la fuga, y no la hubo, porque
+`Punch.objects` filtra por empresa más adentro y sin fichajes ajenos no hay nada
+que sumar.
+
+Ahí lo que toca no es forzar la prueba hasta que falle, sino **escribir en ella
+lo que se ha medido**: que hay dos capas, cuál hace hoy el trabajo, y que lo
+fijado es el resultado y no el mecanismo. Una prueba que afirma en su docstring
+una fuga que no ha visto es tan poco fiable como una que no comprueba nada.
