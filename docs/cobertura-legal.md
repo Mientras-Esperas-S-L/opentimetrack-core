@@ -369,10 +369,19 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 4 | **Llamamiento del fijo discontinuo** (art. 16), ya señalado en el código | **2-3 días.** Periodos de actividad, y que fuera de ellos el cuadrante no espere jornada |
 | 5 | **Topes que se guardan y no se comprueban**: 30 % de complementarias al mes y 65/85 % del contrato formativo | **2 días.** El patrón ya existe: el de 80 horas extra al año se contrasta desde agosto y esto es acumular y avisar igual |
 | 6 | **Historia de la adscripción a departamento**, cuando el informe empiece a mentir | **2-3 días.** Una tabla de vigencias y los informes leyendo de ella |
-| 7 | **La interfaz en catalán y gallego.** El mecanismo está montado ---i18next, con la cadena castellana como clave--- y lo usan **2 de 38 pantallas**: el catálogo tiene 23 claves y son las del menú | **4-6 días.** Unas **330 cadenas** en 28 ficheros, más 660 traducciones y un guard que exija el catálogo completo. Lo caro es envolverlas sin destrozar la legibilidad del código, que es una propiedad que este proyecto cuida |
-| 8 | **Reducciones de jornada por cuidados** (arts. 37.4, 37.5, 37.6 y 37.8). El permiso está catalogado; falta la mecánica de la fracción ---de ⅛ a ½ de la jornada, con sus fechas--- y su efecto en el cuadrante y en el cotejo | **4-6 días.** Son cuatro artículos con reglas distintas, y toca el cálculo de lo esperado |
-| 9 | **El acuerdo de trabajo a distancia y su umbral** (Ley 10/2021). El fichaje ya dice desde dónde se trabajó; no consta el acuerdo ni si se pasa del 30 % que lo hace obligatorio | **2-3 días.** El documento con sus fechas y el porcentaje calculado sobre lo trabajado |
-| 10 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
+| 7 | **Reducciones de jornada por cuidados** (arts. 37.4, 37.5, 37.6 y 37.8). El permiso está catalogado; falta la mecánica de la fracción ---de ⅛ a ½ de la jornada, con sus fechas--- y su efecto en el cuadrante y en el cotejo | **4-6 días.** Son cuatro artículos con reglas distintas, y toca el cálculo de lo esperado |
+| 8 | **El acuerdo de trabajo a distancia y su umbral** (Ley 10/2021). El fichaje ya dice desde dónde se trabajó; no consta el acuerdo ni si se pasa del 30 % que lo hace obligatorio | **2-3 días.** El documento con sus fechas y el porcentaje calculado sobre lo trabajado |
+| 9 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
+
+### Hecho desde que se escribió esta lista
+
+- **La interfaz en catalán y gallego** (28/08/2026). Estaba estimada en 4-6 días
+  para unas 330 cadenas; fueron **898 en 917** y doce tandas, porque la cuenta
+  de partida no veía ni los párrafos partidos ni los rótulos compartidos.
+  Termina con un guard que exige el catálogo completo
+  ---`npm run i18n:check`--- y con las diecinueve cadenas que **no** se traducen
+  declaradas una a una con su motivo. **Le falta que la revise alguien que hable
+  el idioma**, y eso no es trabajo de programación.
 
 ---
 
