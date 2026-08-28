@@ -2,6 +2,48 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Dos párrafos del mismo artículo pueden decir lo contrario (28/08/2026)
+
+El art. 37.6 tiene la reducción por guarda legal ---«entre, al menos, un octavo y
+un máximo de la mitad»--- y, tres párrafos más abajo, la del cuidado de un menor
+con enfermedad grave: «una reducción de al menos la mitad». En uno la mitad es el
+techo y en el otro es el suelo.
+
+El chequeo que ya existía filtraba por el código del permiso, así que no se rompió
+nada. Pero la tentación era clara: «es el mismo artículo, vale el mismo aviso». Si
+lo hubiera soltado a todas las reducciones del 37.6, el ejercicio normal del
+segundo derecho ---reducir un 60 %--- habría salido marcado como incumplimiento.
+
+**Cómo evitarlo:** al añadir un permiso de un artículo que ya está cubierto, leer
+**el párrafo**, no el artículo. Y escribir la prueba en las dos direcciones: que
+el aviso viejo no le aplica al nuevo, y que el nuevo no le aplica al viejo.
+
+## Un nombre parecido en el catálogo no es la misma figura (28/08/2026)
+
+Buscando si faltaba la reducción por violencia de género apareció
+`es.gender_violence_suspension`, que existía desde el principio. Es la
+**suspensión del art. 45.1.n** ---para quien deja de trabajar--- y no la reducción
+o reordenación del art. 37.8, que es para quien sigue trabajando. Darla por buena
+habría dejado sin cubrir el caso más frecuente, y la fila del inventario habría
+pasado a «cubierto» sin serlo.
+
+**Cómo evitarlo:** comprobar el **artículo** de la entrada, no su nombre. Dos
+figuras del mismo supuesto de hecho pueden llamarse casi igual y conceder cosas
+distintas, y el catálogo guarda el artículo justamente para poder distinguirlas.
+
+## El texto que el catálogo escribe hay que pintarlo como está escrito (28/08/2026)
+
+Las notas del catálogo llevan `**énfasis**` desde el primer día, y la pantalla las
+pintaba en plano: se veían los asteriscos. Nadie lo había notado porque cada nota
+tiene uno o dos, y con uno solo parece una errata del texto.
+
+Se ve al mirar la pantalla, no al leer el código: en el código la nota es una
+cadena correcta y el componente la pinta sin tocarla.
+
+**Cómo evitarlo:** cuando un texto viene de datos y no del código de la pantalla,
+abrirlo en pantalla al menos una vez. Y al escribir la primera nota con marcado,
+decidir ahí mismo quién lo interpreta.
+
 ## Lo descriptivo de un tramo viaja en el evento que lo abre (28/08/2026)
 
 La semilla marcaba la naturaleza de las horas ---ordinarias, complementarias,

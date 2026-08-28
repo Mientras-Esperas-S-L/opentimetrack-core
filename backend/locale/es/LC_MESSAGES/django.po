@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 20:22+0000\n"
+"POT-Creation-Date: 2026-08-28 20:55+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -332,7 +332,7 @@ msgstr "ausencias"
 msgid "The end date cannot precede the start date."
 msgstr "La fecha final no puede ir antes que la inicial."
 
-#: apps/absences/models.py:443 apps/absences/views.py:332
+#: apps/absences/models.py:443 apps/absences/views.py:340
 msgid "Give both times, or neither: half of a range is not one."
 msgstr "Pon las dos horas o ninguna: media franja no es una franja."
 
@@ -514,21 +514,25 @@ msgstr "Por dentro el fichero no parece un %(kind)s, se llame como se llame."
 msgid "The file is %(size).1f MB and the limit is %(limit)s MB."
 msgstr "El fichero ocupa %(size).1f MB y el límite son %(limit)s MB."
 
-#: apps/absences/views.py:173
+#: apps/absences/views.py:180
+msgid "the part of the working day that is agreed"
+msgstr "la parte de jornada que se acuerde"
+
+#: apps/absences/views.py:181
 msgid "the time it takes"
 msgstr "el tiempo indispensable"
 
-#: apps/absences/views.py:201 apps/shifts/views.py:204
+#: apps/absences/views.py:209 apps/shifts/views.py:204
 #: apps/tenants/views.py:181 apps/users/views.py:757 apps/users/views.py:827
 #: apps/users/views.py:985 apps/users/views.py:1036 apps/users/views.py:1073
 msgid "Added"
 msgstr "Añadido"
 
-#: apps/absences/views.py:229 apps/audit/trail.py:74 apps/users/views.py:1009
+#: apps/absences/views.py:237 apps/audit/trail.py:74 apps/users/views.py:1009
 msgid "Changed"
 msgstr "Cambiado"
 
-#: apps/absences/views.py:247
+#: apps/absences/views.py:255
 #, python-format
 msgid ""
 "%(count)s absences use it. Deactivate it instead: deleting would take the "
@@ -537,26 +541,26 @@ msgstr ""
 "Lo usan %(count)s ausencias. Desactívalo en vez de borrarlo: borrarlo le "
 "quitaría el motivo a registros que tienen que durar cuatro años."
 
-#: apps/absences/views.py:253 apps/audit/trail.py:78
+#: apps/absences/views.py:261 apps/audit/trail.py:78
 msgid "Deleted"
 msgstr "Eliminado"
 
-#: apps/absences/views.py:274 apps/absences/views.py:501
+#: apps/absences/views.py:282 apps/absences/views.py:509
 #: apps/punches/correction_views.py:246 apps/reports/views.py:405
 #: apps/users/serializers.py:480 apps/users/serializers.py:732
 #: apps/users/serializers.py:806 apps/users/serializers.py:894
 msgid "That person is not in this company."
 msgstr "Esa persona no pertenece a esta empresa."
 
-#: apps/absences/views.py:410
+#: apps/absences/views.py:418
 msgid "Leave can only be requested for yourself."
 msgstr "Solo puedes solicitar ausencias para ti."
 
-#: apps/absences/views.py:420
+#: apps/absences/views.py:428
 msgid "That leave type does not exist or is no longer in use."
 msgstr "Ese tipo de permiso no existe o ya no está en uso."
 
-#: apps/absences/views.py:431
+#: apps/absences/views.py:439
 msgid ""
 "This kind of leave is recorded by the company, not requested. Talk to "
 "whoever manages your working time."
@@ -564,15 +568,15 @@ msgstr ""
 "Este tipo de ausencia la registra la empresa, no se solicita. Habla con "
 "quien gestione tu jornada."
 
-#: apps/absences/views.py:615
+#: apps/absences/views.py:623
 msgid "You can only see your own balance."
 msgstr "Solo puedes consultar tu propio saldo."
 
-#: apps/absences/views.py:629
+#: apps/absences/views.py:637
 msgid "`until` has to be a date, as YYYY-MM-DD."
 msgstr "«until» tiene que ser una fecha, escrita como AAAA-MM-DD."
 
-#: apps/absences/views.py:682 apps/shifts/views.py:264
+#: apps/absences/views.py:690 apps/shifts/views.py:264
 msgid "Give 'from' and 'to' as YYYY-MM-DD."
 msgstr "Indica 'from' y 'to' con el formato AAAA-MM-DD."
 
@@ -1979,11 +1983,11 @@ msgstr "Alguien de esa lista no pertenece a esta empresa."
 msgid "That shift pattern does not exist."
 msgstr "Ese turno no existe."
 
-#: apps/shifts/services.py:369
+#: apps/shifts/services.py:370
 msgid "Rostered the same day."
 msgstr "Puesto en el cuadrante el mismo día."
 
-#: apps/shifts/services.py:372
+#: apps/shifts/services.py:373
 #, python-format
 msgid "Rostered %(days)s day ahead, under the %(floor)s the company asks for."
 msgid_plural ""
@@ -1998,7 +2002,7 @@ msgstr[2] ""
 "Puesto con %(days)s días de antelación, por debajo de los %(floor)s que pide "
 "la empresa."
 
-#: apps/shifts/services.py:423
+#: apps/shifts/services.py:424
 #, python-format
 msgid ""
 "%(hours)s h of rest at a shift changeover, which is allowed. The %(owed)s h "
@@ -2008,13 +2012,13 @@ msgstr ""
 "%(owed)s h que faltan hasta las %(usual)s h habituales hay que devolverlas "
 "en %(weeks)s semanas."
 
-#: apps/shifts/services.py:450
+#: apps/shifts/services.py:451
 msgid "The clocks went forward that night, so the shifts are an hour closer."
 msgstr ""
 "Esa noche los relojes se adelantaron, así que los dos turnos quedan una hora "
 "más cerca."
 
-#: apps/shifts/services.py:462
+#: apps/shifts/services.py:463
 #, python-format
 msgid ""
 "Only %(hours)s h of rest since the previous shift, under the %(floor)s h a "
@@ -2023,19 +2027,19 @@ msgstr ""
 "Solo %(hours)s h de descanso desde el turno anterior, por debajo de las "
 "%(floor)s h a las que puede bajar un relevo."
 
-#: apps/shifts/services.py:466
+#: apps/shifts/services.py:467
 #, python-format
 msgid "Only %(hours)s h of rest since the previous shift."
 msgstr "Solo %(hours)s h de descanso desde el turno anterior."
 
-#: apps/shifts/services.py:567
+#: apps/shifts/services.py:568
 #, python-format
 msgid "%(hours)s h rostered that week, over the %(limit)s h configured."
 msgstr ""
 "%(hours)s h planificadas esa semana, por encima de las %(limit)s h "
 "configuradas."
 
-#: apps/shifts/services.py:580
+#: apps/shifts/services.py:581
 #, python-format
 msgid ""
 "%(hours)s h rostered that week against %(agreed)s h contracted. The "
@@ -2044,7 +2048,7 @@ msgstr ""
 "%(hours)s h planificadas esa semana frente a %(agreed)s h contratadas. Las "
 "%(extra)s h de más son horas complementarias y cuentan para su propio tope."
 
-#: apps/shifts/services.py:602
+#: apps/shifts/services.py:603
 msgid ""
 "No agreed weekly hours on this contract, so the weekly total is not checked. "
 "Only the legal maximum applies."
@@ -2052,14 +2056,14 @@ msgstr ""
 "Este contrato no tiene horas semanales pactadas, así que no se comprueba el "
 "total de la semana. Solo rige el máximo legal."
 
-#: apps/shifts/services.py:702
+#: apps/shifts/services.py:703
 #, python-format
 msgid "A continuous day of %(hours)s h needs a break of %(minutes)s min."
 msgstr ""
 "Una jornada continuada de %(hours)s h necesita un descanso de %(minutes)s "
 "min."
 
-#: apps/shifts/services.py:773
+#: apps/shifts/services.py:774
 #, python-format
 msgid ""
 "The longest break in those %(days)s days is %(hours)s h, under the "
@@ -2068,7 +2072,7 @@ msgstr ""
 "El descanso más largo de esos %(days)s días es de %(hours)s h, por debajo de "
 "las %(minimum)s h configuradas."
 
-#: apps/shifts/services.py:834
+#: apps/shifts/services.py:835
 #, python-format
 msgid ""
 "%(count)s of %(total)s days with %(hours)s h or more at night. If the person "
@@ -2081,7 +2085,7 @@ msgstr ""
 "h en %(days)s días, la prohibición de horas extraordinarias y una evaluación "
 "de salud. Nadie ha dejado constancia de si la tiene."
 
-#: apps/shifts/services.py:903
+#: apps/shifts/services.py:904
 #, python-format
 msgid ""
 "A night worker averaging %(average)s h a day over %(days)s days, above the "
@@ -2090,7 +2094,7 @@ msgstr ""
 "Un trabajador nocturno con un promedio de %(average)s h diarias en %(days)s "
 "días, por encima de las %(limit)s h permitidas."
 
-#: apps/shifts/services.py:908
+#: apps/shifts/services.py:909
 #, python-format
 msgid ""
 "Averaging %(average)s h a day over %(days)s days. The roster reads like "
@@ -2101,7 +2105,7 @@ msgstr ""
 "trabajo nocturno, y si le corresponde esa condición eso pasa de las "
 "%(limit)s h del art. 36.1 ET."
 
-#: apps/shifts/services.py:955
+#: apps/shifts/services.py:956
 #, python-format
 msgid ""
 "%(weeks)s consecutive weeks on the night shift, over the %(limit)s allowed. "
@@ -2111,7 +2115,7 @@ msgstr ""
 "%(limit)s permitidas. Para más hace falta que la persona se haya adscrito "
 "voluntariamente, y eso es un campo de su ficha."
 
-#: apps/shifts/services.py:996
+#: apps/shifts/services.py:997
 #, python-format
 msgid ""
 "%(hours)s h rostered for somebody under eighteen. The limit is %(limit)s h a "
@@ -2120,7 +2124,7 @@ msgstr ""
 "%(hours)s h planificadas a una persona menor de dieciocho años. El límite "
 "son %(limit)s h diarias y ningún convenio puede subirlo."
 
-#: apps/shifts/services.py:1010
+#: apps/shifts/services.py:1011
 #, python-format
 msgid ""
 "A continuous day of %(hours)s h for somebody under eighteen needs a break of "
@@ -2129,7 +2133,7 @@ msgstr ""
 "Una jornada continuada de %(hours)s h de una persona menor de dieciocho años "
 "necesita un descanso de %(minutes)s min, a partir de %(after)s h."
 
-#: apps/shifts/services.py:1028
+#: apps/shifts/services.py:1029
 msgid ""
 "Night shift rostered for somebody under eighteen. Art. 6.2 ET forbids it "
 "outright: there is no permitted amount."
@@ -2137,16 +2141,25 @@ msgstr ""
 "Turno nocturno planificado a una persona menor de dieciocho años. El art. "
 "6.2 ET lo prohíbe sin más: no hay cantidad permitida."
 
-#: apps/shifts/services.py:1126
+#: apps/shifts/services.py:1125
+#, python-format
+msgid ""
+"The working day is cut by %(share)s %%, and art. 37.6 grants at least half "
+"for the care of a seriously ill child."
+msgstr ""
+"La jornada se reduce un %(share)s %%, y el art. 37.6 concede al menos la "
+"mitad para el cuidado de un menor con enfermedad grave."
+
+#: apps/shifts/services.py:1178
 #, python-format
 msgid ""
 "%(hours)s h of overtime to be given back as rest are past the %(days)s-day "
 "deadline."
 msgstr ""
-"%(hours)s h de horas extraordinarias por devolver en descanso han pasado "
-"del plazo de %(days)s días."
+"%(hours)s h de horas extraordinarias por devolver en descanso han pasado del "
+"plazo de %(days)s días."
 
-#: apps/shifts/services.py:1226
+#: apps/shifts/services.py:1278
 #, python-format
 msgid ""
 "%(hours)s h that week counting on-call time on the premises, over the "
@@ -2157,7 +2170,7 @@ msgstr ""
 "máximo de %(limit)s h: una guardia en el centro de trabajo es tiempo de "
 "trabajo en su totalidad."
 
-#: apps/shifts/services.py:1313
+#: apps/shifts/services.py:1365
 #, python-format
 msgid ""
 "%(hours)s h of on-call time that month, %(average)s h a week on average, "
@@ -2166,21 +2179,21 @@ msgstr ""
 "%(hours)s h de tiempo de presencia ese mes, %(average)s h semanales de "
 "promedio, por encima de las %(limit)s permitidas."
 
-#: apps/shifts/services.py:1364
+#: apps/shifts/services.py:1416
 #, python-format
 msgid ""
 "%(hours)s h over the %(agreed)s h agreed for %(year)s, and art. 34.2 gives "
 "%(months)s months to settle them."
 msgstr ""
 
-#: apps/shifts/services.py:1369
+#: apps/shifts/services.py:1421
 #, python-format
 msgid ""
 "%(hours)s h under the %(agreed)s h agreed for %(year)s, and art. 34.2 gives "
 "%(months)s months to settle them."
 msgstr ""
 
-#: apps/shifts/services.py:1451
+#: apps/shifts/services.py:1503
 #, python-format
 msgid ""
 "The working day is cut by %(share)s %% for partial retirement, and art. 12.6 "
@@ -2189,7 +2202,7 @@ msgstr ""
 "La jornada se reduce un %(share)s %% por jubilación parcial, y el art. 12.6 "
 "va del %(min)s %% al %(max)s %%."
 
-#: apps/shifts/services.py:1471
+#: apps/shifts/services.py:1523
 msgid ""
 "This relief contract stands in for somebody with no partial retirement on "
 "record, so there is nothing to measure it against."
@@ -2197,7 +2210,7 @@ msgstr ""
 "Este contrato de relevo sustituye a alguien que no tiene jubilación parcial "
 "registrada, así que no hay contra qué medirlo."
 
-#: apps/shifts/services.py:1495
+#: apps/shifts/services.py:1547
 #, python-format
 msgid ""
 "%(hours)s h agreed, and art. 12.7 asks for at least %(needed)s: the hours "
@@ -2206,7 +2219,7 @@ msgstr ""
 "%(hours)s h pactadas, y el art. 12.7 pide al menos %(needed)s: las horas que "
 "deja de trabajar la persona relevada."
 
-#: apps/shifts/services.py:1542
+#: apps/shifts/services.py:1594
 #, python-format
 msgid ""
 "Asked for on %(day)s and still unanswered %(days)s days later: art. 34.8 "
@@ -2215,7 +2228,7 @@ msgstr ""
 "Solicitada el %(day)s y sin contestar %(days)s días después: el art. 34.8 da "
 "quince."
 
-#: apps/shifts/services.py:1592
+#: apps/shifts/services.py:1644
 msgid ""
 "This training contract does not say whether it is alternating (art. 11.2) or "
 "for work practice (art. 11.3), and only the first one has a cap on working "
@@ -2224,7 +2237,7 @@ msgstr ""
 "Este contrato formativo no dice si es en alternancia (art. 11.2) o para "
 "práctica profesional (art. 11.3), y solo el primero tiene tope de jornada."
 
-#: apps/shifts/services.py:1623
+#: apps/shifts/services.py:1675
 #, python-format
 msgid ""
 "%(agreed)s h agreed against a cap of %(cap)s: art. 11.2.b allows %(share)s "
@@ -2233,7 +2246,7 @@ msgstr ""
 "%(agreed)s h pactadas contra un tope de %(cap)s: el art. 11.2.b permite el "
 "%(share)s %% de las %(max)s h de jornada máxima."
 
-#: apps/shifts/services.py:1692
+#: apps/shifts/services.py:1744
 #, python-format
 msgid ""
 "%(share)s %% of the time worked in the last three months was remote, over "
@@ -2244,7 +2257,7 @@ msgstr ""
 "distancia, por encima del %(threshold)s %% que hace aplicable la Ley "
 "10/2021, y no consta acuerdo."
 
-#: apps/shifts/services.py:1709
+#: apps/shifts/services.py:1761
 #, python-format
 msgid ""
 "The remote work agreement was signed on %(signed)s and the remote work began "
@@ -2253,7 +2266,7 @@ msgstr ""
 "El acuerdo de trabajo a distancia se firmó el %(signed)s y el trabajo a "
 "distancia empezó el %(started)s."
 
-#: apps/shifts/services.py:1760
+#: apps/shifts/services.py:1812
 #, python-format
 msgid ""
 "The working day is cut by %(share)s %%, and art. 37.6 runs from an eighth to "
@@ -2262,19 +2275,19 @@ msgstr ""
 "La jornada se reduce un %(share)s %%, y el art. 37.6 va de un octavo a la "
 "mitad: entre el %(min)s %% y el %(max)s %%."
 
-#: apps/shifts/services.py:1817
+#: apps/shifts/services.py:1869
 msgid "that week"
 msgstr "esa semana"
 
-#: apps/shifts/services.py:1818
+#: apps/shifts/services.py:1870
 msgid "that month"
 msgstr "ese mes"
 
-#: apps/shifts/services.py:1819
+#: apps/shifts/services.py:1871
 msgid "that year"
 msgstr "ese año"
 
-#: apps/shifts/services.py:1837
+#: apps/shifts/services.py:1889
 #, python-format
 msgid ""
 "%(over)s h over the contract %(when)s, and only %(cap)s are allowed: "
@@ -2283,7 +2296,7 @@ msgstr ""
 "%(over)s h por encima del contrato %(when)s, y solo se permiten %(cap)s: el "
 "%(share)s %% de las %(agreed)s h pactadas."
 
-#: apps/shifts/services.py:1930
+#: apps/shifts/services.py:1982
 #, python-format
 msgid ""
 "%(hours)s h actually worked that week, over the %(limit)s h maximum. This is "
@@ -2292,20 +2305,20 @@ msgstr ""
 "%(hours)s h realmente trabajadas esa semana, por encima del máximo de "
 "%(limit)s h. Esto es el registro, no el cuadrante."
 
-#: apps/shifts/services.py:1943
+#: apps/shifts/services.py:1995
 #, python-format
 msgid "%(hours)s h actually worked against %(agreed)s h contracted."
 msgstr "%(hours)s h trabajadas de verdad frente a %(agreed)s h contratadas."
 
-#: apps/shifts/services.py:1980
+#: apps/shifts/services.py:2032
 msgid "Rostered outside their periods of activity (art. 16 ET)."
 msgstr "En el cuadrante fuera de sus periodos de actividad (art. 16 ET)."
 
-#: apps/shifts/services.py:1982
+#: apps/shifts/services.py:2034
 msgid "Rostered on a day outside the dates of their contract."
 msgstr "En el cuadrante un día fuera de las fechas de su contrato."
 
-#: apps/shifts/services.py:2026
+#: apps/shifts/services.py:2078
 msgid ""
 "Rostered on a public holiday. It is allowed, and it earns compensation in "
 "rest or in pay under the agreement."
@@ -2313,7 +2326,7 @@ msgstr ""
 "Planificado en un festivo. Está permitido, y genera compensación en descanso "
 "o en dinero según el convenio."
 
-#: apps/shifts/services.py:2065
+#: apps/shifts/services.py:2117
 #, python-format
 msgid "Rostered on a day of approved %(kind)s."
 msgstr "Con turno asignado en un día de %(kind)s aprobada."

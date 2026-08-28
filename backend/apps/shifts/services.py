@@ -291,6 +291,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     findings.extend(_check_standby_average(company, first, last, employee))
     findings.extend(_check_on_call_counts_as_work(company, rules, first, last, employee))
     findings.extend(_check_overtime_rest_overdue(company, rules, first, last, employee))
+    findings.extend(_check_serious_illness_reduction(company, first, last, employee))
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -1049,6 +1050,13 @@ GUARDA_LEGAL_MAXIMO = 50.0
 #: «Reducción por cuidado de hijos» y sigue siendo el mismo derecho---.
 GUARDA_LEGAL = "es.childcare_reduced_hours"
 
+#: La otra reducción del art. 37.6, la del párrafo tercero. Aquí la mitad es el
+#: **mínimo** y no el máximo: «una reducción de la jornada de trabajo de al menos
+#: la mitad». Aplicarle el rango de la guarda legal convertiría el ejercicio
+#: normal de este derecho ---reducir un 60 %--- en un aviso de incumplimiento.
+ENFERMEDAD_GRAVE = "es.serious_illness_care"
+ENFERMEDAD_GRAVE_MINIMO = 50.0
+
 
 #: Art. 11.2.b: el tiempo de trabajo efectivo del formativo en alternancia no
 #: pasa del 65 % el primer año ni del 85 % el segundo, **de la jornada máxima**
@@ -1077,6 +1085,50 @@ JUBILACION_PARCIAL = "es.partial_retirement"
 #: diferencia de las veinte horas de presencia del transporte, que sí son
 #: disponibles para el convenio---.
 MAXIMO_SEMANAL_UE = 48
+
+
+def _check_serious_illness_reduction(company, first, last, employee) -> list[Finding]:
+    """Que la reducción por cuidado de un menor con enfermedad grave llegue a la mitad.
+
+    «Tendrá derecho a una reducción de la jornada de trabajo de **al menos la
+    mitad** de la duración de aquella» (art. 37.6, párrafo 3.º).
+
+    Es el mismo artículo que la guarda legal y la comprobación es la contraria.
+    Allí la mitad es el techo ---de un octavo a la mitad--- y aquí es el suelo.
+    Una reducción del 30 % registrada como ejercicio de este derecho se queda
+    corta de lo que la ley concede, y quien la firma probablemente no lo sabe.
+
+    **Avisa, no impide**, como el resto: cabe pactar otra cosa, y el convenio
+    mejora. Lo que no cabe es que pase sin que nadie lo mire.
+    """
+    from apps.absences.models import Absence, AbsenceStatus
+
+    filas = Absence.objects.filter(
+        status=AbsenceStatus.APPROVED,
+        start_date__lte=last,
+        end_date__gte=first,
+        reduction_share__isnull=False,
+        reduction_share__lt=ENFERMEDAD_GRAVE_MINIMO,
+        leave_type__code=ENFERMEDAD_GRAVE,
+    ).select_related("employee")
+    if employee is not None:
+        filas = filas.filter(employee=employee)
+
+    found: list[Finding] = []
+    for ausencia in filas:
+        found.append(
+            Finding(
+                day=max(ausencia.start_date, first),
+                employee_id=ausencia.employee_id,
+                code="serious_illness_reduction_too_small",
+                message=_(
+                    "The working day is cut by %(share)s %%, and art. 37.6 grants at "
+                    "least half for the care of a seriously ill child."
+                )
+                % {"share": f"{float(ausencia.reduction_share):g}"},
+            )
+        )
+    return found
 
 
 def _check_overtime_rest_overdue(company, rules, first, last, employee) -> list[Finding]:

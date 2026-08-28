@@ -60,6 +60,25 @@ const UNITS_ONE = {
   WEEKS: alCatalogo('semana'),
 }
 
+/** Las notas del catálogo llevan `**énfasis**`, y hasta hoy salía en crudo.
+ *
+ *  No es decoración: lo que va destacado es justo lo que se confunde ---«al
+ *  menos la mitad» frente a «como máximo la mitad» en los dos párrafos del mismo
+ *  artículo, o el «no retribuido» del permiso parental---. Leerlo con los
+ *  asteriscos puestos hace pensar que el texto está a medio escribir.
+ *
+ *  Se parte por los dobles asteriscos en vez de interpretar Markdown entero: las
+ *  notas las escribe el catálogo del país o la empresa en su copia, y meter un
+ *  intérprete de marcado ---o peor, HTML sin filtrar--- por unas negritas sería
+ *  abrir una puerta que nadie ha pedido.
+ */
+function conEnfasis(texto) {
+  if (!texto) return texto
+  return String(texto)
+    .split('**')
+    .map((trozo, i) => (i % 2 ? <strong key={i}>{trozo}</strong> : trozo))
+}
+
 /** El nombre de la unidad, concordado con la cifra que la acompaña. */
 function unidadDe(t, unit, cuantos) {
   if (!UNITS[unit]) return ''
@@ -370,7 +389,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                 hasta cuándo se puede pedir. */}
             {kind?.note && (
               <Alert severity="info" variant="outlined">
-                {kind.note}
+                {conEnfasis(kind.note)}
               </Alert>
             )}
 

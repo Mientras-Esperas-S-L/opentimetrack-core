@@ -151,6 +151,13 @@ ESPANA = LegalFramework(
         # No es un incumplimiento: las horas por encima de lo pactado en jornada
         # parcial son complementarias, lícitas y con su propio tope.
         "over_contracted_hours": Citation("Art. 12.5 ET"),
+        "serious_illness_reduction_too_small": Citation(
+            "Art. 37.6 ET, párrafo 3.º",
+            "Para el cuidado de un menor a cargo con cáncer o con otra enfermedad "
+            "grave, la reducción es de **al menos la mitad** de la jornada. En el "
+            "mismo artículo, la guarda legal tiene la mitad como máximo: aquí es el "
+            "mínimo.",
+        ),
         "overtime_rest_overdue": Citation(
             "Art. 35.1 ET",
             "Las horas extraordinarias que se compensan con descanso se devuelven "
@@ -450,6 +457,80 @@ ESPANA = LegalFramework(
             "elige quien trabaja**, no la empresa. Si se pide como reducción, pon "
             "cuánto se reduce y las fechas. Acumulable en jornadas completas cuando lo "
             "permita el convenio.",
+        ),
+        # Las tres reducciones que faltaban, todas sobre la maquinaria del art.
+        # 37.6: se piden con **cuánto se reduce** y sus fechas, y el cuadrante
+        # pasa a medir contra la jornada reducida. Lo que cambia en cada una es
+        # quién paga la parte que no se trabaja y qué límite tiene.
+        LeaveKind(
+            code="es.premature_birth_hour",
+            name="Hijo prematuro u hospitalizado: la hora de ausencia",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 37.5 ET",
+            amount=1,
+            unit="HOURS",
+            per="DAY",
+            # **Retribuida**, a diferencia de la reducción del mismo artículo.
+            # Por eso son dos entradas y no una: el artículo concede dos cosas
+            # distintas y una se cobra y la otra no, y `paid` no puede decir las
+            # dos a la vez.
+            paid=True,
+            note="Una hora de ausencia mientras el recién nacido siga hospitalizado. "
+            "La puede ejercer la madre o el otro progenitor. Se cobra.",
+        ),
+        LeaveKind(
+            code="es.premature_birth_reduction",
+            name="Hijo prematuro u hospitalizado: la reducción de hasta 2 h",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 37.5 ET",
+            amount=2,
+            unit="HOURS",
+            per="DAY",
+            # «Con la disminución proporcional del salario», dice el artículo.
+            paid=False,
+            can_reduce_the_day=True,
+            initiated_by="PERSON",
+            note="Hasta dos horas de reducción de jornada, **con disminución "
+            "proporcional del salario**, mientras el recién nacido siga hospitalizado. "
+            "Es un derecho distinto de la hora de ausencia del mismo artículo, y se "
+            "pueden ejercer los dos.",
+        ),
+        LeaveKind(
+            code="es.serious_illness_care",
+            name="Cuidado de menor con cáncer o enfermedad grave",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 37.6 ET, párrafo 3.º",
+            amount=None,
+            paid=False,
+            can_reduce_the_day=True,
+            initiated_by="PERSON",
+            needs_justification=True,
+            note="Reducción de **al menos la mitad** de la jornada para el cuidado, "
+            "durante la hospitalización y el tratamiento continuado, de un menor a "
+            "cargo con cáncer o con otra enfermedad grave, hasta que cumpla veintitrés "
+            "años. Ojo al «al menos»: aquí la mitad es el **mínimo**, mientras que en "
+            "la guarda legal del mismo artículo es el máximo.",
+        ),
+        LeaveKind(
+            code="es.gender_violence_reduction",
+            name="Violencia de género o sexual: reducción o reordenación",
+            family=LeaveFamily.PAID_LEAVE,
+            basis="Art. 37.8 ET",
+            amount=None,
+            paid=False,
+            can_reduce_the_day=True,
+            initiated_by="PERSON",
+            # **Sin justificante.** El artículo da el derecho a la víctima y la
+            # acreditación se hace ante quien corresponde, no colgando un
+            # documento en una herramienta de fichaje. Pedirlo aquí convertiría
+            # el ejercicio del derecho en una declaración de algo íntimo delante
+            # de quien aprueba las ausencias.
+            needs_justification=False,
+            note="Reducción de jornada **con disminución proporcional del salario**, o "
+            "reordenación del tiempo de trabajo. **Lo concreta quien lo ejerce** (art. "
+            "37.8), sin rango mínimo ni máximo: no hay cifra que comprobar y no la "
+            "decide la empresa. Distinto de la suspensión del art. 45.1.n, que es para "
+            "quien deja de trabajar.",
         ),
         LeaveKind(
             code="es.compensatory_rest",

@@ -170,6 +170,14 @@ class LeaveTypeSerializer(serializers.ModelSerializer):
 
     def get_allowance(self, obj) -> str:
         if obj.amount is None:
+            # Sin cuantía, «el tiempo indispensable» ---que es lo que significa
+            # un `amount` vacío--- solo vale para los permisos que **paran** la
+            # jornada: una consulta médica, un examen. Para los que la
+            # **recortan** es engañoso: la reducción por cuidado de un menor con
+            # enfermedad grave no es el tiempo que haga falta, es al menos la
+            # mitad de la jornada, y lo que dice el artículo lo pone la nota.
+            if obj.can_reduce_the_day:
+                return str(_("the part of the working day that is agreed"))
             return str(_("the time it takes"))
         amount = f"{obj.amount.normalize():f}".rstrip(".")
         # La unidad concuerda con la cifra: «1 hora», no «1 horas».

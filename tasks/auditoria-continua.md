@@ -369,6 +369,65 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 165 --- Las tres reducciones que faltaban (28/08)
+
+Al empezar: 4 «A medias» y 12 «Falta».
+
+**Elegidas porque el inventario ya las agrupaba**: «van sobre la misma
+maquinaria». Es cierto ---las tres se piden con cuánto se reduce y sus fechas, y
+el cuadrante mide contra la jornada reducida--- y esa maquinaria quedó montada en
+la vuelta 163. Lo que tenía trabajo era justo lo que **no** comparten.
+
+**El art. 37.5 son dos derechos, y uno se cobra y el otro no.** Una hora de
+ausencia retribuida y, «asimismo», una reducción de hasta dos horas «con la
+disminución proporcional del salario». Van dos entradas del catálogo: una sola
+tendría que elegir un valor de `paid` y mentiría en la mitad de los casos.
+
+**En el párrafo tercero del art. 37.6 la mitad es el mínimo.** «Al menos la
+mitad» para el cuidado de un menor con cáncer o enfermedad grave, mientras que la
+guarda legal del **mismo artículo** va «entre un octavo y la mitad». Sin separar
+los dos avisos, reducir un 60 % ---que es exactamente lo que la ley concede---
+habría salido marcado como incumplimiento. Hay prueba en las dos direcciones: que
+el aviso de la guarda legal no le aplica a esta, y que el de esta no le aplica a
+la guarda legal.
+
+**El art. 37.8 no tiene rango y no pide justificante.** Lo concreta quien lo
+ejerce, así que no hay cifra que comprobar; inventarle un mínimo sería ponerle un
+límite que la ley no le pone, y a costa de quien lo está ejerciendo. Y el
+justificante se deja fuera a propósito: la acreditación se hace ante quien
+corresponde, no colgando un documento en una herramienta de fichaje, que
+convertiría el ejercicio del derecho en una declaración de algo íntimo delante de
+quien aprueba las ausencias. Es el mismo criterio por el que el producto rechaza
+los partes de baja.
+
+Y una comprobación que evitó dar por hecho lo que no era: ya existía
+`es.gender_violence_suspension`, pero es la **suspensión del art. 45.1.n** ---para
+quien deja de trabajar---, no la reducción del 37.8. Darla por buena habría dejado
+sin cubrir el caso más frecuente.
+
+**Dos defectos de la pantalla, vistos abriéndola.**
+
+1. **Las notas salían con los asteriscos puestos.** El catálogo escribe
+   `**énfasis**` desde siempre y la pantalla lo pintaba en plano, así que el
+   texto parecía a medio escribir. Y lo destacado es justo lo que se confunde:
+   «al menos la mitad» frente a «como máximo la mitad». Se parte por los dobles
+   asteriscos en vez de meter un intérprete de Markdown ---las notas las escribe
+   la empresa en su copia, y abrir esa puerta por unas negritas no lo ha pedido
+   nadie---.
+2. **Un permiso que recorta la jornada decía durar «el tiempo indispensable».**
+   Esa frase es la de los que la **paran** ---una consulta, un examen---. Ahora
+   dice «la parte de jornada que se acuerde», y arregla de paso la guarda legal,
+   que lo decía desde la vuelta 151.
+
+**Ocho contrastes, los ocho rojos.** Y otra vez `makemessages` heredó para el
+aviso nuevo la traducción del aviso hermano ---con `%(min)s` y `%(max)s` que este
+no tiene---, marcada `fuzzy`. Tercera vez esta semana; lo cazó el guard de huecos.
+
+**Cierre:** ocho pasos del CI en verde con 1.491 pruebas, suite de navegador
+aparte, cuatro filas del inventario movidas y la tarea 5 de «Por dónde seguir»
+rehecha. Dossier en la 1.34. El recuento pasa de 95/4/12 a **98/4/9 de 111**,
+contado de las filas.
+
 ### Vuelta 164 --- El saldo de descanso, que es el mecanismo de toda una familia (28/08)
 
 Al empezar: 5 «A medias» y 12 «Falta».

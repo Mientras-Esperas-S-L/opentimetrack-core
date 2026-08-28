@@ -154,10 +154,10 @@ suelo legal y el convenio mejora cualquiera.
 |---|---|---|
 | Reducción por guarda legal, entre ⅛ y ½ de la jornada | 37.6 | **Cubierto.** Se solicita con la fracción y las fechas; el cuadrante mide contra la jornada reducida y el derecho caduca solo. Fuera de la horquilla se avisa, no se impide |
 | Lactancia: 1 h de ausencia o ½ h de reducción hasta los 9 meses, acumulable | 37.4 | **Cubierto.** Las **dos formas**, y las elige quien trabaja: la hora de ausencia y la reducción de jornada. Es un permiso **retribuido** aunque reduzca ---a diferencia del art. 37.6, que lleva reducción proporcional de salario--- y no le aplica el rango de un octavo a la mitad: media hora de ocho es menos que un octavo, y ese aviso está atado al código de la guarda legal. El tope de los nueve meses lo pone quien la pide en las fechas de la solicitud: el producto no guarda datos del menor. La acumulación en jornadas completas depende del convenio |
-| Nacimiento prematuro u hospitalización tras el parto | 37.5 | **Falta** |
-| Cuidado de menor con cáncer o enfermedad grave: reducción de al menos la mitad | 37.6 | **Falta.** La maquinaria de la fracción y las fechas ya está; falta su fila en el catálogo, con la regla propia ---aquí el suelo es la mitad, no el techo--- |
+| Nacimiento prematuro u hospitalización tras el parto | 37.5 | **Cubierto.** Los **dos derechos del artículo, por separado**: la hora de ausencia, que se cobra, y la reducción de hasta dos horas «con la disminución proporcional del salario», que no. Son dos entradas del catálogo porque una sola tendría que elegir si se paga o no, y mentiría en la mitad de los casos |
+| Cuidado de menor con cáncer o enfermedad grave: reducción de al menos la mitad | 37.6 | **Cubierto.** Y con el matiz que lo separa del otro párrafo del mismo artículo: aquí la mitad es el **mínimo** ---«al menos la mitad»--- y en la guarda legal es el máximo. Se avisa cuando la reducción se queda corta, y el aviso de la guarda legal **no le aplica**: sin esa separación, reducir un 60 % ---que es exactamente lo que la ley concede--- saldría marcado como incumplimiento |
 | Permiso parental de 8 semanas, **no retribuido**, hasta los 8 años | 48 bis | **Cubierto.** Ocho semanas hasta que el menor cumple ocho años, marcadas **sin sueldo**, que es lo que más se confunde de este permiso |
-| Víctimas de violencia de género o sexual: reducción, reordenación, horario flexible | 37.8 | **Falta** |
+| Víctimas de violencia de género o sexual: reducción, reordenación, horario flexible | 37.8 | **Cubierto.** Reducción de jornada o reordenación del tiempo de trabajo, **sin rango**: lo concreta quien lo ejerce y no hay cifra que comprobar. **No pide justificante**, a propósito: la acreditación se hace ante quien corresponde, no colgando un documento en una herramienta de fichaje. Es distinta de la suspensión del art. 45.1.n, que ya estaba y es para quien deja de trabajar |
 | Crédito horario de representantes | 68.e | **A medias.** El permiso está en el catálogo y se cuenta en horas al mes; lo que no trae es **la escala del art. 68.e** ---quince, veinte, treinta, treinta y cinco o cuarenta horas según el tamaño de la plantilla---, que hoy la pone la empresa a mano. Esa escala es suelo legal y no una cifra de convenio, así que traerla no pisaría a nadie |
 | Búsqueda de empleo durante el preaviso de despido objetivo, 6 h/semana | 53.2 | **Cubierto.** Seis horas semanales, con la nota de que solo corren durante el preaviso de un despido por causas objetivas |
 | Exámenes de formación reglada | 23.1.a | **Cubierto.** El tiempo indispensable, con justificante |
@@ -374,10 +374,29 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 2 | **Saldos de devolución**: horas extra compensadas, relevo de turno, distribución irregular. Convertir los avisos en una cuenta | **5-8 días.** Es una pieza, no tres: un saldo con su plazo por concepto ---4 meses el art. 35.1, 4 semanas el relevo, 12 meses la distribución irregular---, su pantalla y su columna en el informe. Arregla **tres filas del inventario de golpe** |
 | 3 | **Vacaciones**: devengo proporcional y traslado por IT | **3-4 días.** El devengo por fecha de alta y el traslado con el tope de 18 meses del art. 38.3 |
 | 4 | **Historia de la adscripción a departamento**, cuando el informe empiece a mentir | **2-3 días.** Una tabla de vigencias y los informes leyendo de ella |
-| 5 | **Las otras reducciones por cuidados** (arts. 37.4, 37.5 y 37.8): lactancia, hospitalización de un recién nacido y cuidado de menor con enfermedad grave. La mecánica de la fracción y las fechas **ya está** ---la puso el art. 37.6---; falta que cada una entre en el catálogo con su regla propia | **2-3 días.** Son tres artículos con cifras distintas sobre la misma maquinaria |
+| 5 | **El crédito horario de representantes** (art. 68.e). El permiso está y se cuenta en horas al mes; falta traer **la escala legal** ---quince, veinte, treinta, treinta y cinco o cuarenta horas según el tamaño de la plantilla---, que hoy pone la empresa a mano. Es suelo legal y no una cifra de convenio, así que traerla no pisaría a nadie | **1-2 días.** Una escala por tramos y el aviso cuando la cifra puesta se queda por debajo |
 | 6 | **Las cifras de cada sector** (RD 1561/1995). Lo que quedaba de esta fila y sigue fuera a propósito: quince cifras por cada uno de los trece regímenes, cada sector con su convenio encima. Que los avisos citen el régimen declarado **ya está** desde el 28/08 | **Semanas**, y conviene partirlo por sector empezando por el que tenga un cliente esperando. No es trabajo pendiente sino una decisión de producto: mientras no haya un cliente de un sector concreto, traer sus cifras es inventar |
 
 ### Hecho desde que se escribió esta lista
+
+- **Las tres reducciones que faltaban** (arts. 37.5, 37.6 párrafo 3.º y 37.8,
+  28/08/2026), sobre la maquinaria que quedó montada al arreglar la lactancia.
+
+  El inventario las agrupaba bien ---«van sobre la misma maquinaria»--- y lo que
+  tenía trabajo era lo que **no** comparten. El art. 37.5 concede dos derechos y
+  uno se cobra y el otro no, así que son dos entradas: una sola tendría que
+  elegir un valor y mentiría en la mitad de los casos. En el párrafo tercero del
+  art. 37.6 **la mitad es el mínimo**, al revés que en la guarda legal del mismo
+  artículo: sin separar los dos avisos, reducir un 60 % ---que es exactamente lo
+  que la ley concede--- habría salido marcado como incumplimiento. Y el art. 37.8
+  no tiene rango: lo concreta quien lo ejerce, y **no pide justificante**, porque
+  la acreditación no se hace colgando un documento en una herramienta de fichaje.
+
+  Dos defectos de la pantalla, vistos abriéndola. Las notas del catálogo llevan
+  `**énfasis**` desde siempre y salían **con los asteriscos puestos**, de modo que
+  el texto parecía a medio escribir ---y lo destacado es justo lo que se confunde,
+  «al menos» frente a «como máximo»---. Y un permiso que recorta la jornada decía
+  durar «el tiempo indispensable», que es la frase de los que la **paran**.
 
 - **El saldo de descanso que se debe** (art. 35.1, 28/08/2026), que es el
   mecanismo que faltaba para toda la familia de las compensaciones.
