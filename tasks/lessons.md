@@ -2,6 +2,66 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Una fila del inventario que dice «falta» puede llevar meses hecha (28/08/2026)
+
+El enunciado decía «quien entra en julio tiene hoy el saldo entero». Medido antes
+de tocar nada: **12 de 23**. El devengo proporcional se había hecho el 13/08 y
+nadie movió la fila. Tirando del hilo aparecieron tres más de la misma familia,
+todas con código, pruebas y hasta una prueba de navegador.
+
+Lo grave no es el trabajo repetido que casi hago: es que el inventario es
+**público**, y estaba contando el producto **peor de lo que está**. Esa es la
+dirección en la que un documento equivoca a quien decide comprarlo, y es más
+difícil de detectar que la contraria, porque nadie protesta cuando te acusas a ti
+mismo de menos.
+
+**Cómo evitarlo:** antes de implementar una fila, medir el caso que el enunciado
+describe. Un `manage.py shell` con cuatro casos cuesta dos minutos y decide la
+vuelta entera. Y al cerrar una fila, mirar sus vecinas de la misma familia: si
+una se hizo con una maquinaria común, es probable que arrastrara a otras.
+
+## Una prueba de fechas puede caer entera dentro del mismo periodo (28/08/2026)
+
+Para comprobar que un cálculo usa la fecha de fin de contrato y no «hoy», comparé
+el resultado en dos fechas: febrero y diciembre del mismo año. Pasaba con el
+error puesto, porque las dos caen en el mismo periodo de cómputo y el prorrateo
+salía idéntico. La prueba afirmaba exactamente lo que quería comprobar y no
+comprobaba nada.
+
+**Cómo evitarlo:** cuando una prueba distingue dos fechas, comprobar que caen en
+**periodos distintos** de lo que se está midiendo. Aquí bastó mover el contrato
+al año anterior: mirando «hoy», ese contrato no toca el periodo de este año y el
+resultado se va a cero.
+
+## `refresh_from_db()` esconde justo lo que quieres comprobar (28/08/2026)
+
+Una función contesta una hipótesis y no debe modificar la persona. La prueba
+hacía `quien.refresh_from_db()` y comprobaba el campo. Pasaba igual con la
+función mutando el objeto: como nunca se guarda, releer de la base lo devolvía a
+su valor de todas formas.
+
+Lo que importaba era el objeto **en memoria**, que es el que quien llamó sigue
+usando después ---y en una vista, el que se serializa en la respuesta---.
+
+**Cómo evitarlo:** para comprobar que algo no muta un objeto, mirar el objeto tal
+cual, sin releerlo. Releer es lo que se hace para comprobar lo contrario, que sí
+se guardó.
+
+## Un dato que solo aparece después de guardar llega tarde (28/08/2026)
+
+El aviso de liquidación salía con la fecha de baja **ya guardada**. Funcionaba, y
+las pruebas de servidor pasaban. Abriendo la pantalla se veía el problema: quien
+prepara una baja escribe la fecha y quiere el número **antes** de darle a
+guardar; con el diseño de la primera versión había que guardar, cerrar la ficha y
+volver a abrirla para verlo, que es cuando ya no sirve para decidir.
+
+**Cómo evitarlo:** para un dato que se calcula a partir de un campo del
+formulario, preguntarse si la respuesta tiene que llegar **mientras se escribe**.
+Si la respuesta es sí, la consulta lleva el valor del formulario y el servidor
+contesta la hipótesis ---en una copia en memoria, sin escribir nada---. Y en
+general: abrir la pantalla antes de dar la fila por cerrada. Esto no lo habría
+encontrado ninguna prueba de servidor.
+
 ## Un contenedor puede tener el fichero nuevo y estar corriendo el viejo (28/08/2026)
 
 `grep` dentro del contenedor confirmaba que el código nuevo estaba ahí, y la API

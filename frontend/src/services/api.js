@@ -418,7 +418,13 @@ export const getPushKey = () => get('/push/key/')
 export const subscribePush = (payload) => post('/push/subscriptions/', payload)
 export const unsubscribePush = (endpoint) =>
   api.delete('/push/subscriptions/', { data: { endpoint } })
-export const getLeaveBalance = (employee) => get('/absences/balance/', employee ? { employee } : {})
+/** El saldo de vacaciones. `until` pregunta la hipótesis: «si el contrato
+ *  terminara ese día, ¿cuánto quedaría por liquidar?». No cambia nada. */
+export const getLeaveBalance = (employee, until) =>
+  get('/absences/balance/', {
+    ...(employee ? { employee } : {}),
+    ...(until ? { until } : {}),
+  })
 /** Pedir una ausencia, con su justificante si lo lleva.
  *
  *  El fichero obliga a `multipart`, así que se arma un FormData solo cuando lo

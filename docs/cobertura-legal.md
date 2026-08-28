@@ -220,11 +220,11 @@ espera jornada»: la persona sigue viniendo, por menos tiempo.
 | Periodo de referencia distinto del año natural | 38.1 | **Cubierto.** Mes de inicio configurable |
 | Días distintos para una persona concreta | — | **Cubierto** |
 | No sustituibles por dinero | 38.1 | **Cubierto** por omisión: no hay forma de pagarlas |
-| Calendario con dos meses de antelación | 38.3 | **Falta.** No existe el calendario de vacaciones como documento |
-| Coincidencia con embarazo, parto o lactancia | 38.3 | **Falta.** Se disfrutan en otra fecha |
-| Coincidencia con IT por otra contingencia | 38.3 | **Falta.** Hasta 18 meses después del fin del año en que se originaron |
-| Devengo proporcional al tiempo trabajado | — | **Falta.** Quien entra en julio tiene hoy el mismo saldo que quien lleva el año entero |
-| Liquidación al finalizar el contrato | — | **Falta** |
+| Calendario con dos meses de antelación | 38.3 | **A medias.** El **plazo sí se comprueba**: unas vacaciones puestas por la empresa con menos de sesenta días de aviso salen marcadas, con su artículo. Solo cuando las pone otro ---quien las pide conoce las fechas por definición---. Lo que no existe es el **calendario como documento**, que es lo que el artículo manda exponer en la empresa |
+| Coincidencia con embarazo, parto o lactancia | 38.3 | **Cubierto.** El régimen **sin plazo** del párrafo 2.º: se disfrutan al terminar la suspensión, «aunque haya terminado el año natural a que correspondan». Los días vuelven al saldo cuando un responsable lo confirma, no solos |
+| Coincidencia con IT por otra contingencia | 38.3 | **Cubierto.** El régimen de **dieciocho meses** del párrafo 3.º, y solo por los días que coinciden ---«total o parcialmente», dice la ley---. Da igual que la baja empezara antes: el precepto solo dice «coincida» (TJUE, ANGED C-78/11; STS del Pleno de 3/10/2012) |
+| Devengo proporcional al tiempo trabajado | — | **Cubierto.** Quien no ha trabajado el periodo entero devenga la parte proporcional, por días naturales de contrato y **redondeando hacia arriba** ---a la baja el peor caso es incumplir un mínimo legal; al alza, dar medio día de más---. Medido en la demostración: quien entra el 1 de julio tiene 12 de 23, no 23 |
+| Liquidación al finalizar el contrato | 38.1 | **Cubierto.** Los días devengados y no disfrutados al terminar el contrato ---y los disfrutados de más, que se descuentan---, en la ficha de la persona y **mientras se escribe la fecha de baja**, no después de guardarla. Lo pendiente de decidir no resta: se cuenta aparte, porque ni está disfrutado ni liquidado. **Días, no importe**: lo que vale un día es una nómina y eso está fuera del producto |
 | Días adicionales por antigüedad | Convenio | **Falta** |
 | Asuntos propios y libre disposición | Convenio | **Falta.** No son vacaciones y hoy no hay dónde ponerlos |
 
@@ -371,6 +371,31 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 6 | **Las cifras de cada sector** (RD 1561/1995). Lo que quedaba de esta fila y sigue fuera a propósito: quince cifras por cada uno de los trece regímenes, cada sector con su convenio encima. Que los avisos citen el régimen declarado **ya está** desde el 28/08 | **Semanas**, y conviene partirlo por sector empezando por el que tenga un cliente esperando. No es trabajo pendiente sino una decisión de producto: mientras no haya un cliente de un sector concreto, traer sus cifras es inventar |
 
 ### Hecho desde que se escribió esta lista
+
+- **La liquidación de vacaciones al terminar el contrato** (art. 38.1,
+  28/08/2026), y con ella **cuatro filas de esta misma familia que ya estaban
+  hechas y seguían marcadas como pendientes**.
+
+  Clasificar antes de implementar volvió a ahorrar la vuelta entera. El
+  enunciado decía «quien entra en julio tiene hoy el saldo entero», y medido en
+  la demostración: **12 de 23**. El devengo proporcional se hizo el 13/08 y el
+  inventario no se movió. Lo mismo con los dos regímenes del art. 38.3 ---la
+  coincidencia con baja, con y sin plazo--- y con el plazo de dos meses del
+  calendario, que tienen su código, sus pruebas y hasta una prueba de navegador.
+  El inventario estaba **contando el producto peor de lo que está**, que es la
+  dirección en la que un documento público equivoca a quien decide comprarlo.
+
+  Lo que sí faltaba es la liquidación, y va con dos decisiones que se ven mejor
+  en las pruebas que en el código. **Lo pendiente de decidir no resta**: no está
+  disfrutado ni liquidado, así que restarlo daría una cifra a pagar más baja que
+  la real; se cuenta aparte. Y **la cifra se enseña mientras se escribe la fecha
+  de baja**, no después de guardarla: la primera versión solo sabía contestar por
+  la fecha ya guardada, de modo que el número aparecía tras guardar, cerrar la
+  ficha y volver a abrirla, o sea cuando ya no servía para decidir.
+
+  **Días, no importe.** Lo que vale un día depende del salario, de los
+  complementos y del prorrateo de pagas: eso es una nómina y está fuera de lo
+  que hace este producto.
 
 - **Que los avisos citen el régimen declarado** (28/08/2026), y con esto quedan
   cubiertas **las trece situaciones** que Francisco marcó el 28/08.

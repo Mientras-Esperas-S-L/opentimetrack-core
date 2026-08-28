@@ -39,6 +39,7 @@ import {
   deactivateEmployee,
   getDepartments,
   getEmployees,
+  getLeaveBalance,
   getWorkplaces,
   deliverRecord,
   erasePerson,
@@ -205,6 +206,20 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
   const { t } = useTranslation()
   const [form, setForm] = useState(EMPTY_FORM)
   const [loaded, setLoaded] = useState(null)
+
+  // Lo que quedaría por liquidar si el contrato termina. Solo se pregunta con
+  // una fecha de fin puesta: sin ella no hay nada que liquidar, y pedirlo para
+  // cada ficha que se abre sería una consulta por persona a cambio de nada.
+  // La fecha va en la consulta, no solo la persona: así el aviso contesta por
+  // **la fecha que se está escribiendo** y no por la que había guardada. Sin eso
+  // hay que guardar, cerrar la ficha y volver a abrirla para ver el número, que
+  // es justo el momento en que ya no sirve.
+  const { data: saldo } = useQuery({
+    queryKey: ['leave-balance', person?.id, form.contract_end],
+    queryFn: () => getLeaveBalance(person.id, form.contract_end),
+    enabled: Boolean(open && person?.id && form.contract_end),
+  })
+  const liquidacion = form.contract_end ? saldo?.settlement : null
 
   // Fills the form when a different person is opened, without an effect.
   if (open && loaded !== (person?.id ?? 'new')) {
@@ -484,6 +499,40 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
                 helperText={t('Vacío = indefinido.')}
               />
             </Stack>
+
+            {/* Las vacaciones no se pagan (art. 38.1), salvo aquí: si el
+                contrato se extingue ya no hay cuándo disfrutarlas. Los días los
+                sabe el registro; el importe es una nómina y no se calcula. */}
+            {liquidacion && (
+              <Alert severity={liquidacion.days < 0 ? 'warning' : 'info'} variant="outlined">
+                {liquidacion.days > 0 &&
+                  t(
+                    'Al terminar el contrato le quedarán {{dias}} días {{computo}} de vacaciones sin disfrutar, que se liquidan con el finiquito (art. 38.1 ET). El producto cuenta los días; el importe lo pone la nómina.',
+                    {
+                      dias: liquidacion.days,
+                      computo: liquidacion.working_days ? t('laborables') : t('naturales'),
+                    },
+                  )}
+                {liquidacion.days < 0 &&
+                  t(
+                    'Al terminar el contrato habrá disfrutado {{dias}} días {{computo}} de vacaciones de más, que se descuentan en la liquidación (art. 38.1 ET).',
+                    {
+                      dias: -liquidacion.days,
+                      computo: liquidacion.working_days ? t('laborables') : t('naturales'),
+                    },
+                  )}
+                {liquidacion.days === 0 &&
+                  t('Al terminar el contrato no quedarán vacaciones por liquidar.')}
+                {liquidacion.pending > 0 && (
+                  <Box component="span" sx={{ display: 'block', mt: 0.5 }}>
+                    {t(
+                      'Quedan {{dias}} días pedidos y sin decidir. Resuélvelos antes de cerrar la liquidación: ni están disfrutados ni liquidados.',
+                      { dias: liquidacion.pending },
+                    )}
+                  </Box>
+                )}
+              </Alert>
+            )}
 
             <FormControlLabel
               control={

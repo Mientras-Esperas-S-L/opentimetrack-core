@@ -12,6 +12,7 @@ from datetime import date
 import django_filters
 from django.conf import settings
 from django.http import FileResponse, Http404, HttpResponseRedirect
+from django.utils.dateparse import parse_date
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import mixins, serializers, status, viewsets
@@ -24,6 +25,7 @@ from apps.absences.services import (
     approve_absence,
     cancel_absence,
     leave_over_the_limit,
+    leave_settlement,
     reject_absence,
     request_absence,
     short_holiday_notice,
@@ -597,8 +599,30 @@ class AbsenceViewSet(
                 )
             employee = self._employee_in_company(wanted)
 
+        # «Si el contrato terminara ese día, ¿cuánto quedaría?». Es la pregunta
+        # que se hace quien está escribiendo una fecha de baja, y contestarla
+        # solo con la fecha ya guardada obliga a guardar, cerrar y reabrir para
+        # ver el número. No escribe nada.
+        hasta = None
+        if request.query_params.get("until"):
+            hasta = parse_date(request.query_params["until"])
+            if hasta is None:
+                raise BusinessRuleError(
+                    code="bad_until",
+                    message=_("`until` has to be a date, as YYYY-MM-DD."),
+                )
+
         balance = vacation_balance(employee, request.user.tenant)
-        return Response({"employee": str(employee.id), **balance.as_dict()})
+        return Response(
+            {
+                "employee": str(employee.id),
+                **balance.as_dict(),
+                # Y lo que quedaría por liquidar si el contrato termina. `None`
+                # para quien no tiene fecha de fin, que es casi todo el mundo:
+                # la pantalla decide con eso si hay algo que enseñar.
+                "settlement": leave_settlement(employee, request.user.tenant, until=hasta),
+            }
+        )
 
     @extend_schema(
         # Ver el mismo comentario en `ShiftViewSet.roster`: no es una lista del

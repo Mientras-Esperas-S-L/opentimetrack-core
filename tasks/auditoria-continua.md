@@ -369,6 +369,78 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 162 --- La liquidación de vacaciones, y cuatro filas que ya estaban hechas (28/08)
+
+Primera vuelta de la tanda nueva: lo que queda «A medias» y «Falta» en el
+inventario. Al empezar eran 3 y 22.
+
+**Clasificar antes de implementar ahorró la vuelta entera.** El enunciado
+elegido decía «quien entra en julio tiene hoy el saldo entero», y es de las
+pocas filas que enseña una **cifra falsa** en vez de faltar. Medido en la
+demostración antes de tocar nada:
+
+```
+  entra el 1 de enero      -> le corresponden 23 de 23
+  entra el 1 de julio      -> le corresponden 12 de 23
+  entra el 1 de diciembre  -> le corresponden  2 de 23
+  contrato de 3 meses      -> le corresponden  6 de 23
+```
+
+El devengo proporcional se hizo el **13/08** y el inventario no se movió. Y
+tirando del hilo, tres filas más de la misma familia: los dos regímenes del art.
+38.3 ---la baja que se come las vacaciones, sin plazo para embarazo, parto y
+lactancia y con dieciocho meses para el resto--- tienen once pruebas en verde, y
+el plazo de dos meses del calendario tiene su fichero de pruebas y hasta una de
+navegador.
+
+**El inventario estaba contando el producto peor de lo que está.** Es la
+dirección en la que un documento público equivoca a quien decide comprarlo, y ya
+había pasado el 28/08 por la mañana con la tabla del §5 del dossier.
+
+Una matización que evita pasarse de frenada: la fila del calendario **no** queda
+cubierta, queda a medias. El plazo se comprueba; el **calendario como documento**
+---lo que el art. 38.3 manda exponer--- no existe.
+
+**Lo que sí faltaba: la liquidación al terminar el contrato.** Las vacaciones no
+se pagan (art. 38.1), salvo aquí: si el contrato se extingue ya no hay cuándo
+disfrutarlas. Tres decisiones:
+
+1. **Días, no importe.** Lo que vale un día depende del salario, de los
+   complementos y del prorrateo de pagas: eso es una nómina y está fuera de lo
+   que hace el producto. Los días sí los sabe el registro, y hasta ahora había
+   que contarlos a mano mirando el calendario.
+2. **Lo pendiente de decidir no resta.** El saldo normal sí lo resta, y hace
+   bien. Para una liquidación no: esos días o se disfrutan o se pagan, y todavía
+   no ha pasado ninguna de las dos cosas, así que restarlos daría una cifra a
+   pagar más baja que la real. Van aparte, con su número.
+3. **Las dos direcciones.** Quien disfrutó más de lo que devengó tiene días
+   descontados. Un producto que solo contara hacia arriba daría cero ahí, que se
+   lee como «no hay nada que ajustar» y es lo contrario.
+
+**El defecto de UX, encontrado mirando la pantalla y arreglado en la vuelta.**
+La primera versión solo sabía contestar por la fecha **ya guardada**, así que el
+número aparecía después de guardar, cerrar la ficha y volver a abrirla ---o sea,
+cuando ya no servía para decidir---. Quien prepara una baja escribe una fecha y
+quiere saber qué debe **antes** de darle a guardar. La consulta lleva ahora la
+fecha del formulario, y el endpoint contesta la hipótesis sin escribir nada: la
+fecha se pone en una copia en memoria.
+
+**Diez contrastes, y dos no contrastaron a la primera.**
+
+- La prueba de que el devengo va hasta el fin de contrato y no hasta hoy
+  comparaba dos fechas **del mismo año**, así que las dos caían en el mismo
+  periodo de cómputo y daba igual cuál se usara. Rehecha con un contrato de
+  2025: mirando «hoy» ese contrato no toca el periodo de 2026 y la liquidación
+  saldría cero.
+- La prueba de que preguntar por una hipótesis no toca a nadie hacía
+  `refresh_from_db()`, y como la función nunca guarda, releer devolvía `None`
+  igual. Lo que importa es el objeto **en memoria**, que es el que quien llamó
+  va a seguir usando.
+
+**Cierre:** ocho pasos del CI en verde con 1.455 pruebas, suite de navegador
+aparte, cinco filas del inventario reconciliadas, dossier en la 1.31. El
+recuento pasa de 86/3/22 a **90/4/17 de 111**, contado de las filas.
+
 ### Vuelta 161 --- Que el aviso diga bajo qué régimen trabaja la empresa (28/08)
 
 **13 de 13**, con una salvedad que va abajo.

@@ -17,6 +17,7 @@ Two decisions worth stating up front:
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from datetime import date, timedelta
 
@@ -162,6 +163,68 @@ def vacation_balance(employee, company, day: date | None = None) -> LeaveBalance
         accrued_from=accrued_from,
         accrued_to=accrued_to,
     )
+
+
+def leave_settlement(
+    employee, company, day: date | None = None, until: date | None = None
+) -> dict | None:
+    """Las vacaciones que quedan sin disfrutar cuando el contrato termina.
+
+    Las vacaciones no se pagan: «no podrán ser sustituidas por compensación
+    económica» (art. 38.1 ET). La excepción es esta ---el contrato se extingue y
+    ya no hay cuándo disfrutarlas---, y entonces los días devengados y no
+    disfrutados se compensan en la liquidación. La otra dirección existe igual:
+    quien disfrutó más de lo que devengó tiene esos días descontados.
+
+    **Días, no dinero.** Lo que vale ese día depende del salario, de los
+    complementos y del prorrateo de pagas, y eso es una nómina: está fuera de lo
+    que hace este producto, y calcularlo aquí sería dar una cifra que nadie ha
+    contrastado con la gestoría. Los días sí los sabe el registro, son los que
+    hacen falta para el finiquito, y hoy hay que contarlos a mano mirando el
+    calendario.
+
+    **Lo pendiente no resta.** Una solicitud sin resolver no está disfrutada ni
+    liquidada: o se aprueba y se disfruta antes de irse, o se paga. Restarla
+    daría una cifra a liquidar más baja que la real, así que se cuenta aparte y
+    se dice cuántas hay ---son lo que quien gestiona tiene que resolver antes de
+    cerrar la liquidación---.
+
+    Devuelve `None` para quien no tiene fecha de fin: no hay nada que liquidar
+    mientras el contrato siga.
+
+    **`until` responde a la pregunta antes de que sea un hecho**: «si el contrato
+    terminara ese día, ¿cuánto quedaría?». Es la pregunta que se hace de verdad
+    ---quien prepara una baja escribe una fecha y quiere saber qué debe--- y sin
+    ella la cifra solo aparece después de guardar, cerrar la ficha y volver a
+    abrirla. No escribe nada: la fecha se pone en una copia en memoria.
+    """
+    fin = until or employee.contract_end
+    if not fin:
+        return None
+
+    if fin != employee.contract_end:
+        # Una copia, no la persona: esto contesta una hipótesis y no cambia el
+        # contrato de nadie.
+        employee = copy.copy(employee)
+        employee.contract_end = fin
+
+    # El saldo a fecha de fin de contrato, no a día de hoy: lo que se devenga se
+    # devenga hasta el último día, y `vacation_balance` ya recorta el prorrateo
+    # con esa fecha.
+    balance = vacation_balance(employee, company, day or fin)
+
+    return {
+        "until": fin.isoformat(),
+        "entitled": balance.entitled,
+        "taken": balance.taken,
+        #: Positivo, días que se liquidan. Negativo, días disfrutados de más que
+        #: se descuentan. Las dos direcciones se dicen igual de claro: la
+        #: segunda es la que nadie mira hasta que aparece en la nómina.
+        "days": balance.entitled - balance.taken,
+        "pending": balance.pending,
+        "working_days": balance.working_days,
+        "citation": "Art. 38.1 ET",
+    }
 
 
 def _accrued(
