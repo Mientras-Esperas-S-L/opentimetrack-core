@@ -144,6 +144,25 @@ ESPANA = LegalFramework(
         # No es un incumplimiento: las horas por encima de lo pactado en jornada
         # parcial son complementarias, lícitas y con su propio tope.
         "over_contracted_hours": Citation("Art. 12.5 ET"),
+        "partial_retirement_out_of_range": Citation(
+            "Art. 12.6 ET",
+            "La jornada se reduce entre un 25 % y un 50 %, o hasta un 75 % cuando "
+            "el contrato de relevo es a jornada completa y de duración indefinida. "
+            "Se avisa: el convenio puede mejorar las condiciones y el acuerdo lo "
+            "firman las partes.",
+        ),
+        "relief_hours_below_the_reduction": Citation(
+            "Art. 12.7 ET",
+            "«La duración de la jornada deberá ser, como mínimo, igual a la "
+            "reducción de jornada acordada por el trabajador sustituido». Es el "
+            "sentido del contrato: cubrir lo que el otro deja de trabajar.",
+        ),
+        "relief_without_partial_retirement": Citation(
+            "Art. 12.7 ET",
+            "El relevo se celebra para sustituir a quien se jubila parcialmente. "
+            "Sin esa jubilación registrada no hay nada que relevar, y la cifra "
+            "que el artículo compara no existe.",
+        ),
         "adaptation_answer_overdue": Citation(
             "Art. 34.8 ET",
             "Quince días de negociación como máximo, y luego respuesta por "
@@ -569,6 +588,27 @@ ESPANA = LegalFramework(
             note="Igual que el ERTE en cuanto a jornada. Lo activa el Consejo de "
             "Ministros para un sector o para toda la economía.",
             can_reduce_the_day=True,
+        ),
+        LeaveKind(
+            code="es.partial_retirement",
+            name="Jubilación parcial",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 12.6 ET",
+            # No es una ausencia retribuida: se sigue trabajando la parte no
+            # reducida y esa se cobra como siempre. Lo que la empresa deja de
+            # pagar es lo que se deja de trabajar, y de esa parte se ocupa la
+            # pensión parcial.
+            paid=False,
+            # La registra la empresa: hay un acuerdo detrás y, casi siempre, un
+            # contrato de relevo que se firma a la vez. No es algo que se pida
+            # una mañana desde el móvil.
+            initiated_by="COMPANY",
+            can_reduce_the_day=True,
+            amount=None,
+            note="Pon **cuánto se reduce** la jornada: entre el 25 % y el 50 %, o hasta "
+            "el 75 % si el contrato de relevo es a jornada completa e indefinido "
+            "(art. 12.6). Y en la ficha del relevista, di a quién releva: su jornada "
+            "tiene que cubrir al menos esta reducción (art. 12.7).",
         ),
         LeaveKind(
             code="es.disciplinary",

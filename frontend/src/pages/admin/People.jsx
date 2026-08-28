@@ -59,6 +59,7 @@ import { SelectionBar } from '../../components/selection.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 import { useDebounced } from '../../hooks/useDebounced.js'
 import { plural } from '../../components/format.js'
+import EmployeePicker from '../../components/EmployeePicker.jsx'
 import RemoteWorkDialog from '../../components/RemoteWorkDialog.jsx'
 import SeasonsDialog from '../../components/SeasonsDialog.jsx'
 import { alCatalogo, IDIOMAS_QUE_SE_OFRECEN } from '../../i18n/index.js'
@@ -163,6 +164,7 @@ const EMPTY_FORM = {
   contract_start: '',
   contract_end: '',
   seasonal: false,
+  relieves: '',
   contracted_schedule: '',
   night_worker: 'AUTO',
   rotating_shifts: false,
@@ -189,6 +191,7 @@ const fromPerson = (person) => ({
   contract_start: person.contract_start ?? '',
   contract_end: person.contract_end ?? '',
   seasonal: Boolean(person.seasonal),
+  relieves: person.relieves || '',
   contracted_schedule: person.contracted_schedule ?? '',
   night_worker: person.night_worker || 'AUTO',
   rotating_shifts: Boolean(person.rotating_shifts),
@@ -497,6 +500,20 @@ function PersonDialog({ open, person, departments, workplaces, onClose, onSave, 
               )}
               {form.seasonal && person && (
                 <> {t('Las temporadas se cargan desde «Más acciones», en su fila.')}</>
+              )}
+            </Typography>
+
+            {/* El relevo no es una casilla: existe **para sustituir a alguien
+                concreto**, y la ley compara las dos jornadas. Por eso se pide a
+                quién releva y no un «sí/no». */}
+            <EmployeePicker
+              label={t('Releva a')}
+              value={form.relieves}
+              onChange={(quien) => setForm({ ...form, relieves: quien || '' })}
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ mt: -1.5 }}>
+              {t(
+                'Art. 12.7 ET: solo para contratos de relevo. Su jornada tiene que cubrir al menos lo que deja de trabajar quien se jubila parcialmente.',
               )}
             </Typography>
 

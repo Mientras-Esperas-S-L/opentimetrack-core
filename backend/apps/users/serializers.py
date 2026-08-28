@@ -270,6 +270,7 @@ class UserSerializer(DecimalesTolerantes, serializers.ModelSerializer):
             "contract_start",
             "contract_end",
             "seasonal",
+            "relieves",
             "contracted_schedule",
             "default_work_mode",
             # Art. 36 ET. Neither is a property of the shift: a night worker
@@ -325,6 +326,7 @@ class UserWriteSerializer(DecimalesTolerantes, serializers.ModelSerializer):
             "contract_start",
             "contract_end",
             "seasonal",
+            "relieves",
             "contracted_schedule",
             "default_work_mode",
             "night_worker",
@@ -466,6 +468,21 @@ class UserWriteSerializer(DecimalesTolerantes, serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"contracted_hours": _("Art. 3.b asks for the agreed hours on this regime.")}
             )
+
+        # El relevo sustituye a **otra** persona, y de la misma empresa. Nadie se
+        # releva a sí mismo: sería un contrato que cubre la reducción de su
+        # propia jornada, que no cubre nada.
+        releva_a = attrs.get("relieves", getattr(current, "relieves", None))
+        if releva_a is not None:
+            empresa = self.context["request"].user.tenant
+            if releva_a.tenant_id != empresa.id:
+                raise serializers.ValidationError(
+                    {"relieves": _("That person is not in this company.")}
+                )
+            if current is not None and releva_a.pk == current.pk:
+                raise serializers.ValidationError(
+                    {"relieves": _("A relief contract stands in for somebody else.")}
+                )
 
         start = attrs.get("contract_start", getattr(current, "contract_start", None))
         finish = attrs.get("contract_end", getattr(current, "contract_end", None))

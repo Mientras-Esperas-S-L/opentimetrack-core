@@ -385,6 +385,27 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         blank=True,
         help_text=_("Empty means open-ended. A date makes it fixed-term."),
     )
+    #: A quién releva, si este contrato es de relevo (art. 12.7 ET).
+    #:
+    #: El relevo no es una modalidad más que apuntar en una casilla: existe
+    #: **para sustituir a alguien concreto** que se ha jubilado parcialmente, y
+    #: la ley compara las dos jornadas ---la del relevista tiene que cubrir al
+    #: menos lo que el otro deja de trabajar---. Sin decir a quién releva no hay
+    #: nada que comparar, así que el dato es el vínculo y no una etiqueta.
+    #:
+    #: `SET_NULL` y no `CASCADE`: si la persona jubilada se borra de la base, el
+    #: contrato de relevo sigue existiendo. Se queda sin con quién compararse, y
+    #: eso lo dice la revisión.
+    relieves = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="relieved_by",
+        verbose_name=_("relieves"),
+        help_text=_("Art. 12.7: who this relief contract stands in for."),
+    )
+
     seasonal = models.BooleanField(
         _("permanent seasonal"),
         default=False,

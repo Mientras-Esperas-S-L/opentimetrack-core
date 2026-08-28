@@ -433,6 +433,38 @@ class Command(BaseCommand):
                     "contract_end": today - timedelta(days=7),
                 },
             ),
+            # El par del art. 12.6 y 12.7: quien se jubila parcialmente y quien
+            # le releva. Van juntos porque la ley los compara: la jornada del
+            # relevo tiene que cubrir al menos lo que el otro deja de trabajar.
+            (
+                "retiring",
+                "jubilacion@demo.local",
+                "Manuel",
+                "Cortés",
+                Role.EMPLOYEE,
+                works,
+                "EMP-0018",
+                WorkingTimeRegime.FULL_TIME,
+                40,
+                HoursPeriod.WEEK,
+                {"contract_start": today - timedelta(days=365 * 12)},
+            ),
+            (
+                "relief",
+                "relevo@demo.local",
+                "Nerea",
+                "Pardo",
+                Role.EMPLOYEE,
+                works,
+                "EMP-0019",
+                WorkingTimeRegime.PART_TIME,
+                # Veinte horas: exactamente lo que Manuel deja de trabajar con
+                # su reducción del 50 %. El mínimo del art. 12.7, y por eso
+                # cumple sin margen --- que es como se firman de verdad.
+                20,
+                HoursPeriod.WEEK,
+                {"contract_start": today - timedelta(days=60)},
+            ),
             # Permanent-seasonal.
             (
                 "seasonal",
@@ -535,6 +567,11 @@ class Command(BaseCommand):
                 contracted_period=period,
                 **extra,
             )
+
+        # El vínculo del relevo, después del bucle: apunta a otra persona de la
+        # misma tanda y no existe hasta que las dos están creadas.
+        made["relief"].relieves = made["retiring"]
+        made["relief"].save(update_fields=["relieves"])
         return made
 
     # ------------------------------------------------------------------ roster
@@ -946,6 +983,16 @@ class Command(BaseCommand):
             # Un cuarto de reducción: `reduction_share` es **cuánto se reduce**,
             # así que 25 y no 75. Trabaja 30 de sus 40 horas, que es lo que
             # dicen sus fichajes. Y acaba, que es la mitad del asunto.
+            # Jubilación parcial al 50 %, que es el máximo del art. 12.6 sin
+            # relevo a jornada completa. Nerea cubre esas veinte horas.
+            (
+                "retiring",
+                "es.partial_retirement",
+                -90,
+                1000,
+                50,
+                "Jubilación parcial, media jornada",
+            ),
             (
                 "reduced",
                 "es.childcare_reduced_hours",

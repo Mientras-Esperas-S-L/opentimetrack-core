@@ -285,6 +285,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     findings.extend(_check_remote_work_agreement(company, first, last, employee))
     findings.extend(_check_training_contract(company, rules, first, last, employee))
     findings.extend(_check_adaptation_deadline(company, first, last, employee))
+    findings.extend(_check_relief_contracts(company, rules, first, last, employee))
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -1051,6 +1052,138 @@ GUARDA_LEGAL = "es.childcare_reduced_hours"
 #: de cuarenta va sobrado aunque él mismo diga cuarenta.
 FORMATIVO_PRIMER_ANO = 65.0
 FORMATIVO_SEGUNDO_ANO = 85.0
+
+
+#: Art. 12.6: la jornada se reduce entre un 25 % y un 50 %, o hasta un 75 %
+#: cuando el relevo es a jornada completa y de duración indefinida.
+#:
+#: Sobre **cuánto se reduce**, como todo `reduction_share`.
+JUBILACION_MINIMA = 25.0
+JUBILACION_MAXIMA = 50.0
+JUBILACION_MAXIMA_CON_RELEVO_ENTERO = 75.0
+
+#: El código con el que el catálogo español siembra la jubilación parcial.
+JUBILACION_PARCIAL = "es.partial_retirement"
+
+
+def _check_relief_contracts(company, rules, first, last, employee) -> list[Finding]:
+    """El par del art. 12.6 y 12.7, que es una sola pieza.
+
+    Quien se jubila parcialmente reduce su jornada y **alguien tiene que cubrir
+    lo que deja**. Por eso los dos artículos se comprueban juntos: la cifra que
+    el 12.7 compara ---«la duración de la jornada deberá ser, como mínimo, igual
+    a la reducción de jornada acordada por el trabajador sustituido»--- sale de
+    la jubilación del otro, y sin ella no hay nada que comparar.
+
+    Tres cosas, y las tres se avisan sin impedir nada:
+
+    1. **La reducción, fuera de horquilla.** Del 25 al 50 %, o hasta el 75 % si
+       el relevo es a jornada completa e indefinido. El acuerdo lo firman las
+       partes y el convenio puede mejorarlo.
+    2. **El relevista, por debajo de lo que releva.** Es el sentido del
+       contrato.
+    3. **Un relevo que no releva a nadie.** Sin jubilación registrada, la cifra
+       del artículo no existe: se dice en vez de callar, que es lo que hacía el
+       producto antes de tener el vínculo.
+    """
+    from apps.absences.models import Absence, AbsenceStatus
+    from apps.users.models import User, WorkingTimeRegime
+
+    jubilaciones = {
+        fila.employee_id: fila
+        for fila in Absence.objects.filter(
+            status=AbsenceStatus.APPROVED,
+            start_date__lte=last,
+            end_date__gte=first,
+            reduction_share__isnull=False,
+            leave_type__code=JUBILACION_PARCIAL,
+        ).select_related("employee")
+    }
+
+    relevistas = User.objects.filter(
+        tenant=company, is_active=True, relieves__isnull=False
+    ).select_related("relieves")
+    if employee is not None:
+        relevistas = relevistas.filter(pk=employee.pk)
+
+    #: Quién tiene a alguien cubriéndole con jornada entera e indefinida, que es
+    #: lo que sube el tope del 50 al 75 %.
+    con_relevo_entero = {
+        quien.relieves_id
+        for quien in relevistas
+        if quien.regime == WorkingTimeRegime.FULL_TIME and quien.contract_end is None
+    }
+
+    found: list[Finding] = []
+
+    for employee_id, jubilacion in jubilaciones.items():
+        if employee is not None and employee.id != employee_id:
+            continue
+        cuanto = float(jubilacion.reduction_share)
+        tope = (
+            JUBILACION_MAXIMA_CON_RELEVO_ENTERO
+            if employee_id in con_relevo_entero
+            else JUBILACION_MAXIMA
+        )
+        if JUBILACION_MINIMA <= cuanto <= tope:
+            continue
+        found.append(
+            Finding(
+                day=max(jubilacion.start_date, first),
+                employee_id=employee_id,
+                code="partial_retirement_out_of_range",
+                message=_(
+                    "The working day is cut by %(share)s %% for partial retirement, and "
+                    "art. 12.6 runs from %(min)s %% to %(max)s %%."
+                )
+                % {
+                    "share": f"{cuanto:g}",
+                    "min": f"{JUBILACION_MINIMA:g}",
+                    "max": f"{tope:g}",
+                },
+            )
+        )
+
+    for quien in relevistas:
+        jubilacion = jubilaciones.get(quien.relieves_id)
+        if jubilacion is None:
+            found.append(
+                Finding(
+                    day=last,
+                    employee_id=quien.id,
+                    code="relief_without_partial_retirement",
+                    message=_(
+                        "This relief contract stands in for somebody with no partial "
+                        "retirement on record, so there is nothing to measure it against."
+                    ),
+                )
+            )
+            continue
+
+        suya = quien.agreed_hours(rules)
+        del_otro = jubilacion.employee.agreed_hours(rules)
+        # Las dos cifras tienen que ser comparables. Convertir un año en semanas
+        # daría un número que nadie pactó, que es la misma razón por la que el
+        # tope de complementarias tampoco convierte.
+        if suya is None or del_otro is None or suya[1] != del_otro[1]:
+            continue
+
+        deja_de_trabajar = del_otro[0] * float(jubilacion.reduction_share) / 100
+        if suya[0] + 0.001 >= deja_de_trabajar:
+            continue
+        found.append(
+            Finding(
+                day=last,
+                employee_id=quien.id,
+                code="relief_hours_below_the_reduction",
+                message=_(
+                    "%(hours)s h agreed, and art. 12.7 asks for at least %(needed)s: the "
+                    "hours the person being relieved stops working."
+                )
+                % {"hours": f"{suya[0]:g}", "needed": f"{deja_de_trabajar:.1f}"},
+            )
+        )
+    return found
 
 
 def _check_adaptation_deadline(company, first, last, employee) -> list[Finding]:

@@ -63,8 +63,8 @@ registro no la pide. Sí importan las dos que traen límites propios.
 | Fijo discontinuo | art. 16 | **Cubierto.** Periodos de actividad con su fecha de llamamiento, que se cargan desde la ficha de la persona. Fuera de ellos no se espera jornada, el cuadrante avisa si se asigna un turno y la cobertura pendiente lo distingue de quien dejó la empresa |
 | Formativo en alternancia | art. 11.2 | **Cubierto.** Régimen propio, y el tope del art. 11.2.b contrastado contra **la jornada máxima** ---no contra lo que el contrato pactara---: 65 % el primer año, 85 % el segundo, según la fecha de inicio |
 | Formativo para práctica profesional | art. 11.3 | **Cubierto.** Régimen propio y separado del anterior, que es lo que permite **no** aplicarle un tope que no tiene |
-| Contrato de relevo | art. 12.7 | **Falta.** La jornada del relevista debe cubrir al menos la reducción de quien se jubila parcialmente |
-| Jubilación parcial | art. 12.6 | **Falta.** Es una jornada reducida con regla propia |
+| Contrato de relevo | art. 12.7 | **Cubierto.** En la ficha se dice **a quién releva**, que es el dato que la ley compara, y se avisa si su jornada no cubre lo que el otro deja de trabajar. Un relevo sobre alguien sin jubilación parcial registrada también se dice: no hay contra qué medirlo |
+| Jubilación parcial | art. 12.6 | **Cubierto.** Se registra como reducción de jornada con sus fechas, y la horquilla del artículo se avisa: del 25 % al 50 %, o hasta el 75 % **si el relevo es a jornada completa e indefinido** ---el mismo 60 % está bien o mal según cómo sea el contrato de la otra persona--- |
 
 **Relaciones laborales especiales** (art. 2 ET): once, cada una con su real
 decreto y su jornada. Ninguna está modelada. La que más se va a dar es la de
@@ -371,6 +371,13 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 6 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
 
 ### Hecho desde que se escribió esta lista
+
+- **El relevo y la jubilación parcial** (arts. 12.7 y 12.6, 28/08/2026), que son
+  una sola pieza: la cifra que el 12.7 compara ---la jornada del relevo contra lo
+  que el otro deja de trabajar--- **sale de la jubilación del otro**. Lo que
+  faltaba no era la mecánica de reducir la jornada, que ya la puso el art. 37.6,
+  sino el **vínculo** entre las dos personas. El tope que sube al 75 % es el
+  ejemplo más claro de por qué van juntos.
 
 - **La adaptación de jornada** (art. 34.8, 28/08/2026), en dos tandas. El producto sabía la consecuencia ---un fichaje puede
   marcarse como trabajado bajo una adaptación, art. 3.i--- y no tenía dónde

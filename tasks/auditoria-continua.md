@@ -369,6 +369,61 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 157 --- El relevo y la jubilación parcial, que son una pieza (28/08)
+
+**9 de 13.** Dos filas de golpe, como los formativos, y por la misma razón: no se
+pueden hacer por separado.
+
+**Los dos artículos se leen juntos o no se leen.** El art. 12.6 dice cuánto
+reduce su jornada quien se jubila parcialmente; el 12.7 dice que el relevo tiene
+que cubrir «como mínimo» esa reducción. **La cifra que el 12.7 compara sale de la
+jubilación del otro**, así que sin saber a quién releva un contrato de relevo no
+hay nada que comparar.
+
+Y al revés: **el tope del 12.6 depende del contrato del relevista**. Del 25 al
+50 %, o hasta el 75 % si el relevo es a jornada completa e indefinido. O sea que
+**el mismo 60 % de reducción está bien o mal según cómo sea el contrato de otra
+persona**. Un producto que mirara la jubilación por su cuenta acusaría a la mitad
+de las empresas que lo hacen bien. Es la prueba que mejor lo enseña.
+
+**Lo que faltaba no era la mecánica.** Reducir la jornada con su fracción y sus
+fechas ya existía desde el art. 37.6 (vuelta 151), y la jubilación parcial es
+exactamente eso. Lo que no había era el **vínculo entre dos personas**: el
+modelo no tenía ninguno.
+
+Por eso el relevo se guarda como **a quién releva** y no como una casilla de
+«¿es de relevo?». Una etiqueta habría sido más fácil y no habría servido para
+comprobar nada.
+
+**Tres avisos, ninguno bloquea:**
+
+- La reducción, fuera de horquilla.
+- El relevista, por debajo de lo que releva.
+- **Un relevo que no releva a nadie**, que es el que más se va a ver: se dice en
+  vez de callar, porque un contrato de relevo sobre alguien sin jubilación
+  registrada **no se puede comprobar**, y quedarse callado se lee como que está
+  bien. Y sale solo ese: sacar también el de las horas mandaría a arreglar una
+  cifra que no se puede calcular.
+
+**Tres tropiezos, los tres cazados por algo del proyecto:**
+
+1. **Me inventé una prop de un componente.** Puse `exclude={person?.id}` en
+   `EmployeePicker`, que no la tiene. Lo dijo la lectura de su firma, no `eslint`
+   ---una prop de más no es un error de JavaScript---. La comprobación de verdad
+   ---que nadie se releve a sí mismo--- está donde importa, en el servidor.
+2. **Y no importé el componente.** Eso sí lo dijo `eslint`, y es la [[252]] otra
+   vez: el script que insertó el bloque no tocó los imports.
+3. **Choqué dos números de empleado.** Puse EMP-0014 y EMP-0015 sin mirar, y
+   estaban usados hasta el EMP-0017. Lo paró la restricción de unicidad de la
+   base ---que ignora mayúsculas--- al resembrar.
+
+**La demostración enseña el par cumpliendo:** Manuel se jubila al 50 % de sus 40
+horas y Nerea le releva con exactamente 20, que es el mínimo del art. 12.7. Sin
+margen, que es como se firman de verdad.
+
+**Cifras al cerrar:** los ocho pasos del CI en verde, 1.409 pruebas de backend y
+310 de navegador.
+
 ### Vuelta 156 --- La adaptación de jornada, parte B: las dos pantallas (28/08)
 
 **7 de 13.** Cierra el art. 34.8: quien trabaja la pide desde «Mi jornada» y

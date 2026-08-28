@@ -5269,3 +5269,27 @@ dirección la marca el argumento, y ahí es donde hay que mirar dos veces. Y en 
 prueba con dos actores, comprobar que cada uno **es quien se dice**: aquí bastaba
 mirar de quién sale la solicitud en el servidor, que es lo que la prueba hace
 ahora.
+
+## 308. Una prop que no existe no la caza ningún linter
+
+Escribí `<EmployeePicker exclude={person?.id} />`. Ese componente no tiene
+`exclude`. React la ignora, `eslint` no dice nada ---una prop de más es
+JavaScript válido--- y la pantalla funciona: solo que **el filtro que creía haber
+puesto no está**.
+
+Lo vi porque fui a leer la firma del componente por otro motivo. Podría haberse
+quedado ahí meses, con un comentario al lado explicando un comportamiento que no
+ocurría.
+
+Es la misma familia que la [[252]] ---importar un icono que no existe--- con una
+diferencia que la hace peor: **aquella revienta y esta no**. Un import inventado
+deja la pantalla en blanco y se arregla en cinco minutos; una prop inventada no
+hace nada y se descubre cuando alguien se pregunta por qué no filtra.
+
+**La regla:** antes de pasarle una prop a un componente propio, mirar su firma.
+Están todas juntas en el `export default function`, cuesta un `sed`, y es la
+única comprobación que hay.
+
+Y el corolario que sí me salvó aquí: **la regla de verdad iba en el servidor**.
+La pantalla puede ayudar a no equivocarse, pero lo que impide que alguien se
+releve a sí mismo tiene que estar donde no se puede saltar.
