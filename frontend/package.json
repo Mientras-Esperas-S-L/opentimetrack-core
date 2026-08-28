@@ -16,8 +16,7 @@
     "format": "prettier --write \"src/**/*.{js,jsx,css}\"",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
-    "i18n:check": "node scripts/comprobar-catalogos.mjs",
-    "i18n:falta": "node scripts/lo-que-se-ve.mjs"
+    "i18n:check": "node scripts/comprobar-catalogos.mjs && node scripts/comprobar-lo-visible.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

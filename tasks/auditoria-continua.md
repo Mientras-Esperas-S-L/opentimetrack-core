@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 145 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---871 de 917 cadenas; solo queda Turnos, reservada como muestra, y el guard---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 146 · La lista del 27/08 está terminada, lo propuesto también y **la interfaz habla los tres idiomas entera**. Lo siguiente es retomar la auditoría exploratoria: el contador de vueltas en blanco quedó en 2 de 3. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,36 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 146 --- Turnos, el guard, y la interfaz queda entera (28/08)
+
+**Turnos traducida**, que era la última. El catálogo: 772 → **788 claves**. La
+interfaz: **898 de 917 cadenas**, y las 19 que quedan no son huecos.
+
+**El guard**: `scripts/comprobar-lo-visible.mjs`, con `NO_SE_TRADUCE` ---las 19,
+una a una, con su motivo--- y tres contrastes, los tres verificados poniéndolo
+rojo a propósito:
+
+1. una cadena nueva sin `t()` lo pone rojo (salida 1);
+2. una exención que ya no le corresponde a nada también (salida 1), porque una
+   decisión vieja que sigue tapando es tan mala como el hueco;
+3. y si el lector dejara de encontrar cadenas, sale con 2 en vez de decir que
+   está todo bien --- cero pendientes con un lector roto se lee igual que cero
+   pendientes de verdad.
+
+Corre en la suite (`54-nada-se-queda-sin-traducir`) además de en `npm run
+i18n:check`, porque a mano no lo llama nadie.
+
+**Y `36-interfaz-traducida` se retira.** Comprobaba que lo no traducido cayera
+al castellano y no al inglés, con una muestra de pantalla sin traducir que se
+movió dos veces ---Personas, Informes--- y al llegar Turnos se quedó sin caso.
+Lo dejaba dicho en su propio texto: «cuando no quede ninguna sin traducir, esta
+prueba se borra». Una prueba que se queda sin caso y sigue en verde es peor que
+no tenerla.
+
+**Lo que sigue faltando, y no lo arregla ninguna vuelta más:** nadie que hable
+catalán o gallego ha revisado esto. La cobertura ya no es lo que impide
+anunciarlo; la revisión sí.
 
 ### Vuelta 145 --- El barrido de lo pequeño (28/08)
 

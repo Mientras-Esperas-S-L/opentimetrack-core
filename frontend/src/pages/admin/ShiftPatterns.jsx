@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
+
+import { plural } from '../../components/format.js'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -39,6 +42,7 @@ function spanMinutes(start, end) {
 const hhmm = (minutes) => `${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}m` : ''}`
 
 function PatternDialog({ open, pattern, onClose, onSave, saving, error }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState(null)
   const [loaded, setLoaded] = useState(null)
 
@@ -71,7 +75,7 @@ function PatternDialog({ open, pattern, onClose, onSave, saving, error }) {
           onSave(form)
         }}
       >
-        <DialogTitle>{pattern ? 'Editar turno' : 'Nuevo turno'}</DialogTitle>
+        <DialogTitle>{pattern ? t('Editar turno') : t('Nuevo turno')}</DialogTitle>
         <DialogContent>
           <ErrorNote error={error} />
           <Stack sx={{ gap: 2, pt: 1 }}>
@@ -79,15 +83,15 @@ function PatternDialog({ open, pattern, onClose, onSave, saving, error }) {
               autoFocus
               required
               fullWidth
-              label="Nombre"
-              placeholder="Mañana, Noche, Partida…"
+              label={t('Nombre')}
+              placeholder={t('Mañana, Noche, Partida…')}
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
 
             <Box>
               <Typography variant="caption" color="text.secondary">
-                Tramos horarios
+                {t('Tramos horarios')}
               </Typography>
               <Stack sx={{ gap: 1, mt: 0.5 }}>
                 {form.segments.map((span, index) => (
@@ -95,7 +99,7 @@ function PatternDialog({ open, pattern, onClose, onSave, saving, error }) {
                     <TextField
                       size="small"
                       type="time"
-                      label="Desde"
+                      label={t('Desde')}
                       value={span.start}
                       onChange={setSpan(index, 'start')}
                       slotProps={{ inputLabel: { shrink: true } }}
@@ -103,7 +107,7 @@ function PatternDialog({ open, pattern, onClose, onSave, saving, error }) {
                     <TextField
                       size="small"
                       type="time"
-                      label="Hasta"
+                      label={t('Hasta')}
                       value={span.end}
                       onChange={setSpan(index, 'end')}
                       slotProps={{ inputLabel: { shrink: true } }}
@@ -114,7 +118,7 @@ function PatternDialog({ open, pattern, onClose, onSave, saving, error }) {
                     {form.segments.length > 1 && (
                       <IconButton
                         size="small"
-                        aria-label="Quitar tramo"
+                        aria-label={t('Quitar tramo')}
                         onClick={() =>
                           setForm({
                             ...form,
@@ -139,17 +143,22 @@ function PatternDialog({ open, pattern, onClose, onSave, saving, error }) {
                   })
                 }
               >
-                Añadir tramo
+                {t('Añadir tramo')}
               </Button>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                Dos tramos = jornada partida. Total: <strong>{hhmm(total)}</strong>.
-                {crossesMidnight && ' Un tramo cruza la medianoche: se cuenta como turno de noche.'}
+                <Trans
+                  i18nKey="Dos tramos = jornada partida. Total: <destacado>{{total}}</destacado>."
+                  values={{ total: hhmm(total) }}
+                  components={{ destacado: <strong /> }}
+                />
+                {crossesMidnight &&
+                  ` ${t('Un tramo cruza la medianoche: se cuenta como turno de noche.')}`}
               </Typography>
             </Box>
 
             <Box>
               <Typography variant="caption" color="text.secondary">
-                Color en el cuadrante
+                {t('Color en el cuadrante')}
               </Typography>
               <Stack direction="row" sx={{ gap: 1, mt: 0.5 }}>
                 {PALETTE.map((colour) => (
@@ -170,17 +179,17 @@ function PatternDialog({ open, pattern, onClose, onSave, saving, error }) {
                 ))}
               </Stack>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                El color acompaña al nombre; nunca es lo único que identifica un turno.
+                {t('El color acompaña al nombre; nunca es lo único que identifica un turno.')}
               </Typography>
             </Box>
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="inherit">
-            Cancelar
+            {t('Cancelar')}
           </Button>
           <Button type="submit" variant="contained" disabled={saving}>
-            Guardar
+            {t('Guardar')}
           </Button>
         </DialogActions>
       </form>
@@ -189,6 +198,7 @@ function PatternDialog({ open, pattern, onClose, onSave, saving, error }) {
 }
 
 export default function ShiftPatterns() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { session } = useAuth()
   const isAdmin = session?.user?.role === 'ADMIN'
@@ -226,12 +236,14 @@ export default function ShiftPatterns() {
   return (
     <>
       <PageHeader
-        title="Turnos"
-        subtitle="Las formas de jornada que se repiten. Cambiar una no reescribe los días ya publicados: el cuadrante guarda las horas con las que se creó."
+        title={t('Turnos')}
+        subtitle={t(
+          'Las formas de jornada que se repiten. Cambiar una no reescribe los días ya publicados: el cuadrante guarda las horas con las que se creó.',
+        )}
         action={
           isAdmin && (
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => setEditing(null)}>
-              Nuevo turno
+              {t('Nuevo turno')}
             </Button>
           )
         }
@@ -242,7 +254,7 @@ export default function ShiftPatterns() {
       {isLoading ? (
         <Loading rows={3} />
       ) : rows.length === 0 ? (
-        <Empty>Todavía no hay turnos definidos.</Empty>
+        <Empty>{t('Todavía no hay turnos definidos.')}</Empty>
       ) : (
         // Lista de verdad, no cajas sueltas: un lector de pantalla anuncia
         // «lista de 8 turnos» y avisa al salir de ella, en vez de leer del
@@ -286,26 +298,34 @@ export default function ShiftPatterns() {
                   <Stack direction="row" sx={{ gap: 0.5, flexShrink: 0 }}>
                     <Button
                       size="small"
-                      aria-label={`Editar ${pattern.name}`}
+                      aria-label={t('Editar {{cual}}', { cual: pattern.name })}
                       onClick={() => setEditing(pattern)}
                     >
-                      Editar
+                      {t('Editar')}
                     </Button>
                     <Button
                       size="small"
                       color="inherit"
                       onClick={() =>
                         setConfirming({
-                          title: 'Eliminar turno',
+                          title: t('Eliminar turno'),
                           body: pattern.name,
                           // SET_NULL, so nothing published disappears: the days
                           // stay and stop naming a shift. Which is exactly the
                           // sort of thing somebody should hear before, not find
                           // out afterwards looking at a blank cuadrante.
                           detail: pattern.shifts_count
-                            ? `Hay ${pattern.shifts_count} ${pattern.shifts_count === 1 ? 'día' : 'días'} del cuadrante con este turno. No se borran: dejan de llevar nombre de turno, y sus horas siguen contando.`
-                            : 'No está puesto en ningún día del cuadrante. No se puede deshacer.',
-                          verb: 'Eliminar',
+                            ? t(
+                                'Hay {{cuantos}} {{unidad}} del cuadrante con este turno. No se borran: dejan de llevar nombre de turno, y sus horas siguen contando.',
+                                {
+                                  cuantos: pattern.shifts_count,
+                                  unidad: plural(pattern.shifts_count, t('día'), t('días')),
+                                },
+                              )
+                            : t(
+                                'No está puesto en ningún día del cuadrante. No se puede deshacer.',
+                              ),
+                          verb: t('Eliminar'),
                           run: () => remove.mutate(pattern.id),
                         })
                       }
@@ -313,9 +333,9 @@ export default function ShiftPatterns() {
                       // Cuál se elimina. Es el rótulo donde más caro sale que
                       // se repita: siete «Eliminar» seguidos y quien no ve la
                       // pantalla no sabe cuál está a punto de pulsar.
-                      aria-label={`Eliminar ${pattern.name}`}
+                      aria-label={t('Eliminar {{cual}}', { cual: pattern.name })}
                     >
-                      Eliminar
+                      {t('Eliminar')}
                     </Button>
                   </Stack>
                 )}

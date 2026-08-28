@@ -1,27 +1,46 @@
 # Idiomas: qué está traducido y qué pide revisión
 
-El producto habla **castellano** entero. Del catalán y del gallego hay **el
-servidor traducido y la pantalla a medias**, y las traducciones que hay se
-hicieron **sin hablante nativo**. Las dos cosas hay que saberlas antes de
-enseñárselo a un cliente.
+El producto habla **castellano**, **catalán** y **gallego** enteros: servidor y
+pantalla. Lo que falta es una sola cosa, y no es pequeña: **nadie que hable
+catalán o gallego las ha revisado**. Eso hay que saberlo antes de enseñárselo a
+un cliente.
 
 | Qué | Catalán y gallego |
 |---|---|
 | Lo que responde el servidor: correos, errores, avisos legales, tipos y estados | **Traducido** ---558 de 711 mensajes; el resto son etiquetas de campo que se dejan a propósito--- |
-| La pantalla: botones, rótulos, textos de cada página | **Casi entera** ---871 de 917 cadenas al 28/08/2026. Falta una pantalla, Turnos, y lo que no se traduce por su naturaleza (nombres de navegadores, teclas, cabeceras HTTP)--- |
+| La pantalla: botones, rótulos, textos de cada página | **Traducida** ---898 de 917 cadenas al 28/08/2026; las 19 restantes no se traducen por su naturaleza y están declaradas una a una con su motivo--- |
 
-Así que una empresa catalana ve hoy el menú, los correos y los errores en
-catalán, seis pantallas en catalán y el resto en castellano. **Hasta que esté
-entera no se puede anunciar como «disponible en catalán»**, y así lo dice el
-dossier.
+Una empresa catalana ve hoy el producto entero en catalán. **Lo que impide
+anunciarlo es la revisión**, no la cobertura --- y eso no lo levanta ningún
+avance de aquí.
 
-## Cómo se cuenta lo que falta
+## Las dos comprobaciones
 
 ```bash
 cd frontend
-npm run i18n:falta     # cuántas cadenas visibles no pasan por t(), por fichero
-npm run i18n:check     # y que ninguna traducción se haya quedado huérfana
+npm run i18n:check     # las dos, y es lo que corre la suite
+node scripts/lo-que-se-ve.mjs src/pages/admin/People.jsx   # el detalle de un fichero
 ```
+
+Miran direcciones contrarias y hacen falta las dos.
+`comprobar-catalogos.mjs` comprueba que **toda traducción le corresponde a una
+cadena del código**; `comprobar-lo-visible.mjs`, que **toda cadena visible del
+código pasa por el catálogo**. Corren también en la suite de navegador
+(`54-nada-se-queda-sin-traducir`), porque a mano no las llama nadie.
+
+**Por qué el segundo hace falta ahora y no antes.** Mientras la conversión iba a
+medias, lo no traducido caía al castellano y eso era correcto. Terminada, esa
+misma propiedad se vuelve el agujero: una pantalla nueva escrita sin `t()` se
+lee perfectamente en castellano y no lo delata nada hasta que alguien mira la
+aplicación en catalán.
+
+**Lo que no se traduce** va declarado una a una en `NO_SE_TRADUCE`, con su
+motivo: nombres de navegadores y sistemas, teclas de `event.key`, la cabecera
+`Authorization: Bearer`, un aviso de consola para el equipo, el nombre del
+producto, dos errores de programación en inglés y los símbolos de duración.
+Añadir una línea ahí es declarar por escrito que esa cadena no se lee o no se
+traduce. Y mira también al revés: una exención que ya no le corresponde a nada
+se señala, porque es una decisión vieja que sigue tapando.
 
 El espacio de separación **va fuera de la clave**: `` `${t('· sin sueldo')} ` ``
 y nunca `t(' · sin sueldo')`. Dentro se pierde en cuanto la clave pasa por algo

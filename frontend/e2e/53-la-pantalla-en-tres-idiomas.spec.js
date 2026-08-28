@@ -238,6 +238,19 @@ const PANTALLAS = [
     control: { es: 'Año', ca: 'Any', gl: 'Ano' },
     rol: 'combobox',
   },
+  {
+    // La última que se tradujo, y la que durante seis vueltas hizo de muestra
+    // de «lo que todavía no está traducido cae al castellano».
+    ruta: '/panel/turnos',
+    titulo: { es: 'Turnos', ca: 'Torns', gl: 'Quendas' },
+    propio: {
+      es: 'el cuadrante guarda las horas con las que se creó',
+      ca: 'el quadrant desa les hores amb què es va crear',
+      gl: 'o cadro garda as horas coas que se creou',
+    },
+    control: { es: 'Nuevo turno', ca: 'Nou torn', gl: 'Nova quenda' },
+    rol: 'button',
+  },
 ]
 
 test.describe('La pantalla, en los tres idiomas', () => {

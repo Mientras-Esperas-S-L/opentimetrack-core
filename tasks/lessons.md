@@ -4743,3 +4743,35 @@ esa lista es un guard que obliga a traducir «Chrome».
 **La regla**: al cerrar una migración así, presupuestar el último 5 % como trabajo de
 clasificación y no de ejecución. Es donde se decide si el guard que queda detrás
 sirve para algo o hay que apagarlo a los dos meses.
+
+## 287. La propiedad que sostiene una migración se vuelve su agujero al terminarla
+
+«La clave **es** la cadena castellana» era lo que hacía utilizable un catálogo a
+medias: lo que faltaba caía al castellano solo, sin configurar nada, y una pantalla
+sin traducir se leía perfectamente. Esa propiedad es la que permitió hacer esto en
+doce tandas sin romper nada.
+
+Terminada la conversión, esa misma propiedad es el agujero. Una pantalla nueva
+escrita sin `t()` se lee perfectamente en castellano, y **no lo delata nada** hasta
+que alguien mira la aplicación en catalán --- que es dentro de meses y por
+casualidad. El producto vuelve a las andadas una pantalla cada vez.
+
+**La regla**: al cerrar una migración, preguntarse qué la hizo posible y si eso, ya
+sin migración, protege o esconde. Lo que era una virtud durante el camino es
+justo lo que hay que vigilar al llegar.
+
+## 288. Un guard también se equivoca por lo que exime
+
+`comprobar-lo-visible` tiene diecinueve exenciones ---nombres de navegadores,
+teclas, la cabecera `Bearer`--- y cada una es una decisión: «esto no se lee o no se
+traduce». Sin ellas el guard obligaría a traducir «Chrome» y alguien lo apagaría a
+los dos meses.
+
+Pero una lista de exenciones envejece hacia el otro lado: la cadena se traduce, o
+desaparece del código, y la exención se queda tapando un sitio donde ya no hay nada.
+Peor: tapando el sitio donde mañana habrá otra cosa.
+
+Así que el guard mira **en las dos direcciones**. Si una exención ya no le
+corresponde a ninguna cadena, se señala y hay que quitarla. Es la misma idea que el
+contraste ---«¿esta comprobación puede ponerse roja?»--- aplicada a la lista de lo
+que se perdona: **¿esta excepción sigue excepcionando algo?**
