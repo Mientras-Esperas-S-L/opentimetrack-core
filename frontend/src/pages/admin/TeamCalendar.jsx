@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -38,6 +38,7 @@ import {
   plural,
 } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
+import { alCatalogo } from '../../i18n/index.js'
 import { PickFilter } from '../../components/filters.jsx'
 
 /** What is behind a coloured band, and what can be done about it.
@@ -48,6 +49,7 @@ import { PickFilter } from '../../components/filters.jsx'
  *  --- so the answer belongs here.
  */
 function AbsenceDialog({ absence, canDecide, busy, onClose, onApprove, onReject }) {
+  const { t } = useTranslation()
   const pending = absence?.status === 'PENDING'
 
   return (
@@ -61,7 +63,7 @@ function AbsenceDialog({ absence, canDecide, busy, onClose, onApprove, onReject 
           </Stack>
           <Typography variant="body2" color="text.secondary">
             {absence && dayRange(absence.start_date, absence.end_date)} · {absence?.days}{' '}
-            {absence?.days === 1 ? 'día' : 'días'}
+            {plural(absence?.days, t('día'), t('días'))}
           </Typography>
           {absence?.reason && (
             <Typography
@@ -75,15 +77,15 @@ function AbsenceDialog({ absence, canDecide, busy, onClose, onApprove, onReject 
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="inherit">
-          Cerrar
+          {t('Cerrar')}
         </Button>
         {canDecide && pending && (
           <>
             <Button onClick={onReject} disabled={busy} color="inherit">
-              Rechazar
+              {t('Rechazar')}
             </Button>
             <Button onClick={onApprove} disabled={busy} variant="contained">
-              Aprobar
+              {t('Aprobar')}
             </Button>
           </>
         )}
@@ -105,11 +107,11 @@ function AbsenceDialog({ absence, canDecide, busy, onClose, onApprove, onReject 
  *  el filtro, y si se separan acaban diciendo cosas distintas para lo mismo.
  */
 const KIND_LABELS = {
-  VACATION: 'Vacaciones',
-  SICK_LEAVE: 'Baja',
-  PAID_LEAVE: 'Permiso',
-  UNPAID_LEAVE: 'Sin sueldo',
-  SUSPENSION: 'Suspensión',
+  VACATION: alCatalogo('Vacaciones'),
+  SICK_LEAVE: alCatalogo('Baja'),
+  PAID_LEAVE: alCatalogo('Permiso'),
+  UNPAID_LEAVE: alCatalogo('Sin sueldo'),
+  SUSPENSION: alCatalogo('Suspensión'),
 }
 
 const KIND_COLOUR = {
@@ -229,12 +231,14 @@ export default function TeamCalendar() {
   return (
     <>
       <PageHeader
-        title="Calendario del equipo"
-        subtitle="Quién está fuera y cuándo. Las solicitudes sin resolver aparecen rayadas: cuentan para decidir, pero todavía no son un hecho."
+        title={t('Calendario del equipo')}
+        subtitle={t(
+          'Quién está fuera y cuándo. Las solicitudes sin resolver aparecen rayadas: cuentan para decidir, pero todavía no son un hecho.',
+        )}
         action={
           canManage && (
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => setRecording(true)}>
-              Registrar ausencia
+              {t('Registrar ausencia')}
             </Button>
           )
         }
@@ -247,12 +251,15 @@ export default function TeamCalendar() {
           onClose={() => setAvisoDePlazo(null)}
           sx={{ mb: 2 }}
         >
-          Registradas las vacaciones de {avisoDePlazo.employee_name} con{' '}
-          <strong>
-            {avisoDePlazo.short_notice.days} {plural(avisoDePlazo.short_notice.days, 'día', 'días')}
-          </strong>{' '}
-          de antelación. El {avisoDePlazo.short_notice.citation} pide dos meses para que dé tiempo a
-          organizarse. Quedan registradas igual; si no estaba acordado, todavía se pueden mover.
+          <Trans
+            i18nKey="Registradas las vacaciones de {{quien}} con <destacado>{{plazo}}</destacado> de antelación. El {{articulo}} pide dos meses para que dé tiempo a organizarse. Quedan registradas igual; si no estaba acordado, todavía se pueden mover."
+            values={{
+              quien: avisoDePlazo.employee_name,
+              plazo: `${avisoDePlazo.short_notice.days} ${plural(avisoDePlazo.short_notice.days, t('día'), t('días'))}`,
+              articulo: avisoDePlazo.short_notice.citation,
+            }}
+            components={{ destacado: <strong /> }}
+          />
         </Alert>
       )}
 
@@ -274,37 +281,40 @@ export default function TeamCalendar() {
           página entera se iba 22 px a la derecha. La rejilla de abajo sí estaba
           resuelta, con su propio desplazamiento dentro del contenedor. */}
       <Stack direction="row" sx={{ alignItems: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-        <IconButton onClick={() => move(-1)} aria-label="Mes anterior">
+        <IconButton onClick={() => move(-1)} aria-label={t('Mes anterior')}>
           <ChevronLeftIcon />
         </IconButton>
         <Typography sx={{ fontWeight: 600, minWidth: 190 }}>
           {capitalised(monthName(cursor))}
         </Typography>
-        <IconButton onClick={() => move(1)} aria-label="Mes siguiente">
+        <IconButton onClick={() => move(1)} aria-label={t('Mes siguiente')}>
           <ChevronRightIcon />
         </IconButton>
         <IconButton
           onClick={() => setCursor({ year: today.getFullYear(), month: today.getMonth() })}
-          aria-label="Volver a hoy"
+          aria-label={t('Volver a hoy')}
         >
           <TodayIcon />
         </IconButton>
 
         <PickFilter
-          label="Tipo"
+          label={t('Tipo')}
           value={kind}
           onChange={setKind}
-          options={Object.entries(KIND_LABELS).map(([value, label]) => ({ value, label }))}
+          options={Object.entries(KIND_LABELS).map(([value, label]) => ({
+            value,
+            label: t(label),
+          }))}
           all={t('Todos')}
           width={160}
         />
         <PickFilter
-          label="Estado"
+          label={t('Estado')}
           value={state}
           onChange={setState}
           options={[
-            { value: 'PENDING', label: 'Sin resolver' },
-            { value: 'APPROVED', label: 'Concedidas' },
+            { value: 'PENDING', label: t('Sin resolver') },
+            { value: 'APPROVED', label: t('Concedidas') },
           ]}
           all={t('Todos')}
           width={160}
@@ -317,7 +327,7 @@ export default function TeamCalendar() {
             <Stack key={kind} direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
               <Box sx={{ width: 12, height: 12, borderRadius: 0.5, bgcolor: KIND_COLOUR[kind] }} />
               <Typography variant="caption" color="text.secondary">
-                {label}
+                {t(label)}
               </Typography>
             </Stack>
           ))}
@@ -336,7 +346,7 @@ export default function TeamCalendar() {
       {isLoading ? (
         <Loading rows={4} />
       ) : people.length === 0 ? (
-        <Empty>Nadie tiene ausencias este mes.</Empty>
+        <Empty>{t('Nadie tiene ausencias este mes.')}</Empty>
       ) : (
         <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
           {/* Rejilla de `Box`, así que la semántica hay que ponerla a mano: sin
@@ -353,7 +363,7 @@ export default function TeamCalendar() {
               puestas ya se puede recorrer por filas, que era el punto ciego. */}
           <Box
             role="table"
-            aria-label="Ausencias del mes por persona"
+            aria-label={t('Ausencias del mes por persona')}
             sx={{ minWidth: 40 * total + 180 }}
           >
             {/* Day numbers. Weekends are tinted so a span reads at a glance
@@ -367,7 +377,7 @@ export default function TeamCalendar() {
                 borderColor: 'divider',
               }}
             >
-              <Box role="columnheader" aria-label="Persona" sx={{ p: 1 }} />
+              <Box role="columnheader" aria-label={t('Persona')} sx={{ p: 1 }} />
               {dayNumbers.map((day) => {
                 const weekday = weekdayOf(cursor.year, cursor.month, day)
                 return (
@@ -459,7 +469,7 @@ export default function TeamCalendar() {
                   return span ? (
                     <Tooltip
                       key={day}
-                      title={`${leaveLabel(span)}${pending ? ' (sin resolver)' : ''} · ${leaveLength(span)}`}
+                      title={`${leaveLabel(span)}${pending ? ` ${t('(sin resolver)')}` : ''} · ${leaveLength(span)}`}
                     >
                       {cell}
                     </Tooltip>
@@ -480,7 +490,9 @@ export default function TeamCalendar() {
           size="small"
           color="warning"
           sx={{ mt: 2 }}
-          label={`${rows.filter((a) => a.status === 'PENDING').length} sin resolver este mes`}
+          label={t('{{cuantas}} sin resolver este mes', {
+            cuantas: rows.filter((a) => a.status === 'PENDING').length,
+          })}
         />
       )}
     </>

@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+
+import { plural } from '../../components/format.js'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -24,6 +27,7 @@ import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
 function DepartmentDialog({ open, department, onClose, onSave, saving, error }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState({ name: '', description: '', managers: [], members: [] })
   const [loaded, setLoaded] = useState(null)
 
@@ -46,7 +50,7 @@ function DepartmentDialog({ open, department, onClose, onSave, saving, error }) 
           onSave(form)
         }}
       >
-        <DialogTitle>{department ? 'Editar departamento' : 'Nuevo departamento'}</DialogTitle>
+        <DialogTitle>{department ? t('Editar departamento') : t('Nuevo departamento')}</DialogTitle>
         <DialogContent>
           <ErrorNote error={error} />
           <Stack sx={{ gap: 2, pt: 1 }}>
@@ -54,7 +58,7 @@ function DepartmentDialog({ open, department, onClose, onSave, saving, error }) 
               autoFocus
               required
               fullWidth
-              label="Nombre"
+              label={t('Nombre')}
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
@@ -62,7 +66,7 @@ function DepartmentDialog({ open, department, onClose, onSave, saving, error }) 
               fullWidth
               multiline
               minRows={2}
-              label="Descripción (opcional)"
+              label={t('Descripción (opcional)')}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
@@ -74,7 +78,7 @@ function DepartmentDialog({ open, department, onClose, onSave, saving, error }) 
             <EmployeePicker
               multiple
               onlyManagers
-              label="Quién lo lleva"
+              label={t('Quién lo lleva')}
               value={form.managers}
               onChange={(ids) => setForm({ ...form, managers: ids })}
               // Los nombres que ya tenemos, para las fichas de quien no esté en
@@ -87,7 +91,9 @@ function DepartmentDialog({ open, department, onClose, onSave, saving, error }) 
                   department?.manager_names?.[index] ?? '',
                 ]),
               )}
-              helperText="Responsables que pueden leer y resolver por su gente. Sin nadie aquí, todos los responsables de la empresa ven a todo el mundo."
+              helperText={t(
+                'Responsables que pueden leer y resolver por su gente. Sin nadie aquí, todos los responsables de la empresa ven a todo el mundo.',
+              )}
             />
 
             {/* Quién está dentro. Antes esto no se podía hacer aquí: los
@@ -102,7 +108,7 @@ function DepartmentDialog({ open, department, onClose, onSave, saving, error }) 
                 quién. */}
             <EmployeePicker
               multiple
-              label="Quién está dentro"
+              label={t('Quién está dentro')}
               value={form.members}
               onChange={(ids) => setForm({ ...form, members: ids })}
               knownNames={Object.fromEntries(
@@ -111,16 +117,18 @@ function DepartmentDialog({ open, department, onClose, onSave, saving, error }) 
                   department?.member_names?.[index] ?? '',
                 ]),
               )}
-              helperText="Las personas del departamento. Quitar a alguien de aquí lo deja sin departamento, no lo da de baja."
+              helperText={t(
+                'Las personas del departamento. Quitar a alguien de aquí lo deja sin departamento, no lo da de baja.',
+              )}
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="inherit">
-            Cancelar
+            {t('Cancelar')}
           </Button>
           <Button type="submit" variant="contained" disabled={saving}>
-            Guardar
+            {t('Guardar')}
           </Button>
         </DialogActions>
       </form>
@@ -129,6 +137,7 @@ function DepartmentDialog({ open, department, onClose, onSave, saving, error }) 
 }
 
 export default function Departments() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const { session } = useAuth()
   const isAdmin = session?.user?.role === 'ADMIN'
@@ -169,12 +178,14 @@ export default function Departments() {
   return (
     <>
       <PageHeader
-        title="Departamentos"
-        subtitle="Agrupan a las personas y sirven para filtrar informes. Una persona puede no tener ninguno."
+        title={t('Departamentos')}
+        subtitle={t(
+          'Agrupan a las personas y sirven para filtrar informes. Una persona puede no tener ninguno.',
+        )}
         action={
           isAdmin && (
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => setEditing(null)}>
-              Nuevo
+              {t('Nuevo')}
             </Button>
           )
         }
@@ -186,8 +197,8 @@ export default function Departments() {
         <Loading rows={3} />
       ) : rows.length === 0 ? (
         <Empty>
-          Todavía no hay departamentos.{' '}
-          {isAdmin ? 'Crea el primero.' : 'Puede crearlos la administración.'}
+          {t('Todavía no hay departamentos.')}{' '}
+          {isAdmin ? t('Crea el primero.') : t('Puede crearlos la administración.')}
         </Empty>
       ) : (
         <Box
@@ -218,15 +229,17 @@ export default function Departments() {
                     size="small"
                     variant="outlined"
                     sx={{ mt: 1 }}
-                    label={
-                      department.people_count === 1
-                        ? '1 persona'
-                        : `${department.people_count} personas`
-                    }
+                    label={`${department.people_count} ${plural(
+                      department.people_count,
+                      t('persona'),
+                      t('personas'),
+                    )}`}
                   />
                   {department.manager_names?.length > 0 && (
                     <Typography variant="caption" color="text.secondary">
-                      Lo lleva {department.manager_names.join(', ')}
+                      {t('Lo lleva {{quienes}}', {
+                        quienes: department.manager_names.join(', '),
+                      })}
                     </Typography>
                   )}
                 </Box>
@@ -235,10 +248,10 @@ export default function Departments() {
                   <Stack direction="row" sx={{ gap: 0.5, flexShrink: 0 }}>
                     <Button
                       size="small"
-                      aria-label={`Editar ${department.name}`}
+                      aria-label={t('Editar {{cual}}', { cual: department.name })}
                       onClick={() => setEditing(department)}
                     >
-                      Editar
+                      {t('Editar')}
                     </Button>
                     {/* Vacío de gente **y** sin nadie al mando.
 
@@ -259,20 +272,23 @@ export default function Departments() {
                         color="inherit"
                         // Cuál. Siete departamentos seguidos daban siete botones
                         // «Eliminar» que sonaban igual con lector de pantalla.
-                        aria-label={`Eliminar el departamento ${department.name}`}
+                        aria-label={t('Eliminar el departamento {{cual}}', {
+                          cual: department.name,
+                        })}
                         onClick={() =>
                           setConfirming({
-                            title: 'Eliminar departamento',
+                            title: t('Eliminar departamento'),
                             body: department.name,
-                            detail:
+                            detail: t(
                               'No tiene a nadie asignado ni nadie que responda de él, así que no afecta a ninguna persona. No se puede deshacer.',
-                            verb: 'Eliminar',
+                            ),
+                            verb: t('Eliminar'),
                             run: () => remove.mutate(department.id),
                           })
                         }
                         disabled={remove.isPending}
                       >
-                        Eliminar
+                        {t('Eliminar')}
                       </Button>
                     )}
                   </Stack>

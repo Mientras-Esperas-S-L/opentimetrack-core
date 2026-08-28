@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 142 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---623 de 923 cadenas, trece pantallas enteras---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 143 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---698 de 919 cadenas, dieciséis pantallas enteras---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,20 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 143 --- Calendario del equipo, Fichar y Departamentos (28/08)
+
+**Traducido:** las tres enteras. El catálogo: 572 → **628 claves**. Van 698 de
+919, dieciséis pantallas.
+
+**Fichar entra en la tabla de la prueba**, y era la que faltaba: es la única que
+ve quien no gestiona nada, o sea la mayoría de la plantilla. Su muestra es
+«trabajadas hoy», que sale siempre, y el control el botón grande.
+
+Turnos se queda **sin traducir a propósito**: es la muestra de «lo que todavía
+no está traducido cae al castellano» de la prueba 36. Cuando le toque, esa
+prueba se borra ---su condición habrá dejado de existir--- y lo que la sustituye
+es el guard del catálogo completo.
 
 ### Vuelta 142 --- Personas e Informes, y la lista que ya había divergido (28/08)
 

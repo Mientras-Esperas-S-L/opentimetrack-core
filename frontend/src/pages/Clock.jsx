@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
@@ -17,7 +18,7 @@ import { useAuth } from '../hooks/useAuth.js'
 import { clock, getMyShiftToday, getToday } from '../services/api.js'
 import { hhmm, hhmmss, timeOf } from '../components/format.js'
 import { serverAt, serverClockReady } from '../services/serverClock.js'
-import { localeDeFechas } from '../i18n/index.js'
+import { alCatalogo, localeDeFechas } from '../i18n/index.js'
 
 /** Un latido común, en el borde del segundo.
  *
@@ -113,15 +114,15 @@ function WallClock({ zone, sx }) {
 }
 
 const STATES = {
-  WORKING: { label: 'Trabajando', color: 'success' },
+  WORKING: { label: alCatalogo('Trabajando'), color: 'success' },
   //: El servidor lo devuelve desde que existe `PunchInterval.BREAK`, y aquí no
   //: estaba: `STATES[estado]` caía al respaldo y la pantalla decía «Sin
   //: empezar» a quien tenía la jornada abierta y una pausa en marcha. No se
   //: notaba porque nada de la web podía abrir una pausa; la puerta de
   //: integración sí.
-  ON_BREAK: { label: 'En pausa', color: 'warning' },
-  OFF: { label: 'Jornada cerrada', color: 'default' },
-  NOT_STARTED: { label: 'Sin empezar', color: 'default' },
+  ON_BREAK: { label: alCatalogo('En pausa'), color: 'warning' },
+  OFF: { label: alCatalogo('Jornada cerrada'), color: 'default' },
+  NOT_STARTED: { label: alCatalogo('Sin empezar'), color: 'default' },
 }
 
 /** Qué es cada tramo del día, para el desglose.
@@ -129,14 +130,14 @@ const STATES = {
  *  Sin esto una pausa se lee igual que un rato trabajado, que es justo lo que el
  *  art. 3.d viene a distinguir. */
 const TRAMOS = {
-  BREAK: { etiqueta: 'Pausa', color: 'warning' },
-  STANDBY: { etiqueta: 'Presencia', color: 'info' },
-  DISCONNECTION: { etiqueta: 'Fuera de horario', color: 'info' },
+  BREAK: { etiqueta: alCatalogo('Pausa'), color: 'warning' },
+  STANDBY: { etiqueta: alCatalogo('Presencia'), color: 'info' },
+  DISCONNECTION: { etiqueta: alCatalogo('Fuera de horario'), color: 'info' },
 }
 
 const MODOS = [
-  { valor: 'ONSITE', etiqueta: 'Presencial' },
-  { valor: 'REMOTE', etiqueta: 'A distancia' },
+  { valor: 'ONSITE', etiqueta: alCatalogo('Presencial') },
+  { valor: 'REMOTE', etiqueta: alCatalogo('A distancia') },
 ]
 
 /** El modo elegido hoy, si se eligió.
@@ -166,6 +167,7 @@ function recuerdaElModo(dia, modo) {
 }
 
 export default function Clock() {
+  const { t } = useTranslation()
   const { session } = useAuth()
   const queryClient = useQueryClient()
   const [error, setError] = useState(null)
@@ -239,7 +241,9 @@ export default function Clock() {
   return (
     <Box sx={{ maxWidth: 560, mx: 'auto' }}>
       <Typography variant="h1" sx={{ fontSize: '1.5rem', mb: 0.5 }}>
-        Hola, {session?.user?.first_name || session?.user?.full_name}
+        {t('Hola, {{quien}}', {
+          quien: session?.user?.first_name || session?.user?.full_name,
+        })}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         {new Date().toLocaleDateString(localeDeFechas(), {
@@ -251,12 +255,20 @@ export default function Clock() {
 
       {expected?.has_shift && (
         <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
-          Hoy tienes turno de <strong>{hhmm(expected.expected_minutes * 60)}</strong>.
+          <Trans
+            i18nKey="Hoy tienes turno de <destacado>{{cuanto}}</destacado>."
+            values={{ cuanto: hhmm(expected.expected_minutes * 60) }}
+            components={{ destacado: <strong /> }}
+          />{' '}
           {expected.difference_minutes < 0
-            ? ` Llevas ${hhmm(Math.abs(expected.difference_minutes) * 60)} menos.`
+            ? t('Llevas {{cuanto}} menos.', {
+                cuanto: hhmm(Math.abs(expected.difference_minutes) * 60),
+              })
             : expected.difference_minutes > 0
-              ? ` Llevas ${hhmm(expected.difference_minutes * 60)} de más.`
-              : ' Vas al día.'}
+              ? t('Llevas {{cuanto}} de más.', {
+                  cuanto: hhmm(expected.difference_minutes * 60),
+                })
+              : t('Vas al día.')}
         </Alert>
       )}
 
@@ -265,7 +277,7 @@ export default function Clock() {
           <CircularProgress />
         ) : (
           <>
-            <Chip label={state.label} color={state.color} sx={{ mb: 1.5 }} />
+            <Chip label={t(state.label)} color={state.color} sx={{ mb: 1.5 }} />
 
             {/* La hora, y del servidor. Es la que se va a guardar si pulsa, así
                 que enseñar la del dispositivo —que puede ir cinco minutos
@@ -285,7 +297,7 @@ export default function Clock() {
               {hhmmss(seconds)}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-              trabajadas hoy
+              {t('trabajadas hoy')}
             </Typography>
 
             {error && (
@@ -305,7 +317,7 @@ export default function Clock() {
                     fichaje no se decide en el navegador. */}
                 {error.code === 'network_error' && (
                   <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 600 }}>
-                    No se ha registrado nada. Vuelve a pulsar cuando tengas cobertura.
+                    {t('No se ha registrado nada. Vuelve a pulsar cuando tengas cobertura.')}
                   </Typography>
                 )}
                 {/* Y cuando la petición sí salió, lo honesto es no afirmarlo.
@@ -316,8 +328,9 @@ export default function Clock() {
                     encima de la entrada. */}
                 {error.code === 'timeout' && (
                   <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 600 }}>
-                    Puede que sí haya quedado registrado. Mira abajo antes de volver a pulsar: si
-                    aparece, está hecho.
+                    {t(
+                      'Puede que sí haya quedado registrado. Mira abajo antes de volver a pulsar: si aparece, está hecho.',
+                    )}
                   </Typography>
                 )}
               </Alert>
@@ -333,7 +346,7 @@ export default function Clock() {
                   {MODOS.map(({ valor, etiqueta }) => (
                     <Chip
                       key={valor}
-                      label={etiqueta}
+                      label={t(etiqueta)}
                       color={modo === valor ? 'primary' : 'default'}
                       variant={modo === valor ? 'filled' : 'outlined'}
                       onClick={() => {
@@ -345,7 +358,7 @@ export default function Clock() {
                   ))}
                 </Stack>
                 <Typography variant="caption" color="text.secondary">
-                  Desde dónde trabajas hoy (art. 3.e). Puedes dejarlo sin decir.
+                  {t('Desde dónde trabajas hoy (art. 3.e). Puedes dejarlo sin decir.')}
                 </Typography>
               </Stack>
             )}
@@ -365,12 +378,12 @@ export default function Clock() {
               sx={{ py: 2, px: 6, fontSize: '1.15rem', borderRadius: 2 }}
             >
               {punch.isPending
-                ? 'Registrando…'
+                ? t('Registrando…')
                 : enPausa
-                  ? 'Volver de la pausa'
+                  ? t('Volver de la pausa')
                   : working
-                    ? 'Fichar salida'
-                    : 'Fichar entrada'}
+                    ? t('Fichar salida')
+                    : t('Fichar entrada')}
             </Button>
 
             {/* La pausa que no es tiempo de trabajo (art. 3.d). Secundaria y
@@ -387,7 +400,7 @@ export default function Clock() {
                   onClick={() => punch.mutate({ interval: 'BREAK' })}
                   disabled={punch.isPending}
                 >
-                  Empezar una pausa
+                  {t('Empezar una pausa')}
                 </Button>
               </Box>
             )}
@@ -398,7 +411,7 @@ export default function Clock() {
       {today?.segments?.length > 0 && (
         <Paper variant="outlined" sx={{ p: 3, mt: 2 }}>
           <Typography variant="h2" sx={{ fontSize: '1rem', mb: 2 }}>
-            Hoy
+            {t('Hoy')}
           </Typography>
           <Stack spacing={1.5} divider={<Divider flexItem />}>
             {today.segments.map((segment) => (
@@ -420,11 +433,11 @@ export default function Clock() {
                       size="small"
                       variant="outlined"
                       color={TRAMOS[segment.interval].color}
-                      label={TRAMOS[segment.interval].etiqueta}
+                      label={t(TRAMOS[segment.interval].etiqueta)}
                     />
                   )}
                   {segment.work_mode === 'REMOTE' && (
-                    <Chip size="small" variant="outlined" label="A distancia" />
+                    <Chip size="small" variant="outlined" label={t('A distancia')} />
                   )}
                 </Stack>
                 <Typography variant="body2" color="text.secondary">
@@ -435,12 +448,16 @@ export default function Clock() {
           </Stack>
           {today.break_seconds > 0 && (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              {hhmm(today.break_seconds)} de pausa. Si tu convenio dice que el descanso es tiempo de
-              trabajo, ya está contado en las horas de arriba.
+              {t(
+                '{{cuanto}} de pausa. Si tu convenio dice que el descanso es tiempo de trabajo, ya está contado en las horas de arriba.',
+                { cuanto: hhmm(today.break_seconds) },
+              )}
             </Typography>
           )}
           <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-            Horas de {today.time_zone}. Las pone el servidor, no tu dispositivo.
+            {t('Horas de {{zona}}. Las pone el servidor, no tu dispositivo.', {
+              zona: today.time_zone,
+            })}
           </Typography>
         </Paper>
       )}

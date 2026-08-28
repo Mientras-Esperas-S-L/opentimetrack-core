@@ -160,6 +160,45 @@ const PANTALLAS = [
     },
     rol: 'button',
   },
+  {
+    ruta: '/panel/calendario',
+    titulo: {
+      es: 'Calendario del equipo',
+      ca: "Calendari de l'equip",
+      gl: 'Calendario do equipo',
+    },
+    propio: {
+      es: 'Las solicitudes sin resolver aparecen rayadas',
+      ca: 'Les sol·licituds sense resoldre surten ratllades',
+      gl: 'As solicitudes sen resolver aparecen raiadas',
+    },
+    control: { es: 'Volver a hoy', ca: 'Tornar a avui', gl: 'Volver a hoxe' },
+    rol: 'button',
+  },
+  {
+    ruta: '/panel/departamentos',
+    titulo: { es: 'Departamentos', ca: 'Departaments', gl: 'Departamentos' },
+    propio: {
+      es: 'Una persona puede no tener ninguno',
+      ca: 'Una persona pot no tenir-ne cap',
+      gl: 'Unha persoa pode non ter ningún',
+    },
+    control: { es: 'Nuevo', ca: 'Nou', gl: 'Novo' },
+    rol: 'button',
+  },
+  {
+    // La pantalla de fichar, que es la que más gente ve y la única que ve
+    // quien no gestiona nada.
+    ruta: '/',
+    titulo: { es: 'Hola,', ca: 'Hola,', gl: 'Ola,' },
+    propio: {
+      es: 'trabajadas hoy',
+      ca: 'treballades avui',
+      gl: 'traballadas hoxe',
+    },
+    control: { es: 'Fichar entrada', ca: "Fitxar l'entrada", gl: 'Fichar a entrada' },
+    rol: 'button',
+  },
 ]
 
 test.describe('La pantalla, en los tres idiomas', () => {
