@@ -4699,3 +4699,24 @@ que se le puede hacer a una suite.
 Y el detalle que lo delata: **escribí el modo de fallo en el propio comentario** y
 seguí adelante igual. Cuando uno se descubre documentando por qué algo podría
 romperse, eso no es una nota al pie: es la lista de lo que falta por arreglar.
+
+## 285. Una pantalla puede tener dos textos según quién mire
+
+Elegí como muestra del Registro de actividad su subtítulo, «nadie puede borrar estas
+entradas». La prueba corre con sesión de administración, y esa sesión lee otro:
+«la base de datos lo impide, también para la administración».
+
+No es un caso raro: esa pantalla la ven dos públicos distintos y les dice cosas
+distintas a propósito ---quien administra necesita saber que ni él puede tocarlo---.
+Lo que estaba mal era mirar el código y quedarme con la primera rama del ternario.
+
+**La regla**: al elegir un texto de muestra, comprobar con **qué sesión** corre la
+prueba y qué rama le toca. Y si el texto sale de un condicional sobre el permiso, es
+señal de que la pantalla tiene dos caras y quizá haya que mirar las dos.
+
+Junto con «Solicitar», que se escribe igual en castellano y en gallego, van dos
+muestras mal elegidas en la misma vuelta. Las dos las cazó una comprobación escrita
+para eso ---la salvaguarda que exige que la muestra cambie entre idiomas--- o el
+propio rojo al primer intento. Elegir muestras es más delicado de lo que parece, y
+por eso conviene que el rojo llegue en la propia prueba y no cuatro pantallas más
+allá.

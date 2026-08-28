@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
@@ -16,7 +17,7 @@ import { Empty, Loading, PageHeader, Pager } from '../../components/common.jsx'
 import { dateOf, firstOfThisMonth, today } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
-import { localeDeFechas } from '../../i18n/index.js'
+import { alCatalogo, localeDeFechas } from '../../i18n/index.js'
 
 /** Entries that are somebody reading, as opposed to somebody changing.
  *
@@ -27,13 +28,13 @@ import { localeDeFechas } from '../../i18n/index.js'
 const READS = new Set(['RECORD_VIEWED', 'REPORT_EXPORTED', 'DOCUMENT_DOWNLOADED'])
 
 const GROUPS = [
-  { value: '', label: 'Todo' },
-  { value: 'RECORD_VIEWED', label: 'Lecturas de registros ajenos' },
-  { value: 'DOCUMENT_DOWNLOADED', label: 'Descargas de justificantes' },
-  { value: 'REPORT_EXPORTED', label: 'Exportaciones de informes' },
-  { value: 'ROLE_CHANGED', label: 'Cambios de perfil' },
-  { value: 'SETTINGS_CHANGED', label: 'Cambios de ajustes' },
-  { value: 'CORRECTION_APPROVED', label: 'Correcciones aprobadas' },
+  { value: '', label: alCatalogo('Todo') },
+  { value: 'RECORD_VIEWED', label: alCatalogo('Lecturas de registros ajenos') },
+  { value: 'DOCUMENT_DOWNLOADED', label: alCatalogo('Descargas de justificantes') },
+  { value: 'REPORT_EXPORTED', label: alCatalogo('Exportaciones de informes') },
+  { value: 'ROLE_CHANGED', label: alCatalogo('Cambios de perfil') },
+  { value: 'SETTINGS_CHANGED', label: alCatalogo('Cambios de ajustes') },
+  { value: 'CORRECTION_APPROVED', label: alCatalogo('Correcciones aprobadas') },
 ]
 
 function when(iso) {
@@ -88,6 +89,7 @@ function Changes({ changes }) {
 }
 
 export default function AuditTrail() {
+  const { t } = useTranslation()
   const { session } = useAuth()
   const isAdmin = session?.user?.role === 'ADMIN'
   const [action, setAction] = useState('')
@@ -150,15 +152,19 @@ export default function AuditTrail() {
                 }
               }}
             >
-              Descargar
+              {t('Descargar')}
             </Button>
           )
         }
-        title="Registro de actividad"
+        title={t('Registro de actividad')}
         subtitle={
           isAdmin
-            ? 'Qué se ha hecho y quién lo hizo. No se puede modificar ni borrar: la base de datos lo impide, también para la administración.'
-            : 'Quién ha consultado tu registro y qué se ha cambiado sobre ti. Nadie puede borrar estas entradas.'
+            ? t(
+                'Qué se ha hecho y quién lo hizo. No se puede modificar ni borrar: la base de datos lo impide, también para la administración.',
+              )
+            : t(
+                'Quién ha consultado tu registro y qué se ha cambiado sobre ti. Nadie puede borrar estas entradas.',
+              )
         }
       />
 
@@ -169,31 +175,31 @@ export default function AuditTrail() {
         <TextField
           select
           size="small"
-          label="Qué mostrar"
+          label={t('Qué mostrar')}
           value={action}
           onChange={(event) => narrow(setAction)(event.target.value)}
           sx={{ minWidth: 300 }}
         >
           {GROUPS.map((group) => (
             <MenuItem key={group.value} value={group.value}>
-              {group.label}
+              {t(group.label)}
             </MenuItem>
           ))}
         </TextField>
         {isAdmin && (
           <EmployeePicker
             size="small"
-            label="Quién"
+            label={t('Quién')}
             value={actor}
             onChange={(id) => narrow(setActor)(id)}
-            everyoneLabel="Cualquiera"
+            everyoneLabel={t('Cualquiera')}
             sx={{ minWidth: 240 }}
           />
         )}
         <TextField
           size="small"
           type="date"
-          label="Desde"
+          label={t('Desde')}
           value={from}
           onChange={(event) => narrow(setFrom)(event.target.value)}
           slotProps={{ inputLabel: { shrink: true } }}
@@ -201,19 +207,19 @@ export default function AuditTrail() {
         <TextField
           size="small"
           type="date"
-          label="Hasta"
+          label={t('Hasta')}
           value={to}
           onChange={(event) => narrow(setTo)(event.target.value)}
           slotProps={{ inputLabel: { shrink: true } }}
           error={to < from}
-          helperText={to < from ? 'Va antes que la inicial.' : ' '}
+          helperText={to < from ? t('Va antes que la inicial.') : ' '}
         />
       </Stack>
 
       {isLoading ? (
         <Loading rows={6} />
       ) : rows.length === 0 ? (
-        <Empty>No hay entradas en ese periodo.</Empty>
+        <Empty>{t('No hay entradas en ese periodo.')}</Empty>
       ) : (
         <Stack sx={{ gap: 1 }}>
           {rows.map((entry) => {
@@ -241,8 +247,9 @@ export default function AuditTrail() {
                       </Typography>
                     </Stack>
                     <Typography variant="body2" color="text.secondary">
-                      {entry.actor_label || 'sistema'}
-                      {entry.target_label && ` · sobre ${entry.target_label}`}
+                      {entry.actor_label || t('sistema')}
+                      {entry.target_label &&
+                        ` ${t('· sobre {{quien}}', { quien: entry.target_label })}`}
                     </Typography>
                     {entry.note && (
                       <Typography variant="caption" sx={{ fontStyle: 'italic' }}>
@@ -273,13 +280,15 @@ export default function AuditTrail() {
         page={page}
         pageSize={PAGE_SIZE}
         onChange={setPage}
-        noun={{ singular: 'entrada', plural: 'entradas' }}
+        noun={{ singular: alCatalogo('entrada'), plural: alCatalogo('entradas') }}
       />
 
       {rows.length > 0 && (
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
-          Consultar tu propio registro no deja entrada: es un derecho, y anotarlo enterraría lo que
-          sí importa. {dateOf(new Date().toISOString())}
+          {t(
+            'Consultar tu propio registro no deja entrada: es un derecho, y anotarlo enterraría lo que sí importa.',
+          )}{' '}
+          {dateOf(new Date().toISOString())}
         </Typography>
       )}
     </>

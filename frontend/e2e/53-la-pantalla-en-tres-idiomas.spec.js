@@ -199,6 +199,45 @@ const PANTALLAS = [
     control: { es: 'Fichar entrada', ca: "Fitxar l'entrada", gl: 'Fichar a entrada' },
     rol: 'button',
   },
+  {
+    ruta: '/panel',
+    titulo: { es: 'Resumen', ca: 'Resum', gl: 'Resumo' },
+    propio: {
+      es: 'Se actualiza cada minuto',
+      ca: "S'actualitza cada minut",
+      gl: 'Actualízase cada minuto',
+    },
+  },
+  {
+    ruta: '/actividad',
+    titulo: {
+      es: 'Registro de actividad',
+      ca: "Registre d'activitat",
+      gl: 'Rexistro de actividade',
+    },
+    // El subtítulo de administración, que es la sesión con la que corre esto.
+    // Quien no gestiona ve otro.
+    propio: {
+      es: 'la base de datos lo impide',
+      ca: 'la base de dades ho impedeix',
+      gl: 'a base de datos impídeo',
+    },
+    control: { es: 'Qué mostrar', ca: 'Què mostrar', gl: 'Que amosar' },
+    rol: 'combobox',
+  },
+  {
+    ruta: '/mis-ausencias',
+    titulo: { es: 'Mis ausencias', ca: 'Les meves absències', gl: 'As miñas ausencias' },
+    propio: {
+      es: 'bloquea el fichaje en esas fechas',
+      ca: 'bloqueja el fitxatge en aquelles dates',
+      gl: 'bloquea a fichaxe nesas datas',
+    },
+    // El botón de pedir se escribe igual en castellano y en gallego, así que
+    // el control es el filtro del año, que sí cambia en los dos.
+    control: { es: 'Año', ca: 'Any', gl: 'Ano' },
+    rol: 'combobox',
+  },
 ]
 
 test.describe('La pantalla, en los tres idiomas', () => {

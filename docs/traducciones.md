@@ -8,7 +8,7 @@ enseñárselo a un cliente.
 | Qué | Catalán y gallego |
 |---|---|
 | Lo que responde el servidor: correos, errores, avisos legales, tipos y estados | **Traducido** ---558 de 711 mensajes; el resto son etiquetas de campo que se dejan a propósito--- |
-| La pantalla: botones, rótulos, textos de cada página | **En curso** ---698 de 919 cadenas al 28/08/2026. Dieciséis pantallas enteras ---la de fichar incluida---, el formulario de pedir una ausencia y todo lo compartido (menú, paginadores, filtros, estados, fechas)--- |
+| La pantalla: botones, rótulos, textos de cada página | **En curso** ---764 de 921 cadenas al 28/08/2026. Diecinueve pantallas enteras ---la de fichar incluida---, el formulario de pedir una ausencia y todo lo compartido (menú, paginadores, filtros, estados, fechas)--- |
 
 Así que una empresa catalana ve hoy el menú, los correos y los errores en
 catalán, seis pantallas en catalán y el resto en castellano. **Hasta que esté

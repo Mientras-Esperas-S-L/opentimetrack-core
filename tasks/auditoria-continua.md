@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 143 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---698 de 919 cadenas, dieciséis pantallas enteras---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 144 · La lista del 27/08 está terminada y lo propuesto también; ahora **la interfaz en tres idiomas** ---764 de 921 cadenas, diecinueve pantallas enteras---, y después se retoma la auditoría exploratoria. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,24 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 144 --- Resumen, Registro de actividad y Mis ausencias (28/08)
+
+**Traducido:** las tres enteras. El catálogo: 628 → **682 claves**. Van 764 de
+921, diecinueve pantallas, y la tabla de la prueba llega a doce.
+
+**Dos muestras hubo que cambiarlas, y las dos por lo mismo**: no comprobaban lo
+que decían comprobar.
+
+- «Solicitar» se escribe igual en castellano y en gallego, así que la
+  salvaguarda de la vuelta 136 saltó antes de llegar al navegador. Se cambia por
+  el filtro del año, que sí cambia en los dos.
+- El subtítulo del Registro de actividad **es distinto según quién mire**: quien
+  administra lee «la base de datos lo impide, también para la administración» y
+  quien no, «nadie puede borrar estas entradas». Elegí el segundo y la prueba
+  corre con sesión de administración, así que buscaba un texto que esa sesión no
+  ve. Dos textos para la misma pantalla es justo el sitio donde una muestra se
+  elige mal.
 
 ### Vuelta 143 --- Calendario del equipo, Fichar y Departamentos (28/08)
 

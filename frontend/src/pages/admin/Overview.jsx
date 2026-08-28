@@ -1,4 +1,5 @@
 import { Link as RouterLink } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
@@ -56,6 +57,7 @@ function Figure({ value, label, tone = 'default', to }) {
  *  the shape of the week, and calling it hours would be a lie --- these are
  *  events, and hours need pairing and closing open days. */
 function WeekBars({ week }) {
+  const { t } = useTranslation()
   const max = Math.max(1, ...week.events)
   const initials = ['D', 'L', 'M', 'X', 'J', 'V', 'S']
 
@@ -70,7 +72,7 @@ function WeekBars({ week }) {
               {value || ''}
             </Typography>
             <Box
-              title={`${dateOf(day)}: ${value} eventos`}
+              title={t('{{dia}}: {{cuantos}} eventos', { dia: dateOf(day), cuantos: value })}
               sx={{
                 width: '100%',
                 height: `${Math.max(3, (value / max) * 56)}px`,
@@ -89,6 +91,7 @@ function WeekBars({ week }) {
 }
 
 export default function Overview() {
+  const { t } = useTranslation()
   const { session } = useAuth()
   const zone = session?.tenant?.time_zone
 
@@ -101,7 +104,7 @@ export default function Overview() {
   if (isLoading || !data) {
     return (
       <>
-        <PageHeader title="Resumen" />
+        <PageHeader title={t('Resumen')} />
         <Loading rows={4} />
       </>
     )
@@ -134,8 +137,10 @@ export default function Overview() {
   return (
     <>
       <PageHeader
-        title="Resumen"
-        subtitle={`Situación de ${dateOf(data.date, { weekday: 'long', year: undefined })}. Se actualiza cada minuto.`}
+        title={t('Resumen')}
+        subtitle={t('Situación de {{dia}}. Se actualiza cada minuto.', {
+          dia: dateOf(data.date, { weekday: 'long', year: undefined }),
+        })}
       />
 
       <Box
@@ -146,17 +151,17 @@ export default function Overview() {
           mb: 3,
         }}
       >
-        <Figure value={data.working_now.length} label="trabajando ahora" />
-        <Figure value={data.off_today.length} label="fuera hoy" />
+        <Figure value={data.working_now.length} label={t('trabajando ahora')} />
+        <Figure value={data.off_today.length} label={t('fuera hoy')} />
         <Figure
           value={waiting}
-          label="esperando decisión"
+          label={t('esperando decisión')}
           tone="attention"
           to="/panel/decisiones"
         />
         <Figure
           value={data.headcount}
-          label={plural(data.headcount, 'persona de alta', 'personas de alta')}
+          label={plural(data.headcount, t('persona de alta'), t('personas de alta'))}
           to="/panel/personas"
         />
       </Box>
@@ -170,11 +175,13 @@ export default function Overview() {
         }}
       >
         <Panel
-          title="Trabajando ahora"
-          hint="Quien tiene una entrada sin salida hoy. Sale del registro, no de un estado aparte."
+          title={t('Trabajando ahora')}
+          hint={t(
+            'Quien tiene una entrada sin salida hoy. Sale del registro, no de un estado aparte.',
+          )}
         >
           {data.working_now.length === 0 ? (
-            <Empty>Nadie ha fichado la entrada todavía.</Empty>
+            <Empty>{t('Nadie ha fichado la entrada todavía.')}</Empty>
           ) : (
             <List disablePadding>
               {data.working_now.map((person, i) => (
@@ -188,7 +195,9 @@ export default function Overview() {
                     </ListItemAvatar>
                     <ListItemText
                       primary={person.name}
-                      secondary={`desde las ${timeOf(person.since, zone)}`}
+                      secondary={t('desde las {{hora}}', {
+                        hora: timeOf(person.since, zone),
+                      })}
                     />
                   </ListItem>
                 </Box>
@@ -198,20 +207,23 @@ export default function Overview() {
         </Panel>
 
         <Stack sx={{ gap: 2 }}>
-          <Panel title="La semana" hint="Eventos de fichaje por día. No son horas.">
+          <Panel title={t('La semana')} hint={t('Eventos de fichaje por día. No son horas.')}>
             <WeekBars week={data.week} />
           </Panel>
 
-          <Panel title="Fuera hoy">
+          <Panel title={t('Fuera hoy')}>
             {data.off_today.length === 0 ? (
-              <Empty>Nadie tiene ausencia aprobada para hoy.</Empty>
+              <Empty>{t('Nadie tiene ausencia aprobada para hoy.')}</Empty>
             ) : (
               <List disablePadding dense>
                 {data.off_today.map((person) => (
                   <ListItem key={person.employee} disableGutters>
                     <ListItemText
                       primary={person.name}
-                      secondary={`${person.type_display} · hasta el ${dateOf(person.until)}`}
+                      secondary={t('{{tipo}} · hasta el {{fecha}}', {
+                        tipo: person.type_display,
+                        fecha: dateOf(person.until),
+                      })}
                     />
                   </ListItem>
                 ))}
@@ -228,15 +240,23 @@ export default function Overview() {
               fullWidth
             >
               {waiting > 0
-                ? `Resolver ${waiting} ${waiting === 1 ? 'solicitud' : 'solicitudes'}`
-                : 'Ver las horas extra por resolver'}
+                ? t('Resolver {{cuantas}} {{unidad}}', {
+                    cuantas: waiting,
+                    unidad: plural(waiting, t('solicitud'), t('solicitudes')),
+                  })
+                : t('Ver las horas extra por resolver')}
             </Button>
           )}
           {horasExtra > 0 && (
             <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
               {horasExtra === 1
-                ? 'Uno de ellos son horas extra del mes, con cuatro meses de plazo para compensarse con descanso (art. 35.1).'
-                : `${horasExtra} de ellos son horas extra del mes, con cuatro meses de plazo para compensarse con descanso (art. 35.1).`}
+                ? t(
+                    'Uno de ellos son horas extra del mes, con cuatro meses de plazo para compensarse con descanso (art. 35.1).',
+                  )
+                : t(
+                    '{{cuantos}} de ellos son horas extra del mes, con cuatro meses de plazo para compensarse con descanso (art. 35.1).',
+                    { cuantos: horasExtra },
+                  )}
             </Typography>
           )}
         </Stack>

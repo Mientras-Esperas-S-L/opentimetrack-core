@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Box from '@mui/material/Box'
 import Alert from '@mui/material/Alert'
@@ -39,7 +39,7 @@ import {
   StatusChip,
 } from '../../components/common.jsx'
 import LeaveDialog from '../../components/LeaveDialog.jsx'
-import { dateOf, dayRange, leaveLabel, leaveLength } from '../../components/format.js'
+import { dateOf, dayRange, leaveLabel, leaveLength, plural } from '../../components/format.js'
 import { FilterBar, PickFilter } from '../../components/filters.jsx'
 
 /** The balance, as a bar plus the three numbers behind it.
@@ -48,16 +48,20 @@ import { FilterBar, PickFilter } from '../../components/filters.jsx'
  *  but they are not available either, and a single figure hides which is which.
  */
 function Balance({ balance }) {
+  const { t } = useTranslation()
   const { entitled, taken, pending, remaining, period_start, period_end } = balance
   const pct = (value) => (entitled > 0 ? (value / entitled) * 100 : 0)
   // Which unit the three figures are in. Without it "quedan 9" is ambiguous by
   // about a third, which is exactly how far the balance used to be wrong.
-  const unit = balance.working_days ? 'laborables' : 'naturales'
+  const unit = balance.working_days ? t('laborables') : t('naturales')
 
   return (
     <Panel
-      title="Vacaciones"
-      hint={`Periodo del ${dateOf(period_start, { year: 'numeric' })} al ${dateOf(period_end, { year: 'numeric' })}`}
+      title={t('Vacaciones')}
+      hint={t('Periodo del {{desde}} al {{hasta}}', {
+        desde: dateOf(period_start, { year: 'numeric' }),
+        hasta: dateOf(period_end, { year: 'numeric' }),
+      })}
     >
       <Stack direction="row" sx={{ alignItems: 'baseline', gap: 1, mb: 1.5 }}>
         <Typography
@@ -71,7 +75,11 @@ function Balance({ balance }) {
           {remaining}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {remaining === 1 ? 'día' : 'días'} {unit} de {entitled}
+          {t('{{unidad}} {{computo}} de {{total}}', {
+            unidad: plural(remaining, t('día'), t('días')),
+            computo: unit,
+            total: entitled,
+          })}
         </Typography>
       </Stack>
 
@@ -101,10 +109,18 @@ function Balance({ balance }) {
 
       <Stack direction="row" sx={{ gap: 3, flexWrap: 'wrap' }}>
         <Typography variant="caption" color="text.secondary">
-          <strong>{taken}</strong> disfrutados
+          <Trans
+            i18nKey="<destacado>{{cuantos}}</destacado> disfrutados"
+            values={{ cuantos: taken }}
+            components={{ destacado: <strong /> }}
+          />
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          <strong>{pending}</strong> solicitados sin resolver
+          <Trans
+            i18nKey="<destacado>{{cuantos}}</destacado> solicitados sin resolver"
+            values={{ cuantos: pending }}
+            components={{ destacado: <strong /> }}
+          />
         </Typography>
       </Stack>
     </Panel>
@@ -172,11 +188,13 @@ export default function MyLeave() {
   return (
     <>
       <PageHeader
-        title="Mis ausencias"
-        subtitle="Vacaciones, permisos y bajas. Una ausencia aprobada bloquea el fichaje en esas fechas."
+        title={t('Mis ausencias')}
+        subtitle={t(
+          'Vacaciones, permisos y bajas. Una ausencia aprobada bloquea el fichaje en esas fechas.',
+        )}
         action={
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAsking(true)}>
-            Solicitar
+            {t('Solicitar')}
           </Button>
         }
       />
@@ -186,7 +204,7 @@ export default function MyLeave() {
       {balance ? <Balance balance={balance} /> : <LinearProgress sx={{ mb: 2 }} />}
 
       <Typography variant="h2" sx={{ fontSize: '1rem', mt: 3, mb: 1.5 }}>
-        Historial
+        {t('Historial')}
       </Typography>
 
       <FilterBar>
@@ -194,7 +212,7 @@ export default function MyLeave() {
             allá no hay nada que enseñar. «Todos» al final y no al principio,
             porque casi nadie lo quiere. */}
         <PickFilter
-          label="Año"
+          label={t('Año')}
           value={year}
           onChange={(valor) => {
             setYear(valor)
@@ -208,17 +226,17 @@ export default function MyLeave() {
           width={130}
         />
         <PickFilter
-          label="Estado"
+          label={t('Estado')}
           value={status}
           onChange={(valor) => {
             setStatus(valor)
             setPage(1)
           }}
           options={[
-            { value: 'PENDING', label: 'Sin resolver' },
-            { value: 'APPROVED', label: 'Aprobada' },
-            { value: 'REJECTED', label: 'Rechazada' },
-            { value: 'CANCELLED', label: 'Cancelada' },
+            { value: 'PENDING', label: t('Sin resolver') },
+            { value: 'APPROVED', label: t('Aprobada') },
+            { value: 'REJECTED', label: t('Rechazada') },
+            { value: 'CANCELLED', label: t('Cancelada') },
           ]}
           all={t('Todos')}
           width={170}
@@ -233,8 +251,8 @@ export default function MyLeave() {
               las hay, pero en otro año o en otro estado. Y es una mentira que
               se cree, porque el filtro está arriba y el mensaje abajo. */}
           {year || status
-            ? 'Ninguna ausencia coincide con lo que has elegido arriba.'
-            : 'Todavía no has solicitado ninguna ausencia.'}
+            ? t('Ninguna ausencia coincide con lo que has elegido arriba.')
+            : t('Todavía no has solicitado ninguna ausencia.')}
         </Empty>
       ) : (
         <Stack sx={{ gap: 1 }}>
@@ -266,7 +284,10 @@ export default function MyLeave() {
                   )}
                   {absence.resolved_by_name && (
                     <Typography variant="caption" color="text.secondary">
-                      Resuelta por {absence.resolved_by_name} el {dateOf(absence.resolved_at)}
+                      {t('Resuelta por {{quien}} el {{fecha}}', {
+                        quien: absence.resolved_by_name,
+                        fecha: dateOf(absence.resolved_at),
+                      })}
                     </Typography>
                   )}
                 </Box>
@@ -290,13 +311,13 @@ export default function MyLeave() {
                               ? fallo
                               : {
                                   code: 'download_failed',
-                                  message: 'No se pudo descargar el justificante.',
+                                  message: t('No se pudo descargar el justificante.'),
                                 },
                           ),
                         )
                       }
                     >
-                      Justificante
+                      {t('Justificante')}
                     </Button>
                   )}
                   <StatusChip status={absence.status} label={absence.status_display} />
@@ -306,17 +327,18 @@ export default function MyLeave() {
                       color="inherit"
                       onClick={() =>
                         setConfirming({
-                          title: 'Retirar la solicitud',
+                          title: t('Retirar la solicitud'),
                           body: `${leaveLabel(absence)} · ${dayRange(absence.start_date, absence.end_date)}`,
-                          detail:
+                          detail: t(
                             'Deja de estar pendiente de respuesta. Puedes volver a pedirla, pero esta solicitud queda retirada en el historial.',
-                          verb: 'Retirar',
+                          ),
+                          verb: t('Retirar'),
                           run: () => withdraw.mutate(absence.id),
                         })
                       }
                       disabled={withdraw.isPending}
                     >
-                      Retirar
+                      {t('Retirar')}
                     </Button>
                   )}
                 </Stack>
