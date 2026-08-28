@@ -42,6 +42,7 @@ SIN_CITA = {
         "over_contracted_hours": "horas complementarias, que la directiva no conoce",
         "worked_over_the_contract": "lo mismo, sobre lo fichado",
         "complementary_hours_cap": "el tope solo se comprueba donde el marco las define",
+        "reduction_outside_the_right": "la horquilla de un octavo a la mitad es del ET",
         "consecutive_night_weeks": "adición nacional del ET",
         "changeover_rest_owed": "adición del RD español de jornadas especiales",
         "minor_over_daily_limit": "lo regula la Directiva 94/33/CE, no esta",

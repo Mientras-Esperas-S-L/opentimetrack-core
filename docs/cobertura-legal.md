@@ -86,7 +86,7 @@ empresa de trabajo temporal.
 | Jornada continuada o partida | — | **Cubierto**, por los tramos del turno |
 | Trabajo a turnos rotativos | art. 36.3 | **Cubierto**, con la reducción del relevo y su devolución |
 | Trabajo nocturno | art. 36.1 | **Cubierto**: la condición, el promedio de 8 h en 15 días y el tope de dos semanas |
-| Jornada reducida por guarda legal | art. 37.6 | **A medias.** Hay régimen; la fracción reducida y las fechas, no |
+| Jornada reducida por guarda legal | art. 37.6 | **Cubierto.** Se pide como cualquier otra solicitud, con **cuánto se reduce** y entre qué fechas. El cuadrante y el cotejo pasan a medirse contra la jornada reducida, y **se acaba sola** el día que termina el derecho. Si la reducción se sale de la horquilla del artículo ---de un octavo a la mitad--- se avisa, no se impide |
 | Distribución irregular | art. 34.2 | **A medias.** Se marca el fichaje, pero no hay saldo: el 10 % se compensa en 12 meses y nadie lleva la cuenta |
 | Adaptación de jornada | art. 34.8 | **A medias.** Se marca en el fichaje; la solicitud y su respuesta no se tramitan |
 | Horas extraordinarias | art. 35 | **Cubierto.** Se marcan, se dice cómo se saldan y el tope anual se contrasta con lo autorizado: la pantalla de decisiones avisa al pasarse, descontando las compensadas con descanso y las de fuerza mayor |
@@ -152,10 +152,10 @@ suelo legal y el convenio mejora cualquiera.
 
 | Situación | Base | Estado |
 |---|---|---|
-| Reducción por guarda legal, entre ⅛ y ½ de la jornada | 37.6 | **A medias.** El régimen sí, la fracción no |
+| Reducción por guarda legal, entre ⅛ y ½ de la jornada | 37.6 | **Cubierto.** Se solicita con la fracción y las fechas; el cuadrante mide contra la jornada reducida y el derecho caduca solo. Fuera de la horquilla se avisa, no se impide |
 | Lactancia: 1 h de ausencia o ½ h de reducción hasta los 9 meses, acumulable | 37.4 | **Falta** |
 | Nacimiento prematuro u hospitalización tras el parto | 37.5 | **Falta** |
-| Cuidado de menor con cáncer o enfermedad grave: reducción de al menos la mitad | 37.6 | **Falta** |
+| Cuidado de menor con cáncer o enfermedad grave: reducción de al menos la mitad | 37.6 | **Falta.** La maquinaria de la fracción y las fechas ya está; falta su fila en el catálogo, con la regla propia ---aquí el suelo es la mitad, no el techo--- |
 | Permiso parental de 8 semanas, **no retribuido**, hasta los 8 años | 48 bis | **Falta** |
 | Víctimas de violencia de género o sexual: reducción, reordenación, horario flexible | 37.8 | **Falta** |
 | Crédito horario de representantes | 68.e | **Falta.** Hay casilla de representante, pero no horas |
@@ -368,11 +368,19 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 3 | **Vacaciones**: devengo proporcional y traslado por IT | **3-4 días.** El devengo por fecha de alta y el traslado con el tope de 18 meses del art. 38.3 |
 | 4 | **El tope del contrato formativo**: 65 % de la jornada el primer año y 85 % el segundo, formación incluida | **1-2 días.** El patrón ya existe: el de complementarias se acumula desde el 28/08 y esto es la misma forma sobre otra cifra |
 | 5 | **Historia de la adscripción a departamento**, cuando el informe empiece a mentir | **2-3 días.** Una tabla de vigencias y los informes leyendo de ella |
-| 6 | **Reducciones de jornada por cuidados** (arts. 37.4, 37.5, 37.6 y 37.8). El permiso está catalogado; falta la mecánica de la fracción ---de ⅛ a ½ de la jornada, con sus fechas--- y su efecto en el cuadrante y en el cotejo | **4-6 días.** Son cuatro artículos con reglas distintas, y toca el cálculo de lo esperado |
+| 6 | **Las otras reducciones por cuidados** (arts. 37.4, 37.5 y 37.8): lactancia, hospitalización de un recién nacido y cuidado de menor con enfermedad grave. La mecánica de la fracción y las fechas **ya está** ---la puso el art. 37.6---; falta que cada una entre en el catálogo con su regla propia | **2-3 días.** Son tres artículos con cifras distintas sobre la misma maquinaria |
 | 7 | **El acuerdo de trabajo a distancia y su umbral** (Ley 10/2021). El fichaje ya dice desde dónde se trabajó; no consta el acuerdo ni si se pasa del 30 % que lo hace obligatorio | **2-3 días.** El documento con sus fechas y el porcentaje calculado sobre lo trabajado |
 | 8 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
 
 ### Hecho desde que se escribió esta lista
+
+- **La reducción de jornada por guarda legal** (art. 37.6, 28/08/2026). El
+  mecanismo para reducir la jornada existía entero desde el ERTE, y estaba
+  cerrado a lo que **registra la empresa**. El razonamiento era bueno ---una
+  excedencia voluntaria «al 40 %» no existe--- y dejaba fuera la reducción más
+  corriente de todas, que la pide quien trabaja. La única forma de apuntarla era
+  escribirla en el horario contratado, donde no hay fracción, no hay fechas y el
+  derecho no se acaba nunca. Ahora lo decide el catálogo tipo a tipo.
 
 - **El tope de horas complementarias** (art. 12.5.c, 28/08/2026). El aviso del
   cuadrante llevaba tiempo diciendo que las horas por encima del contrato

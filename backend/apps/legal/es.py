@@ -144,6 +144,12 @@ ESPANA = LegalFramework(
         # No es un incumplimiento: las horas por encima de lo pactado en jornada
         # parcial son complementarias, lícitas y con su propio tope.
         "over_contracted_hours": Citation("Art. 12.5 ET"),
+        "reduction_outside_the_right": Citation(
+            "Art. 37.6 ET",
+            "«Entre, al menos, un octavo y un máximo de la mitad de la duración de "
+            "la jornada». Se avisa y no se impide: el artículo delimita el derecho, "
+            "no lo que las partes puedan acordar por encima.",
+        ),
         "complementary_hours_cap": Citation(
             "Art. 12.5.c ET",
             "El tope va sobre las horas ordinarias objeto del contrato, y el objeto "
@@ -481,6 +487,35 @@ ESPANA = LegalFramework(
             note="Da derecho a la conservación del puesto y al cómputo de antigüedad.",
         ),
         LeaveKind(
+            code="es.childcare_reduced_hours",
+            name="Reducción de jornada por guarda legal",
+            family=LeaveFamily.SUSPENSION,
+            basis="Art. 37.6 ET",
+            # `paid` dice si la empresa paga **la parte que no se trabaja**, y
+            # aquí no la paga nadie: la reducción de jornada lleva reducción
+            # proporcional del salario. Lo que sí se sigue cobrando ---lo
+            # trabajado--- no pasa por este campo.
+            #
+            # Marcarlo `True` lo escribí primero razonando «se cobra lo que se
+            # trabaja», y lo paró el guard que exige que ninguna suspensión
+            # salga de la nómina de la empresa. Tenía razón el guard.
+            paid=False,
+            # La pide quien trabaja, y ahí está lo que este catálogo no
+            # contemplaba: reducir la jornada no era cosa de la empresa hasta
+            # hoy, así que el producto **rechazaba** la reducción más corriente
+            # que existe.
+            initiated_by="PERSON",
+            can_reduce_the_day=True,
+            amount=None,
+            note="Entre un octavo y la mitad de la jornada, por cuidado de un menor "
+            "de doce años, de una persona con discapacidad que no desempeñe actividad "
+            "retribuida, o de un familiar hasta el segundo grado que no pueda valerse. "
+            "Pon **cuánto se reduce** en la solicitud ---25 si se reduce un cuarto, no "
+            "75--- y las fechas: **este derecho se acaba**, y sin fecha de fin el "
+            "cuadrante seguiría midiendo contra la jornada reducida para siempre. La "
+            "concreción horaria la elige quien trabaja (art. 37.7).",
+        ),
+        LeaveKind(
             code="es.erte",
             name="ERTE",
             family=LeaveFamily.SUSPENSION,
@@ -491,6 +526,7 @@ ESPANA = LegalFramework(
             note="Puede **suspender** el contrato o **reducir la jornada** entre un 10 y "
             "un 70 %. Si reduce, pon el porcentaje en la solicitud: el cuadrante pasa a "
             "medirse contra la jornada reducida en vez de contra el contrato entero.",
+            can_reduce_the_day=True,
         ),
         LeaveKind(
             code="es.red",
@@ -502,6 +538,7 @@ ESPANA = LegalFramework(
             amount=None,
             note="Igual que el ERTE en cuanto a jornada. Lo activa el Consejo de "
             "Ministros para un sector o para toda la economía.",
+            can_reduce_the_day=True,
         ),
         LeaveKind(
             code="es.disciplinary",

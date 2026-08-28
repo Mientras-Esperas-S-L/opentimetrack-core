@@ -580,8 +580,14 @@ def test_a_suspension_must_say_which_one_it_is(company, worker):
 
 @pytest.mark.django_db
 def test_an_excedencia_cannot_carry_a_reduction(company, worker):
-    """La excedencia «al 40 %» no existe: la reducción es de las suspensiones
-    que registra la empresa (ERTE, RED)."""
+    """La excedencia «al 40 %» no existe, y sigue sin existir.
+
+    El criterio cambió el 28/08 y esta prueba se queda: antes reducir era cosa
+    de lo que registraba la empresa ---ERTE, RED---, y eso dejaba fuera la
+    reducción por guarda legal del art. 37.6, que la pide quien trabaja. Ahora
+    lo decide el catálogo, tipo a tipo. Una excedencia voluntaria sigue sin
+    poder reducir, que es lo que esta prueba defiende.
+    """
     with tenant_context(company.id), pytest.raises(BusinessRuleError) as caught:
         request_absence(
             employee=worker,
@@ -592,4 +598,4 @@ def test_an_excedencia_cannot_carry_a_reduction(company, worker):
             reduction_share=40,
         )
 
-    assert caught.value.code == "reduction_is_company_recorded"
+    assert caught.value.code == "this_leave_cannot_reduce_the_day"

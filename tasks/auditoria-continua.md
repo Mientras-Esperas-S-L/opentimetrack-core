@@ -369,6 +369,81 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 151 --- La reducción por guarda legal, que el producto rechazaba (28/08)
+
+**3 de 13.** Cambié la que había anunciado. Dije que tocaba el tope del contrato
+formativo «porque es la misma forma sobre otra cifra», y eso es elegir por
+dificultad, que es justo lo que el encargo dice que no haga. Por gente afectada
+en un cliente real, la reducción por guarda legal gana de calle.
+
+**Lo que había, que no era lo que decía el enunciado.** El inventario ponía «Hay
+régimen; la fracción reducida y las fechas, no». La maquinaria para reducir la
+jornada ---una fracción, unas fechas, y el cuadrante midiendo contra lo
+reducido--- **existía entera** desde el ERTE. Estaba cerrada con esto:
+
+    if reduction_share is not None and leave_type.initiated_by != "COMPANY":
+        raise BusinessRuleError(code="reduction_is_company_recorded", ...)
+
+y el razonamiento escrito al lado era bueno: una excedencia voluntaria «al 40 %»
+no existe en la ley, y si se colara, el cuadrante mediría a esa persona contra un
+contrato que nadie redujo. Lo que no consideró es que **la reducción más
+corriente de todas la pide quien trabaja**: el art. 37.6 es un derecho suyo, no
+un acto de la empresa, así que caía del lado prohibido.
+
+Es el mismo patrón que el `?search=` de la vuelta 149: una regla bien razonada
+para el caso que tenía delante, que deja fuera un caso real que nadie miró.
+
+Consecuencia práctica: la única forma de apuntar una reducción era escribirla en
+el horario contratado. En la demostración estaba literalmente como
+**«L-V 09:00-15:00 (guarda legal)»**, donde no hay fracción, no hay fechas y
+**el derecho no se acaba nunca**. Cuando el menor cumple doce años no avisa
+nadie, y la persona sigue con la jornada reducida para siempre.
+
+**Lo que decide ahora** no es quién lo registra sino si el artículo lo permite, y
+eso lo dice el catálogo tipo a tipo: `LeaveType.can_reduce_the_day`. Una
+excedencia voluntaria sigue sin poder, que es lo que la regla vieja protegía y
+hay prueba que lo fija.
+
+**La horquilla del artículo se avisa, no se impide.** De un octavo a la mitad. El
+artículo delimita el derecho, no lo que las partes puedan acordar, y bloquearlo
+obligaría a apuntar la reducción en el horario contratado otra vez ---que es de
+donde se la ha sacado---.
+
+**Tres tropiezos, y los tres los cazó algo del proyecto:**
+
+1. **Puse `paid=True`** razonando «se cobra lo que se trabaja». Lo paró el guard
+   que exige que ninguna suspensión salga de la nómina de la empresa. Tenía razón:
+   el campo dice si la empresa paga **la parte que no se trabaja**, y ahí no paga
+   nadie ---la reducción de jornada lleva reducción proporcional del salario---.
+2. **Escribí la fracción al revés.** `reduction_share` es **cuánto se reduce** ---
+   «40 means they work 60 %», dice el modelo sin lugar a dudas--- y yo lo tomé por
+   cuánto se trabaja. Lo cazó la prueba del cuadrante, y no era un detalle
+   interno: **la nota que lee quien registra la solicitud lo decía así**, o sea que
+   una reducción de un cuarto se habría apuntado como del 75 %.
+3. **La migración no se podía deshacer.** El `ALTER TABLE` y el `UPDATE` en la
+   misma transacción dan «cannot ALTER TABLE because it has pending trigger
+   events» al revertir. Partida en dos ---`0014` la columna, `0015` los datos---
+   va y viene sin quejarse.
+
+**El sembrado de la migración era obligatorio,** no un adorno: el campo nace en
+`False`, así que sin él el ERTE y el mecanismo RED habrían dejado de poder reducir
+en cuanto se aplicara, y el cuadrante habría vuelto a medir contra la jornada
+entera a quien la tiene reducida. Sin que nadie tocara nada.
+
+**Un contraste que no contrastó, y lo que dijo.** Vacié la lista de la migración
+esperando que la prueba del ERTE se pusiera roja, y siguió verde: la fixture
+siembra el catálogo desde `apps.legal.es`, no desde el historial de migraciones.
+La prueba es correcta pero **fija el catálogo, no la migración**, y su docstring
+ahora lo dice en vez de afirmar lo que no cubre.
+
+**La demostración lo enseña.** Elena Prats pasa a tener su contrato entero ---40
+h--- con una reducción del 25 % y sus fechas, en vez de 30 h escritas a mano.
+
+**Cifras al cerrar:** 1.354 pruebas de backend y 304 de navegador en verde,
+`ruff`, `ruff format`, `eslint` y `prettier` limpios, `i18n:check` en verde, sin
+migraciones pendientes, y los tres catálogos del servidor sin cadena visible
+pendiente ni dudosa ---el guard de `fuzzy` que se puso ayer cazó las dos de hoy---.
+
 ### Vuelta 150 --- El tope de las horas complementarias (28/08)
 
 **2 de 13.** Elegida por lo que más se nota: las complementarias son la única

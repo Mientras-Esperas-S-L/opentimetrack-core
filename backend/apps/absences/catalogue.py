@@ -40,6 +40,7 @@ def seed_leave_types(company) -> dict:
             extra_when_travelling=kind.extra_when_travelling,
             paid=kind.paid,
             initiated_by=kind.initiated_by,
+            can_reduce_the_day=kind.can_reduce_the_day,
             needs_justification=kind.needs_justification,
             vacation_recovery=kind.vacation_recovery,
             note=kind.note,

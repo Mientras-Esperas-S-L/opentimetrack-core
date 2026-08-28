@@ -257,6 +257,10 @@ class LeaveKind:
     #: PERSON asks through the request flow; COMPANY records it directly, in
     #: force, because it is the company's own act or an accomplished fact.
     initiated_by: str = "PERSON"
+    #: Whether the law lets **this** kind cut the working day instead of
+    #: stopping it. Independent of who records it: art. 37.6 is the worker's
+    #: own right and reduces; a voluntary excedencia is theirs too and does not.
+    can_reduce_the_day: bool = False
     note: str = ""
 
 

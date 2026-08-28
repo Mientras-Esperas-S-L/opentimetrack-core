@@ -157,6 +157,19 @@ class LeaveType(TenantOwnedModel):
         default="PERSON",
     )
 
+    #: Si la ley permite que **este** tipo reduzca la jornada en vez de pararla.
+    #:
+    #: Antes lo decidía `initiated_by`: solo lo que registraba la empresa podía
+    #: reducir. El razonamiento era bueno para lo que tenía delante ---una
+    #: excedencia voluntaria «al 40 %» no existe en la ley, y si se colara, el
+    #: cuadrante empezaría a medir a esa persona contra un contrato que nadie
+    #: redujo--- y dejaba fuera el caso más corriente de todos: la reducción por
+    #: guarda legal del art. 37.6, que es un **derecho de quien trabaja** y por
+    #: tanto la pide la persona.
+    #:
+    #: Lo que decide no es quién lo registra, sino si el artículo lo permite.
+    can_reduce_the_day = models.BooleanField(_("may reduce the working day"), default=False)
+
     paid = models.BooleanField(_("paid"), default=True)
     vacation_recovery = models.CharField(
         _("recovers holiday"),

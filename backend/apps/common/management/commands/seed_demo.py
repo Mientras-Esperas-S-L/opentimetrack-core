@@ -315,9 +315,13 @@ class Command(BaseCommand):
                 office,
                 "EMP-0007",
                 WorkingTimeRegime.REDUCED,
-                30,
+                # Su contrato es de jornada completa: lo que está reducido es la
+                # jornada, y eso vive en una solicitud con su fracción y sus
+                # fechas ---ver `_suspensions`---. Antes ponía 30 aquí y «(guarda
+                # legal)» en el horario, y así la reducción no se acababa nunca.
+                40,
                 HoursPeriod.WEEK,
-                {"contracted_schedule": "L-V 09:00-15:00 (guarda legal)"},
+                {"contracted_schedule": "L-V 09:00-17:00"},
             ),
             # The gardening agreement sets 1700 hours a year and no weekly
             # figure at all.
@@ -849,17 +853,34 @@ class Command(BaseCommand):
         self._suspensions(company, people, today)
 
     def _suspensions(self, company, people, today):
-        """Dos: una que para el contrato y una que lo encoge.
+        """Tres: una que para el contrato y dos que lo encogen.
 
-        La segunda es la que hace falta ver. Un ERTE que reduce la jornada un
-        cuarenta por ciento no suspende nada: la persona sigue viniendo, por
-        menos tiempo, y sin él su cuadrante se leería como que se pasa de sus
-        horas todas las semanas.
+        Las que encogen son las que hace falta ver. Un ERTE que reduce la
+        jornada un cuarenta por ciento no suspende nada: la persona sigue
+        viniendo, por menos tiempo, y sin él su cuadrante se leería como que se
+        pasa de sus horas todas las semanas.
+
+        Y la reducción por guarda legal del art. 37.6, que es la más corriente
+        de todas y que hasta el 28/08 el producto **no dejaba registrar** ---
+        reducir era cosa de lo que apuntaba la empresa, y esta la pide quien
+        trabaja ---. La demostración la llevaba escrita en el horario contratado,
+        que es donde no hay fracción ni fechas.
         """
         catalogue = {kind.code: kind for kind in LeaveType.objects.all()}
         wanted = [
             ("seasonal", "es.unpaid_leave", -60, 200, None, "Excedencia voluntaria"),
             ("parttime2", "es.erte", -20, 70, 40, "ERTE de reducción, 40 %"),
+            # Un cuarto de reducción: `reduction_share` es **cuánto se reduce**,
+            # así que 25 y no 75. Trabaja 30 de sus 40 horas, que es lo que
+            # dicen sus fichajes. Y acaba, que es la mitad del asunto.
+            (
+                "reduced",
+                "es.childcare_reduced_hours",
+                -400,
+                900,
+                25,
+                "Guarda legal, un cuarto de jornada",
+            ),
         ]
         for key, code, begins, ends, share, reason in wanted:
             kind = catalogue.get(code)

@@ -4975,3 +4975,60 @@ Ahí lo que toca no es forzar la prueba hasta que falle, sino **escribir en ella
 lo que se ha medido**: que hay dos capas, cuál hace hoy el trabajo, y que lo
 fijado es el resultado y no el mecanismo. Una prueba que afirma en su docstring
 una fuga que no ha visto es tan poco fiable como una que no comprueba nada.
+
+## 297. La nota que lee el usuario también es código, y la escribí al revés
+
+`reduction_share` guarda **cuánto se reduce** la jornada. El modelo lo dice sin
+margen: «A figure means the share of the day that stops --- 40 means they work
+60 %».
+
+Yo lo leí como cuánto se trabaja. Con esa lectura escribí la horquilla del art.
+37.6 (puse 50-87,5 donde va 12,5-50), la prueba, y --- lo que importa --- **la
+nota que ve quien registra la solicitud**:
+
+> «Pon la fracción que se trabaja ---el 75 % si se reduce un cuarto---»
+
+Una reducción de un cuarto se habría apuntado como del 75 %. La persona habría
+quedado con el 25 % de su jornada esperada y el cuadrante la habría dado por
+cumplidora trabajando una cuarta parte.
+
+Lo cazó una prueba que compara contra `_reduced_share`, y solo porque **puse un
+número esperado concreto** (`== 0.75`) en vez de comprobar que «hay reducción».
+Una aserción de forma no habría dicho nada.
+
+**Dos reglas.**
+
+La primera: cuando un campo puede leerse en dos sentidos ---reducido o
+trabajado, restante o consumido, incluido o excluido--- **buscar la frase del
+modelo antes de escribir la primera línea**. Estaba escrita, con un ejemplo
+numérico, a cuatro líneas de la definición.
+
+La segunda, y es la que se me escapa más: **el texto de ayuda es tan producto
+como la función**. Un porcentaje mal calculado lo caza una prueba; una nota que
+dice al revés cómo rellenarlo, no la caza nadie --- y produce exactamente el
+mismo dato equivocado, escrito a mano por alguien que hizo lo que se le dijo.
+
+## 298. Una migración que no se puede deshacer da miedo, con razón
+
+Metí el `ALTER TABLE` y el sembrado de datos en la misma migración. Aplicar iba
+bien; revertir daba:
+
+    django.db.utils.OperationalError: cannot ALTER TABLE "absences_leavetype"
+    because it has pending trigger events
+
+PostgreSQL no deja alterar una tabla en la misma transacción en la que se han
+tocado sus filas. Partida en dos ---una para la columna, otra para los datos---
+va y viene sin quejarse, y cada mitad conserva su atomicidad, que es lo que se
+perdería con `atomic = False`.
+
+Lo encontré porque quise revertir para reaplicarla con un texto corregido, no
+porque lo comprobara a propósito. **Probar la vuelta atrás cuesta un comando** y
+es la diferencia entre una migración que se despliega con tranquilidad y una a
+la que hay que entrar con la respiración contenida:
+
+    python manage.py migrate <app> <la_anterior> && python manage.py migrate <app>
+
+Y el sembrado no era opcional: el campo nace en `False`, así que sin él el ERTE
+habría dejado de poder reducir la jornada en cuanto se aplicara la migración. Una
+regresión que no rompe ninguna prueba ---las fixtures siembran del catálogo, no
+del historial--- y que solo se ve en una base que ya existía.

@@ -391,21 +391,28 @@ def request_absence(
             ),
         )
 
-    # And only the suspensions the company records. A voluntary excedencia "at
-    # 40 %" does not exist in law, and if one slipped through and got approved
-    # on a busy afternoon, the roster would quietly start measuring that person
-    # against a reduced contract nobody lawfully reduced.
-    if (
-        reduction_share is not None
-        and leave_type is not None
-        and leave_type.initiated_by != "COMPANY"
-    ):
+    # Y solo los tipos a los que la ley se lo permite. Una excedencia voluntaria
+    # «al 40 %» no existe, y si una se colara y se aprobara una tarde con prisa,
+    # el cuadrante empezaría a medir a esa persona contra un contrato que nadie
+    # redujo legalmente.
+    #
+    # **Esto lo decidía `initiated_by`**: solo lo que registraba la empresa podía
+    # reducir. El razonamiento valía para lo que había delante ---el ERTE y el
+    # mecanismo RED son actos de la empresa--- y dejaba fuera la reducción más
+    # corriente que existe: la del art. 37.6 por guarda legal, que es un
+    # **derecho de quien trabaja** y por tanto la pide la persona. El producto la
+    # rechazaba, así que la única forma de apuntarla era escribir «(guarda
+    # legal)» en el horario contratado, donde no hay ni fracción ni fechas.
+    #
+    # Lo que decide es si el artículo lo permite, y eso lo dice el catálogo.
+    if reduction_share is not None and leave_type is not None and not leave_type.can_reduce_the_day:
         raise BusinessRuleError(
-            code="reduction_is_company_recorded",
+            code="this_leave_cannot_reduce_the_day",
             message=_(
-                "Only a suspension the company records --- an ERTE, the RED "
-                "mechanism --- can reduce the working day."
-            ),
+                "«%(kind)s» cannot reduce the working day. For fewer hours by "
+                "agreement, change the contracted figure on the person."
+            )
+            % {"kind": leave_type.name},
         )
 
     if (start_time or end_time) and absence_type == AbsenceType.VACATION:

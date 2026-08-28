@@ -281,6 +281,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     findings.extend(
         _check_complementary_cap(company, framework.complementary, first, last, employee)
     )
+    findings.extend(_check_reduction_within_the_right(company, first, last, employee))
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -1021,6 +1022,74 @@ def _check_under_eighteen(roster, rules, minors, first, last) -> list[Finding]:
                 )
             )
 
+    return found
+
+
+#: La horquilla del art. 37.6: la reducción va de un octavo a la mitad.
+#:
+#: Sobre **cuánto se reduce**, que es lo que guarda `reduction_share` ---«40
+#: means they work 60 %», dice el modelo---. Lo escribí al revés la primera vez,
+#: y lo cazó la prueba del cuadrante: con la lectura invertida, una reducción de
+#: un cuarto se habría registrado como del 75 %, y la nota que lee quien la
+#: apunta lo decía así.
+GUARDA_LEGAL_MINIMO = 12.5
+GUARDA_LEGAL_MAXIMO = 50.0
+
+#: El código con el que el catálogo español siembra ese permiso. Se mira el
+#: código y no el nombre porque la empresa edita su copia ---puede llamarlo
+#: «Reducción por cuidado de hijos» y sigue siendo el mismo derecho---.
+GUARDA_LEGAL = "es.childcare_reduced_hours"
+
+
+def _check_reduction_within_the_right(company, first, last, employee) -> list[Finding]:
+    """Que una reducción por guarda legal quepa en lo que el art. 37.6 concede.
+
+    «Entre, al menos, un octavo y un máximo de la mitad de la duración de la
+    jornada»: quien la ejerce sigue trabajando entre el 50 % y el 87,5 %.
+
+    **Avisa, no impide.** El artículo delimita el derecho, no lo que las partes
+    pueden acordar: cabe pactar una reducción mayor, y el convenio puede mejorar
+    las condiciones. Lo que no cabe es que una reducción del 70 % se registre
+    como ejercicio de este derecho y nadie lo mire. La empresa decide; el
+    producto pone el dato al lado.
+    """
+    from apps.absences.models import Absence, AbsenceStatus
+
+    filas = (
+        Absence.objects.filter(
+            status=AbsenceStatus.APPROVED,
+            start_date__lte=last,
+            end_date__gte=first,
+            reduction_share__isnull=False,
+            leave_type__code=GUARDA_LEGAL,
+        )
+        .exclude(reduction_share__gte=GUARDA_LEGAL_MINIMO, reduction_share__lte=GUARDA_LEGAL_MAXIMO)
+        .select_related("employee")
+    )
+    if employee is not None:
+        filas = filas.filter(employee=employee)
+
+    found: list[Finding] = []
+    for ausencia in filas:
+        cuanto = float(ausencia.reduction_share)
+        found.append(
+            Finding(
+                # El primer día suyo que se ve en la ventana, para que el aviso
+                # caiga dentro del cuadrante que se está mirando.
+                day=max(ausencia.start_date, first),
+                employee_id=ausencia.employee_id,
+                code="reduction_outside_the_right",
+                message=_(
+                    "The working day is cut by %(share)s %%, and art. 37.6 runs from an "
+                    "eighth to a half --- between %(min)s %% and %(max)s %%."
+                )
+                % {
+                    "share": f"{cuanto:g}",
+                    "min": f"{GUARDA_LEGAL_MINIMO:g}",
+                    "max": f"{GUARDA_LEGAL_MAXIMO:g}",
+                },
+            )
+        )
     return found
 
 
