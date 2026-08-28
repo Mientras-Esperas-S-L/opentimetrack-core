@@ -293,6 +293,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     findings.extend(_check_overtime_rest_overdue(company, rules, first, last, employee))
     findings.extend(_check_serious_illness_reduction(company, first, last, employee))
     findings.extend(_check_representation_credit(company, first, last, employee))
+    findings.extend(_check_seniority_without_a_start_date(company, first, last, employee))
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -1086,6 +1087,42 @@ JUBILACION_PARCIAL = "es.partial_retirement"
 #: diferencia de las veinte horas de presencia del transporte, que sí son
 #: disponibles para el convenio---.
 MAXIMO_SEMANAL_UE = 48
+
+
+def _check_seniority_without_a_start_date(company, first, last, employee) -> list[Finding]:
+    """Hay días de vacaciones por antigüedad y a alguien no se le pueden contar.
+
+    `contract_start` admite estar vacío ---«ya estaba en marcha cuando la empresa
+    empezó aquí»--- y esa persona puede llevar veinte años. Con una escala de
+    antigüedad declarada, tratar el hueco como cero años le quitaría sus días
+    justo a quien más antigüedad tiene, y el saldo no diría nada raro: enseñaría
+    los veintitrés de siempre.
+
+    Por eso no se estima y se avisa. **Es lo contrario de un incumplimiento**: es
+    un dato que falta y que solo la empresa puede poner.
+    """
+    from apps.tenants.rules import WorkingTimeRules
+    from apps.users.models import User
+
+    if not (WorkingTimeRules.for_company(company).seniority_leave or []):
+        return []
+
+    quienes = User.objects.filter(tenant=company, is_active=True, contract_start__isnull=True)
+    if employee is not None:
+        quienes = quienes.filter(pk=employee.pk)
+
+    return [
+        Finding(
+            day=last,
+            employee_id=person.id,
+            code="seniority_without_a_start_date",
+            message=_(
+                "No contract start date, so the extra holiday the agreement gives "
+                "for seniority cannot be counted."
+            ),
+        )
+        for person in quienes
+    ]
 
 
 def _check_representation_credit(company, first, last, employee) -> list[Finding]:

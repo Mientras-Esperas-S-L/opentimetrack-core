@@ -2,6 +2,33 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Un campo que admite estar vacío es una decisión, no un descuido (29/08/2026)
+
+`contract_start` puede quedarse vacío, y su ayuda lo dice: «ya estaba en marcha
+cuando la empresa empezó aquí». Al sumar días de vacaciones por antigüedad, la
+salida cómoda era tratar ese hueco como cero años. Eso le habría quitado sus días
+**precisamente a quien más antigüedad tiene** ---el perfil que el campo vacío
+describe--- y sin que nada pareciera fuera de sitio: el saldo enseñaría los
+veintidós de siempre.
+
+**Cómo evitarlo:** antes de usar un campo opcional en un cálculo, leer su
+`help_text` y preguntarse **quién** lo tiene vacío. Si son justo las personas a
+las que el cálculo afecta más, el hueco no se rellena con un valor por defecto: se
+declara y se avisa.
+
+## Una prueba de interfaz no puede comprobar lo que la interfaz no muestra (29/08/2026)
+
+Escribí una prueba de navegador que decía comprobar que los días por antigüedad
+están **dentro** del total de vacaciones. Pasaba con la suma quitada: desde la
+pantalla, un total con extra y uno sin ellos se ven exactamente igual, porque no
+hay cifra base con la que comparar. La prueba afirmaba justo lo que no podía ver.
+
+**Cómo evitarlo:** al escribir una prueba de interfaz, preguntarse qué tendría que
+cambiar **en la pantalla** para que se pusiera roja. Si la respuesta es «nada
+visible», eso se prueba en la capa que tiene los datos, y la de interfaz se queda
+con lo que sí puede afirmar. Y decirlo en la prueba: la siguiente persona que la
+lea va a creerse el nombre.
+
 ## Volví a hacer `git checkout` sobre trabajo sin commitear (29/08/2026)
 
 La lección estaba escrita hace cuatro vueltas, con su título y su «cómo

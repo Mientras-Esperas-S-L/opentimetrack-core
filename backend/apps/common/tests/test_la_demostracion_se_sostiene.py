@@ -186,3 +186,26 @@ def test_la_demostracion_ensena_los_dos_saldos_de_descanso(sembrada):
 
         assert "overtime" in origenes, "ninguna hora extra a compensar con descanso"
         assert "holiday" in origenes, "ningún festivo trabajado"
+
+
+@pytest.mark.django_db
+def test_la_demostracion_ensena_los_dias_por_antiguedad(sembrada):
+    """Sin escala declarada, esa línea del saldo no aparece nunca.
+
+    Los días de vacaciones por antigüedad no salen del Estatuto ---el art. 38.1
+    no habla de antigüedad--- así que solo existen si el convenio los da. Una
+    demostración sin ellos no puede enseñar la función, y es de las que un
+    cliente reconoce al momento: casi cualquier convenio los tiene.
+    """
+    from apps.absences.services import vacation_balance
+    from apps.tenants.rules import WorkingTimeRules
+
+    with tenant_context(sembrada.id):
+        assert WorkingTimeRules.for_company(sembrada).seniority_leave, "sin escala declarada"
+
+        con_extra = [
+            quien
+            for quien in User.objects.filter(tenant=sembrada)[:20]
+            if vacation_balance(quien, sembrada).seniority_days
+        ]
+        assert con_extra, "nadie de la demostración llega a ningún tramo de antigüedad"

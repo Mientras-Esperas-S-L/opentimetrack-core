@@ -22,11 +22,36 @@ from __future__ import annotations
 
 from datetime import time
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from apps.common.models import BaseModel
+
+
+def validate_seniority_leave(value) -> None:
+    """Tramos de antigüedad: `[{"years": 5, "extra_days": 1}, ...]`.
+
+    Validado aquí y no confiado, por lo mismo que los tramos de un turno: un
+    tramo mal escrito no falla hasta que alguien mira su saldo de vacaciones, y
+    para entonces la cifra lleva meses en pantalla.
+    """
+    if value in (None, ""):
+        return
+    if not isinstance(value, list):
+        raise ValidationError(_("Seniority steps are a list."))
+
+    for step in value:
+        if not isinstance(step, dict) or "years" not in step or "extra_days" not in step:
+            raise ValidationError(_("Each step needs years and extra_days."))
+        try:
+            años = int(step["years"])
+            dias = float(step["extra_days"])
+        except (TypeError, ValueError) as exc:
+            raise ValidationError(_("Years and extra days are numbers.")) from exc
+        if años < 0 or dias < 0:
+            raise ValidationError(_("Years and extra days cannot be negative."))
 
 
 class SpecialRegime(models.TextChoices):
@@ -263,6 +288,26 @@ class WorkingTimeRules(BaseModel):
     #: ningún saldo, porque no habría de dónde sacar la cifra.
     HOLIDAY_REST = "REST"
     HOLIDAY_PAID = "PAID"
+
+    #: Días de vacaciones que se suman por antigüedad, si el convenio los da.
+    #:
+    #: `[{"years": 5, "extra_days": 1}, {"years": 15, "extra_days": 2}]` --- a
+    #: partir de cinco años uno más, a partir de quince, dos.
+    #:
+    #: **No sale del Estatuto**: el art. 38.1 fija treinta días naturales y no
+    #: habla de antigüedad. Esto lo da el convenio, y por eso vive aquí ---en las
+    #: reglas de la empresa--- y no en el marco legal del país, donde están las
+    #: cifras que la ley impone.
+    seniority_leave = models.JSONField(
+        _("extra holiday by seniority"),
+        default=list,
+        blank=True,
+        validators=[validate_seniority_leave],
+        help_text=_(
+            "From the collective agreement, not the law. Empty means none: years "
+            "of service add nothing to the holiday allowance."
+        ),
+    )
 
     holiday_worked_compensation = models.CharField(
         _("a public holiday worked is made up with"),

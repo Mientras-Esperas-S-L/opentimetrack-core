@@ -369,6 +369,49 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 168 --- Los días de vacaciones por antigüedad (29/08)
+
+Al empezar: 3 «A medias» y 7 «Falta».
+
+**Y una que ya estaba.** «Asuntos propios y libre disposición» decía «no hay dónde
+ponerlos», y `es.personal_days` lleva en el catálogo desde siempre, en días
+laborables al año y con la nota que aclara lo que más se confunde: no son
+vacaciones y no salen del mismo saldo. Sexta fila de esta tanda que estaba hecha y
+marcada como pendiente.
+
+**Los de antigüedad no salen del Estatuto.** El art. 38.1 fija treinta días
+naturales y no dice ni una palabra de la antigüedad: los da el convenio. Por eso
+la escala vive en las reglas de la empresa y no en el marco legal del país, y sin
+declararla no cambia nada.
+
+**Lo que decide el diseño es un caso concreto.** `contract_start` admite estar
+vacío ---«ya estaba en marcha cuando la empresa empezó aquí»--- y esa persona
+puede llevar veinte años. Contarle cero años le quitaría sus días **precisamente a
+quien más antigüedad tiene**, y el saldo no diría nada raro: enseñaría los
+veintidós de siempre. Así que no se estima, no se suma y se avisa. Es un dato que
+falta, no un derecho que no exista.
+
+**Y el saldo explica la cifra.** «Incluye 1 día por antigüedad, con 12 años de
+servicio.» Un número que alguien puede comprobar vale más que uno correcto que
+nadie entiende, y este acaba en una conversación con la gestoría si no se explica.
+
+Dos decisiones que las pruebas dejaron por escrito porque no son obvias: los años
+se cuentan **al cierre del periodo de cómputo** ---medirlos hoy haría que el saldo
+de un año cambiara solo al cumplir años dentro de él--- y los extra se suman
+**antes** de prorratear, así que quien entra a mitad de año devenga también la
+parte que le toca de ellos.
+
+**Seis contrastes, y uno no contrastó.** La prueba de navegador decía comprobar que
+los días extra están **dentro** del total, y pasaba con la suma quitada: desde la
+pantalla no se puede distinguir un total con extra de uno sin ellos, porque no hay
+cifra base con la que comparar. Eso lo prueba la suite de servidor, que sí la
+tiene. La prueba se quedó con lo que sí puede afirmar ---que los números de la
+pantalla son los del saldo servido--- y lo dice.
+
+**Cierre:** ocho pasos del CI en verde con 1.535 pruebas, suite de navegador
+aparte, dos filas movidas a Cubierto, dossier en la 1.37. El recuento pasa de
+101/3/7 a **103/3/5 de 111**, contado de las filas.
+
 ### Vuelta 167 --- El crédito horario del art. 68.e (29/08)
 
 Al empezar: 4 «A medias» y 7 «Falta».

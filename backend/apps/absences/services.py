@@ -90,6 +90,17 @@ class LeaveBalance:
     #: the screen showing it has no other way to know which.
     working_days: bool = True
 
+    #: Los días que suma el convenio por antigüedad, ya incluidos en `full_year`.
+    #: Se dicen aparte para poder explicar la cifra: «23 + 2 por antigüedad» es
+    #: una frase que alguien puede comprobar, y «25» no.
+    seniority_days: float = 0.0
+    #: Años de servicio con los que se ha calculado. `None` cuando no hay escala
+    #: declarada o cuando no se ha podido saber.
+    seniority_years: int | None = None
+    #: Hay escala y **no se ha podido aplicar** porque falta la fecha de inicio
+    #: del contrato. No es lo mismo que no tener derecho, y por eso no se calla.
+    seniority_unknown: bool = False
+
     @property
     def remaining(self) -> int:
         """Pending requests count against it. Showing them as available is how
@@ -115,6 +126,9 @@ class LeaveBalance:
             "full_year": self.full_year,
             "accrued_from": self.accrued_from.isoformat() if self.accrued_from else None,
             "accrued_to": self.accrued_to.isoformat() if self.accrued_to else None,
+            "seniority_days": self.seniority_days,
+            "seniority_years": self.seniority_years,
+            "seniority_unknown": self.seniority_unknown,
         }
 
 
@@ -124,6 +138,12 @@ def vacation_balance(employee, company, day: date | None = None) -> LeaveBalance
     full_year = employee.annual_leave_days
     if full_year is None:
         full_year = company.annual_leave_days
+
+    # Y los días que el convenio suma por antigüedad, antes de prorratear: quien
+    # entra a mitad de año con derecho a un día extra devenga la parte que le
+    # toca de ese día también.
+    extra, años, sin_saber = seniority_days(employee, company, end)
+    full_year += extra
 
     entitled, accrued_from, accrued_to = _accrued(employee, full_year, start, end)
 
@@ -162,6 +182,9 @@ def vacation_balance(employee, company, day: date | None = None) -> LeaveBalance
         full_year=full_year,
         accrued_from=accrued_from,
         accrued_to=accrued_to,
+        seniority_days=extra,
+        seniority_years=años,
+        seniority_unknown=sin_saber,
     )
 
 
@@ -225,6 +248,46 @@ def leave_settlement(
         "working_days": balance.working_days,
         "citation": "Art. 38.1 ET",
     }
+
+
+def seniority_days(employee, company, on: date) -> tuple[float, int | None, bool]:
+    """Días de vacaciones que suma la antigüedad, y si se ha podido saber.
+
+    Devuelve `(días, años de servicio, no se sabe)`.
+
+    **No sale del Estatuto.** El art. 38.1 fija treinta días naturales y no habla
+    de antigüedad: estos días los da el convenio, y por eso la escala la declara
+    la empresa. Sin escala declarada, esto no suma nada y nada cambia.
+
+    **Y no siempre se puede calcular.** `contract_start` admite estar vacío ---
+    «ya estaba en marcha cuando la empresa empezó aquí»--- y esa persona puede
+    llevar veinte años. Tratar el hueco como cero años le quitaría sus días
+    justo a quien más antigüedad tiene, así que no se suma nada y se **dice**:
+    el tercer valor es la señal de que hay una escala que no se ha podido
+    aplicar, y quien la lea sabrá que falta una fecha, no que no le toque.
+
+    Los años se miden **al final del periodo de cómputo**, que es cuando se
+    devengan las vacaciones de ese periodo. Medirlos hoy haría que el saldo de un
+    año cerrado cambiara al cumplir años en el siguiente.
+    """
+    from apps.tenants.rules import WorkingTimeRules
+
+    tramos = WorkingTimeRules.for_company(company).seniority_leave or []
+    if not tramos:
+        return 0.0, None, False
+
+    if not employee.contract_start:
+        return 0.0, None, True
+
+    años = (on - employee.contract_start).days // 365
+    # El tramo más alto que alcanza. Ordenados aquí y no confiando en el orden
+    # en que la empresa los escribió.
+    ganados = [
+        float(x["extra_days"])
+        for x in sorted(tramos, key=lambda x: int(x["years"]))
+        if años >= int(x["years"])
+    ]
+    return (ganados[-1] if ganados else 0.0), años, False
 
 
 def _accrued(

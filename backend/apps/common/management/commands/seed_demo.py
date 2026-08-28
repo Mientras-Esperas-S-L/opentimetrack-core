@@ -150,7 +150,15 @@ class Command(BaseCommand):
             # compensa, lo dice el convenio--- y esa pantalla no aparecería
             # nunca en una demostración.
             rules.holiday_worked_compensation = WorkingTimeRules.HOLIDAY_REST
-            rules.save(update_fields=["holiday_worked_compensation"])
+            # Y días de vacaciones por antigüedad, como los da casi cualquier
+            # convenio. No salen del Estatuto ---el art. 38.1 no habla de
+            # antigüedad--- así que sin declararlos el saldo no los suma y esa
+            # línea no aparece en ninguna demostración.
+            rules.seniority_leave = [
+                {"years": 5, "extra_days": 1},
+                {"years": 15, "extra_days": 2},
+            ]
+            rules.save(update_fields=["holiday_worked_compensation", "seniority_leave"])
             sites = self._workplaces(company)
             departments = self._departments(company)
             people = self._people(company, departments, sites)

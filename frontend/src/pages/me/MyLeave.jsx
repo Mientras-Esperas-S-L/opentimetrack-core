@@ -148,6 +148,10 @@ function DeudaDeDescanso({ deuda }) {
 function Balance({ balance }) {
   const { t } = useTranslation()
   const { entitled, taken, pending, remaining, period_start, period_end } = balance
+  //: Los días que suma el convenio por antigüedad, y los años con los que se ha
+  //: contado. Van aparte de la cifra grande porque «22 + 1 por antigüedad» es
+  //: una frase que alguien puede comprobar, y «23» no.
+  const porAntiguedad = Number(balance.seniority_days) || 0
   const pct = (value) => (entitled > 0 ? (value / entitled) * 100 : 0)
   // Which unit the three figures are in. Without it "quedan 9" is ambiguous by
   // about a third, which is exactly how far the balance used to be wrong.
@@ -204,6 +208,27 @@ function Balance({ balance }) {
           />
         </Box>
       </Box>
+
+      {porAntiguedad > 0 && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+          {t('Incluye {{cuantos}} {{unidad}} por antigüedad, con {{años}} años de servicio.', {
+            cuantos: porAntiguedad,
+            unidad: plural(porAntiguedad, t('día'), t('días')),
+            años: balance.seniority_years,
+          })}
+        </Typography>
+      )}
+
+      {balance.seniority_unknown && (
+        <Typography variant="caption" color="warning.main" sx={{ display: 'block', mb: 1 }}>
+          {/* Ni se estima ni se calla: contar cero años le quitaría sus días
+              justo a quien más lleva, y hacerlo en silencio es lo peor de las
+              dos cosas. Solo la empresa puede poner esa fecha. */}
+          {t(
+            'Tu convenio suma días por antigüedad y no consta tu fecha de inicio de contrato, así que no se han podido contar.',
+          )}
+        </Typography>
+      )}
 
       <Stack direction="row" sx={{ gap: 3, flexWrap: 'wrap' }}>
         <Typography variant="caption" color="text.secondary">

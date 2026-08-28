@@ -225,8 +225,8 @@ espera jornada»: la persona sigue viniendo, por menos tiempo.
 | Coincidencia con IT por otra contingencia | 38.3 | **Cubierto.** El régimen de **dieciocho meses** del párrafo 3.º, y solo por los días que coinciden ---«total o parcialmente», dice la ley---. Da igual que la baja empezara antes: el precepto solo dice «coincida» (TJUE, ANGED C-78/11; STS del Pleno de 3/10/2012) |
 | Devengo proporcional al tiempo trabajado | — | **Cubierto.** Quien no ha trabajado el periodo entero devenga la parte proporcional, por días naturales de contrato y **redondeando hacia arriba** ---a la baja el peor caso es incumplir un mínimo legal; al alza, dar medio día de más---. Medido en la demostración: quien entra el 1 de julio tiene 12 de 23, no 23 |
 | Liquidación al finalizar el contrato | 38.1 | **Cubierto.** Los días devengados y no disfrutados al terminar el contrato ---y los disfrutados de más, que se descuentan---, en la ficha de la persona y **mientras se escribe la fecha de baja**, no después de guardarla. Lo pendiente de decidir no resta: se cuenta aparte, porque ni está disfrutado ni liquidado. **Días, no importe**: lo que vale un día es una nómina y eso está fuera del producto |
-| Días adicionales por antigüedad | Convenio | **Falta** |
-| Asuntos propios y libre disposición | Convenio | **Falta.** No son vacaciones y hoy no hay dónde ponerlos |
+| Días adicionales por antigüedad | Convenio | **Cubierto.** La empresa declara su escala ---«a los cinco años, uno más; a los quince, dos»--- y el saldo los suma **y los explica**: «incluye 1 día por antigüedad, con 12 años de servicio», que es una frase que alguien puede comprobar y «24» no. No salen del Estatuto: el art. 38.1 fija treinta días naturales y no habla de antigüedad, así que sin escala declarada no suman nada. Los años se cuentan **al cierre del periodo de cómputo**, no a día de hoy, para que el saldo de un año no cambie solo al cumplir años dentro de él. Y si falta la fecha de inicio del contrato **no se estima**: se avisa, porque contar cero años se los quitaría justo a quien más lleva |
+| Asuntos propios y libre disposición | Convenio | **Cubierto.** Están en el catálogo, en días laborables al año y con su nota: no salen del Estatuto y **no son vacaciones**, así que no se descuentan del mismo saldo. La cuantía la pone cada empresa, que es de donde viene |
 
 ---
 
@@ -378,6 +378,24 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 6 | **Las cifras de cada sector** (RD 1561/1995). Lo que quedaba de esta fila y sigue fuera a propósito: quince cifras por cada uno de los trece regímenes, cada sector con su convenio encima. Que los avisos citen el régimen declarado **ya está** desde el 28/08 | **Semanas**, y conviene partirlo por sector empezando por el que tenga un cliente esperando. No es trabajo pendiente sino una decisión de producto: mientras no haya un cliente de un sector concreto, traer sus cifras es inventar |
 
 ### Hecho desde que se escribió esta lista
+
+- **Los días de vacaciones por antigüedad** (convenio, 29/08/2026), y **asuntos
+  propios, que ya estaba**.
+
+  Los de antigüedad no salen del Estatuto, así que la escala la declara la
+  empresa y sin declararla no cambia nada. Lo que decide el diseño es un caso
+  concreto: `contract_start` **admite estar vacío** ---«ya estaba en marcha cuando
+  la empresa empezó aquí»--- y esa persona puede llevar veinte años. Contarle cero
+  le quitaría sus días precisamente a quien más antigüedad tiene, y el saldo no
+  diría nada raro: enseñaría los de siempre. Así que no se estima, no se suma y se
+  avisa.
+
+  Y el saldo **explica la cifra**: «incluye 1 día por antigüedad, con 12 años de
+  servicio». Un número que alguien puede comprobar vale más que uno correcto que
+  nadie entiende.
+
+  Asuntos propios ya estaba en el catálogo, con su unidad, su periodo y la nota
+  que aclara lo que más se confunde: no son vacaciones y no salen del mismo saldo.
 
 - **El crédito horario de la representación legal** (art. 68.e, 29/08/2026).
 

@@ -152,6 +152,12 @@ ESPANA = LegalFramework(
         # No es un incumplimiento: las horas por encima de lo pactado en jornada
         # parcial son complementarias, lícitas y con su propio tope.
         "over_contracted_hours": Citation("Art. 12.5 ET"),
+        "seniority_without_a_start_date": Citation(
+            "Convenio",
+            "Los días de vacaciones por antigüedad no salen del Estatuto: los da el "
+            "convenio. Sin fecha de inicio de contrato no hay antigüedad que contar, "
+            "y suponer cero años se los quitaría precisamente a quien más lleva.",
+        ),
         "representation_credit_below_the_floor": Citation(
             "Art. 68.e ET",
             "El crédito horario de la representación legal va por tamaño del centro "
