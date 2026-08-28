@@ -875,9 +875,16 @@ class Command(BaseCommand):
         )
         if rest:
             starts, ends = rest
+            # **Una pausa se abre con una entrada, no con una salida.** Ocurre
+            # *dentro* de la jornada, que sigue abierta mientras dura ---lo dice
+            # `build_day_status`: hay una pila por tipo de intervalo, y la del
+            # trabajo no se toca---. Puestos al revés, el `OUT` de la pausa se
+            # ignora por no haber ninguna abierta, el `IN` abre una que no se
+            # cierra nunca, y sus horas se restan de las trabajadas: **el día
+            # entero contaba cero**.
             for moment, kind in (
-                (starts, PunchType.OUT),  # sale a desayunar
-                (ends, PunchType.IN),  # y vuelve
+                (starts, PunchType.IN),  # empieza la pausa
+                (ends, PunchType.OUT),  # y termina
             ):
                 Punch.objects.create(
                     tenant=company,
