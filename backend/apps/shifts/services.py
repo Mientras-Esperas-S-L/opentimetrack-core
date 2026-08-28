@@ -289,6 +289,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     findings.extend(_check_relief_contracts(company, rules, first, last, employee))
     findings.extend(_check_irregular_balance(company, first, last, employee))
     findings.extend(_check_standby_average(company, first, last, employee))
+    findings.extend(_check_on_call_counts_as_work(company, rules, first, last, employee))
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -1067,6 +1068,115 @@ JUBILACION_MAXIMA_CON_RELEVO_ENTERO = 75.0
 
 #: El código con el que el catálogo español siembra la jubilación parcial.
 JUBILACION_PARCIAL = "es.partial_retirement"
+
+
+#: Cuarenta y ocho horas semanales, horas extra incluidas: art. 6.b de la
+#: Directiva 2003/88. Es el tope que SIMAP y Jaeger ponen en juego, y no admite
+#: mejora a la baja ---por eso no hay una regla de empresa que lo apague, a
+#: diferencia de las veinte horas de presencia del transporte, que sí son
+#: disponibles para el convenio---.
+MAXIMO_SEMANAL_UE = 48
+
+
+def _check_on_call_counts_as_work(company, rules, first, last, employee) -> list[Finding]:
+    """En sanidad, la guardia de presencia cuenta para la jornada máxima.
+
+    El producto trata el tiempo de presencia como lo que dice el art. 3.g del
+    real decreto de registro: estar a disposición **sin** trabajo efectivo. Para
+    casi todo el mundo eso es correcto, y por eso `counts_as_work` solo es cierto
+    para la jornada.
+
+    En sanidad no. El TJUE lo resolvió hace veinte años ---SIMAP (C-303/98) y
+    Jaeger (C-151/02)---: **la guardia de presencia física en el centro es tiempo
+    de trabajo en su totalidad** a efectos de la jornada máxima y de los
+    descansos, se atienda a alguien o se pase la noche sin que suene nada. Lo que
+    no cuenta es la guardia **localizada**, salvo la parte de atención efectiva
+    ---y esa se ficha como jornada, así que ya contaba---.
+
+    Aquí no se cambia ningún total. Lo que se cobra y lo que dice el informe
+    siguen saliendo del registro tal cual, con la presencia separada de la
+    jornada como manda el art. 3.g; lo que se hace es **avisar** cuando la suma
+    de las dos pasa de las cuarenta y ocho horas semanales.
+
+    **Por qué esto empareja los fichajes en vez de preguntarle a
+    `build_day_status`.** Esa es la pieza que sabe leer un día, y era la primera
+    opción: descuenta las pausas y deja la presencia aparte, sin duplicar nada.
+    No sirve aquí, y el motivo es justo el caso que hay que medir: **una guardia
+    de sanidad son veinticuatro horas y cruza la medianoche**. `build_day_status`
+    recorta los eventos al día, así que el primero ve una entrada que nunca se
+    cierra y el segundo una salida que no abre nada: la guardia entera no cuenta
+    en ninguno de los dos. Medirla con la pieza que la parte por la mitad habría
+    dado siempre cero, que es exactamente el defecto que esto viene a arreglar.
+
+    Se empareja entonces sobre el rango completo, con una pila por tipo de
+    intervalo ---como hace `build_day_status`, porque la pausa se abre con una
+    **entrada** dentro de la jornada--- y cada tramo se apunta a la semana en la
+    que **empezó**.
+    """
+    from apps.punches.models import Punch, PunchInterval, PunchType
+    from apps.tenants.rules import SpecialRegime
+    from apps.users.models import User
+
+    if rules.special_regime != SpecialRegime.HEALTHCARE:
+        return []
+
+    zone = company.tzinfo
+    dentro = {
+        "timestamp__gte": datetime.combine(first, dt_time.min, tzinfo=zone),
+        "timestamp__lt": datetime.combine(last + timedelta(days=1), dt_time.min, tzinfo=zone),
+        "is_active": True,
+    }
+    quienes = User.objects.filter(
+        tenant=company,
+        is_active=True,
+        id__in=Punch.objects.filter(
+            tenant=company, interval=PunchInterval.STANDBY, **dentro
+        ).values("employee_id"),
+    )
+    if employee is not None:
+        quienes = quienes.filter(pk=employee.pk)
+
+    #: La pausa resta salvo que la empresa haya dicho que su convenio la cuenta.
+    resta_la_pausa = not rules.break_counts_as_work
+
+    found: list[Finding] = []
+    for person in quienes:
+        semanas: dict[tuple[int, int], float] = {}
+        abiertos: dict[str, Punch] = {}
+        for punch in Punch.objects.filter(employee=person, **dentro).order_by("timestamp"):
+            if punch.punch_type == PunchType.IN:
+                abiertos.setdefault(punch.interval, punch)
+                continue
+            opening = abiertos.pop(punch.interval, None)
+            if opening is None:
+                continue
+            horas = (punch.timestamp - opening.timestamp).total_seconds() / 3600
+            if opening.interval == PunchInterval.BREAK:
+                if not resta_la_pausa:
+                    continue
+                horas = -horas
+            elif opening.interval not in {PunchInterval.WORK, PunchInterval.STANDBY}:
+                continue
+            semana = opening.timestamp.astimezone(zone).date().isocalendar()[:2]
+            semanas[semana] = semanas.get(semana, 0) + horas
+
+        for (year, week), horas in sorted(semanas.items()):
+            if horas <= MAXIMO_SEMANAL_UE:
+                continue
+            found.append(
+                Finding(
+                    day=max(first, date.fromisocalendar(year, week, 1)),
+                    employee_id=person.id,
+                    code="on_call_over_the_weekly_maximum",
+                    message=_(
+                        "%(hours)s h that week counting on-call time on the premises, "
+                        "over the %(limit)s h maximum: a shift spent on call at the "
+                        "workplace is working time in full."
+                    )
+                    % {"hours": f"{horas:.1f}", "limit": MAXIMO_SEMANAL_UE},
+                )
+            )
+    return found
 
 
 def _check_standby_average(company, first, last, employee) -> list[Finding]:

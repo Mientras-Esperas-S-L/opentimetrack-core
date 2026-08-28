@@ -2,6 +2,75 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## La pieza que lee un día no sirve para medir lo que cruza la medianoche (28/08/2026)
+
+Para contar guardias de sanidad lo primero que hice fue apoyarme en
+`build_day_status`: es la única función que sabe leer un día entero ---cierra los
+tramos, descuenta las pausas, deja la presencia aparte--- y reusarla evitaba
+duplicar la regla de que una pausa se abre con una entrada.
+
+No servía, y no por un detalle: **una guardia son veinticuatro horas y cruza la
+medianoche por definición**. Esa función recorta los eventos al día, así que el
+primero veía una entrada que nunca se cierra y el segundo una salida que no abre
+nada. La guardia entera contaba cero en los dos.
+
+Lo cazó una prueba escrita para otra cosa; si no, el chequeo habría quedado
+diciendo que mide guardias y midiendo solo las que caben en un día.
+
+**Cómo evitarlo:** antes de reusar una función que agrega por unidad de tiempo,
+preguntar si lo que voy a medir cabe dentro de esa unidad. Si el caso típico la
+desborda ---guardias, turnos de noche, jornadas partidas---, la agregación tiene
+que ir sobre el rango, no sobre cada tramo por separado.
+
+## `_` como descarte pisa `gettext` en el mismo ámbito (28/08/2026)
+
+Escribí `year, week, _ = day.isocalendar()` dentro de una función que unas líneas
+más abajo llama a `_("...")` para traducir su mensaje. En ese módulo `_` **es**
+`gettext`, y el desempaquetado lo dejó valiendo un entero: `TypeError: 'int'
+object is not callable`, en el único camino que llega al mensaje.
+
+`ruff` no dice nada: `_` como descarte es idiomático y no sabe que aquí es otra
+cosa. Y el fallo no se ve en el camino normal, solo cuando el aviso se emite.
+
+**Cómo evitarlo:** en un módulo que importa `_` para traducir, nunca usar `_`
+como descarte. `day.isocalendar()[:2]`, o un nombre cualquiera. Cuando aparezca
+un `TypeError` de «no es invocable» sobre algo que sí lo es, buscar quién le ha
+puesto ese nombre encima en el mismo ámbito.
+
+## Sembrar con `unblock()` sin deshacerlo contamina toda la suite (28/08/2026)
+
+La prueba de la semilla de demostración usa `django_db_blocker.unblock()` para
+poder llamar a `seed_demo`. Eso abre la base de datos **de verdad**, fuera de la
+transacción que pytest-django envuelve alrededor de cada prueba, así que catorce
+personas y mil fichajes se quedaron puestos para todo lo que viniera detrás.
+
+Ejecutando ese fichero solo, verde. Ejecutando los ocho pasos del CI, **once
+rojas**, y ninguna en el fichero culpable: cayeron los barridos de aislamiento,
+que cuentan filas de todas las empresas y esperaban dos donde había siete.
+
+**Cómo evitarlo:** todo lo que escriba dentro de `unblock()` va envuelto en
+`transaction.atomic()` con un savepoint que se deshace al terminar el fixture. Y
+la regla de siempre, que aquí volvió a pagarse: **un fichero de pruebas en verde
+no dice nada hasta correr la suite entera**.
+
+## Un catálogo de traducción verde puede estar en inglés (28/08/2026)
+
+Al extraer un mensaje nuevo aparecieron dieciséis heredados sin traducir en
+catalán y gallego, y cuatro marcados `fuzzy` en los tres idiomas. Los `fuzzy` son
+los peores: en el `.po` se ven traducidos, y `msgfmt` **los omite del `.mo`**, así
+que en ejecución salen en inglés. Dos de ellos, además, con huecos que no eran
+los del original ---`%(days)s` donde el mensaje dice `%(hours)s`---: un
+`KeyError` en cuanto alguien llegara a ese aviso en su idioma.
+
+Vienen de que `makemessages` reaprovecha la traducción de un mensaje parecido
+cuando el original cambia, y la marca `fuzzy` para que alguien la revise. Si nadie
+la revisa, se queda.
+
+**Cómo evitarlo:** después de cada `makemessages`, `grep -c "^#, fuzzy"` en los
+tres `.po` tiene que dar cero, y los huecos de cada traducción tienen que ser
+exactamente los del original. Las dos cosas tienen guard; correrlos antes de dar
+por cerrada una vuelta, no después.
+
 ## Comprobar la CI entera antes de empujar, no fichero a fichero
 
 **12/08/2026.** Estuve empujando a main con la CI en rojo sin enterarme, hasta

@@ -92,9 +92,9 @@ empresa de trabajo temporal.
 | Horas extraordinarias | art. 35 | **Cubierto.** Se marcan, se dice cómo se saldan y el tope anual se contrasta con lo autorizado: la pantalla de decisiones avisa al pasarse, descontando las compensadas con descanso y las de fuerza mayor |
 | Horas complementarias | art. 12.5 | **Cubierto.** El tope se acumula contra lo trabajado y se avisa al pasarse. Va sobre **el periodo del contrato** ---semana, mes o año---, que es lo que dice el art. 12.5.c: el 30 % de «las horas ordinarias objeto del contrato». Un contrato de 800 h al año tiene 240 complementarias al año, no 20 al mes |
 | Trabajo a distancia | Ley 10/2021 | **Cubierto.** El umbral del art. 1 se calcula ---el 30 % de la jornada en tres meses--- y se avisa a quien lo pasa sin acuerdo, o con uno firmado después de empezar (art. 5.1). El acuerdo se registra desde la ficha de la persona, con sus fechas y su porcentaje. Lo que no se guarda aquí es el contenido del art. 7: eso es el documento firmado |
-| Guardias y atención continuada | RD 1561/1995 | **Falta.** Sanidad: presencia frente a trabajo efectivo |
+| Guardias y atención continuada | RD 1561/1995 | **Cubierto.** Con el régimen de sanidad declarado, la **guardia de presencia física** cuenta como tiempo de trabajo para el tope de cuarenta y ocho horas semanales ---SIMAP (C-303/98) y Jaeger (C-151/02)---, y se avisa al pasarse. No se toca ningún total: el registro sigue separando jornada de presencia, que es lo que obliga el art. 3.g. La guardia **localizada** no cuenta, salvo la atención efectiva, que ya se ficha como jornada |
 | Tiempo de presencia | RD 1561/1995 | **Cubierto.** El promedio del art. 8.b ---20 h semanales en un mes--- se cuenta sobre lo marcado como espera (art. 3.g) y se avisa al pasarse. **Solo si la empresa declara el régimen de transporte por carretera**: aplicárselo a una oficina sería inventarle un límite de otro sector |
-| Jornadas especiales por sector | RD 1561/1995 | **A medias.** La empresa ya puede **declarar su régimen** ---trece, de ampliación y de limitación--- y eso es lo que faltaba para que sus cifras dejen de parecer un descuido. Lo que aún no hace es que cada aviso de cifra apartada **cite el régimen declarado**, ni trae las cifras de cada sector: eso sería pisar el convenio |
+| Jornadas especiales por sector | RD 1561/1995 | **A medias.** Con el régimen declarado se comprueban ya dos sectores ---el tiempo de presencia en transporte y las guardias en sanidad---. La empresa puede **declarar su régimen** ---trece, de ampliación y de limitación--- y eso es lo que faltaba para que sus cifras dejen de parecer un descuido. Lo que aún no hace es que cada aviso de cifra apartada **cite el régimen declarado**, ni trae las cifras de cada sector: eso sería pisar el convenio |
 
 Las jornadas especiales del RD 1561/1995 son de dos clases. **Ampliaciones**:
 fincas urbanas, guardas y vigilantes, campo, comercio y hostelería, transporte
@@ -371,6 +371,20 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 6 | **Que los avisos citen el régimen declarado** (RD 1561/1995). Desde el 28/08 la empresa dice bajo qué régimen trabaja; falta que un descanso de diez horas se lea «por el art. 8.3, transporte» en vez de a secas. Y las cifras de cada sector siguen sin traerse a propósito: pisarían al convenio | **2-3 días** lo primero. Lo segundo son semanas, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
 
 ### Hecho desde que se escribió esta lista
+
+- **Las guardias de sanidad** (28/08/2026). Con el régimen declarado, la guardia
+  de presencia en el centro suma para el tope semanal de la Directiva 2003/88,
+  que es lo que SIMAP y Jaeger llevan veinte años diciendo. Lo que había: una
+  guardia de veinticuatro horas no contaba **nada**, y quien hacía cuarenta de
+  jornada y dos guardias figuraba con cuarenta horas habiendo pasado ochenta y
+  ocho en el hospital.
+
+  El diseño se cambió a mitad de camino y conviene dejarlo escrito: la primera
+  versión leía cada día con la pieza que ya sabe leerlo ---descuenta pausas,
+  separa la presencia--- y era la opción limpia salvo por un detalle que es el
+  caso entero: **una guardia cruza la medianoche**, esa pieza recorta al día, y
+  la guardia no contaba en ninguno de los dos. Se empareja sobre el rango
+  completo.
 
 - **El tiempo de presencia del transporte** (art. 8.b RD 1561/1995, 28/08/2026),
   y con él **el régimen especial declarado**, que era lo que faltaba para las

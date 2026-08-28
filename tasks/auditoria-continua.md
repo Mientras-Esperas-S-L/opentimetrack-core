@@ -369,6 +369,79 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 160 --- Las guardias de sanidad, y la semilla que contaba cero (28/08)
+
+**12 de 13.** Queda una: que cada aviso de cifra apartada cite el régimen
+declarado.
+
+**Lo que se clasificó primero, y lo que salió por el camino.** La pregunta era si
+en sanidad hay hueco, y la respuesta estaba en dos piezas que discrepan.
+`counts_as_work` solo es cierto para la jornada ---la presencia no cuenta---, que
+es lo correcto según el art. 3.g del real decreto de registro: estar a
+disposición sin trabajo efectivo. Y `_check_time_actually_worked` suma todos los
+tramos emparejados sin mirar el intervalo.
+
+En sanidad manda la primera y está equivocada. El TJUE lo resolvió en SIMAP
+(C-303/98) y lo confirmó en Jaeger (C-151/02): **la guardia de presencia física
+en el centro es tiempo de trabajo en su totalidad** a efectos de jornada máxima y
+descansos, se atienda a alguien o se pase la noche sin que suene nada. La
+localizada no, salvo la atención efectiva ---y esa se ficha como jornada, así que
+ya contaba---.
+
+Medido en el producto: quien hacía cuarenta horas de jornada y dos guardias de
+veinticuatro figuraba con **cuarenta horas** habiendo pasado ochenta y ocho en el
+hospital.
+
+**Lo que se hizo, y lo que expresamente no.** Un aviso al pasar de las cuarenta y
+ocho horas semanales del art. 6.b de la Directiva 2003/88, solo con el régimen de
+sanidad declarado. **No se tocó `counts_as_work`.** Cambiarlo según la empresa
+habría movido lo que se cobra y lo que dice el informe ---cifras que nadie ha
+pedido mover--- y habría borrado del registro la distinción que el art. 3.g
+obliga a anotar. El tope no lleva apagado por regla de empresa, a diferencia de
+las veinte horas del transporte: aquellas son disponibles para el convenio y
+estas cuarenta y ocho son suelo de la Directiva.
+
+**El diseño se cambió a mitad de camino, y esa es la lección de la vuelta.** La
+primera versión leía cada día con `build_day_status`, la pieza que ya sabe
+descontar pausas y separar la presencia. Era la opción limpia y no duplicaba
+nada. No servía, por el caso que precisamente había que medir: **una guardia son
+veinticuatro horas y cruza la medianoche**. Esa pieza recorta los eventos al día,
+así que el primero ve una entrada que nunca se cierra y el segundo una salida que
+no abre nada: la guardia entera contaba cero en los dos. Se empareja sobre el
+rango completo, con la pila por tipo de intervalo y restando las pausas a mano.
+
+Lo cazó una prueba escrita para otra cosa. Sin ella, el chequeo habría quedado
+diciendo que mide guardias y midiendo solo las que caben en un día.
+
+**Cuatro contrastes, y uno no contrastó.** Que la presencia no cuente: 4 rojas.
+Que el tramo se corte por día: 1 roja, la de la medianoche. Que el aviso salga en
+cualquier régimen: 2 rojas. Que la pausa no se reste: **10 en verde**. Esa prueba
+no medía nada: la persona no tenía ni un fichaje de presencia, así que se salía
+por el primer filtro del chequeo y la suma no se ejecutaba nunca. Es el mismo
+error que ya había pasado en la prueba del transporte, con el mismo remedio:
+darle a la persona lo que hace falta para llegar hasta donde se suma.
+
+**Y el defecto que salió al correr el CI entero.** La prueba de la semilla de la
+vuelta anterior siembra con `django_db_blocker.unblock()`, que abre la base de
+datos de verdad, fuera de la transacción que pytest-django da a cada prueba.
+Catorce personas y mil fichajes se quedaban puestos para todo lo que viniera
+detrás. En verde ejecutando ese fichero solo; **once rojas al correr los ocho
+pasos del CI**, en los barridos de aislamiento, que cuentan filas de todas las
+empresas y esperaban dos donde había siete. Arreglado con un savepoint que se
+deshace al terminar el módulo.
+
+**Traducciones, que estaban peor de lo que decía el guard.** Al extraer el
+mensaje nuevo aparecieron dieciséis heredados de la vuelta anterior sin traducir
+en catalán y gallego ---los trece regímenes del real decreto y los dos del art.
+34.2---, y cuatro marcados `fuzzy` en los tres idiomas, que `msgfmt` omite del
+`.mo`: se veían traducidos en el `.po` y salían en inglés. Dos de ellos con
+huecos que no eran los del original ---`%(days)s` donde el mensaje dice
+`%(hours)s`---, o sea un `KeyError` en cuanto alguien de Cataluña o Galicia
+llegara a ese aviso. Todo puesto y los guards en verde.
+
+**Cierre:** ocho pasos del CI en verde con 1.439 pruebas, suite de navegador
+aparte, fila del inventario movida a Cubierto, dossier en la 1.29.
+
 ### Vuelta 159 --- El tiempo de presencia, y el régimen que faltaba (28/08)
 
 **11 de 13**, y una de ellas ---las jornadas por sector--- baja de «Falta» a «A
