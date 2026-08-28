@@ -4886,3 +4886,19 @@ Queda propuesto en el cuaderno un trinquete: que el número de cadenas sin
 traducir **no suba** y que los `fuzzy` sigan a cero. No puede exigir cero hoy
 ---hay 143 huecos viejos en catalán--- pero sí puede impedir que crezca, que es
 lo que ha pasado estas vueltas.
+
+## 294. El guard mira el disco, no lo que subes
+
+Subí `gl.json` y me dejé `ca.json` en el mismo commit. En local no se nota nada:
+`npm run i18n:check` lee los ficheros del disco, los dos están completos y sale
+verde. En el repositorio, el catalán se quedaba sin las quince cadenas del fijo
+discontinuo, y quien clonara vería el guard en rojo sin haber tocado nada.
+
+Es la [[283]] otra vez, en otro plano: **dos ficheros que solo tienen sentido
+juntos y se dejan divergir**. Allí eran dos listas de idiomas en dos pantallas;
+aquí, dos catálogos hermanos en dos rutas.
+
+La comprobación cuesta un vistazo y la hago siempre **antes** del push, no
+después: `git status --short`. Si queda suelto el hermano de algo que acabo de
+subir, falta un `git add`. Aquí saltó a la vista porque el push imprimió el
+fichero pendiente justo debajo; no siempre va a ser tan amable.
