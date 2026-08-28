@@ -369,6 +369,65 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 158 --- El saldo del art. 34.2, y qué parte del descarte seguía en pie (28/08)
+
+La fila estaba **descartada a propósito** desde hace vueltas, así que lo primero
+fue releer el descarte. Decía dos cosas y hay que separarlas, porque solo una se
+ha caído.
+
+**Motivo uno: el plazo solo rige «en defecto de pacto».** Cierto, y el propio
+descarte señalaba la salida: «hace falta antes un sitio donde la empresa declare
+si tiene pacto». Ese sitio es `WorkingTimeRules`, donde ya viven las demás cifras
+que el convenio puede cambiar. Ahora el plazo se declara ---doce meses por
+defecto, que es el legal--- y **un cero apaga la cuenta**, porque hay convenios
+que remiten a un cómputo distinto y forzar un número inventado sería peor que
+callar.
+
+**Motivo dos: falta la distribución ordinaria contra la que comparar.** Sigue en
+pie, y sigue siendo la razón de que el **10 % del párrafo primero** no se
+calcule. Pero **no alcanza al saldo**, y ahí está lo que costó ver.
+
+---
+
+## Lo que decidió el diseño: la jornada anual ya viene neta
+
+Empecé el cálculo contra la jornada **semanal** y a mitad de camino salió el
+problema que lo habría invalidado entero: **las vacaciones**. Quien tiene
+veintidós días de vacaciones trabaja unas 176 horas menos que su jornada
+nominal, y una resta contra «40 × 52» le habría puesto una deuda de ciento y
+pico horas que no debe. Un falso positivo del tamaño de una casa, y en todas las
+plantillas a la vez.
+
+La salida no era descontar las ausencias a mano ---ahí se vuelve al motivo dos:
+la referencia saldría del cuadrante, que es lo que se quiere medir--- sino mirar
+**qué cifra ya viene neta**:
+
+- Una jornada pactada **por año** ---«1.700 horas», como lo escriben muchos
+  convenios--- ya lleva las vacaciones y los festivos descontados. Restarla de lo
+  trabajado es honesto.
+- Una jornada **semanal** no. Y con ella **no se contesta**, en vez de contestar
+  una resta que suma vacaciones como si fueran horas debidas.
+
+Hay prueba para ese falso positivo concreto, y es la que más vale del fichero.
+
+---
+
+**Se avisa por exceso y por defecto**, que es lo que dice el artículo. Trabajar
+de menos también es una diferencia que compensar, y a quien la tiene le interesa
+saberlo antes de que se la reclamen de golpe.
+
+**Y un fallo que cazó una prueba de contraste**, no yo: calculaba el año a
+cuadrar restando uno fijo. Con un convenio de veinticuatro meses hay que
+retroceder **dos** ---en agosto de 2026, ni 2025 ni 2024 han vencido, y toca
+2023---. La prueba del plazo doble lo dijo a la primera; ahora se busca hacia
+atrás hasta encontrar el año cuyo plazo pasó de verdad.
+
+**La fila del inventario se queda en «A medias» a propósito**, y esta vez la
+mitad que falta está escrita: el saldo está, el 10 % no.
+
+**Cifras al cerrar:** los ocho pasos del CI en verde, 1.418 pruebas de backend y
+310 de navegador.
+
 ### Vuelta 157 --- El relevo y la jubilación parcial, que son una pieza (28/08)
 
 **9 de 13.** Dos filas de golpe, como los formativos, y por la misma razón: no se
@@ -8115,6 +8174,12 @@ Lo del 13/08/2026, antes de arrancar el bucle, está en
 - **El 10 % anual del art. 34.2.** «En defecto de pacto, la empresa podrá
   distribuir de manera irregular a lo largo del año el diez por ciento de la
   jornada.» No se calcula, y es una decisión, no un olvido.
+
+  **Al día 28/08/2026:** el primero de los dos motivos se ha caído ---el plazo
+  lo declara ahora la empresa--- y con él se ha podido hacer **el saldo de
+  compensación**, que es el párrafo tercero del mismo artículo. El 10 % de este
+  párrafo sigue sin calcularse por el segundo motivo, que es el de abajo y no ha
+  cambiado.
 
   Dos motivos. Uno: el tope solo rige **en defecto de pacto**, y el producto no
   sabe si hay convenio o acuerdo de empresa que regule la distribución --- que es

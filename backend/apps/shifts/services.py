@@ -286,6 +286,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     findings.extend(_check_training_contract(company, rules, first, last, employee))
     findings.extend(_check_adaptation_deadline(company, first, last, employee))
     findings.extend(_check_relief_contracts(company, rules, first, last, employee))
+    findings.extend(_check_irregular_balance(company, first, last, employee))
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -1064,6 +1065,64 @@ JUBILACION_MAXIMA_CON_RELEVO_ENTERO = 75.0
 
 #: El código con el que el catálogo español siembra la jubilación parcial.
 JUBILACION_PARCIAL = "es.partial_retirement"
+
+
+def _check_irregular_balance(company, first, last, employee) -> list[Finding]:
+    """Horas de un año ya vencido que siguen sin compensar (art. 34.2).
+
+    Solo para quien tiene la jornada pactada **por año**, que es donde la cifra
+    viene neta de vacaciones y festivos y la resta es honesta. Con jornada
+    semanal no se contesta: ver `apps.punches.irregular`.
+
+    Se avisa en los dos sentidos, y eso importa. El exceso es lo que suele
+    mirarse, pero el artículo dice «por exceso **o por defecto**»: haber
+    trabajado de menos también es una diferencia que hay que compensar, y a
+    quien la tiene le interesa saberlo antes de que alguien se la reclame de
+    golpe.
+    """
+    from apps.punches.irregular import irregular_balance
+    from apps.users.models import HoursPeriod, User
+
+    quienes = User.objects.filter(
+        tenant=company,
+        is_active=True,
+        contracted_period=HoursPeriod.YEAR,
+        contracted_hours__isnull=False,
+    )
+    if employee is not None:
+        quienes = quienes.filter(pk=employee.pk)
+
+    found: list[Finding] = []
+    for person in quienes:
+        saldo = irregular_balance(employee=person, company=company, day=last)
+        if not saldo or saldo["settled"]:
+            continue
+        cuantas = saldo["balance_hours"]
+        found.append(
+            Finding(
+                day=last,
+                employee_id=person.id,
+                code="irregular_hours_unsettled",
+                message=(
+                    _(
+                        "%(hours)s h over the %(agreed)s h agreed for %(year)s, and art. "
+                        "34.2 gives %(months)s months to settle them."
+                    )
+                    if cuantas > 0
+                    else _(
+                        "%(hours)s h under the %(agreed)s h agreed for %(year)s, and art. "
+                        "34.2 gives %(months)s months to settle them."
+                    )
+                )
+                % {
+                    "hours": f"{abs(cuantas):.1f}",
+                    "agreed": f"{saldo['agreed_hours']:g}",
+                    "year": saldo["year"],
+                    "months": saldo["months"],
+                },
+            )
+        )
+    return found
 
 
 def _check_relief_contracts(company, rules, first, last, employee) -> list[Finding]:

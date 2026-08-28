@@ -47,6 +47,7 @@ SIN_CITA = {
         "training_hours_over_the_cap": "el tope 65/85 es del ET",
         "adaptation_answer_overdue": "el plazo de quince días es del ET",
         "partial_retirement_out_of_range": "la horquilla del 25 al 50 es del ET",
+        "irregular_hours_unsettled": "el plazo de compensación es del ET",
         "relief_hours_below_the_reduction": "el contrato de relevo es del ET",
         "relief_without_partial_retirement": "el contrato de relevo es del ET",
         "training_kind_not_stated": "los dos formativos son del ET",

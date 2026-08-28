@@ -87,7 +87,7 @@ empresa de trabajo temporal.
 | Trabajo a turnos rotativos | art. 36.3 | **Cubierto**, con la reducción del relevo y su devolución |
 | Trabajo nocturno | art. 36.1 | **Cubierto**: la condición, el promedio de 8 h en 15 días y el tope de dos semanas |
 | Jornada reducida por guarda legal | art. 37.6 | **Cubierto.** Se pide como cualquier otra solicitud, con **cuánto se reduce** y entre qué fechas. El cuadrante y el cotejo pasan a medirse contra la jornada reducida, y **se acaba sola** el día que termina el derecho. Si la reducción se sale de la horquilla del artículo ---de un octavo a la mitad--- se avisa, no se impide |
-| Distribución irregular | art. 34.2 | **A medias.** Se marca el fichaje, pero no hay saldo: el 10 % se compensa en 12 meses y nadie lleva la cuenta |
+| Distribución irregular | art. 34.2 | **A medias.** El **saldo** ya se lleva: las diferencias de un año cuyo plazo venció se avisan, por exceso y por defecto, con el plazo que declare la empresa ---12 meses en defecto de pacto---. Solo con jornada pactada **por año**, que es la única cifra que viene neta de vacaciones. El **10 % del párrafo primero** sigue sin calcularse a propósito |
 | Adaptación de jornada | art. 34.8 | **Cubierto.** Se pide desde «Mi jornada» y se contesta desde «Por decidir», con el plazo de quince días a la vista. La respuesta que no es un sí ---también la alternativa--- **pide el motivo antes de mandarla**, y el servidor lo exige igual. Retirar la propia es de quien la pidió |
 | Horas extraordinarias | art. 35 | **Cubierto.** Se marcan, se dice cómo se saldan y el tope anual se contrasta con lo autorizado: la pantalla de decisiones avisa al pasarse, descontando las compensadas con descanso y las de fuerza mayor |
 | Horas complementarias | art. 12.5 | **Cubierto.** El tope se acumula contra lo trabajado y se avisa al pasarse. Va sobre **el periodo del contrato** ---semana, mes o año---, que es lo que dice el art. 12.5.c: el 30 % de «las horas ordinarias objeto del contrato». Un contrato de 800 h al año tiene 240 complementarias al año, no 20 al mes |
@@ -371,6 +371,15 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 6 | **Jornadas especiales por sector** (RD 1561/1995): quince regímenes con reglas propias. Hoy la empresa ajusta sus cifras a mano ---funciona, pero no deja dicho **por qué** se apartó de la regla general--- | **Semanas, no días.** Es lo más grande de la lista con diferencia, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
 
 ### Hecho desde que se escribió esta lista
+
+- **El saldo de la distribución irregular** (art. 34.2, 28/08/2026), *la mitad
+  que se puede calcular*. Estaba descartado por dos motivos y uno se ha caído:
+  el plazo ahora lo declara la empresa, así que ya no hay que suponerlo. El otro
+  ---que falta la distribución ordinaria contra la que comparar--- sigue en pie
+  para el 10 %, y no alcanza al saldo **si la jornada se pactó por año**: esa
+  cifra ya viene neta de vacaciones y festivos, y restarla es honesto. Con
+  jornada semanal no se contesta, porque 40 × 52 son 2.080 horas que no trabaja
+  nadie y la resta convertiría las vacaciones en una deuda.
 
 - **El relevo y la jubilación parcial** (arts. 12.7 y 12.6, 28/08/2026), que son
   una sola pieza: la cifra que el 12.7 compara ---la jornada del relevo contra lo

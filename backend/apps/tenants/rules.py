@@ -166,6 +166,30 @@ class WorkingTimeRules(BaseModel):
         help_text=_("Days of notice before a roster change."),
     )
 
+    #: En cuánto tiempo hay que compensar lo que se trabaja de más o de menos
+    #: por distribución irregular de la jornada.
+    #:
+    #: **Es de la empresa y no nuestra.** El art. 34.2 dice que la compensación
+    #: «será exigible según lo acordado en convenio colectivo o, a falta de
+    #: previsión al respecto, por acuerdo entre la empresa y los representantes
+    #: de los trabajadores», y solo **en defecto de pacto** pone los doce meses.
+    #: Así que el número por defecto es el legal y el convenio lo cambia.
+    #:
+    #: Este campo es el sitio que faltaba. La cuenta del saldo se descartó en su
+    #: día ---y con razón--- porque el producto no sabía si había pacto, y decir
+    #: «te quedan tantas horas» a una empresa cuyo convenio dice otra cosa es
+    #: decir algo falso con aire de dato. Preguntándolo, deja de serlo.
+    #:
+    #: Un cero apaga la comprobación: hay convenios que remiten a un cómputo
+    #: distinto del plazo, y forzar un número inventado sería peor que callar.
+    irregular_settlement_months = models.PositiveSmallIntegerField(
+        _("settle irregular hours within (months)"),
+        default=12,
+        help_text=_(
+            "Art. 34.2 ET, unless the collective agreement says otherwise. 0 turns it off."
+        ),
+    )
+
     # La frontera entre «cerró tarde» y «se olvidó de fichar la salida». No la
     # fija ningún artículo, y por eso es de la empresa y no nuestra.
     #

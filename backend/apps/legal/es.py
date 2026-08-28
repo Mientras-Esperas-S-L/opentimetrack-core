@@ -115,6 +115,13 @@ ESPANA = LegalFramework(
             # convenio que lo permita.
             ceiling=60,
         ),
+        "irregular_settlement_months": Citation(
+            "Art. 34.2 ET",
+            "Las diferencias por exceso o por defecto se compensan según lo que "
+            "diga el convenio y, **en defecto de pacto**, en doce meses. Por eso "
+            "el número lo pone la empresa: preguntarlo es lo que distingue una "
+            "cuenta de una suposición.",
+        ),
         "roster_notice_days": Citation(
             "Art. 34.2 ET",
             "Cinco días de preaviso para la distribución irregular de la jornada. El "
@@ -144,6 +151,13 @@ ESPANA = LegalFramework(
         # No es un incumplimiento: las horas por encima de lo pactado en jornada
         # parcial son complementarias, lícitas y con su propio tope.
         "over_contracted_hours": Citation("Art. 12.5 ET"),
+        "irregular_hours_unsettled": Citation(
+            "Art. 34.2 ET",
+            "«Las diferencias derivadas de la distribución irregular de la "
+            "jornada deberán quedar compensadas en el plazo de doce meses desde "
+            "que se produzcan», salvo que el convenio diga otro plazo. Por "
+            "exceso **y por defecto**: las dos son diferencias.",
+        ),
         "partial_retirement_out_of_range": Citation(
             "Art. 12.6 ET",
             "La jornada se reduce entre un 25 % y un 50 %, o hasta un 75 % cuando "

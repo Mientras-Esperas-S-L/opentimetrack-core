@@ -5293,3 +5293,54 @@ Están todas juntas en el `export default function`, cuesta un `sed`, y es la
 Y el corolario que sí me salvó aquí: **la regla de verdad iba en el servidor**.
 La pantalla puede ayudar a no equivocarse, pero lo que impide que alguien se
 releve a sí mismo tiene que estar donde no se puede saltar.
+
+## 309. Un descarte tiene motivos, y no todos caducan a la vez
+
+El saldo del art. 34.2 llevaba vueltas descartado, con dos motivos escritos. Al
+volver a él, lo útil no fue decidir si el descarte «seguía valiendo» ---esa
+pregunta no tiene buena respuesta--- sino **separar los dos motivos y mirarlos
+uno a uno**:
+
+- «El plazo solo rige en defecto de pacto y no sabemos si lo hay» → se cayó, y el
+  propio descarte decía cómo: preguntándolo.
+- «Falta la distribución ordinaria contra la que comparar» → sigue en pie, y
+  sigue impidiendo **una parte** de lo descartado.
+
+El resultado no es «se hace» ni «no se hace», sino la mitad que se puede hacer,
+con la otra mitad escrita al lado y el descarte original **matizado donde está**,
+no borrado: quien lo lea dentro de un año tiene que encontrar qué cambió y qué
+no.
+
+**La regla:** un descarte con varios motivos es varias decisiones juntas. Al
+revisarlo, contarlas y mirarlas por separado; si se tratan como una sola, o se
+tira un razonamiento que seguía siendo bueno, o se deja sin hacer algo que ya se
+podía.
+
+## 310. La cifra que ya viene neta
+
+Iba a calcular el saldo anual contra la jornada **semanal** ---40 h × 52--- y a
+mitad de camino apareció lo que lo invalidaba: **las vacaciones**. Veintidós días
+son unas 176 horas menos, así que la resta le habría puesto una deuda de ciento y
+pico horas a cada persona de cada plantilla. Todas falsas.
+
+La salida no fue descontar ausencias a mano ---eso lleva a necesitar una
+referencia que no existe--- sino preguntarse **qué cifra ya lleva el descuento
+hecho**:
+
+- «1.700 horas al año», como lo escriben los convenios, **ya es neta**: es lo que
+  se trabaja, vacaciones y festivos fuera.
+- «40 horas a la semana» es bruta, y multiplicarla por 52 produce un número que
+  no le corresponde a nadie.
+
+Así que el saldo solo se contesta con jornada pactada por año, y con la semanal
+se devuelve `None`.
+
+**La regla:** antes de multiplicar o dividir una cifra pactada para llevarla a
+otro periodo, preguntarse **qué incluye ya**. Una cifra anual y una semanal del
+mismo contrato no son la misma magnitud en distinta escala: la anual ha pasado
+por descuentos que la semanal no. Convertir entre ellas parece aritmética y es
+una suposición.
+
+Y la señal para verlo a tiempo: el número convertido salía **redondo y grande**
+---2.080--- donde el real es irregular y menor. Un total que nadie reconocería al
+verlo es un total que no es de nadie.
