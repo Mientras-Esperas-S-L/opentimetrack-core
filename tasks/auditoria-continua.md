@@ -369,6 +369,59 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 166 --- El festivo trabajado, segunda fuente del saldo (28/08)
+
+Al empezar: 4 «A medias» y 9 «Falta».
+
+**Elegida por lo que más se nota:** trabajar un festivo pasa en cualquier empresa
+con turnos, comercio, hostelería o sanidad, y el aviso del cuadrante ya lo decía
+desde hace tiempo. Lo que faltaba era llevar la cuenta.
+
+**La pregunta que trae, y que tienen todas las compensaciones que quedan: cuánto
+se debe.** El art. 37.2 hace los catorce días retribuidos y no recuperables, y
+trabajar uno es lícito, pero **no dice cómo se compensa**: eso lo fija el
+convenio. Así que la empresa declara dos cosas ---si compensa con descanso o con
+dinero, y cuántas horas de descanso por hora trabajada--- y **mientras no lo
+declare no se lleva ningún saldo**. Una cifra inventada se leería como la del
+convenio. Hay prueba de las dos direcciones: sin declarar, nada; declarado como
+dinero, tampoco ---y no son lo mismo, aunque las dos den cero---.
+
+**Se cuenta lo fichado, no lo planificado.** El cuadrante avisa desde que se
+asigna el turno, y hace bien: es cuando alguien puede cambiarlo. Pero la
+compensación se debe por haber trabajado el día, y quien tenía turno un festivo y
+estuvo de baja no ha ganado ningún descanso.
+
+**Y con dos fuentes apareció una decisión que con una sola no existía.** Restar lo
+devuelto dentro de cada fuente lo contaría **dos veces**: un descanso disfrutado
+salda deuda y no dice de cuál, y repartirlo exigiría una regla de imputación que
+nadie ha acordado. Así que las fuentes dicen lo que **generan** ---con su artículo
+y su plazo--- y la resta se hace una vez, sobre el total. Eso obligó a rehacer el
+contrato de ayer: `overtime_rest_debt` se parte en «lo debido» y el agregado
+`rest_debt` hace la cuenta. Las diez pruebas de ayer siguen en verde, adaptadas.
+
+**Un defecto de UX, y se vio en la pantalla y no en el código.** Con las dos
+fuentes el total llevaba la fecha de las horas extra:
+
+> Te quedan **12 h** de descanso por disfrutar, hasta el 14 dic 2026.
+
+De esas doce solo vencen cuatro; el festivo no vence, porque el art. 37.2 no da
+plazo. Ahora cada plazo va con lo suyo:
+
+> Te quedan 12 h de descanso por disfrutar.
+> 4 h de horas extra, hasta el 14 dic 2026 (Art. 35.1 ET).
+> 8 h de festivos trabajados, sin plazo (Art. 37.2 ET).
+
+**Y la semilla, otra vez.** El festivo trabajado lo había creado a mano para
+mirarlo, así que la prueba de navegador se habría caído en cuanto alguien
+resembrase. La demostración lo genera ahora, con la regla declarada, y hay guard:
+sin un caso de cada fuente, esa pantalla no aparece en ninguna demostración.
+
+**Nueve contrastes, los nueve rojos.**
+
+**Cierre:** ocho pasos del CI en verde con 1.500 pruebas, suite de navegador
+aparte, dos filas movidas a Cubierto, dossier en la 1.35. El recuento pasa de
+98/4/9 a **100/4/7 de 111**, contado de las filas.
+
 ### Vuelta 165 --- Las tres reducciones que faltaban (28/08)
 
 Al empezar: 4 «A medias» y 12 «Falta».

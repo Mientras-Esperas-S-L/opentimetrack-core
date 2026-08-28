@@ -145,6 +145,12 @@ class Command(BaseCommand):
 
         with tenant_context(company.id):
             rules = WorkingTimeRules.for_company(company)
+            # Los festivos trabajados se compensan con descanso. Sin declararlo
+            # el producto no lleva saldo ---el art. 37.2 no dice cómo se
+            # compensa, lo dice el convenio--- y esa pantalla no aparecería
+            # nunca en una demostración.
+            rules.holiday_worked_compensation = WorkingTimeRules.HOLIDAY_REST
+            rules.save(update_fields=["holiday_worked_compensation"])
             sites = self._workplaces(company)
             departments = self._departments(company)
             people = self._people(company, departments, sites)
@@ -154,9 +160,45 @@ class Command(BaseCommand):
             seed_leave_types(company)
             self._absences(company, people)
             self._corrections(company, people)
+            self._worked_holiday(company, people)
 
         self._neighbour()
         self._report(company, people, rules)
+
+    def _worked_holiday(self, company, people):
+        """Un festivo que alguien trabajó, para que el saldo del art. 37.2 se vea.
+
+        Es el mismo motivo por el que la semilla genera horas extra a compensar
+        con descanso: sin un solo caso, la pantalla que lo cuenta no aparece en
+        ninguna demostración y la función no se puede enseñar.
+
+        Se ficha de verdad ---no basta con poner el turno---: la compensación se
+        debe por haber trabajado el día, no por haberlo tenido previsto.
+        """
+        from apps.tenants.models import HolidayScope, PublicHoliday
+
+        quien = people.get("worker")
+        if quien is None:
+            return
+
+        day = timezone.localdate() - timedelta(days=13)
+        PublicHoliday.objects.get_or_create(
+            tenant=company,
+            day=day,
+            defaults={"name": "Fiesta local", "scope": HolidayScope.NATIONAL},
+        )
+
+        zone = company.tzinfo
+        entered = datetime.combine(day, time(9, 0), tzinfo=zone)
+        left = entered + timedelta(hours=8)
+        for moment, kind in ((entered, PunchType.IN), (left, PunchType.OUT)):
+            Punch.objects.create(
+                tenant=company,
+                employee=quien,
+                timestamp=moment,
+                punch_type=kind,
+                source=PunchSource.WEB,
+            )
 
     def _neighbour(self):
         """Una segunda empresa, mínima, para que el aislamiento sea comprobable.

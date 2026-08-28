@@ -255,6 +255,38 @@ class WorkingTimeRules(BaseModel):
         ),
     )
 
+    #: Cómo se compensa un festivo trabajado, cuando la empresa lo ha decidido.
+    #:
+    #: Vacío **no es un descuido**: el art. 37.2 hace los catorce días retribuidos
+    #: y no recuperables, y trabajar uno es lícito, pero **no dice cómo se
+    #: compensa** ---eso lo fija el convenio---. Sin declararlo no se lleva
+    #: ningún saldo, porque no habría de dónde sacar la cifra.
+    HOLIDAY_REST = "REST"
+    HOLIDAY_PAID = "PAID"
+
+    holiday_worked_compensation = models.CharField(
+        _("a public holiday worked is made up with"),
+        max_length=8,
+        blank=True,
+        default="",
+        choices=[(HOLIDAY_REST, _("rest")), (HOLIDAY_PAID, _("pay"))],
+        help_text=_(
+            "Art. 37.2 ET does not say: the collective agreement does. Empty means "
+            "nothing is tracked, because there would be no figure to track it with."
+        ),
+    )
+
+    holiday_rest_multiplier = models.DecimalField(
+        _("hours of rest per hour worked on a holiday"),
+        max_digits=4,
+        decimal_places=2,
+        default=1,
+        help_text=_(
+            "1 gives back the same time; agreements often say 1.5 or 1.75. Only used "
+            "when holidays are made up with rest."
+        ),
+    )
+
     overtime_rest_days = models.PositiveSmallIntegerField(
         _("give back overtime rest within (days)"),
         default=120,

@@ -1148,7 +1148,7 @@ def _check_overtime_rest_overdue(company, rules, first, last, employee) -> list[
     a los cuatro meses es ruido durante cuatro meses.
     """
     from apps.punches.models import HoursNature, OvertimeSettlement, Punch
-    from apps.punches.rest_debt import RUIDO_HORAS, overtime_rest_debt
+    from apps.punches.rest_debt import RUIDO_HORAS, rest_debt
     from apps.users.models import User
 
     quienes = User.objects.filter(
@@ -1166,7 +1166,7 @@ def _check_overtime_rest_overdue(company, rules, first, last, employee) -> list[
 
     found: list[Finding] = []
     for person in quienes:
-        saldo = overtime_rest_debt(employee=person, company=company, day=last)
+        saldo = rest_debt(employee=person, company=company, day=last)
         if not saldo or saldo["overdue_hours"] <= RUIDO_HORAS:
             continue
         found.append(
@@ -1178,7 +1178,13 @@ def _check_overtime_rest_overdue(company, rules, first, last, employee) -> list[
                     "%(hours)s h of overtime to be given back as rest are past the "
                     "%(days)s-day deadline."
                 )
-                % {"hours": f"{saldo['overdue_hours']:.1f}", "days": saldo["days"]},
+                # El plazo sale de la fuente que lo tiene, no del agregado: el
+                # festivo trabajado no lleva ninguno y el del art. 35.1 sí, y
+                # decir «se ha pasado el plazo de 0 días» no significa nada.
+                % {
+                    "hours": f"{saldo['overdue_hours']:.1f}",
+                    "days": max(f["days"] for f in saldo["sources"]),
+                },
             )
         )
     return found

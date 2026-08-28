@@ -239,7 +239,7 @@ espera jornada»: la persona sigue viniendo, por menos tiempo.
 | Los dos locales | 37.2 | **Cubierto** — a mano por centro, que es la única forma: no hay registro nacional legible |
 | Un festivo no consume vacaciones | 38.1 | **Cubierto** — una semana con un festivo dentro cuesta cuatro días |
 | Trabajar un festivo se avisa | 37.2 | **Cubierto** — no se impide: es lícito y genera compensación |
-| Compensación por festivo trabajado | 37.2 | **Falta** — se avisa de la deuda, no se lleva el saldo. Ver §8 |
+| Compensación por festivo trabajado | 37.2 | **Cubierto.** Con una condición que es la mitad del asunto: **la empresa declara cómo compensa** un festivo trabajado ---con descanso o con dinero--- y cuántas horas de descanso por hora trabajada. El art. 37.2 hace los catorce días retribuidos y no recuperables y trabajar uno es lícito, pero **no dice cómo se compensa**: eso lo fija el convenio. Sin declararlo no se lleva saldo, porque no habría de dónde sacar la cifra. Se cuenta **lo fichado, no lo planificado**: quien tenía turno un festivo y estuvo de baja no ha ganado ningún descanso. Y no lleva plazo, porque el artículo no da ninguno |
 
 El calendario de 2026 que viene en el repositorio lleva los ocho nacionales con
 las fechas comprobadas y **está marcado como no verificado**: falta transcribir
@@ -283,7 +283,7 @@ con más frecuencia: la regla se comprueba, pero **el saldo no se lleva**.
 | Compensación de horas extra con descanso | 35.1 | 4 meses | **Cubierto.** Lo que se debe sale de los fichajes ---cada hora extra dice desde el primer día si se salda con dinero o con descanso, art. 3.f--- y lo devuelto se anota como **descanso compensatorio**. El saldo dice cuánto queda **y hasta cuándo**, y avisa cuando el plazo pasó. Un día entero de descanso vale lo que ese día tocaba trabajar, leído del cuadrante; sin turno previsto **no se estima**, se dice cuántos días quedaron sin convertir. El plazo lo declara la empresa y un cero lo apaga |
 | Compensación de la distribución irregular | 34.2 | 12 meses | **Falta.** El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
 | Compensación de nocturnidad con descansos | 36.2 | Convenio | **Falta.** El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
-| Compensación por festivo trabajado | 37.2 | Convenio | **Falta.** El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
+| Compensación por festivo trabajado | 37.2 | Convenio | **Cubierto.** Con una condición que es la mitad del asunto: **la empresa declara cómo compensa** un festivo trabajado ---con descanso o con dinero--- y cuántas horas de descanso por hora trabajada. El art. 37.2 hace los catorce días retribuidos y no recuperables y trabajar uno es lícito, pero **no dice cómo se compensa**: eso lo fija el convenio. Sin declararlo no se lleva saldo, porque no habría de dónde sacar la cifra. Se cuenta **lo fichado, no lo planificado**: quien tenía turno un festivo y estuvo de baja no ha ganado ningún descanso. Y no lleva plazo, porque el artículo no da ninguno |
 | Descanso compensatorio por ampliación sectorial | RD 1561/1995 | Según sector | **Falta.** El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
 
 El patrón se repetía en las seis: sabíamos decir «esto se aparta de la regla» y
@@ -378,6 +378,25 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 6 | **Las cifras de cada sector** (RD 1561/1995). Lo que quedaba de esta fila y sigue fuera a propósito: quince cifras por cada uno de los trece regímenes, cada sector con su convenio encima. Que los avisos citen el régimen declarado **ya está** desde el 28/08 | **Semanas**, y conviene partirlo por sector empezando por el que tenga un cliente esperando. No es trabajo pendiente sino una decisión de producto: mientras no haya un cliente de un sector concreto, traer sus cifras es inventar |
 
 ### Hecho desde que se escribió esta lista
+
+- **La compensación por festivo trabajado** (art. 37.2, 28/08/2026), segunda
+  fuente del saldo de descanso.
+
+  Trae consigo la pregunta que tienen todas las demás compensaciones: **cuánto se
+  debe**. El artículo hace los catorce días retribuidos y no recuperables, y
+  trabajar uno es lícito, pero no dice cómo se compensa ---eso lo fija el
+  convenio---. Así que la empresa declara si compensa con descanso o con dinero y
+  con qué equivalencia, y **mientras no lo declare no se lleva ningún saldo**: una
+  cifra inventada se leería como la del convenio.
+
+  Se cuenta **lo fichado y no lo planificado**. El cuadrante ya avisaba desde que
+  se asigna el turno ---y hace bien, es cuando alguien puede cambiarlo--- pero la
+  compensación se debe por haber trabajado el día.
+
+  Y con dos fuentes apareció una decisión que con una sola no existía: **lo
+  devuelto se resta una vez, del total**. Un descanso disfrutado salda deuda y no
+  dice de cuál; repartirlo entre las fuentes exigiría una regla de imputación que
+  nadie ha acordado, y restarlo de cada una lo contaría dos veces.
 
 - **Las tres reducciones que faltaban** (arts. 37.5, 37.6 párrafo 3.º y 37.8,
   28/08/2026), sobre la maquinaria que quedó montada al arreglar la lactancia.

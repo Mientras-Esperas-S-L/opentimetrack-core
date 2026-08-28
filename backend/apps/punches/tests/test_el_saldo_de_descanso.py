@@ -9,6 +9,15 @@ decirlo--- y no sabía **si** se había saldado. Es el patrón que más se repet
 lo que quedaba del inventario: decir «esto se aparta de la regla» y no decir «y
 quedan cuatro horas por devolver antes del 9 de septiembre».
 
+Desde el 28/08 por la tarde el saldo es **agregado**: `rest_debt` suma lo que
+generan todas las fuentes ---por ahora, las horas extra del art. 35.1 y el
+festivo trabajado del art. 37.2--- y resta **una sola vez** lo devuelto. Un
+descanso disfrutado salda deuda y no dice de cuál, así que repartirlo entre las
+fuentes exigiría una regla de imputación que nadie ha acordado, y restarlo de cada
+una lo contaría dos veces. Estas pruebas siguen midiendo la fuente del art. 35.1,
+que es la única que tienen delante: sin festivos declarados como compensables con
+descanso, la segunda no aporta nada.
+
 Dos decisiones que se ven mejor aquí que en el código:
 
 - **Se deriva, no se guarda.** La deuda está en los fichajes y lo devuelto en las
@@ -34,7 +43,7 @@ from apps.punches.models import (
     Punch,
     PunchType,
 )
-from apps.punches.rest_debt import DESCANSO_COMPENSATORIO, overtime_rest_debt
+from apps.punches.rest_debt import DESCANSO_COMPENSATORIO, rest_debt
 from apps.shifts.models import Shift
 from apps.tenants.models import Tenant
 from apps.tenants.rules import WorkingTimeRules
@@ -115,7 +124,7 @@ def test_sin_horas_extra_no_hay_saldo(company, quien):
     no dice nada. Se contesta `None` y no se enseña.
     """
     with tenant_context(company.id):
-        assert overtime_rest_debt(employee=quien, company=company, day=HOY) is None
+        assert rest_debt(employee=quien, company=company, day=HOY) is None
 
 
 @pytest.mark.django_db
@@ -127,7 +136,7 @@ def test_las_horas_extra_pagadas_no_deben_descanso(company, quien):
     """
     with tenant_context(company.id):
         extra(company, quien, HOY - timedelta(days=10), 4, settlement=OvertimeSettlement.PAID)
-        assert overtime_rest_debt(employee=quien, company=company, day=HOY) is None
+        assert rest_debt(employee=quien, company=company, day=HOY) is None
 
 
 @pytest.mark.django_db
@@ -137,11 +146,11 @@ def test_lo_que_se_debe_y_lo_que_queda(company, quien, descanso):
         extra(company, quien, HOY - timedelta(days=10), 4)
         devuelve(company, quien, descanso, HOY - timedelta(days=2), desde="09:00", hasta="10:30")
 
-        saldo = overtime_rest_debt(employee=quien, company=company, day=HOY)
+        saldo = rest_debt(employee=quien, company=company, day=HOY)
         assert saldo["owed_hours"] == 4
         assert saldo["settled_hours"] == 1.5
         assert saldo["remaining_hours"] == 2.5
-        assert saldo["citation"] == "Art. 35.1 ET"
+        assert saldo["sources"][0]["citation"] == "Art. 35.1 ET"
 
 
 @pytest.mark.django_db
@@ -156,7 +165,7 @@ def test_dice_hasta_cuando_hay_para_devolverlo(company, quien):
         extra(company, quien, date(2026, 5, 12), 3)
         extra(company, quien, date(2026, 8, 20), 2)
 
-        saldo = overtime_rest_debt(employee=quien, company=company, day=HOY)
+        saldo = rest_debt(employee=quien, company=company, day=HOY)
         # 12 de mayo más 120 días.
         assert saldo["due_on"] == "2026-09-09"
 
@@ -172,7 +181,7 @@ def test_lo_que_se_pasó_de_plazo_se_cuenta_aparte(company, quien):
         extra(company, quien, HOY - timedelta(days=200), 5)
         extra(company, quien, HOY - timedelta(days=10), 3)
 
-        saldo = overtime_rest_debt(employee=quien, company=company, day=HOY)
+        saldo = rest_debt(employee=quien, company=company, day=HOY)
         assert saldo["overdue_hours"] == 5
         assert saldo["owed_hours"] == 3
 
@@ -196,7 +205,7 @@ def test_un_dia_entero_vale_lo_que_ese_dia_tocaba(company, quien, descanso):
         extra(company, quien, HOY - timedelta(days=10), 8)
         devuelve(company, quien, descanso, libre)
 
-        saldo = overtime_rest_debt(employee=quien, company=company, day=HOY)
+        saldo = rest_debt(employee=quien, company=company, day=HOY)
         assert saldo["settled_hours"] == 8
         assert saldo["remaining_hours"] == 0
         assert saldo["unconverted_days"] == 0
@@ -214,7 +223,7 @@ def test_un_dia_sin_turno_no_se_estima(company, quien, descanso):
         extra(company, quien, HOY - timedelta(days=10), 8)
         devuelve(company, quien, descanso, HOY - timedelta(days=3))
 
-        saldo = overtime_rest_debt(employee=quien, company=company, day=HOY)
+        saldo = rest_debt(employee=quien, company=company, day=HOY)
         assert saldo["settled_hours"] == 0
         assert saldo["remaining_hours"] == 8
         assert saldo["unconverted_days"] == 1
@@ -235,7 +244,7 @@ def test_una_solicitud_sin_aprobar_no_devuelve_nada(company, quien, descanso):
         pendiente.status = AbsenceStatus.PENDING
         pendiente.save(update_fields=["status"])
 
-        saldo = overtime_rest_debt(employee=quien, company=company, day=HOY)
+        saldo = rest_debt(employee=quien, company=company, day=HOY)
         assert saldo["settled_hours"] == 0
         assert saldo["remaining_hours"] == 4
 
@@ -253,7 +262,7 @@ def test_un_cero_apaga_la_cuenta(company, quien):
         reglas.save(update_fields=["overtime_rest_days"])
 
         extra(company, quien, HOY - timedelta(days=10), 4)
-        assert overtime_rest_debt(employee=quien, company=company, day=HOY) is None
+        assert rest_debt(employee=quien, company=company, day=HOY) is None
 
 
 @pytest.mark.django_db
@@ -270,7 +279,7 @@ def test_un_plazo_de_convenio_mas_largo_cambia_la_cuenta(company, quien):
         reglas.save(update_fields=["overtime_rest_days"])
 
         extra(company, quien, HOY - timedelta(days=150), 6)
-        saldo = overtime_rest_debt(employee=quien, company=company, day=HOY)
+        saldo = rest_debt(employee=quien, company=company, day=HOY)
         assert saldo["overdue_hours"] == 0
         assert saldo["owed_hours"] == 6
-        assert saldo["days"] == 200
+        assert saldo["sources"][0]["days"] == 200

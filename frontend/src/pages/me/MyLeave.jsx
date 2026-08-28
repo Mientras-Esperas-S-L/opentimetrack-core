@@ -43,34 +43,80 @@ import { dateOf, dayRange, leaveLabel, leaveLength, plural } from '../../compone
 import { FilterBar, PickFilter } from '../../components/filters.jsx'
 import { alCatalogo } from '../../i18n/index.js'
 
-/** Lo que se debe en descanso por horas extra, y hasta cuándo hay para devolverlo.
+//: De dónde viene cada trozo de deuda. El artículo lo manda el servidor con la
+//: fuente; esto es solo cómo se llama en una frase.
+const ORIGENES = {
+  overtime: alCatalogo('horas extra'),
+  holiday: alCatalogo('festivos trabajados'),
+}
+
+/** Lo que se debe en descanso, de dónde viene y hasta cuándo hay para devolverlo.
  *
- *  Solo aparece cuando hay alguna hora extra marcada para compensar con descanso:
- *  un saldo a cero de algo que no ha pasado nunca ocupa sitio y no dice nada.
+ *  Solo aparece cuando hay deuda: un saldo a cero de algo que no ha pasado nunca
+ *  ocupa sitio y no dice nada.
  *
  *  La fecha es la mitad del asunto. «Te quedan 4 h» no sirve para nada sin «antes
  *  del 9 de septiembre», que es lo que permite no llegar tarde ---y llegar tarde
- *  aquí no se arregla: pasado el plazo, el art. 35.1 está incumplido---.
+ *  no se arregla: pasado el plazo, el art. 35.1 está incumplido---.
+ *
+ *  **El desglose es la otra mitad.** Desde que hay más de una fuente ---horas
+ *  extra del art. 35.1 y festivos trabajados del art. 37.2--- un total a secas no
+ *  dice de dónde sale, y de dónde sale es lo que decide qué plazo corre: las
+ *  extra vencen a los cuatro meses y el festivo no vence. Se enseña el total, que
+ *  es lo que se disfruta, y debajo qué lo compone.
  */
 function DeudaDeDescanso({ deuda }) {
   const { t } = useTranslation()
   const vencidas = Number(deuda.overdue_hours) > 0
   const quedan = Number(deuda.remaining_hours)
+  const fuentes = deuda.sources ?? []
+  //: El plazo que corre, de la fuente que lo tiene. El festivo trabajado no
+  //: lleva ninguno ---el art. 37.2 no lo da--- y decir «el plazo de 0 días» no
+  //: significa nada.
+  const conPlazo = fuentes.find((f) => Number(f.days) > 0)
 
   return (
     <Alert severity={vencidas ? 'warning' : 'info'} variant="outlined" sx={{ mb: 2 }}>
       {vencidas &&
         t(
           'Hay {{horas}} h de horas extra que tenías que recuperar con descanso y se ha pasado el plazo de {{dias}} días (art. 35.1 ET).',
-          { horas: deuda.overdue_hours, dias: deuda.days },
+          { horas: deuda.overdue_hours, dias: conPlazo?.days ?? 0 },
         )}
       {!vencidas &&
         quedan > 0 &&
-        t('Te quedan {{horas}} h de descanso por disfrutar, hasta el {{fecha}} (art. 35.1 ET).', {
-          horas: quedan,
-          fecha: dateOf(deuda.due_on, { year: 'numeric' }),
-        })}
-      {!vencidas && quedan <= 0 && t('No queda descanso por recuperar de tus horas extra.')}
+        (deuda.due_on && fuentes.length === 1
+          ? t('Te quedan {{horas}} h de descanso por disfrutar, hasta el {{fecha}}.', {
+              horas: quedan,
+              fecha: dateOf(deuda.due_on, { year: 'numeric' }),
+            })
+          : // Sin fecha en el total. O ninguna fuente lleva plazo ---y poner una
+            // inventada convertiría en «fuera de plazo» algo que no lo está---, o
+            // hay varias y solo alguna vence: decir «te quedan 12 h hasta el 14
+            // de diciembre» cuando solo vencen 4 es peor que no decir la fecha.
+            // Cada plazo va en su línea del desglose.
+            t('Te quedan {{horas}} h de descanso por disfrutar.', { horas: quedan }))}
+      {!vencidas && quedan <= 0 && t('No queda descanso por recuperar.')}
+      {fuentes.length > 1 && (
+        <Box component="span" sx={{ display: 'block', mt: 0.5 }}>
+          {/* Con una sola fuente el desglose sobra: el total ya la nombra. */}
+          {fuentes.map((f) => (
+            <Box component="span" key={f.source} sx={{ display: 'block' }}>
+              {f.due_on
+                ? t('{{horas}} h de {{origen}}, hasta el {{fecha}} ({{articulo}}).', {
+                    horas: f.owed_hours,
+                    origen: ORIGENES[f.source] ? t(ORIGENES[f.source]) : f.source,
+                    fecha: dateOf(f.due_on, { year: 'numeric' }),
+                    articulo: f.citation,
+                  })
+                : t('{{horas}} h de {{origen}}, sin plazo ({{articulo}}).', {
+                    horas: f.owed_hours,
+                    origen: ORIGENES[f.source] ? t(ORIGENES[f.source]) : f.source,
+                    articulo: f.citation,
+                  })}
+            </Box>
+          ))}
+        </Box>
+      )}
       {quedan > 0 && (
         <Box component="span" sx={{ display: 'block', mt: 0.5 }}>
           {/* Un aviso que dice lo que debes y no el siguiente paso obliga a

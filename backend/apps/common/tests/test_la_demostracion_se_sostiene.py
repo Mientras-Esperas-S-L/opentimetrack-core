@@ -156,3 +156,33 @@ def test_las_horas_marcadas_se_ven_de_verdad(sembrada):
             .count()
         )
         assert en_salidas == 0, f"{en_salidas} marcadas en la salida, donde no se leen"
+
+
+@pytest.mark.django_db
+def test_la_demostracion_ensena_los_dos_saldos_de_descanso(sembrada):
+    """Sin un caso de cada, esas pantallas no aparecen en ninguna demostración.
+
+    El saldo de descanso solo se enseña cuando hay deuda, y hay dos fuentes: las
+    horas extra a compensar con descanso (art. 35.1) y los festivos trabajados
+    (art. 37.2). La segunda además exige que la empresa haya declarado que los
+    compensa con descanso, porque el artículo no lo dice ---lo dice el convenio---.
+
+    Es la misma razón por la que la semilla marca horas complementarias: una
+    función que no se ve en la demostración no se puede enseñar, y nadie se entera
+    de que existe.
+    """
+    from apps.punches.rest_debt import rest_debt
+    from apps.tenants.rules import WorkingTimeRules
+
+    with tenant_context(sembrada.id):
+        reglas = WorkingTimeRules.for_company(sembrada)
+        assert reglas.holiday_worked_compensation == WorkingTimeRules.HOLIDAY_REST
+
+        origenes = set()
+        for quien in User.objects.filter(tenant=sembrada)[:20]:
+            saldo = rest_debt(employee=quien, company=sembrada)
+            if saldo:
+                origenes |= {f["source"] for f in saldo["sources"]}
+
+        assert "overtime" in origenes, "ninguna hora extra a compensar con descanso"
+        assert "holiday" in origenes, "ningún festivo trabajado"

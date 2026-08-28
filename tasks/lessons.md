@@ -2,6 +2,53 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## La segunda fuente de un saldo cambia el diseño de la primera (28/08/2026)
+
+Con una sola fuente de deuda, restar lo devuelto dentro de ella era correcto y
+además cómodo: una función, un resultado. Al añadir la segunda, hacer lo mismo
+descontaba el mismo descanso **dos veces** y el saldo salía a cero teniendo deuda.
+
+El motivo de fondo: lo debido tiene origen y lo devuelto no. Un descanso
+disfrutado salda deuda y no dice de cuál, y repartirlo entre las fuentes exigiría
+una regla de imputación que nadie ha acordado.
+
+**Cómo evitarlo:** cuando un cálculo agrega varias fuentes contra un mismo
+consumo, separar «lo que cada fuente genera» de «lo que se ha consumido». La
+primera parte se desglosa; la segunda se resta una vez, del total. Y si el módulo
+ya anuncia que vendrán más fuentes ---como hacía este---, montarlo así desde la
+primera cuesta lo mismo.
+
+## Un total con la fecha de una de sus partes miente (28/08/2026)
+
+«Te quedan 12 h de descanso por disfrutar, **hasta el 14 de diciembre**». De esas
+doce, cuatro vencían ese día y ocho no vencían nunca: el art. 37.2 no da plazo
+para compensar un festivo trabajado. La frase era correcta en el total y falsa en
+el plazo.
+
+No se ve leyendo el código ---el total es un número y la fecha es la mínima de las
+fuentes, las dos cosas bien calculadas--- sino leyendo la frase en pantalla.
+
+**Cómo evitarlo:** un dato agregado solo puede llevar pegado lo que vale para
+**todas** sus partes. Si una parte tiene plazo y otra no, el plazo va en el
+desglose. Vale igual para importes con distinta moneda, fechas con distinta
+vigencia y cifras con distinta unidad.
+
+## Lo que se enseña a mano no está en la demostración (28/08/2026)
+
+Para mirar la pantalla creé un festivo trabajado directamente en la base de datos
+de desarrollo. La prueba de navegador que escribí después pasaba, y se habría
+caído en cuanto alguien corriera `seed_demo --reset`: el dato no existía en la
+semilla, solo en mi base.
+
+Es la tercera vez esta semana que la semilla aparece en una vuelta ---las pausas
+al revés, la naturaleza de las horas, y ahora esto--- y las tres veces por lo
+mismo: **la demostración es el único sitio donde el producto se enseña entero**.
+
+**Cómo evitarlo:** cualquier dato que haga falta crear a mano para ver una función
+en pantalla va a la semilla en la misma vuelta, con un guard que falle si deja de
+generarse. Si no, la función no se ve en ninguna demostración y su prueba de
+navegador depende de la base de quien la escribió.
+
 ## Dos párrafos del mismo artículo pueden decir lo contrario (28/08/2026)
 
 El art. 37.6 tiene la reducción por guarda legal ---«entre, al menos, un octavo y

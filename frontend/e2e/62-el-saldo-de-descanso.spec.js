@@ -62,9 +62,43 @@ test.describe('El saldo de descanso', () => {
 
     // Sin la fecha, «te quedan 4 h» no sirve para no llegar tarde. Y sin los
     // días sin convertir, un saldo podría parecer devuelto sin estarlo.
-    for (const campo of ['owed_hours', 'remaining_hours', 'overdue_hours', 'due_on', 'days']) {
+    for (const campo of ['owed_hours', 'remaining_hours', 'overdue_hours', 'due_on', 'sources']) {
       expect(deuda, `falta ${campo}`).toHaveProperty(campo)
     }
-    expect(deuda.citation).toBe('Art. 35.1 ET')
+    // Cada fuente trae su artículo y su plazo: son lo que decide qué corre.
+    for (const fuente of deuda.sources) {
+      expect(fuente.citation, `${fuente.source} sin artículo`).toBeTruthy()
+      expect(fuente, `${fuente.source} sin plazo`).toHaveProperty('days')
+    }
+  })
+
+  test('con dos orígenes, dice de dónde viene cada trozo', async ({ page }) => {
+    await irA(page, '/mis-ausencias', 'Mis ausencias')
+    const {
+      body: { rest_debt: deuda },
+    } = await api(page, '/absences/balance/')
+    const origenes = deuda.sources.map((f) => f.source)
+    expect(origenes, 'la demostración ya no genera las dos fuentes').toContain('holiday')
+    expect(origenes).toContain('overtime')
+
+    // Un total a secas no dice de dónde sale, y de dónde sale es lo que decide
+    // qué plazo corre.
+    await expect(elAviso(page)).toContainText('35.1')
+    await expect(elAviso(page)).toContainText('37.2')
+  })
+
+  test('y el plazo va con lo suyo, no pegado al total', async ({ page }) => {
+    // **El defecto que se vio abriendo la pantalla.** Con las dos fuentes, el
+    // total llevaba la fecha de las horas extra: «te quedan 12 h hasta el 14 de
+    // diciembre» cuando de esas doce solo vencen cuatro. El festivo trabajado no
+    // vence ---el art. 37.2 no da plazo--- y ahora lo dice en su línea.
+    await irA(page, '/mis-ausencias', 'Mis ausencias')
+    const texto = await elAviso(page).first().innerText()
+    const [total] = texto.split('\n')
+
+    expect(total, 'el total no puede llevar una fecha que solo vale para una fuente').not.toMatch(
+      /hasta el/,
+    )
+    expect(texto).toMatch(/sin plazo/)
   })
 })
