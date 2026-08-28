@@ -1,6 +1,6 @@
 # Auditoría continua — cuaderno
 
-Vueltas dadas: 146 · La lista del 27/08 está terminada, lo propuesto también y **la interfaz habla los tres idiomas entera**. Lo siguiente es retomar la auditoría exploratoria: el contador de vueltas en blanco quedó en 2 de 3. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
+Vueltas dadas: 147 · La interfaz habla los tres idiomas entera. Ahora **las trece situaciones de cobertura legal** que marcó Francisco el 28/08. La auditoría exploratoria queda para después: el contador de vueltas en blanco está en 2 de 3. El contador de vueltas en blanco quedó en 2 de 3 cuando se dejó de buscar: si se vuelve a abrir la auditoría, se retoma ahí
 
 **Parada el 14/08/2026, retomada el 25/08/2026.**
 
@@ -368,6 +368,39 @@ completo (evidencia y refutación) está en el registro del workflow.
   nada que copiar: el hueco es de OTT desde el principio.
 
 ## Cerrado
+
+### Vuelta 147 --- El fijo discontinuo, clasificado antes de tocarlo (28/08)
+
+**Lo que se buscaba:** empezar por el llamamiento del fijo discontinuo (art. 16),
+la primera de las trece.
+
+**Lo que salió al mirarlo**, y cambia el diseño: **lo esperado no sale del
+contrato, sale del cuadrante**. `reconcile_day` devuelve `expected_minutes=0` y
+estado `NO_SHIFT` cuando no hay turno, así que fuera de temporada, si nadie le
+pone turnos, el sistema ya no espera jornada. El enunciado del inventario
+---«fuera de temporada el sistema no sabe que no se espera jornada»--- describe
+mal el hueco.
+
+**El hueco real es otro, y son tres cosas:**
+
+1. **Nadie puede declarar los periodos de actividad.** El campo `seasonal`
+   existe desde hace tiempo y `is_engaged_on` **nombra el hueco en su propio
+   docstring**: «the system does not model the call-up yet --- which is a gap
+   worth naming rather than a question to answer wrongly».
+2. **El cuadrante no avisa si se asigna turno fuera de temporada.**
+   `_check_outside_the_contract` sí avisa fuera de las fechas del contrato, pero
+   se salta a quien no tiene ni `contract_start` ni `contract_end` --- que es
+   justo el caso del fijo discontinuo indefinido.
+3. **No queda constancia del llamamiento**, que el art. 16.3 pide por escrito y
+   con antelación.
+
+**No cabe en una vuelta**, así que va en dos:
+
+- **A:** el modelo del periodo de actividad con su fecha de llamamiento, la API,
+  `is_engaged_on` respetándolo y el aviso del cuadrante. Con pruebas de backend y
+  su contraste.
+- **B:** la pantalla para declararlos, en los tres idiomas, y el efecto en la
+  cobertura pendiente.
 
 ### Vuelta 146 --- Turnos, el guard, y la interfaz queda entera (28/08)
 
