@@ -20,7 +20,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.absences.catalogue import seed_leave_types
-from apps.absences.models import Absence, AbsenceStatus, AbsenceType, LeaveType
+from apps.absences.models import (
+    Absence,
+    AbsenceStatus,
+    AbsenceType,
+    LeaveType,
+    LeaveUnit,
+)
 from apps.absences.services import (
     approve_absence,
     cancel_absence,
@@ -144,6 +150,14 @@ class LeaveTypeSerializer(serializers.ModelSerializer):
             "measured_in_hours",
             "paid",
             "initiated_by",
+            # Si la ley deja que **este** permiso corte la jornada en vez de
+            # pararla. Se sirve porque la pantalla lo necesita para saber si
+            # ofrecer el campo de la fracción, y sin él lo estaba adivinando
+            # ---«suspensión que registra la empresa»--- con dos errores en las
+            # dos direcciones: no lo ofrecía en la lactancia ni en la guarda
+            # legal, que son derechos de quien trabaja, y sí en la huelga y en
+            # el cierre patronal, que no reducen la jornada sino que la paran.
+            "can_reduce_the_day",
             "needs_justification",
             "note",
             "is_active",
@@ -157,7 +171,9 @@ class LeaveTypeSerializer(serializers.ModelSerializer):
         if obj.amount is None:
             return str(_("the time it takes"))
         amount = f"{obj.amount.normalize():f}".rstrip(".")
-        return f"{amount} {obj.get_unit_display()} · {obj.get_period_display()}"
+        # La unidad concuerda con la cifra: «1 hora», no «1 horas».
+        unidad = LeaveUnit.one(obj.unit) if obj.amount == 1 else obj.get_unit_display()
+        return f"{amount} {unidad} · {obj.get_period_display()}"
 
 
 @extend_schema(tags=["absences"])

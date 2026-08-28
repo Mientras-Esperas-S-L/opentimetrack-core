@@ -369,6 +369,77 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 163 --- La lactancia, y el campo de la fracción que se adivinaba (28/08)
+
+Al empezar: 4 «A medias» y 17 «Falta».
+
+**Elegida por lo que más se nota**: la lactancia es el permiso más usado de los
+que no se podían ni pedir. Al clasificar apareció que **sí** estaba en el
+catálogo ---como una hora de ausencia--- y que lo que faltaba era la otra mitad
+del artículo: «reducir su jornada en media hora». El art. 37.4 da **dos formas y
+las elige quien trabaja**.
+
+**Y tirando de ahí, algo bastante mayor.** La pantalla decidía si ofrecer el
+campo de la fracción con un heurístico:
+
+```js
+const canReduce = kind?.family === 'SUSPENSION' && kind?.initiated_by === 'COMPANY'
+```
+
+El campo que responde a esa pregunta ---`can_reduce_the_day`--- existe en el
+modelo desde el principio y **no se servía por la API**, así que la pantalla no
+tenía con qué decidir y lo adivinaba. Medido contra los treinta y cuatro tipos
+del catálogo, **fallaba en ocho, en las dos direcciones**:
+
+- No ofrecía reducir en la **lactancia** ni en la **reducción por guarda legal**.
+  La segunda es la peor: el derecho del art. 37.6 se ejerce precisamente
+  reduciendo, y el inventario la daba por cubierta ---«se pide con su fracción y
+  sus fechas»---. Desde el lado de quien la pide, **no se podía poner la
+  fracción**.
+- Sí lo ofrecía en la **huelga**, el **cierre patronal**, la **prisión
+  provisional** y los **dos riesgos del embarazo**, que no reducen la jornada
+  sino que la paran. Un campo para registrar una huelga a media jornada es una
+  invitación a anotar algo que no existe.
+
+**Y tres filas más de esta familia estaban hechas y marcadas como pendientes**:
+el permiso parental (48 bis), la búsqueda de empleo en el preaviso (53.2) y los
+exámenes (23.1.a), cada uno con su cuantía y su artículo en el catálogo.
+
+**Dos defectos de UX, encontrados abriendo la pantalla.**
+
+1. El texto de ayuda de la fracción decía «Vacío o 100 suspende el contrato
+   entero» **para cualquier permiso que la ofreciera**. En la lactancia es falso:
+   dejarla vacía es pedirla como la hora de ausencia del art. 37.4, no suspender
+   nada.
+2. **«1 horas · al día»**, en la primera línea que se lee al abrir el permiso más
+   usado. La unidad venía de un mapa que solo tenía plural, en el frontend y en
+   el backend. Las dos concordadas.
+
+**El backfill, y el falso verde que casi cuela.** El catálogo se copia a cada
+empresa y `seed_leave_types` no pisa nunca lo que hay, así que corregir el marco
+no llega a quien ya lo copió. El comando de migración usaba `LeaveType.objects`,
+que **filtra por el contexto de empresa**, y un comando corre sin contexto:
+contaba cero filas y decía «0 actualizadas · comprobado». Con
+`objects_all_tenants`: una. Ahora el comando **se niega** si no encuentra ni una
+fila, porque «nada que hacer» y «no estoy viendo el catálogo» daban exactamente
+la misma salida tranquilizadora.
+
+**Un guard nuevo, del agujero de la vuelta anterior.** El mensaje de error de
+`until` se subió el 28/08 sin traducir y el CI pasó: las comprobaciones de
+idiomas leen el `.po`, así que un `_()` que nadie ha extraído **no está** ---no
+sale como «sin traducir», no sale---. Ahora se compara el código contra el
+catálogo por AST, sin subprocesos ni mover el árbol de traducciones. Dio dos
+falsos positivos a la primera: en un bloque con plural el singular es el `msgid` y
+detrás viene `msgid_plural`, no `msgstr `.
+
+**Diez contrastes, los diez rojos.** Y uno se perdió por el camino: restauré un
+fichero con `git checkout` en mitad de los sabotajes y me llevé por delante el
+guard nuevo, que no estaba commiteado. Se vio porque el recuento bajó de 14 a 13.
+
+**Cierre:** ocho pasos del CI en verde con 1.465 pruebas, suite de navegador
+aparte, cinco filas del inventario movidas, dossier en la 1.32. El recuento pasa
+de 90/4/17 a **94/5/12 de 111**, contado de las filas.
+
 ### Vuelta 162 --- La liquidación de vacaciones, y cuatro filas que ya estaban hechas (28/08)
 
 Primera vuelta de la tanda nueva: lo que queda «A medias» y «Falta» en el

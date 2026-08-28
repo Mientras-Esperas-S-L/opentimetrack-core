@@ -153,14 +153,14 @@ suelo legal y el convenio mejora cualquiera.
 | Situación | Base | Estado |
 |---|---|---|
 | Reducción por guarda legal, entre ⅛ y ½ de la jornada | 37.6 | **Cubierto.** Se solicita con la fracción y las fechas; el cuadrante mide contra la jornada reducida y el derecho caduca solo. Fuera de la horquilla se avisa, no se impide |
-| Lactancia: 1 h de ausencia o ½ h de reducción hasta los 9 meses, acumulable | 37.4 | **Falta** |
+| Lactancia: 1 h de ausencia o ½ h de reducción hasta los 9 meses, acumulable | 37.4 | **Cubierto.** Las **dos formas**, y las elige quien trabaja: la hora de ausencia y la reducción de jornada. Es un permiso **retribuido** aunque reduzca ---a diferencia del art. 37.6, que lleva reducción proporcional de salario--- y no le aplica el rango de un octavo a la mitad: media hora de ocho es menos que un octavo, y ese aviso está atado al código de la guarda legal. El tope de los nueve meses lo pone quien la pide en las fechas de la solicitud: el producto no guarda datos del menor. La acumulación en jornadas completas depende del convenio |
 | Nacimiento prematuro u hospitalización tras el parto | 37.5 | **Falta** |
 | Cuidado de menor con cáncer o enfermedad grave: reducción de al menos la mitad | 37.6 | **Falta.** La maquinaria de la fracción y las fechas ya está; falta su fila en el catálogo, con la regla propia ---aquí el suelo es la mitad, no el techo--- |
-| Permiso parental de 8 semanas, **no retribuido**, hasta los 8 años | 48 bis | **Falta** |
+| Permiso parental de 8 semanas, **no retribuido**, hasta los 8 años | 48 bis | **Cubierto.** Ocho semanas hasta que el menor cumple ocho años, marcadas **sin sueldo**, que es lo que más se confunde de este permiso |
 | Víctimas de violencia de género o sexual: reducción, reordenación, horario flexible | 37.8 | **Falta** |
-| Crédito horario de representantes | 68.e | **Falta.** Hay casilla de representante, pero no horas |
-| Búsqueda de empleo durante el preaviso de despido objetivo, 6 h/semana | 53.2 | **Falta** |
-| Exámenes de formación reglada | 23.1.a | **Falta** |
+| Crédito horario de representantes | 68.e | **A medias.** El permiso está en el catálogo y se cuenta en horas al mes; lo que no trae es **la escala del art. 68.e** ---quince, veinte, treinta, treinta y cinco o cuarenta horas según el tamaño de la plantilla---, que hoy la pone la empresa a mano. Esa escala es suelo legal y no una cifra de convenio, así que traerla no pisaría a nadie |
+| Búsqueda de empleo durante el preaviso de despido objetivo, 6 h/semana | 53.2 | **Cubierto.** Seis horas semanales, con la nota de que solo corren durante el preaviso de un despido por causas objetivas |
+| Exámenes de formación reglada | 23.1.a | **Cubierto.** El tiempo indispensable, con justificante |
 
 ---
 
@@ -371,6 +371,28 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 6 | **Las cifras de cada sector** (RD 1561/1995). Lo que quedaba de esta fila y sigue fuera a propósito: quince cifras por cada uno de los trece regímenes, cada sector con su convenio encima. Que los avisos citen el régimen declarado **ya está** desde el 28/08 | **Semanas**, y conviene partirlo por sector empezando por el que tenga un cliente esperando. No es trabajo pendiente sino una decisión de producto: mientras no haya un cliente de un sector concreto, traer sus cifras es inventar |
 
 ### Hecho desde que se escribió esta lista
+
+- **La lactancia como reducción de jornada** (art. 37.4, 28/08/2026), y con ella
+  **el campo de la fracción deja de adivinarse**.
+
+  El artículo da dos formas ---una hora de ausencia o media hora de reducción---
+  y las elige quien trabaja. Solo estaba la primera. Al arreglarlo apareció algo
+  más grande: la pantalla decidía si ofrecer el campo de la fracción por un
+  heurístico ---«suspensión que registra la empresa»--- en vez de mirar el campo
+  del permiso que existe justo para eso, y **ese campo no se servía por la API**.
+
+  El heurístico fallaba en **ocho de los treinta y cuatro** tipos, en las dos
+  direcciones: no ofrecía reducir en la lactancia ni en la reducción por guarda
+  legal ---derechos de quien trabaja que se ejercen precisamente reduciendo, de
+  modo que la del art. 37.6 solo se podía pedir entera desde el lado de la
+  persona---, y sí lo ofrecía en la huelga, el cierre patronal, la prisión
+  provisional y los dos riesgos del embarazo, que no reducen la jornada sino que
+  la paran.
+
+  Y otras tres filas de esta familia estaban hechas y marcadas como pendientes:
+  el permiso parental (48 bis), la búsqueda de empleo en el preaviso (53.2) y los
+  exámenes (23.1.a) tienen su entrada en el catálogo con su cuantía y su
+  artículo.
 
 - **La liquidación de vacaciones al terminar el contrato** (art. 38.1,
   28/08/2026), y con ella **cuatro filas de esta misma familia que ya estaban

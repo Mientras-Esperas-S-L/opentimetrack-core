@@ -331,3 +331,51 @@ def test_el_lector_de_huecos_sabe_encontrarlos():
             assert [m[0] for m in malas] == ["hay %(cuantos)s cosas"]
         finally:
             settings.BASE_DIR = original
+
+
+def _msgids(idioma: str) -> set[str]:
+    """Todas las cadenas que el catálogo conoce, estén traducidas o no."""
+    ruta = Path(settings.BASE_DIR) / "locale" / idioma / "LC_MESSAGES" / "django.po"
+    dentro = set()
+    for bloque in ruta.read_text(encoding="utf-8").split("\n\n"):
+        if "Project-Id-Version" in bloque:
+            continue
+        # Hasta `msgstr` **o** `msgid_plural`: en un bloque con plural el
+        # singular es el `msgid` y detrás viene `msgid_plural`, no `msgstr `.
+        # Parando solo en `msgstr ` esos bloques no casaban y sus singulares
+        # salían como «no está en el catálogo» estando de sobra.
+        cabeza = re.search(
+            r"^msgid (.*?)(?=^msgstr|^msgid_plural )", bloque + "\nmsgstr ", re.M | re.S
+        )
+        if not cabeza:
+            continue
+        junto = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', cabeza.group(1)))
+        dentro.add(junto.replace("\\n", "\n").replace('\\"', '"'))
+    return dentro
+
+
+def test_no_hay_mensajes_visibles_sin_extraer():
+    """Un mensaje nuevo que nadie ha extraído es invisible para todo lo demás.
+
+    Las otras comprobaciones de este fichero leen el `.po`, así que solo ven lo
+    que `makemessages` ya metió allí. Un `_()` recién escrito **no está** en el
+    catálogo: no aparece como «sin traducir» ---no aparece---, y sale en inglés
+    en producción con los catálogos en verde y el CI también.
+
+    Pasó el 28/08/2026 con el error de `until` del saldo de vacaciones: escrito,
+    subido, CI en verde, y descubierto al día siguiente al correr `makemessages`
+    por otra cosa. Los ocho pasos del CI tampoco lo corren, y no deberían: eso
+    reescribiría los `.po` en mitad de una comprobación.
+
+    Se compara contra el código, que es la fuente, y no corriendo `makemessages`
+    sobre una copia: eso exigiría un subproceso y mover el árbol de traducciones
+    de sitio, y una prueba que borra `locale/` para restaurarlo después es un
+    riesgo mucho mayor que el fallo que evita.
+    """
+    faltan = _visibles_del_codigo() - _msgids("es")
+    assert faltan == set(), (
+        f"{len(faltan)} mensaje(s) que ve una persona y no están en el catálogo:\n  "
+        + "\n  ".join(f"{c[:88]!r}" for c in sorted(faltan)[:10])
+        + "\n\nCorre `python manage.py makemessages -l es -l ca -l gl --no-obsolete`, "
+        "tradúcelos y `compilemessages`."
+    )

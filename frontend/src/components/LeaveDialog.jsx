@@ -50,6 +50,22 @@ const UNITS = {
   WEEKS: alCatalogo('semanas'),
 }
 
+//: En singular, para cuando la cifra es uno. «1 horas» se lee mal en una
+//: pantalla que por lo demás cuida el idioma, y la lactancia es exactamente una
+//: hora al día, así que salía en el primer permiso que alguien abre.
+const UNITS_ONE = {
+  DAYS_CALENDAR: alCatalogo('día natural'),
+  DAYS_WORKING: alCatalogo('día laborable'),
+  HOURS: alCatalogo('hora'),
+  WEEKS: alCatalogo('semana'),
+}
+
+/** El nombre de la unidad, concordado con la cifra que la acompaña. */
+function unidadDe(t, unit, cuantos) {
+  if (!UNITS[unit]) return ''
+  return Number(cuantos) === 1 ? t(UNITS_ONE[unit]) : t(UNITS[unit])
+}
+
 const PERIODS = {
   YEAR: alCatalogo('este año'),
   MONTH: alCatalogo('este mes'),
@@ -164,7 +180,19 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
   // Un ERTE puede suspender el contrato o reducir la jornada. Solo se pregunta
   // en una suspensión: en cualquier otro sitio parecería un ajuste y no haría
   // nada, que es la peor clase de campo.
-  const canReduce = kind?.family === 'SUSPENSION' && kind?.initiated_by === 'COMPANY'
+  // Lo dice el propio permiso, que es el único que lo sabe. Antes se adivinaba
+  // ---«suspensión que registra la empresa»--- y se equivocaba en ocho de los
+  // treinta y cuatro tipos, en las dos direcciones: no ofrecía la fracción en la
+  // lactancia ni en la reducción por guarda legal, que son derechos de quien
+  // trabaja y se ejercen precisamente reduciendo, y sí la ofrecía en la huelga,
+  // el cierre patronal y la prisión provisional, que no reducen la jornada sino
+  // que la paran.
+  const canReduce = Boolean(kind?.can_reduce_the_day)
+  // Y si además **para** el contrato, que no es lo mismo. El texto de ayuda de
+  // la fracción decía «vacío o 100 suspende el contrato entero» para cualquier
+  // permiso que la ofreciera, y en la lactancia eso es falso: dejarla vacía es
+  // pedirla como la hora de ausencia del art. 37.4, no suspender nada.
+  const suspende = kind?.family === 'SUSPENSION'
   // Lo que queda de este permiso, si tiene tope y se acumula. Aquí y no en
   // otra pantalla: es justo antes de pedir cuando sirve de algo.
   const left = usage?.find((row) => row.leave_type === kind?.id) ?? null
@@ -322,7 +350,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                   values={{
                     usado: formatAmount(left.used),
                     total: formatAmount(left.allowance),
-                    unidad: UNITS[left.unit] ? t(UNITS[left.unit]) : '',
+                    unidad: unidadDe(t, left.unit, left.allowance),
                     periodo: PERIODS[left.period] ? t(PERIODS[left.period]) : '',
                   }}
                   components={{ destacado: <strong /> }}
@@ -439,7 +467,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                         unidad: plural(days, t('día'), t('días')),
                         aclaracion:
                           asked != null && kind?.unit !== 'DAYS_CALENDAR'
-                            ? ` (${formatAmount(asked)} ${t(UNITS[kind.unit])})`
+                            ? ` (${formatAmount(asked)} ${unidadDe(t, kind.unit, asked)})`
                             : '',
                       }}
                       components={{ destacado: <strong /> }}
@@ -457,7 +485,7 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                     permiso: kind.name,
                     cuanto: kind.allowance,
                     pedido: formatAmount(asked),
-                    unidad: t(UNITS[kind.unit]),
+                    unidad: unidadDe(t, kind.unit, kind.amount),
                   },
                 )}
                 {Number(kind.extra_when_travelling) > 0 &&
@@ -477,12 +505,16 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                 onChange={set('reduction_share')}
                 slotProps={{ htmlInput: { min: 1, max: 100, step: 1 } }}
                 helperText={
-                  form.reduction_share === '' || Number(form.reduction_share) >= 100
-                    ? t('Vacío o 100 suspende el contrato entero: no se espera jornada.')
-                    : t(
+                  form.reduction_share !== '' && Number(form.reduction_share) < 100
+                    ? t(
                         'Se sigue trabajando el {{porcentaje}} %. El cuadrante pasa a medirse contra esa jornada.',
                         { porcentaje: 100 - Number(form.reduction_share) },
                       )
+                    : suspende
+                      ? t('Vacío o 100 suspende el contrato entero: no se espera jornada.')
+                      : t(
+                          'Vacío se pide como ausencia; con un número se reduce la jornada en esa parte y se sigue trabajando el resto.',
+                        )
                 }
               />
             )}

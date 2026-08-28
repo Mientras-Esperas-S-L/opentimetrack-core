@@ -2,6 +2,71 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Una pantalla que adivina un dato que el servidor tiene y no manda (28/08/2026)
+
+El diálogo de ausencias decidía si ofrecer el campo de la fracción de jornada con
+`family === 'SUSPENSION' && initiated_by === 'COMPANY'`. El campo que responde a
+esa pregunta ---`can_reduce_the_day`--- llevaba en el modelo desde el principio,
+con un docstring que explica exactamente para qué es. **No se servía en la API**,
+así que la pantalla no tenía con qué decidir y se inventó una regla.
+
+Medido contra los treinta y cuatro tipos del catálogo: fallaba en **ocho**, y en
+las dos direcciones. No ofrecía reducir en la lactancia ni en la reducción por
+guarda legal ---derechos que se ejercen precisamente reduciendo--- y sí en la
+huelga y el cierre patronal, que paran la jornada en vez de recortarla.
+
+Lo revelador es que el heurístico **parecía razonable**: casi todas las
+suspensiones que registra la empresa reducen, y casi todo lo demás no. Un
+heurístico que acierta el 76 % de las veces no se nota nunca hasta que alguien
+mira los casos uno a uno.
+
+**Cómo evitarlo:** cuando la pantalla deduzca algo con dos o tres condiciones
+sobre otros campos, buscar si existe **el campo que lo dice**. Si existe y no se
+sirve, servirlo. Y al hacerlo, listar en qué casos discrepan el heurístico y el
+campo: ahí está lo que llevaba roto.
+
+## Un comando de gestión corre sin contexto de empresa (28/08/2026)
+
+Un backfill sobre `LeaveType.objects` contó **cero filas**, dijo «0 actualizadas
+· comprobado» y se quedó tan ancho. Ese manager filtra por el contexto de
+empresa, y un comando de gestión no tiene ninguno. Con `objects_all_tenants`
+había una fila esperando.
+
+Lo peor no fue el fallo: fue que **la salida de un backfill que no ve nada es
+idéntica a la de uno que no tenía nada que hacer**. Las dos dicen que todo está
+bien.
+
+**Cómo evitarlo:** en cualquier comando que recorra datos de todas las empresas,
+`objects_all_tenants`. Y que el comando **se niegue** cuando el conjunto está
+vacío del todo: si no hay ni una fila del tipo que busca, es que está mirando
+donde no es, no que no haya trabajo.
+
+## Un `_()` que nadie ha extraído es invisible para el guard de idiomas (28/08/2026)
+
+Un mensaje de error nuevo se subió sin traducir y el CI pasó en verde. Las
+comprobaciones de idiomas leen los `.po`, así que solo ven lo que `makemessages`
+ya metió allí: una cadena recién escrita **no está** en el catálogo, de modo que
+no aparece como «sin traducir» ---no aparece---. Sale en inglés en producción con
+todo verde.
+
+Los ocho pasos del CI tampoco corren `makemessages`, y no deberían: reescribiría
+los `.po` en mitad de una comprobación.
+
+**Cómo evitarlo:** ya hay guard, `test_no_hay_mensajes_visibles_sin_extraer`, que
+compara el código contra el catálogo por AST. La regla de trabajo sigue siendo la
+misma: `makemessages` en el mismo paso en que se escribe el mensaje.
+
+## `git checkout` de un fichero se lleva el trabajo sin commitear (28/08/2026)
+
+Restaurando ficheros entre sabotajes usé `git checkout <fichero>` en uno que
+tenía un guard nuevo **sin commitear**. Lo dejó en el estado del último commit, o
+sea sin el guard. Se vio solo porque el recuento de pruebas bajó de 14 a 13.
+
+**Cómo evitarlo:** para restaurar tras un sabotaje, `cp` de una copia hecha antes
+de empezar ---que es lo que hago en el resto de los casos--- y nunca `git
+checkout` sobre un fichero que tiene trabajo del día. Y mirar el número de
+pruebas al restaurar: si no vuelve al de antes, algo se ha perdido.
+
 ## Una fila del inventario que dice «falta» puede llevar meses hecha (28/08/2026)
 
 El enunciado decía «quien entra en julio tiene hoy el saldo entero». Medido antes

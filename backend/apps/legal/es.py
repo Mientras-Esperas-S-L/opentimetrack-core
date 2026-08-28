@@ -430,9 +430,20 @@ ESPANA = LegalFramework(
             amount=1,
             unit="HOURS",
             per="DAY",
+            # El artículo da **dos formas y las elige quien trabaja**: una hora
+            # de ausencia o media hora de reducción de jornada. El catálogo solo
+            # traía la primera, así que la mitad del derecho no se podía
+            # ejercer: pedir la reducción se rechazaba.
+            #
+            # Y a diferencia de la guarda legal, esta reducción **no lleva
+            # reducción de salario** ---es un permiso retribuido---, que es por
+            # lo que `paid` se queda en `True` aunque reduzca la jornada.
+            can_reduce_the_day=True,
             note="Una hora de ausencia, divisible en dos fracciones, o media hora de "
-            "reducción, hasta que el menor cumpla nueve meses. Acumulable en jornadas "
-            "completas cuando lo permita el convenio.",
+            "reducción, hasta que el menor cumpla nueve meses. **Las dos formas las "
+            "elige quien trabaja**, no la empresa. Si se pide como reducción, pon "
+            "cuánto se reduce y las fechas. Acumulable en jornadas completas cuando lo "
+            "permita el convenio.",
         ),
         LeaveKind(
             code="es.exams",

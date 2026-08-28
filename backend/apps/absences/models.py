@@ -58,6 +58,21 @@ class LeaveUnit(models.TextChoices):
     HOURS = "HOURS", _("hours")
     WEEKS = "WEEKS", _("weeks")
 
+    @classmethod
+    def one(cls, unit) -> str:
+        """El nombre de la unidad en singular, para cuando la cifra es uno.
+
+        Django solo guarda una forma por opción, y con la plural salía «1 horas»
+        en la primera línea que se lee al pedir una lactancia ---que es
+        exactamente una hora al día, así que le tocaba a la unidad más usada---.
+        """
+        return {
+            cls.DAYS_CALENDAR: _("calendar day"),
+            cls.DAYS_WORKING: _("working day"),
+            cls.HOURS: _("hour"),
+            cls.WEEKS: _("week"),
+        }.get(unit, cls(unit).label)
+
 
 class LeavePeriod(models.TextChoices):
     """What the entitlement resets against.
