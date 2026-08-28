@@ -144,6 +144,12 @@ ESPANA = LegalFramework(
         # No es un incumplimiento: las horas por encima de lo pactado en jornada
         # parcial son complementarias, lícitas y con su propio tope.
         "over_contracted_hours": Citation("Art. 12.5 ET"),
+        "adaptation_answer_overdue": Citation(
+            "Art. 34.8 ET",
+            "Quince días de negociación como máximo, y luego respuesta por "
+            "escrito. El plazo se incumple dejando pasar el tiempo, así que lo "
+            "único que cabe hacer es que no pase desapercibido.",
+        ),
         "training_hours_over_the_cap": Citation(
             "Art. 11.2.b ET",
             "El tiempo de trabajo efectivo no pasa del 65 % el primer año ni del "

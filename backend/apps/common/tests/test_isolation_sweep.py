@@ -34,7 +34,15 @@ from apps.punches.services import register_punch
 from apps.shifts.models import Shift, ShiftPattern
 from apps.tenants.holidays import PublicHoliday
 from apps.tenants.models import Tenant
-from apps.users.models import ActivityPeriod, Department, RemoteWorkAgreement, Role, User, Workplace
+from apps.users.models import (
+    ActivityPeriod,
+    Department,
+    RemoteWorkAgreement,
+    Role,
+    ScheduleAdaptation,
+    User,
+    Workplace,
+)
 
 PASSWORD = "a-sufficiently-long-password"
 
@@ -116,6 +124,12 @@ def build_company(name, tax_id, email_domain):
             signed_on=date(2026, 1, 15),
             starts_on=date(2026, 2, 1),
         )
+        adaptation = ScheduleAdaptation.objects.create(
+            tenant=company,
+            employee=worker,
+            requested_on=date(2026, 2, 1),
+            asked_for="Entrar media hora más tarde.",
+        )
         entry = AuditLog.objects.create(
             tenant=company,
             action=AuditAction.RECORD_VIEWED,
@@ -141,6 +155,7 @@ def build_company(name, tax_id, email_domain):
         "shift": shift,
         "season": season,
         "remote": remote,
+        "adaptation": adaptation,
         "audit": entry,
     }
 
@@ -179,6 +194,7 @@ def detail_urls(world):
         "audit entry": f"/api/audit/{world['audit'].id}/",
         "period of activity": f"/api/activity-periods/{world['season'].id}/",
         "remote work agreement": f"/api/remote-work-agreements/{world['remote'].id}/",
+        "schedule adaptation": f"/api/schedule-adaptations/{world['adaptation'].id}/",
     }
 
 
@@ -186,6 +202,7 @@ COLLECTIONS = [
     "/api/punches/",
     "/api/activity-periods/",
     "/api/remote-work-agreements/",
+    "/api/schedule-adaptations/",
     "/api/absences/",
     "/api/corrections/",
     "/api/employees/",
@@ -303,6 +320,7 @@ def test_no_collection_shows_another_companys_rows(ours, theirs):
         "/api/shift-patterns/",
         "/api/activity-periods/",
         "/api/remote-work-agreements/",
+        "/api/schedule-adaptations/",
         "/api/audit/",
     ]:
         body = intruder.get(url).json()
@@ -364,6 +382,15 @@ def test_they_cannot_change_or_resolve_anything_of_ours(ours, theirs):
             {"starts_on": "2026-03-01"},
         ),
         ("delete", f"/api/remote-work-agreements/{ours['remote'].id}/", None),
+        # Contestar la solicitud de conciliación de alguien de otra empresa es
+        # decidir sobre su jornada, y encima queda firmado con el nombre de
+        # quien contesta.
+        (
+            "patch",
+            f"/api/schedule-adaptations/{ours['adaptation'].id}/",
+            {"status": "REFUSED", "answered_on": "2026-02-10", "answer": "No."},
+        ),
+        ("delete", f"/api/schedule-adaptations/{ours['adaptation'].id}/", None),
         # The workplace decides which local holidays apply and which zone the
         # day is measured in, so taking one over is not a cosmetic change.
         (
@@ -645,6 +672,8 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^activity-periods/(?P<pk>[^/.]+)/$",
         "api/^remote-work-agreements/$",
         "api/^remote-work-agreements/(?P<pk>[^/.]+)/$",
+        "api/^schedule-adaptations/$",
+        "api/^schedule-adaptations/(?P<pk>[^/.]+)/$",
         "api/^departments/$",
         "api/^departments/(?P<pk>[^/.]+)/$",
         "api/^workplaces/$",

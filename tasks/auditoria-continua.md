@@ -369,6 +369,58 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 155 --- La adaptación de jornada, parte A (28/08)
+
+**Partida, y se dice.** Esta vuelta trae el expediente ---modelo, API, la regla
+de la motivación y el aviso del plazo---; las pantallas quedan para la
+siguiente, y son **dos** ---pedirla y contestarla---, que es lo que hace que no
+quepa. Mientras tanto la fila sigue en «A medias».
+
+Elegida por lo que más se nota: el derecho es de 2019 y lo puede ejercer
+cualquiera con hijos menores de doce años. De las siete que quedaban, las demás
+son sectoriales o poco frecuentes.
+
+**Lo que había, y el enunciado acertaba:** el producto sabía la *consecuencia*
+---un fichaje puede marcarse como trabajado bajo una adaptación, `FlexibilityMeasure.CARE`,
+que es el art. 3.i--- y no tenía **el expediente**, que es donde está la
+obligación del 34.8: quince días de negociación como máximo, y respuesta por
+escrito que acepte, proponga una alternativa o se niegue, motivando en los dos
+últimos casos.
+
+**Lo que se impide y lo que se avisa, y por qué no es lo mismo.** La regla de
+esta auditoría es avisar y dejar decidir, y aquí hay una excepción **que el
+artículo impone**:
+
+- **La motivación se exige.** «En los dos últimos casos, se motivará» no admite
+  lectura: una negativa sin motivo escrito no es una negativa mal documentada,
+  es un incumplimiento. Se rechaza al guardar.
+- **El plazo se avisa.** Se incumple **dejando pasar el tiempo**, así que no hay
+  nada que impedir; lo único que cabe hacer es que no pase desapercibido.
+
+**Y aceptar no pide motivo**, con prueba propia: exigirlo siempre habría sido
+inventarse una obligación, porque quien dice que sí no tiene nada que
+justificar. Es el contraste de la regla anterior y sin él las dos se verían
+igual.
+
+**La alternativa es una respuesta distinta de la negativa**, no un matiz. Es el
+resultado normal de una negociación, y meterlas en el mismo cajón perdería justo
+lo que el artículo quiere que quede escrito. Las dos motivan, eso sí: para quien
+la recibe, una alternativa es un «no» a lo que pidió.
+
+**Dos tropiezos con los scripts de parcheo, los dos del mismo día:**
+
+1. **Un `replace` sin `assert`.** El script del barrido de aislamiento llevaba
+   comprobación en cinco reemplazos y en el sexto ---el del import--- no. Fue el
+   único que no encajó, y falló **en silencio**: el fichero quedó usando un
+   símbolo sin importar y lo dijeron las pruebas, no el script.
+2. **Un ancla dentro de una tupla.** Inserté `"/api/schedule-adaptations/",`
+   detrás de una línea que parecía un elemento de lista y era el segundo campo de
+   una tupla de tres. Es **la segunda vez en dos vueltas** que lo hago en el
+   mismo fichero.
+
+**Cifras al cerrar:** los ocho pasos del CI en verde ---`./scripts/como-el-ci.sh`,
+que es lo que se estrenó ayer---, 1.391 pruebas de backend y 307 de navegador.
+
 ### Vuelta 154 --- Los dos formativos, y por qué el CI llevaba días en rojo (28/08)
 
 **6 de 13.** Dos filas de golpe, y no por ir deprisa: eran el mismo problema. El

@@ -140,6 +140,19 @@ def _solo_administracion(m):
             "/api/remote-work-agreements/",
             {"employee": str(curro), "signed_on": "2027-01-15", "starts_on": "2027-02-01"},
         ),
+        # La respuesta a una adaptación de jornada (art. 34.8). Un responsable
+        # organiza el trabajo; contestar por escrito a una petición de
+        # conciliación ---y que quede su nombre firmándola--- es de quien lleva
+        # los contratos.
+        (
+            "POST",
+            "/api/schedule-adaptations/",
+            {
+                "employee": str(curro),
+                "requested_on": "2027-01-15",
+                "asked_for": "Entrar media hora más tarde.",
+            },
+        ),
     ]
 
 

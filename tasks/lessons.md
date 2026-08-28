@@ -5170,3 +5170,50 @@ alguien copió de otro sitio. Está en
 igual: `makemessages` empareja por parecido, y el emparejamiento es **una
 sugerencia** que el fichero guarda como si fuera una decisión. Cada vez que se
 añada una cadena parecida a otra, mirar qué le puso.
+
+## 304. El `replace` sin comprobación es el que muerde
+
+Un script de parcheo con seis reemplazos: cinco llevaban
+
+    assert t.count(viejo) == 1
+
+y el sexto, el del import, no. Fue justo el que no encajó ---`ruff` había
+reordenado los símbolos alfabéticamente en la vuelta anterior--- y **falló en
+silencio**: `str.replace` no encuentra nada, devuelve el texto igual, y el script
+imprime «al día». El fichero quedó usando `ScheduleAdaptation` sin importarlo, y
+quien lo dijo fueron doce pruebas con `NameError`, no el script.
+
+Los cinco reemplazos comprobados eran los «difíciles» ---bloques largos, cuerpos
+de función---. El que se quedó sin comprobar era el fácil, una línea de import, y
+por eso ni me lo planteé.
+
+**La regla:** en un script de parcheo, **todos** los reemplazos llevan su
+comprobación, incluidos los de una línea. Cuesta escribir cinco palabras y es lo
+único que separa «no encajó» de «no hizo nada y dijo que sí».
+
+Y el corolario, que ya apareció en la [[301]]: los imports son justo lo que otra
+herramienta reordena por su cuenta, así que son los reemplazos que más se rompen
+solos entre una vuelta y la siguiente.
+
+## 305. Mirar de qué son los elementos de la lista donde se inserta
+
+Por segunda vez en dos vueltas, inserté una cadena suelta en una lista **de
+tuplas**:
+
+    (
+        "POST",
+        "/api/remote-work-agreements/",
+        "/api/schedule-adaptations/",     # <-- esto no es un elemento
+        {"employee": …},
+    ),
+
+El ancla ---`"/api/remote-work-agreements/",`--- existía y era única, así que el
+`assert` pasó. Lo que no comprobé es **qué había alrededor**: esa línea no era un
+elemento de la lista, era el segundo campo de una tupla de tres. El resultado es
+una tupla de cuatro y un `ValueError: too many values to unpack`.
+
+Un `assert` dice que el ancla es única. No dice que el sitio sea el que uno cree.
+
+**La regla:** antes de insertar en una estructura, **leer las cinco líneas de
+alrededor**, no solo la del ancla. Un `sed -n 'N,Mp'` cuesta un segundo y es la
+diferencia entre insertar un elemento y romper el que había.

@@ -11,8 +11,17 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps import legal
 from apps.common.campos import DecimalesTolerantes
+from apps.common.clock import local_today
 from apps.tenants.models import Tenant, validate_time_zone
-from apps.users.models import ActivityPeriod, Department, RemoteWorkAgreement, Role, Workplace
+from apps.users.models import (
+    ActivityPeriod,
+    AdaptationStatus,
+    Department,
+    RemoteWorkAgreement,
+    Role,
+    ScheduleAdaptation,
+    Workplace,
+)
 
 User = get_user_model()
 
@@ -660,6 +669,90 @@ class PasswordSetSerializer(serializers.Serializer):
         except DjangoValidationError as exc:
             raise serializers.ValidationError(list(exc.messages)) from exc
         return value
+
+
+class ScheduleAdaptationSerializer(serializers.ModelSerializer):
+    """Una solicitud de adaptación de jornada (art. 34.8 ET) y su respuesta."""
+
+    employee_name = serializers.SerializerMethodField()
+    days_waiting = serializers.SerializerMethodField()
+    out_of_time = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ScheduleAdaptation
+        fields = [
+            "id",
+            "employee",
+            "employee_name",
+            "requested_on",
+            "asked_for",
+            "status",
+            "answered_on",
+            "answer",
+            "answered_by",
+            "days_waiting",
+            "out_of_time",
+        ]
+        read_only_fields = ["answered_by"]
+
+    def get_employee_name(self, obj) -> str:
+        return f"{obj.employee.first_name} {obj.employee.last_name}".strip() or obj.employee.email
+
+    def get_days_waiting(self, obj) -> int | None:
+        return obj.days_waiting(local_today(self.context["request"].user.tenant))
+
+    def get_out_of_time(self, obj) -> bool:
+        return obj.out_of_time(local_today(self.context["request"].user.tenant))
+
+    def validate_employee(self, value):
+        empresa = self.context["request"].user.tenant
+        if value.tenant_id != empresa.id:
+            raise serializers.ValidationError(_("That person is not in this company."))
+        return value
+
+    def validate(self, attrs):
+        """La motivación, que es lo único que el artículo no deja a la empresa.
+
+        «Comunicará la aceptación de la petición, planteará una propuesta
+        alternativa... o bien manifestará la negativa a su ejercicio. **En los
+        dos últimos casos, se motivará**.» No es un consejo ni una mejora que el
+        convenio pueda quitar: una negativa sin motivo escrito no cumple el
+        artículo, así que aquí sí se impide en vez de avisar.
+
+        Aceptar no pide motivo, y forzarlo sería inventarse una obligación:
+        quien dice que sí no tiene nada que justificar.
+        """
+        instancia = self.instance
+        estado = attrs.get("status", getattr(instancia, "status", AdaptationStatus.PENDING))
+        motivo = attrs.get("answer", getattr(instancia, "answer", ""))
+        contestada = attrs.get("answered_on", getattr(instancia, "answered_on", None))
+
+        if (
+            estado in {AdaptationStatus.ALTERNATIVE, AdaptationStatus.REFUSED}
+            and not motivo.strip()
+        ):
+            raise serializers.ValidationError(
+                {
+                    "answer": _(
+                        "Art. 34.8 asks for a reason when the answer is an alternative or a "
+                        "refusal."
+                    )
+                }
+            )
+
+        # Una respuesta sin fecha deja el plazo del artículo sin poder medirse,
+        # que es justo lo que este expediente existe para poder mirar.
+        resueltas = {
+            AdaptationStatus.ACCEPTED,
+            AdaptationStatus.ALTERNATIVE,
+            AdaptationStatus.REFUSED,
+        }
+        if estado in resueltas and contestada is None:
+            raise serializers.ValidationError(
+                {"answered_on": _("An answer needs the date it was given.")}
+            )
+
+        return attrs
 
 
 class RemoteWorkAgreementSerializer(serializers.ModelSerializer):

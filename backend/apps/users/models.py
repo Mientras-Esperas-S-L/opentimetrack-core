@@ -917,3 +917,120 @@ class RemoteWorkAgreement(TenantOwnedModel):
     def signed_late(self) -> bool:
         """Firmado después de empezar, que es lo que el art. 5.1 no admite."""
         return self.signed_on > self.starts_on
+
+
+class AdaptationStatus(models.TextChoices):
+    """Las tres respuestas que el art. 34.8 admite, y la espera.
+
+    El artículo no deja «denegada» a secas: la empresa comunica por escrito la
+    aceptación, **plantea una alternativa** o se niega, y en los dos últimos
+    casos motiva. La alternativa es una respuesta distinta de la negativa ---es
+    el resultado normal de una negociación--- y meterlas en el mismo cajón
+    perdería justo lo que el artículo quiere que quede escrito.
+    """
+
+    PENDING = "PENDING", _("In negotiation")
+    ACCEPTED = "ACCEPTED", _("Accepted")
+    ALTERNATIVE = "ALTERNATIVE", _("An alternative was proposed")
+    REFUSED = "REFUSED", _("Refused")
+    WITHDRAWN = "WITHDRAWN", _("Withdrawn by the person")
+
+
+class ScheduleAdaptation(TenantOwnedModel):
+    """Una solicitud de adaptación de jornada del art. 34.8 ET, y su respuesta.
+
+    El derecho existe desde 2019 y es de los más usados que hay: cualquier
+    persona con hijos menores de doce años puede pedir cambiar la duración, la
+    distribución o la forma de prestación de su jornada ---incluido pasar a
+    trabajo a distancia--- para conciliar.
+
+    Lo que el producto ya sabía era la **consecuencia**: un fichaje puede
+    marcarse como trabajado bajo una adaptación (art. 3.i, `FlexibilityMeasure.
+    CARE`). Lo que no había era **el expediente**, y es donde está la obligación:
+
+    - La empresa abre un proceso de negociación de **quince días como máximo**.
+    - Al terminar, **por escrito**, acepta, propone una alternativa o se niega.
+    - En los dos últimos casos, **motiva**.
+
+    Sin eso, una solicitud podía quedarse sin contestar para siempre y no había
+    dónde mirarlo. El plazo se avisa ---nadie puede impedir que pase el tiempo---
+    y la motivación se exige, porque ahí el artículo no da opción.
+
+    **No guarda si la adaptación se concedió «de verdad».** Lo que se pacte se
+    aplica cambiando la jornada, el cuadrante o el modo de trabajo, que ya
+    existen. Esto es el expediente de cómo se llegó ahí.
+    """
+
+    #: Art. 34.8: «un periodo máximo de quince días».
+    PLAZO_DE_RESPUESTA = 15
+
+    employee = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="schedule_adaptations",
+        verbose_name=_("employee"),
+    )
+    requested_on = models.DateField(
+        _("requested on"),
+        help_text=_("The fifteen days of art. 34.8 count from here."),
+    )
+    asked_for = models.TextField(
+        _("what is being asked"),
+        validators=[validate_texto_legible],
+        help_text=_("Duration, distribution, or the way the work is done --- remote included."),
+    )
+    status = models.CharField(
+        _("status"),
+        max_length=12,
+        choices=AdaptationStatus,
+        default=AdaptationStatus.PENDING,
+    )
+    answered_on = models.DateField(_("answered on"), null=True, blank=True)
+    answer = models.TextField(
+        _("answer"),
+        blank=True,
+        validators=[validate_texto_legible],
+        help_text=_(
+            "Art. 34.8 asks for this in writing, and for a reason when the answer is "
+            "not a plain yes."
+        ),
+    )
+    answered_by = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="schedule_adaptations_answered",
+        verbose_name=_("answered by"),
+    )
+
+    class Meta:
+        verbose_name = _("schedule adaptation")
+        verbose_name_plural = _("schedule adaptations")
+        ordering = ["-requested_on"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(answered_on__isnull=True)
+                | models.Q(answered_on__gte=models.F("requested_on")),
+                name="adaptation_answered_after_it_was_asked",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.requested_on.isoformat()} · {self.get_status_display()}"
+
+    @property
+    def needs_a_reason(self) -> bool:
+        """Si esta respuesta es de las que el artículo obliga a motivar."""
+        return self.status in {AdaptationStatus.ALTERNATIVE, AdaptationStatus.REFUSED}
+
+    def days_waiting(self, today) -> int | None:
+        """Días que lleva sin contestar, o `None` si ya se contestó."""
+        if self.status != AdaptationStatus.PENDING:
+            return None
+        return (today - self.requested_on).days
+
+    def out_of_time(self, today) -> bool:
+        """Si se ha pasado el plazo del art. 34.8 sin contestar."""
+        esperando = self.days_waiting(today)
+        return esperando is not None and esperando > self.PLAZO_DE_RESPUESTA

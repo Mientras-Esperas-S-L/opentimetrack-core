@@ -34,7 +34,15 @@ from apps.common.permissions import (
 from apps.common.scope import people_queryset, visible_people
 from apps.reports.delivery import send_delivery_email
 from apps.users.erase import rastro_de
-from apps.users.models import ActivityPeriod, Department, RemoteWorkAgreement, Role, Workplace
+from apps.users.models import (
+    ActivityPeriod,
+    AdaptationStatus,
+    Department,
+    RemoteWorkAgreement,
+    Role,
+    ScheduleAdaptation,
+    Workplace,
+)
 from apps.users.passwords import resolve_token, revoke_sessions, send_account_email
 from apps.users.serializers import (
     ActivityPeriodSerializer,
@@ -42,6 +50,7 @@ from apps.users.serializers import (
     PasswordResetRequestSerializer,
     PasswordSetSerializer,
     RemoteWorkAgreementSerializer,
+    ScheduleAdaptationSerializer,
     SignInSerializer,
     SignUpSerializer,
     TenantSerializer,
@@ -909,6 +918,51 @@ class PasswordSetView(APIView):
                 "tenant": TenantSerializer(user.tenant).data if user.tenant else None,
             }
         )
+
+
+class ScheduleAdaptationViewSet(StructureTrail, viewsets.ModelViewSet):
+    """Las solicitudes de adaptación de jornada del art. 34.8 y sus respuestas.
+
+    **Lee quien gestiona y escribe quien administra**, igual que los otros dos
+    expedientes de esta aplicación. Que la solicitud la origine la persona
+    trabajadora no cambia quién la registra aquí: lo que este modelo guarda es el
+    expediente ---qué se pidió, cuándo, qué se contestó y por qué--- y eso lo
+    lleva quien responde. La pantalla para que la pida cada cual llega en la
+    tanda siguiente.
+    """
+
+    queryset = ScheduleAdaptation.objects.none()
+    serializer_class = ScheduleAdaptationSerializer
+    permission_classes = [ReadForAllWriteForAdmin]
+    filterset_fields = ["employee", "status"]
+    trail_fields = ("requested_on", "status", "answered_on", "answer")
+
+    def get_queryset(self):
+        qs = ScheduleAdaptation.objects.select_related("employee")
+        scope = visible_people(self.request.user)
+        if scope is not None:
+            qs = qs.filter(employee__in=scope)
+        return qs
+
+    def perform_create(self, serializer):
+        self.anotar(serializer.save(tenant=self.request.user.tenant), _("Added"))
+
+    def perform_update(self, serializer):
+        # Quién contestó forma parte de la respuesta escrita que pide el
+        # artículo: sin eso queda un texto sin firma.
+        resueltas = {
+            AdaptationStatus.ACCEPTED,
+            AdaptationStatus.ALTERNATIVE,
+            AdaptationStatus.REFUSED,
+        }
+        objeto = serializer.save(
+            answered_by=(
+                self.request.user
+                if serializer.validated_data.get("status") in resueltas
+                else serializer.instance.answered_by
+            )
+        )
+        self.anotar(objeto, _("Changed"))
 
 
 class RemoteWorkAgreementViewSet(StructureTrail, viewsets.ModelViewSet):

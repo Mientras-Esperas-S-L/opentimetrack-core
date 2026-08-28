@@ -284,6 +284,7 @@ def review_roster(*, company, first: date, last: date, employee=None) -> list[Fi
     findings.extend(_check_reduction_within_the_right(company, first, last, employee))
     findings.extend(_check_remote_work_agreement(company, first, last, employee))
     findings.extend(_check_training_contract(company, rules, first, last, employee))
+    findings.extend(_check_adaptation_deadline(company, first, last, employee))
     findings.extend(_check_notice(company, by_person, rules, first, last))
 
     # The citation comes from the company's country, not from the place the
@@ -1050,6 +1051,56 @@ GUARDA_LEGAL = "es.childcare_reduced_hours"
 #: de cuarenta va sobrado aunque él mismo diga cuarenta.
 FORMATIVO_PRIMER_ANO = 65.0
 FORMATIVO_SEGUNDO_ANO = 85.0
+
+
+def _check_adaptation_deadline(company, first, last, employee) -> list[Finding]:
+    """Solicitudes del art. 34.8 que llevan más de quince días sin contestar.
+
+    «La empresa, ante la solicitud de adaptación de jornada, abrirá un proceso de
+    negociación con la persona trabajadora durante **un periodo máximo de quince
+    días**.» Pasados, sigue sin haber respuesta escrita, que es lo que el
+    artículo pide.
+
+    Se avisa y no se hace nada más, porque no hay nada que impedir: el plazo se
+    incumple **dejando pasar el tiempo**, y lo único que un producto puede hacer
+    con eso es que no pase desapercibido. Lo que sí se impide, en el
+    serializador, es contestar que no sin motivo, que ahí el artículo no da
+    opción.
+
+    El aviso se repite cada vez que se revisa el cuadrante mientras siga sin
+    contestar, y está bien que se repita: es una obligación viva, no un suceso.
+    """
+    from apps.users.models import AdaptationStatus, ScheduleAdaptation
+
+    pendientes = ScheduleAdaptation.objects.filter(
+        status=AdaptationStatus.PENDING,
+        # Pedidas antes del final de la ventana que se está mirando: una
+        # solicitud de la semana que viene todavía no tiene plazo que contar.
+        requested_on__lte=last,
+    ).select_related("employee")
+    if employee is not None:
+        pendientes = pendientes.filter(employee=employee)
+
+    found: list[Finding] = []
+    for solicitud in pendientes:
+        if not solicitud.out_of_time(last):
+            continue
+        found.append(
+            Finding(
+                day=max(solicitud.requested_on, first),
+                employee_id=solicitud.employee_id,
+                code="adaptation_answer_overdue",
+                message=_(
+                    "Asked for on %(day)s and still unanswered %(days)s days later: art. "
+                    "34.8 gives fifteen."
+                )
+                % {
+                    "day": solicitud.requested_on.isoformat(),
+                    "days": solicitud.days_waiting(last),
+                },
+            )
+        )
+    return found
 
 
 def _check_training_contract(company, rules, first, last, employee) -> list[Finding]:
