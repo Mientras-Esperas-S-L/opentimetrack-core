@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 15:00+0000\n"
+"POT-Creation-Date: 2026-08-28 15:44+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -2296,9 +2296,9 @@ msgid ""
 "%(limit)s h maximum: a shift spent on call at the workplace is working time "
 "in full."
 msgstr ""
-"%(hours)s h esa semana contando a garda de presenza, por riba do máximo "
-"de %(limit)s h: unha garda no centro de traballo é tempo de traballo na "
-"súa totalidade."
+"%(hours)s h esa semana contando a garda de presenza, por riba do máximo de "
+"%(limit)s h: unha garda no centro de traballo é tempo de traballo na súa "
+"totalidade."
 
 #: apps/shifts/services.py:1259
 #, python-format
@@ -2306,8 +2306,8 @@ msgid ""
 "%(hours)s h of on-call time that month, %(average)s h a week on average, "
 "over the %(limit)s allowed."
 msgstr ""
-"%(hours)s h de tempo de presenza ese mes, %(average)s h semanais de "
-"media, por riba das %(limit)s permitidas."
+"%(hours)s h de tempo de presenza ese mes, %(average)s h semanais de media, "
+"por riba das %(limit)s permitidas."
 
 #: apps/shifts/services.py:1310
 #, python-format
@@ -2315,8 +2315,8 @@ msgid ""
 "%(hours)s h over the %(agreed)s h agreed for %(year)s, and art. 34.2 gives "
 "%(months)s months to settle them."
 msgstr ""
-"%(hours)s h por riba das %(agreed)s h pactadas para %(year)s, e o "
-"art. 34.2 dá %(months)s meses para compensar a diferenza."
+"%(hours)s h por riba das %(agreed)s h pactadas para %(year)s, e o art. 34.2 "
+"dá %(months)s meses para compensar a diferenza."
 
 #: apps/shifts/services.py:1315
 #, python-format
@@ -2324,8 +2324,8 @@ msgid ""
 "%(hours)s h under the %(agreed)s h agreed for %(year)s, and art. 34.2 gives "
 "%(months)s months to settle them."
 msgstr ""
-"%(hours)s h por baixo das %(agreed)s h pactadas para %(year)s, e o "
-"art. 34.2 dá %(months)s meses para compensar a diferenza."
+"%(hours)s h por baixo das %(agreed)s h pactadas para %(year)s, e o art. 34.2 "
+"dá %(months)s meses para compensar a diferenza."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
 #: apps/shifts/services.py:1397
@@ -2504,8 +2504,19 @@ msgstr "Xa ten unha quenda ese día."
 msgid "Shift covered by somebody else."
 msgstr "Quenda cuberta por outra persoa."
 
+#: apps/shifts/views.py:662
+#, python-format
+msgid ""
+"The company works under %(regime)s, and RD 1561/1995 moves some of these "
+"figures for that sector: check which article applies before reading this as "
+"a mistake."
+msgstr ""
+"A empresa traballa en réxime de %(regime)s, e o RD 1561/1995 aparta "
+"algunhas destas cifras nese sector: comproba que artigo se aplica antes "
+"de lelo como un descoido."
+
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/shifts/views.py:657
+#: apps/shifts/views.py:683
 msgid ""
 "With no days to answer, a change can be applied the moment it is proposed: "
 "nobody gets the chance to agree or to disagree."
@@ -2514,19 +2525,19 @@ msgstr ""
 "propón: ninguén ten a ocasión de estar de acordo nin de non estalo."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/shifts/views.py:679
+#: apps/shifts/views.py:705
 #, python-format
 msgid "%(value)s is below the %(floor)s that %(basis)s sets."
 msgstr "%(value)s está por debaixo do %(floor)s que fixa %(basis)s."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/shifts/views.py:690
+#: apps/shifts/views.py:717
 #, python-format
 msgid "%(value)s is above the %(ceiling)s that %(basis)s sets."
 msgstr "%(value)s está por riba do %(ceiling)s que fixa %(basis)s."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/shifts/views.py:850
+#: apps/shifts/views.py:883
 msgid ""
 "Changing how time is counted needs the day it starts to apply. Without it "
 "the change would reach periods already closed and reported."
@@ -2535,7 +2546,7 @@ msgstr ""
 "iso o cambio chegaría a períodos xa pechados e informados."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/shifts/views.py:883
+#: apps/shifts/views.py:916
 msgid "How time was counted until this change."
 msgstr "Como se contaba o tempo ata este cambio."
 

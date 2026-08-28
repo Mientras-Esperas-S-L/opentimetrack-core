@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 15:00+0000\n"
+"POT-Creation-Date: 2026-08-28 15:44+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -2134,8 +2134,8 @@ msgid ""
 "%(hours)s h of on-call time that month, %(average)s h a week on average, "
 "over the %(limit)s allowed."
 msgstr ""
-"%(hours)s h de tiempo de presencia ese mes, %(average)s h semanales "
-"de promedio, por encima de las %(limit)s permitidas."
+"%(hours)s h de tiempo de presencia ese mes, %(average)s h semanales de "
+"promedio, por encima de las %(limit)s permitidas."
 
 #: apps/shifts/services.py:1310
 #, python-format
@@ -2310,7 +2310,18 @@ msgstr "Ya tiene un turno ese día."
 msgid "Shift covered by somebody else."
 msgstr "Turno cubierto por otra persona."
 
-#: apps/shifts/views.py:657
+#: apps/shifts/views.py:662
+#, python-format
+msgid ""
+"The company works under %(regime)s, and RD 1561/1995 moves some of these "
+"figures for that sector: check which article applies before reading this as "
+"a mistake."
+msgstr ""
+"La empresa trabaja en régimen de %(regime)s, y el RD 1561/1995 aparta "
+"algunas de estas cifras en ese sector: comprueba qué artículo aplica "
+"antes de leerlo como un descuido."
+
+#: apps/shifts/views.py:683
 msgid ""
 "With no days to answer, a change can be applied the moment it is proposed: "
 "nobody gets the chance to agree or to disagree."
@@ -2318,18 +2329,18 @@ msgstr ""
 "Sin días para responder, un cambio se puede aplicar en el momento en que se "
 "propone: nadie llega a aceptarlo ni a discreparlo."
 
-#: apps/shifts/views.py:679
+#: apps/shifts/views.py:705
 #, python-format
 msgid "%(value)s is below the %(floor)s that %(basis)s sets."
 msgstr ""
 "%(value)s queda por debajo de %(floor)s, que es lo que fija el %(basis)s."
 
-#: apps/shifts/views.py:690
+#: apps/shifts/views.py:717
 #, python-format
 msgid "%(value)s is above the %(ceiling)s that %(basis)s sets."
 msgstr "%(value)s pasa de %(ceiling)s, que es el tope que fija el %(basis)s."
 
-#: apps/shifts/views.py:850
+#: apps/shifts/views.py:883
 msgid ""
 "Changing how time is counted needs the day it starts to apply. Without it "
 "the change would reach periods already closed and reported."
@@ -2337,7 +2348,7 @@ msgstr ""
 "Cambiar cómo se cuenta el tiempo exige decir desde qué día se aplica. Sin "
 "eso, el cambio alcanzaría a periodos ya cerrados y entregados."
 
-#: apps/shifts/views.py:883
+#: apps/shifts/views.py:916
 msgid "How time was counted until this change."
 msgstr "Cómo se contaba hasta este cambio."
 

@@ -2,6 +2,84 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Un contenedor puede tener el fichero nuevo y estar corriendo el viejo (28/08/2026)
+
+`grep` dentro del contenedor confirmaba que el código nuevo estaba ahí, y la API
+seguía devolviendo la respuesta de antes. Pasé un buen rato revisando el
+serializador, la vista y el volumen antes de reiniciar el proceso, que era todo lo
+que hacía falta.
+
+**Cómo evitarlo:** cuando la API no devuelve algo que el fichero sí tiene,
+reiniciar el contenedor **antes** de leer el código otra vez. Es un comando y
+descarta la mitad de las hipótesis.
+
+## `getByText` con expresión regular puede devolver un ancestro (28/08/2026)
+
+Una comprobación de que un aviso menciona «1561/1995» pasaba sin que el aviso lo
+mencionara: `page.getByText(/Art\. 34\.3/)` había resuelto a un contenedor que
+envolvía media pantalla, y dentro estaba el texto de ayuda de **otro** campo, que
+sí lo decía.
+
+Una prueba así no es un falso positivo cualquiera: afirma exactamente lo que se
+quería comprobar y no comprueba nada.
+
+**Cómo evitarlo:** anclar al elemento, no al texto. Aquí,
+`page.locator('p.MuiFormHelperText-root').filter({ hasText: ... })`. Y en general,
+desconfiar de una prueba de interfaz que pasa a la primera sobre algo que acaba de
+escribirse: sabotear el origen y ver si se pone roja.
+
+## Un campo que existe en la API no es un campo que alguien pueda rellenar (28/08/2026)
+
+El inventario decía «la empresa ya puede declarar su régimen», y era cierto: el
+campo estaba en el modelo y el serializador lo exponía. Lo que no había era
+**pantalla**. Una empresa real no podía declararlo sin escribir una llamada a la
+API, así que todo lo que dependía de ese dato ---un aviso que nombra el sector---
+no lo habría visto nadie nunca.
+
+No es lo contrario del error de la vuelta 151, es el mismo error girado: aquella
+vez afirmé «solo por API» sin que hubiera API; esta, el inventario afirmaba que
+la empresa puede decir algo y solo podía decirlo por API.
+
+**Cómo evitarlo:** cuando una fila del inventario diga que la empresa «declara»,
+«elige» o «configura» algo, buscar el control en la pantalla antes de darla por
+buena. Un `grep` del nombre del campo en el frontend cuesta diez segundos y
+responde.
+
+## Citar la ley equivocada es peor que no citar ninguna (28/08/2026)
+
+La fila pedía que un descanso de diez horas se leyera «por el art. 8.3,
+transporte». Cumplirlo al pie de la letra exigía mapear trece regímenes del
+RD 1561/1995 contra cada cifra del marco, y ahí no tengo forma de verificar cada
+correspondencia. Una cita equivocada **se lee bien**: nadie la revisa, porque
+tiene la forma de un dato. Y quien la use ante una inspección estará alegando un
+artículo que no es el suyo.
+
+Lo que sí se puede afirmar sin verificar nada por sector: que la empresa ha
+declarado ese régimen, y que el real decreto aparta algunas de estas cifras en
+sectores concretos. Las dos son ciertas de todos los regímenes a la vez.
+
+**Cómo evitarlo:** cuando el encargo pida una cita concreta que no puedo
+verificar, dar la parte que sí es verificable y **decir que la otra no se da y
+por qué**, en el código y en el documento. Rebajar el alcance en silencio es lo
+que no vale.
+
+## Una pantalla devuelve al servidor todo lo que no excluye a mano (28/08/2026)
+
+El endpoint de reglas sirve, junto a las cifras, cosas que describen la ley: el
+país, las citas, los límites de menores. La pantalla las quita una por una antes
+de guardar, con un `const { id, country, framework, citations, minors,
+...figures } = rules`.
+
+Añadir un dato nuevo al cuerpo de la respuesta y no tocar esa línea significa
+mandarlo de vuelta en el siguiente guardado. Aquí no rompió nada ---el
+serializador ignora lo que no conoce--- pero es suerte, no diseño: el día que ese
+nombre coincida con un campo escribible, la pantalla estará guardando algo que
+nadie escribió.
+
+**Cómo evitarlo:** cada vez que se añade una clave al cuerpo de un endpoint que
+la pantalla también manda de vuelta, mirar esa desestructuración en el mismo
+edit.
+
 ## La pieza que lee un día no sirve para medir lo que cruza la medianoche (28/08/2026)
 
 Para contar guardias de sanidad lo primero que hice fue apoyarme en

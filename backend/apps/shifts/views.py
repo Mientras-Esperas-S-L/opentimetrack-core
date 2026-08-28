@@ -38,7 +38,7 @@ from apps.shifts.services import (
     review_roster,
     weekdays_in,
 )
-from apps.tenants.rules import ComputationRuleChange, WorkingTimeRules
+from apps.tenants.rules import ComputationRuleChange, SpecialRegime, WorkingTimeRules
 
 
 class ShiftPatternSerializer(serializers.ModelSerializer):
@@ -637,8 +637,34 @@ def _outside_the_law(rules, framework, changed) -> list[dict]:
     convenio hace lo mismo con `fatal=False` y por el mismo motivo --- el
     RD 1561/1995 baja algunos de estos suelos para sectores concretos, así que
     un valor por debajo puede ser correcto y quien lo sabe es la empresa.
+
+    **Y si la empresa ya ha dicho cuál es su sector, el aviso lo dice.** Un
+    descanso de diez horas leído «por debajo de las doce del art. 34.3 ET» se lee
+    como un descuido; leído junto a «transporte por carretera» se lee como lo que
+    probablemente es. El aviso **no se calla** por tener régimen declarado: el
+    real decreto no quita el límite, lo aparta en artículos concretos, y quien
+    tiene que comprobar cuál aplica es la empresa.
+
+    Lo que no se hace, a propósito, es **decir qué artículo**. Habría que mapear
+    trece regímenes contra cada cifra, y una cita equivocada es peor que ninguna:
+    se lee bien y señala a la ley que no es. El sitio donde eso sí se puede
+    declarar ya existe y es la ficha de convenio, que guarda la procedencia cifra
+    por cifra.
     """
     avisos = []
+
+    # El sector declarado, si lo hay. Se calcula una vez: es el mismo para todos
+    # los avisos de la respuesta.
+    porque = ""
+    if rules.special_regime:
+        porque = " " + str(
+            _(
+                "The company works under %(regime)s, and RD 1561/1995 moves some of "
+                "these figures for that sector: check which article applies before "
+                "reading this as a mistake."
+            )
+            % {"regime": SpecialRegime(rules.special_regime).label}
+        )
 
     # El plazo del art. 4.b, aparte: **el artículo no fija días**, y declarar un
     # suelo en el marco sería atribuirle un número que no dice. Lo que sí se
@@ -678,7 +704,8 @@ def _outside_the_law(rules, framework, changed) -> list[dict]:
                     "message": str(
                         _("%(value)s is below the %(floor)s that %(basis)s sets.")
                         % {"value": valor, "floor": cita.floor, "basis": cita.basis}
-                    ),
+                    )
+                    + porque,
                 }
             )
         elif cita.ceiling is not None and valor > float(cita.ceiling):
@@ -689,7 +716,8 @@ def _outside_the_law(rules, framework, changed) -> list[dict]:
                     "message": str(
                         _("%(value)s is above the %(ceiling)s that %(basis)s sets.")
                         % {"value": valor, "ceiling": cita.ceiling, "basis": cita.basis}
-                    ),
+                    )
+                    + porque,
                 }
             )
     return avisos
@@ -780,6 +808,11 @@ class WorkingTimeRulesView(APIView):
             "country": framework.country,
             "framework": framework.name,
             "citations": citas,
+            # Las opciones del régimen especial, por lo mismo que las citas: si
+            # las escribiera la pantalla habría dos listas que mantener, y la
+            # traducción de cada etiqueta viviría lejos del `TextChoices` que la
+            # define. Aquí ya vienen traducidas al idioma de quien pregunta.
+            "regimes": [{"value": r.value, "label": str(r.label)} for r in SpecialRegime],
             # Not settings and never will be: no agreement may lower them, so a
             # field to edit them would be a field whose only use is breaking the
             # law. Served so the screen can say what they are.

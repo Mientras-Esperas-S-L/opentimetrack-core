@@ -369,6 +369,94 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 161 --- Que el aviso diga bajo qué régimen trabaja la empresa (28/08)
+
+**13 de 13**, con una salvedad que va abajo.
+
+**La clasificación destapó otra cosa.** La fila decía que faltaba «que un
+descanso de diez horas se lea "por el art. 8.3, transporte" en vez de a secas».
+Al mirar el caso real salió algo anterior: **el régimen se podía declarar por la
+API y en ningún otro sitio**. El campo estaba en el modelo desde la vuelta
+anterior y el serializador lo exponía ---o sea que el inventario no mentía---
+pero la pantalla de ajustes no tenía selector. Una frase que nombra el sector no
+sirve de nada si el sector no se puede decir, así que la vuelta incluyó el
+selector.
+
+**Lo que hace ahora.** Con régimen declarado, el aviso de cifra apartada pasa de
+
+> «Por debajo del mínimo de 12 que fija el Art. 34.3 ET.»
+
+a lo mismo seguido de
+
+> «La empresa trabaja en régimen de transporte por carretera, y el RD 1561/1995
+> aparta algunas de estas cifras en ese sector: comprueba qué artículo aplica
+> antes de leerlo como un descuido.»
+
+**Dos cosas que expresamente no hace, y son la mitad del diseño.** El aviso **no
+se calla**: el real decreto no quita el límite del art. 34.3, lo aparta en
+artículos concretos, y silenciarlo sería decirle a la empresa que ahí no hay nada
+que comprobar. Y **no dice qué artículo**. La fila pedía «por el art. 8.3», y
+para cumplirlo habría que mapear trece regímenes contra cada cifra: es
+exactamente donde se acaba citando la ley equivocada, que es peor que no citar
+ninguna porque se lee bien y señala a otra parte. El sitio donde la cita exacta
+sí se puede declarar ya existe y es la ficha de convenio, que guarda la
+procedencia cifra por cifra.
+
+**Las opciones las manda el servidor.** Escribir los trece regímenes en la
+pantalla habría dejado dos listas que mantener y la traducción de cada etiqueta
+lejos del `TextChoices` que la define. Van en el cuerpo del endpoint de reglas,
+ya traducidas al idioma de quien pregunta, por el mismo razonamiento que hizo que
+las citas se sirvieran en vez de escribirse a mano. Efecto secundario que
+conviene anotar: **la pantalla devuelve al servidor todo lo que no excluye
+explícitamente**, así que la lista nueva hubo que sacarla de ahí a mano.
+
+**Cinco contrastes, los cinco rojos.** Sin la frase: 3 rojas. Con la frase
+siempre, aunque no haya régimen: 1 roja. Solo la rama del suelo y no la del
+techo ---que es como salió el primer parche---: 1 roja. El aviso callado cuando
+hay régimen: 3 rojas. El nombre del régimen puesto en crudo sin etiqueta: 2
+rojas.
+
+**Y una prueba mía que estaba mal por un acierto del producto.** La que recorre
+los trece regímenes mandaba siempre el mismo diez, y la pantalla **solo avisa de
+lo que acaba de cambiar** ---y hace bien: repetir en cada respuesta lo que la
+empresa decidió hace meses es ruido---. Así que a partir del segundo régimen no
+había ningún aviso que mirar. Alterna entre diez y once.
+
+**La salvedad de las trece.** Doce filas están en Cubierto. La treceava ---la
+distribución irregular del art. 34.2--- se queda en **A medias** a propósito: su
+mitad comprobable está hecha desde la vuelta 158, y la otra, el 10 % del párrafo
+primero, exige una distribución ordinaria de referencia que el modelo no tiene
+---el cuadrante *es* la distribución---. Inventarla y sacar un porcentaje de ahí
+se leería como un hecho. Marcarla Cubierto habría escondido eso.
+
+**La prueba de navegador, y cuatro cosas que se aprendieron escribiéndola.**
+Va en la suite de navegador y no solo en la de servidor porque lo que hay que
+impedir que vuelva ---un campo que existe en la API y no se puede rellenar--- solo
+se ve desde la pantalla.
+
+- `api()` de las ayudas devuelve `{status, body}` y yo lo usaba como si fuera el
+  cuerpo. `regimes` salía `undefined` y parecía que el servidor no lo mandaba.
+- El contenedor de la API **no había recargado** el fichero, aunque lo tuviera
+  dentro. Media hora de sospechar del código por no reiniciar un proceso.
+- Un `select` de MUI se abre por su rol `combobox`, no por su etiqueta: el
+  `getByLabel` encuentra el campo, y el click no despliega nada.
+- `getByText` con una expresión regular puede devolver **un ancestro** que
+  envuelve media pantalla, y entonces la comprobación pasa por lo que dice otro
+  campo. Acotado al texto de ayuda del campo.
+
+Y las etiquetas se piden a la API en vez de escribirlas en la prueba: vienen
+traducidas al idioma de la sesión, y buscar «Transporte por carretera» se pondría
+rojo el día que alguien mire esta pantalla en catalán.
+
+**Cuatro contrastes, los cuatro rojos.** Sin selector: 3 rojas. Sin la frase del
+sector: 2 rojas. Con la frase siempre: 1 roja. Con las opciones escritas a mano en
+vez de pedidas al servidor: 2 rojas ---esta última es la que impide que vuelva el
+doble registro---.
+
+**Cierre:** ocho pasos del CI en verde con 1.445 pruebas, suite de navegador
+aparte con 314, dos filas del inventario movidas, dossier en la 1.30. Las capturas
+no se regeneran: ninguna de las cinco es de la pantalla de ajustes.
+
 ### Vuelta 160 --- Las guardias de sanidad, y la semilla que contaba cero (28/08)
 
 **12 de 13.** Queda una: que cada aviso de cifra apartada cite el régimen

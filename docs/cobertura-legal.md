@@ -94,7 +94,7 @@ empresa de trabajo temporal.
 | Trabajo a distancia | Ley 10/2021 | **Cubierto.** El umbral del art. 1 se calcula ---el 30 % de la jornada en tres meses--- y se avisa a quien lo pasa sin acuerdo, o con uno firmado después de empezar (art. 5.1). El acuerdo se registra desde la ficha de la persona, con sus fechas y su porcentaje. Lo que no se guarda aquí es el contenido del art. 7: eso es el documento firmado |
 | Guardias y atención continuada | RD 1561/1995 | **Cubierto.** Con el régimen de sanidad declarado, la **guardia de presencia física** cuenta como tiempo de trabajo para el tope de cuarenta y ocho horas semanales ---SIMAP (C-303/98) y Jaeger (C-151/02)---, y se avisa al pasarse. No se toca ningún total: el registro sigue separando jornada de presencia, que es lo que obliga el art. 3.g. La guardia **localizada** no cuenta, salvo la atención efectiva, que ya se ficha como jornada |
 | Tiempo de presencia | RD 1561/1995 | **Cubierto.** El promedio del art. 8.b ---20 h semanales en un mes--- se cuenta sobre lo marcado como espera (art. 3.g) y se avisa al pasarse. **Solo si la empresa declara el régimen de transporte por carretera**: aplicárselo a una oficina sería inventarle un límite de otro sector |
-| Jornadas especiales por sector | RD 1561/1995 | **A medias.** Con el régimen declarado se comprueban ya dos sectores ---el tiempo de presencia en transporte y las guardias en sanidad---. La empresa puede **declarar su régimen** ---trece, de ampliación y de limitación--- y eso es lo que faltaba para que sus cifras dejen de parecer un descuido. Lo que aún no hace es que cada aviso de cifra apartada **cite el régimen declarado**, ni trae las cifras de cada sector: eso sería pisar el convenio |
+| Jornadas especiales por sector | RD 1561/1995 | **Cubierto.** La empresa declara su régimen ---trece, de ampliación y de limitación--- **desde la pantalla de ajustes**, y a partir de ahí cada aviso de cifra apartada lo nombra: un descanso de diez horas se lee «por debajo de las doce del art. 34.3 ET, y la empresa trabaja en transporte por carretera, donde el RD 1561/1995 aparta algunas de estas cifras». El aviso **no se calla** por tener régimen ---el real decreto no quita el límite, lo aparta en artículos concretos--- y **no dice cuál**: mapear trece regímenes contra cada cifra es donde se acaba citando la ley equivocada. Para la cita exacta ya existe la ficha de convenio, que guarda la procedencia cifra por cifra. Y en dos sectores se comprueba además una cifra concreta: el tiempo de presencia en transporte y las guardias en sanidad. Las cifras de los trece regímenes **siguen fuera a propósito**: son quince números por sector que además tienen su convenio, y uno nuestro pisando el suyo se leería como la ley |
 
 Las jornadas especiales del RD 1561/1995 son de dos clases. **Ampliaciones**:
 fincas urbanas, guardas y vigilantes, campo, comercio y hostelería, transporte
@@ -368,9 +368,22 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 3 | **Vacaciones**: devengo proporcional y traslado por IT | **3-4 días.** El devengo por fecha de alta y el traslado con el tope de 18 meses del art. 38.3 |
 | 4 | **Historia de la adscripción a departamento**, cuando el informe empiece a mentir | **2-3 días.** Una tabla de vigencias y los informes leyendo de ella |
 | 5 | **Las otras reducciones por cuidados** (arts. 37.4, 37.5 y 37.8): lactancia, hospitalización de un recién nacido y cuidado de menor con enfermedad grave. La mecánica de la fracción y las fechas **ya está** ---la puso el art. 37.6---; falta que cada una entre en el catálogo con su regla propia | **2-3 días.** Son tres artículos con cifras distintas sobre la misma maquinaria |
-| 6 | **Que los avisos citen el régimen declarado** (RD 1561/1995). Desde el 28/08 la empresa dice bajo qué régimen trabaja; falta que un descanso de diez horas se lea «por el art. 8.3, transporte» en vez de a secas. Y las cifras de cada sector siguen sin traerse a propósito: pisarían al convenio | **2-3 días** lo primero. Lo segundo son semanas, y conviene partirlo por sector empezando por el que tenga un cliente esperando |
+| 6 | **Las cifras de cada sector** (RD 1561/1995). Lo que quedaba de esta fila y sigue fuera a propósito: quince cifras por cada uno de los trece regímenes, cada sector con su convenio encima. Que los avisos citen el régimen declarado **ya está** desde el 28/08 | **Semanas**, y conviene partirlo por sector empezando por el que tenga un cliente esperando. No es trabajo pendiente sino una decisión de producto: mientras no haya un cliente de un sector concreto, traer sus cifras es inventar |
 
 ### Hecho desde que se escribió esta lista
+
+- **Que los avisos citen el régimen declarado** (28/08/2026), y con esto quedan
+  cubiertas **las trece situaciones** que Francisco marcó el 28/08.
+
+  Al clasificarla salió lo que faltaba de verdad: el régimen se podía declarar
+  **por la API y en ningún otro sitio**. El campo estaba en el modelo desde la
+  vuelta anterior, el serializador lo exponía, y la pantalla de ajustes no tenía
+  selector. Una frase que nombra el sector no sirve de nada si el sector no se
+  puede decir, así que la vuelta incluyó el selector.
+
+  Las opciones las manda el servidor ya traducidas, por lo mismo que las citas:
+  escribirlas en la pantalla habría dejado dos listas que mantener y la
+  traducción de cada etiqueta lejos del sitio que la define.
 
 - **Las guardias de sanidad** (28/08/2026). Con el régimen declarado, la guardia
   de presencia en el centro suma para el tope semanal de la Directiva 2003/88,

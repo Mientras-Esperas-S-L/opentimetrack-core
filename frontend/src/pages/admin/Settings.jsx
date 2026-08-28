@@ -268,8 +268,8 @@ export default function Settings() {
       // Only the figures. The rest of the payload is what the server tells us
       // about the applicable law --- the country, its citations, the floors for
       // minors --- and sending it back would be asking to change the law.
-      const { id, country, framework, citations, minors, ...figures } = rules
-      ;(void id, country, framework, citations, minors)
+      const { id, country, framework, citations, minors, regimes, ...figures } = rules
+      ;(void id, country, framework, citations, minors, regimes)
       // Y con la fecha desde la que aplica, si se ha tocado una de las dos del
       // cómputo. El servidor la exige, y hace bien: el sistema no puede saber
       // desde cuándo rige un convenio.
@@ -333,18 +333,45 @@ export default function Settings() {
     if (Number.isNaN(value)) return null
 
     if (c.floor != null && value < c.floor) {
-      return t(
-        'Por debajo del mínimo de {{limite}} que fija el {{articulo}}. Se guarda igual, pero debería ampararlo el convenio o una norma sectorial.',
-        { limite: c.floor, articulo: c.basis },
+      return (
+        t(
+          'Por debajo del mínimo de {{limite}} que fija el {{articulo}}. Se guarda igual, pero debería ampararlo el convenio o una norma sectorial.',
+          { limite: c.floor, articulo: c.basis },
+        ) + porElSector()
       )
     }
     if (c.ceiling != null && value > c.ceiling) {
-      return t(
-        'Por encima del máximo de {{limite}} que fija el {{articulo}}. Se guarda igual, pero debería ampararlo el convenio.',
-        { limite: c.ceiling, articulo: c.basis },
+      return (
+        t(
+          'Por encima del máximo de {{limite}} que fija el {{articulo}}. Se guarda igual, pero debería ampararlo el convenio.',
+          { limite: c.ceiling, articulo: c.basis },
+        ) + porElSector()
       )
     }
     return null
+  }
+
+  /** Y si la empresa ya ha dicho cuál es su sector, el aviso lo nombra.
+   *
+   *  «Por debajo del mínimo de 12 que fija el Art. 34.3 ET» se lee como un
+   *  descuido. Leído junto a «transporte por carretera» se lee como lo que
+   *  probablemente es: el RD 1561/1995 aparta esa cifra en ese sector.
+   *
+   *  El aviso **no se calla** por tener régimen declarado ---el real decreto no
+   *  quita el límite, lo aparta en artículos concretos--- y **no dice cuál**:
+   *  mapear trece regímenes contra cada cifra es donde se acaba citando la ley
+   *  equivocada, que se lee bien y señala a otra parte.
+   */
+  const porElSector = () => {
+    const suyo = rules?.regimes?.find((r) => r.value === rules?.special_regime)
+    if (!suyo?.value) return ''
+    return (
+      ' ' +
+      t(
+        'La empresa trabaja en régimen de {{regimen}}, y el RD 1561/1995 aparta algunas de estas cifras en ese sector: comprueba qué artículo aplica antes de leerlo como un descuido.',
+        { regimen: suyo.label },
+      )
+    )
   }
 
   /** Las propiedades del campo que lleva límite legal, cita incluida. */
@@ -636,6 +663,26 @@ export default function Settings() {
         >
           {rules ? (
             <Stack sx={{ gap: 2 }}>
+              {/* El sector va primero porque cambia cómo se leen los avisos de
+                  todo lo que viene debajo, no porque cambie ninguna cifra: no
+                  toca ni una. */}
+              <TextField
+                select
+                fullWidth
+                label={t('Régimen de jornada especial')}
+                value={rules.special_regime ?? ''}
+                onChange={setRule('special_regime')}
+                helperText={t(
+                  'El RD 1561/1995 aparta algunas cifras en sectores concretos. Declararlo no cambia ningún valor: hace que los avisos digan por qué una cifra se aparta, en vez de parecer un descuido.',
+                )}
+              >
+                {(rules.regimes ?? []).map((r) => (
+                  <MenuItem key={r.value || 'none'} value={r.value}>
+                    {r.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+
               <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
                 <TextField
                   fullWidth
