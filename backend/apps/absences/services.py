@@ -631,6 +631,85 @@ def _overlapping(
 # -------------------------------------------------------------------- resolving
 
 
+def rest_debt_over_the_balance(absence) -> dict | None:
+    """Pedir más descanso compensatorio del que consta que se debe.
+
+    El catálogo no le pone cifra a este permiso, y hace bien: el art. 35.1 no da
+    ninguna ---lo que se devuelve lo fija lo que se debe, y cuatro horas extra
+    son cuatro horas de descanso---. Pero **el producto sí sabe la cifra**: es el
+    saldo. Sin esta comprobación la calculaba, la enseñaba en la pantalla de quien
+    la disfruta, y no la usaba en el único sitio donde decide algo.
+
+    Medido: con veinticuatro horas debidas se podían pedir diez días seguidos y
+    ni quien los pedía ni quien los aprobaba veía nada.
+
+    **Avisa, no impide, y aquí eso es más importante que de costumbre**, porque
+    el saldo que sirve de referencia es incompleto **por diseño**: los descansos
+    por ampliación sectorial están fuera a propósito, y el convenio puede dar más
+    de lo que el Estatuto obliga. Negarse a registrar un descanso por un saldo que
+    el propio producto declara incompleto sería usar una cifra parcial como si
+    fuera la ley.
+
+    Por eso la frase no dice «esto está mal», dice **cuánto consta**. Y no cita
+    ningún artículo: la deuda viene de hasta cinco, y elegir uno sería atribuirle
+    la cifra al que no toca.
+    """
+    from apps.punches.rest_debt import DESCANSO_COMPENSATORIO, rest_debt
+
+    kind = absence.leave_type
+    if kind is None or kind.code != DESCANSO_COMPENSATORIO:
+        return None
+
+    pedidas, sin_convertir = _horas_pedidas(absence)
+    if pedidas <= 0 and sin_convertir <= 0:
+        return None
+
+    saldo = rest_debt(employee=absence.employee, company=absence.tenant)
+    quedan = float(saldo["remaining_hours"]) if saldo else 0.0
+
+    # **Callarse cuando no se sabe es lo que hace este aviso inútil justo cuando
+    # más falta hace.** Un día entero de descanso vale lo que ese día tocaba
+    # trabajar, y eso sale del cuadrante; quien pide con un mes de antelación
+    # ---lo normal, y lo que la ley fomenta--- pide días que todavía no tienen
+    # turno. La primera versión devolvía `None` ahí, así que el aviso solo
+    # aparecía en las peticiones de última hora.
+    #
+    # No se estima: no se sabe cuántas horas son diez días sin cuadrante y
+    # ponerles una jornada tipo daría una cifra con aire de dato. Se dice lo que
+    # sí se sabe ---cuántos días se piden y cuántas horas constan--- y decide
+    # quien tiene delante el caso.
+    if sin_convertir <= 0 and pedidas <= quedan:
+        return None
+
+    return {
+        "kind": "rest_debt",
+        # `EVENT` para que la pantalla no lo lea como un saldo por periodo: este
+        # no se reinicia en enero, se gasta contra lo que se deba en cada momento.
+        "period": "EVENT",
+        # `None` y no cero cuando no se ha podido convertir nada: cero se leería
+        # como «no pide horas», que es lo contrario de lo que pasa.
+        "asked_hours": round(pedidas, 1) if pedidas > 0 else None,
+        "owed_hours": round(quedan, 1),
+        # Los días de la petición que no se han podido convertir a horas porque
+        # no había turno previsto. Sin decirlo, la cifra de arriba parecería
+        # exacta cuando le falta justo eso.
+        "unconverted_days": sin_convertir,
+    }
+
+
+def _horas_pedidas(absence) -> tuple[float, int]:
+    """Cuántas horas pide esta ausencia, y cuántos días no se han podido contar.
+
+    La misma cuenta que usa el saldo para lo ya disfrutado, y a propósito: si una
+    la hiciera de otra manera, pedir y disfrutar lo mismo daría cifras distintas.
+    """
+    from apps.punches.rest_debt import _horas_del_cuadrante
+
+    if absence.is_partial:
+        return float(absence.hours or 0), 0
+    return _horas_del_cuadrante(absence.employee, absence)
+
+
 def leave_over_the_limit(absence) -> dict | None:
     """Whether approving this would go past what its leave type grants.
 

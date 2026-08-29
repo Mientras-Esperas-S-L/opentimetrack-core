@@ -35,6 +35,7 @@ from apps.absences.services import (
     leave_settlement,
     reject_absence,
     request_absence,
+    rest_debt_over_the_balance,
     short_holiday_notice,
     vacation_balance,
 )
@@ -82,7 +83,11 @@ class AbsenceSerializer(serializers.ModelSerializer):
     def get_over_the_limit(self, obj) -> dict | None:
         if obj.status != AbsenceStatus.PENDING:
             return None
-        return leave_over_the_limit(obj)
+        # El saldo de descanso va por el mismo canal que el tope del catálogo: es
+        # el mismo aviso ---«pides más de lo que hay»--- y lo tienen que ver las
+        # mismas dos personas, quien lo pide y quien lo decide. Un canal nuevo
+        # habría dejado la pantalla de decidir sin enterarse, que es como estaba.
+        return rest_debt_over_the_balance(obj) or leave_over_the_limit(obj)
 
     #: Vacaciones puestas por la empresa con menos de los dos meses del art.
     #: 38.3. Va con la fila, y no solo al crearla, porque quien decide también

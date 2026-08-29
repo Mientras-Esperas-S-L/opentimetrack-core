@@ -16,7 +16,7 @@ import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
 import Typography from '@mui/material/Typography'
 
-import { getLeaveTypes, getLeaveUsage } from '../services/api.js'
+import { getLeaveBalance, getLeaveTypes, getLeaveUsage } from '../services/api.js'
 import EmployeePicker from './EmployeePicker.jsx'
 import { ErrorNote } from './common.jsx'
 import { alCatalogo } from '../i18n/index.js'
@@ -216,6 +216,23 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
   // otra pantalla: es justo antes de pedir cuando sirve de algo.
   const left = usage?.find((row) => row.leave_type === kind?.id) ?? null
 
+  // El descanso compensatorio no tiene tope en el catálogo ---el art. 35.1 no da
+  // cifra: lo que se devuelve lo fija lo que se debe--- así que la línea de
+  // arriba no encuentra nada y este permiso se pedía **a ciegas**. El tope que
+  // tiene es el saldo, y el saldo existe: se calcula, se enseña en «Mis
+  // ausencias» y no llegaba ni aquí ni a la pantalla de quien aprueba.
+  //
+  // Justo antes de pedir es donde más sirve: enterarse de que se piden ochenta
+  // horas cuando constan veinticuatro debería pasar al escribirlo, no al recibir
+  // el rechazo.
+  const esDescansoCompensatorio = kind?.code === 'es.compensatory_rest'
+  const { data: saldoDeDescanso } = useQuery({
+    queryKey: ['leave-balance', subject],
+    queryFn: () => getLeaveBalance(forPerson && person ? person : undefined),
+    enabled: open && esDescansoCompensatorio && (!forPerson || Boolean(person)),
+  })
+  const deuda = esDescansoCompensatorio ? (saldoDeDescanso?.rest_debt ?? null) : null
+
   const set = (field) => (event) => {
     const next = { ...form, [field]: event.target.value }
     // Mover el inicio más allá del fin casi siempre es un clic torcido, no la
@@ -381,6 +398,31 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                   : t('No queda nada de este permiso en este periodo.')}
                 {left.estimated &&
                   ` ${t('La duración de la jornada se ha estimado: no hay cuadrante de ese día.')}`}
+              </Alert>
+            )}
+
+            {esDescansoCompensatorio && (
+              <Alert
+                severity={deuda && deuda.remaining_hours > 0 ? 'info' : 'warning'}
+                variant="outlined"
+              >
+                {deuda && deuda.remaining_hours > 0
+                  ? forPerson
+                    ? t('Le constan {{cuanto}} h de descanso por disfrutar.', {
+                        cuanto: deuda.remaining_hours,
+                      })
+                    : t('Te constan {{cuanto}} h de descanso por disfrutar.', {
+                        cuanto: deuda.remaining_hours,
+                      })
+                  : /* Cero no es «poco»: es que no consta ninguna deuda. Decirlo
+                       con la misma frase que «te quedan 3 h» haría pensar que el
+                       sistema ha contado y ha salido bajo. */
+                    forPerson
+                    ? t('No le consta ningún descanso pendiente de disfrutar.')
+                    : t('No te consta ningún descanso pendiente de disfrutar.')}{' '}
+                {t(
+                  'Es lo que el sistema sabe: no cuenta los descansos que fije el convenio ni los de ampliación sectorial.',
+                )}
               </Alert>
             )}
 

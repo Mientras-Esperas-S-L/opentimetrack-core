@@ -868,7 +868,37 @@ export default function Decisions() {
                     legal y el convenio mejora cualquiera. */}
                 {absence.over_the_limit && (
                   <Alert severity="warning" variant="outlined" sx={{ mt: 1.5 }}>
-                    {absence.over_the_limit.period === 'EVENT' ? (
+                    {absence.over_the_limit.kind === 'rest_debt' ? (
+                      /* El descanso compensatorio no tiene tope en el catálogo
+                         ---el art. 35.1 no da cifra--- pero sí lo tiene en el
+                         saldo: lo que se debe. Sin esta rama el producto
+                         calculaba «te quedan 24 h», lo enseñaba en la pantalla
+                         de quien las disfruta, y no lo decía en la única
+                         pantalla donde alguien aprueba. */
+                      <>
+                        {absence.over_the_limit.asked_hours === null ? (
+                          <Trans
+                            i18nKey="Constan <destacado>{{deben}}</destacado> por disfrutar, y lo que pide no se puede contar en horas."
+                            values={{ deben: `${absence.over_the_limit.owed_hours} h` }}
+                            components={{ destacado: <strong /> }}
+                          />
+                        ) : (
+                          <Trans
+                            i18nKey="Pide <destacado>{{pedido}}</destacado> y constan {{deben}} por disfrutar."
+                            values={{
+                              pedido: `${absence.over_the_limit.asked_hours} h`,
+                              deben: `${absence.over_the_limit.owed_hours} h`,
+                            }}
+                            components={{ destacado: <strong /> }}
+                          />
+                        )}{' '}
+                        {absence.over_the_limit.unconverted_days > 0 &&
+                          `${t('Hay {{dias}} día(s) sin turno previsto, así que no se han podido contar en horas.', { dias: absence.over_the_limit.unconverted_days })} `}
+                        {t(
+                          'Se puede aprobar igual —el saldo no cuenta los descansos que fije el convenio ni los de ampliación sectorial—, pero conviene saberlo.',
+                        )}
+                      </>
+                    ) : absence.over_the_limit.period === 'EVENT' ? (
                       <Trans
                         i18nKey="Pide <destacado>{{pedido}}</destacado> y el permiso da {{permiso}}{{extra}}."
                         values={{
@@ -893,9 +923,10 @@ export default function Decisions() {
                         components={{ destacado: <strong /> }}
                       />
                     )}{' '}
-                    {t(
-                      'Se puede aprobar igual —el convenio puede dar más de lo que consta en el catálogo—, pero conviene saberlo.',
-                    )}
+                    {absence.over_the_limit.kind !== 'rest_debt' &&
+                      t(
+                        'Se puede aprobar igual —el convenio puede dar más de lo que consta en el catálogo—, pero conviene saberlo.',
+                      )}
                   </Alert>
                 )}
 

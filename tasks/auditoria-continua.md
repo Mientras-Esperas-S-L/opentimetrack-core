@@ -369,6 +369,52 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 175 --- El saldo que se calculaba y no se usaba (29/08)
+
+Primera vuelta del bucle nuevo: contradicciones, sinsentidos y agujeros de
+lógica. Ángulo elegido, **seguridad lógica**, con su pregunta: «¿qué gana alguien
+haciendo esto dos veces, al revés, o a la vez?».
+
+**El agujero.** El producto calcula lo que se debe en descanso, lo desglosa por
+artículo y lo enseña en la pantalla de quien lo disfruta ---cinco fuentes, cuatro
+maneras de no tener plazo, catorce vueltas de trabajo--- y **no usaba esa cifra
+en el único sitio donde alguien decide algo**. Medido antes de tocar nada: con
+veinticuatro horas debidas se pedían diez días seguidos de «Descanso
+compensatorio» y `over_the_limit` contestaba `null`. Ni quien lo pedía ni quien
+lo aprobaba veía nada.
+
+El catálogo no le pone tope a ese permiso y hace bien: el art. 35.1 no da cifra,
+lo que se devuelve lo fija lo que se debe. Pero `leave_over_the_limit` sale por
+`if kind.amount is None: return None`, y ahí se acababa la comprobación. **El
+tope existía en otro sitio y nadie los había presentado.**
+
+**Avisa, no impide, y aquí eso pesa más que de costumbre**: el saldo de
+referencia es incompleto **por diseño** ---los descansos por ampliación sectorial
+están fuera a propósito desde la vuelta anterior, y el convenio puede dar más---.
+Negarse a registrar un descanso por una cifra que el propio producto declara
+parcial sería usarla como si fuera la ley. Por eso la frase no dice «esto está
+mal», dice **cuánto consta**. Y no cita ningún artículo: la deuda viene de hasta
+cinco y elegir uno sería atribuirle la cifra al que no toca.
+
+**El segundo hallazgo salió al verificar el primero.** Mi arreglo hacía
+`if pedidas <= 0: return None`. Un día entero de descanso vale lo que ese día
+tocaba trabajar, y eso sale del cuadrante; quien pide con un mes de antelación
+---lo normal, y lo que la ley fomenta--- pide días que todavía no tienen turno.
+Así que el aviso **se callaba justo ahí** y solo aparecía en las peticiones de
+última hora. No se estima lo que no se sabe: `asked_hours` va nulo, se dicen los
+días, y decide quien tiene el caso delante.
+
+**Y el aviso tampoco llegaba a quien pide.** `over_the_limit` solo lo pintaba la
+pantalla de decidir; el diálogo de solicitar avisa del saldo **solo si el permiso
+tiene tope en el catálogo**, y este no lo tiene. Ahora lo enseña antes de enviar,
+que es cuando todavía sirve para algo: «Te constan 24 h de descanso por
+disfrutar».
+
+**Siete contrastes, los siete rojos.**
+
+**Cierre:** ocho pasos del CI en verde con 1.607 pruebas, suite de navegador
+aparte, dos pantallas tocadas y nueve cadenas traducidas a catalán y gallego.
+
 ### Vuelta 174 --- Lo que el saldo no cuenta, dicho en su pantalla (29/08)
 
 Al empezar: 1 «A medias», 1 «Falta» y 1 descartada. **Al terminar no queda

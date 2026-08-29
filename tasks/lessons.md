@@ -2,6 +2,40 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Un dato que se calcula y no se usa donde decide es medio dato (29/08/2026)
+
+Catorce vueltas construyendo el saldo de descanso: cinco fuentes, cada una con su
+artículo, cuatro maneras distintas de no tener plazo, el aviso de lo que no
+cuenta. Y en el único sitio donde alguien aprueba un descanso, la cifra no
+aparecía: `leave_over_the_limit` sale por `if kind.amount is None` y el descanso
+compensatorio no tiene tope en el catálogo, a propósito, porque el artículo no da
+ninguno.
+
+**El tope existía en otro sitio y nadie había presentado los dos.** Con
+veinticuatro horas debidas se pedían diez días y nadie decía nada.
+
+**Cómo evitarlo:** cuando el producto calcule una cifra que limita algo, escribir
+en el mismo momento **dónde se usa esa cifra para decidir**. Si la respuesta es
+«se enseña», no está terminada: enseñar es un uso, decidir es otro, y el trabajo
+de calcularla se hizo para el segundo.
+
+## La comprobación que se calla cuando no sabe es la que falla cuando importa (29/08/2026)
+
+Al verificar el arreglo anterior escribí `if pedidas <= 0: return None`: sin
+horas que contar, sin aviso. Suena prudente y es lo contrario. Un día entero de
+descanso vale lo que ese día tocaba trabajar, y eso sale del cuadrante — así que
+**los días sin turno son justo los que se piden con antelación**, que es lo normal
+y lo que la ley fomenta. El aviso solo aparecía en las peticiones de última hora.
+
+Callarse y no estimar no son lo mismo, aunque los dos eviten inventar. No estimar
+es decir «diez días, de los que no sé cuántas horas son, y constan ocho».
+Callarse es dejar que se apruebe sin que nadie lo sepa.
+
+**Cómo evitarlo:** cuando una comprobación dependa de un dato que puede faltar,
+preguntarse **cuándo falta** antes de decidir qué hacer con ese caso. Si falta en
+el escenario más frecuente, el camino de «no sé» no es una rama secundaria: es la
+principal, y tiene que decir algo.
+
 ## Mover el estado de una fila y dejar su nota vieja (29/08/2026)
 
 Tres filas del inventario publicado estaban marcadas **Cubierto** con la nota de
