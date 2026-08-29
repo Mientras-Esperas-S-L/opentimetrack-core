@@ -369,6 +369,60 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 172 --- El calendario de vacaciones, para quien las disfruta (29/08)
+
+Al empezar: 3 «A medias», 1 «Falta» y 1 descartada.
+
+**Y el enunciado contaba mal, otra vez.** La fila decía que faltaba «el
+calendario como documento, que es lo que el artículo manda exponer en la
+empresa». El art. 38.3 no manda exponer nada: dice «el calendario de vacaciones
+se fijará en cada empresa» y «**el trabajador** conocerá las fechas que le
+correspondan dos meses antes». Exponer un ejemplar en lugar visible de cada
+centro es el art. 34.6, y es del **calendario laboral** ---jornada y festivos---,
+no del de vacaciones. Dos artículos distintos con la misma palabra en medio.
+
+**Lo que faltaba de verdad era el destinatario.** El plazo se comprobaba desde
+hace tiempo, y el aviso de que a alguien le habían fijado las vacaciones con
+menos de dos meses llegaba a quien las metió y a quien las decide. A la persona
+a la que se las fijan ---la que tiene que reservar un vuelo o apuntar a un crío a
+un campamento--- no le llegaba a ninguna pantalla. El artículo la pone de sujeto
+y era la única que no lo veía.
+
+**Y el cumplimiento no se veía tampoco.** `short_notice` solo existe cuando el
+plazo falla, así que unas vacaciones avisadas con noventa días de antelación no
+decían nada. Un plazo que solo se nota cuando falla no se puede comprobar: solo
+se puede padecer. Ahora el dato va siempre que las fije otro, y el aviso sigue
+saliendo solo cuando incumple.
+
+**Tres casos y no dos.** «No consta quién las fijó» no es «las pediste tú»:
+todo lo registrado antes de que el dato existiera cae ahí, y meter los dos en la
+misma frase le diría a alguien que pidió unas vacaciones que no pidió, y encima
+le quitaría el plazo.
+
+**Dos defectos que ya estaban, vistos al abrir la pantalla:**
+
+1. **«Mis ausencias» enseñaba las de toda la gente** a quien tiene permiso de
+   gestión. El historial no pasaba `employee`, así que devolvía lo que el
+   alcance permite ---y las filas no dicen de quién son--- mientras el saldo de
+   arriba sí era el suyo. Dos cosas distintas en la misma pantalla sin nada que
+   las separase. La ventana del calendario tenía lo mismo, y peor: `?employee=`
+   se publica en el esquema y el endpoint lo **ignoraba en silencio**.
+2. **Los paneles no eran regiones.** `Panel` se pintaba como un `div` con un
+   `h2` suelto al lado, así que quien navega con lector de pantalla no podía
+   saltar de sección en sección: tenía que recorrer encabezados y adivinar dónde
+   acababa cada uno. Ahora es un `<section>` con su título por nombre, en las
+   pantallas del producto entero.
+
+**Cuatro contrastes en el backend y cinco en el navegador. Uno no contrastó**, y
+volvió a enseñar algo: la prueba de que la pantalla acota comprobaba la
+respuesta de la API con `?employee=`, o sea que el **servidor** sabe acotar.
+Quitando el filtro de la pantalla seguía en verde. Reescrita contra lo que se
+dibuja ---contando los tramos pintados--- se pone roja.
+
+**Cierre:** ocho pasos del CI en verde, suite de navegador aparte, una fila
+movida y su motivo corregido. El recuento pasa a **64 cubiertas, 2 a medias y 1
+falta, de 67** en el inventario del repositorio.
+
 ### Vuelta 171 --- La noche entra en el saldo, y los ajustes salen del `curl` (29/08)
 
 Al empezar: 3 «A medias», 2 «Falta» y 1 descartada.

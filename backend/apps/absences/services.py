@@ -815,6 +815,32 @@ def _must_be_open(absence: Absence) -> Absence:
 HOLIDAY_NOTICE_DAYS = 60
 
 
+def holiday_notice_days(absence) -> int | None:
+    """Con cuánta antelación supo la persona estas vacaciones, o `None`.
+
+    `None` cuando las pidió ella ---conoce las fechas por definición y un número
+    de días ahí no significa nada--- y cuando no son vacaciones, porque el plazo
+    del art. 38.3 es de las vacaciones y de nada más.
+
+    Va aparte del aviso porque son dos cosas distintas: **el dato** existe
+    siempre que las fije otro, y el **aviso** solo cuando el plazo se incumple.
+    Sin el dato, la pantalla de quien las disfruta no puede decir «lo supiste con
+    noventa días», que es la única forma de que el cumplimiento se vea. Un plazo
+    que solo se nota cuando falla no se puede comprobar: solo se puede padecer.
+    """
+    if absence.absence_type != AbsenceType.VACATION:
+        return None
+    if absence.requested_by_id is None or absence.requested_by_id == absence.employee_id:
+        return None
+
+    # Desde que se metió, no desde hoy: el plazo se mide contra el momento en
+    # que la persona pudo conocer las fechas. Mirarlo contra hoy haría que unas
+    # vacaciones avisadas con tiempo se volvieran «con poco aviso» solas, según
+    # se acercara la fecha.
+    conocidas = local_date_of(absence.created_at or timezone.now(), absence.tenant)
+    return (absence.start_date - conocidas).days
+
+
 def short_holiday_notice(absence) -> dict | None:
     """Vacaciones puestas por la empresa con menos de dos meses de aviso.
 
@@ -834,18 +860,8 @@ def short_holiday_notice(absence) -> dict | None:
     saltaría en la mitad de las solicitudes normales y en dos semanas nadie lo
     miraría, que es como se estropea un aviso.
     """
-    if absence.absence_type != AbsenceType.VACATION:
-        return None
-    if absence.requested_by_id is None or absence.requested_by_id == absence.employee_id:
-        return None
-
-    # Desde que se metió, no desde hoy: el plazo se mide contra el momento en
-    # que la persona pudo conocer las fechas. Mirarlo contra hoy haría que unas
-    # vacaciones avisadas con tiempo se volvieran «con poco aviso» solas, según
-    # se acercara la fecha.
-    conocidas = local_date_of(absence.created_at or timezone.now(), absence.tenant)
-    dias = (absence.start_date - conocidas).days
-    if dias >= HOLIDAY_NOTICE_DAYS:
+    dias = holiday_notice_days(absence)
+    if dias is None or dias >= HOLIDAY_NOTICE_DAYS:
         return None
 
     return {

@@ -397,8 +397,8 @@ export const applyCorrectionAnyway = (id) => post(`/corrections/${id}/apply-anyw
 // --------------------------------------------------------------------- absences
 
 export const getAbsences = async (params) => page(await get('/absences/', params))
-export const getAbsenceCalendar = async (from, to) =>
-  rows(await get('/absences/calendar/', { from, to }))
+export const getAbsenceCalendar = async (from, to, params = {}) =>
+  rows(await get('/absences/calendar/', { from, to, ...params }))
 export const getPendingAbsences = async () => rows(await get('/absences/pending/'))
 
 /** Horas extra pendientes de que un responsable las autorice o rechace. */

@@ -2,6 +2,64 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Un plazo que solo se nota cuando falla no se puede comprobar (29/08/2026)
+
+El aviso de los dos meses del art. 38.3 existía desde hacía tiempo y solo
+aparecía cuando el plazo se incumplía. Con noventa días de antelación la pantalla
+no decía nada, así que quien disfruta las vacaciones no tenía forma de ver que
+**sí** se había cumplido: solo podía enterarse el día que le tocara el
+incumplimiento. Eso no es un plazo comprobable, es un plazo que se padece.
+
+**Cómo evitarlo:** el aviso y el dato son dos cosas distintas. El aviso sale
+cuando algo va mal; el dato existe siempre. Cuando una regla mida una distancia
+---días de antelación, horas de descanso, porcentaje usado--- servir el número
+aunque esté dentro del límite, y dejar el aviso para cuando no lo esté.
+
+## El aviso de un derecho tiene que llegar a quien ese derecho protege (29/08/2026)
+
+El art. 38.3 existe para que a nadie le fijen las vacaciones encima. El aviso de
+que se había incumplido lo veían quien metió las fechas y quien las decide; la
+persona a la que se las fijaban, no. El plazo lo comprobaba justo quien no lo
+padece.
+
+No fue un descuido de una pantalla: el aviso se había construido desde el lado de
+quien gestiona, que es donde estaba el flujo, y nadie miró desde el otro.
+
+**Cómo evitarlo:** al implementar una garantía, escribir primero **a quién
+protege** y comprobar que esa persona la ve en su pantalla. Si solo la ve quien
+podría incumplirla, la garantía está montada del revés.
+
+## `?filtro=` publicado y no aplicado es peor que no ofrecerlo (29/08/2026)
+
+La ventana del calendario de ausencias es un `@action` de DRF y llamaba a
+`get_queryset()` a secas. Los filtros de la lista ---`employee`, `status`,
+`absence_type`--- se publican en el esquema y ahí se ignoraban **en silencio**:
+quien pedía `?employee=X` recibía la ventana entera creyéndola acotada. En la
+pantalla «Mis ausencias» de quien tiene permiso de gestión eso eran las
+vacaciones de toda su gente bajo un título que empieza por «Mi».
+
+Y el orden importa: `filter_queryset(get_queryset())`, nunca al revés. Filtrar
+antes de acotar por quien pregunta convertiría el parámetro en un mirador.
+
+**Cómo evitarlo:** en un `@action` que devuelve una lista, `filter_queryset`. Y
+al añadir uno nuevo, comprobar con una prueba que un filtro **no amplía** lo que
+se ve: que pedir el identificador de otra persona devuelve vacío, no sus datos.
+
+## Una prueba de pantalla que interroga a la API prueba la API (29/08/2026)
+
+Escribí la prueba de que «Mis ausencias» solo enseña lo propio pidiendo la
+ventana con `?employee=` y comprobando la respuesta. Eso demuestra que el
+servidor sabe acotar, no que la pantalla se lo pida. Al sabotear el filtro **en
+la pantalla**, la prueba siguió en verde.
+
+Y la parte que sí miraba la pantalla tampoco servía: buscaba el motivo de una
+ausencia ajena, y el panel no pinta el motivo.
+
+**Cómo evitarlo:** una prueba de pantalla afirma sobre **lo dibujado**. Si hace
+falta la API, que sea para calcular el número esperado ---cuántos tramos son
+suyos--- y la aserción sobre lo que aparece. Y comprobar que lo que se busca en
+el DOM es algo que esa pantalla llega a pintar.
+
 ## Un ajuste que solo se pone por la API es una función que no existe (29/08/2026)
 
 Las cuatro fuentes del saldo de descanso dependen de ajustes que la empresa tiene

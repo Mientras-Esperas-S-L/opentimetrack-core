@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -42,14 +44,26 @@ export function PageHeader({ title, subtitle, action }) {
 }
 
 export function Panel({ title, hint, action, children, sx }) {
+  // `section` con su título por nombre, y no un `div` con un encabezado suelto
+  // al lado. Un `<section>` sin nombre accesible **no es una región**, así que
+  // quien navega con lector de pantalla no podía saltar de un panel a otro:
+  // tenía que recorrer los encabezados y adivinar dónde acababa cada uno. Y sin
+  // región tampoco se puede escribir una prueba que diga «dentro de este panel»,
+  // que es como se comprueba que un aviso sale donde tiene que salir.
+  const rotulo = useId()
   return (
-    <Paper variant="outlined" sx={{ p: { xs: 2, md: 2.5 }, ...sx }}>
+    <Paper
+      variant="outlined"
+      component="section"
+      aria-labelledby={title ? rotulo : undefined}
+      sx={{ p: { xs: 2, md: 2.5 }, ...sx }}
+    >
       {(title || action) && (
         <Stack
           direction="row"
           sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: hint ? 0.5 : 2 }}
         >
-          <Typography variant="h2" sx={{ fontSize: '1rem' }}>
+          <Typography id={rotulo} variant="h2" sx={{ fontSize: '1rem' }}>
             {title}
           </Typography>
           {action}

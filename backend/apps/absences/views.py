@@ -30,6 +30,7 @@ from apps.absences.models import (
 from apps.absences.services import (
     approve_absence,
     cancel_absence,
+    holiday_notice_days,
     leave_over_the_limit,
     leave_settlement,
     reject_absence,
@@ -61,6 +62,12 @@ class AbsenceSerializer(serializers.ModelSerializer):
     resolved_by_name = serializers.CharField(
         source="approved_by.get_full_name", read_only=True, default=""
     )
+    #: Quién las fijó. Con el nombre y no solo el identificador porque la frase
+    #: que lee quien las disfruta es «te las fijó Ana», y un UUID ahí no dice
+    #: nada. Vacío cuando las pidió esa misma persona.
+    requested_by_name = serializers.CharField(
+        source="requested_by.get_full_name", read_only=True, default=""
+    )
     days = serializers.IntegerField(read_only=True)
     leave_type_name = serializers.CharField(source="leave_type.name", read_only=True, default=None)
     #: Served with the absence rather than looked up: a list of leave has to be
@@ -85,6 +92,15 @@ class AbsenceSerializer(serializers.ModelSerializer):
 
     def get_short_notice(self, obj) -> dict | None:
         return short_holiday_notice(obj)
+
+    #: Con cuánta antelación lo supo, cuando lo fijó otro. El aviso de arriba
+    #: solo aparece si el plazo se incumple, y un plazo que solo se nota cuando
+    #: falla no se puede comprobar: quien disfruta las vacaciones no tiene forma
+    #: de ver que **sí** se cumplió. `null` cuando las pidió esa misma persona.
+    notice_days = serializers.SerializerMethodField()
+
+    def get_notice_days(self, obj) -> int | None:
+        return holiday_notice_days(obj)
 
     # Whether there is one, not where it lives. The raw URL would be a bearer
     # secret sitting in every list response; the file comes from the
@@ -114,12 +130,14 @@ class AbsenceSerializer(serializers.ModelSerializer):
             "reduction_share",
             "over_the_limit",
             "short_notice",
+            "notice_days",
             "reason",
             "status",
             "status_display",
             "approved_by",
             "resolved_by_name",
             "requested_by",
+            "requested_by_name",
             "resolved_at",
             "has_justification",
             "created_at",
@@ -700,8 +718,14 @@ class AbsenceViewSet(
                 message=_("Give 'from' and 'to' as YYYY-MM-DD."),
             ) from exc
 
+        # `filter_queryset` y no `get_queryset` a secas: los filtros de la lista
+        # ---`employee`, `status`, `absence_type`--- se publican en el esquema y
+        # aquí se ignoraban en silencio. Un cliente que pidiera `?employee=`
+        # recibía la ventana entera creyéndola acotada, y en la pantalla «Mis
+        # ausencias» de quien tiene permiso de gestión eso son las vacaciones de
+        # toda la empresa bajo un título que dice «mi».
         window = (
-            self.get_queryset()
+            self.filter_queryset(self.get_queryset())
             .filter(start_date__lte=last, end_date__gte=first)
             .exclude(status=AbsenceStatus.REJECTED)
             .order_by("start_date")

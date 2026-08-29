@@ -1050,7 +1050,14 @@ class Command(BaseCommand):
 
     def _absences(self, company, people):
         today = timezone.localdate()
+        # El séptimo elemento es **quién las pidió**, y no es un adorno: el plazo
+        # del art. 38.3 solo corre cuando las fija otro, así que sin este dato la
+        # demostración no puede enseñar ni el caso que incumple ni el que cumple.
+        # `None` significa que no consta, que es lo que había en todas hasta
+        # ahora y lo que la pantalla tiene que saber decir sin inventarse nada.
         wanted = [
+            # Se las fija la empresa a cuarenta días: dentro de los dos meses del
+            # art. 38.3, que es el caso que el artículo existe para proteger.
             (
                 "worker",
                 AbsenceType.VACATION,
@@ -1058,16 +1065,52 @@ class Command(BaseCommand):
                 47,
                 AbsenceStatus.APPROVED,
                 "Vacaciones de verano",
+                "manager",
             ),
-            ("parttime", AbsenceType.VACATION, 12, 16, AbsenceStatus.PENDING, "Puente"),
-            ("delegate", AbsenceType.PERSONAL, 5, 5, AbsenceStatus.PENDING, "Asuntos propios"),
-            ("annual", AbsenceType.SICK_LEAVE, -12, -5, AbsenceStatus.APPROVED, ""),
-            ("parttime2", AbsenceType.VACATION, -30, -25, AbsenceStatus.REJECTED, "No procede"),
+            # Y otras con tiempo de sobra, porque el cumplimiento también hay que
+            # poder verlo: un plazo que solo se nota cuando falla no se comprueba.
+            (
+                "worker",
+                AbsenceType.VACATION,
+                90,
+                92,
+                AbsenceStatus.APPROVED,
+                "Puente de diciembre",
+                "manager",
+            ),
+            ("parttime", AbsenceType.VACATION, 12, 16, AbsenceStatus.PENDING, "Puente", "parttime"),
+            (
+                "delegate",
+                AbsenceType.PERSONAL,
+                5,
+                5,
+                AbsenceStatus.PENDING,
+                "Asuntos propios",
+                "delegate",
+            ),
+            ("annual", AbsenceType.SICK_LEAVE, -12, -5, AbsenceStatus.APPROVED, "", None),
+            (
+                "parttime2",
+                AbsenceType.VACATION,
+                -30,
+                -25,
+                AbsenceStatus.REJECTED,
+                "No procede",
+                "parttime2",
+            ),
             # Clashes with the roster: the most ordinary planning mistake there
             # is, and the one that reaches the worker fastest.
-            ("reduced", AbsenceType.VACATION, 1, 3, AbsenceStatus.APPROVED, "Días pedidos"),
+            (
+                "reduced",
+                AbsenceType.VACATION,
+                1,
+                3,
+                AbsenceStatus.APPROVED,
+                "Días pedidos",
+                "reduced",
+            ),
         ]
-        for key, kind, begins, ends, status, reason in wanted:
+        for key, kind, begins, ends, status, reason, asked_by in wanted:
             Absence.objects.create(
                 tenant=company,
                 employee=people[key],
@@ -1076,6 +1119,7 @@ class Command(BaseCommand):
                 end_date=today + timedelta(days=ends),
                 status=status,
                 reason=reason,
+                requested_by=people[asked_by] if asked_by else None,
                 approved_by=people["manager"] if status != AbsenceStatus.PENDING else None,
                 resolved_at=timezone.now() if status != AbsenceStatus.PENDING else None,
             )

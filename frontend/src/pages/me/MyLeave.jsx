@@ -23,6 +23,7 @@ import AttachFileIcon from '@mui/icons-material/AttachFile'
 import {
   cancelAbsence,
   downloadJustification,
+  getAbsenceCalendar,
   getAbsences,
   getLeaveBalance,
   PAGE_SIZE,
@@ -41,6 +42,7 @@ import {
 import LeaveDialog from '../../components/LeaveDialog.jsx'
 import { dateOf, dayRange, leaveLabel, leaveLength, plural } from '../../components/format.js'
 import { FilterBar, PickFilter } from '../../components/filters.jsx'
+import { useAuth } from '../../hooks/useAuth.js'
 import { alCatalogo } from '../../i18n/index.js'
 
 //: De dónde viene cada trozo de deuda. El artículo lo manda el servidor con la
@@ -149,6 +151,126 @@ function DeudaDeDescanso({ deuda }) {
         </Box>
       )}
     </Alert>
+  )
+}
+
+/** Quién fijó estas vacaciones: `propia`, `ajena` o `desconocida`.
+ *
+ *  Se lee de quién las pidió, y no de si hay plazo: sin este dato no se puede
+ *  saber, y no saberlo es una respuesta legítima. Todo lo registrado antes de
+ *  que el campo existiera cae aquí.
+ */
+const quienLasFijo = (tramo) => {
+  if (!tramo.requested_by) return 'desconocida'
+  return tramo.requested_by === tramo.employee ? 'propia' : 'ajena'
+}
+
+/** El calendario de vacaciones de esta persona, para el periodo en curso.
+ *
+ *  «El calendario de vacaciones se fijará en cada empresa. El trabajador
+ *  conocerá las fechas que le correspondan dos meses antes, al menos, del
+ *  comienzo del disfrute» (art. 38.3 ET).
+ *
+ *  **El sujeto del artículo es quien trabaja**, y era el único que no lo veía.
+ *  El calendario del equipo existe desde hace tiempo y está tras el permiso de
+ *  gestión; el aviso de que a alguien le fijaron las vacaciones con menos de dos
+ *  meses lo veían quien las metió y quien las decide. La persona a la que le
+ *  fijan las fechas ---la que tiene que reservar un vuelo, cuadrar con su pareja
+ *  o apuntar a un crío a un campamento--- no lo veía en ninguna pantalla.
+ *
+ *  Y se dice **siempre** con cuánta antelación las supo, no solo cuando el plazo
+ *  se incumple. Un plazo que solo se nota cuando falla no se puede comprobar:
+ *  solo se puede padecer.
+ */
+function CalendarioDeVacaciones({ desde, hasta, quien }) {
+  const { t } = useTranslation()
+  const { data: tramos, isLoading } = useQuery({
+    queryKey: ['mi-calendario-de-vacaciones', desde, hasta, quien],
+    // Acotado a esta persona, y no filtrado después: quien tiene permiso de
+    // gestión ve a los suyos, así que sin el filtro este panel enseñaba las
+    // vacaciones de media empresa bajo un título que empieza por «Mi». Filtrarlo
+    // en la pantalla tampoco valdría: los datos habrían viajado igual.
+    queryFn: () => getAbsenceCalendar(desde, hasta, { employee: quien }),
+    enabled: Boolean(desde && hasta && quien),
+  })
+
+  // Solo vacaciones: el plazo del art. 38.3 es de las vacaciones y de nada más,
+  // y mezclar aquí una visita al médico convertiría el calendario en otra copia
+  // del historial, que está justo debajo.
+  const vacaciones = (tramos ?? []).filter((a) => a.absence_type === 'VACATION')
+
+  return (
+    <Panel
+      title={t('Mi calendario de vacaciones')}
+      hint={t('Las fechas que te corresponden en este periodo, y desde cuándo las sabes.')}
+    >
+      {isLoading ? (
+        <Loading rows={2} />
+      ) : vacaciones.length === 0 ? (
+        <Empty>
+          {/* Un estado vacío que solo dice «no hay nada» deja a quien lo lee sin
+              saber si es que no le tocan vacaciones o es que el sistema no las
+              tiene. Dice las dos puertas por las que llegan. */}
+          {t(
+            'Todavía no tienes vacaciones fijadas en este periodo. Aparecerán aquí en cuanto las pidas tú o te las fije la empresa.',
+          )}
+        </Empty>
+      ) : (
+        <Stack sx={{ gap: 1.5 }}>
+          {vacaciones.map((tramo) => (
+            <Box key={tramo.id}>
+              <Stack
+                direction="row"
+                sx={{ gap: 1, alignItems: 'center', justifyContent: 'space-between' }}
+              >
+                <Typography sx={{ fontWeight: 600 }}>
+                  {dayRange(tramo.start_date, tramo.end_date)}
+                </Typography>
+                <StatusChip status={tramo.status} label={tramo.status_display} />
+              </Stack>
+              <Typography variant="body2" color="text.secondary">
+                {leaveLength(tramo)}
+                {' · '}
+                {/* Tres casos, no dos. `notice_days` es nulo tanto si las pidió
+                    esta persona ---y entonces conoce las fechas por definición---
+                    como si **no consta quién las fijó**, que es lo que hay en
+                    todo lo registrado antes de que el dato existiera. Meter los
+                    dos en la misma frase le diría a alguien que pidió unas
+                    vacaciones que no pidió, y encima le quitaría el plazo. */}
+                {quienLasFijo(tramo) === 'propia'
+                  ? t('las pediste tú')
+                  : quienLasFijo(tramo) === 'ajena'
+                    ? t('te las fijó {{quien}}', {
+                        quien: tramo.requested_by_name || t('la empresa'),
+                      })
+                    : t('no consta quién las fijó')}
+              </Typography>
+              {/* El aviso, en la pantalla de quien lo sufre. Antes solo llegaba a
+                  quien las metió y a quien las decide: si el aviso de un plazo
+                  que existe para proteger a alguien no le llega a esa persona,
+                  el plazo lo comprueba justo quien no lo padece. */}
+              {tramo.short_notice ? (
+                <Alert severity="warning" variant="outlined" sx={{ mt: 0.5, py: 0 }}>
+                  {t('Lo supiste con {{plazo}}, y el {{articulo}} pide {{minimo}}.', {
+                    plazo: `${tramo.short_notice.days} ${plural(tramo.short_notice.days, t('día'), t('días'))}`,
+                    articulo: tramo.short_notice.citation,
+                    minimo: `${tramo.short_notice.required} ${t('días')}`,
+                  })}
+                </Alert>
+              ) : (
+                tramo.notice_days !== null && (
+                  <Typography variant="caption" color="text.secondary">
+                    {t('Lo supiste con {{plazo}} de antelación.', {
+                      plazo: `${tramo.notice_days} ${plural(tramo.notice_days, t('día'), t('días'))}`,
+                    })}
+                  </Typography>
+                )
+              )}
+            </Box>
+          ))}
+        </Stack>
+      )}
+    </Panel>
   )
 }
 
@@ -271,6 +393,7 @@ function Balance({ balance }) {
 export default function MyLeave() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const { session } = useAuth()
   const [asking, setAsking] = useState(false)
   const [error, setError] = useState(null)
   const [page, setPage] = useState(1)
@@ -291,10 +414,16 @@ export default function MyLeave() {
     queryFn: () =>
       getAbsences({
         page,
+        // Las suyas. Sin esto, quien tiene permiso de gestión veía aquí el
+        // historial de toda la gente que lleva ---y las filas no dicen de quién
+        // son--- mientras el saldo de arriba sí era el suyo. Dos cosas distintas
+        // en la misma pantalla, sin nada que las separase.
+        employee: session?.user?.id,
         ...(year ? { year } : {}),
         ...(status ? { status } : {}),
       }),
     placeholderData: (previous) => previous,
+    enabled: Boolean(session?.user?.id),
   })
 
   const refresh = () => {
@@ -339,6 +468,12 @@ export default function MyLeave() {
       {balance ? <Balance balance={balance} /> : <LinearProgress sx={{ mb: 2 }} />}
 
       {balance?.rest_debt && <DeudaDeDescanso deuda={balance.rest_debt} />}
+
+      <CalendarioDeVacaciones
+        desde={balance?.period_start}
+        hasta={balance?.period_end}
+        quien={session?.user?.id}
+      />
 
       <Typography variant="h2" sx={{ fontSize: '1rem', mt: 3, mb: 1.5 }}>
         {t('Historial')}
