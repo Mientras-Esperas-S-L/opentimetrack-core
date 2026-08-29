@@ -427,15 +427,39 @@ export default function MyLeave() {
   //: en la que hay que bajar buscando, y lo que se busca casi siempre es «las
   //: de este año» o «las que están sin resolver».
   const esteAño = new Date().getFullYear()
-  const [year, setYear] = useState(String(esteAño))
+  // `null` hasta que se sepa qué periodo mira el saldo de arriba: elegir el año
+  // natural de entrada hacía que las dos mitades de esta pantalla hablaran de
+  // ventanas distintas en cuanto la empresa movía el mes de inicio.
+  const [year, setYear] = useState(null)
   const [status, setStatus] = useState('')
 
   const { data: balance } = useQuery({
     queryKey: ['leave-balance'],
     queryFn: () => getLeaveBalance(),
   })
+  //: A qué periodo pertenece lo que enseña el saldo de arriba. El historial mira
+  //: el mismo, que es lo que impedía leer «0 disfrutados» encima de dos
+  //: vacaciones aprobadas: las dos cosas eran ciertas y hablaban de ventanas
+  //: distintas sin decirlo.
+  const añoDelPeriodo = balance?.period_start ? Number(balance.period_start.slice(0, 4)) : esteAño
+  //: Si ese periodo cruza el año natural. Con el mes de inicio por defecto no lo
+  //: hace y la pantalla se queda exactamente como estaba.
+  const periodoPartido = Boolean(
+    balance?.period_start &&
+    balance?.period_end &&
+    balance.period_start.slice(0, 4) !== balance.period_end.slice(0, 4),
+  )
+
+  //: El año que la consulta usa de verdad. **Va en la clave**, y no `year` a
+  //: secas: `year` es `null` hasta que alguien elige, así que la clave no
+  //: cambiaba al llegar el saldo y react-query servía para siempre la respuesta
+  //: que había pedido antes, con el año natural. La pantalla enseñaba el rótulo
+  //: del periodo correcto sobre la lista del periodo equivocado, que es peor que
+  //: el fallo que venía a arreglar.
+  const añoEfectivo = year ?? String(añoDelPeriodo)
+
   const { data: absences, isLoading } = useQuery({
-    queryKey: ['absences', 'mine', page, year, status],
+    queryKey: ['absences', 'mine', page, añoEfectivo, status],
     queryFn: () =>
       getAbsences({
         page,
@@ -444,7 +468,7 @@ export default function MyLeave() {
         // son--- mientras el saldo de arriba sí era el suyo. Dos cosas distintas
         // en la misma pantalla, sin nada que las separase.
         employee: session?.user?.id,
-        ...(year ? { year } : {}),
+        ...(añoEfectivo === '' ? {} : { year: añoEfectivo }),
         ...(status ? { status } : {}),
       }),
     placeholderData: (previous) => previous,
@@ -509,18 +533,25 @@ export default function MyLeave() {
             allá no hay nada que enseñar. «Todos» al final y no al principio,
             porque casi nadie lo quiere. */}
         <PickFilter
-          label={t('Año')}
-          value={year}
+          label={periodoPartido ? t('Periodo') : t('Año')}
+          value={añoEfectivo}
           onChange={(valor) => {
             setYear(valor)
             setPage(1)
           }}
-          options={Array.from({ length: 5 }, (_, i) => ({
-            value: String(esteAño - i),
-            label: String(esteAño - i),
-          }))}
+          options={Array.from({ length: 5 }, (_, i) => {
+            const desde = añoDelPeriodo - i
+            return {
+              value: String(desde),
+              // «2025/26» y no «2025» cuando el periodo cruza el año: si el
+              // periodo va de septiembre a agosto, la etiqueta «2025» a secas
+              // deja fuera ocho de sus doce meses y quien la lee busca donde no
+              // está. Con el periodo natural son el mismo año y sobra la barra.
+              label: periodoPartido ? `${desde}/${String(desde + 1).slice(2)}` : String(desde),
+            }
+          })}
           all={t('Todos')}
-          width={130}
+          width={periodoPartido ? 150 : 130}
         />
         <PickFilter
           label={t('Estado')}
@@ -547,7 +578,13 @@ export default function MyLeave() {
           {/* Con un filtro puesto, «no has solicitado ninguna» sería mentira:
               las hay, pero en otro año o en otro estado. Y es una mentira que
               se cree, porque el filtro está arriba y el mensaje abajo. */}
-          {year || status
+          {/* `year` vale `null` mientras no se elige nada, y **eso no significa
+              «sin filtro»**: significa «el periodo en curso», que es lo que
+              mira el saldo de arriba. Solo «Todos» ---la cadena vacía--- quita
+              el corte. Sin esta distinción la pantalla decía «todavía no has
+              solicitado ninguna» a quien sí tiene ausencias en otro periodo,
+              que es justo la mentira que este mensaje existe para evitar. */}
+          {añoEfectivo !== '' || status
             ? t('Ninguna ausencia coincide con lo que has elegido arriba.')
             : t('Todavía no has solicitado ninguna ausencia.')}
         </Empty>

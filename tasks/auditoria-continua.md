@@ -369,6 +369,53 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 176 --- «0 disfrutados» encima de dos vacaciones aprobadas (29/08)
+
+Ángulo: **bordes del tiempo**. Empecé mirando el cambio de hora en la franja
+nocturna ---bien: la resta es de instantes, no de horas de reloj--- y
+`period_for`, que resuelve el fin de mes con el truco correcto y acierta el
+bisiesto. Lo que apareció fue otra cosa.
+
+**Con el periodo de cómputo movido, la pantalla se contradecía a dos
+centímetros.** Puesto el mes de inicio en septiembre ---que es lo que el propio
+producto ofrece configurar--- «Mis ausencias» decía:
+
+    Vacaciones · Periodo del 01 sept 2025 al 31 ago 2026
+    24 días laborables de 24 · 0 disfrutados
+    Mi calendario de vacaciones · Todavía no tienes vacaciones fijadas
+    ...
+    Historial · Año 2026
+    Vacaciones 08 oct → 15 oct · 8 días · Aprobada
+    Vacaciones 27 nov → 29 nov · 3 días · Aprobada
+
+Las dos mitades eran ciertas. El saldo y el calendario iban por el periodo de la
+empresa y el historial por el año natural, y **nada lo decía**.
+
+**Y el propio código ya sabía cuál era el correcto.** El docstring del filtro
+decía «se devengan y se disfrutan **por periodo**» y tres líneas más abajo
+filtraba `date(año, 1, 1)` a `date(año, 12, 31)`. Con el mes por defecto son lo
+mismo y por eso nadie lo vio en catorce vueltas.
+
+Ahora `year` significa **el periodo que empieza en ese año**, el desplegable se
+rotula «Periodo · 2025/26» cuando cruza el año natural, y con el mes por defecto
+la pantalla se queda exactamente como estaba: «Año · 2026».
+
+**El segundo fallo era mío y lo cazó el navegador, no la lectura.** La clave de
+la consulta llevaba el año **elegido** ---nulo mientras nadie elige--- y no el
+que la consulta usaba de verdad. Al llegar el saldo la clave no cambiaba, así que
+react-query servía para siempre la respuesta pedida antes con el año natural: la
+pantalla enseñaba **el rótulo del periodo correcto sobre la lista del periodo
+equivocado**, que es peor que el fallo que venía a arreglar.
+
+**Siete contrastes; uno no contrastó.** Cambiar las opciones del desplegable para
+que se contaran desde el año natural no ponía roja ninguna prueba: comprobaba lo
+**seleccionado** y no las opciones, y un desfase de uno no se ve en el valor
+elegido ---que sigue estando en la lista--- sino en los extremos, ofreciendo un
+periodo futuro y comiéndose el más antiguo. Añadida la aserción, cae.
+
+**Cierre:** ocho pasos del CI en verde con 1.613 pruebas, suite de navegador
+aparte, una cadena traducida.
+
 ### Vuelta 175 --- El saldo que se calculaba y no se usaba (29/08)
 
 Primera vuelta del bucle nuevo: contradicciones, sinsentidos y agujeros de

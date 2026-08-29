@@ -395,8 +395,26 @@ class AbsenceFilter(django_filters.FilterSet):
     year = django_filters.NumberFilter(method="_del_año")
 
     def _del_año(self, queryset, name, value):
+        """El **periodo** que empieza en ese año, no el año natural.
+
+        El docstring de arriba ya decía que las vacaciones «se devengan y se
+        disfrutan por periodo», y esto filtraba de enero a diciembre. Con el
+        periodo por defecto son lo mismo y no se notaba; con cualquier otro
+        ---que es lo que el producto ofrece configurar--- la misma pantalla se
+        contradecía a la vista: el saldo decía «24 de 24, 0 disfrutados» y el
+        historial de debajo enseñaba dos vacaciones aprobadas. Las dos cosas
+        eran ciertas y hablaban de ventanas distintas sin decirlo.
+        """
+        from apps.absences.services import leave_period_for
+
         año = int(value)
-        return queryset.filter(start_date__lte=date(año, 12, 31), end_date__gte=date(año, 1, 1))
+        empresa = getattr(getattr(self.request, "user", None), "tenant", None)
+        if empresa is None:
+            return queryset.filter(start_date__lte=date(año, 12, 31), end_date__gte=date(año, 1, 1))
+
+        # El periodo que **empieza** en ese año: el que contiene su primer día.
+        desde, hasta = leave_period_for(empresa, date(año, empresa.leave_year_start_month, 1))
+        return queryset.filter(start_date__lte=hasta, end_date__gte=desde)
 
     class Meta:
         model = Absence

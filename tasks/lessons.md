@@ -2,6 +2,38 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Un ajuste que casi nadie cambia esconde los fallos de quien lo cambia (29/08/2026)
+
+El mes en que empieza el periodo de vacaciones es configurable y por defecto es
+enero. Con enero, «periodo» y «año natural» son la misma ventana, así que el
+historial filtrando por año natural y el saldo contando por periodo daban lo
+mismo **siempre**. En cuanto una empresa lo mueve ---y el producto lo ofrece,
+con su campo y su explicación--- la pantalla se contradice a dos centímetros:
+«0 disfrutados» encima de dos vacaciones aprobadas.
+
+Catorce vueltas de auditoría sobre esa pantalla y no salió, porque la
+demostración usa el valor por defecto.
+
+**Cómo evitarlo:** al auditar una pantalla, mirar **qué ajustes la alimentan** y
+probarla con uno cambiado. Los ajustes con un valor por defecto cómodo son los
+que menos cobertura real tienen: la semilla los deja como vienen, las pruebas los
+heredan, y el caso que los mueve es justo el que nadie ha visto nunca.
+
+## La clave de una consulta tiene que llevar lo que la consulta usa (29/08/2026)
+
+Puse `queryKey: [..., year, ...]` y `queryFn` usando `year ?? añoDelPeriodo`.
+`year` es nulo hasta que alguien elige, así que la clave **no cambiaba** cuando
+llegaba el saldo y traía el periodo bueno: react-query servía para siempre la
+respuesta que había pedido antes, con el año natural.
+
+El resultado era peor que el fallo original: el rótulo decía el periodo correcto
+y la lista de debajo era la del periodo equivocado. Un fallo visible se había
+convertido en uno que parece correcto.
+
+**Cómo evitarlo:** calcular el valor efectivo **en una variable**, y usar esa
+misma variable en la clave, en la consulta y en lo que se pinta. Si la clave y la
+petición se derivan por caminos distintos, tarde o temprano dicen cosas distintas.
+
 ## Un dato que se calcula y no se usa donde decide es medio dato (29/08/2026)
 
 Catorce vueltas construyendo el saldo de descanso: cinco fuentes, cada una con su
