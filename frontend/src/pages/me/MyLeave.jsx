@@ -74,6 +74,15 @@ function DeudaDeDescanso({ deuda }) {
   const { t } = useTranslation()
   const vencidas = Number(deuda.overdue_hours) > 0
   const quedan = Number(deuda.remaining_hours)
+  //: Lo ya disfrutado. **Es lo que hace que el total no sea la suma de las
+  //: líneas**: cada fuente dice lo que *generó* y lo devuelto se resta una sola
+  //: vez, del total, porque un descanso disfrutado no dice de cuál salda y
+  //: repartirlo exigiría una regla de imputación que nadie ha acordado.
+  //:
+  //: La decisión es correcta y estaba escrita en el servidor; lo que faltaba era
+  //: decirla aquí. Sin esta cifra la pantalla ponía «te quedan 16 h» encima de
+  //: tres líneas que suman 24, y quien las lee cuenta y no le sale.
+  const devuelto = Number(deuda.settled_hours) || 0
   const fuentes = deuda.sources ?? []
 
   return (
@@ -101,7 +110,13 @@ function DeudaDeDescanso({ deuda }) {
             // Cada plazo va en su línea del desglose.
             t('Te quedan {{horas}} h de descanso por disfrutar.', { horas: quedan }))}
       {!vencidas && quedan <= 0 && t('No queda descanso por recuperar.')}
-      {fuentes.length > 1 && (
+      {/* Y solo mientras quede algo que disfrutar. Con el saldo a cero, estas
+          líneas seguían enseñando las horas y **sus plazos**: «No queda descanso
+          por recuperar» encima de «8 h de horas extra, hasta el 12 dic 2026».
+          Quien lo lee entiende que tiene ocho horas que caducan en diciembre.
+          El desglose sirve para saber qué disfrutar y con qué plazo; sin nada
+          que disfrutar no tiene función y sí tiene con qué engañar. */}
+      {quedan > 0 && fuentes.length > 1 && (
         <Box component="span" sx={{ display: 'block', mt: 0.5 }}>
           {/* Con una sola fuente el desglose sobra: el total ya la nombra. */}
           {fuentes.map((f) => (
@@ -153,6 +168,14 @@ function DeudaDeDescanso({ deuda }) {
           {t(
             'Tu empresa trabaja en {{sector}}, donde el {{norma}} amplía la jornada y fija descansos compensatorios propios. Esos no se cuentan aquí: mira tu convenio.',
             { sector: deuda.sector.regime, norma: deuda.sector.citation },
+          )}
+        </Box>
+      )}
+      {quedan > 0 && devuelto > 0 && fuentes.length > 1 && (
+        <Box component="span" sx={{ display: 'block', mt: 0.5 }}>
+          {t(
+            'Ya has disfrutado {{cuanto}} h, que se restan del total y no de una línea: un descanso no dice de cuál sale.',
+            { cuanto: devuelto },
           )}
         </Box>
       )}

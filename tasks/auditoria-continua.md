@@ -367,6 +367,42 @@ completo (evidencia y refutación) está en el registro del workflow.
   que «pausas y ausencias llegarán en OpenTimeTrack, no aquí». Así que no hay
   nada que copiar: el hueco es de OTT desde el principio.
 
+## En curso
+
+### Vuelta 177 --- El total que no era la suma de sus líneas (29/08) · SIN CERRAR
+
+**El trabajo está hecho y verificado; falta el cierre.** Se paró a mitad, así que
+antes de darla por buena hay que correr `./scripts/la-suite-de-navegador.sh` y
+subir. Lo demás está: los ocho pasos del CI en verde con 1.617 pruebas, las
+propias de la vuelta pasando, los contrastes rojos y las dos pantallas miradas.
+
+Ángulo: **sinsentidos aritméticos**.
+
+**El saldo de descanso resta lo devuelto del total y el desglose enseña lo que
+cada fuente generó.** Con ocho horas disfrutadas de veinticuatro, la pantalla
+ponía «Te quedan 16 h» encima de tres líneas de 8 h que suman 24. Quien las lee
+cuenta y no le sale.
+
+La decisión de fondo es correcta y estaba razonada en el servidor: un descanso
+disfrutado no dice de qué fuente salda, y repartirlo entre ellas exigiría una
+regla de imputación que nadie ha acordado. Lo que faltaba era **decirlo**.
+
+**En el extremo era peor.** Con todo devuelto: «No queda descanso por recuperar»
+encima de «8 h de horas extra, **hasta el 12 dic 2026**». Un plazo de algo
+saldado no corre, y ahí parecía que sí — alguien lee esa fecha y cree que tiene
+ocho horas que caducan en diciembre. Ahora el desglose no aparece cuando no queda
+nada que disfrutar: sirve para saber qué disfrutar y con qué plazo, y sin nada
+que disfrutar no tiene función y sí tiene con qué engañar.
+
+**Tres contrastes; uno no contrastó, y por partida doble.** La primera versión de
+la prueba de navegador miraba el saldo que hubiera y se saltaba sola cuando no
+encajaba: con la demostración recién sembrada nadie ha disfrutado nada, así que
+la comprobación que importa no llegaba a correr **nunca**. Reescrita para
+**construir** el caso ---pedir el descanso, aprobarlo desde otra sesión y
+mirarlo---, cae. Y aun así el caso extremo seguía sin cubrirse: hubo que llevar
+la prueba hasta saldar el total entero, con descansos **por horas** en vez de por
+días para no depender de qué días tiene turno la persona en la demostración.
+
 ## Cerrado
 
 ### Vuelta 176 --- «0 disfrutados» encima de dos vacaciones aprobadas (29/08)
