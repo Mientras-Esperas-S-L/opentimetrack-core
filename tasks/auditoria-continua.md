@@ -369,6 +369,72 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 169 --- La historia de la adscripción, y la jerarquía descartada (29/08)
+
+Al empezar: 3 «A medias» y 5 «Falta».
+
+**Lo primero de la vuelta no fue una fila.** La suite de navegador no tenía
+script propio, y la corría a mano con `| tail -6` ---que fue justo lo que ocultó
+cinco fallos en la vuelta anterior---. Ahora está `scripts/la-suite-de-navegador.sh`,
+que vuelca la salida a un fichero, mira el código de salida de Playwright y
+**compara el total contra `--list`**: una tanda incompleta se caza por el
+recuento aunque nadie diga «failed».
+
+**Clasificar destapó que el enunciado apuntaba a otro sitio.** Decía «el informe
+de julio dirá el departamento de ahora», y el informe **no lleva departamento**:
+se comprobó. Lo que sí tiene es un filtro, `?department=`, y ese sí leía la
+adscripción de hoy. Pedir «julio, Jardinería» tras una reorganización de
+septiembre devolvía a la gente de septiembre: metía en el documento a quien
+entonces no estaba y dejaba fuera a quien sí.
+
+**Dos decisiones que separan dos preguntas que la fila mezclaba.**
+
+- **El historial empieza el día que se estrena.** Del pasado no hay dato, y
+  ponerle a cada asignación la fecha del contrato sería afirmar algo que no
+  consta. La de arranque va **sin fecha de inicio** ---«no consta desde
+  cuándo»--- y cuenta para cualquier periodo, que es exactamente como se
+  comportaba el producto antes.
+- **En el alcance de quien gestiona no se usa, y es a propósito.** Quien lleva
+  hoy un departamento necesita el histórico de la gente que lleva hoy, no el de
+  quien ya no. Un documento de un periodo y un permiso de lectura son dos
+  preguntas distintas con dos respuestas distintas.
+
+Va por señal y no llamando desde cada sitio que cambia el departamento: hay tres
+---la ficha, la pantalla del departamento y la semilla--- y el día que aparezca
+un cuarto, nadie se acordaría.
+
+**La jerarquía de departamentos pasa a descartada**, que es la primera fila del
+inventario en esa categoría. Solo haría falta para acotar la lectura en cascada
+---resuelto ya poniendo a alguien al frente de varios--- y para agrupar cifras por
+rama, que nadie ha pedido. Lo que sí trae es una pregunta nueva en cada sitio que
+hoy es una respuesta: si quien lleva «Operaciones» ve los fichajes de
+«Jardinería», si aprueba sus vacaciones, si sale en su informe. El inventario
+estrena categoría, con su color y su explicación: **no es una laguna, es una
+respuesta**.
+
+**Cuatro contrastes, y uno no contrastó.** La guarda de `update_fields` en la
+señal es rendimiento y no corrección ---`remember_department` no hace nada si el
+departamento no cambió, y ahí está la garantía---. Segunda vez que aparece este
+patrón, y el comentario lo dice.
+
+**Tres cosas que salieron mal por el camino.**
+
+1. **Tercer `git checkout` sobre trabajo sin commitear.** Esta vez `models.py`,
+   con el modelo y la señal dentro. Lo vi porque fui a comprobarlo justo después.
+   La lección estaba escrita dos veces.
+2. **Una prueba que ordenaba por UUID.** `order_by("id")` sobre una clave
+   aleatoria da un orden aleatorio: pasaba por casualidad hasta que le tocaron
+   otros identificadores. Ahora ordena por `created_at`.
+3. **Dos managers que no se comportan igual.** `DepartmentAssignment` es de
+   empresa y necesita `objects_all_tenants` en un comando; `User` es al revés,
+   su manager **no** filtra por empresa y va `objects` a secas. Suponer que los
+   dos eran iguales habría fallado en uno de los dos sentidos.
+
+**Cierre:** ocho pasos del CI en verde con 1.544 pruebas, suite de navegador
+aparte, dos filas cerradas ---una cubierta y otra descartada---, dossier en la
+1.38. El recuento pasa de 103/3/5 a **104 cubiertas, 3 a medias, 3 faltan y 1
+descartada, de 111**.
+
 ### Vuelta 168 --- Los días de vacaciones por antigüedad (29/08)
 
 Al empezar: 3 «A medias» y 7 «Falta».

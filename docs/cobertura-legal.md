@@ -317,9 +317,9 @@ trabaja**. Un modelo de organización completo es otra herramienta.
 | Un responsable lee solo lo suyo | **Cubierto.** Los departamentos que lleva, más él mismo. Con un ajuste de empresa para volver al alcance total |
 | Representación legal de las personas trabajadoras | **Cubierto.** Es a quien se avisa en el art. 4.b |
 | Centro de trabajo | **Cubierto.** Con municipio, comunidad y zona horaria propia: una delegación en Canarias mide su jornada una hora antes que la central |
-| Historia de la adscripción | **Falta.** Si alguien cambia de departamento en septiembre, el informe de julio dirá el de ahora |
+| Historia de la adscripción | **Cubierto.** Cada cambio de departamento queda fechado, y el informe del art. 34.9 pedido **por departamento** usa la adscripción **del periodo**: pedir «julio, Jardinería» después de una reorganización de septiembre devolvía la plantilla de septiembre, con las personas equivocadas en un documento que puede acabar en una inspección. **El historial empieza el día que se estrena**: del pasado no hay dato, así que la asignación de arranque va sin fecha de inicio ---«no consta desde cuándo»--- y cuenta para cualquier periodo, igual que antes. En el **alcance** de quien gestiona no se usa, y es a propósito: quien lleva hoy un departamento necesita el histórico de la gente que lleva hoy |
 | Retirar un alta equivocada | **Cubierto desde el 27/08/2026.** Se puede borrar de verdad a quien no dejó nada que explicar: ni trabajo suyo ni decisiones sobre el de otras personas. Con cualquiera de las dos cosas se niega y dice qué encontró, y hay que dar de baja |
-| Jerarquía de departamentos | **Falta**, y probablemente deba seguir faltando: acotar la lectura no la necesita |
+| Jerarquía de departamentos | **Descartado a propósito.** Un departamento dentro de otro solo haría falta para dos cosas: acotar la lectura en cascada ---y eso ya se resuelve poniendo a alguien al frente de varios departamentos, sin inventar un árbol--- y agrupar cifras por rama, que nadie ha pedido. Lo que sí trae es una pregunta nueva en cada sitio que hoy es una respuesta: si quien lleva «Operaciones» ve los fichajes de «Jardinería», si aprueba sus vacaciones, si sale en su informe. Se implementará el día que un cliente tenga una jerarquía de verdad, y no antes |
 
 ---
 
@@ -378,6 +378,24 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 6 | **Las cifras de cada sector** (RD 1561/1995). Lo que quedaba de esta fila y sigue fuera a propósito: quince cifras por cada uno de los trece regímenes, cada sector con su convenio encima. Que los avisos citen el régimen declarado **ya está** desde el 28/08 | **Semanas**, y conviene partirlo por sector empezando por el que tenga un cliente esperando. No es trabajo pendiente sino una decisión de producto: mientras no haya un cliente de un sector concreto, traer sus cifras es inventar |
 
 ### Hecho desde que se escribió esta lista
+
+- **La historia de la adscripción** (29/08/2026), y **la jerarquía de
+  departamentos descartada** con su motivo.
+
+  El enunciado decía «el informe de julio dirá el departamento de ahora», y el
+  informe **no lleva departamento**: se comprobó. Lo que sí lleva es un filtro
+  ---`?department=`--- y ese sí leía la adscripción de hoy. Pedir «julio,
+  Jardinería» tras una reorganización de septiembre devolvía a la gente de
+  septiembre: metía en el documento a quien entonces no estaba y dejaba fuera a
+  quien sí. Un documento que puede acabar en una inspección.
+
+  Dos decisiones que se ven mejor en las pruebas. **El historial empieza el día
+  que se estrena**: del pasado no hay dato, y ponerle a cada asignación la fecha
+  del contrato sería afirmar algo que no consta, así que la de arranque va sin
+  fecha ---«no consta desde cuándo»--- y cuenta para cualquier periodo. Y **en el
+  alcance de quien gestiona no se usa**: quien lleva hoy un departamento necesita
+  el histórico de la gente que lleva hoy, no el de quien ya no. Son dos preguntas
+  distintas con dos respuestas distintas, y la fila mezclaba las dos.
 
 - **Los días de vacaciones por antigüedad** (convenio, 29/08/2026), y **asuntos
   propios, que ya estaba**.

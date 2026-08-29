@@ -21,6 +21,8 @@ import zoneinfo
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.db.models.functions import Lower
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -70,6 +72,75 @@ class Department(TenantOwnedModel):
 
     def __str__(self) -> str:
         return self.name
+
+
+class DepartmentAssignment(TenantOwnedModel):
+    """En qué departamento estaba alguien, y desde cuándo.
+
+    La persona lleva su departamento **actual** en una columna, y eso es lo
+    correcto para casi todo: el alcance de quien gestiona, las colas de
+    decisión, el resumen de hoy. Quien lleva hoy un departamento necesita ver el
+    histórico de la gente que lleva hoy, no el de quien ya no.
+
+    Donde no vale es en un documento **de un periodo**. El informe del art. 34.9
+    se puede pedir por departamento, y hasta ahora ese filtro leía la adscripción
+    de hoy: pedir «julio, Jardinería» después de una reorganización de septiembre
+    devolvía a la gente de Jardinería de septiembre. Un documento que puede
+    acabar en una inspección, con las personas equivocadas.
+
+    **El historial empieza el día que se estrena, y eso se dice.** Del pasado no
+    hay dato: nadie guardó los cambios anteriores, y ponerle a cada asignación
+    una fecha de inicio inventada ---la del contrato, por ejemplo--- sería
+    afirmar algo que no consta. Por eso `starts_on` admite quedarse vacío, y
+    significa «no consta desde cuándo»: esas asignaciones cuentan para cualquier
+    periodo, que es exactamente como se comportaba el producto antes. Lo que
+    cambie a partir de ahora sí queda fechado.
+    """
+
+    employee = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="department_history",
+        verbose_name=_("employee"),
+    )
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.CASCADE,
+        related_name="assignments",
+        verbose_name=_("department"),
+    )
+    starts_on = models.DateField(
+        _("from"),
+        null=True,
+        blank=True,
+        help_text=_("Empty means it is not on record since when, so it counts for any period."),
+    )
+    ends_on = models.DateField(
+        _("until"),
+        null=True,
+        blank=True,
+        help_text=_("Empty means it is the current one."),
+    )
+
+    class Meta:
+        verbose_name = _("department assignment")
+        verbose_name_plural = _("department assignments")
+        ordering = ["-starts_on"]
+        indexes = [models.Index(fields=["employee", "starts_on", "ends_on"])]
+
+    def __str__(self) -> str:
+        return f"{self.employee} · {self.department}"
+
+    def covers(self, first, last) -> bool:
+        """Si la asignación se solapa con ese periodo.
+
+        Sin fecha de inicio cubre cualquier periodo anterior: es lo que significa
+        «no consta desde cuándo», y es el comportamiento que el producto tenía
+        antes de que existiera este historial.
+        """
+        if self.starts_on and self.starts_on > last:
+            return False
+        return not (self.ends_on and self.ends_on < first)
 
 
 class Workplace(TenantOwnedModel):
@@ -1055,3 +1126,32 @@ class ScheduleAdaptation(TenantOwnedModel):
         """Si se ha pasado el plazo del art. 34.8 sin contestar."""
         esperando = self.days_waiting(today)
         return esperando is not None and esperando > self.PLAZO_DE_RESPUESTA
+
+
+@receiver(post_save, sender=User)
+def _anotar_la_adscripcion(sender, instance, **kwargs):
+    """Deja constancia del departamento cada vez que se guarda una persona.
+
+    Por señal y no desde cada sitio que cambia el departamento: hay tres
+    ---la ficha, la pantalla del departamento y la semilla--- y el día que
+    aparezca un cuarto, nadie se acordaría de llamarlo. Lo que este historial
+    sirve es un documento que puede acabar en una inspección, así que perderse
+    un cambio no es un detalle.
+
+    Se salta cuando el guardado dice qué campos toca y el departamento no está
+    entre ellos: un `last_login` no cambia la adscripción de nadie, y esto corre
+    en cada inicio de sesión.
+
+    **Ese atajo es rendimiento, no corrección.** Quitarlo no cambia ni un tramo:
+    `remember_department` no hace nada si el departamento sigue siendo el mismo,
+    y ahí está la garantía de verdad. Lo que evita es una consulta por cada
+    guardado de cualquier campo, que en el inicio de sesión de una plantilla
+    entera se nota.
+    """
+    campos = kwargs.get("update_fields")
+    if campos is not None and "department" not in campos:
+        return
+
+    from apps.users.adscription import remember_department
+
+    remember_department(instance)

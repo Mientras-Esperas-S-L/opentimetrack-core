@@ -2,6 +2,48 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Tercer `git checkout`: la lección no bastaba, hacía falta el script (29/08/2026)
+
+Escribí «no uses `git checkout` para restaurar tras un sabotaje» el 28/08, la
+repetí ampliada el 29 por la mañana, y esa misma tarde volví a hacerlo sobre
+`apps/users/models.py`, que tenía un modelo y una señal sin commitear.
+
+Las tres veces el patrón fue el mismo: una tanda de sabotajes, un fichero que no
+estaba en la copia de seguridad, y `git checkout` como salida rápida. La lección
+describía el error pero no cambiaba nada de cómo trabajo.
+
+**Cómo evitarlo, de verdad:** la copia se hace de **todos** los ficheros que la
+tanda va a tocar, antes de empezar, en un solo comando. Si a mitad aparece uno
+sin copia, se hace la copia entonces ---cuesta un `cp`--- y nunca se restaura con
+git. Y al terminar cada tanda, comprobar que lo escrito sigue ahí: un `grep -c`
+del símbolo nuevo cuesta un segundo y es la única señal de que no se ha perdido
+nada.
+
+## `order_by("id")` con clave UUID es orden aleatorio (29/08/2026)
+
+Una prueba comprobaba que el primer tramo del historial es el antiguo y el
+segundo el nuevo, ordenando por `id`. La clave primaria es un UUID, así que el
+orden no tiene nada que ver con la cronología: la prueba pasaba por casualidad y
+falló en cuanto le tocaron otros identificadores.
+
+**Cómo evitarlo:** para orden cronológico, `created_at` ---o el campo de fecha
+que el modelo tenga---, nunca la clave. Con enteros autoincrementales el orden por
+`id` coincide de casualidad y por eso el hábito se cuela; con UUID el fallo es
+inmediato y aleatorio, que es peor.
+
+## Dos managers del mismo proyecto pueden hacer lo contrario (29/08/2026)
+
+En un comando de gestión, `DepartmentAssignment` necesita `objects_all_tenants`
+---su manager normal filtra por el contexto de empresa, y un comando no tiene
+ninguno--- y `User` necesita `objects` a secas, porque **su** manager no filtra
+por empresa. Escribir `User.objects_all_tenants` reventó con `AttributeError`,
+que al menos es ruidoso; al revés habría sido silencioso.
+
+**Cómo evitarlo:** antes de usar un manager en un comando, mirar de qué modelo
+es. `TenantOwnedModel` acota y tiene la salida `objects_all_tenants`; `User` no
+acota y no la tiene. Y hay un guard que exige declarar cada `User.objects` con su
+motivo, que es lo que obliga a pensarlo.
+
 ## `| tail` se traga el resultado de la tanda, y el código de salida (29/08/2026)
 
 Corría la suite de navegador con `npx playwright test --reporter=line | tail -6`.

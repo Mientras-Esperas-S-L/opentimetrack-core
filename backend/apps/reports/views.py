@@ -182,10 +182,18 @@ class ReportView(APIView):
         ).values("employee_id")
         people = people.filter(Q(is_active=True) | Q(id__in=trabajaron))
 
+        people = list(people.order_by("last_name", "first_name"))
+
         department = request.query_params.get("department")
         if department:
-            people = people.filter(department_id=department)
-        people = list(people.order_by("last_name", "first_name"))
+            # Por la adscripción **del periodo**, no por la de hoy. Este informe
+            # se pide con fechas, y una reorganización de septiembre no cambia
+            # quién estaba en ese departamento en julio: leer la columna actual
+            # metía en el documento a gente que entonces no estaba y dejaba
+            # fuera a la que sí.
+            from apps.users.adscription import people_in_department
+
+            people = people_in_department(people, department, date_from, date_to)
 
         if not people:
             raise ValidationError({"detail": _("Nobody worked in that period.")})

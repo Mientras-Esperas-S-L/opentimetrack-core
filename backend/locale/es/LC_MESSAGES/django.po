@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 22:42+0000\n"
+"POT-Creation-Date: 2026-08-29 00:45+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -87,17 +87,17 @@ msgid "a day"
 msgstr "al día"
 
 #: apps/absences/models.py:87 apps/reports/services.py:169
-#: apps/users/models.py:206
+#: apps/users/models.py:277
 msgid "a week"
 msgstr "a la semana"
 
 #: apps/absences/models.py:88 apps/reports/services.py:169
-#: apps/users/models.py:207
+#: apps/users/models.py:278
 msgid "a month"
 msgstr "al mes"
 
 #: apps/absences/models.py:89 apps/reports/services.py:169
-#: apps/users/models.py:208
+#: apps/users/models.py:279
 msgid "a year"
 msgstr "al año"
 
@@ -107,7 +107,7 @@ msgstr "código"
 
 #: apps/absences/models.py:109 apps/shifts/models.py:72
 #: apps/tenants/applications.py:44 apps/tenants/holidays.py:64
-#: apps/users/models.py:36 apps/users/models.py:96
+#: apps/users/models.py:38 apps/users/models.py:167
 msgid "name"
 msgstr "nombre"
 
@@ -204,14 +204,14 @@ msgstr "necesita justificante"
 #: apps/absences/models.py:203 apps/absences/models.py:559
 #: apps/audit/models.py:191 apps/punches/models.py:538
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
-#: apps/tenants/rules.py:516 apps/tenants/rules.py:600 apps/users/models.py:835
-#: apps/users/models.py:913
+#: apps/tenants/rules.py:516 apps/tenants/rules.py:600 apps/users/models.py:906
+#: apps/users/models.py:984
 msgid "note"
 msgstr "nota"
 
 #: apps/absences/models.py:204 apps/shifts/models.py:84
 #: apps/tenants/applications.py:53 apps/tenants/models.py:166
-#: apps/users/models.py:40 apps/users/models.py:134 apps/users/models.py:536
+#: apps/users/models.py:42 apps/users/models.py:205 apps/users/models.py:607
 msgid "active"
 msgstr "activo"
 
@@ -243,8 +243,8 @@ msgstr "Cancelada"
 #: apps/notifications/models.py:34 apps/punches/corrections.py:80
 #: apps/punches/models.py:150 apps/punches/models.py:485
 #: apps/punches/models.py:527 apps/reports/payroll.py:97
-#: apps/shifts/models.py:111 apps/users/models.py:817 apps/users/models.py:889
-#: apps/users/models.py:992
+#: apps/shifts/models.py:111 apps/users/models.py:104 apps/users/models.py:888
+#: apps/users/models.py:960 apps/users/models.py:1063
 msgid "employee"
 msgstr "persona trabajadora"
 
@@ -254,7 +254,7 @@ msgid "type"
 msgstr "tipo"
 
 #: apps/absences/models.py:288 apps/absences/models.py:536
-#: apps/reports/payroll.py:99
+#: apps/reports/payroll.py:99 apps/users/models.py:113
 msgid "from"
 msgstr "desde"
 
@@ -293,7 +293,7 @@ msgstr "registrado por"
 
 #: apps/absences/models.py:344 apps/absences/models.py:548
 #: apps/punches/corrections.py:104 apps/punches/models.py:531
-#: apps/users/models.py:1004
+#: apps/users/models.py:1075
 msgid "status"
 msgstr "estado"
 
@@ -550,7 +550,7 @@ msgid "Deleted"
 msgstr "Eliminado"
 
 #: apps/absences/views.py:292 apps/absences/views.py:519
-#: apps/punches/correction_views.py:246 apps/reports/views.py:405
+#: apps/punches/correction_views.py:246 apps/reports/views.py:413
 #: apps/users/serializers.py:480 apps/users/serializers.py:732
 #: apps/users/serializers.py:806 apps/users/serializers.py:894
 msgid "That person is not in this company."
@@ -735,7 +735,7 @@ msgstr "cuándo"
 #: apps/audit/models.py:163 apps/common/models.py:117
 #: apps/tenants/models.py:169 apps/tenants/models.py:197
 #: apps/tenants/rules.py:100 apps/tenants/rules.py:493
-#: apps/tenants/rules.py:578 apps/users/models.py:288
+#: apps/tenants/rules.py:578 apps/users/models.py:359
 msgid "company"
 msgstr "empresa"
 
@@ -1278,11 +1278,11 @@ msgstr "Tiempo de espera o a disposición"
 msgid "Interruption of the right to disconnect"
 msgstr "Interrupción del derecho a la desconexión"
 
-#: apps/punches/models.py:68 apps/users/models.py:467
+#: apps/punches/models.py:68 apps/users/models.py:538
 msgid "On site"
 msgstr "Presencial"
 
-#: apps/punches/models.py:69 apps/users/models.py:467
+#: apps/punches/models.py:69 apps/users/models.py:538
 msgid "Remote"
 msgstr "A distancia"
 
@@ -1415,7 +1415,7 @@ msgid "timestamp"
 msgstr "momento"
 
 #: apps/punches/models.py:214 apps/tenants/models.py:53
-#: apps/users/models.py:124
+#: apps/users/models.py:195
 msgid "time zone"
 msgstr "zona horaria"
 
@@ -1712,7 +1712,7 @@ msgid "Tax number"
 msgstr "CIF/NIF"
 
 #: apps/reports/pdf.py:110 apps/reports/services.py:559
-#: apps/users/models.py:239
+#: apps/users/models.py:310
 msgid "Employee"
 msgstr "Persona trabajadora"
 
@@ -1868,11 +1868,11 @@ msgstr "Solo puedes pedir tu propio registro."
 msgid "That person does not exist."
 msgstr "Esa persona no existe."
 
-#: apps/reports/views.py:191
+#: apps/reports/views.py:199
 msgid "Nobody worked in that period."
 msgstr "Nadie trabajó en ese periodo."
 
-#: apps/reports/views.py:196
+#: apps/reports/views.py:204
 #, python-format
 msgid ""
 "%(count)s people is over the %(limit)s this can produce in one request. "
@@ -1881,11 +1881,11 @@ msgstr ""
 "%(count)s personas pasan de las %(limit)s que se pueden generar de una vez. "
 "Acota por departamento."
 
-#: apps/reports/views.py:347
+#: apps/reports/views.py:355
 msgid "Only a manager or an administrator generates the summaries."
 msgstr "Solo un responsable o la administración genera los resúmenes."
 
-#: apps/reports/views.py:400
+#: apps/reports/views.py:408
 msgid "You may only ask for your own summary."
 msgstr "Solo puedes pedir tu propio resumen."
 
@@ -2150,8 +2150,8 @@ msgid ""
 "No contract start date, so the extra holiday the agreement gives for "
 "seniority cannot be counted."
 msgstr ""
-"No consta la fecha de inicio del contrato, así que no se pueden contar "
-"los días de vacaciones que el convenio da por antigüedad."
+"No consta la fecha de inicio del contrato, así que no se pueden contar los "
+"días de vacaciones que el convenio da por antigüedad."
 
 #: apps/shifts/services.py:1177
 #, python-format
@@ -2571,7 +2571,7 @@ msgstr "Crear y modificar personas"
 msgid "Receive outbound events"
 msgstr "Recibir eventos salientes"
 
-#: apps/tenants/applications.py:45 apps/users/models.py:38
+#: apps/tenants/applications.py:45 apps/users/models.py:40
 msgid "description"
 msgstr "descripción"
 
@@ -2642,8 +2642,8 @@ msgstr "Local"
 msgid "origin"
 msgstr "origen"
 
-#: apps/tenants/holidays.py:81 apps/users/models.py:137
-#: apps/users/models.py:302
+#: apps/tenants/holidays.py:81 apps/users/models.py:208
+#: apps/users/models.py:373
 msgid "workplace"
 msgstr "centro de trabajo"
 
@@ -2690,7 +2690,7 @@ msgstr ""
 "Nombre IANA. El almacenamiento siempre es UTC; esto solo afecta a cómo se "
 "muestra."
 
-#: apps/tenants/models.py:60 apps/users/models.py:331
+#: apps/tenants/models.py:60 apps/users/models.py:402
 msgid "language"
 msgstr "idioma"
 
@@ -2702,7 +2702,7 @@ msgstr ""
 "Idioma en el que trabaja la empresa. Una persona puede cambiarlo para sí "
 "misma; el ajuste del navegador solo se usa cuando no hay ninguno de los dos."
 
-#: apps/tenants/models.py:73 apps/users/models.py:513
+#: apps/tenants/models.py:73 apps/users/models.py:584
 msgid "annual leave days"
 msgstr "días de vacaciones al año"
 
@@ -3086,8 +3086,8 @@ msgid ""
 "From the collective agreement, not the law. Empty means none: years of "
 "service add nothing to the holiday allowance."
 msgstr ""
-"Del convenio, no de la ley. Vacío significa ninguno: los años de "
-"servicio no suman nada al saldo de vacaciones."
+"Del convenio, no de la ley. Vacío significa ninguno: los años de servicio no "
+"suman nada al saldo de vacaciones."
 
 #: apps/tenants/rules.py:313
 msgid "a public holiday worked is made up with"
@@ -3270,11 +3270,11 @@ msgstr "cambios en cómo se cuenta el tiempo"
 msgid "application credentials they created"
 msgstr "credenciales de aplicación que creó"
 
-#: apps/users/models.py:53
+#: apps/users/models.py:55
 msgid "managers"
 msgstr "responsables"
 
-#: apps/users/models.py:55
+#: apps/users/models.py:57
 msgid ""
 "Who may read and resolve for the people in it. Only has an effect on the "
 "manager profile: an administrator sees the whole company."
@@ -3282,48 +3282,71 @@ msgstr ""
 "Quién puede leer y resolver por su gente. Solo afecta al perfil de "
 "responsable: administración ve toda la empresa."
 
-#: apps/users/models.py:61 apps/users/models.py:310
+#: apps/users/models.py:63 apps/users/models.py:110 apps/users/models.py:381
 msgid "department"
 msgstr "departamento"
 
-#: apps/users/models.py:62
+#: apps/users/models.py:64
 msgid "departments"
 msgstr "departamentos"
 
-#: apps/users/models.py:97
+#: apps/users/models.py:116
+msgid ""
+"Empty means it is not on record since when, so it counts for any period."
+msgstr ""
+"Vacío significa que no consta desde cuándo, así que cuenta para cualquier "
+"periodo."
+
+#: apps/users/models.py:119
+msgid "until"
+msgstr "hasta"
+
+#: apps/users/models.py:122
+msgid "Empty means it is the current one."
+msgstr "Vacío significa que es la actual."
+
+#: apps/users/models.py:126
+msgid "department assignment"
+msgstr "adscripción a departamento"
+
+#: apps/users/models.py:127
+msgid "department assignments"
+msgstr "adscripciones a departamento"
+
+#: apps/users/models.py:168
 msgid "address"
 msgstr "dirección"
 
-#: apps/users/models.py:100
+#: apps/users/models.py:171
 msgid "municipality"
 msgstr "municipio"
 
-#: apps/users/models.py:103
+#: apps/users/models.py:174
 msgid "Decides the two local public holidays."
 msgstr "Decide los dos festivos locales."
 
-#: apps/users/models.py:109
+#: apps/users/models.py:180
 msgid "municipality code"
 msgstr "código de municipio"
 
-#: apps/users/models.py:112
+#: apps/users/models.py:183
 msgid "INE code in Spain. Names repeat between provinces; codes do not."
 msgstr ""
 "Código INE en España. Los nombres se repiten entre provincias; los códigos "
 "no."
 
-#: apps/users/models.py:115
+#: apps/users/models.py:186
 msgid "region"
 msgstr "comunidad autónoma"
 
-#: apps/users/models.py:119
+#: apps/users/models.py:190
 msgid ""
 "Decides the public holidays the region sets. Empty uses only the national "
 "ones."
 msgstr ""
 "Decide los festivos que fija la comunidad. Vacío aplica solo los nacionales."
 
-#: apps/users/models.py:129
+#: apps/users/models.py:200
 msgid ""
 "Empty uses the company's. Only needed where a workplace is in another zone: "
 "in Spain, the Canary Islands."
@@ -3331,84 +3354,84 @@ msgstr ""
 "Vacío usa la de la empresa. Solo hace falta si el centro está en otra zona: "
 "en España, Canarias."
 
-#: apps/users/models.py:138
+#: apps/users/models.py:209
 msgid "workplaces"
 msgstr "centros de trabajo"
 
-#: apps/users/models.py:176
+#: apps/users/models.py:247
 msgid "Full time"
 msgstr "Jornada completa"
 
-#: apps/users/models.py:177
+#: apps/users/models.py:248
 msgid "Part time"
 msgstr "Tiempo parcial"
 
-#: apps/users/models.py:178
+#: apps/users/models.py:249
 msgid "Reduced working day"
 msgstr "Jornada reducida"
 
-#: apps/users/models.py:181
+#: apps/users/models.py:252
 msgid "Training contract, alternating"
 msgstr "Contrato formativo en alternancia"
 
-#: apps/users/models.py:184
+#: apps/users/models.py:255
 msgid "Training contract, work practice"
 msgstr "Contrato formativo para práctica profesional"
 
-#: apps/users/models.py:192
+#: apps/users/models.py:263
 msgid "Training contract, kind not stated"
 msgstr "Contrato formativo, sin concretar cuál"
 
-#: apps/users/models.py:193
+#: apps/users/models.py:264
 msgid "No agreed figure"
 msgstr "Sin cifra pactada"
 
-#: apps/users/models.py:233
+#: apps/users/models.py:304
 msgid "Read from the roster"
 msgstr "Según el cuadrante"
 
-#: apps/users/models.py:234
+#: apps/users/models.py:305
 msgid "Yes"
 msgstr "Sí"
 
-#: apps/users/models.py:235
+#: apps/users/models.py:306
 msgid "No"
 msgstr "No"
 
-#: apps/users/models.py:240
+#: apps/users/models.py:311
 msgid "Manager"
 msgstr "Responsable"
 
-#: apps/users/models.py:241
+#: apps/users/models.py:312
 msgid "Administrator"
 msgstr "Administración"
 
-#: apps/users/models.py:289
+#: apps/users/models.py:360
 msgid "Null only for platform superusers on self-hosted installs."
 msgstr ""
 "Vacío solo para superusuarios de plataforma en instalaciones autoalojadas."
 
-#: apps/users/models.py:313
+#: apps/users/models.py:384
 msgid "email address"
 msgstr "correo electrónico"
 
-#: apps/users/models.py:315
+#: apps/users/models.py:386
 msgid "first name"
 msgstr "nombre"
 
-#: apps/users/models.py:318
+#: apps/users/models.py:389
 msgid "last name"
 msgstr "apellidos"
 
-#: apps/users/models.py:320
+#: apps/users/models.py:391
 msgid "role"
 msgstr "perfil"
 
-#: apps/users/models.py:322
+#: apps/users/models.py:393
 msgid "staff number"
 msgstr "nº de empleado"
 
-#: apps/users/models.py:326
+#: apps/users/models.py:397
 msgid ""
 "The person's identifier in the company's own systems. Acts as a bridge when "
 "an external application records clock events on their behalf."
@@ -3416,23 +3439,23 @@ msgstr ""
 "El identificador de la persona en los sistemas de la propia empresa. Sirve "
 "de puente cuando una aplicación externa registra fichajes en su nombre."
 
-#: apps/users/models.py:334
+#: apps/users/models.py:405
 msgid "Overrides the company language for this person."
 msgstr "Sustituye el idioma de la empresa para esta persona."
 
-#: apps/users/models.py:346
+#: apps/users/models.py:417
 msgid "working-time regime"
 msgstr "régimen de jornada"
 
-#: apps/users/models.py:350
+#: apps/users/models.py:421
 msgid "Art. 3.b. Decides which limits apply, not just how many hours."
 msgstr "Art. 3.b. Decide qué límites se aplican, no solo cuántas horas."
 
-#: apps/users/models.py:353
+#: apps/users/models.py:424
 msgid "contracted hours"
 msgstr "horas contratadas"
 
-#: apps/users/models.py:359
+#: apps/users/models.py:430
 msgid ""
 "The figure the contract agreed. Empty on a full-time contract means the "
 "company's own; empty with no agreed figure means there is none."
@@ -3440,44 +3463,44 @@ msgstr ""
 "La cifra que pactó el contrato. Vacío en jornada completa significa la de la "
 "empresa; vacío sin cifra pactada significa que no la hay."
 
-#: apps/users/models.py:364
+#: apps/users/models.py:435
 msgid "over"
 msgstr "sobre"
 
-#: apps/users/models.py:368
+#: apps/users/models.py:439
 msgid "Whether the figure above is a week, a month or a year."
 msgstr "Si la cifra anterior es semanal, mensual o anual."
 
-#: apps/users/models.py:377
+#: apps/users/models.py:448
 msgid "contract starts"
 msgstr "el contrato empieza"
 
-#: apps/users/models.py:380
+#: apps/users/models.py:451
 msgid "Empty means it was already running when the company started here."
 msgstr ""
 "Vacío significa que ya estaba en marcha cuando la empresa empezó a usar esto."
 
-#: apps/users/models.py:383
+#: apps/users/models.py:454
 msgid "contract ends"
 msgstr "el contrato acaba"
 
-#: apps/users/models.py:386
+#: apps/users/models.py:457
 msgid "Empty means open-ended. A date makes it fixed-term."
 msgstr "Vacío significa indefinido. Con fecha, es temporal."
 
-#: apps/users/models.py:405
+#: apps/users/models.py:476
 msgid "relieves"
 msgstr "releva a"
 
-#: apps/users/models.py:406
+#: apps/users/models.py:477
 msgid "Art. 12.7: who this relief contract stands in for."
 msgstr "Art. 12.7: a quién sustituye este contrato de relevo."
 
-#: apps/users/models.py:410
+#: apps/users/models.py:481
 msgid "permanent seasonal"
 msgstr "fijo discontinuo"
 
-#: apps/users/models.py:413
+#: apps/users/models.py:484
 msgid ""
 "Art. 16 ET: the work comes in periods of activity. Outside them there is no "
 "expected working day, and the roster says so instead of reporting an absence."
@@ -3486,11 +3509,11 @@ msgstr ""
 "hay jornada prevista, y el cuadrante lo dice en vez de contarlo como una "
 "ausencia."
 
-#: apps/users/models.py:419
+#: apps/users/models.py:490
 msgid "agreed hours"
 msgstr "horario pactado"
 
-#: apps/users/models.py:423
+#: apps/users/models.py:494
 msgid ""
 "Art. 3.b: the agreed working hours, as text. For example 'L-V 09:00-17:00'. "
 "Free text because a schedule is not a shape a closed field can hold."
@@ -3499,11 +3522,11 @@ msgstr ""
 "Texto libre porque un horario no tiene una forma que quepa en un campo "
 "cerrado."
 
-#: apps/users/models.py:433
+#: apps/users/models.py:504
 msgid "night worker"
 msgstr "trabajador nocturno"
 
-#: apps/users/models.py:438
+#: apps/users/models.py:509
 msgid ""
 "Art. 36.1 ET. A status, not a shift: three hours of the daily working day at "
 "night as a rule, or a third of the year. It brings an eight-hour average "
@@ -3515,11 +3538,11 @@ msgstr ""
 "anual. Trae un promedio de ocho horas en quince días y la prohibición de "
 "horas extraordinarias. Déjalo en automático para leerlo del cuadrante."
 
-#: apps/users/models.py:445
+#: apps/users/models.py:516
 msgid "rotating shifts"
 msgstr "turnos rotativos"
 
-#: apps/users/models.py:448
+#: apps/users/models.py:519
 msgid ""
 "Art. 36.3 ET. The person rotates between shift teams. This does not add "
 "limits: it stops the ordinary ones being applied to a changeover, where a "
@@ -3529,11 +3552,11 @@ msgstr ""
 "evita que se apliquen los ordinarios a un relevo, donde un descanso más "
 "corto es lícito y se devuelve, no se incumple."
 
-#: apps/users/models.py:454
+#: apps/users/models.py:525
 msgid "volunteered for nights"
 msgstr "adscripción voluntaria a noches"
 
-#: apps/users/models.py:457
+#: apps/users/models.py:528
 msgid ""
 "Art. 36.3 ET allows more than two consecutive weeks on the night shift only "
 "when the person asked for it. Recorded here because the roster cannot tell a "
@@ -3543,11 +3566,11 @@ msgstr ""
 "solo si la persona lo ha pedido. Se anota aquí porque el cuadrante no "
 "distingue a quien se ofrece de a quien dejan ahí."
 
-#: apps/users/models.py:464
+#: apps/users/models.py:535
 msgid "usual mode"
 msgstr "modalidad habitual"
 
-#: apps/users/models.py:469
+#: apps/users/models.py:540
 msgid ""
 "Art. 3.e. What a clock event assumes when it says nothing; each event can "
 "still record the other."
@@ -3555,11 +3578,11 @@ msgstr ""
 "Art. 3.e. Lo que asume un fichaje cuando no dice nada; cada uno puede "
 "registrar la otra modalidad."
 
-#: apps/users/models.py:475
+#: apps/users/models.py:546
 msgid "date of birth"
 msgstr "fecha de nacimiento"
 
-#: apps/users/models.py:479
+#: apps/users/models.py:550
 msgid ""
 "Only used to apply the protections the law gives workers under eighteen: "
 "eight hours a day, a thirty-minute break from four and a half, two days of "
@@ -3573,11 +3596,11 @@ msgstr ""
 "extraordinarias. Sin ella no se pueden aplicar, y el sistema lo dice en vez "
 "de dar por hecho que la persona es mayor de edad."
 
-#: apps/users/models.py:491
+#: apps/users/models.py:562
 msgid "workers' representative"
 msgstr "representante de las personas trabajadoras"
 
-#: apps/users/models.py:494
+#: apps/users/models.py:565
 msgid ""
 "Informed when somebody disagrees with a change to their record (art. 4.b), "
 "and entitled to consult the register (art. 6.2)."
@@ -3585,11 +3608,11 @@ msgstr ""
 "Se le informa cuando alguien discrepa de un cambio en su registro (art. "
 "4.b), y tiene derecho a consultar el registro (art. 6.2)."
 
-#: apps/users/models.py:504
+#: apps/users/models.py:575
 msgid "wants clock reminders"
 msgstr "quiere recordatorios de fichaje"
 
-#: apps/users/models.py:507
+#: apps/users/models.py:578
 msgid ""
 "Send a reminder when a shift starts and there is no entry, or when a day is "
 "left open. It prompts the real punch; it never records one."
@@ -3597,7 +3620,7 @@ msgstr ""
 "Envía un recordatorio si empieza el turno y no hay entrada, o si queda una "
 "jornada abierta. Empuja al fichaje real, nunca registra uno."
 
-#: apps/users/models.py:517
+#: apps/users/models.py:588
 msgid ""
 "Overrides the company figure for this person. Empty means the company's. "
 "Part-time and mid-year joiners are the usual reason."
@@ -3605,48 +3628,48 @@ msgstr ""
 "Sustituye la cifra de la empresa para esta persona. Vacío significa la de la "
 "empresa. Lo habitual es la jornada parcial y las altas a mitad de periodo."
 
-#: apps/users/models.py:529
+#: apps/users/models.py:600
 msgid "identity provider subject"
 msgstr "identificador en el proveedor de identidad"
 
-#: apps/users/models.py:534
+#: apps/users/models.py:605
 msgid "issuer"
 msgstr "emisor"
 
-#: apps/users/models.py:537
+#: apps/users/models.py:608
 msgid "admin site access"
 msgstr "acceso al sitio de administración"
 
-#: apps/users/models.py:538
+#: apps/users/models.py:609
 msgid "date joined"
 msgstr "fecha de alta"
 
-#: apps/users/models.py:546
+#: apps/users/models.py:617
 msgid "person"
 msgstr "persona"
 
-#: apps/users/models.py:547
+#: apps/users/models.py:618
 msgid "people"
 msgstr "personas"
 
-#: apps/users/models.py:819
+#: apps/users/models.py:890
 msgid "activity starts"
 msgstr "la actividad empieza"
 
-#: apps/users/models.py:821
+#: apps/users/models.py:892
 msgid "activity ends"
 msgstr "la actividad acaba"
 
-#: apps/users/models.py:824
+#: apps/users/models.py:895
 msgid "Empty while the season is open: a campaign knows when it starts."
 msgstr ""
 "Vacío mientras la temporada siga abierta: una campaña sabe cuándo empieza."
 
-#: apps/users/models.py:827
+#: apps/users/models.py:898
 msgid "called up on"
 msgstr "llamamiento el"
 
-#: apps/users/models.py:831
+#: apps/users/models.py:902
 msgid ""
 "Art. 16.3 ET: the call-up is in writing and with notice. The date is what "
 "shows the notice was given; a tick would not."
@@ -3654,39 +3677,39 @@ msgstr ""
 "Art. 16.3 ET: el llamamiento es por escrito y con antelación. La fecha es lo "
 "que demuestra que se avisó; una casilla marcada, no."
 
-#: apps/users/models.py:838
+#: apps/users/models.py:909
 msgid "period of activity"
 msgstr "periodo de actividad"
 
-#: apps/users/models.py:839
+#: apps/users/models.py:910
 msgid "periods of activity"
 msgstr "periodos de actividad"
 
-#: apps/users/models.py:892
+#: apps/users/models.py:963
 msgid "signed on"
 msgstr "firmado el"
 
-#: apps/users/models.py:893
+#: apps/users/models.py:964
 msgid "Art. 5.1: the agreement comes before the remote work starts."
 msgstr "Art. 5.1: el acuerdo va antes de que empiece el trabajo a distancia."
 
-#: apps/users/models.py:895
+#: apps/users/models.py:966
 msgid "remote work starts"
 msgstr "el trabajo a distancia empieza"
 
-#: apps/users/models.py:897
+#: apps/users/models.py:968
 msgid "remote work ends"
 msgstr "el trabajo a distancia acaba"
 
-#: apps/users/models.py:900
+#: apps/users/models.py:971
 msgid "Empty for an open-ended agreement, which is the usual one."
 msgstr "Vacío para un acuerdo sin fecha de fin, que es el corriente."
 
-#: apps/users/models.py:903
+#: apps/users/models.py:974
 msgid "share agreed (%)"
 msgstr "porcentaje pactado (%)"
 
-#: apps/users/models.py:909
+#: apps/users/models.py:980
 msgid ""
 "Art. 7.f asks the agreement to state it. Left empty it is not checked "
 "against what is actually worked: the figure that binds is on paper."
@@ -3694,61 +3717,61 @@ msgstr ""
 "El art. 7.f pide que el acuerdo lo diga. Vacío no se contrasta con lo que se "
 "trabaja de verdad: la cifra que obliga es la del papel."
 
-#: apps/users/models.py:916
+#: apps/users/models.py:987
 msgid "remote work agreement"
 msgstr "acuerdo de trabajo a distancia"
 
-#: apps/users/models.py:917
+#: apps/users/models.py:988
 msgid "remote work agreements"
 msgstr "acuerdos de trabajo a distancia"
 
-#: apps/users/models.py:953
+#: apps/users/models.py:1024
 msgid "In negotiation"
 msgstr "En negociación"
 
-#: apps/users/models.py:954
+#: apps/users/models.py:1025
 msgid "Accepted"
 msgstr "Aceptada"
 
-#: apps/users/models.py:955
+#: apps/users/models.py:1026
 msgid "An alternative was proposed"
 msgstr "Se propuso una alternativa"
 
-#: apps/users/models.py:956
+#: apps/users/models.py:1027
 msgid "Refused"
 msgstr "Denegada"
 
-#: apps/users/models.py:957
+#: apps/users/models.py:1028
 msgid "Withdrawn by the person"
 msgstr "Retirada por la persona"
 
-#: apps/users/models.py:995
+#: apps/users/models.py:1066
 msgid "requested on"
 msgstr "solicitada el"
 
-#: apps/users/models.py:996
+#: apps/users/models.py:1067
 msgid "The fifteen days of art. 34.8 count from here."
 msgstr "Los quince días del art. 34.8 se cuentan desde aquí."
 
-#: apps/users/models.py:999
+#: apps/users/models.py:1070
 msgid "what is being asked"
 msgstr "qué se pide"
 
-#: apps/users/models.py:1001
+#: apps/users/models.py:1072
 msgid ""
 "Duration, distribution, or the way the work is done --- remote included."
 msgstr ""
 "Duración, distribución o forma de prestación ---incluido a distancia---."
 
-#: apps/users/models.py:1009
+#: apps/users/models.py:1080
 msgid "answered on"
 msgstr "contestada el"
 
-#: apps/users/models.py:1011
+#: apps/users/models.py:1082
 msgid "answer"
 msgstr "respuesta"
 
-#: apps/users/models.py:1015
+#: apps/users/models.py:1086
 msgid ""
 "Art. 34.8 asks for this in writing, and for a reason when the answer is not "
 "a plain yes."
@@ -3756,15 +3779,15 @@ msgstr ""
 "El art. 34.8 lo pide por escrito, y con motivo cuando la respuesta no es un "
 "sí a secas."
 
-#: apps/users/models.py:1025
+#: apps/users/models.py:1096
 msgid "answered by"
 msgstr "contestada por"
 
-#: apps/users/models.py:1029
+#: apps/users/models.py:1100
 msgid "schedule adaptation"
 msgstr "adaptación de jornada"
 
-#: apps/users/models.py:1030
+#: apps/users/models.py:1101
 msgid "schedule adaptations"
 msgstr "adaptaciones de jornada"
 

@@ -147,6 +147,10 @@ SIN_EMPRESA_A_PROPOSITO = {
     ("common/scope.py", "pk=user.pk"): "uno mismo, no hay nada que fugar",
     ("common/management/commands/seed_demo.py", ""): "comando de demostración, no una petición",
     (
+        "users/management/commands/backfill_department_history.py",
+        "",
+    ): "estrena el historial de adscripción en todas las empresas a la vez, y por eso no acota",
+    (
         "users/management/commands/purge_test_people.py",
         "",
     ): "barre el entorno de demostración entero, y no hay petición de la que sacar la empresa",
