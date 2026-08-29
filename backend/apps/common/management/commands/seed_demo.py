@@ -182,6 +182,7 @@ class Command(BaseCommand):
             self._corrections(company, people)
             self._worked_holiday(company, people)
             self._night_shift(company, people)
+            self._changeover(company, people)
 
         self._neighbour()
         self._report(company, people, rules)
@@ -253,6 +254,58 @@ class Command(BaseCommand):
                 punch_type=kind,
                 source=PunchSource.MOBILE,
             )
+
+    def _changeover(self, company, people):
+        """El relevo de turno **fichado**, para que la deuda del art. 19.a se vea.
+
+        El cuadrante ya lo tiene ---sale de una noche a las 06:00 y entra a una
+        tarde a las 14:00---, pero el saldo se deriva de los fichajes, no de lo
+        previsto, por lo mismo que el festivo y la noche: la compensación se debe
+        por haber trabajado, no por haberlo tenido en el papel.
+
+        Ocho horas de descanso: por debajo de las doce del art. 34.3 y por encima
+        de las siete que el RD permite en un relevo. Lícito, y con cuatro horas
+        que devolver «en los días inmediatamente siguientes».
+        """
+        quien = people.get("rotating")
+        if quien is None:
+            return
+
+        from apps.tenants.models import PublicHoliday
+
+        zone = company.tzinfo
+        # Una semana atrás, para que quede dentro de la ventana del saldo y lejos
+        # de los días que otras partes de la semilla usan. Y **esquivando el
+        # festivo**: según el día de la semana en que se siembre, este turno caía
+        # justo en el que la demostración marca como fiesta, y entonces la misma
+        # noche generaba deuda por dos artículos a la vez. No es incorrecto ---la
+        # ley suma las dos--- pero enseña dos cosas donde hay que enseñar una, y
+        # el caso aparecía o no según el día, que es peor todavía.
+        hoy = timezone.localdate()
+        lunes = hoy - timedelta(days=hoy.weekday() + 7)
+        for _ in range(3):
+            tocados = [lunes - timedelta(days=1), lunes]
+            if not PublicHoliday.objects.filter(tenant=company, day__in=tocados).exists():
+                break
+            lunes -= timedelta(days=7)
+
+        # La noche del domingo al lunes, y la tarde del lunes.
+        tramos = [
+            (datetime.combine(lunes - timedelta(days=1), time(22, 0), tzinfo=zone), 8),
+            (datetime.combine(lunes, time(14, 0), tzinfo=zone), 8),
+        ]
+        for entra, horas in tramos:
+            for momento, kind in (
+                (entra, PunchType.IN),
+                (entra + timedelta(hours=horas), PunchType.OUT),
+            ):
+                Punch.objects.create(
+                    tenant=company,
+                    employee=quien,
+                    timestamp=momento,
+                    punch_type=kind,
+                    source=PunchSource.TERMINAL,
+                )
 
     def _neighbour(self):
         """Una segunda empresa, mínima, para que el aislamiento sea comprobable.
@@ -830,7 +883,8 @@ class Command(BaseCommand):
 
         # The backward rotation, in the current week: off a night at 06:00 and
         # onto an evening at 14:00 the same day. Eight hours, which is under the
-        # twelve and over the seven --- lawful, and owed back within four weeks.
+        # twelve and over the seven --- lawful, and owed back over the days that
+        # follow (art. 19.a; the four weeks are paragraph b, about weekly rest).
         Shift.objects.update_or_create(
             tenant=company,
             employee=people["rotating"],

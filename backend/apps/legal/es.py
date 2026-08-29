@@ -991,8 +991,10 @@ ESPANA = LegalFramework(
         max_consecutive_night_weeks=2,
         # Art. 19.a RD 1561/1995: en trabajo a turnos, cuando el trabajador
         # cambie de equipo, el descanso entre jornadas podrá reducirse hasta un
-        # mínimo de siete horas, compensando la diferencia en períodos de hasta
-        # cuatro semanas.
+        # mínimo de siete horas, «compensándose la diferencia hasta las doce
+        # horas establecidas con carácter general en los días inmediatamente
+        # siguientes». El plazo de cuatro semanas es del apartado b, y es del
+        # descanso semanal: son dos cosas distintas del mismo artículo.
         changeover_rest_hours=7,
         # Art. 19.b: el descanso semanal puede acumularse por períodos de hasta
         # cuatro semanas, frente a los catorce días del art. 37.1 general.
@@ -1005,8 +1007,9 @@ ESPANA = LegalFramework(
             ),
             "changeover_rest": Citation(
                 "Art. 19.a RD 1561/1995",
-                "Hasta siete horas en el relevo de turno, compensando la diferencia en "
-                "cuatro semanas.",
+                "Hasta siete horas en el relevo de turno, compensando la diferencia "
+                "hasta las doce «en los días inmediatamente siguientes». Las cuatro "
+                "semanas son del apartado b, que es del descanso semanal.",
             ),
             "rest_accumulation": Citation("Art. 19.b RD 1561/1995"),
         },

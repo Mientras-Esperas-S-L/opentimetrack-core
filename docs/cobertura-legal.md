@@ -279,7 +279,7 @@ con más frecuencia: la regla se comprueba, pero **el saldo no se lleva**.
 | Descanso en jornada continuada, 15 min desde 6 h | 34.4 | — | **Cubierto** |
 | Descanso de menores, 30 min desde 4,5 h | 34.4 | — | **Cubierto** |
 | Acumulación del descanso semanal a turnos | 19.b RD 1561/1995 | 4 semanas | **Cubierto** |
-| Reducción del descanso en relevo de turno | 19.a RD 1561/1995 | 4 semanas | **A medias.** Se avisa de la diferencia; no se lleva el saldo. El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
+| Reducción del descanso en relevo de turno | 19.a RD 1561/1995 | Días siguientes | **Cubierto.** Lo que le falta al descanso de un relevo para llegar a las doce horas entra en el saldo, de lo fichado. Solo de quien **rota entre equipos** y solo cuando la hora de entrada se movió: un descanso corto entre dos jornadas de la misma hora no es un relevo, es el art. 34.3 sin más, y ampararlo con este artículo sería darle cobertura a un incumplimiento. *El plazo **no es de cuatro semanas**: esas son del apartado b, que es del descanso semanal. El 19.a dice «en los días inmediatamente siguientes», que es más estricto que cualquier fecha. El producto citaba el plazo del otro apartado y daba más margen del que la norma concede; corregido el 29/08* |
 | Compensación de horas extra con descanso | 35.1 | 4 meses | **Cubierto.** Lo que se debe sale de los fichajes ---cada hora extra dice desde el primer día si se salda con dinero o con descanso, art. 3.f--- y lo devuelto se anota como **descanso compensatorio**. El saldo dice cuánto queda **y hasta cuándo**, y avisa cuando el plazo pasó. Un día entero de descanso vale lo que ese día tocaba trabajar, leído del cuadrante; sin turno previsto **no se estima**, se dice cuántos días quedaron sin convertir. El plazo lo declara la empresa y un cero lo apaga |
 | Compensación de la distribución irregular | 34.2 | 12 meses | **Cubierto.** Las horas de un año vencido que se trabajaron **de más** entran en el saldo de descanso, con su artículo y ya marcadas **fuera de plazo** ---si siguen ahí, el del artículo pasó---. Solo el exceso: haber trabajado de menos también es una diferencia que compensar, pero se compensa trabajando, y en negativo restaría de lo que se debe por otras fuentes |
 | Compensación de nocturnidad con descansos | 36.2 | Convenio | **Cubierto**: la empresa elige en Ajustes cuál de las **tres salidas** del artículo aplica ---plus específico, salario que ya lo contempla, o descansos--- y solo la tercera deja saldo; las otras dos son nómina. Se cuentan las horas **dentro de la franja nocturna** de lo fichado, no las jornadas que la tocan, con el multiplicador que ponga el convenio. Sin plazo: el artículo no da ninguno |
@@ -290,6 +290,13 @@ El patrón se repetía en las seis: sabíamos decir «esto se aparta de la regla
 no «y quedan cuatro horas por devolver antes del 9 de septiembre». Lo segundo es
 lo que una empresa necesita para cumplir; lo primero solo sirve para saber que no
 cumple.
+
+Y el plazo de cada una es distinto, hasta el punto de que hay **cuatro maneras de
+no tener fecha**: las horas extra vencen a los cuatro meses; la distribución
+irregular vencía y ya está fuera de plazo; el festivo y la noche no vencen porque
+sus artículos no dan ninguno; y el relevo de turno no da fecha pero exige «los
+días inmediatamente siguientes», que es más estricto, no menos. Meterlas todas en
+«sin plazo» diría de tres de ellas algo que no es verdad.
 
 **Desde el 28/08/2026 el mecanismo existe**, con las horas extra del art. 35.1 de
 primera fuente: la deuda se deriva de los fichajes, lo devuelto se anota con el

@@ -2,6 +2,56 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Dos apartados del mismo artículo no dicen lo mismo (29/08/2026)
+
+El art. 19 del RD 1561/1995 tiene dos letras. La **a** permite bajar el descanso
+entre jornadas en un relevo de turno y obliga a compensar la diferencia «en los
+días inmediatamente siguientes». La **b** permite acumular el descanso **semanal**
+«por períodos de hasta cuatro semanas». El producto citaba las cuatro semanas de
+la b como si fueran el plazo de la a: en el mensaje del cuadrante, en la cita del
+catálogo, en un comentario del código y en la columna «Plazo» del inventario.
+
+No es un matiz. Las cuatro semanas **dan mucho más margen** del que la norma
+concede ahí, así que el producto estaba autorizando por escrito un retraso que la
+ley no ampara ---y con la cita al lado, que es lo que lo hace creíble---.
+
+**Cómo evitarlo:** cuando una cita lleve letra o apartado, leer **ese** apartado
+entero antes de copiar ninguna cifra del vecino. Y si la misma norma aparece en
+dos filas del inventario con el mismo plazo, sospechar: suele significar que una
+de las dos copió de la otra.
+
+## Un `cd` dentro de la función que corre las pruebas rompe las restauraciones (29/08/2026)
+
+Escribí un bucle de contrastes con `run() { cd .../frontend && npx playwright ... }`
+y las rutas de restauración relativas al directorio de partida. Después del primer
+`run`, el `cd` ya había cambiado el directorio del shell: los `cp` de vuelta
+fallaron con «No existe el fichero», el segundo sabotaje se aplicó **encima** del
+primero y un `assert` falló sin que yo leyera su salida entre dos bloques de
+resultados.
+
+Los números que salieron no significaban nada, y parecían significar algo.
+
+**Cómo evitarlo:** en un bucle de sabotajes, rutas **absolutas** en todas partes
+---la del script, la de la copia y la de la restauración--- y nunca un `cd`
+dentro de la función que se llama en cada vuelta. Y al terminar, comprobar con
+`grep -c` que cada pieza saboteada volvió a su sitio antes de fiarse de la tanda.
+
+## Una prueba puede salirse por un filtro anterior al que quiere probar (29/08/2026)
+
+La prueba de que la medianoche no convierte un turno fijo en un relevo usaba dos
+jornadas de ocho horas con entradas a las 23:50 y las 00:10. Nunca llegaba a
+comparar las horas: dos entradas casi a la misma hora del día están veinticuatro
+horas aparte, así que con jornadas de ocho el descanso era de dieciséis y la
+comprobación salía por el filtro de las doce. El contraste lo destapó: saboteando
+la circularidad, la prueba seguía verde.
+
+Hizo falta una jornada de **quince horas** para que el hueco bajara de doce y las
+dos entradas siguieran a los dos lados de la medianoche.
+
+**Cómo evitarlo:** al escribir una prueba de un caso límite, comprobar que el
+caso **llega** a la línea que se quiere probar. La forma barata es el contraste:
+si sabotear justo esa línea no la pone roja, la prueba se está saliendo antes.
+
 ## Un plazo que solo se nota cuando falla no se puede comprobar (29/08/2026)
 
 El aviso de los dos meses del art. 38.3 existía desde hacía tiempo y solo

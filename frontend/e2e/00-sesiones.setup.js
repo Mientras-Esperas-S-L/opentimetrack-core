@@ -27,6 +27,7 @@ const SESIONES = [
   { perfil: 'admin', correo: EMPRESA.propia.admin },
   { perfil: 'responsable', correo: EMPRESA.propia.responsable },
   { perfil: 'operario', correo: EMPRESA.propia.operario },
+  { perfil: 'rotativo', correo: EMPRESA.propia.rotativo },
   { perfil: 'vecina', correo: EMPRESA.vecina.admin },
 ]
 

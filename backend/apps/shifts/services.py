@@ -395,8 +395,10 @@ def _check_daily_rest(roster, rules, shifts_law, first, last, company) -> list[F
     in breach, which is how this check came to be rewritten.
 
     The shorter rest is still reported. It is not a breach and the wording says
-    so, but the difference has to be given back within four weeks and nobody
-    gives back what nobody wrote down.
+    so, but the difference has to be given back over the days that follow --- not
+    within four weeks, which is the other paragraph, about the weekly rest ---
+    and nobody gives back what nobody wrote down. Since it is owed, it goes into
+    the rest balance too.
     """
     found = []
     person = roster[0].employee if roster else None
@@ -422,16 +424,23 @@ def _check_daily_rest(roster, rules, shifts_law, first, last, company) -> list[F
                     day=current.day,
                     employee_id=current.employee_id,
                     code="changeover_rest_owed",
+                    # **En los días inmediatamente siguientes, no en cuatro
+                    # semanas.** Las cuatro semanas son del art. 19.b ---la
+                    # acumulación del descanso **semanal**--- y este aviso las
+                    # citaba como si fueran el plazo del 19.a. Dos apartados del
+                    # mismo artículo, y el que se citaba da mucho más margen del
+                    # que la norma concede aquí: «compensándose la diferencia
+                    # hasta las doce horas establecidas con carácter general en
+                    # los días inmediatamente siguientes».
                     message=_(
                         "%(hours)s h of rest at a shift changeover, which is allowed. "
                         "The %(owed)s h missing from the usual %(usual)s h are owed back "
-                        "within %(weeks)s weeks."
+                        "over the days that follow."
                     )
                     % {
                         "hours": f"{gap:.1f}",
                         "owed": f"{float(rules.daily_rest_hours) - gap:.1f}",
                         "usual": f"{float(rules.daily_rest_hours):g}",
-                        "weeks": shifts_law.accumulation_weeks,
                     },
                 )
             )

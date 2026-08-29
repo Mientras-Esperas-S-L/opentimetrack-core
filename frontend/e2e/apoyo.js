@@ -11,7 +11,7 @@
  *  prueba que nadie vuelve a ejecutar.
  */
 
-import { expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 export const CLAVE = 'demo-password-2026'
 
@@ -37,6 +37,10 @@ export const EMPRESA = {
     admin: 'admin@demo.local',
     responsable: 'manager@demo.local',
     operario: 'operario@demo.local',
+    // Quien rota entre equipos de mañana, tarde y noche. Hace falta una sesión
+    // suya porque el art. 19.a solo se aplica a quien cambia de turno, y el
+    // saldo que genera se ve en su pantalla y en la de nadie más.
+    rotativo: 'turnos@demo.local',
   },
   vecina: {
     nombre: 'Vecina S.L.',
@@ -70,12 +74,48 @@ export const marca = () => `p${Date.now().toString(36)}${Math.random().toString(
  */
 export async function entrar(page, correo, clave = CLAVE) {
   await page.goto('/')
-  // El navegador rellena solo el último correo usado, así que se vacía antes.
-  const email = page.getByLabel('Correo electrónico')
-  await email.fill('')
-  await email.fill(correo)
-  await page.getByLabel('Contraseña').fill(clave)
-  await page.getByRole('button', { name: 'Entrar' }).click()
+
+  // Con reintento si el cupo de intentos está lleno, como en el arranque de
+  // sesiones. El límite de `/api/auth/token/` es de cinco por minuto **y va por
+  // dirección IP**, así que lo comparten el arranque, esta función y la prueba
+  // que lo agota a propósito. Es lo que impide probar contraseñas a lo bruto y
+  // no se toca: se espera, que es lo que la aplicación pide hacer.
+  //
+  // Sin esto, cualquier prueba que entre por el formulario se cae con la
+  // pantalla de entrada delante y el mensaje «Hola» sin aparecer --- que se lee
+  // como un fallo de la aplicación y no como lo que es. Ya pasó al pasar el
+  // arranque de cuatro sesiones a cinco: cuatro dejaban un intento de margen y
+  // cinco lo agotan justo.
+  for (let intento = 0; intento < 4; intento += 1) {
+    // El navegador rellena solo el último correo usado, así que se vacía antes.
+    const email = page.getByLabel('Correo electrónico')
+    await email.fill('')
+    await email.fill(correo)
+    await page.getByLabel('Contraseña').fill(clave)
+    await page.getByRole('button', { name: 'Entrar' }).click()
+    await page.waitForTimeout(800)
+
+    if (await page.evaluate(() => localStorage.getItem('ott.access'))) break
+
+    const aviso = await page
+      .getByRole('alert')
+      .first()
+      .innerText()
+      .catch(() => '')
+    // Una contraseña mal puesta no se reintenta: hay pruebas que entran mal a
+    // propósito, y esperar cuatro veces por ellas alargaría la tanda sin motivo.
+    if (!/Demasiados intentos/.test(aviso)) break
+
+    // Lo que el propio aviso dice que falta, más un segundo de cortesía.
+    const faltan = Number(aviso.match(/en (\d+) segundos/)?.[1] ?? 30)
+    // Y el plazo de la prueba, ampliado por lo que se va a esperar: el de serie
+    // son treinta segundos, así que esperar el cupo se lo comía entero y la
+    // prueba moría **mientras esperaba a que la aplicación la dejara entrar**.
+    // Se amplía solo cuando toca esperar; una tanda normal no paga nada.
+    test.info().setTimeout(test.info().timeout + (faltan + 10) * 1000)
+    await page.waitForTimeout((faltan + 1) * 1000)
+  }
+
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 15_000 })
 }
 

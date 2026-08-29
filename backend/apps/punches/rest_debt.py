@@ -48,6 +48,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta
 from datetime import time as dt_time
+from itertools import pairwise
 
 from apps.common.clock import local_today
 
@@ -303,6 +304,7 @@ def rest_debt(*, employee, company, day: date | None = None) -> dict | None:
             _holiday_owed(employee=employee, company=company, hoy=hoy),
             _irregular_owed(employee=employee, company=company, hoy=hoy),
             _night_owed(employee=employee, company=company, hoy=hoy),
+            _changeover_owed(employee=employee, company=company, hoy=hoy),
         )
         if f
     ]
@@ -441,6 +443,127 @@ def _night_owed(*, employee, company, hoy: date) -> dict | None:
         "days": 0,
         "multiplier": float(reglas.night_rest_multiplier or 1),
         "citation": "Art. 36.2 ET",
+    }
+
+
+#: Cuánto tiene que moverse la hora de entrada para que sea un relevo de turno y
+#: no ruido de fichaje. Dos horas: un cambio de equipo mueve la entrada de la
+#: mañana a la tarde o de la tarde a la noche, y el jitter de fichar son minutos.
+MARGEN_RELEVO = 120
+
+
+def _cuanto_se_movio(uno: datetime, otro: datetime) -> int:
+    """Cuánto se separan dos horas de entrada, en minutos y por el lado corto.
+
+    Circular a propósito: las 23:50 y las 00:10 distan veinte minutos, no mil
+    cuatrocientos veinte. Restando a pelo, un turno de noche que empieza unos
+    minutos antes o después de medianoche salía como si hubiera cambiado de
+    equipo, y con él aparecía una deuda de descanso que nadie debe.
+    """
+    diferencia = abs((uno.hour * 60 + uno.minute) - (otro.hour * 60 + otro.minute))
+    return min(diferencia, 1440 - diferencia)
+
+
+def _changeover_owed(*, employee, company, hoy: date) -> dict | None:
+    """Lo que le falta al descanso de un relevo de turno para llegar a las 12 h.
+
+    «Cuando el trabajador cambie de turno de trabajo y no pueda disfrutar del
+    descanso mínimo entre jornadas establecido en el artículo 34.3 del Estatuto
+    de los Trabajadores, se podrá reducir el mismo, en el día en que así ocurra,
+    hasta un mínimo de siete horas, **compensándose la diferencia hasta las doce
+    horas** establecidas con carácter general en los días inmediatamente
+    siguientes» (art. 19.a RD 1561/1995).
+
+    **No es un incumplimiento y por eso hay que llevar la cuenta.** El artículo
+    permite el descanso corto justamente para que la rotación sea posible; lo que
+    exige a cambio es devolver la diferencia. Aplicarle el suelo ordinario
+    reportaría en falta a todos los equipos rotativos del país ---y así estaba
+    escrito el aviso del cuadrante antes de reescribirlo---; no llevar el saldo
+    deja la otra mitad del artículo sin cumplir.
+
+    **De lo fichado, y solo de quien rota.** El supuesto del artículo es el
+    cambio de turno: un descanso corto entre dos jornadas de la misma hora no es
+    un relevo, es un turno que se alargó, y eso es el art. 34.3 sin más.
+
+    Sin fecha de vencimiento, pero no «sin plazo»: el artículo dice **en los días
+    inmediatamente siguientes**, que es más exigente que cualquier fecha que se
+    pudiera calcular. Por eso va marcado aparte.
+    """
+    from apps.legal import for_company as marco_de
+    from apps.punches.models import Punch, PunchInterval, PunchType
+    from apps.tenants.rules import WorkingTimeRules
+
+    if not employee.rotating_shifts:
+        return None
+
+    marco = marco_de(company)
+    if marco.shifts is None:
+        return None
+
+    reglas = WorkingTimeRules.for_company(company)
+    ordinario = float(reglas.daily_rest_hours)
+
+    desde = hoy - timedelta(days=365)
+    zone = company.tzinfo
+
+    eventos = Punch.objects.filter(
+        employee=employee,
+        is_active=True,
+        interval=PunchInterval.WORK,
+        timestamp__gte=datetime.combine(desde, dt_time.min, tzinfo=zone),
+        timestamp__lt=datetime.combine(hoy + timedelta(days=1), dt_time.min, tzinfo=zone),
+    ).order_by("timestamp")
+
+    # Las jornadas, como pares entrada-salida. Una apertura sin cerrar no cuenta:
+    # no se sabe cuándo terminó, y de ahí no sale ningún descanso medible.
+    jornadas: list[tuple[datetime, datetime]] = []
+    abierta: Punch | None = None
+    for punch in eventos:
+        if punch.punch_type == PunchType.IN:
+            abierta = abierta or punch
+        elif abierta is not None:
+            jornadas.append((abierta.timestamp.astimezone(zone), punch.timestamp.astimezone(zone)))
+            abierta = None
+
+    debidas = 0.0
+    relevos = 0
+    for (entro_antes, salio), (entra, _) in pairwise(jornadas):
+        hueco = (entra - salio).total_seconds() / 3600
+        if hueco >= ordinario or hueco <= 0:
+            continue
+        # El relevo se reconoce porque **la hora de entrada se movió**, y se
+        # compara con la entrada anterior, no con la salida: comparar contra la
+        # salida no dice nada de si el turno cambió. Sin esta condición,
+        # cualquier jornada que se alargue hasta comerse el descanso entraría
+        # aquí como si la ley la amparase, y no la ampara.
+        #
+        # Con margen, porque esto son fichajes y no cuadrante: entrar siete
+        # minutos antes no es cambiar de turno. Un relevo mueve la entrada horas.
+        if _cuanto_se_movio(entra, entro_antes) < MARGEN_RELEVO:
+            continue
+        # Por debajo del suelo del RD ---siete horas--- ya no es la
+        # excepción del art. 19.a sino un incumplimiento del art. 34.3, y el
+        # cuadrante lo dice como tal. La diferencia se sigue debiendo igual: que
+        # el descanso fuera ilegalmente corto no lo convierte en descanso.
+        debidas += ordinario - hueco
+        relevos += 1
+
+    if debidas <= RUIDO_HORAS:
+        return None
+
+    return {
+        "source": "changeover",
+        "owed_hours": round(debidas, 1),
+        "overdue_hours": 0,
+        "due_on": None,
+        # No es «sin plazo»: el artículo dice «en los días inmediatamente
+        # siguientes». Sin esta marca, el desglose lo enseñaría junto al festivo
+        # trabajado ---que de verdad no tiene ninguno--- y le daría a la empresa
+        # la impresión contraria a la que da el artículo.
+        "promptly": True,
+        "days": 0,
+        "changeovers": relevos,
+        "citation": "Art. 19.a RD 1561/1995",
     }
 
 

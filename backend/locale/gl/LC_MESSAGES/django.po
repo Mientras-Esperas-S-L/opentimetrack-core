@@ -2185,11 +2185,11 @@ msgstr[1] ""
 #, python-format
 msgid ""
 "%(hours)s h of rest at a shift changeover, which is allowed. The %(owed)s h "
-"missing from the usual %(usual)s h are owed back within %(weeks)s weeks."
+"missing from the usual %(usual)s h are owed back over the days that follow."
 msgstr ""
-"%(hours)s h de descanso nun relevo de quenda, o que está permitido. As "
-"%(owed)s h que faltan ata as %(usual)s h habituais hai que devolvelas en "
-"%(weeks)s semanas."
+"%(hours)s h de descanso nunha quenda de relevo, o que está permitido. As "
+"%(owed)s h que faltan ata as %(usual)s h habituais hai que devolvelas "
+"nos días seguintes."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/shifts/services.py:453

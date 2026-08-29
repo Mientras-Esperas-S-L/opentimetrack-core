@@ -2010,11 +2010,11 @@ msgstr[2] ""
 #, python-format
 msgid ""
 "%(hours)s h of rest at a shift changeover, which is allowed. The %(owed)s h "
-"missing from the usual %(usual)s h are owed back within %(weeks)s weeks."
+"missing from the usual %(usual)s h are owed back over the days that follow."
 msgstr ""
 "%(hours)s h de descanso en un relevo de turno, que está permitido. Las "
-"%(owed)s h que faltan hasta las %(usual)s h habituales hay que devolverlas "
-"en %(weeks)s semanas."
+"%(owed)s h que faltan hasta las %(usual)s h habituales hay que "
+"devolverlas en los días siguientes."
 
 #: apps/shifts/services.py:453
 msgid "The clocks went forward that night, so the shifts are an hour closer."

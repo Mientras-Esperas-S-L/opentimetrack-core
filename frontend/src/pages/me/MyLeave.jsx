@@ -52,6 +52,7 @@ const ORIGENES = {
   holiday: alCatalogo('festivos trabajados'),
   irregular: alCatalogo('jornada repartida de forma irregular'),
   night: alCatalogo('trabajo nocturno'),
+  changeover: alCatalogo('relevos de turno'),
 }
 
 /** Lo que se debe en descanso, de dónde viene y hasta cuándo hay para devolverlo.
@@ -105,10 +106,12 @@ function DeudaDeDescanso({ deuda }) {
           {/* Con una sola fuente el desglose sobra: el total ya la nombra. */}
           {fuentes.map((f) => (
             <Box component="span" key={f.source} sx={{ display: 'block' }}>
-              {/* Tres casos y no dos. «Sin plazo» y «se pasó el plazo» son cosas
-                  distintas: el art. 37.2 no da ninguno para el festivo
-                  trabajado, y el 34.2 sí lo daba y ya venció. Decir «sin plazo»
-                  de lo segundo suena a que no corre nada. */}
+              {/* Cuatro casos, no tres. A «fuera de plazo», «hasta el X» y «sin
+                  plazo» se suma **«en los días siguientes»**: el art. 19.a no da
+                  una fecha, pero exige devolverlo «en los días inmediatamente
+                  siguientes», que es más estricto que cualquier fecha, no menos.
+                  Meterlo en «sin plazo» junto al festivo trabajado ---que de
+                  verdad no tiene ninguno--- daría la impresión contraria. */}
               {Number(f.overdue_hours) > 0
                 ? t('{{horas}} h de {{origen}}, fuera de plazo ({{articulo}}).', {
                     horas: f.overdue_hours,
@@ -122,11 +125,17 @@ function DeudaDeDescanso({ deuda }) {
                       fecha: dateOf(f.due_on, { year: 'numeric' }),
                       articulo: f.citation,
                     })
-                  : t('{{horas}} h de {{origen}}, sin plazo ({{articulo}}).', {
-                      horas: f.owed_hours,
-                      origen: ORIGENES[f.source] ? t(ORIGENES[f.source]) : f.source,
-                      articulo: f.citation,
-                    })}
+                  : f.promptly
+                    ? t('{{horas}} h de {{origen}}, en los días siguientes ({{articulo}}).', {
+                        horas: f.owed_hours,
+                        origen: ORIGENES[f.source] ? t(ORIGENES[f.source]) : f.source,
+                        articulo: f.citation,
+                      })
+                    : t('{{horas}} h de {{origen}}, sin plazo ({{articulo}}).', {
+                        horas: f.owed_hours,
+                        origen: ORIGENES[f.source] ? t(ORIGENES[f.source]) : f.source,
+                        articulo: f.citation,
+                      })}
             </Box>
           ))}
         </Box>

@@ -369,6 +369,55 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 173 --- El relevo de turno, y el plazo que el producto se inventaba (29/08)
+
+Al empezar: 2 «A medias», 1 «Falta» y 1 descartada.
+
+**El enunciado contaba mal, y esta vez estaba dentro del producto.** El aviso del
+cuadrante decía que la diferencia de un relevo de turno se devuelve **«en cuatro
+semanas»**, y esas cuatro semanas son del art. 19.**b** ---la acumulación del
+descanso **semanal**---. El 19.a dice otra cosa: «compensándose la diferencia
+hasta las doce horas establecidas con carácter general **en los días
+inmediatamente siguientes**». Dos apartados del mismo artículo, y el que se
+citaba **da mucho más margen del que la norma concede**. Estaba también en la
+cita del catálogo legal, en el comentario del código y en la columna «Plazo» del
+inventario: cuatro sitios copiando el mismo error.
+
+**Quinta fuente del saldo.** Lo que le falta al descanso de un relevo para llegar
+a las doce horas, de lo fichado. El artículo permite el descanso corto para que
+la rotación sea posible; lo que exige a cambio es devolver la diferencia, y esa
+mitad no se cumplía desde el producto: sabía decir «ocho horas, y es lícito» y no
+«y quedan cuatro por devolver».
+
+**Solo de quien rota, y solo cuando la entrada se movió.** Un descanso corto
+entre dos jornadas que empiezan a la misma hora no es un cambio de equipo: es una
+jornada que se alargó, y eso es el art. 34.3 sin más. Contarlo aquí le daría a un
+incumplimiento el amparo de un artículo que no le corresponde.
+
+**Cuatro maneras de no tener fecha.** Con esta fuente, el desglose necesitaba un
+estado más: las extra vencen a los cuatro meses, la distribución irregular ya
+venció, el festivo y la noche no vencen porque sus artículos no dan plazo, y el
+relevo **no da fecha pero exige inmediatez**. Meterlo en «sin plazo» junto al
+festivo daría la impresión contraria a la del artículo.
+
+**Y el aviso salía en inglés.** Al reescribir el texto del mensaje, la traducción
+quedó huérfana y el cuadrante enseñaba «8.0 h of rest at a shift changeover» en
+mitad de una pantalla en castellano. Se vio abriéndola; ninguna prueba lo miraba.
+
+**Nueve contrastes; dos no contrastaron y los dos enseñaron algo.** El de la
+circularidad de la medianoche pasaba porque la prueba **se salía por el filtro
+del hueco** antes de llegar a comparar horas: con jornadas de ocho horas, dos
+entradas casi a la misma hora quedan dieciséis horas de descanso aparte. Hizo
+falta una jornada de quince horas para que el hueco bajara de doce **y** las dos
+entradas cayeran a los dos lados de la medianoche. El otro fue un `cd` dentro de
+la función que corría las pruebas: rompió las restauraciones, así que un sabotaje
+se aplicó encima de otro y un `assert` falló sin que yo lo leyera.
+
+**Cierre:** ocho pasos del CI en verde con 1.579 pruebas, suite de navegador
+aparte, una fila movida y su plazo corregido en los cuatro sitios. El recuento
+pasa a **65 cubiertas, 1 a medias y 1 falta, de 67** en el inventario del
+repositorio.
+
 ### Vuelta 172 --- El calendario de vacaciones, para quien las disfruta (29/08)
 
 Al empezar: 3 «A medias», 1 «Falta» y 1 descartada.
