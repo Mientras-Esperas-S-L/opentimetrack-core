@@ -87,7 +87,7 @@ empresa de trabajo temporal.
 | Trabajo a turnos rotativos | art. 36.3 | **Cubierto**, con la reducción del relevo y su devolución |
 | Trabajo nocturno | art. 36.1 | **Cubierto**: la condición, el promedio de 8 h en 15 días y el tope de dos semanas |
 | Jornada reducida por guarda legal | art. 37.6 | **Cubierto.** Se pide como cualquier otra solicitud, con **cuánto se reduce** y entre qué fechas. El cuadrante y el cotejo pasan a medirse contra la jornada reducida, y **se acaba sola** el día que termina el derecho. Si la reducción se sale de la horquilla del artículo ---de un octavo a la mitad--- se avisa, no se impide |
-| Distribución irregular | art. 34.2 | **A medias.** El **saldo** ya se lleva: las diferencias de un año cuyo plazo venció se avisan, por exceso y por defecto, con el plazo que declare la empresa ---12 meses en defecto de pacto---. Solo con jornada pactada **por año**, que es la única cifra que viene neta de vacaciones. El **10 % del párrafo primero** sigue sin calcularse a propósito |
+| Distribución irregular | art. 34.2 | **A medias.** El **saldo** se lleva y las horas de exceso aparecen en lo que se debe en descanso, con su plazo vencido. Lo que sigue sin calcularse es el **10 % del párrafo primero**, y por un motivo que no ha cambiado: haría falta la distribución **ordinaria** contra la que comparar, y el cuadrante *es* la distribución. Un porcentaje sobre una referencia inventada se lee como un hecho |
 | Adaptación de jornada | art. 34.8 | **Cubierto.** Se pide desde «Mi jornada» y se contesta desde «Por decidir», con el plazo de quince días a la vista. La respuesta que no es un sí ---también la alternativa--- **pide el motivo antes de mandarla**, y el servidor lo exige igual. Retirar la propia es de quien la pidió |
 | Horas extraordinarias | art. 35 | **Cubierto.** Se marcan, se dice cómo se saldan y el tope anual se contrasta con lo autorizado: la pantalla de decisiones avisa al pasarse, descontando las compensadas con descanso y las de fuerza mayor |
 | Horas complementarias | art. 12.5 | **Cubierto.** El tope se acumula contra lo trabajado y se avisa al pasarse. Va sobre **el periodo del contrato** ---semana, mes o año---, que es lo que dice el art. 12.5.c: el 30 % de «las horas ordinarias objeto del contrato». Un contrato de 800 h al año tiene 240 complementarias al año, no 20 al mes |
@@ -281,7 +281,7 @@ con más frecuencia: la regla se comprueba, pero **el saldo no se lleva**.
 | Acumulación del descanso semanal a turnos | 19.b RD 1561/1995 | 4 semanas | **Cubierto** |
 | Reducción del descanso en relevo de turno | 19.a RD 1561/1995 | 4 semanas | **A medias.** Se avisa de la diferencia; no se lleva el saldo. El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
 | Compensación de horas extra con descanso | 35.1 | 4 meses | **Cubierto.** Lo que se debe sale de los fichajes ---cada hora extra dice desde el primer día si se salda con dinero o con descanso, art. 3.f--- y lo devuelto se anota como **descanso compensatorio**. El saldo dice cuánto queda **y hasta cuándo**, y avisa cuando el plazo pasó. Un día entero de descanso vale lo que ese día tocaba trabajar, leído del cuadrante; sin turno previsto **no se estima**, se dice cuántos días quedaron sin convertir. El plazo lo declara la empresa y un cero lo apaga |
-| Compensación de la distribución irregular | 34.2 | 12 meses | **Falta.** El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
+| Compensación de la distribución irregular | 34.2 | 12 meses | **Cubierto.** Las horas de un año vencido que se trabajaron **de más** entran en el saldo de descanso, con su artículo y ya marcadas **fuera de plazo** ---si siguen ahí, el del artículo pasó---. Solo el exceso: haber trabajado de menos también es una diferencia que compensar, pero se compensa trabajando, y en negativo restaría de lo que se debe por otras fuentes |
 | Compensación de nocturnidad con descansos | 36.2 | Convenio | **Falta.** El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
 | Compensación por festivo trabajado | 37.2 | Convenio | **Cubierto.** Con una condición que es la mitad del asunto: **la empresa declara cómo compensa** un festivo trabajado ---con descanso o con dinero--- y cuántas horas de descanso por hora trabajada. El art. 37.2 hace los catorce días retribuidos y no recuperables y trabajar uno es lícito, pero **no dice cómo se compensa**: eso lo fija el convenio. Sin declararlo no se lleva saldo, porque no habría de dónde sacar la cifra. Se cuenta **lo fichado, no lo planificado**: quien tenía turno un festivo y estuvo de baja no ha ganado ningún descanso. Y no lleva plazo, porque el artículo no da ninguno |
 | Descanso compensatorio por ampliación sectorial | RD 1561/1995 | Según sector | **Falta.** El mecanismo ya está ---la deuda se deriva de los fichajes, lo devuelto se anota como **descanso compensatorio** y el saldo dice hasta cuándo hay---; falta decidir **cuánto** se debe en este caso, que es la pregunta propia de cada artículo |
@@ -378,6 +378,25 @@ sirve para comparar entre líneas, no para prometer una fecha.
 | 6 | **Las cifras de cada sector** (RD 1561/1995). Lo que quedaba de esta fila y sigue fuera a propósito: quince cifras por cada uno de los trece regímenes, cada sector con su convenio encima. Que los avisos citen el régimen declarado **ya está** desde el 28/08 | **Semanas**, y conviene partirlo por sector empezando por el que tenga un cliente esperando. No es trabajo pendiente sino una decisión de producto: mientras no haya un cliente de un sector concreto, traer sus cifras es inventar |
 
 ### Hecho desde que se escribió esta lista
+
+- **La compensación de la distribución irregular** (art. 34.2, 29/08/2026),
+  tercera fuente del saldo de descanso.
+
+  Es la única cuya deuda ya estaba calculada entera: `irregular_balance` dice
+  desde la vuelta 158 cuántas horas de un año vencido siguen sin compensar. Lo
+  que faltaba era llevarlas a la cuenta de lo que se debe **en descanso**, que es
+  como se devuelven las de exceso.
+
+  **Solo el exceso**, y eso es una decisión: el saldo va en las dos direcciones y
+  las dos hay que compensarlas, pero haber trabajado de menos se compensa
+  trabajando. En negativo aquí restaría de lo que se debe por horas extra o por
+  festivos, que no tienen nada que ver.
+
+  Y **nace fuera de plazo**: `irregular_balance` mira un año vencido, así que si
+  esas horas siguen ahí el plazo del artículo ya pasó. Es la única fuente que
+  entra directa en lo vencido, y eso destapó dos textos que mentían ---el aviso
+  de lo vencido citaba siempre el art. 35.1, y el desglose decía «sin plazo» de
+  algo cuyo plazo había vencido---.
 
 - **La historia de la adscripción** (29/08/2026), y **la jerarquía de
   departamentos descartada** con su motivo.

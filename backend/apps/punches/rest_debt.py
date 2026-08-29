@@ -25,8 +25,16 @@ retribuidos y no recuperables, y trabajar uno es lícito, pero no dice cómo se
 compensa ---eso lo fija el convenio---. Así que la empresa lo declara, y mientras
 no lo declare **no se lleva ningún saldo**: no habría de dónde sacar la cifra.
 
-Quedan la distribución irregular, la nocturnidad, la ampliación sectorial y el
-relevo de turno.
+La tercera es la **distribución irregular** (art. 34.2), y es la única cuya
+deuda ya estaba calculada entera: `irregular_balance` dice desde la vuelta 158
+cuántas horas de un año vencido siguen sin compensar. Lo que faltaba era llevarlas
+a la cuenta de lo que se debe en descanso, que es como se devuelven.
+
+Quedan la nocturnidad (art. 36.2), la ampliación sectorial y el relevo de turno
+(art. 19.a RD 1561/1995). Las dos primeras necesitan que la empresa declare
+**cuánto** compensa, como el festivo; la del relevo tiene su cifra ---lo que le
+falta al descanso para llegar a las doce horas--- pero hay que sacarla de un
+recorrido del cuadrante que hoy vive dentro de la revisión.
 
 **Lo debido se desglosa por origen; lo devuelto es uno solo.** Un descanso
 disfrutado salda deuda, y no dice de cuál: repartirlo entre las fuentes exigiría
@@ -293,6 +301,7 @@ def rest_debt(*, employee, company, day: date | None = None) -> dict | None:
         for f in (
             _overtime_owed(employee=employee, company=company, hoy=hoy),
             _holiday_owed(employee=employee, company=company, hoy=hoy),
+            _irregular_owed(employee=employee, company=company, hoy=hoy),
         )
         if f
     ]
@@ -319,4 +328,48 @@ def rest_debt(*, employee, company, day: date | None = None) -> dict | None:
         "overdue_hours": round(vencidas, 1),
         "due_on": vence,
         "unconverted_days": sin_convertir,
+    }
+
+
+def _irregular_owed(*, employee, company, hoy: date) -> dict | None:
+    """Horas trabajadas de más en un año ya vencido, que se devuelven en descanso.
+
+    «Las diferencias derivadas de la distribución irregular de la jornada deberán
+    quedar compensadas en el plazo de doce meses desde que se produzcan» (art.
+    34.2), salvo que el convenio diga otro plazo.
+
+    La cuenta la hace `irregular_balance` desde la vuelta 158, y contesta `None`
+    en los casos en que no se puede hacer: jornada pactada por semana ---una
+    cifra semanal no viene neta de vacaciones y restarla convertiría las de
+    cualquiera en una deuda---, plazo apagado por la empresa, o alguien que entró
+    a mitad del año que toca cuadrar.
+
+    **Solo el exceso.** El saldo del art. 34.2 va en las dos direcciones y las dos
+    hay que compensarlas, pero lo que se devuelve **con descanso** es haber
+    trabajado de más. Haber trabajado de menos se compensa trabajando, y meterlo
+    aquí en negativo restaría de lo que se debe por otras fuentes, que no tienen
+    nada que ver.
+
+    Y ya está fuera de plazo por definición: `irregular_balance` mira un año
+    **vencido**, así que estas horas van directas a lo vencido y no a lo
+    pendiente. Es el único caso en que una fuente nace tarde.
+    """
+    from apps.punches.irregular import irregular_balance
+
+    saldo = irregular_balance(employee=employee, company=company, day=hoy)
+    if not saldo or saldo["settled"]:
+        return None
+
+    horas = saldo["balance_hours"]
+    if horas <= RUIDO_HORAS:
+        return None
+
+    return {
+        "source": "irregular",
+        "owed_hours": round(horas, 1),
+        "overdue_hours": round(horas, 1),
+        "due_on": None,
+        "days": 0,
+        "year": saldo["year"],
+        "citation": "Art. 34.2 ET",
     }

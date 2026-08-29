@@ -87,6 +87,40 @@ test.describe('El saldo de descanso', () => {
     await expect(elAviso(page)).toContainText('37.2')
   })
 
+  test('cada línea del desglose dice su artículo y en qué plazo va', async ({ page }) => {
+    // Sin exigir **qué** fuentes tiene la demostración: eso cambia con la
+    // semilla y ataría esta prueba a un dato que no controla. Lo que se
+    // comprueba es la forma, que es lo que se rompe al añadir una fuente nueva:
+    // toda línea lleva su artículo, y dice si tiene fecha, si no tiene plazo o
+    // si se pasó. «Sin plazo» y «fuera de plazo» no son lo mismo ---el art. 37.2
+    // no da ninguno y el 34.2 sí lo daba y venció--- y confundirlos hace pensar
+    // que no corre nada.
+    await irA(page, '/mis-ausencias', 'Mis ausencias')
+    const {
+      body: { rest_debt: deuda },
+    } = await api(page, '/absences/balance/')
+
+    const texto = await elAviso(page).first().innerText()
+    const lineas = texto.split('\n').filter((l) => /^\d/.test(l))
+    expect(lineas.length, 'ninguna línea de desglose').toBe(deuda.sources.length)
+
+    for (const linea of lineas) {
+      expect(linea, `sin artículo: ${linea}`).toMatch(/Art\./)
+      expect(linea, `sin estado de plazo: ${linea}`).toMatch(/hasta el|sin plazo|fuera de plazo/)
+    }
+  })
+
+  test('lo vencido no se atribuye a un artículo que puede no ser el suyo', async ({ page }) => {
+    // El aviso de lo vencido citaba siempre el art. 35.1. Con ochenta horas
+    // vencidas del art. 34.2 decía que eran horas extra: el artículo equivocado
+    // en la primera frase que alguien lee. Cada fuente pone el suyo en su línea.
+    await irA(page, '/mis-ausencias', 'Mis ausencias')
+    const texto = await elAviso(page).first().innerText()
+    const [total] = texto.split('\n')
+
+    expect(total, 'el total no puede citar el artículo de una sola fuente').not.toMatch(/Art\./i)
+  })
+
   test('y el plazo va con lo suyo, no pegado al total', async ({ page }) => {
     // **El defecto que se vio abriendo la pantalla.** Con las dos fuentes, el
     // total llevaba la fecha de las horas extra: «te quedan 12 h hasta el 14 de

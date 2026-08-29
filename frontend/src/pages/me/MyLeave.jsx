@@ -48,6 +48,7 @@ import { alCatalogo } from '../../i18n/index.js'
 const ORIGENES = {
   overtime: alCatalogo('horas extra'),
   holiday: alCatalogo('festivos trabajados'),
+  irregular: alCatalogo('jornada repartida de forma irregular'),
 }
 
 /** Lo que se debe en descanso, de dónde viene y hasta cuándo hay para devolverlo.
@@ -70,18 +71,18 @@ function DeudaDeDescanso({ deuda }) {
   const vencidas = Number(deuda.overdue_hours) > 0
   const quedan = Number(deuda.remaining_hours)
   const fuentes = deuda.sources ?? []
-  //: El plazo que corre, de la fuente que lo tiene. El festivo trabajado no
-  //: lleva ninguno ---el art. 37.2 no lo da--- y decir «el plazo de 0 días» no
-  //: significa nada.
-  const conPlazo = fuentes.find((f) => Number(f.days) > 0)
 
   return (
     <Alert severity={vencidas ? 'warning' : 'info'} variant="outlined" sx={{ mb: 2 }}>
       {vencidas &&
-        t(
-          'Hay {{horas}} h de horas extra que tenías que recuperar con descanso y se ha pasado el plazo de {{dias}} días (art. 35.1 ET).',
-          { horas: deuda.overdue_hours, dias: conPlazo?.days ?? 0 },
-        )}
+        // Sin citar ningún artículo: lo vencido puede venir de más de una fuente
+        // ---horas extra del art. 35.1, la jornada repartida del 34.2--- y este
+        // aviso citaba siempre el primero. Con ochenta horas del 34.2 decía que
+        // eran horas extra y las atribuía al artículo que no era. Cada fuente
+        // pone su artículo en su línea, que es donde se puede comprobar.
+        t('Hay {{horas}} h de descanso que tenías que recuperar y se ha pasado el plazo.', {
+          horas: deuda.overdue_hours,
+        })}
       {!vencidas &&
         quedan > 0 &&
         (deuda.due_on && fuentes.length === 1
@@ -101,18 +102,28 @@ function DeudaDeDescanso({ deuda }) {
           {/* Con una sola fuente el desglose sobra: el total ya la nombra. */}
           {fuentes.map((f) => (
             <Box component="span" key={f.source} sx={{ display: 'block' }}>
-              {f.due_on
-                ? t('{{horas}} h de {{origen}}, hasta el {{fecha}} ({{articulo}}).', {
-                    horas: f.owed_hours,
+              {/* Tres casos y no dos. «Sin plazo» y «se pasó el plazo» son cosas
+                  distintas: el art. 37.2 no da ninguno para el festivo
+                  trabajado, y el 34.2 sí lo daba y ya venció. Decir «sin plazo»
+                  de lo segundo suena a que no corre nada. */}
+              {Number(f.overdue_hours) > 0
+                ? t('{{horas}} h de {{origen}}, fuera de plazo ({{articulo}}).', {
+                    horas: f.overdue_hours,
                     origen: ORIGENES[f.source] ? t(ORIGENES[f.source]) : f.source,
-                    fecha: dateOf(f.due_on, { year: 'numeric' }),
                     articulo: f.citation,
                   })
-                : t('{{horas}} h de {{origen}}, sin plazo ({{articulo}}).', {
-                    horas: f.owed_hours,
-                    origen: ORIGENES[f.source] ? t(ORIGENES[f.source]) : f.source,
-                    articulo: f.citation,
-                  })}
+                : f.due_on
+                  ? t('{{horas}} h de {{origen}}, hasta el {{fecha}} ({{articulo}}).', {
+                      horas: f.owed_hours,
+                      origen: ORIGENES[f.source] ? t(ORIGENES[f.source]) : f.source,
+                      fecha: dateOf(f.due_on, { year: 'numeric' }),
+                      articulo: f.citation,
+                    })
+                  : t('{{horas}} h de {{origen}}, sin plazo ({{articulo}}).', {
+                      horas: f.owed_hours,
+                      origen: ORIGENES[f.source] ? t(ORIGENES[f.source]) : f.source,
+                      articulo: f.citation,
+                    })}
             </Box>
           ))}
         </Box>

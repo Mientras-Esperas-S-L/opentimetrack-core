@@ -369,6 +369,47 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 170 --- La distribución irregular entra en el saldo de descanso (29/08)
+
+Al empezar: 3 «A medias», 3 «Falta» y 1 descartada.
+
+**Tercera fuente del mecanismo, y la única cuya deuda ya estaba calculada
+entera.** `irregular_balance` dice desde la vuelta 158 cuántas horas de un año
+vencido siguen sin compensar; lo que faltaba era llevarlas a la cuenta de lo que
+se debe **en descanso**, que es como se devuelven las de exceso.
+
+**Solo el exceso.** El saldo del art. 34.2 va en las dos direcciones y las dos
+hay que compensarlas, pero haber trabajado de menos se compensa **trabajando**.
+Meterlo aquí en negativo restaría de lo que se debe por horas extra o por
+festivos, que no tienen ninguna relación.
+
+**Y nace fuera de plazo.** `irregular_balance` mira un año **vencido**: si esas
+horas siguen ahí, el plazo del artículo ya pasó. Es la única fuente que entra
+directa en lo vencido, y eso destapó dos textos que mentían:
+
+1. El aviso de lo vencido citaba **siempre el art. 35.1**. Con ochenta horas
+   vencidas del art. 34.2 decía que eran horas extra y las atribuía al artículo
+   que no era, en la primera frase que alguien lee. Ahora no cita ninguno: cada
+   fuente pone el suyo en su línea, que es donde se puede comprobar.
+2. El desglose decía **«sin plazo»** de algo cuyo plazo había vencido. No es lo
+   mismo: el art. 37.2 no da ninguno para el festivo trabajado, y el 34.2 sí lo
+   daba y venció. Son tres casos y no dos.
+
+**Lo que queda de la familia y por qué no cabía hoy.** La nocturnidad (art. 36.2)
+y la ampliación sectorial necesitan que la empresa declare **cuánto** compensa,
+como el festivo. La del relevo de turno (art. 19.a) sí tiene su cifra ---lo que le
+falta al descanso para llegar a las doce horas, y sus cuatro semanas--- pero hay
+que sacarla de un recorrido del cuadrante que hoy vive dentro de la revisión, y
+eso no cabía limpio en esta vuelta.
+
+**Cinco contrastes, los cinco rojos**, aunque dos hubo que rehacerlos: las anclas
+apuntaban al texto antes de que `prettier` lo reformateara, así que el sabotaje no
+se aplicaba y la prueba «pasaba» sin haber cambiado nada.
+
+**Cierre:** ocho pasos del CI en verde con 1.551 pruebas, suite de navegador
+aparte con su script nuevo, dos filas movidas, dossier en la 1.39. El recuento
+pasa a **105 cubiertas, 3 a medias, 2 faltan y 1 descartada, de 111**.
+
 ### Vuelta 169 --- La historia de la adscripción, y la jerarquía descartada (29/08)
 
 Al empezar: 3 «A medias» y 5 «Falta».

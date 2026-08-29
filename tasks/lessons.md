@@ -2,6 +2,44 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Un ancla de sabotaje puede apuntar a un texto que el formateador ya movió (29/08/2026)
+
+Dos contrastes de esta vuelta «pasaron» sin haber sabotado nada: el `assert` del
+script de parcheo falló ---el texto que buscaba ya no existía tal cual, porque
+`prettier` lo había reformateado--- y la prueba corrió sobre el código intacto. En
+la salida eso se ve como «12 passed», exactamente igual que un contraste que no
+contrasta.
+
+**Cómo evitarlo:** un contraste tiene dos partes, y las dos hay que verificar. Que
+el sabotaje **se aplicó** ---el script debe fallar ruidosamente si no, y ese
+fallo hay que leerlo, no solo emitirlo--- y que la prueba se pone roja. Si el
+recuento de pruebas no cambia, el sabotaje no llegó a entrar.
+
+## «Sin plazo» y «fuera de plazo» no son lo mismo (29/08/2026)
+
+El desglose del saldo de descanso tenía dos casos: con fecha límite y sin ella.
+Al entrar una fuente cuyo plazo **ya había vencido**, cayó en «sin plazo», que
+suena a que no corre ninguno. Y son lo contrario: el art. 37.2 no da plazo para
+compensar un festivo trabajado; el 34.2 sí lo daba y pasó.
+
+**Cómo evitarlo:** cuando una lista de estados se queda corta, el caso nuevo cae
+en el que más se le parece y ahí es donde miente. Al añadir una fuente, un tipo o
+un origen, repasar los estados que la pantalla sabe contar: si el nuevo no encaja
+en ninguno, hace falta uno más, no reutilizar el vecino.
+
+## Un aviso agregado no puede citar el artículo de una de sus partes (29/08/2026)
+
+«Hay 80 h de horas extra que tenías que recuperar (art. 35.1)» cuando esas
+ochenta horas venían del art. 34.2. El mensaje se escribió con una sola fuente
+en mente y siguió citándola al llegar la tercera: el artículo equivocado en la
+primera frase que alguien lee, y el artículo es justo lo que hace comprobable un
+aviso.
+
+Es el mismo error que la fecha pegada al total de la vuelta 166, en otro campo.
+
+**Cómo evitarlo:** lo que solo vale para **una** parte ---su artículo, su plazo,
+su origen--- va en la línea de esa parte. El agregado dice la suma y nada más.
+
 ## Tercer `git checkout`: la lección no bastaba, hacía falta el script (29/08/2026)
 
 Escribí «no uses `git checkout` para restaurar tras un sabotaje» el 28/08, la
