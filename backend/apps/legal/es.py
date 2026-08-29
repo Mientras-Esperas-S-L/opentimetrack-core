@@ -92,6 +92,26 @@ ESPANA = LegalFramework(
             "los cuatro meses siguientes, ni las de fuerza mayor del art. 35.3.",
             ceiling=80,
         ),
+        # Las tres salidas de compensar lo trabajado de más. Se citan porque
+        # ahora se eligen en pantalla, y un desplegable que decide lo que
+        # alguien va a descansar sin decir de qué artículo sale es lo mismo que
+        # no tener el artículo.
+        "overtime_rest_days": Citation(
+            "Art. 35.1 ET",
+            "Cuatro meses desde que se hicieron. Pasado el plazo la compensación ya no "
+            "vale para descontarlas del tope anual, y el descanso sigue debiéndose.",
+        ),
+        "holiday_worked_compensation": Citation(
+            "Art. 37.2 ET",
+            "Las catorce fiestas son retribuidas y no recuperables. Cómo se compensa "
+            "trabajarlas ---descanso o pago--- lo decide el convenio, no la ley.",
+        ),
+        "night_worked_compensation": Citation(
+            "Art. 36.2 ET",
+            "Retribución específica del convenio, salario fijado ya atendiendo a que el "
+            "trabajo sea nocturno, o compensación por descansos. Solo la tercera deja "
+            "saldo aquí: las otras dos son nómina.",
+        ),
         "night_starts_at": Citation(
             "Art. 36.1 ET",
             "Entre las 22:00 y las 06:00. Trabajar en esa franja no convierte a nadie "

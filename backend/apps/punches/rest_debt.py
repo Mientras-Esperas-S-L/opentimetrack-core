@@ -302,6 +302,7 @@ def rest_debt(*, employee, company, day: date | None = None) -> dict | None:
             _overtime_owed(employee=employee, company=company, hoy=hoy),
             _holiday_owed(employee=employee, company=company, hoy=hoy),
             _irregular_owed(employee=employee, company=company, hoy=hoy),
+            _night_owed(employee=employee, company=company, hoy=hoy),
         )
         if f
     ]
@@ -373,3 +374,94 @@ def _irregular_owed(*, employee, company, hoy: date) -> dict | None:
         "year": saldo["year"],
         "citation": "Art. 34.2 ET",
     }
+
+
+def _night_owed(*, employee, company, hoy: date) -> dict | None:
+    """Descanso que se debe por trabajo nocturno, cuando así lo compensa la empresa.
+
+    «El trabajo nocturno tendrá una retribución específica que se determinará en
+    la negociación colectiva, salvo que el salario se haya establecido atendiendo
+    a que el trabajo sea nocturno por su propia naturaleza o se haya acordado la
+    compensación de este trabajo por descansos» (art. 36.2).
+
+    **Tres salidas y solo una llega aquí.** Las otras dos se pagan, y lo que se
+    paga es una nómina: fuera de lo que hace este producto. Sin declarar cuál
+    eligió el convenio no se lleva ningún saldo, porque no habría de dónde sacar
+    la cifra.
+
+    Se cuentan las horas **dentro de la franja nocturna** de la empresa, no las
+    jornadas que la tocan: quien entra a las 21:00 y sale a las 23:00 ha hecho
+    una hora de noche, no dos. Y de lo fichado, no del cuadrante, por lo mismo
+    que el festivo: la compensación se debe por haber trabajado.
+    """
+    from apps.punches.models import Punch, PunchInterval, PunchType
+    from apps.tenants.rules import WorkingTimeRules
+
+    reglas = WorkingTimeRules.for_company(company)
+    if reglas.night_worked_compensation != WorkingTimeRules.NIGHT_REST:
+        return None
+
+    desde = hoy - timedelta(days=365)
+    zone = company.tzinfo
+
+    eventos = Punch.objects.filter(
+        employee=employee,
+        is_active=True,
+        timestamp__gte=datetime.combine(desde, dt_time.min, tzinfo=zone),
+        timestamp__lt=datetime.combine(hoy + timedelta(days=1), dt_time.min, tzinfo=zone),
+    ).order_by("timestamp")
+
+    nocturnas = 0.0
+    abiertos: dict[str, Punch] = {}
+    for punch in eventos:
+        if punch.punch_type == PunchType.IN:
+            abiertos.setdefault(punch.interval, punch)
+            continue
+        opening = abiertos.pop(punch.interval, None)
+        if opening is None or opening.interval != PunchInterval.WORK:
+            continue
+        nocturnas += _horas_de_noche(
+            opening.timestamp.astimezone(zone),
+            punch.timestamp.astimezone(zone),
+            reglas.night_starts_at,
+            reglas.night_ends_at,
+        )
+
+    if nocturnas <= RUIDO_HORAS:
+        return None
+
+    return {
+        "source": "night",
+        "owed_hours": round(nocturnas * float(reglas.night_rest_multiplier or 1), 1),
+        "overdue_hours": 0,
+        # El art. 36.2 no da plazo para devolver estos descansos: lo pone el
+        # convenio, en su ficha. Inventar uno convertiría en «fuera de plazo»
+        # algo que no lo está.
+        "due_on": None,
+        "days": 0,
+        "multiplier": float(reglas.night_rest_multiplier or 1),
+        "citation": "Art. 36.2 ET",
+    }
+
+
+def _horas_de_noche(entra: datetime, sale: datetime, empieza, acaba) -> float:
+    """Cuánto de ese tramo cae dentro de la franja nocturna.
+
+    La franja cruza la medianoche ---de 22:00 a 6:00--- así que se recorre día a
+    día en vez de comparar horas de reloj: quien entra a las 21:00 y sale a las
+    7:00 hace ocho horas de noche repartidas en dos fechas, y una comparación
+    directa de `hora >= 22 or hora < 6` no las suma bien.
+    """
+    total = 0.0
+    dia = entra.date() - timedelta(days=1)
+    fin = sale.date() + timedelta(days=1)
+    while dia <= fin:
+        arranca = datetime.combine(dia, empieza, tzinfo=entra.tzinfo)
+        termina = datetime.combine(dia, acaba, tzinfo=entra.tzinfo)
+        if termina <= arranca:
+            termina += timedelta(days=1)
+        solape = min(sale, termina) - max(entra, arranca)
+        if solape.total_seconds() > 0:
+            total += solape.total_seconds() / 3600
+        dia += timedelta(days=1)
+    return total

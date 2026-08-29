@@ -369,6 +369,59 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 171 --- La noche entra en el saldo, y los ajustes salen del `curl` (29/08)
+
+Al empezar: 3 «A medias», 2 «Falta» y 1 descartada.
+
+**Cuarta fuente del mecanismo, y la primera con tres salidas.** El art. 36.2 no
+dice que el trabajo nocturno se compense con descanso: dice que tiene retribución
+específica del convenio, **salvo** que el salario ya se haya fijado atendiendo a
+que el trabajo sea nocturno, **o** que se haya acordado compensarlo por
+descansos. Tres caminos, y solo el tercero llega a este producto; los otros dos
+son nómina. Sin declarar cuál eligió el convenio no se lleva saldo, porque no
+habría de dónde sacar la cifra ---y las tres dan cero **por motivos distintos**,
+que es lo que separan las pruebas.
+
+**Horas dentro de la franja, no jornadas que la tocan.** Quien entra a las 21:00
+y sale a las 23:00 ha hecho **una** hora de noche, no dos. Y como la franja cruza
+la medianoche, el tramo se recorre día a día: comparando horas de reloj sueltas
+---«22 o más, o menos de 6»--- se parte mal en cuanto cambia la fecha, que es
+justo lo que hace un turno de noche.
+
+**Lo que se vio al abrir la pantalla, y es lo importante de esta vuelta.** Los
+ajustes de compensación de las **cuatro** fuentes ---el plazo de las horas extra,
+cómo se compensa el festivo y con qué multiplicador, y ahora los dos de la
+noche--- existían en el modelo y en la API y **no estaban en ninguna pantalla**.
+Se ponían por `curl` o por el shell de Django. Para quien usa el producto eso es
+lo mismo que si no existieran: el saldo salía a cero y no había forma de
+averiguar por qué. Tres vueltas de esta familia se habían dado por cerradas con
+ese agujero dentro. Ahora hay un panel propio en Ajustes, con la cita de cada
+artículo servida por el marco legal del país.
+
+**Y al mirarlo, tres defectos más:**
+
+1. **Los desplegables salían vacíos** con el valor puesto. La pantalla ofrecía
+   `NIGHT_REST` y el modelo guarda `REST`: escribí los nombres de las constantes
+   de Python en vez de sus valores. Desde fuera se veía igual que si el ajuste no
+   se hubiera guardado nunca.
+2. **`-3:-60`** en la pantalla de fichar. En JavaScript el resto conserva el
+   signo del dividendo, así que `hhmm` repartía el menos por las dos partes. No
+   es una hora, no es una duración y no se puede leer. Ahora el signo va delante
+   y las partes se calculan sobre el valor absoluto.
+3. **La semilla creaba un fichaje en el futuro.** La jornada abierta de «hoy» se
+   ponía a las 07:02 fijas; sembrada de madrugada, la entrada quedaba tres horas
+   por delante de la hora del servidor y la pantalla enseñaba un contador en
+   marcha con cero horas trabajadas. Es lo que destapó el defecto anterior.
+
+**Cuatro contrastes en el backend y cuatro en el navegador, los ocho rojos.** El
+del navegador que borra el nombre en cristiano de la fuente tumbó **dos** pruebas
+y no una: sin el mapa, `night` se cuela crudo en una frase en castellano y además
+se lleva por delante la línea que comprueba el plazo.
+
+**Cierre:** ocho pasos del CI en verde, suite de navegador aparte, una fila
+movida. El recuento pasa a **63 cubiertas, 3 a medias y 1 falta, de 67** en el
+inventario del repositorio.
+
 ### Vuelta 170 --- La distribución irregular entra en el saldo de descanso (29/08)
 
 Al empezar: 3 «A medias», 3 «Falta» y 1 descartada.

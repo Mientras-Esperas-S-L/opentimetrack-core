@@ -14,10 +14,20 @@ import { localeDeFechas } from '../i18n/index.js'
 
 const pad = (n) => String(n).padStart(2, '0')
 
+/** `HH:MM`, y con signo si la cifra es negativa.
+ *
+ *  El signo va delante y las dos partes se calculan sobre el valor absoluto. En
+ *  JavaScript el resto conserva el signo del dividendo, así que hacerlo a pelo
+ *  reparte el menos por las dos: cuatro horas menos se escribían **`-3:-60`**,
+ *  que no es una hora, no es una duración y no se puede leer. Se veía en la
+ *  pantalla de fichar, en la fila de un tramo cuya entrada quedaba por delante
+ *  de la hora del servidor.
+ */
 export function hhmm(totalSeconds) {
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  return `${pad(hours)}:${pad(minutes)}`
+  const total = Math.trunc(Number(totalSeconds) || 0)
+  const signo = total < 0 ? '−' : ''
+  const abs = Math.abs(total)
+  return `${signo}${pad(Math.floor(abs / 3600))}:${pad(Math.floor((abs % 3600) / 60))}`
 }
 
 /** Una duración en minutos, dicha como la diría una persona.

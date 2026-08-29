@@ -158,7 +158,19 @@ class Command(BaseCommand):
                 {"years": 5, "extra_days": 1},
                 {"years": 15, "extra_days": 2},
             ]
-            rules.save(update_fields=["holiday_worked_compensation", "seniority_leave"])
+            # Y la noche se compensa con descanso. Mismo motivo que el festivo:
+            # el art. 36.2 da tres salidas ---plus, salario que ya lo incluye, o
+            # descanso--- y solo la tercera deja saldo. Sin elegirla, la fuente
+            # nocturna no aparece nunca y con ella el desglose de la pantalla
+            # queda en una sola línea, que es justo lo que no hay que enseñar.
+            rules.night_worked_compensation = WorkingTimeRules.NIGHT_REST
+            rules.save(
+                update_fields=[
+                    "holiday_worked_compensation",
+                    "night_worked_compensation",
+                    "seniority_leave",
+                ]
+            )
             sites = self._workplaces(company)
             departments = self._departments(company)
             people = self._people(company, departments, sites)
@@ -169,6 +181,7 @@ class Command(BaseCommand):
             self._absences(company, people)
             self._corrections(company, people)
             self._worked_holiday(company, people)
+            self._night_shift(company, people)
 
         self._neighbour()
         self._report(company, people, rules)
@@ -206,6 +219,39 @@ class Command(BaseCommand):
                 timestamp=moment,
                 punch_type=kind,
                 source=PunchSource.WEB,
+            )
+
+    def _night_shift(self, company, people):
+        """Un turno de noche, para que la fuente del art. 36.2 se vea.
+
+        En sábado a propósito: el historial solo ficha de lunes a viernes, así
+        que el fin de semana está libre y la entrada no se cruza con la jornada
+        de ese día ---que es exactamente lo que rompió la semilla la última vez
+        que se le añadió un caso encima de un día ocupado---.
+
+        Cruza la medianoche porque es lo que hace un turno de noche y porque es
+        el caso que el cálculo puede equivocar: de 22:00 a 06:00 son ocho horas
+        repartidas en dos fechas.
+        """
+        quien = people.get("worker")
+        if quien is None:
+            return
+
+        # El sábado anterior al último domingo: retrocede hasta dar con uno.
+        day = timezone.localdate() - timedelta(days=3)
+        while day.weekday() != 5:
+            day -= timedelta(days=1)
+
+        zone = company.tzinfo
+        entered = datetime.combine(day, time(22, 0), tzinfo=zone)
+        left = entered + timedelta(hours=8)
+        for moment, kind in ((entered, PunchType.IN), (left, PunchType.OUT)):
+            Punch.objects.create(
+                tenant=company,
+                employee=quien,
+                timestamp=moment,
+                punch_type=kind,
+                source=PunchSource.MOBILE,
             )
 
     def _neighbour(self):
@@ -897,10 +943,23 @@ class Command(BaseCommand):
             self._pair(company, people["flexible"], day, opens, closes, PunchSource.WEB, zone)
 
         # And one still clocked in, so "today" has an open day on screen.
+        #
+        # La hora se acota a lo ya pasado: las 07:02 fijas dejaban la entrada
+        # **en el futuro** cuando la semilla se sembraba de madrugada, y una
+        # jornada que empieza dentro de tres horas sale en pantalla como un
+        # contador en marcha con cero horas trabajadas y un tramo de duración
+        # negativa. Un cuarto de hora antes de ahora es una entrada plausible a
+        # cualquier hora del día.
+        ahora = timezone.localtime(timezone.now(), zone)
+        abre = min(
+            time(7, 2), (ahora - timedelta(minutes=15)).time().replace(second=0, microsecond=0)
+        )
+        if ahora.hour == 0 and ahora.minute < 15:
+            abre = time(0, 0)
         Punch.objects.create(
             tenant=company,
             employee=people["worker"],
-            timestamp=datetime.combine(today, time(7, 2), tzinfo=zone),
+            timestamp=datetime.combine(today, abre, tzinfo=zone),
             punch_type=PunchType.IN,
             source=PunchSource.MOBILE,
         )

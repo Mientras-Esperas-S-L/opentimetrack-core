@@ -2,6 +2,70 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Un ajuste que solo se pone por la API es una función que no existe (29/08/2026)
+
+Las cuatro fuentes del saldo de descanso dependen de ajustes que la empresa tiene
+que declarar ---el plazo de las horas extra, si el festivo se paga o se descansa y
+con qué multiplicador, lo mismo para la noche---. Los cuatro estaban en el modelo,
+los cuatro salían en la API, y **ninguno estaba en ninguna pantalla**: se ponían
+por `curl` o por el shell de Django. Tres vueltas se dieron por cerradas con ese
+agujero dentro, y el síntoma para quien usa el producto era el peor posible: el
+saldo salía a cero y no había forma de averiguar por qué.
+
+Ya había pasado con el régimen de jornada especial. Volvió a pasar porque al
+mirar la fila comprobaba **el cálculo**, que es donde está la dificultad, y no
+**el camino completo**, que es donde está el producto.
+
+**Cómo evitarlo:** antes de mover una fila del inventario, la pregunta no es «¿el
+cálculo sale bien?» sino «¿puede una empresa usarlo sin que yo le escriba un
+`curl`?». Todo dato que el cálculo lee de la configuración tiene que tener sitio
+donde escribirse en pantalla. Si el cálculo se alimenta de un campo nuevo, ese
+campo entra en la misma vuelta o la fila no se mueve.
+
+## Los valores de un `TextChoices` no son los nombres de sus constantes (29/08/2026)
+
+Escribí `<MenuItem value="NIGHT_REST">` copiando el nombre de la constante de
+Python. El modelo declara `NIGHT_REST = "REST"`, así que el valor guardado es
+`REST` y el desplegable no encontraba su opción: salía **vacío** con el ajuste
+puesto, indistinguible de un ajuste que no se ha guardado nunca. Lo mismo con
+`HOLIDAY_REST = "REST"`.
+
+Ninguna prueba de backend lo habría visto: el backend guardaba y devolvía `REST`
+correctamente. Lo vi abriendo la pantalla.
+
+**Cómo evitarlo:** cuando el frontend tenga que escribir un valor de un
+`TextChoices`, leer la línea de la asignación ---no el nombre que aparece en el
+resto del código--- y comprobar el desplegable con un valor ya guardado. Un
+`<Select>` con valor desconocido no avisa: se dibuja vacío.
+
+## El resto de una división negativa se lleva el signo a los minutos (29/08/2026)
+
+`hhmm(-14340)` devolvía **`-3:-59`**, y en otro caso `-3:-60`. En JavaScript `%`
+conserva el signo del dividendo, así que `Math.floor((s % 3600) / 60)` sale
+negativo igual que las horas y el menos aparece dos veces. No es una hora, no es
+una duración y no hay forma de leerlo.
+
+Estaba desde siempre y no se veía porque las duraciones que llegaban eran
+positivas. Apareció cuando un tramo abierto quedó con la entrada por delante de
+la hora del servidor.
+
+**Cómo evitarlo:** un formateador de duraciones se escribe con el signo fuera y
+el valor absoluto dentro, aunque hoy solo reciba positivos. Y al probarlo, meterle
+un negativo: es una línea, y es la única que encuentra esto.
+
+## Una hora fija en la semilla es una hora que a veces está en el futuro (29/08/2026)
+
+La demostración abría la jornada de «hoy» a las 07:02 en punto. Sembrada a las
+cuatro de la mañana, esa entrada quedaba **tres horas por delante** de la hora del
+servidor: la pantalla enseñaba un contador en marcha, cero horas trabajadas y un
+tramo de duración negativa, todo a la vez. Se veía como un fallo del producto y
+era un dato imposible.
+
+**Cómo evitarlo:** cualquier dato de la semilla que se compare con «ahora» se
+acota a «ahora»: `min(la hora que quiero, ahora menos un rato)`. Una semilla que
+solo produce datos coherentes si se ejecuta en horario de oficina falla justo
+cuando nadie está mirando.
+
 ## Un ancla de sabotaje puede apuntar a un texto que el formateador ya movió (29/08/2026)
 
 Dos contrastes de esta vuelta «pasaron» sin haber sabotado nada: el `assert` del

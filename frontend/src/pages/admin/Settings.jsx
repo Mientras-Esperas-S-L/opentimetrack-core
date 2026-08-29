@@ -121,6 +121,11 @@ const NOMBRES = {
   break_counts_as_work: alCatalogo('El descanso computa como trabajo'),
   night_starts_at: alCatalogo('El trabajo nocturno empieza'),
   night_ends_at: alCatalogo('El trabajo nocturno acaba'),
+  overtime_rest_days: alCatalogo('Plazo para descansar las horas extra'),
+  holiday_worked_compensation: alCatalogo('Cómo se compensa el festivo trabajado'),
+  holiday_rest_multiplier: alCatalogo('Descanso por hora de festivo'),
+  night_worked_compensation: alCatalogo('Cómo se compensa el trabajo nocturno'),
+  night_rest_multiplier: alCatalogo('Descanso por hora de noche'),
   record_retention_years: alCatalogo('Conservación del registro'),
   security_metadata_retention_days: alCatalogo('Conservación de metadatos'),
 }
@@ -869,6 +874,95 @@ export default function Settings() {
             Se guarda la constancia, no el acta: que exista un documento, de qué
             fecha y con qué referencia es el hecho comprobable. El acta la
             custodia la empresa con sus otros papeles. */}
+        {/* Lo que se debe en descanso.
+
+            Las cifras existían y solo se podían poner por la API: el saldo del
+            trabajador salía siempre a cero y no había forma de averiguar por
+            qué desde la pantalla. Un ajuste que decide lo que alguien va a
+            disfrutar no puede vivir en un `curl`.
+
+            Los tres artículos dan a elegir, y por eso vacío es una respuesta
+            válida y no un cero: mientras la empresa no diga cómo compensa, no
+            se lleva saldo ---inventarle un criterio sería peor que no llevar
+            ninguno---. */}
+        <Panel
+          title={t('Cómo se compensa lo trabajado de más')}
+          hint={t(
+            'Las horas extra, los festivos y la noche se pueden pagar o descansar. Solo lo que se descansa deja saldo aquí; lo que se paga es nómina y va por otro lado.',
+          )}
+        >
+          {rules ? (
+            <Stack sx={{ gap: 2 }}>
+              <TextField
+                fullWidth
+                type="number"
+                label={t('Plazo para descansar las horas extra (días)')}
+                value={rules.overtime_rest_days}
+                onChange={setRule('overtime_rest_days')}
+                slotProps={{ htmlInput: { min: 1, step: 1 } }}
+                helperText={cite('overtime_rest_days')}
+              />
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label={t('El festivo trabajado se compensa')}
+                  value={rules.holiday_worked_compensation ?? ''}
+                  onChange={setRule('holiday_worked_compensation')}
+                >
+                  <MenuItem value="">{t('Sin decidir todavía')}</MenuItem>
+                  <MenuItem value="REST">{t('con descanso')}</MenuItem>
+                  <MenuItem value="PAID">{t('pagándolo')}</MenuItem>
+                </TextField>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label={t('Horas de descanso por hora trabajada')}
+                  value={rules.holiday_rest_multiplier ?? ''}
+                  onChange={setRule('holiday_rest_multiplier')}
+                  disabled={rules.holiday_worked_compensation !== 'REST'}
+                  slotProps={{ htmlInput: { min: 1, step: 0.25 } }}
+                  helperText={t('1 devuelve lo mismo que se trabajó; hay convenios que dan más.')}
+                />
+              </Stack>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
+                {cite('holiday_worked_compensation')}
+              </Typography>
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 2 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label={t('El trabajo nocturno se compensa')}
+                  value={rules.night_worked_compensation ?? ''}
+                  onChange={setRule('night_worked_compensation')}
+                >
+                  <MenuItem value="">{t('Sin decidir todavía')}</MenuItem>
+                  <MenuItem value="REST">{t('con descanso')}</MenuItem>
+                  <MenuItem value="PAID">{t('con un plus en nómina')}</MenuItem>
+                  <MenuItem value="SALARY">{t('ya va en el salario')}</MenuItem>
+                </TextField>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label={t('Horas de descanso por hora de noche')}
+                  value={rules.night_rest_multiplier ?? ''}
+                  onChange={setRule('night_rest_multiplier')}
+                  disabled={rules.night_worked_compensation !== 'REST'}
+                  slotProps={{ htmlInput: { min: 1, step: 0.25 } }}
+                  helperText={t('Solo se cuentan las horas dentro de la franja nocturna.')}
+                />
+              </Stack>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
+                {cite('night_worked_compensation')}
+              </Typography>
+            </Stack>
+          ) : (
+            <Loading rows={3} />
+          )}
+        </Panel>
+
         <Panel title={t('Cómo se organizó el registro')}>
           <Stack sx={{ gap: 2 }}>
             <Typography variant="body2" color="text.secondary">

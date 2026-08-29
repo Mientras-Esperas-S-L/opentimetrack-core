@@ -49,6 +49,7 @@ const ORIGENES = {
   overtime: alCatalogo('horas extra'),
   holiday: alCatalogo('festivos trabajados'),
   irregular: alCatalogo('jornada repartida de forma irregular'),
+  night: alCatalogo('trabajo nocturno'),
 }
 
 /** Lo que se debe en descanso, de dónde viene y hasta cuándo hay para devolverlo.

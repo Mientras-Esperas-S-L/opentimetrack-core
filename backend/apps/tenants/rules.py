@@ -309,6 +309,44 @@ class WorkingTimeRules(BaseModel):
         ),
     )
 
+    #: Cómo se compensa el trabajo nocturno, cuando la empresa lo ha decidido.
+    #:
+    #: El art. 36.2 da **tres** salidas y conviene no perder ninguna: «una
+    #: retribución específica que se determinará en la negociación colectiva,
+    #: salvo que el salario se haya establecido atendiendo a que el trabajo sea
+    #: nocturno por su propia naturaleza o se haya acordado la compensación de
+    #: este trabajo por descansos».
+    #:
+    #: Solo la tercera genera deuda de descanso. Las otras dos se pagan, y lo que
+    #: se paga es una nómina: está fuera de lo que hace este producto.
+    NIGHT_REST = "REST"
+    NIGHT_PAID = "PAID"
+    NIGHT_IN_SALARY = "SALARY"
+
+    night_worked_compensation = models.CharField(
+        _("night work is made up with"),
+        max_length=8,
+        blank=True,
+        default="",
+        choices=[
+            (NIGHT_REST, _("rest")),
+            (NIGHT_PAID, _("a specific payment")),
+            (NIGHT_IN_SALARY, _("nothing: the salary already accounts for it")),
+        ],
+        help_text=_(
+            "Art. 36.2 ET leaves it to the collective agreement. Empty means nothing "
+            "is tracked, because there would be no figure to track it with."
+        ),
+    )
+
+    night_rest_multiplier = models.DecimalField(
+        _("hours of rest per hour worked at night"),
+        max_digits=4,
+        decimal_places=2,
+        default=1,
+        help_text=_("Only used when night work is made up with rest."),
+    )
+
     holiday_worked_compensation = models.CharField(
         _("a public holiday worked is made up with"),
         max_length=8,
