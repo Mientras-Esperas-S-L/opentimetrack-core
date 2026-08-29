@@ -2,6 +2,28 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Mover el estado de una fila y dejar su nota vieja (29/08/2026)
+
+Tres filas del inventario publicado estaban marcadas **Cubierto** con la nota de
+antes de cubrirlas. La peor: «Compensación por festivo trabajado · Cubierto ·
+*Se avisa de la deuda, **no se lleva el saldo***». El chip decía una cosa y el
+texto de al lado la contraria, en el documento que se enseña a un cliente.
+
+Pasó porque al cerrar cada vuelta buscaba **la fila por su nombre y le cambiaba
+el estado**, que es el gesto que el recuento necesita. La nota está en otra celda
+y no la miraba. Y una cuarta fila llevaba la celda de nota **vacía** desde que se
+cerró.
+
+Tampoco ayudó que el mismo inventario viva en dos documentos con distinto
+detalle: el `.md` del repositorio quedó bien y el artefacto no, y nada comparaba
+uno con otro.
+
+**Cómo evitarlo:** al mover una fila, releer **su fila entera**, no solo la celda
+del estado. Y antes de publicar, una comprobación mecánica sobre el documento:
+que ninguna fila «Cubierto» contenga «no se lleva», «falta», «hoy no hay» ni
+«sigue sin», y que ninguna fila cerrada tenga la nota vacía. Son dos `grep` y
+cazan lo que la vista no.
+
 ## El idioma del código no es el idioma por defecto del producto (29/08/2026)
 
 El guard de traducciones comprobaba `("ca", "gl")` y dejaba fuera el castellano,
