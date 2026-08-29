@@ -369,6 +369,64 @@ completo (evidencia y refutación) está en el registro del workflow.
 
 ## Cerrado
 
+### Vuelta 174 --- Lo que el saldo no cuenta, dicho en su pantalla (29/08)
+
+Al empezar: 1 «A medias», 1 «Falta» y 1 descartada. **Al terminar no queda
+ninguna sin cerrar ni sin descartar con motivo.**
+
+**La última «Falta» se descarta, con tres motivos y no uno.** El descanso
+compensatorio por ampliación sectorial del RD 1561/1995:
+
+1. Haría falta la cifra de cada sector, y esas cifras **ya estaban descartadas**:
+   quince números por cada uno de los trece regímenes, cada sector con su
+   convenio encima.
+2. Esas horas **ya se cuentan una vez**, como horas extra del art. 35.1 o como
+   distribución irregular. Una segunda deuda por el mismo trabajo lo contaría dos
+   veces, y el saldo diría el doble de lo que se debe.
+3. Lo que la ampliación cambia es la **naturaleza** de esas horas, no su
+   cantidad; distinguirlas exige saber dónde acaba la jornada ordinaria del
+   sector, que es justo la cifra del motivo uno.
+
+**Pero descartar no puede ser callarse.** Sin decirlo, quien trabaja en
+hostelería abre su saldo, ve cinco fuentes con sus artículos y da por hecho que
+están todas. Un saldo incompleto que no avisa de estarlo es peor que no tener
+saldo: el primero se cree. Así que el saldo lo dice, en la pantalla de quien lo
+mira, cuando la empresa ha declarado uno de los **nueve regímenes de
+ampliación** ---y no en los cuatro de limitación, que recortan la jornada en vez
+de alargarla y no traen ningún descanso que echar en falta---.
+
+Eso obligó a convertir en dato una clasificación que vivía en un comentario:
+`SpecialRegime.widens_the_day`. Un comentario no se puede consultar.
+
+**Y al abrir la pantalla, el defecto de la vuelta.** El nombre del sector salía
+en inglés: «Tu empresa trabaja en **Retail and hospitality**». Los trece
+regímenes estaban traducidos al catalán y al gallego y **no al castellano**, así
+que el desplegable de Ajustes llevaba desde que existe enseñando «Road
+transport» a cualquier empresa española. Quince cadenas visibles en total.
+
+**El guard no lo veía, y esa es la lección.** `IDIOMAS = ("ca", "gl")`: la
+comprobación se escribió pensando que sin traducción una cadena «cae al
+castellano», y eso solo sería cierto si el código estuviera escrito en
+castellano. Está en inglés. Ahora comprueba los tres.
+
+**Y su contraste tampoco valía.** Exigía «más de cincuenta huecos» por idioma
+---válido para ca y gl, imposible para es--- y eso no comprueba el parseo:
+comprueba cuánto trabajo queda, que es otra cosa y cambia sola. Reescrito para
+comprobar por las dos puntas: que el lector encuentra un hueco concreto y que no
+da por vacía una entrada concreta que sí está traducida. **La primera versión de
+esa segunda comprobación usaba una cadena que no está en ningún catálogo**, así
+que pasaba por ausencia; ahora se comprueba que la cadena de control existe antes
+de concluir nada de que no aparezca.
+
+**Ocho contrastes, los ocho rojos.**
+
+**Cierre:** ocho pasos del CI en verde con 1.600 pruebas, suite de navegador
+aparte, la última fila descartada con motivo y el recuento a **65 cubiertas, 1 a
+medias, 0 faltan y 1 descartada, de 67** en el inventario del repositorio. La «A
+medias» que queda es la distribución irregular, cuya mitad pendiente ---el 10 %
+del párrafo primero del art. 34.2--- está descartada a propósito desde hace
+vueltas y sigue estándolo por los mismos dos motivos.
+
 ### Vuelta 173 --- El relevo de turno, y el plazo que el producto se inventaba (29/08)
 
 Al empezar: 2 «A medias», 1 «Falta» y 1 descartada.

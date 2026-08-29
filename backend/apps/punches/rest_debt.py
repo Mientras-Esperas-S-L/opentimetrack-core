@@ -331,6 +331,40 @@ def rest_debt(*, employee, company, day: date | None = None) -> dict | None:
         "overdue_hours": round(vencidas, 1),
         "due_on": vence,
         "unconverted_days": sin_convertir,
+        "sector": _lo_que_falta_por_sector(company),
+    }
+
+
+def _lo_que_falta_por_sector(company) -> dict | None:
+    """Lo que este saldo **no** cuenta, cuando la empresa está en un sector de
+    jornada ampliada.
+
+    Los arts. 4 a 10 del RD 1561/1995 amplían la jornada en sectores concretos
+    ---porteros, guardas, campo, hostelería, transporte, mar, aire, sanidad--- y
+    cada uno establece a cambio sus propios descansos compensatorios. Este
+    producto **no los calcula, y es una decisión**: haría falta la cifra de cada
+    sector, son quince números por cada uno de los trece regímenes, y todos esos
+    sectores tienen además convenio propio. Un número nuestro pisando el suyo se
+    leería como la ley.
+
+    Lo que sí se puede hacer, y es lo que faltaba: **decirlo**. Sin esta línea,
+    quien trabaja en hostelería abre su saldo, ve tres fuentes con sus artículos
+    y da por hecho que están todas. Un saldo incompleto que no avisa de estarlo
+    es peor que no tener saldo: el primero se cree.
+
+    Solo en las **ampliaciones**. Una limitación recorta la jornada en vez de
+    alargarla, así que no trae descansos compensatorios que echar en falta y el
+    aviso sería ruido en la pantalla de una empresa que no tiene nada pendiente.
+    """
+    from apps.tenants.rules import SpecialRegime, WorkingTimeRules
+
+    regimen = WorkingTimeRules.for_company(company).special_regime
+    if not SpecialRegime.widens_the_day(regimen):
+        return None
+
+    return {
+        "regime": str(SpecialRegime(regimen).label),
+        "citation": "RD 1561/1995",
     }
 
 

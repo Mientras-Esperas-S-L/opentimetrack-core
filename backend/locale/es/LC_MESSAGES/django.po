@@ -2206,6 +2206,8 @@ msgid ""
 "%(hours)s h over the %(agreed)s h agreed for %(year)s, and art. 34.2 gives "
 "%(months)s months to settle them."
 msgstr ""
+"%(hours)s h por encima de las %(agreed)s h pactadas para %(year)s, y el "
+"art. 34.2 da %(months)s meses para compensarlas."
 
 #: apps/shifts/services.py:1527
 #, python-format
@@ -2213,6 +2215,8 @@ msgid ""
 "%(hours)s h under the %(agreed)s h agreed for %(year)s, and art. 34.2 gives "
 "%(months)s months to settle them."
 msgstr ""
+"%(hours)s h por debajo de las %(agreed)s h pactadas para %(year)s, y el "
+"art. 34.2 da %(months)s meses para compensarlas."
 
 #: apps/shifts/services.py:1609
 #, python-format
@@ -2860,55 +2864,55 @@ msgstr "Reglas generales"
 
 #: apps/tenants/rules.py:77
 msgid "Caretaking of urban property"
-msgstr ""
+msgstr "Porteros y empleados de fincas urbanas"
 
 #: apps/tenants/rules.py:78
 msgid "Guards and security"
-msgstr ""
+msgstr "Guardas y vigilantes"
 
 #: apps/tenants/rules.py:79
 msgid "Farm work"
-msgstr ""
+msgstr "Trabajos en el campo"
 
 #: apps/tenants/rules.py:80
 msgid "Retail and hospitality"
-msgstr ""
+msgstr "Comercio y hostelería"
 
 #: apps/tenants/rules.py:81
 msgid "Road transport"
-msgstr ""
+msgstr "Transporte por carretera"
 
 #: apps/tenants/rules.py:82
 msgid "Rail transport"
-msgstr ""
+msgstr "Transporte ferroviario"
 
 #: apps/tenants/rules.py:83
 msgid "Work at sea"
-msgstr ""
+msgstr "Trabajo en el mar"
 
 #: apps/tenants/rules.py:84
 msgid "Air transport"
-msgstr ""
+msgstr "Transporte aéreo"
 
 #: apps/tenants/rules.py:85
 msgid "Healthcare, with on-call duty"
-msgstr ""
+msgstr "Sanidad, con guardias"
 
 #: apps/tenants/rules.py:87
 msgid "Exposure to environmental hazards"
-msgstr ""
+msgstr "Exposición a riesgos ambientales"
 
 #: apps/tenants/rules.py:88
 msgid "Cold storage rooms"
-msgstr ""
+msgstr "Cámaras frigoríficas"
 
 #: apps/tenants/rules.py:89
 msgid "Mining and underground work"
-msgstr ""
+msgstr "Minería y trabajos subterráneos"
 
 #: apps/tenants/rules.py:90
 msgid "Construction and public works"
-msgstr ""
+msgstr "Construcción y obras públicas"
 
 #: apps/tenants/rules.py:121
 msgid "figures taken from an agreement"

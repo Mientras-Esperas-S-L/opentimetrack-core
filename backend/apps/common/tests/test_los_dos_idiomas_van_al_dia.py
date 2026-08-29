@@ -32,7 +32,12 @@ from django.conf import settings
 #: Las funciones de gettext que se usan aquí.
 TRADUCTORAS = {"_", "gettext", "gettext_lazy", "ngettext", "ngettext_lazy", "pgettext"}
 
-IDIOMAS = ("ca", "gl")
+#: **El castellano va aquí, y no estaba.** La comprobación se escribió pensando
+#: que sin traducción una cadena «cae al castellano», y eso solo sería cierto si
+#: el código estuviera escrito en castellano. Está en inglés: lo que cae es el
+#: inglés. Se veían quince cadenas así ---los trece regímenes del RD 1561/1995
+#: entre ellas--- en el desplegable de Ajustes de cualquier empresa española.
+IDIOMAS = ("es", "ca", "gl")
 
 
 def _es_campo(nodo: ast.Call) -> bool:
@@ -91,6 +96,24 @@ def _visibles_del_codigo() -> set[str]:
         except SyntaxError:
             continue
     return {c for c, g in todas.items() if g == "visible"}
+
+
+def _todas_las_entradas(idioma: str) -> set[str]:
+    """Todos los `msgid` del catálogo, traducidos o no.
+
+    Sirve para una cosa: comprobar que una cadena de control **está**, antes de
+    concluir nada de que no aparezca en otra lista.
+    """
+    ruta = Path(settings.BASE_DIR) / "locale" / idioma / "LC_MESSAGES" / "django.po"
+    entradas = set()
+    for bloque in ruta.read_text(encoding="utf-8").split("\n\n"):
+        if "Project-Id-Version" in bloque:
+            continue
+        cabeza = re.search(r"^msgid (.*?)(?=^msgstr )", bloque + "\nmsgstr ", re.M | re.S)
+        if cabeza:
+            texto = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', cabeza.group(1)))
+            entradas.add(texto.replace("\\n", "\n").replace('\\"', '"'))
+    return entradas
 
 
 def _sin_traducir(idioma: str) -> set[str]:
@@ -158,18 +181,47 @@ def test_una_cadena_en_los_dos_sitios_cuenta_como_visible():
     assert clasifica(codigo)["mismo texto"] == "visible"
 
 
-def test_el_lector_del_catalogo_ve_los_huecos():
+@pytest.mark.parametrize("idioma", IDIOMAS)
+def test_el_lector_del_catalogo_ve_los_huecos(idioma):
     """Y que sabe leer un `.po`: si devolviera un conjunto vacío por un error de
-    parseo, las dos pruebas de arriba pasarían para siempre."""
-    for idioma in IDIOMAS:
-        faltan = _sin_traducir(idioma)
-        # Quedan las etiquetas de campo, a propósito. Si esto llega a cero algún
-        # día será porque alguien las tradujo, y entonces habrá que quitar esta
-        # comprobación a mano en vez de dejarla mentir.
-        assert len(faltan) > 50, (
-            f"{idioma}: el lector encuentra solo {len(faltan)} huecos, y deberían "
-            "quedar las etiquetas de campo sin traducir. ¿Se ha roto el parseo?"
-        )
+    parseo, las dos pruebas de arriba pasarían para siempre.
+
+    **Por las dos puntas, y no por volumen.** Antes esto exigía más de cincuenta
+    huecos por idioma, que valía para el catalán y el gallego ---donde quedan las
+    etiquetas de campo sin traducir--- y dejó de valer al añadir el castellano,
+    que tiene muchas menos. Un umbral así no comprueba el parseo: comprueba
+    cuánto trabajo queda, que es otra cosa y cambia sola.
+
+    Lo que sí lo comprueba es que el lector encuentre **algo concreto que está
+    sin traducir** y no encuentre **algo concreto que sí lo está**. Un parseo
+    roto falla por una punta o por la otra.
+    """
+    faltan = _sin_traducir(idioma)
+
+    # Una ayuda de campo, sin traducir a propósito en los tres idiomas: cae al
+    # inglés y solo la ve quien configura, que es donde se decidió aceptarlo.
+    sin_traducir = "Art. 8.b RD 1561/1995, road transport only. 0 turns it off."
+    assert sin_traducir in faltan, (
+        f"{idioma}: el lector no ve un hueco que existe. ¿Se ha roto el parseo, "
+        "o alguien tradujo esa ayuda y hay que elegir otra aquí?"
+    )
+
+    # Y una que sí está traducida en los tres. Si el lector la diera por vacía,
+    # el guard de arriba pediría traducir lo que ya está.
+    #
+    # **Se comprueba que existe antes de fiarse de que no falta.** La primera
+    # versión de esta línea usaba una cadena que no está en ningún catálogo: no
+    # aparecía entre los huecos ---porque no aparece en ninguna parte--- y la
+    # comprobación pasaba sin comprobar nada.
+    traducida = "A valid session is required."
+    assert traducida in _todas_las_entradas(idioma), (
+        f"{idioma}: la cadena de control ya no está en el catálogo. Sin ella, la "
+        "línea de abajo pasa por ausencia y no por acierto: elige otra."
+    )
+    assert traducida not in faltan, (
+        f"{idioma}: el lector da por vacía una entrada que está traducida. "
+        "El parseo del `msgstr` está leyendo mal."
+    )
 
 
 # ------------------------------------------------------ el hueco que no se veía

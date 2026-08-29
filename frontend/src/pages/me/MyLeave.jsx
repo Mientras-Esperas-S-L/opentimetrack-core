@@ -140,6 +140,22 @@ function DeudaDeDescanso({ deuda }) {
           ))}
         </Box>
       )}
+      {deuda.sector && (
+        <Box component="span" sx={{ display: 'block', mt: 0.5 }}>
+          {/* Lo que este saldo **no** cuenta. Los arts. 4 a 10 del RD 1561/1995
+              amplían la jornada en sectores concretos y cada uno trae sus
+              propios descansos compensatorios; el producto no los calcula, a
+              propósito, porque haría falta la cifra de cada sector y todos esos
+              sectores tienen convenio encima.
+              Callarlo sería peor: quien trabaja en hostelería ve tres fuentes
+              con sus artículos y da por hecho que están todas. Un saldo
+              incompleto que no avisa de estarlo se cree. */}
+          {t(
+            'Tu empresa trabaja en {{sector}}, donde el {{norma}} amplía la jornada y fija descansos compensatorios propios. Esos no se cuentan aquí: mira tu convenio.',
+            { sector: deuda.sector.regime, norma: deuda.sector.citation },
+          )}
+        </Box>
+      )}
       {quedan > 0 && (
         <Box component="span" sx={{ display: 'block', mt: 0.5 }}>
           {/* Un aviso que dice lo que debes y no el siguiente paso obliga a

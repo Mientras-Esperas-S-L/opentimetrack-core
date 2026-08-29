@@ -2,6 +2,52 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## El idioma del código no es el idioma por defecto del producto (29/08/2026)
+
+El guard de traducciones comprobaba `("ca", "gl")` y dejaba fuera el castellano,
+con este razonamiento: si una cadena no está traducida, cae al idioma en que está
+escrita, y eso ya vale. Cierto — salvo que el código de este proyecto está
+escrito **en inglés**. Lo que caía era el inglés.
+
+Quince cadenas visibles llevaban así desde siempre, y trece de ellas son los
+nombres de los regímenes del RD 1561/1995: el desplegable de Ajustes enseñaba
+«Road transport» a cualquier empresa española, en la misma pantalla donde todo lo
+demás está en castellano.
+
+**Cómo evitarlo:** un guard de traducciones comprueba **todos** los idiomas que
+el producto ofrece, incluido el suyo por defecto. La excepción «este cae solo»
+solo es válida si el idioma del código y el idioma por defecto son el mismo, y
+conviene escribirlo al lado para que se pueda comprobar.
+
+## Un umbral numérico no comprueba un parseo, comprueba cuánto trabajo queda (29/08/2026)
+
+El contraste del lector de catálogos exigía «más de cincuenta huecos por idioma»,
+para demostrar que no devolvía un conjunto vacío por un error de parseo. Valía
+para el catalán y el gallego, y al añadir el castellano dejó de valer: ahí quedan
+veintiséis, y no porque el parseo falle sino porque hay menos que traducir.
+
+El número no medía lo que decía medir. Medía el estado del trabajo, que cambia
+solo, y por eso se rompió al cambiar algo que no tenía nada que ver.
+
+**Cómo evitarlo:** un contraste de parseo se escribe **por las dos puntas y con
+casos concretos**: que encuentre algo que sabemos que está, y que no encuentre
+algo que sabemos que no. Un parseo roto falla por una punta o por la otra, y
+ninguna de las dos depende de cuánto quede por hacer.
+
+## Comprobar que la cadena de control existe, antes de fiarse de que no aparece (29/08/2026)
+
+Al reescribir ese contraste puse `assert traducida not in faltan` con una cadena
+que **no está en ningún catálogo**. No aparecía entre los huecos porque no
+aparece en ninguna parte: la comprobación pasaba sin comprobar nada, y lo hacía
+con la apariencia de estar comprobando lo más importante.
+
+Es la misma trampa de siempre, en su forma más pequeña: un vacío no es prueba de
+ausencia. Aquí, «no está en la lista de fallos» no significaba «está bien».
+
+**Cómo evitarlo:** toda aserción de la forma «X no está en la lista mala» va
+precedida de «X existe». Dos líneas, y convierten un pase gratis en una
+comprobación.
+
 ## Dos apartados del mismo artículo no dicen lo mismo (29/08/2026)
 
 El art. 19 del RD 1561/1995 tiene dos letras. La **a** permite bajar el descanso

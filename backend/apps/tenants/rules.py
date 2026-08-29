@@ -89,6 +89,29 @@ class SpecialRegime(models.TextChoices):
     MINING = "MINING", _("Mining and underground work")
     CONSTRUCTION = "CONSTRUCTION", _("Construction and public works")
 
+    @classmethod
+    def widens_the_day(cls, value) -> bool:
+        """Si ese régimen es de los que **amplían** la jornada.
+
+        Estaba dicho en un comentario, y un comentario no se puede consultar. La
+        diferencia importa porque solo las ampliaciones traen consigo descansos
+        compensatorios propios de su artículo ---que este producto no calcula, a
+        propósito, porque haría falta la cifra de cada sector--- y hay que poder
+        decírselo a quien mira su saldo. En una limitación no hay nada que
+        matizar: esos artículos recortan la jornada, no la alargan.
+        """
+        return value in {
+            cls.URBAN_PROPERTY,
+            cls.GUARDS,
+            cls.FARMING,
+            cls.RETAIL_HOSPITALITY,
+            cls.ROAD_TRANSPORT,
+            cls.RAIL,
+            cls.SEA,
+            cls.AIR,
+            cls.HEALTHCARE,
+        }
+
 
 class WorkingTimeRules(BaseModel):
     """The figures a company works to, with the article each one comes from."""
