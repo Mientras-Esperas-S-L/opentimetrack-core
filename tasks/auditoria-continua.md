@@ -408,8 +408,65 @@ cifra base con la que comparar. Eso lo prueba la suite de servidor, que sí la
 tiene. La prueba se quedó con lo que sí puede afirmar ---que los números de la
 pantalla son los del saldo servido--- y lo dice.
 
-**Cierre:** ocho pasos del CI en verde con 1.535 pruebas, suite de navegador
-aparte, dos filas movidas a Cubierto, dossier en la 1.37. El recuento pasa de
+**Y el CI de GitHub se puso rojo con `como-el-ci.sh` en verde.** No por un
+desajuste del script: por un fallo **latente en la demostración** que depende del
+día del mes.
+
+La corrección que la empresa aplica sin acuerdo añadía «la entrada que faltaba»
+de un día que **ya tenía la suya**, y esa segunda entrada no se cerraba nunca.
+`max_open_hours` vale dieciséis horas ---está ahí para el turno de noche, que
+entra a las diez y sale a las seis--- así que una apertura huérfana de la tarde
+**se traga los fichajes de la mañana siguiente**: se atribuyen a la jornada
+anterior y el día siguiente cuenta cero horas. Con la fecha calculada desde
+«hoy», eso caía dentro de la ventana que mira la prueba unos días de cada mes.
+
+Arreglado en la semilla: la historia ahora es coherente ---se quita la entrada
+que había, porque el caso es que faltaba--- y la corrección la repone a una hora
+del propio día.
+
+**El guard que existía para esto no lo veía**, y el nuevo tampoco a la primera.
+El viejo miraba tramos con final vacío, y aquel tramo sí tenía final: el de la
+salida del día siguiente. El nuevo contaba aperturas con una pila y
+`setdefault` ---que es la regla del producto, «dos entradas seguidas, la primera
+gana»--- de modo que una entrada **repetida** no contaba como suelta, que es
+justo el caso. Se cuenta por balance: cuántas entradas no llegan a tener salida,
+se parezca o no a como el producto las lee.
+
+**Y de paso, un intermitente que llevaba tiempo esperando.** Al rehacer el CI
+saltó `test_el_registro_del_articulo_34_9_no_cambia`, y volvió a pasar dos veces
+seguidas sin tocar nada. Comprobaba que el registro del art. 34.9 no lleva la cita
+del art. 6.1 con `assert "6.1" not in texto`, y **«6.1» suelto aparece en
+cualquier cifra con esa forma**: seis horas y seis minutos, o una marca de tiempo
+con fracción de segundo. La prueba pasaba o fallaba según el instante en que se
+ejecutara. Ahora busca la cita ---`[Aa]rt\.?\s*6\.1`--- en las dos direcciones.
+
+**Otra vez lo de enseñar a mano.** La fecha de contrato del operario ---la que
+hace visible el día por antigüedad--- la había puesto en la base a mano, así que
+las pruebas de navegador de esta vuelta se caían al resembrar. Es la lección de
+la vuelta 166, repetida. Ya va en la semilla: doce años de casa.
+
+**Y lo peor de la vuelta: llevaba tandas dándolas por buenas sin serlo.** La
+suite de navegador la corría con `| tail -6`, y eso hace dos cosas malas a la
+vez: el código de salida pasa a ser el de `tail` ---siempre cero--- y el resumen
+se corta cuando la lista de fallos es larga, de modo que la línea «N failed»
+desaparece. Se vio al comparar los números: 327 pruebas «en verde» cuando el
+proyecto tiene 340. Repetida guardando la salida entera: **cinco fallos**.
+
+Los cinco venían de dos cosas mías. La entrada que la corrección repone se ponía
+a las 8:05 en vez de a la hora que tenía la que se quitó, y la pausa de ese día
+la coloca el azar de la semilla: si empezaba antes, el día quedaba con **dos
+aperturas sin cerrar** para la misma persona. En el panel eso son dos filas con
+la misma clave de React, y ahí saltaba «Encountered two children with the same
+key», que tumbaba `/panel` para administración y para responsable, el resumen y,
+en cadena, la limpieza de residuos.
+
+Arreglado en los dos sitios: la entrada se repone **a su hora**, y la clave del
+panel lleva el índice ---quien tiene dos intervalos abiertos es un dato raro pero
+existe, y la pantalla que lo enseña no puede romperse por enseñarlo---. **340 de
+340**, con el código de salida de Playwright comprobado.
+
+**Cierre:** ocho pasos del CI en verde con 1.536 pruebas, suite de navegador
+aparte con 340, dos filas movidas a Cubierto, dossier en la 1.37. El recuento pasa de
 101/3/7 a **103/3/5 de 111**, contado de las filas.
 
 ### Vuelta 167 --- El crédito horario del art. 68.e (29/08)

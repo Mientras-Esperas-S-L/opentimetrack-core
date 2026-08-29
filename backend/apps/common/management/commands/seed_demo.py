@@ -344,7 +344,14 @@ class Command(BaseCommand):
                 WorkingTimeRegime.FULL_TIME,
                 None,
                 HoursPeriod.WEEK,
-                {"contracted_schedule": "L-V 07:00-15:00"},
+                {
+                    "contracted_schedule": "L-V 07:00-15:00",
+                    # Doce años de casa, que es lo que hace visible el día de
+                    # vacaciones que el convenio da por antigüedad. Sin fecha de
+                    # contrato no hay antigüedad que contar, y esa línea del
+                    # saldo no aparece en ninguna demostración.
+                    "contract_start": today - timedelta(days=365 * 12 + 40),
+                },
             ),
             # The one the art. 4.b notice needs somebody to be.
             (
@@ -1187,13 +1194,43 @@ class Command(BaseCommand):
 
         # And one the company applied anyway, which is the state the record has
         # to be able to hold.
+        #
+        # **Y el día tiene que quedarse coherente.** La historia es «faltaba la
+        # entrada de ese día», así que primero se quita la que había: si no, el
+        # día acaba con dos entradas y una salida, y esa entrada de más no cierra
+        # nunca. Eso no es un detalle cosmético ---`max_open_hours` vale dieciséis
+        # horas, de modo que una apertura huérfana de la tarde **se traga la
+        # jornada del día siguiente** y ese día cuenta cero---. Salió al día
+        # siguiente de escribirlo, y solo porque la fecha cayó donde tenía que
+        # caer para que se viera.
+        el_dia = (now - timedelta(days=11)).date()
+        quitada = (
+            Punch.objects.filter(
+                employee=people["annual"],
+                timestamp__date=el_dia,
+                punch_type=PunchType.IN,
+                interval=PunchInterval.WORK,
+            )
+            .order_by("timestamp")
+            .first()
+        )
+        # **A la hora que tenía**, y no a una cualquiera de la mañana: la pausa
+        # de ese día empieza donde el azar de la semilla la haya puesto, y una
+        # entrada repuesta **después** de la pausa deja el día desordenado ---dos
+        # aperturas sin cerrar para la misma persona, que en el panel salen dos
+        # veces con la misma clave de React---.
+        cuando = quitada.timestamp if quitada else None
+        if quitada:
+            quitada.delete()
+
         imposed = propose_correction(
             employee=people["annual"],
             company=company,
             proposed_by=people["manager"],
             kind="ADD",
             proposed_type=PunchType.IN,
-            proposed_timestamp=now - timedelta(days=11, hours=9),
+            proposed_timestamp=cuando
+            or datetime.combine(el_dia, time(8, 5), tzinfo=company.tzinfo),
             reason="Faltaba la entrada del día del temporal.",
         )
         dispute_correction(imposed, employee=people["annual"], account="Ese día no fui a trabajar.")

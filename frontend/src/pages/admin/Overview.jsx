@@ -185,7 +185,12 @@ export default function Overview() {
           ) : (
             <List disablePadding>
               {data.working_now.map((person, i) => (
-                <Box key={person.employee}>
+                // La clave lleva el índice además de la persona: quien tiene
+                // dos intervalos abiertos ---una entrada que nadie cerró y otra
+                // de hoy--- aparece dos veces, y React avisa de claves
+                // repetidas. Ese dato es raro pero existe, y la pantalla que lo
+                // enseña no puede romperse por enseñarlo.
+                <Box key={`${person.employee}-${i}`}>
                   {i > 0 && <Divider component="li" />}
                   <ListItem disableGutters secondaryAction={<SourceChip source={person.source} />}>
                     <ListItemAvatar sx={{ minWidth: 46 }}>

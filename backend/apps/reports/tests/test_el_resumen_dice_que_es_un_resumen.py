@@ -16,6 +16,7 @@ otro. El sistema ya las calculaba.
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, date, datetime
 
 import pytest
@@ -60,7 +61,12 @@ def test_el_resumen_se_titula_resumen(informe):
     assert "Summary" in primera or "Resumen" in primera, (
         f"el documento que acompaña al recibo de salarios se titula «{primera}»"
     )
-    assert "6.1" in texto, "y tiene que decir de dónde sale la obligación"
+    # La **cita**, no el fragmento: «6.1» suelto aparece en cualquier cifra con
+    # esa forma ---seis horas y seis minutos, una marca de tiempo con fracción de
+    # segundo--- y buscarlo así hace que la prueba pase o falle según el instante
+    # en que se ejecute. Pasó el 29/08/2026: verde dos veces seguidas y roja en
+    # medio, sin que cambiara ni una línea.
+    assert re.search(r"[Aa]rt\.?\s*6\.1", texto), "y tiene que decir de dónde sale la obligación"
 
 
 def test_y_lleva_lo_que_lo_hace_ser_ese_documento(informe):
@@ -83,7 +89,7 @@ def test_el_registro_del_articulo_34_9_no_cambia(informe):
     assert "Summary" not in primera and "Resumen" not in primera, (
         f"el documento del art. 34.9 se ha vuelto un resumen: «{primera}»"
     )
-    assert "6.1" not in texto
+    assert not re.search(r"[Aa]rt\.?\s*6\.1", texto)
     assert informe.regime not in texto or informe.regime == ""
 
 

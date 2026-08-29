@@ -2,6 +2,87 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## `| tail` se traga el resultado de la tanda, y el código de salida (29/08/2026)
+
+Corría la suite de navegador con `npx playwright test --reporter=line | tail -6`.
+Eso hace dos cosas malas a la vez:
+
+- El código de salida pasa a ser el de `tail`, que es **siempre cero**. El
+  «exited with code 0» no dice nada del resultado.
+- Cuando hay varios fallos, Playwright los lista antes del resumen, así que la
+  línea «N failed» se sale de las seis últimas y **desaparece**.
+
+El resultado es una tanda que se lee como verde y no lo es. Se vio por el
+recuento: 327 pruebas «en verde» cuando el proyecto tiene 340. Repetida
+guardando toda la salida: cinco fallos.
+
+**Cómo evitarlo:** volcar la salida a un fichero y filtrar del fichero, nunca por
+tubería directa. Y comprobar el número: si el total no coincide con el que da
+`npx playwright test --list`, la tanda no está completa por mucho que no diga
+«failed». `set -o pipefail` también sirve para el código de salida, pero el
+recuento es lo que de verdad lo delata.
+
+## Dos aperturas sin cerrar son dos filas con la misma clave (29/08/2026)
+
+El panel lista a quien tiene una entrada sin salida con `key={person.employee}`.
+Quien tiene **dos** intervalos abiertos aparece dos veces, React avisa de claves
+repetidas y la prueba que exige consola limpia tumba la pantalla entera ---y con
+ella el resumen y la limpieza de residuos, en cadena---.
+
+El dato es raro pero legítimo: una entrada que nadie cerró y la de hoy. La
+pantalla que lo enseña no puede romperse por enseñarlo.
+
+**Cómo evitarlo:** una clave de lista es única cuando el dato **garantiza** que
+lo es. Si la lista sale de un cálculo que puede repetir a la misma persona
+---aperturas, avisos, deudas---, la clave lleva el índice. Y al añadir un aviso
+que se emite **por persona**, mirar quién lo pinta: los que existían salían de
+uno en uno.
+
+## Buscar un fragmento donde se quiere una cita produce una prueba que va y viene (29/08/2026)
+
+`assert "6.1" not in texto` comprobaba que el registro del art. 34.9 no lleva la
+cita del art. 6.1. Pero «6.1» suelto aparece en cualquier cifra con esa forma:
+seis horas y seis minutos, o una marca de tiempo con fracción de segundo. La
+prueba pasaba o fallaba **según el instante en que se ejecutara**, y así llevaba
+tiempo: verde dos veces seguidas y roja en medio, sin que cambiara una línea.
+
+**Cómo evitarlo:** cuando lo que se busca es una cita, un identificador o una
+etiqueta, buscarla entera y anclada ---`[Aa]rt\.?\s*6\.1`--- y no un trozo que
+también es un número. Vale igual para códigos de error, referencias y versiones.
+Y si una prueba aparece y desaparece sin que cambie el código, el sospechoso es
+lo que cambia solo: el reloj.
+
+## Un guard que copia la regla del producto no ve lo que el producto ignora (29/08/2026)
+
+Para detectar entradas sin cerrar en la demostración escribí un contador con una
+pila y `setdefault`, igual que hace `build_day_status`: dos entradas seguidas, la
+primera gana. Con esa regla, una entrada **repetida** no cuenta como suelta ---la
+segunda se descarta al leerla--- y era exactamente el caso que se me había
+colado: un día con dos entradas y una salida.
+
+El guard reproducía el punto ciego del código en vez de mirarlo desde fuera.
+
+**Cómo evitarlo:** un guard mide lo que **debería** cumplirse, no lo que el
+código hace. Aquí, «cuántas entradas no llegan a tener salida», contado por
+balance y sin parecerse a cómo el producto las empareja. Si el guard y el código
+comparten la regla, comparten también el fallo.
+
+## Un fallo latente puede depender del día del mes (29/08/2026)
+
+`como-el-ci.sh` en verde, CI de GitHub en rojo, y el script no tenía la culpa: la
+demostración calcula fechas desde «hoy», y una apertura huérfana caía dentro de
+la ventana que mira una prueba solo unos días de cada mes. En local pasaba; al
+día siguiente, no.
+
+Lo que lo hizo visible fue `max_open_hours`: dieciséis horas, que están ahí para
+el turno de noche. Una entrada de la tarde que nadie cerró **absorbe la jornada
+de la mañana siguiente**, y ese día cuenta cero.
+
+**Cómo evitarlo:** cuando una prueba dependa de datos generados desde `today`,
+sospechar de los fallos que aparecen y desaparecen sin que cambie el código. Y en
+la semilla, no dejar aperturas sueltas más que la de hoy: cualquier otra se come
+un día entero y no se nota hasta que la fecha cae donde tiene que caer.
+
 ## Un campo que admite estar vacío es una decisión, no un descuido (29/08/2026)
 
 `contract_start` puede quedarse vacío, y su ayuda lo dice: «ya estaba en marcha

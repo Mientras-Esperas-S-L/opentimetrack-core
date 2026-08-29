@@ -209,3 +209,49 @@ def test_la_demostracion_ensena_los_dias_por_antiguedad(sembrada):
             if vacation_balance(quien, sembrada).seniority_days
         ]
         assert con_extra, "nadie de la demostración llega a ningún tramo de antigüedad"
+
+
+@pytest.mark.django_db
+def test_solo_queda_una_entrada_sin_cerrar_y_es_la_de_hoy(sembrada):
+    """Una apertura huérfana se traga la jornada del día siguiente.
+
+    `max_open_hours` vale dieciséis horas ---está para el turno de noche, que
+    entra a las diez y sale a las seis--- así que una entrada de la tarde que
+    nadie cerró **absorbe los fichajes de la mañana siguiente**: se atribuyen a
+    la jornada anterior y el día siguiente cuenta cero horas.
+
+    La demostración tenía una: la corrección que la empresa aplica sin acuerdo
+    añadía «la entrada que faltaba» de un día que ya tenía la suya, y esa segunda
+    entrada no cerraba nunca. El día siguiente salía a cero.
+
+    **Y la prueba que existía para esto no lo veía.** Miraba tramos con final
+    vacío, y aquel tramo sí tenía final: el de la salida del día siguiente. Por
+    eso este guard cuenta las aperturas en vez de mirar los tramos.
+
+    La de hoy se queda: la semilla deja a alguien fichado a propósito para que la
+    pantalla tenga una jornada en curso.
+    """
+    with tenant_context(sembrada.id):
+        # **Por balance y no con una pila con `setdefault`.** Esa es la regla del
+        # producto ---dos entradas seguidas, la primera gana--- y copiarla aquí
+        # haría que una entrada **repetida** no contara como suelta, que es
+        # justamente el caso que se coló. Aquí se cuenta cuántas entradas no
+        # llegan a tener salida, se parezca o no a como el producto las lee.
+        sueltas = []
+        for quien in User.objects.filter(tenant=sembrada):
+            balance: dict[str, list] = {}
+            for punch in Punch.objects.filter(employee=quien).order_by("timestamp"):
+                cola = balance.setdefault(punch.interval, [])
+                if punch.punch_type == PunchType.IN:
+                    cola.append(punch)
+                elif cola:
+                    cola.pop()
+            sueltas += [(quien.email, p.timestamp) for cola in balance.values() for p in cola]
+
+        de_hoy = [x for x in sueltas if x[1].date() >= timezone.localdate() - timedelta(days=1)]
+        viejas = [x for x in sueltas if x not in de_hoy]
+
+        assert viejas == [], "entradas sin cerrar en días pasados:\n  " + "\n  ".join(
+            f"{email} {cuando:%Y-%m-%d %H:%M}" for email, cuando in viejas[:5]
+        )
+        assert de_hoy, "la de hoy tiene que seguir ahí: es la jornada en curso de la pantalla"
