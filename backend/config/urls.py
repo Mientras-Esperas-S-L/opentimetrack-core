@@ -28,6 +28,12 @@ from apps.tenants.attendance_api import ApplicationAttendanceRangeView, Applicat
 from apps.tenants.me_api import ApplicationMeView
 from apps.tenants.people_api import ApplicationPeopleView, ApplicationPersonView
 from apps.tenants.session_api import ApplicationSessionView
+from apps.tenants.sso_views import (
+    SsoBackChannelLogoutView,
+    SsoCallbackView,
+    SsoDiscoverView,
+    SsoStartView,
+)
 from apps.tenants.views import CompanyView, PublicHolidayViewSet, RecordArrangementView
 from apps.users.views import (
     ActivityPeriodViewSet,
@@ -70,6 +76,12 @@ auth_patterns = [
     path("refresh/", RefreshView.as_view(), name="refresh"),
     path("logout/", SignOutView.as_view(), name="logout"),
     path("me/", MeView.as_view(), name="me"),
+    # Identidad federada: descubrir, empezar, volver, y que el proveedor nos diga
+    # que una sesión se acabó. Ver apps/tenants/sso.py.
+    path("sso/discover/", SsoDiscoverView.as_view(), name="sso-discover"),
+    path("sso/start/<slug:slug>/", SsoStartView.as_view(), name="sso-start"),
+    path("sso/callback/", SsoCallbackView.as_view(), name="sso-callback"),
+    path("sso/logout/", SsoBackChannelLogoutView.as_view(), name="sso-logout"),
     path("password-reset/", PasswordResetRequestView.as_view(), name="password-reset"),
     path("set-password/", PasswordSetView.as_view(), name="set-password"),
 ]

@@ -202,6 +202,7 @@ SIN_RASTRO_A_PROPOSITO = {
     "SignUpSerializer": "igual que SignUpView",
     "PasswordResetRequestView": "anotar quién lo pide sería una forma de averiguar quién existe",
     "PasswordSetView": "poner la contraseña propia no cambia el registro de nadie",
+    "SsoDiscoverView": "solo dice si un dominio entra por un proveedor; no cambia nada",
     # El fichaje **es** el registro. Auditarlo duplicaría la tabla, y su
     # procedencia ya viaja en el propio fichaje (`source`, `recorded_by`,
     # `source_application`).

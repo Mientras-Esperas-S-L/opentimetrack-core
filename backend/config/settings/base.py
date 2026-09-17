@@ -446,6 +446,18 @@ CELERY_TASK_SOFT_TIME_LIMIT = env.int("CELERY_TASK_SOFT_TIME_LIMIT", default=300
 # requisito, y el producto tiene que poder instalarse sin ella.
 WEBPUSH_PUBLIC_KEY = env("WEBPUSH_PUBLIC_KEY", default="")
 WEBPUSH_PRIVATE_KEY = env("WEBPUSH_PRIVATE_KEY", default="")
+
+# La clave con la que se cifran los secretos que el sistema tiene que poder leer ---hoy
+# solo el del proveedor de identidad---. Fuera de la base de datos y **sin derivar de
+# SECRET_KEY**, porque rotar aquella es la respuesta normal a un incidente y dejaría
+# ilegible lo guardado. Solo hace falta si se usa identidad federada:
+#   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY", default="")
+
+# Dónde vuelve el navegador desde el proveedor de identidad. Vacío lo deduce de la
+# petición, que vale en desarrollo; en producción se fija, porque tiene que coincidir
+# **exactamente** con lo registrado en el proveedor.
+SSO_REDIRECT_URI = env("SSO_REDIRECT_URI", default="")
 # Contacto al que el servicio de push del navegador escribiría si algo va mal.
 # Lo exige el estándar VAPID; ha de ser un mailto: o una URL.
 WEBPUSH_SUBJECT = env("WEBPUSH_SUBJECT", default=f"mailto:{DEFAULT_FROM_EMAIL}")

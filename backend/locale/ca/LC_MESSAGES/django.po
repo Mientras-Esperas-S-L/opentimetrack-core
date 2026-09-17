@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-17 20:33+0000\n"
+"POT-Creation-Date: 2026-09-17 20:58+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan\n"
@@ -128,7 +128,7 @@ msgstr ""
 
 #: apps/absences/models.py:109 apps/shifts/models.py:72
 #: apps/tenants/applications.py:44 apps/tenants/holidays.py:64
-#: apps/tenants/identity.py:32 apps/users/models.py:38 apps/users/models.py:167
+#: apps/tenants/identity.py:33 apps/users/models.py:38 apps/users/models.py:167
 msgid "name"
 msgstr ""
 
@@ -219,7 +219,7 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:203 apps/absences/models.py:559
-#: apps/audit/models.py:192 apps/punches/models.py:538
+#: apps/audit/models.py:193 apps/punches/models.py:538
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:577 apps/tenants/rules.py:661 apps/users/models.py:906
 #: apps/users/models.py:984
@@ -227,7 +227,7 @@ msgid "note"
 msgstr ""
 
 #: apps/absences/models.py:204 apps/shifts/models.py:84
-#: apps/tenants/applications.py:53 apps/tenants/identity.py:54
+#: apps/tenants/applications.py:53 apps/tenants/identity.py:116
 #: apps/tenants/models.py:190 apps/users/models.py:42 apps/users/models.py:205
 #: apps/users/models.py:607
 msgid "active"
@@ -271,7 +271,7 @@ msgstr "Cancel·lada"
 msgid "employee"
 msgstr "persona treballadora"
 
-#: apps/absences/models.py:286 apps/audit/models.py:185
+#: apps/absences/models.py:286 apps/audit/models.py:186
 #: apps/punches/corrections.py:94 apps/punches/models.py:152
 msgid "type"
 msgstr "tipus"
@@ -793,29 +793,34 @@ msgid "Obtained a session for a person"
 msgstr "Va obtenir una sessió d'una persona"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:122
+#: apps/audit/models.py:120
+msgid "Ended somebody's sessions"
+msgstr "Va tancar les sessions d'una persona"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:123
 msgid "Purged security metadata"
 msgstr "Va purgar metadades de seguretat"
 
-#: apps/audit/models.py:129
+#: apps/audit/models.py:130
 msgid "Purged expired working time records"
 msgstr "Va purgar el registre que va complir el seu termini"
 
-#: apps/audit/models.py:134
+#: apps/audit/models.py:135
 msgid "Delivered somebody their own record"
 msgstr "Va entregar a algú el seu propi registre"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:140
+#: apps/audit/models.py:141
 msgid "Erased a person who left no record"
 msgstr "Va retirar una alta que no va deixar rastre"
 
-#: apps/audit/models.py:158
+#: apps/audit/models.py:159
 msgid "when"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:164 apps/common/models.py:117
+#: apps/audit/models.py:165 apps/common/models.py:117
 #: apps/tenants/models.py:193 apps/tenants/models.py:221
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:359
@@ -823,37 +828,37 @@ msgid "company"
 msgstr "empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:174
+#: apps/audit/models.py:175
 msgid "who"
 msgstr "qui"
 
-#: apps/audit/models.py:178
+#: apps/audit/models.py:179
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:180
+#: apps/audit/models.py:181
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:186
+#: apps/audit/models.py:187 apps/tenants/identity.py:58
 msgid "identifier"
-msgstr ""
+msgstr "identificador"
 
-#: apps/audit/models.py:187
+#: apps/audit/models.py:188
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:191
+#: apps/audit/models.py:192
 msgid "changes"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:214
+#: apps/audit/models.py:215
 msgid "audit entry"
 msgstr "assentament del rastre"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:215
+#: apps/audit/models.py:216
 msgid "audit trail"
 msgstr "rastre d'auditoria"
 
@@ -893,6 +898,10 @@ msgstr "Registre d'activitat"
 #: apps/common/authentication.py:86 apps/common/authentication.py:89
 msgid "Invalid credential."
 msgstr "Credencial no vàlida."
+
+#: apps/common/crypto.py:51
+msgid "Text stored encrypted at rest"
+msgstr "Text desat xifrat"
 
 #: apps/common/exceptions.py:92
 msgid "Too many attempts. Wait a moment and try again."
@@ -1786,7 +1795,9 @@ msgstr "No pots fitxar: tens una absència aprovada per a avui."
 msgid ""
 "This company clocks in through its management application. You can still "
 "clock in here, but say why in a line."
-msgstr "Aquesta empresa fitxa per la seva aplicació de gestió. Podeu fitxar aquí igualment, però digueu per què en una línia."
+msgstr ""
+"Aquesta empresa fitxa per la seva aplicació de gestió. Podeu fitxar aquí "
+"igualment, però digueu per què en una línia."
 
 #: apps/reports/delivery.py:125 apps/users/passwords.py:136
 msgid "the platform"
@@ -2994,24 +3005,24 @@ msgstr "festiu"
 msgid "public holidays"
 msgstr "festius"
 
-#: apps/tenants/identity.py:32
+#: apps/tenants/identity.py:33
 msgid "Display name, e.g. 'GreenCityControl'."
 msgstr "Nom visible, per exemple «GreenCityControl»."
 
-#: apps/tenants/identity.py:35 apps/users/models.py:605
+#: apps/tenants/identity.py:36 apps/users/models.py:605
 msgid "issuer"
 msgstr ""
 
-#: apps/tenants/identity.py:37
+#: apps/tenants/identity.py:38
 msgid "Exactly the `iss` of its tokens, e.g. https://gcc.example/o."
 msgstr ""
 "Exactament l'«iss» dels seus tokens, per exemple https://gcc.example/o."
 
-#: apps/tenants/identity.py:40
+#: apps/tenants/identity.py:41
 msgid "keys"
 msgstr "claus"
 
-#: apps/tenants/identity.py:43
+#: apps/tenants/identity.py:44
 msgid ""
 "Where its public keys are. Blank derives it from the issuer's discovery "
 "document."
@@ -3020,11 +3031,11 @@ msgstr ""
 "descobriment de l'emissor."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/identity.py:47
+#: apps/tenants/identity.py:48
 msgid "audience"
 msgstr "audiència"
 
-#: apps/tenants/identity.py:51
+#: apps/tenants/identity.py:52
 msgid ""
 "What its tokens must carry in `aud` for this install. Blank accepts the "
 "issuer's own."
@@ -3032,11 +3043,85 @@ msgstr ""
 "El que els seus tokens han de portar a «aud» per a aquesta instal·lació. En "
 "blanc s'accepta el mateix emissor."
 
-#: apps/tenants/identity.py:57
+#: apps/tenants/identity.py:62
+msgid "Stable name used in the sign-in URLs. Blank derives it from the name."
+msgstr "Nom estable per a les adreces d'entrada. En blanc es dedueix del nom."
+
+#: apps/tenants/identity.py:65
+msgid "client id"
+msgstr "identificador de client"
+
+#: apps/tenants/identity.py:69
+msgid ""
+"What this install is registered as at the provider. Only for the browser "
+"flow."
+msgstr ""
+"Com està registrada aquesta instal·lació al proveïdor. Només per a l'entrada "
+"per navegador."
+
+#: apps/tenants/identity.py:73
+msgid "client secret"
+msgstr "secret de client"
+
+#: apps/tenants/identity.py:76
+msgid "Stored encrypted; never sent to the browser. Only for the browser flow."
+msgstr ""
+"Es desa xifrat i mai s'envia al navegador. Només per a l'entrada per "
+"navegador."
+
+#: apps/tenants/identity.py:79
+msgid "scopes"
+msgstr "permisos"
+
+#: apps/tenants/identity.py:82
+msgid "Space separated, as asked for at the authorisation endpoint."
+msgstr "Separats per espais, tal com es demanen a l'autorització."
+
+#: apps/tenants/identity.py:85
+msgid "discovery document"
+msgstr "document de descobriment"
+
+#: apps/tenants/identity.py:87
+msgid "Blank derives it from the issuer, which is the usual case."
+msgstr "En blanc es dedueix de l'emissor, que és el normal."
+
+#: apps/tenants/identity.py:96
+msgid "claim carrying the email"
+msgstr "dada que porta el correu"
+
+#: apps/tenants/identity.py:100
+msgid "Which claim holds the routable address. Ask the provider; they differ."
+msgstr ""
+"Quina dada porta l'adreça que funciona. Pregunta-ho al proveïdor: varien."
+
+#: apps/tenants/identity.py:103
+msgid "create people on first sign-in"
+msgstr "donar d'alta en entrar per primera vegada"
+
+#: apps/tenants/identity.py:106
+msgid ""
+"On: somebody signing in for the first time gets an account here, with no "
+"permissions and no working time set. Off: only people already here can sign "
+"in."
+msgstr ""
+"Activat: qui entra per primera vegada rep un compte aquí, sense permisos i "
+"sense jornada configurada. Desactivat: només entra qui ja hi és."
+
+#: apps/tenants/identity.py:111
+msgid "the provider guarantees the second factor"
+msgstr "el proveïdor garanteix el segon factor"
+
+#: apps/tenants/identity.py:113
+msgid "Evidence that federated sign-ins are still two-factor, for an audit."
+msgstr ""
+"Prova que les entrades federades continuen portant dos factors, per a una "
+"auditoria."
+
+#: apps/tenants/identity.py:119
 msgid "may act for its people"
 msgstr "pot actuar per les seves persones"
 
-#: apps/tenants/identity.py:60
+#: apps/tenants/identity.py:122
 msgid ""
 "Lets its server exchange a signed assertion for a session of one of its "
 "people, with no browser. A managing application that clocks in on their "
@@ -3046,13 +3131,33 @@ msgstr ""
 "d'una de les seves persones, sense navegador. Ho necessita una aplicació de "
 "gestió que fitxi per elles; desactivat per defecte."
 
-#: apps/tenants/identity.py:70
+#: apps/tenants/identity.py:132
 msgid "identity provider"
 msgstr "proveïdor d'identitat"
 
-#: apps/tenants/identity.py:71
+#: apps/tenants/identity.py:133
 msgid "identity providers"
 msgstr "proveïdors d'identitat"
+
+#: apps/tenants/identity.py:190
+msgid "provider"
+msgstr "proveïdor"
+
+#: apps/tenants/identity.py:193
+msgid "domain"
+msgstr "domini"
+
+#: apps/tenants/identity.py:195
+msgid "Just the domain, lowercase and without the @: contrata.example"
+msgstr "Només el domini, en minúscules i sense la @: contrata.example"
+
+#: apps/tenants/identity.py:199
+msgid "federated domain"
+msgstr "domini federat"
+
+#: apps/tenants/identity.py:200
+msgid "federated domains"
+msgstr "dominis federats"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/models.py:23
@@ -3162,7 +3267,12 @@ msgid ""
 "does **not** remove it: if the application is unavailable, somebody would be "
 "working with no way to record their day, and the system that answers to an "
 "inspection is this one."
-msgstr "Quan l'aplicació de gestió és la que sap el context de cada fitxatge (quin lloc, quina feina), un fitxatge fet aquí arriba sense ell. Posar l'aplicació aparta el botó d'aquesta interfície, però **no** el treu: si l'aplicació no està disponible, algú estaria treballant sense poder registrar la seva jornada, i el sistema que respon davant una inspecció és aquest."
+msgstr ""
+"Quan l'aplicació de gestió és la que sap el context de cada fitxatge (quin "
+"lloc, quina feina), un fitxatge fet aquí arriba sense ell. Posar l'aplicació "
+"aparta el botó d'aquesta interfície, però **no** el treu: si l'aplicació no "
+"està disponible, algú estaria treballant sense poder registrar la seva "
+"jornada, i el sistema que respon davant una inspecció és aquest."
 
 #: apps/tenants/models.py:145
 msgid "pay period"
@@ -3688,6 +3798,53 @@ msgstr "canvi en la manera de comptar el temps"
 #: apps/tenants/rules.py:670
 msgid "changes in how time is counted"
 msgstr "canvis en la manera de comptar el temps"
+
+#: apps/tenants/sso.py:66
+msgid "The provider's address is not an http(s) url."
+msgstr "L'adreça del proveïdor no és una URL http(s)."
+
+#: apps/tenants/sso.py:103
+msgid "Could not reach the identity provider."
+msgstr "No s'ha pogut arribar al proveïdor d'identitat."
+
+#: apps/tenants/sso.py:109
+msgid "The provider describes itself with a different issuer."
+msgstr "El proveïdor es descriu amb un emissor diferent."
+
+#: apps/tenants/sso.py:189
+msgid "That sign-in attempt expired or was already used."
+msgstr "Aquest intent d'entrada ha caducat o ja es va fer servir."
+
+#: apps/tenants/sso.py:210
+msgid "The provider did not return a valid token."
+msgstr "El proveïdor no ha retornat un token vàlid."
+
+#: apps/tenants/sso.py:223
+msgid "Could not obtain the provider's signing keys."
+msgstr "No s'han pogut obtenir les claus de signatura del proveïdor."
+
+#: apps/tenants/sso.py:238
+msgid "The provider's token did not pass verification."
+msgstr "El token del proveïdor no ha superat la verificació."
+
+#: apps/tenants/sso.py:244
+msgid "The provider's answer does not match this sign-in attempt."
+msgstr "La resposta del proveïdor no correspon a aquest intent d'entrada."
+
+#: apps/tenants/sso.py:265
+msgid "The provider's token does not identify anybody."
+msgstr "El token del proveïdor no identifica ningú."
+
+#: apps/tenants/sso.py:283
+msgid ""
+"Nobody here matches that account, and this provider does not create people."
+msgstr ""
+"Ningú d'aquí coincideix amb aquest compte, i aquest proveïdor no dóna d'alta "
+"ningú."
+
+#: apps/tenants/sso.py:286
+msgid "The provider's token carries no address to create anybody with."
+msgstr "El token del proveïdor no porta cap adreça amb què donar d'alta ningú."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/views.py:90

@@ -117,6 +117,7 @@ class AuditAction(models.TextChoices):
     APPLICATION_CREATED = "APPLICATION_CREATED", _("Registered an application")
     APPLICATION_REVOKED = "APPLICATION_REVOKED", _("Revoked an application credential")
     APPLICATION_ACTED_AS = "APPLICATION_ACTED_AS", _("Obtained a session for a person")
+    SESSIONS_ENDED = "SESSIONS_ENDED", _("Ended somebody's sessions")
 
     # Housekeeping that removes data.
     METADATA_PURGED = "METADATA_PURGED", _("Purged security metadata")

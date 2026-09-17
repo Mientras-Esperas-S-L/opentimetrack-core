@@ -632,6 +632,15 @@ def test_every_route_is_covered_by_this_sweep():
         # no hay nada de nadie que alcanzar. Que una sesión de persona no entre por
         # esta puerta está en apps/tenants/tests/test_application_me_and_identity.py.
         "api/app/me/",
+        # Identidad federada. Las cuatro son anónimas a propósito ---quien va a entrar
+        # todavía no tiene sesión--- y lo que autoriza cada una es criptográfico: el
+        # estado de un solo uso, el código con su PKCE, y la firma del proveedor. Su
+        # barrido propio está en apps/tenants/tests/test_entrar_por_el_proveedor.py,
+        # con el token firmado por otro, el de otra sesión y el emisor desconocido.
+        "api/auth/sso/discover/",
+        "api/auth/sso/start/<slug:slug>/",
+        "api/auth/sso/callback/",
+        "api/auth/sso/logout/",
         # Canjea una aserción firmada por una sesión de la persona que nombra. Su
         # barrido propio está en apps/tenants/tests/test_application_sessions.py, e
         # incluye que una credencial de otra empresa no obtenga sesión de nadie de

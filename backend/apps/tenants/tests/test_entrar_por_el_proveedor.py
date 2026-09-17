@@ -1,0 +1,406 @@
+"""Entrar con el proveedor de identidad de la empresa.
+
+Lo que se fija aquí: que el descubrimiento no chive quién trabaja aquí, que el
+navegador va con PKCE y estado de un solo uso, que un token firmado por otro no entra,
+que el sujeto ancla la identidad y el correo solo la encuentra la primera vez, y que
+cuando el proveedor dice que una sesión se acabó, se acaba.
+"""
+
+from __future__ import annotations
+
+import base64
+import datetime as dt
+from urllib.parse import parse_qs, urlparse
+
+import jwt
+import pytest
+from cryptography.hazmat.primitives.asymmetric import rsa
+from django.core.cache import cache
+from django.test import override_settings
+from rest_framework.test import APIClient
+
+from apps.common.exceptions import BusinessRuleError
+from apps.common.models import tenant_context
+from apps.tenants.identity import SsoDomain, SsoProvider
+from apps.tenants.models import Tenant
+from apps.users.models import User
+
+PASSWORD = "a-sufficiently-long-password"
+ISSUER = "https://idp.example"
+CLIENT_ID = "ott-en-casa-del-cliente"
+FERNET_KEY = base64.urlsafe_b64encode(b"0" * 32).decode()
+
+
+@pytest.fixture(autouse=True)
+def _limpio():
+    cache.clear()
+    with override_settings(
+        FIELD_ENCRYPTION_KEY=FERNET_KEY,
+        SSO_REDIRECT_URI="https://ott.example/api/auth/sso/callback/",
+    ):
+        yield
+    cache.clear()
+
+
+@pytest.fixture(scope="module")
+def keypair():
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    return key, key.public_key()
+
+
+@pytest.fixture
+def idp(monkeypatch, keypair):
+    """Un proveedor de mentira que sirve su documento y sus claves sin red."""
+    _private, public = keypair
+    numbers = public.public_numbers()
+
+    def b64(value: int) -> str:
+        raw = value.to_bytes((value.bit_length() + 7) // 8, "big")
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
+
+    jwk = {
+        "kty": "RSA",
+        "kid": "idp-1",
+        "use": "sig",
+        "alg": "RS256",
+        "n": b64(numbers.n),
+        "e": b64(numbers.e),
+    }
+    documento = {
+        "issuer": ISSUER,
+        "authorization_endpoint": f"{ISSUER}/authorize",
+        "token_endpoint": f"{ISSUER}/token",
+        "jwks_uri": f"{ISSUER}/jwks",
+    }
+
+    from apps.tenants import sso
+
+    monkeypatch.setattr(sso, "_get_json", lambda url: documento)
+
+    class FakeJWKClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def get_signing_key_from_jwt(self, token):
+            return jwt.PyJWK.from_dict(jwk)
+
+    monkeypatch.setattr(jwt, "PyJWKClient", FakeJWKClient)
+    return documento
+
+
+def id_token(
+    keypair,
+    *,
+    sub="sub-de-marta",
+    email="marta@contrata.example",
+    nonce="",
+    audience=CLIENT_ID,
+    issuer=ISSUER,
+    **extra,
+):
+    private, _public = keypair
+    now = dt.datetime.now(tz=dt.UTC)
+    payload = {
+        "iss": issuer,
+        "aud": audience,
+        "sub": sub,
+        "email": email,
+        "iat": int(now.timestamp()),
+        "exp": int((now + dt.timedelta(minutes=5)).timestamp()),
+        **extra,
+    }
+    if nonce:
+        payload["nonce"] = nonce
+    return jwt.encode(payload, private, algorithm="RS256", headers={"kid": "idp-1"})
+
+
+@pytest.fixture
+def company(db):
+    return Tenant.objects.create(name="Contrata SL", tax_id="B11111111", time_zone="Europe/Madrid")
+
+
+@pytest.fixture
+def provider(company):
+    with tenant_context(company.id):
+        provider = SsoProvider.objects.create(
+            tenant=company,
+            name="Entra de la contrata",
+            issuer=ISSUER,
+            client_id=CLIENT_ID,
+            client_secret="un-secreto-que-hay-que-poder-leer",
+        )
+        SsoDomain.objects.create(tenant=company, provider=provider, domain="contrata.example")
+    return provider
+
+
+# ------------------------------------------------------------ el secreto guardado
+
+
+@pytest.mark.django_db
+def test_el_secreto_no_se_guarda_en_claro(provider):
+    """Un volcado de la base no puede llevarse el secreto del proveedor."""
+    from django.db import connection
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT client_secret FROM tenants_ssoprovider WHERE id = %s", [str(provider.pk)]
+        )
+        crudo = cursor.fetchone()[0]
+
+    assert crudo.startswith("enc:v1:")
+    assert "un-secreto" not in crudo
+    # Y vuelve legible para quien lo necesita, que es el canje del código.
+    with tenant_context(provider.tenant_id):
+        guardado = SsoProvider.objects.get(pk=provider.pk)
+    assert guardado.client_secret == "un-secreto-que-hay-que-poder-leer"
+
+
+# ------------------------------------------------------------- el descubrimiento
+
+
+@pytest.mark.django_db
+def test_el_dominio_dice_dónde_se_entra(provider):
+    answer = APIClient().post(
+        "/api/auth/sso/discover/", {"email": "marta@contrata.example"}, format="json"
+    )
+
+    assert answer.status_code == 200
+    assert answer.json() == {
+        "sso": True,
+        "provider": "Entra de la contrata",
+        "slug": "entra-de-la-contrata",
+    }
+
+
+@pytest.mark.django_db
+def test_un_dominio_cualquiera_no_chiva_nada(provider):
+    """La misma respuesta para «no hay proveedor» y «no trabaja aquí»."""
+    assert APIClient().post(
+        "/api/auth/sso/discover/", {"email": "quien@gmail.com"}, format="json"
+    ).json() == {"sso": False}
+
+
+@pytest.mark.django_db
+def test_un_proveedor_a_medio_configurar_no_se_ofrece(company):
+    """Solo con la parte de navegador puesta: si no, el botón lleva a un error."""
+    with tenant_context(company.id):
+        a_medias = SsoProvider.objects.create(
+            tenant=company, name="A medias", issuer="https://otro.example", may_act_for_people=True
+        )
+        SsoDomain.objects.create(tenant=company, provider=a_medias, domain="medias.example")
+
+    assert APIClient().post(
+        "/api/auth/sso/discover/", {"email": "x@medias.example"}, format="json"
+    ).json() == {"sso": False}
+
+
+# ------------------------------------------------------------------- el flujo
+
+
+@pytest.mark.django_db
+def test_el_navegador_va_con_pkce_y_un_estado_de_un_solo_uso(provider, idp):
+    answer = APIClient().get(f"/api/auth/sso/start/{provider.slug}/")
+
+    assert answer.status_code == 302
+    params = parse_qs(urlparse(answer["Location"]).query)
+    assert params["client_id"] == [CLIENT_ID]
+    assert params["response_type"] == ["code"]
+    assert params["code_challenge_method"] == ["S256"]
+    assert params["code_challenge"] and params["state"] and params["nonce"]
+
+    from apps.tenants import sso
+
+    estado = sso.take_state(params["state"][0])
+    assert estado["provider"] == provider.pk
+    with pytest.raises(BusinessRuleError):
+        # La segunda vez ya no está: reutilizar un estado es repetir una entrada.
+        sso.take_state(params["state"][0])
+
+
+@pytest.mark.django_db
+def test_vuelve_con_una_sesion_de_esa_persona(provider, idp, keypair, monkeypatch, company):
+    with tenant_context(company.id):
+        marta = User.objects.create_user(
+            email="marta@contrata.example", password=PASSWORD, tenant=company, first_name="Marta"
+        )
+
+    client = APIClient()
+    params = parse_qs(
+        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+    )
+    from apps.tenants import sso
+
+    estado = sso.take_state(params["state"][0])
+    # El estado se consume al mirarlo, así que se repone para que lo use el callback.
+    from django.core.cache import cache as django_cache
+
+    django_cache.set(f"sso:state:{params['state'][0]}", estado, 600)
+
+    monkeypatch.setattr(
+        sso,
+        "_post_form",
+        lambda url, data: (200, {"id_token": id_token(keypair, nonce=estado["nonce"])}),
+    )
+
+    answer = client.get(
+        "/api/auth/sso/callback/", {"code": "un-codigo", "state": params["state"][0]}
+    )
+
+    assert answer.status_code == 200
+    body = answer.json()
+    assert body["access"] and body["created"] is False
+    marta.refresh_from_db()
+    assert marta.oidc_sub == "sub-de-marta", "el sujeto queda anclado en la primera entrada"
+    assert marta.oidc_issuer == ISSUER
+
+
+@pytest.mark.django_db
+def test_un_token_firmado_por_otro_no_entra(provider, idp, keypair, monkeypatch):
+    otra = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    client = APIClient()
+    params = parse_qs(
+        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+    )
+
+    from apps.tenants import sso
+
+    monkeypatch.setattr(
+        sso,
+        "_post_form",
+        lambda url, data: (200, {"id_token": id_token((otra, otra.public_key()))}),
+    )
+
+    answer = client.get("/api/auth/sso/callback/", {"code": "x", "state": params["state"][0]})
+    assert answer.json()["error"]["code"] == "invalid_id_token"
+
+
+@pytest.mark.django_db
+def test_un_token_de_otra_sesion_no_vale_para_esta(provider, idp, keypair, monkeypatch):
+    """El nonce ata el token a esta entrada concreta."""
+    client = APIClient()
+    params = parse_qs(
+        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+    )
+
+    from apps.tenants import sso
+
+    monkeypatch.setattr(
+        sso,
+        "_post_form",
+        lambda url, data: (200, {"id_token": id_token(keypair, nonce="de-otra-entrada")}),
+    )
+
+    answer = client.get("/api/auth/sso/callback/", {"code": "x", "state": params["state"][0]})
+    assert answer.json()["error"]["code"] == "nonce_mismatch"
+
+
+@pytest.mark.django_db
+def test_sin_alta_al_vuelo_no_entra_quien_no_esta(provider, idp, keypair, monkeypatch):
+    client = APIClient()
+    params = parse_qs(
+        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+    )
+    from apps.tenants import sso
+
+    estado = sso.take_state(params["state"][0])
+    from django.core.cache import cache as django_cache
+
+    django_cache.set(f"sso:state:{params['state'][0]}", estado, 600)
+    monkeypatch.setattr(
+        sso,
+        "_post_form",
+        lambda url, data: (
+            200,
+            {
+                "id_token": id_token(
+                    keypair, sub="nadie", email="nadie@contrata.example", nonce=estado["nonce"]
+                )
+            },
+        ),
+    )
+
+    answer = client.get("/api/auth/sso/callback/", {"code": "x", "state": params["state"][0]})
+    assert answer.json()["error"]["code"] == "person_not_here"
+
+
+@pytest.mark.django_db
+def test_con_alta_al_vuelo_entra_sin_contraseña_y_sin_permisos(
+    provider, idp, keypair, monkeypatch, company
+):
+    provider.auto_provision = True
+    provider.save(update_fields=["auto_provision"])
+
+    client = APIClient()
+    params = parse_qs(
+        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+    )
+    from apps.tenants import sso
+
+    estado = sso.take_state(params["state"][0])
+    from django.core.cache import cache as django_cache
+
+    django_cache.set(f"sso:state:{params['state'][0]}", estado, 600)
+    monkeypatch.setattr(
+        sso,
+        "_post_form",
+        lambda url, data: (
+            200,
+            {
+                "id_token": id_token(
+                    keypair,
+                    sub="nueva",
+                    email="nueva@contrata.example",
+                    nonce=estado["nonce"],
+                    given_name="Nueva",
+                )
+            },
+        ),
+    )
+
+    answer = client.get("/api/auth/sso/callback/", {"code": "x", "state": params["state"][0]})
+
+    assert answer.status_code == 200 and answer.json()["created"] is True
+    with tenant_context(company.id):
+        nueva = User.objects.get(email="nueva@contrata.example")
+    assert nueva.is_federated, "su contraseña es asunto del proveedor"
+    assert not nueva.has_usable_password()
+
+
+# ---------------------------------------------------------- cerrar desde el IdP
+
+
+@pytest.mark.django_db
+def test_el_proveedor_puede_cerrar_la_sesion_de_alguien(provider, idp, keypair, company):
+    """Cambiar la contraseña allí porque se la robaron tiene que llegar aquí."""
+    from apps.users.serializers import issue_tokens
+
+    with tenant_context(company.id):
+        marta = User.objects.create_user(
+            email="marta@contrata.example",
+            password=PASSWORD,
+            tenant=company,
+            oidc_sub="sub-de-marta",
+        )
+    tokens = issue_tokens(marta)
+
+    answer = APIClient().post(
+        "/api/auth/sso/logout/",
+        {"logout_token": id_token(keypair, sub="sub-de-marta", email="")},
+        format="json",
+    )
+
+    assert answer.status_code == 200 and answer.json()["sessions_ended"] >= 1
+    # El refresco deja de valer, que es lo que se puede revocar sin mirar una lista
+    # en cada petición.
+    renovar = APIClient().post("/api/auth/refresh/", {"refresh": tokens["refresh"]}, format="json")
+    assert renovar.status_code != 200
+
+
+@pytest.mark.django_db
+def test_un_cierre_de_un_emisor_desconocido_no_cierra_nada(provider, idp, keypair):
+    answer = APIClient().post(
+        "/api/auth/sso/logout/",
+        {"logout_token": id_token(keypair, issuer="https://otro.example", sub="x")},
+        format="json",
+    )
+    assert answer.json()["error"]["code"] == "issuer_not_trusted"
