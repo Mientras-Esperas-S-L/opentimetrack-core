@@ -165,6 +165,25 @@ Prioridad: baja mientras nadie traslade a nadie, y alta el primer traslado, porq
 antes del traslado se arregla en un rato y después hay que decidir qué hacer con lo
 que ya se reescribió.
 
+## A2 bis. Tres huecos pequeños de la API de personas (salieron al fijar el contrato, 17/09)
+
+Al capturar el contrato real desde el primer integrador aparecieron tres cosas que la
+API de aplicaciones no dice y el integrador necesita. Son cortas y van juntas:
+
+- **`oidc_issuer` en el alta.** `PUT /api/app/people/{ref}/` acepta `oidc_sub` pero no el
+  emisor, y el sujeto sin emisor no identifica a nadie cuando la empresa tiene dos
+  proveedores (el suyo y el de la aplicación). Hoy la clave se ignora en silencio.
+- **`role` en el alta.** La persona se crea siempre `EMPLOYEE`; la aplicación de gestión
+  sabe quién es responsable y hoy no puede decirlo. Solo al **crear**: el rol de quien
+  ya existe lo manda quien administra aquí, no el conector.
+- **`GET /api/app/me/`: quién soy.** Una aplicación no puede saber a qué empresa apunta
+  su credencial ni qué permisos lleva. «Probar conexión» del integrador tiene que
+  tirar de `/api/app/people/` para adivinarlo, y distingue 401 de 403 a mano.
+
+Y una cosa que no es hueco pero conviene dejar escrita: «no existe» es **409**
+`person_not_found`, no 404, porque todos los errores de negocio van con 409. El
+integrador lo trata así; si algún día se cambia, es un cambio de contrato.
+
 ## A8. Por dónde se ficha, cuando hay una aplicación integrada
 
 Sale de la misma conversación que A7. Si la aplicación integrada es la que sabe el
@@ -196,7 +215,7 @@ Piezas:
 
 ## Orden
 
-A1 y A2 son las que desbloquean a un integrador (entrar sin segunda contraseña y
+A1, A2 y A2 bis son las que desbloquean a un integrador (entrar sin segunda contraseña y
 pintar un mes). A3 va detrás porque sin ella el mes se pinta con huecos. A4 mejora
 la calidad de la prueba pero no bloquea, porque el delegado ya funciona. A5 es la
 que evita perder jornadas en campo. A8 va con la primera integración real, porque es
