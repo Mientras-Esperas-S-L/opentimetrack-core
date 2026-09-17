@@ -45,7 +45,13 @@ Dos cosas más que van con la federación y que no son opcionales:
   autenticación JWT debe rechazar al inactivo en el siguiente refresco. La librería
   lo hace por defecto; que una prueba lo fije para que nadie lo cambie sin verlo.
 
-## A2. Asistencia por rango, no solo el día en curso
+## A2. Asistencia por rango, no solo el día en curso ✔ hecho el 17/09/2026
+
+`GET /api/app/attendance/range/?from=&to=`, con `employee_ref` para una persona y
+paginación por persona (`page`) para la plantilla. Tope de 62 días. Por persona y día:
+estado, segundos trabajados, tramos, `scheduled` (con `null` cuando no hay cuadrante,
+que no es lo mismo que «no le tocaba»), el festivo de **su** centro y la ausencia que
+cubre el día. Quien causó baja conserva su calendario. 8 pruebas.
 
 `GET /api/app/attendance/` responde **hoy**, para una persona o para la plantilla.
 Una pantalla de recursos humanos pinta un mes entero, así que con esto no se puede
@@ -165,7 +171,11 @@ Prioridad: baja mientras nadie traslade a nadie, y alta el primer traslado, porq
 antes del traslado se arregla en un rato y después hay que decidir qué hacer con lo
 que ya se reescribió.
 
-## A2 bis. Tres huecos pequeños de la API de personas (salieron al fijar el contrato, 17/09)
+## A2 bis. Tres huecos pequeños de la API de personas ✔ hecho el 17/09/2026
+
+`oidc_issuer` se guarda; `role` se respeta **solo al crear**; y `GET /api/app/me/`
+dice qué aplicación es, con qué permisos y de qué empresa. 6 pruebas. Lo de abajo es
+el razonamiento de por qué hacían falta.
 
 Al capturar el contrato real desde el primer integrador aparecieron tres cosas que la
 API de aplicaciones no dice y el integrador necesita. Son cortas y van juntas:
