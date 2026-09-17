@@ -24,7 +24,8 @@ from apps.reports.overview import OverviewView
 from apps.reports.views import PayrollSummaryView, ReportView
 from apps.shifts.views import ShiftPatternViewSet, ShiftViewSet, WorkingTimeRulesView
 from apps.tenants.application_views import ApplicationViewSet
-from apps.tenants.attendance_api import ApplicationAttendanceView
+from apps.tenants.attendance_api import ApplicationAttendanceRangeView, ApplicationAttendanceView
+from apps.tenants.me_api import ApplicationMeView
 from apps.tenants.people_api import ApplicationPeopleView, ApplicationPersonView
 from apps.tenants.views import CompanyView, PublicHolidayViewSet, RecordArrangementView
 from apps.users.views import (
@@ -110,6 +111,12 @@ urlpatterns = [
         name="app-person",
     ),
     path("api/app/attendance/", ApplicationAttendanceView.as_view(), name="app-attendance"),
+    path(
+        "api/app/attendance/range/",
+        ApplicationAttendanceRangeView.as_view(),
+        name="app-attendance-range",
+    ),
+    path("api/app/me/", ApplicationMeView.as_view(), name="app-me"),
     path("api/overtime/", OvertimeView.as_view(), name="overtime"),
     path(
         "api/holiday-recoveries/",

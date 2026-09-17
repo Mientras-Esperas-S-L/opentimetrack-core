@@ -623,6 +623,15 @@ def test_every_route_is_covered_by_this_sweep():
         "api/app/people/",
         "api/app/people/<str:reference>/",
         "api/app/attendance/",
+        # El rango de asistencia, con su barrido propio en
+        # apps/tenants/tests/test_application_attendance_range.py: incluye que una
+        # credencial de otra empresa no vea a nadie de esta, ni por referencia ni
+        # pidiendo la plantilla entera.
+        "api/app/attendance/range/",
+        # Solo dice quién es la credencial que llama y a qué empresa apunta, así que
+        # no hay nada de nadie que alcanzar. Que una sesión de persona no entre por
+        # esta puerta está en apps/tenants/tests/test_application_me_and_identity.py.
+        "api/app/me/",
         # Sin sesión a propósito, y de quién es el registro **no llega en la
         # petición**: sale del identificador firmado del enlace, así que no hay
         # ningún parámetro que se pueda cambiar para alcanzar a otra persona ---la
