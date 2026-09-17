@@ -86,7 +86,16 @@ La escritura de **ausencias** sí tiene sentido (`write:absences`), porque es un
 solicitud, no una medición, y quien la pide suele estar en la otra aplicación.
 Pasa por las mismas validaciones y topes que si se pidiera aquí.
 
-## A4. Fichar con la identidad de la persona desde una aplicación
+## A4. Fichar con la identidad de la persona desde una aplicación ✔ hecho el 17/09/2026
+
+`POST /api/app/sessions/` canjea una aserción firmada (RFC 7523) por una sesión de la
+persona que nombra. Los emisores de confianza son filas de la empresa (`SsoProvider`,
+que A1 ampliará para el flujo de navegador) y actuar por las personas es un permiso
+aparte, desactivado por defecto. La aserción exige `iss`, `aud`, `exp`, `iat` y `jti`,
+vive un minuto y sirve una vez. Lo que ficha esa sesión sale `APPLICATION` con el
+nombre de la aplicación, y la marca viaja **dentro del token**, no en el cuerpo, así
+que el origen no lo elige quien llama. El canje deja rastro en la auditoría.
+La referencia opaca de contexto no hizo falta: `evidence` ya la lleva. 13 pruebas.
 
 El ADR-0010 lo da por decidido y solo está la mitad: el fichaje delegado. Falta la
 vía preferente, la persona fichando con su identidad desde otra aplicación.
