@@ -632,6 +632,12 @@ def test_every_route_is_covered_by_this_sweep():
         # no hay nada de nadie que alcanzar. Que una sesión de persona no entre por
         # esta puerta está en apps/tenants/tests/test_application_me_and_identity.py.
         "api/app/me/",
+        # Canjea una aserción firmada por una sesión de la persona que nombra. Su
+        # barrido propio está en apps/tenants/tests/test_application_sessions.py, e
+        # incluye que una credencial de otra empresa no obtenga sesión de nadie de
+        # esta, que el emisor tenga que estar autorizado a actuar, y que una aserción
+        # no se pueda reutilizar.
+        "api/app/sessions/",
         # Sin sesión a propósito, y de quién es el registro **no llega en la
         # petición**: sale del identificador firmado del enlace, así que no hay
         # ningún parámetro que se pueda cambiar para alcanzar a otra persona ---la

@@ -116,6 +116,7 @@ class AuditAction(models.TextChoices):
     # Applications acting on the company's behalf.
     APPLICATION_CREATED = "APPLICATION_CREATED", _("Registered an application")
     APPLICATION_REVOKED = "APPLICATION_REVOKED", _("Revoked an application credential")
+    APPLICATION_ACTED_AS = "APPLICATION_ACTED_AS", _("Obtained a session for a person")
 
     # Housekeeping that removes data.
     METADATA_PURGED = "METADATA_PURGED", _("Purged security metadata")

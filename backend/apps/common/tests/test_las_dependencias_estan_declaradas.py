@@ -43,6 +43,7 @@ NOMBRE_DEL_PAQUETE = {
     "yaml": "pyyaml",
     "drf_spectacular": "drf-spectacular",
     "py_vapid": "py-vapid",
+    "jwt": "pyjwt",
     "sentry_sdk": "sentry-sdk",
     "storages": "django-storages",
     "argon2": "argon2-cffi",

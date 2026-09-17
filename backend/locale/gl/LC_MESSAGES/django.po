@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-17 17:51+0000\n"
+"POT-Creation-Date: 2026-09-17 18:14+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -128,7 +128,7 @@ msgstr ""
 
 #: apps/absences/models.py:109 apps/shifts/models.py:72
 #: apps/tenants/applications.py:44 apps/tenants/holidays.py:64
-#: apps/users/models.py:38 apps/users/models.py:167
+#: apps/tenants/identity.py:32 apps/users/models.py:38 apps/users/models.py:167
 msgid "name"
 msgstr ""
 
@@ -219,7 +219,7 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:203 apps/absences/models.py:559
-#: apps/audit/models.py:191 apps/punches/models.py:538
+#: apps/audit/models.py:192 apps/punches/models.py:538
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:577 apps/tenants/rules.py:661 apps/users/models.py:906
 #: apps/users/models.py:984
@@ -227,8 +227,9 @@ msgid "note"
 msgstr ""
 
 #: apps/absences/models.py:204 apps/shifts/models.py:84
-#: apps/tenants/applications.py:53 apps/tenants/models.py:166
-#: apps/users/models.py:42 apps/users/models.py:205 apps/users/models.py:607
+#: apps/tenants/applications.py:53 apps/tenants/identity.py:54
+#: apps/tenants/models.py:166 apps/users/models.py:42 apps/users/models.py:205
+#: apps/users/models.py:607
 msgid "active"
 msgstr ""
 
@@ -270,7 +271,7 @@ msgstr "Cancelada"
 msgid "employee"
 msgstr "persoa traballadora"
 
-#: apps/absences/models.py:286 apps/audit/models.py:184
+#: apps/absences/models.py:286 apps/audit/models.py:185
 #: apps/punches/corrections.py:94 apps/punches/models.py:152
 msgid "type"
 msgstr "tipo"
@@ -592,8 +593,8 @@ msgstr "Borrado"
 
 #: apps/absences/views.py:315 apps/absences/views.py:560
 #: apps/punches/correction_views.py:246 apps/reports/views.py:413
-#: apps/users/serializers.py:480 apps/users/serializers.py:732
-#: apps/users/serializers.py:806 apps/users/serializers.py:894
+#: apps/users/serializers.py:480 apps/users/serializers.py:745
+#: apps/users/serializers.py:819 apps/users/serializers.py:907
 msgid "That person is not in this company."
 msgstr "Esa persoa non pertence a esta empresa."
 
@@ -786,29 +787,34 @@ msgid "Revoked an application credential"
 msgstr "Revogou unha credencial de aplicación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:121
+#: apps/audit/models.py:119
+msgid "Obtained a session for a person"
+msgstr "Obtivo unha sesión dunha persoa"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:122
 msgid "Purged security metadata"
 msgstr "Purgou metadatos de seguridade"
 
-#: apps/audit/models.py:128
+#: apps/audit/models.py:129
 msgid "Purged expired working time records"
 msgstr "Purgou o rexistro que cumpriu o seu prazo"
 
-#: apps/audit/models.py:133
+#: apps/audit/models.py:134
 msgid "Delivered somebody their own record"
 msgstr "Entregoulle a alguén o seu propio rexistro"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:139
+#: apps/audit/models.py:140
 msgid "Erased a person who left no record"
 msgstr "Retirou unha alta que non deixou rastro"
 
-#: apps/audit/models.py:157
+#: apps/audit/models.py:158
 msgid "when"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:163 apps/common/models.py:117
+#: apps/audit/models.py:164 apps/common/models.py:117
 #: apps/tenants/models.py:169 apps/tenants/models.py:197
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:359
@@ -816,37 +822,37 @@ msgid "company"
 msgstr "empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:173
+#: apps/audit/models.py:174
 msgid "who"
 msgstr "quen"
 
-#: apps/audit/models.py:177
+#: apps/audit/models.py:178
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:179
+#: apps/audit/models.py:180
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:185
+#: apps/audit/models.py:186
 msgid "identifier"
 msgstr ""
 
-#: apps/audit/models.py:186
+#: apps/audit/models.py:187
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:190
+#: apps/audit/models.py:191
 msgid "changes"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:213
+#: apps/audit/models.py:214
 msgid "audit entry"
 msgstr "asento do rastro"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:214
+#: apps/audit/models.py:215
 msgid "audit trail"
 msgstr "rastro de auditoría"
 
@@ -2869,6 +2875,52 @@ msgstr "credencial de aplicación"
 msgid "application credentials"
 msgstr "credenciais de aplicación"
 
+#: apps/tenants/assertions.py:62
+msgid "The assertion is not a readable JWT."
+msgstr "A aserción non é un JWT lexible."
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/assertions.py:67
+msgid "This company does not trust that issuer."
+msgstr "Esta empresa non confía nese emisor."
+
+#: apps/tenants/assertions.py:71
+msgid "That provider may sign people in, but not act for them."
+msgstr "Ese provedor pode identificar ás persoas, pero non actuar por elas."
+
+#: apps/tenants/assertions.py:85
+msgid "Could not obtain the issuer's signing keys."
+msgstr "Non se puideron obter as chaves de sinatura do emisor."
+
+#: apps/tenants/assertions.py:98
+msgid "The assertion has expired."
+msgstr "A aserción caducou."
+
+#: apps/tenants/assertions.py:100
+msgid "The assertion is not addressed to this system."
+msgstr "A aserción non vai dirixida a este sistema."
+
+#: apps/tenants/assertions.py:103
+msgid "The assertion is missing a required claim."
+msgstr "Á aserción fáltalle un dato obrigatorio."
+
+#: apps/tenants/assertions.py:106
+msgid "The assertion did not pass verification."
+msgstr "A aserción non superou a verificación."
+
+#: apps/tenants/assertions.py:111
+#, python-format
+msgid "An assertion may live at most %(seconds)d seconds."
+msgstr "Unha aserción dura como moito %(seconds)d segundos."
+
+#: apps/tenants/assertions.py:119
+msgid "That assertion was already used."
+msgstr "Esa aserción xa se usou."
+
+#: apps/tenants/assertions.py:136
+msgid "No active person matches the assertion's reference."
+msgstr "Ningunha persoa activa coincide coa referencia da aserción."
+
 #: apps/tenants/attendance_api.py:269 apps/tenants/attendance_api.py:271
 msgid "A date is required, as YYYY-MM-DD."
 msgstr "Fai falta unha data, co formato AAAA-MM-DD."
@@ -2932,6 +2984,66 @@ msgstr "festivo"
 #: apps/tenants/holidays.py:89
 msgid "public holidays"
 msgstr "festivos"
+
+#: apps/tenants/identity.py:32
+msgid "Display name, e.g. 'GreenCityControl'."
+msgstr "Nome visible, por exemplo «GreenCityControl»."
+
+#: apps/tenants/identity.py:35 apps/users/models.py:605
+msgid "issuer"
+msgstr ""
+
+#: apps/tenants/identity.py:37
+msgid "Exactly the `iss` of its tokens, e.g. https://gcc.example/o."
+msgstr ""
+"Exactamente o «iss» dos seus tokens, por exemplo https://gcc.example/o."
+
+#: apps/tenants/identity.py:40
+msgid "keys"
+msgstr "chaves"
+
+#: apps/tenants/identity.py:43
+msgid ""
+"Where its public keys are. Blank derives it from the issuer's discovery "
+"document."
+msgstr ""
+"Onde están as súas chaves públicas. En branco dedúcese do documento de "
+"descubrimento do emisor."
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/identity.py:47
+msgid "audience"
+msgstr "audiencia"
+
+#: apps/tenants/identity.py:51
+msgid ""
+"What its tokens must carry in `aud` for this install. Blank accepts the "
+"issuer's own."
+msgstr ""
+"O que os seus tokens teñen que levar en «aud» para esta instalación. En "
+"branco acéptase o propio emisor."
+
+#: apps/tenants/identity.py:57
+msgid "may act for its people"
+msgstr "pode actuar polas súas persoas"
+
+#: apps/tenants/identity.py:60
+msgid ""
+"Lets its server exchange a signed assertion for a session of one of its "
+"people, with no browser. A managing application that clocks in on their "
+"behalf needs it; off by default."
+msgstr ""
+"Permite que o seu servidor troque unha aserción asinada por unha sesión "
+"dunha das súas persoas, sen navegador. Necesítao unha aplicación de xestión "
+"que fiche por elas; desactivado por defecto."
+
+#: apps/tenants/identity.py:70
+msgid "identity provider"
+msgstr "provedor de identidade"
+
+#: apps/tenants/identity.py:71
+msgid "identity providers"
+msgstr "provedores de identidade"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/models.py:23
@@ -3958,10 +4070,6 @@ msgstr ""
 msgid "identity provider subject"
 msgstr ""
 
-#: apps/users/models.py:605
-msgid "issuer"
-msgstr ""
-
 #: apps/users/models.py:608
 msgid "admin site access"
 msgstr ""
@@ -4265,7 +4373,7 @@ msgid "Wrong credentials."
 msgstr "Credenciais incorrectas."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:759
+#: apps/users/serializers.py:772
 msgid ""
 "Art. 34.8 asks for a reason when the answer is an alternative or a refusal."
 msgstr ""
@@ -4273,44 +4381,44 @@ msgstr ""
 "negativa."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:774
+#: apps/users/serializers.py:787
 msgid "An answer needs the date it was given."
 msgstr "Unha resposta precisa a data na que se deu."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:818
+#: apps/users/serializers.py:831
 msgid "A share goes from 0 to 100."
 msgstr "Unha porcentaxe vai de 0 a 100."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:838
+#: apps/users/serializers.py:851
 msgid "The agreement cannot end before it starts."
 msgstr "O acordo non pode acabar antes de comezar."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:856
+#: apps/users/serializers.py:869
 #, python-format
 msgid "It overlaps the agreement that starts on %(day)s."
 msgstr "Solápase co acordo que comeza o %(day)s."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:897
+#: apps/users/serializers.py:910
 msgid "Periods of activity are for permanent-seasonal contracts (art. 16 ET)."
 msgstr ""
 "Os períodos de actividade son para contratos fixos descontinuos (art. 16 ET)."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:916
+#: apps/users/serializers.py:929
 msgid "The season cannot end before it starts."
 msgstr "A temporada non pode acabar antes de comezar."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:923
+#: apps/users/serializers.py:936
 msgid "The call-up comes before the season starts, not after."
 msgstr "O chamamento vai antes de que comece a temporada, non despois."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:936
+#: apps/users/serializers.py:949
 #, python-format
 msgid "It overlaps the period that starts on %(day)s."
 msgstr "Solápase co período que comeza o %(day)s."

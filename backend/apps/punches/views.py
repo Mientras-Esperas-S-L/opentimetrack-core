@@ -49,12 +49,27 @@ def source_for(request) -> str:
     utilizable», que es mirar el agente del navegador, y un número es
     exactamente eso.
     """
+    # Una sesión obtenida con una aserción de aplicación lo dice en el propio token,
+    # y eso manda sobre lo que declare el cuerpo: el origen es parte de la prueba, no
+    # una preferencia del cliente. Ver apps/tenants/session_api.py.
+    if acting_application_name(request):
+        return PunchSource.APPLICATION
+
     declarado = (request.data or {}).get("source")
     declared = declarado.upper() if isinstance(declarado, str) else ""
     if declared in {PunchSource.MOBILE, PunchSource.WEB, PunchSource.TERMINAL}:
         return declared
     agent = request.META.get("HTTP_USER_AGENT", "").lower()
     return PunchSource.MOBILE if "expo" in agent or "okhttp" in agent else PunchSource.WEB
+
+
+def acting_application_name(request) -> str:
+    """The application acting for the person, when the session came from an assertion."""
+    token = getattr(request, "auth", None)
+    try:
+        return str(token["act_app"]) if token is not None and "act_app" in token else ""
+    except TypeError, KeyError:
+        return ""
 
 
 @extend_schema(tags=["punches"])
@@ -155,6 +170,7 @@ class PunchViewSet(
             employee=request.user,
             company=request.user.tenant,
             source=source_for(request),
+            source_application=acting_application_name(request),
             interval=data.get("interval") or PunchInterval.WORK,
             work_mode=data.get("work_mode", ""),
             hours_nature=data.get("hours_nature") or HoursNature.ORDINARY,

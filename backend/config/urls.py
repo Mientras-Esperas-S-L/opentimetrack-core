@@ -27,6 +27,7 @@ from apps.tenants.application_views import ApplicationViewSet
 from apps.tenants.attendance_api import ApplicationAttendanceRangeView, ApplicationAttendanceView
 from apps.tenants.me_api import ApplicationMeView
 from apps.tenants.people_api import ApplicationPeopleView, ApplicationPersonView
+from apps.tenants.session_api import ApplicationSessionView
 from apps.tenants.views import CompanyView, PublicHolidayViewSet, RecordArrangementView
 from apps.users.views import (
     ActivityPeriodViewSet,
@@ -117,6 +118,7 @@ urlpatterns = [
         name="app-attendance-range",
     ),
     path("api/app/me/", ApplicationMeView.as_view(), name="app-me"),
+    path("api/app/sessions/", ApplicationSessionView.as_view(), name="app-sessions"),
     path("api/overtime/", OvertimeView.as_view(), name="overtime"),
     path(
         "api/holiday-recoveries/",
