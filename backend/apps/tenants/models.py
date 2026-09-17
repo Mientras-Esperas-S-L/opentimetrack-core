@@ -117,6 +117,30 @@ class Tenant(BaseModel):
         ),
     )
 
+    # ------------------------------------------------- where punching comes from
+
+    class PunchEntry(models.TextChoices):
+        """Which door people are expected to clock in through."""
+
+        ANY = "ANY", _("The interface and any integrated application")
+        APPLICATION = "APPLICATION", _("Preferably the integrated application")
+        TERMINAL_ONLY = "TERMINAL_ONLY", _("Shared terminals only")
+
+    punch_entry = models.CharField(
+        _("how people clock in"),
+        max_length=16,
+        default=PunchEntry.ANY,
+        choices=PunchEntry.choices,
+        help_text=_(
+            "When a managing application is the one that knows the context of each punch "
+            "(which site, which job), a punch made here arrives without it. Setting this to "
+            "the application moves the button in this interface out of the way -- it does "
+            "**not** remove it: if the application is unavailable, somebody would be working "
+            "with no way to record their day, and the system that answers to an inspection "
+            "is this one."
+        ),
+    )
+
     payroll_period = models.CharField(
         _("pay period"),
         max_length=16,

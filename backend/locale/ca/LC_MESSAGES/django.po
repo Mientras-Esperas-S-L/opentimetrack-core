@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-17 18:14+0000\n"
+"POT-Creation-Date: 2026-09-17 20:33+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan\n"
@@ -228,7 +228,7 @@ msgstr ""
 
 #: apps/absences/models.py:204 apps/shifts/models.py:84
 #: apps/tenants/applications.py:53 apps/tenants/identity.py:54
-#: apps/tenants/models.py:166 apps/users/models.py:42 apps/users/models.py:205
+#: apps/tenants/models.py:190 apps/users/models.py:42 apps/users/models.py:205
 #: apps/users/models.py:607
 msgid "active"
 msgstr ""
@@ -816,7 +816,7 @@ msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/audit/models.py:164 apps/common/models.py:117
-#: apps/tenants/models.py:169 apps/tenants/models.py:197
+#: apps/tenants/models.py:193 apps/tenants/models.py:221
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:359
 msgid "company"
@@ -1782,6 +1782,12 @@ msgstr ""
 msgid "You cannot clock in: you have approved leave for today."
 msgstr "No pots fitxar: tens una absència aprovada per a avui."
 
+#: apps/punches/views.py:93
+msgid ""
+"This company clocks in through its management application. You can still "
+"clock in here, but say why in a line."
+msgstr "Aquesta empresa fitxa per la seva aplicació de gestió. Podeu fitxar aquí igualment, però digueu per què en una línia."
+
 #: apps/reports/delivery.py:125 apps/users/passwords.py:136
 msgid "the platform"
 msgstr "la plataforma"
@@ -1800,17 +1806,17 @@ msgid "the person concerned, through their delivery link"
 msgstr "la persona interessada, pel seu enllaç d'entrega"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/payroll.py:37 apps/tenants/models.py:125
+#: apps/reports/payroll.py:37 apps/tenants/models.py:149
 msgid "Monthly"
 msgstr "Mensual"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/payroll.py:38 apps/tenants/models.py:126
+#: apps/reports/payroll.py:38 apps/tenants/models.py:150
 msgid "Every two weeks"
 msgstr "Cada dues setmanes"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/payroll.py:39 apps/tenants/models.py:127
+#: apps/reports/payroll.py:39 apps/tenants/models.py:151
 msgid "Weekly"
 msgstr "Setmanal"
 
@@ -3129,22 +3135,51 @@ msgid ""
 "have departments wants."
 msgstr ""
 
-#: apps/tenants/models.py:121
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/models.py:125
+msgid "The interface and any integrated application"
+msgstr "La interfície i qualsevol aplicació integrada"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/models.py:126
+msgid "Preferably the integrated application"
+msgstr "Preferiblement l'aplicació integrada"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/models.py:127
+msgid "Shared terminals only"
+msgstr "Només terminals compartits"
+
+#: apps/tenants/models.py:130
+msgid "how people clock in"
+msgstr "com fitxa la gent"
+
+#: apps/tenants/models.py:135
+msgid ""
+"When a managing application is the one that knows the context of each punch "
+"(which site, which job), a punch made here arrives without it. Setting this "
+"to the application moves the button in this interface out of the way -- it "
+"does **not** remove it: if the application is unavailable, somebody would be "
+"working with no way to record their day, and the system that answers to an "
+"inspection is this one."
+msgstr "Quan l'aplicació de gestió és la que sap el context de cada fitxatge (quin lloc, quina feina), un fitxatge fet aquí arriba sense ell. Posar l'aplicació aparta el botó d'aquesta interfície, però **no** el treu: si l'aplicació no està disponible, algú estaria treballant sense poder registrar la seva jornada, i el sistema que respon davant una inspecció és aquest."
+
+#: apps/tenants/models.py:145
 msgid "pay period"
 msgstr ""
 
-#: apps/tenants/models.py:130
+#: apps/tenants/models.py:154
 msgid ""
 "Art. 6.1: a copy of the summary for this period goes out with the payslip. "
 "Not necessarily a calendar month --- art. 29.1 ET only caps the interval at "
 "one."
 msgstr ""
 
-#: apps/tenants/models.py:145
+#: apps/tenants/models.py:169
 msgid "record retention (years)"
 msgstr ""
 
-#: apps/tenants/models.py:148
+#: apps/tenants/models.py:172
 msgid ""
 "How long clock events are kept, after which they are deleted. Four years is "
 "the floor set by art. 34.9 ET; a longer period needs its own justification, "
@@ -3158,32 +3193,32 @@ msgstr ""
 "és una base. Les absències i els contractes no es veuen afectats: no són el "
 "registre de jornada i no viuen d'aquest termini."
 
-#: apps/tenants/models.py:156
+#: apps/tenants/models.py:180
 msgid "security metadata retention (days)"
 msgstr ""
 
-#: apps/tenants/models.py:159
+#: apps/tenants/models.py:183
 msgid ""
 "How long the IP address, device and user agent of each event are kept. They "
 "serve to spot anomalies, not to prove working time: purging them leaves the "
 "record intact."
 msgstr ""
 
-#: apps/tenants/models.py:165
+#: apps/tenants/models.py:189
 msgid "settings"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/models.py:170
+#: apps/tenants/models.py:194
 msgid "companies"
 msgstr "empreses"
 
-#: apps/tenants/models.py:212
+#: apps/tenants/models.py:236
 msgid "enabled features"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/models.py:215 apps/tenants/models.py:216
+#: apps/tenants/models.py:239 apps/tenants/models.py:240
 msgid "company limits"
 msgstr "límits de l'empresa"
 

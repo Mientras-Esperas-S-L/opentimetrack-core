@@ -5,12 +5,14 @@ The heart of the product: one tap, and the server decides everything else.
 
 from __future__ import annotations
 
+from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.audit.services import record_view_of_others
+from apps.common.exceptions import BusinessRuleError
 from apps.common.filters import LocalDayRangeFilter
 from apps.common.permissions import IsAuthenticatedInTenant
 from apps.common.scope import person_in_scope, visible_people
@@ -61,6 +63,39 @@ def source_for(request) -> str:
         return declared
     agent = request.META.get("HTTP_USER_AGENT", "").lower()
     return PunchSource.MOBILE if "expo" in agent or "okhttp" in agent else PunchSource.WEB
+
+
+def _refuse_unless_justified(request, data) -> dict:
+    """When the company expects punches from an application, this door asks why.
+
+    It asks, it does not close. If the application is unavailable -- it is being
+    deployed, the network is down, the phone is dead -- somebody would be working with
+    no way to record their day, and the system that answers to an inspection is this
+    one. A record whose availability depends on a third party is not a reliable record.
+
+    So the answer is a reason, kept with the punch and visible in the report, rather
+    than a refusal.
+    """
+    from apps.punches.serializers import EXCEPTION_REASON_MIN
+
+    company = request.user.tenant
+    if company.punch_entry != company.PunchEntry.APPLICATION:
+        return {}
+    # An application acting for the person is the expected door, not the exception.
+    if acting_application_name(request):
+        return {}
+
+    reason = (data.get("exception_reason") or "").strip()
+    if len(reason) < EXCEPTION_REASON_MIN:
+        raise BusinessRuleError(
+            code="exception_reason_required",
+            message=_(
+                "This company clocks in through its management application. You can still "
+                "clock in here, but say why in a line."
+            ),
+            details={"field": "exception_reason", "min_length": EXCEPTION_REASON_MIN},
+        )
+    return {"exception": {"reason": reason}}
 
 
 def acting_application_name(request) -> str:
@@ -166,6 +201,8 @@ class PunchViewSet(
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
+        excepcion = _refuse_unless_justified(request, data)
+
         punch = register_punch(
             employee=request.user,
             company=request.user.tenant,
@@ -181,7 +218,7 @@ class PunchViewSet(
             device_id=data.get("device_id", ""),
             user_agent=request.META.get("HTTP_USER_AGENT", "")[:255],
             trigger=data.get("trigger") or "MANUAL",
-            evidence=data.get("evidence") or {},
+            evidence={**(data.get("evidence") or {}), **excepcion},
         )
 
         data = PunchSerializer(punch).data

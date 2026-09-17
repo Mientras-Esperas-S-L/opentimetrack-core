@@ -92,6 +92,11 @@ def validate_evidence(value):
     return value
 
 
+#: Lo que hay que escribir para fichar por la puerta que no es la normal. Corto, pero
+#: no vacío: la excepción se justifica, y ese texto llega al informe de Inspección.
+EXCEPTION_REASON_MIN = 10
+
+
 class PunchWriteSerializer(serializers.Serializer):
     """What a client is allowed to send.
 
@@ -109,6 +114,17 @@ class PunchWriteSerializer(serializers.Serializer):
         choices=PunchTrigger.choices, required=False, default=PunchTrigger.MANUAL
     )
     evidence = serializers.JSONField(required=False, default=dict, validators=[validate_evidence])
+    #: Solo se mira cuando la empresa dice que la puerta normal es la aplicación
+    #: integrada. Ver `Tenant.punch_entry` y apps/punches/views.py.
+    exception_reason = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200,
+        help_text=(
+            "Why you are clocking in here rather than through the usual application. "
+            "Required when the company expects punches to come from an application."
+        ),
+    )
 
     # Art. 3 of the pending decree. The client says *what kind* of span this is
     # and under what arrangement --- facts only the person can supply --- but
