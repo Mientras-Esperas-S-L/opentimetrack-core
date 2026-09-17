@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
@@ -10,7 +10,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 
-import { requestPasswordReset } from '../services/api.js'
+import { discoverSso, requestPasswordReset, ssoStartUrl } from '../services/api.js'
 import { useAuth } from '../hooks/useAuth.js'
 
 export default function SignIn() {
@@ -29,6 +29,33 @@ export default function SignIn() {
   // Only asked for when the server says the address exists in more than one
   // company. Nobody should have to type a tax number to clock in.
   const [needsCompany, setNeedsCompany] = useState(false)
+  // Their company's identity provider, if their address belongs to one. Asked of
+  // the server as they type, because the only thing they know is their address:
+  // which identity system their employer uses is not their problem.
+  const [provider, setProvider] = useState(null)
+
+  useEffect(() => {
+    let vivo = true
+    // Waits for them to stop typing: one call per address, not per keystroke. And
+    // everything happens inside the timer, so nothing is set while rendering.
+    const timer = setTimeout(async () => {
+      if (mode !== 'in' || !email.includes('@')) {
+        if (vivo) setProvider(null)
+        return
+      }
+      try {
+        const answer = await discoverSso(email)
+        if (vivo) setProvider(answer?.sso ? answer : null)
+      } catch {
+        // If we cannot ask, the password field is still there and still works.
+        if (vivo) setProvider(null)
+      }
+    }, 500)
+    return () => {
+      vivo = false
+      clearTimeout(timer)
+    }
+  }, [email, mode])
 
   const submit = async (event) => {
     event.preventDefault()
@@ -113,7 +140,27 @@ export default function SignIn() {
                 fullWidth
               />
 
-              {mode === 'in' && (
+              {mode === 'in' && provider && (
+                // Their provider signs them in, so there is no password of ours to
+                // ask for. The field below disappears rather than sitting there
+                // unusable: a box you must not fill in is worse than no box.
+                <Stack spacing={1.5}>
+                  <Alert severity="info" variant="outlined">
+                    {t('Tu empresa usa {{provider}} para identificarte.', {
+                      provider: provider.provider,
+                    })}
+                  </Alert>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    fullWidth
+                    href={ssoStartUrl(provider.slug)}
+                  >
+                    {t('Entrar con {{provider}}', { provider: provider.provider })}
+                  </Button>
+                </Stack>
+              )}
+              {mode === 'in' && !provider && (
                 <>
                   <TextField
                     label={t('Contraseña')}
@@ -139,17 +186,23 @@ export default function SignIn() {
                 </>
               )}
 
-              <Button type="submit" variant="contained" size="large" disabled={busy} fullWidth>
-                {mode === 'in'
-                  ? busy
-                    ? t('Entrando…')
-                    : t('Entrar')
-                  : busy
-                    ? t('Enviando…')
-                    : t('Enviarme un enlace')}
-              </Button>
+              {/* Con proveedor no hay nada que enviar aquí: el botón de arriba se
+                  lleva la entrada, y este sobraría en la pantalla. */}
+              {!(mode === 'in' && provider) && (
+                <Button type="submit" variant="contained" size="large" disabled={busy} fullWidth>
+                  {mode === 'in'
+                    ? busy
+                      ? t('Entrando…')
+                      : t('Entrar')
+                    : busy
+                      ? t('Enviando…')
+                      : t('Enviarme un enlace')}
+                </Button>
+              )}
 
-              <Box sx={{ textAlign: 'center' }}>
+              {/* Quien entra por su proveedor no tiene contraseña aquí que recuperar:
+                  ofrecérsela sería mandarle a un correo que no sirve de nada. */}
+              <Box sx={{ textAlign: 'center', display: mode === 'in' && provider ? 'none' : 'block' }}>
                 <Link
                   component="button"
                   type="button"
