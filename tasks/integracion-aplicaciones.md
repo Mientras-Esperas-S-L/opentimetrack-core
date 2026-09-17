@@ -203,7 +203,12 @@ Y una cosa que no es hueco pero conviene dejar escrita: «no existe» es **409**
 `person_not_found`, no 404, porque todos los errores de negocio van con 409. El
 integrador lo trata así; si algún día se cambia, es un cambio de contrato.
 
-## A8. Por dónde se ficha, cuando hay una aplicación integrada
+## A8. Por dónde se ficha, cuando hay una aplicación integrada ✔ hecho el 17/09/2026
+
+`Tenant.punch_entry` con tres valores. En `APPLICATION`, el fichaje por esta interfaz
+pide un motivo de al menos diez caracteres, que se guarda en la evidencia y sale en el
+informe; no se cierra la puerta. Una sesión obtenida por una aplicación no explica
+nada, porque es la puerta esperada. 5 pruebas.
 
 Sale de la misma conversación que A7. Si la aplicación integrada es la que sabe el
 contexto del fichaje (para su propio uso: en qué proyecto, en qué obra, en qué
