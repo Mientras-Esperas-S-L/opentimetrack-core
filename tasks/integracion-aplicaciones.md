@@ -10,7 +10,13 @@ del todo a su propio módulo de recursos humanos, y esa es la promesa del produc
 Este plan recoge las piezas que faltan para cerrarla. El primer integrador es
 GreenCity, pero ninguna pieza es suya: todas son mecanismo general.
 
-## A1. Entrada por un proveedor de identidad (OIDC)
+## A1. Entrada por un proveedor de identidad (OIDC) ✔ hecho el 17/09/2026
+
+`SsoProvider` (el mismo de A4) más `SsoDomain`, y cuatro puertas: `discover` por dominio
+de correo, `start` con PKCE y estado de un solo uso, `callback` que canjea, verifica y
+resuelve, y `logout` para que el proveedor cierre sesiones. El sujeto ancla y el correo
+solo engancha la primera vez. El secreto se guarda cifrado con `FIELD_ENCRYPTION_KEY`,
+que no se deriva de `SECRET_KEY` a propósito. 12 pruebas.
 
 Hoy el Core solo sabe autenticar con su contraseña. Los campos `oidc_sub` y
 `oidc_issuer` del usuario están desde el principio, y `is_federated` ya niega la
