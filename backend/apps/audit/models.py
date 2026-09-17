@@ -59,6 +59,9 @@ class AuditAction(models.TextChoices):
     CORRECTION_WITHDRAWN = "CORRECTION_WITHDRAWN", _("Withdrew a proposed change")
 
     # Somebody decided about time off.
+    # Pedir no estaba: lo que se anotaba era resolver. Con una aplicación pidiendo en
+    # nombre de alguien, quién lo pidió deja de ser evidente y hay que guardarlo.
+    ABSENCE_REQUESTED = "ABSENCE_REQUESTED", _("Requested leave")
     ABSENCE_APPROVED = "ABSENCE_APPROVED", _("Approved leave")
     ABSENCE_REJECTED = "ABSENCE_REJECTED", _("Rejected leave")
     ABSENCE_CANCELLED = "ABSENCE_CANCELLED", _("Cancelled a leave request")

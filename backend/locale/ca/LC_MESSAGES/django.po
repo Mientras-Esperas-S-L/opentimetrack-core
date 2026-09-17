@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-17 20:58+0000\n"
+"POT-Creation-Date: 2026-09-17 21:58+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan\n"
@@ -127,7 +127,7 @@ msgid "code"
 msgstr ""
 
 #: apps/absences/models.py:109 apps/shifts/models.py:72
-#: apps/tenants/applications.py:44 apps/tenants/holidays.py:64
+#: apps/tenants/applications.py:50 apps/tenants/holidays.py:64
 #: apps/tenants/identity.py:33 apps/users/models.py:38 apps/users/models.py:167
 msgid "name"
 msgstr ""
@@ -219,7 +219,7 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:203 apps/absences/models.py:559
-#: apps/audit/models.py:193 apps/punches/models.py:538
+#: apps/audit/models.py:196 apps/punches/models.py:538
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:577 apps/tenants/rules.py:661 apps/users/models.py:906
 #: apps/users/models.py:984
@@ -227,7 +227,7 @@ msgid "note"
 msgstr ""
 
 #: apps/absences/models.py:204 apps/shifts/models.py:84
-#: apps/tenants/applications.py:53 apps/tenants/identity.py:116
+#: apps/tenants/applications.py:59 apps/tenants/identity.py:116
 #: apps/tenants/models.py:190 apps/users/models.py:42 apps/users/models.py:205
 #: apps/users/models.py:607
 msgid "active"
@@ -271,7 +271,7 @@ msgstr "Cancel·lada"
 msgid "employee"
 msgstr "persona treballadora"
 
-#: apps/absences/models.py:286 apps/audit/models.py:186
+#: apps/absences/models.py:286 apps/audit/models.py:189
 #: apps/punches/corrections.py:94 apps/punches/models.py:152
 msgid "type"
 msgstr "tipus"
@@ -678,149 +678,154 @@ msgid "Withdrew a proposed change"
 msgstr "Va retirar un canvi proposat"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:62
+#: apps/audit/models.py:64
+msgid "Requested leave"
+msgstr "Va demanar un permís"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:65
 msgid "Approved leave"
 msgstr "Absència aprovada"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:63
+#: apps/audit/models.py:66
 msgid "Rejected leave"
 msgstr "Absència rebutjada"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:64
+#: apps/audit/models.py:67
 msgid "Cancelled a leave request"
 msgstr "Va cancel·lar una sol·licitud d'absència"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:65
+#: apps/audit/models.py:68
 msgid "Authorised overtime"
 msgstr "Va autoritzar hores extres"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:66
+#: apps/audit/models.py:69
 msgid "Did not authorise overtime"
 msgstr "No va autoritzar hores extres"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:69
+#: apps/audit/models.py:72
 msgid "Confirmed holiday recovered from sick leave"
 msgstr "Va confirmar vacances recuperades d'una baixa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:73
+#: apps/audit/models.py:76
 msgid "Dismissed a holiday recovery"
 msgstr "Va descartar una recuperació de vacances"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:77
+#: apps/audit/models.py:80
 msgid "Added a person"
 msgstr "Va afegir una persona"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:78
+#: apps/audit/models.py:81
 msgid "Changed a person"
 msgstr "Va canviar una persona"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:79
+#: apps/audit/models.py:82
 msgid "Deactivated a person"
 msgstr "Va donar de baixa una persona"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:80
+#: apps/audit/models.py:83
 msgid "Reactivated a person"
 msgstr "Va tornar a donar d'alta una persona"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:81
+#: apps/audit/models.py:84
 msgid "Changed a role"
 msgstr "Va canviar un perfil"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:86
+#: apps/audit/models.py:89
 msgid "Moved a shift to somebody else"
 msgstr "Va passar un torn a una altra persona"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:93
+#: apps/audit/models.py:96
 msgid "Painted shifts over a period"
 msgstr "Va pintar torns en un període"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:94
+#: apps/audit/models.py:97
 msgid "Cleared shifts over a period"
 msgstr "Va buidar els torns d'un període"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:98
+#: apps/audit/models.py:101
 msgid "Changed what a leave grants"
 msgstr "Va canviar què concedeix un permís"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:107
+#: apps/audit/models.py:110
 msgid "Changed the structure or the calendar"
 msgstr "Va canviar l'estructura o el calendari"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:110
+#: apps/audit/models.py:113
 msgid "Sent a link to set a password"
 msgstr "Va enviar un enllaç per posar la contrasenya"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:113
+#: apps/audit/models.py:116
 msgid "Changed company settings"
 msgstr "Va canviar els ajustos de l'empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:114
+#: apps/audit/models.py:117
 msgid "Changed working time rules"
 msgstr "Va canviar les normes de jornada"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:117
+#: apps/audit/models.py:120
 msgid "Registered an application"
 msgstr "Va registrar una aplicació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:118
+#: apps/audit/models.py:121
 msgid "Revoked an application credential"
 msgstr "Va revocar una credencial d'aplicació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:119
+#: apps/audit/models.py:122
 msgid "Obtained a session for a person"
 msgstr "Va obtenir una sessió d'una persona"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:120
+#: apps/audit/models.py:123
 msgid "Ended somebody's sessions"
 msgstr "Va tancar les sessions d'una persona"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:123
+#: apps/audit/models.py:126
 msgid "Purged security metadata"
 msgstr "Va purgar metadades de seguretat"
 
-#: apps/audit/models.py:130
+#: apps/audit/models.py:133
 msgid "Purged expired working time records"
 msgstr "Va purgar el registre que va complir el seu termini"
 
-#: apps/audit/models.py:135
+#: apps/audit/models.py:138
 msgid "Delivered somebody their own record"
 msgstr "Va entregar a algú el seu propi registre"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:141
+#: apps/audit/models.py:144
 msgid "Erased a person who left no record"
 msgstr "Va retirar una alta que no va deixar rastre"
 
-#: apps/audit/models.py:159
+#: apps/audit/models.py:162
 msgid "when"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:165 apps/common/models.py:117
+#: apps/audit/models.py:168 apps/common/models.py:117
 #: apps/tenants/models.py:193 apps/tenants/models.py:221
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:359
@@ -828,37 +833,37 @@ msgid "company"
 msgstr "empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:175
+#: apps/audit/models.py:178
 msgid "who"
 msgstr "qui"
 
-#: apps/audit/models.py:179
+#: apps/audit/models.py:182
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:181
+#: apps/audit/models.py:184
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:187 apps/tenants/identity.py:58
+#: apps/audit/models.py:190 apps/tenants/identity.py:58
 msgid "identifier"
 msgstr "identificador"
 
-#: apps/audit/models.py:188
+#: apps/audit/models.py:191
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:192
+#: apps/audit/models.py:195
 msgid "changes"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:215
+#: apps/audit/models.py:218
 msgid "audit entry"
 msgstr "assentament del rastre"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:216
+#: apps/audit/models.py:219
 msgid "audit trail"
 msgstr "rastre d'auditoria"
 
@@ -1053,7 +1058,7 @@ msgstr ""
 msgid "device"
 msgstr ""
 
-#: apps/notifications/models.py:44 apps/tenants/applications.py:104
+#: apps/notifications/models.py:44 apps/tenants/applications.py:110
 msgid "last used"
 msgstr ""
 
@@ -1375,6 +1380,7 @@ msgstr ""
 "Aquesta operació encara s'està registrant. Torna-ho a provar de seguida."
 
 #: apps/punches/delegated.py:181 apps/tenants/attendance_api.py:93
+#: apps/tenants/hr_api.py:63
 msgid "No active person matches that reference."
 msgstr "Cap persona activa no coincideix amb aquesta referència."
 
@@ -1704,8 +1710,8 @@ msgid "overtime decisions"
 msgstr "decisions sobre hores extres"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:604 apps/tenants/applications.py:64
-#: apps/tenants/applications.py:90
+#: apps/punches/models.py:604 apps/tenants/applications.py:70
+#: apps/tenants/applications.py:96
 msgid "application"
 msgstr "aplicació"
 
@@ -2819,78 +2825,97 @@ msgid "Read the list of people"
 msgstr "Llegir la llista de persones"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:37
+#: apps/tenants/applications.py:39
+msgid "Read leave and absences"
+msgstr "Llegir permisos i absències"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/applications.py:40
+msgid "Request leave on behalf of an employee"
+msgstr "Demanar un permís en nom d'una persona"
+
+#: apps/tenants/applications.py:41
+msgid "Read planned shifts"
+msgstr "Llegir els torns planificats"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/applications.py:42
+msgid "Read public holidays"
+msgstr "Llegir els festius"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/applications.py:43
 msgid "Create and update people"
 msgstr "Crear i actualitzar persones"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:38
+#: apps/tenants/applications.py:44
 msgid "Receive outbound events"
 msgstr "Rebre esdeveniments de sortida"
 
-#: apps/tenants/applications.py:45 apps/users/models.py:40
+#: apps/tenants/applications.py:51 apps/users/models.py:40
 msgid "description"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:48
+#: apps/tenants/applications.py:54
 msgid "permissions"
 msgstr "permisos"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:50
+#: apps/tenants/applications.py:56
 msgid "List of granted scopes. Empty means the application can do nothing."
 msgstr ""
 "Llista de permisos concedits. Buida vol dir que l'aplicació no pot fer res."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:60
+#: apps/tenants/applications.py:66
 msgid "authorised by"
 msgstr "autoritzada per"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:65
+#: apps/tenants/applications.py:71
 msgid "applications"
 msgstr "aplicacions"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:92
+#: apps/tenants/applications.py:98
 msgid "label"
 msgstr "etiqueta"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:94
+#: apps/tenants/applications.py:100
 msgid "token hash"
 msgstr "resum del testimoni"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:96
+#: apps/tenants/applications.py:102
 msgid "hint"
 msgstr "pista"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:99
+#: apps/tenants/applications.py:105
 msgid "Last characters, to tell one credential from another in the interface."
 msgstr ""
 "Últims caràcters, per distingir una credencial d'una altra a la interfície."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:102
+#: apps/tenants/applications.py:108
 msgid "expires at"
 msgstr "caduca el"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:103
+#: apps/tenants/applications.py:109
 msgid "revoked at"
 msgstr "revocada el"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:107
+#: apps/tenants/applications.py:113
 msgid "application credential"
 msgstr "credencial d'aplicació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:108
+#: apps/tenants/applications.py:114
 msgid "application credentials"
 msgstr "credencials d'aplicació"
 
@@ -2942,14 +2967,15 @@ msgid "No active person matches the assertion's reference."
 msgstr "Cap persona activa coincideix amb la referència de l'asserció."
 
 #: apps/tenants/attendance_api.py:269 apps/tenants/attendance_api.py:271
+#: apps/tenants/hr_api.py:41 apps/tenants/hr_api.py:43
 msgid "A date is required, as YYYY-MM-DD."
 msgstr "Cal una data, amb el format AAAA-MM-DD."
 
-#: apps/tenants/attendance_api.py:275
+#: apps/tenants/attendance_api.py:275 apps/tenants/hr_api.py:47
 msgid "Must not be before `from`."
 msgstr "No pot ser anterior a «from»."
 
-#: apps/tenants/attendance_api.py:278
+#: apps/tenants/attendance_api.py:278 apps/tenants/hr_api.py:50
 #, python-format
 msgid "At most %(days)d days per call."
 msgstr "Com a màxim %(days)d dies per crida."
@@ -3004,6 +3030,11 @@ msgstr "festiu"
 #: apps/tenants/holidays.py:89
 msgid "public holidays"
 msgstr "festius"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/hr_api.py:212
+msgid "This company has no leave type with that code."
+msgstr "Aquesta empresa no té cap tipus de permís amb aquest codi."
 
 #: apps/tenants/identity.py:33
 msgid "Display name, e.g. 'GreenCityControl'."
@@ -3803,46 +3834,46 @@ msgstr "canvis en la manera de comptar el temps"
 msgid "The provider's address is not an http(s) url."
 msgstr "L'adreça del proveïdor no és una URL http(s)."
 
-#: apps/tenants/sso.py:103
+#: apps/tenants/sso.py:105
 msgid "Could not reach the identity provider."
 msgstr "No s'ha pogut arribar al proveïdor d'identitat."
 
-#: apps/tenants/sso.py:109
+#: apps/tenants/sso.py:111
 msgid "The provider describes itself with a different issuer."
 msgstr "El proveïdor es descriu amb un emissor diferent."
 
-#: apps/tenants/sso.py:189
+#: apps/tenants/sso.py:191
 msgid "That sign-in attempt expired or was already used."
 msgstr "Aquest intent d'entrada ha caducat o ja es va fer servir."
 
-#: apps/tenants/sso.py:210
+#: apps/tenants/sso.py:212
 msgid "The provider did not return a valid token."
 msgstr "El proveïdor no ha retornat un token vàlid."
 
-#: apps/tenants/sso.py:223
+#: apps/tenants/sso.py:225
 msgid "Could not obtain the provider's signing keys."
 msgstr "No s'han pogut obtenir les claus de signatura del proveïdor."
 
-#: apps/tenants/sso.py:238
+#: apps/tenants/sso.py:240
 msgid "The provider's token did not pass verification."
 msgstr "El token del proveïdor no ha superat la verificació."
 
-#: apps/tenants/sso.py:244
+#: apps/tenants/sso.py:246
 msgid "The provider's answer does not match this sign-in attempt."
 msgstr "La resposta del proveïdor no correspon a aquest intent d'entrada."
 
-#: apps/tenants/sso.py:265
+#: apps/tenants/sso.py:267
 msgid "The provider's token does not identify anybody."
 msgstr "El token del proveïdor no identifica ningú."
 
-#: apps/tenants/sso.py:283
+#: apps/tenants/sso.py:285
 msgid ""
 "Nobody here matches that account, and this provider does not create people."
 msgstr ""
 "Ningú d'aquí coincideix amb aquest compte, i aquest proveïdor no dóna d'alta "
 "ningú."
 
-#: apps/tenants/sso.py:286
+#: apps/tenants/sso.py:288
 msgid "The provider's token carries no address to create anybody with."
 msgstr "El token del proveïdor no porta cap adreça amb què donar d'alta ningú."
 
@@ -4731,22 +4762,22 @@ msgid "Only an administrator answers a schedule adaptation."
 msgstr "Només administració contesta una adaptació de jornada."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:329
+#: config/settings/base.py:336
 msgid "Spanish"
 msgstr "Castellà"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:330
+#: config/settings/base.py:337
 msgid "Catalan"
 msgstr "Català"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:331
+#: config/settings/base.py:338
 msgid "Galician"
 msgstr "Gallec"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:332
+#: config/settings/base.py:339
 msgid "English"
 msgstr "Anglès"
 

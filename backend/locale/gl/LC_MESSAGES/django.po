@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-17 20:58+0000\n"
+"POT-Creation-Date: 2026-09-17 21:58+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -127,7 +127,7 @@ msgid "code"
 msgstr ""
 
 #: apps/absences/models.py:109 apps/shifts/models.py:72
-#: apps/tenants/applications.py:44 apps/tenants/holidays.py:64
+#: apps/tenants/applications.py:50 apps/tenants/holidays.py:64
 #: apps/tenants/identity.py:33 apps/users/models.py:38 apps/users/models.py:167
 msgid "name"
 msgstr ""
@@ -219,7 +219,7 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:203 apps/absences/models.py:559
-#: apps/audit/models.py:193 apps/punches/models.py:538
+#: apps/audit/models.py:196 apps/punches/models.py:538
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:577 apps/tenants/rules.py:661 apps/users/models.py:906
 #: apps/users/models.py:984
@@ -227,7 +227,7 @@ msgid "note"
 msgstr ""
 
 #: apps/absences/models.py:204 apps/shifts/models.py:84
-#: apps/tenants/applications.py:53 apps/tenants/identity.py:116
+#: apps/tenants/applications.py:59 apps/tenants/identity.py:116
 #: apps/tenants/models.py:190 apps/users/models.py:42 apps/users/models.py:205
 #: apps/users/models.py:607
 msgid "active"
@@ -271,7 +271,7 @@ msgstr "Cancelada"
 msgid "employee"
 msgstr "persoa traballadora"
 
-#: apps/absences/models.py:286 apps/audit/models.py:186
+#: apps/absences/models.py:286 apps/audit/models.py:189
 #: apps/punches/corrections.py:94 apps/punches/models.py:152
 msgid "type"
 msgstr "tipo"
@@ -677,149 +677,154 @@ msgid "Withdrew a proposed change"
 msgstr "Retirou un cambio proposto"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:62
+#: apps/audit/models.py:64
+msgid "Requested leave"
+msgstr "Pediu un permiso"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:65
 msgid "Approved leave"
 msgstr "Ausencia aprobada"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:63
+#: apps/audit/models.py:66
 msgid "Rejected leave"
 msgstr "Ausencia rexeitada"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:64
+#: apps/audit/models.py:67
 msgid "Cancelled a leave request"
 msgstr "Cancelou unha solicitude de ausencia"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:65
+#: apps/audit/models.py:68
 msgid "Authorised overtime"
 msgstr "Autorizou horas extras"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:66
+#: apps/audit/models.py:69
 msgid "Did not authorise overtime"
 msgstr "Non autorizou horas extras"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:69
+#: apps/audit/models.py:72
 msgid "Confirmed holiday recovered from sick leave"
 msgstr "Confirmou vacacións recuperadas dunha baixa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:73
+#: apps/audit/models.py:76
 msgid "Dismissed a holiday recovery"
 msgstr "Descartou unha recuperación de vacacións"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:77
+#: apps/audit/models.py:80
 msgid "Added a person"
 msgstr "Engadiu unha persoa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:78
+#: apps/audit/models.py:81
 msgid "Changed a person"
 msgstr "Cambiou unha persoa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:79
+#: apps/audit/models.py:82
 msgid "Deactivated a person"
 msgstr "Deu de baixa unha persoa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:80
+#: apps/audit/models.py:83
 msgid "Reactivated a person"
 msgstr "Volveu dar de alta unha persoa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:81
+#: apps/audit/models.py:84
 msgid "Changed a role"
 msgstr "Cambiou un perfil"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:86
+#: apps/audit/models.py:89
 msgid "Moved a shift to somebody else"
 msgstr "Pasou unha quenda a outra persoa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:93
+#: apps/audit/models.py:96
 msgid "Painted shifts over a period"
 msgstr "Pintou quendas nun período"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:94
+#: apps/audit/models.py:97
 msgid "Cleared shifts over a period"
 msgstr "Baleirou as quendas dun período"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:98
+#: apps/audit/models.py:101
 msgid "Changed what a leave grants"
 msgstr "Cambiou o que concede un permiso"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:107
+#: apps/audit/models.py:110
 msgid "Changed the structure or the calendar"
 msgstr "Cambiou a estrutura ou o calendario"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:110
+#: apps/audit/models.py:113
 msgid "Sent a link to set a password"
 msgstr "Enviou unha ligazón para poñer o contrasinal"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:113
+#: apps/audit/models.py:116
 msgid "Changed company settings"
 msgstr "Cambiou os axustes da empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:114
+#: apps/audit/models.py:117
 msgid "Changed working time rules"
 msgstr "Cambiou as normas de xornada"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:117
+#: apps/audit/models.py:120
 msgid "Registered an application"
 msgstr "Rexistrou unha aplicación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:118
+#: apps/audit/models.py:121
 msgid "Revoked an application credential"
 msgstr "Revogou unha credencial de aplicación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:119
+#: apps/audit/models.py:122
 msgid "Obtained a session for a person"
 msgstr "Obtivo unha sesión dunha persoa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:120
+#: apps/audit/models.py:123
 msgid "Ended somebody's sessions"
 msgstr "Pechou as sesións dunha persoa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:123
+#: apps/audit/models.py:126
 msgid "Purged security metadata"
 msgstr "Purgou metadatos de seguridade"
 
-#: apps/audit/models.py:130
+#: apps/audit/models.py:133
 msgid "Purged expired working time records"
 msgstr "Purgou o rexistro que cumpriu o seu prazo"
 
-#: apps/audit/models.py:135
+#: apps/audit/models.py:138
 msgid "Delivered somebody their own record"
 msgstr "Entregoulle a alguén o seu propio rexistro"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:141
+#: apps/audit/models.py:144
 msgid "Erased a person who left no record"
 msgstr "Retirou unha alta que non deixou rastro"
 
-#: apps/audit/models.py:159
+#: apps/audit/models.py:162
 msgid "when"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:165 apps/common/models.py:117
+#: apps/audit/models.py:168 apps/common/models.py:117
 #: apps/tenants/models.py:193 apps/tenants/models.py:221
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:359
@@ -827,37 +832,37 @@ msgid "company"
 msgstr "empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:175
+#: apps/audit/models.py:178
 msgid "who"
 msgstr "quen"
 
-#: apps/audit/models.py:179
+#: apps/audit/models.py:182
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:181
+#: apps/audit/models.py:184
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:187 apps/tenants/identity.py:58
+#: apps/audit/models.py:190 apps/tenants/identity.py:58
 msgid "identifier"
 msgstr "identificador"
 
-#: apps/audit/models.py:188
+#: apps/audit/models.py:191
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:192
+#: apps/audit/models.py:195
 msgid "changes"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:215
+#: apps/audit/models.py:218
 msgid "audit entry"
 msgstr "asento do rastro"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:216
+#: apps/audit/models.py:219
 msgid "audit trail"
 msgstr "rastro de auditoría"
 
@@ -1052,7 +1057,7 @@ msgstr ""
 msgid "device"
 msgstr ""
 
-#: apps/notifications/models.py:44 apps/tenants/applications.py:104
+#: apps/notifications/models.py:44 apps/tenants/applications.py:110
 msgid "last used"
 msgstr ""
 
@@ -1373,6 +1378,7 @@ msgid "That operation is still being recorded. Try again shortly."
 msgstr "Esa operación aínda se está a rexistrar. Téntao de novo axiña."
 
 #: apps/punches/delegated.py:181 apps/tenants/attendance_api.py:93
+#: apps/tenants/hr_api.py:63
 msgid "No active person matches that reference."
 msgstr "Ningunha persoa activa coincide con esa referencia."
 
@@ -1702,8 +1708,8 @@ msgid "overtime decisions"
 msgstr "decisións sobre horas extras"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:604 apps/tenants/applications.py:64
-#: apps/tenants/applications.py:90
+#: apps/punches/models.py:604 apps/tenants/applications.py:70
+#: apps/tenants/applications.py:96
 msgid "application"
 msgstr "aplicación"
 
@@ -2816,79 +2822,98 @@ msgid "Read the list of people"
 msgstr "Ler a lista de persoas"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:37
+#: apps/tenants/applications.py:39
+msgid "Read leave and absences"
+msgstr "Ler permisos e ausencias"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/applications.py:40
+msgid "Request leave on behalf of an employee"
+msgstr "Pedir un permiso en nome dunha persoa"
+
+#: apps/tenants/applications.py:41
+msgid "Read planned shifts"
+msgstr "Ler as quendas planificadas"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/applications.py:42
+msgid "Read public holidays"
+msgstr "Ler os festivos"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/applications.py:43
 msgid "Create and update people"
 msgstr "Crear e actualizar persoas"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:38
+#: apps/tenants/applications.py:44
 msgid "Receive outbound events"
 msgstr "Recibir eventos de saída"
 
-#: apps/tenants/applications.py:45 apps/users/models.py:40
+#: apps/tenants/applications.py:51 apps/users/models.py:40
 msgid "description"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:48
+#: apps/tenants/applications.py:54
 msgid "permissions"
 msgstr "permisos"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:50
+#: apps/tenants/applications.py:56
 msgid "List of granted scopes. Empty means the application can do nothing."
 msgstr ""
 "Lista de permisos concedidos. Baleira quere dicir que a aplicación non pode "
 "facer nada."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:60
+#: apps/tenants/applications.py:66
 msgid "authorised by"
 msgstr "autorizada por"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:65
+#: apps/tenants/applications.py:71
 msgid "applications"
 msgstr "aplicacións"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:92
+#: apps/tenants/applications.py:98
 msgid "label"
 msgstr "etiqueta"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:94
+#: apps/tenants/applications.py:100
 msgid "token hash"
 msgstr "resumo do testemuño"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:96
+#: apps/tenants/applications.py:102
 msgid "hint"
 msgstr "pista"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:99
+#: apps/tenants/applications.py:105
 msgid "Last characters, to tell one credential from another in the interface."
 msgstr ""
 "Últimos caracteres, para distinguir unha credencial doutra na interface."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:102
+#: apps/tenants/applications.py:108
 msgid "expires at"
 msgstr "caduca o"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:103
+#: apps/tenants/applications.py:109
 msgid "revoked at"
 msgstr "revogada o"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:107
+#: apps/tenants/applications.py:113
 msgid "application credential"
 msgstr "credencial de aplicación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:108
+#: apps/tenants/applications.py:114
 msgid "application credentials"
 msgstr "credenciais de aplicación"
 
@@ -2939,14 +2964,15 @@ msgid "No active person matches the assertion's reference."
 msgstr "Ningunha persoa activa coincide coa referencia da aserción."
 
 #: apps/tenants/attendance_api.py:269 apps/tenants/attendance_api.py:271
+#: apps/tenants/hr_api.py:41 apps/tenants/hr_api.py:43
 msgid "A date is required, as YYYY-MM-DD."
 msgstr "Fai falta unha data, co formato AAAA-MM-DD."
 
-#: apps/tenants/attendance_api.py:275
+#: apps/tenants/attendance_api.py:275 apps/tenants/hr_api.py:47
 msgid "Must not be before `from`."
 msgstr "Non pode ser anterior a «from»."
 
-#: apps/tenants/attendance_api.py:278
+#: apps/tenants/attendance_api.py:278 apps/tenants/hr_api.py:50
 #, python-format
 msgid "At most %(days)d days per call."
 msgstr "Como moito %(days)d días por chamada."
@@ -3001,6 +3027,11 @@ msgstr "festivo"
 #: apps/tenants/holidays.py:89
 msgid "public holidays"
 msgstr "festivos"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/hr_api.py:212
+msgid "This company has no leave type with that code."
+msgstr "Esta empresa non ten ningún tipo de permiso con ese código."
 
 #: apps/tenants/identity.py:33
 msgid "Display name, e.g. 'GreenCityControl'."
@@ -3801,46 +3832,46 @@ msgstr "cambios no xeito de contar o tempo"
 msgid "The provider's address is not an http(s) url."
 msgstr "O enderezo do provedor non é un URL http(s)."
 
-#: apps/tenants/sso.py:103
+#: apps/tenants/sso.py:105
 msgid "Could not reach the identity provider."
 msgstr "Non se puido chegar ao provedor de identidade."
 
-#: apps/tenants/sso.py:109
+#: apps/tenants/sso.py:111
 msgid "The provider describes itself with a different issuer."
 msgstr "O provedor descríbese cun emisor distinto."
 
-#: apps/tenants/sso.py:189
+#: apps/tenants/sso.py:191
 msgid "That sign-in attempt expired or was already used."
 msgstr "Ese intento de entrada caducou ou xa se usou."
 
-#: apps/tenants/sso.py:210
+#: apps/tenants/sso.py:212
 msgid "The provider did not return a valid token."
 msgstr "O provedor non devolveu un token válido."
 
-#: apps/tenants/sso.py:223
+#: apps/tenants/sso.py:225
 msgid "Could not obtain the provider's signing keys."
 msgstr "Non se puideron obter as chaves de sinatura do provedor."
 
-#: apps/tenants/sso.py:238
+#: apps/tenants/sso.py:240
 msgid "The provider's token did not pass verification."
 msgstr "O token do provedor non superou a verificación."
 
-#: apps/tenants/sso.py:244
+#: apps/tenants/sso.py:246
 msgid "The provider's answer does not match this sign-in attempt."
 msgstr "A resposta do provedor non corresponde a este intento de entrada."
 
-#: apps/tenants/sso.py:265
+#: apps/tenants/sso.py:267
 msgid "The provider's token does not identify anybody."
 msgstr "O token do provedor non identifica a ninguén."
 
-#: apps/tenants/sso.py:283
+#: apps/tenants/sso.py:285
 msgid ""
 "Nobody here matches that account, and this provider does not create people."
 msgstr ""
 "Ninguén de aquí coincide con esa conta, e este provedor non dá de alta a "
 "ninguén."
 
-#: apps/tenants/sso.py:286
+#: apps/tenants/sso.py:288
 msgid "The provider's token carries no address to create anybody with."
 msgstr ""
 "O token do provedor non trae ningún enderezo co que dar de alta a ninguén."
@@ -4731,22 +4762,22 @@ msgid "Only an administrator answers a schedule adaptation."
 msgstr "Só administración contesta unha adaptación de xornada."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:329
+#: config/settings/base.py:336
 msgid "Spanish"
 msgstr "Castelán"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:330
+#: config/settings/base.py:337
 msgid "Catalan"
 msgstr "Catalán"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:331
+#: config/settings/base.py:338
 msgid "Galician"
 msgstr "Galego"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:332
+#: config/settings/base.py:339
 msgid "English"
 msgstr "Inglés"
 

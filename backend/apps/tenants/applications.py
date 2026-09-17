@@ -34,6 +34,12 @@ class ApplicationScope(models.TextChoices):
     PUNCH_DELEGATED = "punch:delegated", _("Clock in on behalf of an employee")
     READ_ATTENDANCE = "read:attendance", _("Read clock events and day status")
     READ_PEOPLE = "read:people", _("Read the list of people")
+    # Granted one by one, never in bulk: an integration that paints a calendar has
+    # no business reading why somebody is off unless its owner said so.
+    READ_ABSENCES = "read:absences", _("Read leave and absences")
+    WRITE_ABSENCES = "write:absences", _("Request leave on behalf of an employee")
+    READ_ROSTER = "read:roster", _("Read planned shifts")
+    READ_CALENDAR = "read:calendar", _("Read public holidays")
     WRITE_PEOPLE = "write:people", _("Create and update people")
     RECEIVE_EVENTS = "receive:events", _("Receive outbound events")
 

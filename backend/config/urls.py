@@ -25,6 +25,11 @@ from apps.reports.views import PayrollSummaryView, ReportView
 from apps.shifts.views import ShiftPatternViewSet, ShiftViewSet, WorkingTimeRulesView
 from apps.tenants.application_views import ApplicationViewSet
 from apps.tenants.attendance_api import ApplicationAttendanceRangeView, ApplicationAttendanceView
+from apps.tenants.hr_api import (
+    ApplicationAbsencesView,
+    ApplicationCalendarView,
+    ApplicationRosterView,
+)
 from apps.tenants.me_api import ApplicationMeView
 from apps.tenants.people_api import ApplicationPeopleView, ApplicationPersonView
 from apps.tenants.session_api import ApplicationSessionView
@@ -130,6 +135,9 @@ urlpatterns = [
         name="app-attendance-range",
     ),
     path("api/app/me/", ApplicationMeView.as_view(), name="app-me"),
+    path("api/app/absences/", ApplicationAbsencesView.as_view(), name="app-absences"),
+    path("api/app/roster/", ApplicationRosterView.as_view(), name="app-roster"),
+    path("api/app/calendar/", ApplicationCalendarView.as_view(), name="app-calendar"),
     path("api/app/sessions/", ApplicationSessionView.as_view(), name="app-sessions"),
     path("api/overtime/", OvertimeView.as_view(), name="overtime"),
     path(

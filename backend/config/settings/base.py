@@ -276,6 +276,13 @@ SPECTACULAR_SETTINGS = {
         # Igual: cómo se salda una hora extra sale en la propuesta y en el
         # intervalo ya saldado, y son el mismo juego de valores.
         "OvertimeSettlementEnum": "apps.punches.models.OvertimeSettlement.choices",
+        # El estado de una ausencia sale en su propia API y, recortado, en la de
+        # aplicaciones: allí nunca viaja una rechazada, porque no explica ningún hueco.
+        # Son dos conjuntos distintos a propósito, así que cada uno lleva su nombre;
+        # sin esto el generador bautiza uno «Status7f3Enum», que no dice nada a quien
+        # lea el esquema.
+        "AbsenceStatusEnum": "apps.absences.models.AbsenceStatus.choices",
+        "AbsenceStatusForApplicationsEnum": [("PENDING", "PENDING"), ("APPROVED", "APPROVED")],
     },
 }
 

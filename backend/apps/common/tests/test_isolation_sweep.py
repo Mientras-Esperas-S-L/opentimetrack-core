@@ -647,6 +647,13 @@ def test_every_route_is_covered_by_this_sweep():
         # esta, que el emisor tenga que estar autorizado a actuar, y que una aserción
         # no se pueda reutilizar.
         "api/app/sessions/",
+        # Las tres lecturas de RRHH para aplicaciones, cada una con su permiso y su
+        # empresa sacada de la credencial. Su barrido propio está en
+        # apps/tenants/tests/test_application_hr.py, e incluye que una credencial de
+        # otra empresa no vea a nadie de esta y que leer no dé permiso para pedir.
+        "api/app/absences/",
+        "api/app/roster/",
+        "api/app/calendar/",
         # Sin sesión a propósito, y de quién es el registro **no llega en la
         # petición**: sale del identificador firmado del enlace, así que no hay
         # ningún parámetro que se pueda cambiar para alcanzar a otra persona ---la
