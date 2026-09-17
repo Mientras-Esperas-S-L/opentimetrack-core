@@ -75,7 +75,13 @@ Los **tramos** no son adorno: la aplicación integrada puede necesitar repartir 
 según su propio contexto (qué proyecto, qué obra), y sin los tramos solo puede
 repartir a ojo o duplicar el día entero en dos sitios.
 
-## A3. Leer ausencias, cuadrante y festivos desde una aplicación
+## A3. Leer ausencias, cuadrante y festivos desde una aplicación ✔ hecho el 18/09/2026
+
+`GET /api/app/absences/`, `/api/app/roster/` y `/api/app/calendar/`, cada una con su
+permiso (`read:absences`, `read:roster`, `read:calendar`) y el mismo tope de 62 días.
+`POST /api/app/absences/` pide un permiso con `write:absences`: llega **pendiente**,
+pasa por las mismas reglas, y deja rastro de qué aplicación lo pidió. Las rechazadas no
+se devuelven: no explican ningún hueco. 11 pruebas.
 
 `read:attendance` se queda con lo que mide la jornada. Lo demás son permisos nuevos
 y separados, que es la regla de la casa: se conceden uno a uno.
