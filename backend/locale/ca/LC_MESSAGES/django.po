@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-18 01:01+0000\n"
+"POT-Creation-Date: 2026-09-18 01:21+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan\n"
@@ -1373,16 +1373,16 @@ msgstr ""
 "Envia una capçalera Idempotency-Key que anomeni aquesta operació, perquè un "
 "reintent no quedi registrat com un segon fitxatge."
 
-# revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/delegated.py:183 apps/punches/delegated.py:208
-msgid "That operation is still being recorded. Try again shortly."
-msgstr ""
-"Aquesta operació encara s'està registrant. Torna-ho a provar de seguida."
-
-#: apps/punches/delegated.py:191 apps/tenants/attendance_api.py:93
+#: apps/punches/delegated.py:182 apps/tenants/attendance_api.py:93
 #: apps/tenants/hr_api.py:63
 msgid "No active person matches that reference."
 msgstr "Cap persona activa no coincideix amb aquesta referència."
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/punches/idempotency.py:80
+msgid "That operation is still being recorded. Try again shortly."
+msgstr ""
+"Aquesta operació encara s'està registrant. Torna-ho a provar de seguida."
 
 #: apps/punches/models.py:46
 msgid "Clock in"
@@ -1428,7 +1428,7 @@ msgid "Ordinary"
 msgstr "Ordinàries"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:92 apps/reports/services.py:616
+#: apps/punches/models.py:92 apps/reports/services.py:619
 msgid "Overtime"
 msgstr "Hores extres"
 
@@ -1808,7 +1808,8 @@ msgstr "El dispositiu diu que aquest fitxatge va passar després d'arribar."
 
 #: apps/punches/services.py:581
 msgid "This company records every punch from the moment it reaches the system."
-msgstr "Aquesta empresa registra tots els fitxatges des que arriben al sistema."
+msgstr ""
+"Aquesta empresa registra tots els fitxatges des que arriben al sistema."
 
 #: apps/punches/services.py:587
 #, python-format
@@ -1816,19 +1817,28 @@ msgid ""
 "This punch was made more than %(hours)s hours ago, so it is not recorded "
 "directly. Ask for it through the correction flow, where it is approved and "
 "the change is on the record."
-msgstr "Aquest fitxatge es va fer fa més de %(hours)s hores, així que no es registra directament. Demana'l per correcció, on s'aprova i queda constància del canvi."
+msgstr ""
+"Aquest fitxatge es va fer fa més de %(hours)s hores, així que no es registra "
+"directament. Demana'l per correcció, on s'aprova i queda constància del "
+"canvi."
 
 #: apps/punches/services.py:631
 msgid "You cannot clock in: you have approved leave for today."
 msgstr "No pots fitxar: tens una absència aprovada per a avui."
 
-#: apps/punches/views.py:93
+#: apps/punches/views.py:94
 msgid ""
 "This company clocks in through its management application. You can still "
 "clock in here, but say why in a line."
 msgstr ""
 "Aquesta empresa fitxa per la seva aplicació de gestió. Podeu fitxar aquí "
 "igualment, però digueu per què en una línia."
+
+#: apps/punches/views.py:253
+msgid ""
+"This key only means something for a session held by an application, which is "
+"where a queue of unsent punches lives."
+msgstr "Aquesta clau només significa alguna cosa en una sessió que sosté una aplicació, que és on hi ha una cua de fitxatges sense enviar."
 
 #: apps/reports/delivery.py:125 apps/users/passwords.py:136
 msgid "the platform"
@@ -1892,16 +1902,16 @@ msgstr "resum per a la nòmina"
 msgid "payroll summaries"
 msgstr "resums per a la nòmina"
 
-#: apps/reports/pdf.py:57 apps/reports/services.py:575
+#: apps/reports/pdf.py:57 apps/reports/services.py:578
 msgid "Summary of the working time record"
 msgstr "Resum del registre de jornada"
 
-#: apps/reports/pdf.py:57 apps/reports/services.py:575
+#: apps/reports/pdf.py:57 apps/reports/services.py:578
 msgid "Working time record"
 msgstr "Registre de jornada"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:98 apps/reports/services.py:578
+#: apps/reports/pdf.py:98 apps/reports/services.py:581
 msgid "Delivered with the payslip (art. 6.1)"
 msgstr "Es lliura amb el rebut de salaris (art. 6.1)"
 
@@ -1910,79 +1920,79 @@ msgstr "Es lliura amb el rebut de salaris (art. 6.1)"
 msgid "Article 34.9 of the Spanish Workers' Statute (Royal Decree-Law 8/2019)"
 msgstr "Article 34.9 de l'Estatut dels Treballadors (Reial decret llei 8/2019)"
 
-#: apps/reports/pdf.py:108 apps/reports/services.py:579
+#: apps/reports/pdf.py:108 apps/reports/services.py:582
 #: apps/tenants/holidays.py:57
 msgid "Company"
 msgstr "Empresa"
 
-#: apps/reports/pdf.py:108 apps/reports/services.py:579
+#: apps/reports/pdf.py:108 apps/reports/services.py:582
 msgid "Tax number"
 msgstr "CIF/NIF"
 
-#: apps/reports/pdf.py:110 apps/reports/services.py:581
+#: apps/reports/pdf.py:110 apps/reports/services.py:584
 #: apps/users/models.py:310
 msgid "Employee"
 msgstr "Persona treballadora"
 
-#: apps/reports/pdf.py:112 apps/reports/services.py:581
+#: apps/reports/pdf.py:112 apps/reports/services.py:584
 msgid "Staff number"
 msgstr "Núm. d'empleat"
 
-#: apps/reports/pdf.py:116 apps/reports/services.py:584
+#: apps/reports/pdf.py:116 apps/reports/services.py:587
 msgid "Period"
 msgstr "Període"
 
-#: apps/reports/pdf.py:118 apps/reports/services.py:584
+#: apps/reports/pdf.py:118 apps/reports/services.py:587
 msgid "Time zone"
 msgstr "Zona horària"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:125 apps/reports/services.py:593
+#: apps/reports/pdf.py:125 apps/reports/services.py:596
 msgid "Break"
 msgstr "Descans"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:126 apps/reports/services.py:594
+#: apps/reports/pdf.py:126 apps/reports/services.py:597
 msgid "counts as working time"
 msgstr "compta com a temps de treball"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:128 apps/reports/services.py:596
+#: apps/reports/pdf.py:128 apps/reports/services.py:599
 msgid "does not count as working time"
 msgstr "no compta com a temps de treball"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:129 apps/reports/services.py:597
+#: apps/reports/pdf.py:129 apps/reports/services.py:600
 msgid "Maximum open day (hours)"
 msgstr "Jornada oberta màxima (hores)"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:138 apps/reports/services.py:608
+#: apps/reports/pdf.py:138 apps/reports/services.py:611
 msgid "Regime"
 msgstr "Règim"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:140 apps/reports/services.py:610
+#: apps/reports/pdf.py:140 apps/reports/services.py:613
 msgid "Contracted hours"
 msgstr "Hores contractades"
 
-#: apps/reports/pdf.py:167 apps/reports/services.py:624
+#: apps/reports/pdf.py:167 apps/reports/services.py:627
 msgid "Date"
 msgstr "Data"
 
-#: apps/reports/pdf.py:167 apps/reports/services.py:624
+#: apps/reports/pdf.py:167 apps/reports/services.py:627
 msgid "Entry"
 msgstr "Entrada"
 
-#: apps/reports/pdf.py:167 apps/reports/services.py:624
+#: apps/reports/pdf.py:167 apps/reports/services.py:627
 msgid "Exit"
 msgstr "Sortida"
 
-#: apps/reports/pdf.py:167 apps/reports/services.py:624
+#: apps/reports/pdf.py:167 apps/reports/services.py:627
 msgid "Hours"
 msgstr "Hores"
 
-#: apps/reports/pdf.py:167 apps/reports/services.py:624
+#: apps/reports/pdf.py:167 apps/reports/services.py:627
 msgid "Notes"
 msgstr "Observacions"
 
@@ -1996,11 +2006,11 @@ msgstr "Cap registre en aquest període"
 msgid "Total for the period"
 msgstr "Total del període"
 
-#: apps/reports/pdf.py:222 apps/reports/services.py:650
+#: apps/reports/pdf.py:222 apps/reports/services.py:653
 msgid "Breaks, not counted as working time"
 msgstr "Pauses, que no computen com a jornada"
 
-#: apps/reports/pdf.py:227 apps/reports/services.py:655
+#: apps/reports/pdf.py:227 apps/reports/services.py:658
 msgid "Waiting time, not counted as working time"
 msgstr "Temps d'espera, que no computa com a jornada"
 
@@ -2013,32 +2023,32 @@ msgstr ""
 "Les hores les registra el servidor, mai el dispositiu que les demana, i es "
 "mostren en el fus horari indicat més amunt."
 
-#: apps/reports/pdf.py:260 apps/reports/services.py:659
+#: apps/reports/pdf.py:260 apps/reports/services.py:662
 msgid "Generated"
 msgstr "Generat"
 
-#: apps/reports/pdf.py:261 apps/reports/services.py:660
+#: apps/reports/pdf.py:261 apps/reports/services.py:663
 msgid "Verification hash"
 msgstr "Empremta de verificació"
 
-#: apps/reports/services.py:344
+#: apps/reports/services.py:345
 msgid "two entries with no exit in between"
 msgstr "dues entrades sense sortida enmig"
 
-#: apps/reports/services.py:351
+#: apps/reports/services.py:352
 msgid "exit with no matching entry"
 msgstr "sortida sense entrada prèvia"
 
-#: apps/reports/services.py:373
+#: apps/reports/services.py:374
 msgid "entry with no exit"
 msgstr "entrada sense sortida"
 
-#: apps/reports/services.py:376
+#: apps/reports/services.py:377
 msgid "break with no end"
 msgstr "pausa sense fi"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/services.py:399
+#: apps/reports/services.py:400
 msgid ""
 "an entry no longer matches its integrity seal: it was altered outside the app"
 msgstr ""
@@ -2046,45 +2056,45 @@ msgstr ""
 "alterar fora de l'aplicació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/services.py:519
+#: apps/reports/services.py:520
 #, python-format
 msgid "this day was also recorded as: %(absence)s"
 msgstr "aquest dia també consta com a: %(absence)s"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/services.py:521
+#: apps/reports/services.py:522
 msgid "recorded by an application on the person's behalf"
 msgstr "registrat per una aplicació en nom de la persona"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/services.py:526
+#: apps/reports/services.py:527
 msgid "corrected by the company"
 msgstr "corregit per l'empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/services.py:528
+#: apps/reports/services.py:529
 msgid "imported from another system"
 msgstr "importat d'un altre sistema"
 
-#: apps/reports/services.py:537
+#: apps/reports/services.py:540
 #, python-format
 msgid "recorded offline and received later (at %(times)s)"
 msgstr "registrat sense cobertura i rebut després (a les %(times)s)"
 
-#: apps/reports/services.py:539
+#: apps/reports/services.py:542
 msgid "recorded offline and received later"
 msgstr "registrat sense cobertura i rebut després"
 
-#: apps/reports/services.py:545
+#: apps/reports/services.py:548
 msgid "changed without the person's agreement (art. 4.b)"
 msgstr "modificat sense la conformitat de la persona (art. 4.b)"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/services.py:618
+#: apps/reports/services.py:621
 msgid "Days with activity"
 msgstr "Dies amb activitat"
 
-#: apps/reports/services.py:644
+#: apps/reports/services.py:647
 msgid "Total"
 msgstr "Total"
 

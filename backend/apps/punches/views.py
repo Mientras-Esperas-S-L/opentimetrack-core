@@ -6,7 +6,7 @@ The heart of the product: one tap, and the server decides everything else.
 from __future__ import annotations
 
 from django.utils.translation import gettext_lazy as _
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,6 +16,7 @@ from apps.common.exceptions import BusinessRuleError
 from apps.common.filters import LocalDayRangeFilter
 from apps.common.permissions import IsAuthenticatedInTenant
 from apps.common.scope import person_in_scope, visible_people
+from apps.punches import idempotency
 from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource
 from apps.punches.serializers import PunchSerializer, PunchWriteSerializer
 from apps.punches.services import build_day_status, register_punch
@@ -100,9 +101,27 @@ def _refuse_unless_justified(request, data) -> dict:
 
 def acting_application_name(request) -> str:
     """The application acting for the person, when the session came from an assertion."""
+    return _claim(request, "act_app")
+
+
+def acting_application(request):
+    """The application itself, or `None` when the person is acting for themselves.
+
+    Needed rather than just its name for the idempotency receipt, which is scoped to
+    the application: two connectors numbering their own operations must not collide.
+    """
+    from apps.tenants.models import Application
+
+    identifier = _claim(request, "act_app_id")
+    if not identifier:
+        return None
+    return Application.objects.filter(pk=identifier).first()
+
+
+def _claim(request, name: str) -> str:
     token = getattr(request, "auth", None)
     try:
-        return str(token["act_app"]) if token is not None and "act_app" in token else ""
+        return str(token[name]) if token is not None and name in token else ""
     except TypeError, KeyError:
         return ""
 
@@ -191,10 +210,29 @@ class PunchViewSet(
         summary="Clock in or out",
         description=(
             "Records a clock event. The client sends neither the time nor the type: "
-            "the server sets the timestamp and infers whether it is an entry or an exit."
+            "the server infers whether it is an entry or an exit, and sets the timestamp "
+            "unless the punch was made offline and says when (`declared_at`).\n\n"
+            "**`Idempotency-Key` is accepted when an application holds the session.** "
+            "That is the case with a queue at the other end --- a phone that recorded a "
+            "punch with no signal and sends it when the signal returns. Repeating a call "
+            "with the same key returns the event already recorded, with `200` instead of "
+            "`201`. Without it a retry would not repeat the entry: it would record an "
+            "**exit**, because the type is inferred from the current state."
         ),
+        parameters=[
+            OpenApiParameter(
+                name="Idempotency-Key",
+                type=str,
+                location=OpenApiParameter.HEADER,
+                required=False,
+                description=(
+                    "Identifies the operation so a retry is not recorded twice. Only for a "
+                    "session obtained by an application; up to 200 characters."
+                ),
+            )
+        ],
         request=PunchWriteSerializer,
-        responses={201: PunchSerializer},
+        responses={201: PunchSerializer, 200: PunchSerializer},
     )
     def create(self, request):
         serializer = PunchWriteSerializer(data=request.data)
@@ -202,6 +240,30 @@ class PunchViewSet(
         data = serializer.validated_data
 
         excepcion = _refuse_unless_justified(request, data)
+
+        # La clave es de la aplicación que sostiene la sesión, porque es la que tiene
+        # la cola. Una persona fichando desde la web no tiene nada que reintentar, y
+        # aceptarle una clave sería ofrecerle una garantía que no hay quien dé.
+        application = acting_application(request)
+        key = idempotency.key_from(request)
+        if key and application is None:
+            raise BusinessRuleError(
+                code="idempotency_key_not_accepted",
+                message=_(
+                    "This key only means something for a session held by an application, "
+                    "which is where a queue of unsent punches lives."
+                ),
+                details={"header": "Idempotency-Key"},
+            )
+
+        receipt = None
+        if key:
+            ya = idempotency.already_recorded(application, key)
+            if ya is not None:
+                return self._answer(ya, status.HTTP_200_OK)
+            receipt, ya = idempotency.claim(request.user.tenant, application, key)
+            if ya is not None:
+                return self._answer(ya, status.HTTP_200_OK)
 
         punch = register_punch(
             employee=request.user,
@@ -222,9 +284,16 @@ class PunchViewSet(
             declared_at=data.get("declared_at"),
         )
 
+        if receipt is not None:
+            idempotency.settle(receipt, punch)
+
+        return self._answer(punch, status.HTTP_201_CREATED)
+
+    @staticmethod
+    def _answer(punch, code: int) -> Response:
         data = PunchSerializer(punch).data
-        data["day_status"] = build_day_status(request.user, request.user.tenant).as_dict()
-        return Response(data, status=status.HTTP_201_CREATED)
+        data["day_status"] = build_day_status(punch.employee, punch.tenant).as_dict()
+        return Response(data, status=code)
 
     @extend_schema(
         summary="Today's status",
