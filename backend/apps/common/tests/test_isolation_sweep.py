@@ -654,6 +654,10 @@ def test_every_route_is_covered_by_this_sweep():
         "api/app/absences/",
         "api/app/roster/",
         "api/app/calendar/",
+        # El catálogo de permisos de la empresa. No nombra a nadie ---son tipos de
+        # permiso, no personas--- y la empresa sale de la credencial igual que en las
+        # tres de arriba, así que se barre con ellas en test_application_hr.py.
+        "api/app/leave-types/",
         # Sin sesión a propósito, y de quién es el registro **no llega en la
         # petición**: sale del identificador firmado del enlace, así que no hay
         # ningún parámetro que se pueda cambiar para alcanzar a otra persona ---la

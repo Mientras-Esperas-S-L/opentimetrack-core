@@ -358,3 +358,58 @@ class ApplicationCalendarView(APIView):
                 ]
             }
         )
+
+
+class LeaveTypeOutSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    name = serializers.CharField()
+    family = serializers.CharField(help_text="What it behaves like: VACATION, SICK_LEAVE, …")
+    basis = serializers.CharField(help_text="The article it comes from, when it has one.")
+
+
+class LeaveTypesAnswerSerializer(serializers.Serializer):
+    leave_types = LeaveTypeOutSerializer(many=True)
+
+
+@extend_schema(tags=["applications"])
+class ApplicationLeaveTypesView(APIView):
+    """This company's catalogue of leave, so the other side can name one.
+
+    Requesting leave needs a code, and the catalogue is the company's: seeded from the
+    country's law and then grown by whatever its agreement adds. Without this, whoever
+    configures the other application is mapping their own states onto codes they cannot
+    see, and finds out they guessed wrong the first time somebody asks for a day off.
+    """
+
+    permission_classes = [HasApplicationScope]
+    required_scope = ApplicationScope.READ_ABSENCES
+
+    @extend_schema(
+        summary="The company's leave catalogue",
+        description=(
+            "Every leave type this company recognises, with the code that "
+            "`POST /api/app/absences/` expects. Requires `read:absences`."
+        ),
+        responses={200: LeaveTypesAnswerSerializer},
+    )
+    def get(self, request):
+        from apps.absences.models import LeaveType
+
+        company = request.user.application.tenant
+        rows = LeaveType.objects.filter(tenant=company, is_active=True).order_by("name")
+        return Response(
+            {
+                "leave_types": [
+                    {
+                        "code": row.code,
+                        "name": row.name,
+                        "family": row.family,
+                        "basis": row.basis,
+                    }
+                    for row in rows
+                    # Sin código no hay nada que pedir desde fuera: son los que la
+                    # empresa se inventó y solo existen dentro de su propia pantalla.
+                    if row.code
+                ]
+            }
+        )

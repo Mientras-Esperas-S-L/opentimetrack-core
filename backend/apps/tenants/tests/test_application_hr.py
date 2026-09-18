@@ -247,3 +247,51 @@ def test_another_company_sees_nobody_here(company, rosa):
     assert intruder.get("/api/app/roster/", RANGE).json()["shifts"] == []
     named = intruder.get("/api/app/absences/", {**RANGE, "employee_ref": "EMP-0042"})
     assert named.json()["error"]["code"] == "employee_not_found"
+
+
+# ------------------------------------------------------------- the catalogue
+
+
+@pytest.mark.django_db
+def test_the_catalogue_gives_the_codes_that_requesting_leave_expects(company):
+    with tenant_context(company.id):
+        LeaveType.objects.create(
+            tenant=company,
+            code="es.vacation",
+            name="Vacaciones",
+            family="VACATION",
+            basis="art. 38 ET",
+        )
+    answer = credential(company, ApplicationScope.READ_ABSENCES).get("/api/app/leave-types/")
+
+    assert answer.status_code == 200
+    kinds = answer.json()["leave_types"]
+    assert {"code": "es.vacation", "name": "Vacaciones", "family": "VACATION", "basis": "art. 38 ET"} in kinds
+
+
+@pytest.mark.django_db
+def test_a_type_the_company_invented_has_no_code_so_it_is_not_offered(company):
+    """Sin código no hay nada que pedir desde fuera, y ofrecerlo sería ofrecer un fallo."""
+    with tenant_context(company.id):
+        LeaveType.objects.create(tenant=company, code="", name="Día de la empresa")
+    answer = credential(company, ApplicationScope.READ_ABSENCES).get("/api/app/leave-types/")
+
+    assert [kind["name"] for kind in answer.json()["leave_types"]] == []
+
+
+@pytest.mark.django_db
+def test_the_catalogue_needs_permission_to_read_leave(company):
+    answer = credential(company, ApplicationScope.READ_ROSTER).get("/api/app/leave-types/")
+
+    assert answer.status_code == 403
+
+
+@pytest.mark.django_db
+def test_another_company_does_not_see_this_catalogue(company):
+    with tenant_context(company.id):
+        LeaveType.objects.create(tenant=company, code="es.vacation", name="Vacaciones")
+    other = Tenant.objects.create(name="Globex", tax_id="B33333333", time_zone="Europe/Madrid")
+
+    intruder = credential(other, ApplicationScope.READ_ABSENCES).get("/api/app/leave-types/")
+
+    assert intruder.json()["leave_types"] == []
