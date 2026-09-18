@@ -33,6 +33,18 @@ def _redirect_uri(request) -> str:
     return configured or request.build_absolute_uri("/api/auth/sso/callback/")
 
 
+def _web_url(request) -> str:
+    """La aplicación web de esta instalación, sin barra final.
+
+    De los ajustes, y si no están, del origen de la propia petición: en un despliegue
+    normal la web y la API comparten dominio, así que esa suposición acierta y evita
+    un ajuste obligatorio más. En desarrollo, donde van en puertos distintos, hay que
+    ponerlo.
+    """
+    configurada = (getattr(settings, "SSO_WEB_URL", "") or "").rstrip("/")
+    return configurada
+
+
 class DiscoverSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
@@ -154,7 +166,52 @@ class SsoCallbackView(APIView):
                 code="person_inactive", message="That account is not active here."
             )
 
-        return Response({**issue_tokens(person), "created": created}, status=status.HTTP_200_OK)
+        sesion = {**issue_tokens(person), "created": created}
+
+        # Quien está al otro lado de esta llamada es **el navegador de una persona**,
+        # que llega aquí por una redirección del proveedor y espera acabar dentro de
+        # la aplicación, no mirando un JSON. Así que se le devuelve a la aplicación
+        # web con un vale de un solo uso, y ella lo canjea por la sesión.
+        #
+        # Los testigos no viajan en esa redirección a propósito: quedarían en el
+        # historial, en el registro del servidor web y en el `Referer` de la primera
+        # imagen que cargara la página.
+        destino = _web_url(request)
+        if destino:
+            return redirect(f"{destino}/entrando?ticket={sso.leave_ticket(sesion)}")
+
+        # Sin aplicación web configurada ---una instalación que solo use la API---
+        # se responde como antes, que es lo que esperan sus integraciones.
+        return Response(sesion, status=status.HTTP_200_OK)
+
+
+class TicketSerializer(serializers.Serializer):
+    ticket = serializers.CharField()
+
+
+@extend_schema(tags=["auth"])
+class SsoTicketView(APIView):
+    """La aplicación web recoge aquí la sesión que dejó el proveedor.
+
+    El último paso del viaje: el navegador vuelve del proveedor a la API, la API lo
+    devuelve a la aplicación web con un vale, y la aplicación lo cambia por la sesión.
+    El vale no sirve para nada más, se canjea **una vez** y caduca en un minuto.
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes: list = []
+    throttle_scope = "login"
+
+    @extend_schema(
+        summary="Collect the session left by the provider",
+        request=TicketSerializer,
+        responses={200: SessionAnswerSerializer},
+        auth=[],
+    )
+    def post(self, request):
+        form = TicketSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+        return Response(sso.take_ticket(form.validated_data["ticket"]))
 
 
 class LogoutTokenSerializer(serializers.Serializer):

@@ -217,6 +217,20 @@ def test_el_navegador_va_con_pkce_y_un_estado_de_un_solo_uso(provider, idp):
         sso.take_state(params["state"][0])
 
 
+def sesion_de(answer, client):
+    """La sesión que trae la vuelta, llegue como llegue.
+
+    Con una aplicación web configurada ---lo normal--- el callback **devuelve el
+    navegador a ella** con un vale, y la sesión se recoge canjeándolo. Sin ella
+    responde el JSON directamente. Las dos formas acaban en el mismo sitio, y lo que
+    estas pruebas miran es lo que hay dentro.
+    """
+    if answer.status_code == 302:
+        vale = parse_qs(urlparse(answer["Location"]).query)["ticket"][0]
+        return client.post("/api/auth/sso/ticket/", {"ticket": vale}, format="json").json()
+    return answer.json()
+
+
 @pytest.mark.django_db
 def test_vuelve_con_una_sesion_de_esa_persona(provider, idp, keypair, monkeypatch, company):
     with tenant_context(company.id):
@@ -246,8 +260,7 @@ def test_vuelve_con_una_sesion_de_esa_persona(provider, idp, keypair, monkeypatc
         "/api/auth/sso/callback/", {"code": "un-codigo", "state": params["state"][0]}
     )
 
-    assert answer.status_code == 200
-    body = answer.json()
+    body = sesion_de(answer, client)
     assert body["access"] and body["created"] is False
     marta.refresh_from_db()
     assert marta.oidc_sub == "sub-de-marta", "el sujeto queda anclado en la primera entrada"
@@ -359,7 +372,7 @@ def test_con_alta_al_vuelo_entra_sin_contraseña_y_sin_permisos(
 
     answer = client.get("/api/auth/sso/callback/", {"code": "x", "state": params["state"][0]})
 
-    assert answer.status_code == 200 and answer.json()["created"] is True
+    assert sesion_de(answer, client)["created"] is True
     with tenant_context(company.id):
         nueva = User.objects.get(email="nueva@contrata.example")
     assert nueva.is_federated, "su contraseña es asunto del proveedor"
@@ -404,3 +417,96 @@ def test_un_cierre_de_un_emisor_desconocido_no_cierra_nada(provider, idp, keypai
         format="json",
     )
     assert answer.json()["error"]["code"] == "issuer_not_trusted"
+
+
+# ------------------------------------------- la vuelta a la aplicación web
+
+
+def _hasta_el_callback(client, provider, keypair, monkeypatch):
+    """Deja el viaje a punto de volver, y devuelve la respuesta del callback."""
+    from django.core.cache import cache as django_cache
+
+    from apps.tenants import sso
+
+    params = parse_qs(
+        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+    )
+    estado = sso.take_state(params["state"][0])
+    django_cache.set(f"sso:state:{params['state'][0]}", estado, 600)
+    monkeypatch.setattr(
+        sso,
+        "_post_form",
+        lambda url, data: (200, {"id_token": id_token(keypair, nonce=estado["nonce"])}),
+    )
+    return client.get("/api/auth/sso/callback/", {"code": "un-codigo", "state": params["state"][0]})
+
+
+@pytest.mark.django_db
+def test_con_aplicacion_web_el_navegador_acaba_en_ella_y_no_en_un_json(
+    provider, idp, keypair, monkeypatch, company
+):
+    """Quien vuelve del proveedor es una persona, no un integrador.
+
+    Sin esto, el viaje acababa en la respuesta de la API: alguien que entra con la
+    cuenta de su empresa se quedaba mirando sus propios testigos en un JSON.
+    """
+    with tenant_context(company.id):
+        User.objects.create_user(
+            email="marta@contrata.example", password=PASSWORD, tenant=company, first_name="Marta"
+        )
+
+    with override_settings(SSO_WEB_URL="https://ott.example"):
+        answer = _hasta_el_callback(APIClient(), provider, keypair, monkeypatch)
+
+    assert answer.status_code == 302
+    destino = answer["Location"]
+    assert destino.startswith("https://ott.example/entrando?ticket=")
+    # Y los testigos **no** viajan en esa dirección: acabarían en el historial, en el
+    # registro del servidor web y en el `Referer` de la primera imagen de la página.
+    assert "access" not in destino and "refresh" not in destino
+
+
+@pytest.mark.django_db
+def test_el_vale_se_cambia_por_la_sesion_una_sola_vez(provider, idp, keypair, monkeypatch, company):
+    with tenant_context(company.id):
+        User.objects.create_user(
+            email="marta@contrata.example", password=PASSWORD, tenant=company, first_name="Marta"
+        )
+
+    client = APIClient()
+    with override_settings(SSO_WEB_URL="https://ott.example"):
+        vuelta = _hasta_el_callback(client, provider, keypair, monkeypatch)
+    vale = parse_qs(urlparse(vuelta["Location"]).query)["ticket"][0]
+
+    primera = client.post("/api/auth/sso/ticket/", {"ticket": vale}, format="json")
+    assert primera.status_code == 200
+    assert primera.json()["access"]
+
+    repetida = client.post("/api/auth/sso/ticket/", {"ticket": vale}, format="json")
+    assert repetida.json()["error"]["code"] == "ticket_unknown", (
+        "repetirlo es reutilizar una sesión"
+    )
+
+
+@pytest.mark.django_db
+def test_un_vale_inventado_no_da_sesion(provider):
+    answer = APIClient().post("/api/auth/sso/ticket/", {"ticket": "me-lo-invento"}, format="json")
+
+    assert answer.json()["error"]["code"] == "ticket_unknown"
+
+
+@pytest.mark.django_db
+def test_sin_aplicacion_web_configurada_responde_como_siempre(
+    provider, idp, keypair, monkeypatch, company
+):
+    """Una instalación que solo use la API no se entera de este cambio."""
+    with tenant_context(company.id):
+        User.objects.create_user(
+            email="marta@contrata.example", password=PASSWORD, tenant=company, first_name="Marta"
+        )
+
+    with override_settings(SSO_WEB_URL=""):
+        answer = _hasta_el_callback(APIClient(), provider, keypair, monkeypatch)
+
+    assert answer.status_code == 200
+    assert answer.json()["access"]

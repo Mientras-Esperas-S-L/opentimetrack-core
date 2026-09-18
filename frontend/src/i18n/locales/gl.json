@@ -914,5 +914,7 @@
   "· resuelto antes con {{antes}}": "· resolto antes con {{antes}}",
   "· sin cubrir": "· sen cubrir",
   "· sin sueldo": "· sen soldo",
-  "· sobre {{quien}}": "· sobre {{quien}}"
+  "· sobre {{quien}}": "· sobre {{quien}}",
+  "Volver a la pantalla de acceso": "Volver á pantalla de acceso",
+  "Falta el identificador de la entrada. Vuelve a intentarlo desde la pantalla de acceso.": "Falta o identificador da entrada. Téntao de novo desde a pantalla de acceso."
 }

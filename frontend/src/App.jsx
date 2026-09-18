@@ -9,6 +9,7 @@ import AppShell from './routes/AppShell.jsx'
 import RequireManager from './routes/RequireManager.jsx'
 import RequireAdmin from './routes/RequireAdmin.jsx'
 import SignIn from './pages/SignIn.jsx'
+import SsoLanding from './pages/SsoLanding.jsx'
 import SetPassword from './pages/SetPassword.jsx'
 import Clock from './pages/Clock.jsx'
 import MyTime from './pages/me/MyTime.jsx'
@@ -73,6 +74,11 @@ export default function App() {
             lived behind it the link fell through to the catch-all and landed on
             the clock, so an invited person could never get a password. */}
         <Route path="set-password/:uid/:token" element={<SetPassword />} />
+
+        {/* La vuelta del proveedor de identidad. Fuera de la comprobación de
+            sesión por lo mismo que la de arriba: quien llega aquí **todavía no
+            tiene sesión**, la viene a recoger. */}
+        <Route path="entrando" element={<SsoLanding />} />
 
         {!session ? (
           <Route path="*" element={<SignIn />} />

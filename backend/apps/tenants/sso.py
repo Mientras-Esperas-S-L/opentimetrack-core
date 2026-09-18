@@ -193,6 +193,37 @@ def take_state(state: str) -> dict:
     return kept
 
 
+#: Cuánto vive el vale con el que el navegador recoge su sesión. Corto porque el
+#: único hueco entre emitirlo y canjearlo es una redirección.
+TICKET_TTL_SECONDS = 60
+_TICKET_PREFIX = "sso:ticket:"
+
+
+def leave_ticket(session: dict) -> str:
+    """Guarda la sesión recién emitida y devuelve el vale con el que se recoge.
+
+    El proveedor devuelve el navegador a una dirección del **servidor**, y la sesión
+    la necesita la **aplicación web**. Entre los dos hay una redirección, y por ella
+    no pueden viajar los testigos: quedarían en el historial del navegador, en el
+    registro del servidor web y en el `Referer` de la primera imagen que cargue la
+    página. Viaja este vale, que no vale para nada más, se canjea una vez y caduca en
+    un minuto.
+    """
+    ticket = secrets.token_urlsafe(32)
+    cache.set(f"{_TICKET_PREFIX}{ticket}", session, TICKET_TTL_SECONDS)
+    return ticket
+
+
+def take_ticket(ticket: str) -> dict:
+    """La sesión que guarda ese vale, **una sola vez**."""
+    key = f"{_TICKET_PREFIX}{ticket or ''}"
+    kept = cache.get(key)
+    if not kept:
+        _refuse("ticket_unknown", _("That sign-in expired or was already collected."))
+    cache.delete(key)
+    return kept
+
+
 def exchange_code(provider: SsoProvider, code: str, verifier: str, redirect_uri: str) -> dict:
     """The authorisation code for tokens, as a confidential client."""
     document = discovery(provider)

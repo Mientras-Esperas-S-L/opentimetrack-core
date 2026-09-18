@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-18 02:11+0000\n"
+"POT-Creation-Date: 2026-09-18 08:17+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -3906,34 +3906,38 @@ msgstr "O provedor descríbese cun emisor distinto."
 msgid "That sign-in attempt expired or was already used."
 msgstr "Ese intento de entrada caducou ou xa se usou."
 
-#: apps/tenants/sso.py:212
+#: apps/tenants/sso.py:222
+msgid "That sign-in expired or was already collected."
+msgstr "Esa entrada caducou ou xa se recolleu."
+
+#: apps/tenants/sso.py:243
 msgid "The provider did not return a valid token."
 msgstr "O provedor non devolveu un token válido."
 
-#: apps/tenants/sso.py:225
+#: apps/tenants/sso.py:256
 msgid "Could not obtain the provider's signing keys."
 msgstr "Non se puideron obter as chaves de sinatura do provedor."
 
-#: apps/tenants/sso.py:240
+#: apps/tenants/sso.py:271
 msgid "The provider's token did not pass verification."
 msgstr "O token do provedor non superou a verificación."
 
-#: apps/tenants/sso.py:246
+#: apps/tenants/sso.py:277
 msgid "The provider's answer does not match this sign-in attempt."
 msgstr "A resposta do provedor non corresponde a este intento de entrada."
 
-#: apps/tenants/sso.py:267
+#: apps/tenants/sso.py:298
 msgid "The provider's token does not identify anybody."
 msgstr "O token do provedor non identifica a ninguén."
 
-#: apps/tenants/sso.py:285
+#: apps/tenants/sso.py:316
 msgid ""
 "Nobody here matches that account, and this provider does not create people."
 msgstr ""
 "Ninguén de aquí coincide con esa conta, e este provedor non dá de alta a "
 "ninguén."
 
-#: apps/tenants/sso.py:288
+#: apps/tenants/sso.py:319
 msgid "The provider's token carries no address to create anybody with."
 msgstr ""
 "O token do provedor non trae ningún enderezo co que dar de alta a ninguén."

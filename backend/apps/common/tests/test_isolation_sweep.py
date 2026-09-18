@@ -640,6 +640,12 @@ def test_every_route_is_covered_by_this_sweep():
         "api/auth/sso/discover/",
         "api/auth/sso/start/<slug:slug>/",
         "api/auth/sso/callback/",
+        # Donde la aplicación web recoge la sesión que dejó el proveedor. Anónima
+        # a propósito ---quien llega todavía no tiene sesión, la viene a buscar---
+        # y lo que la autoriza es el vale: de un solo uso, de un minuto, y emitido
+        # por el callback para ese navegador. Su barrido está en
+        # apps/tenants/tests/test_entrar_por_el_proveedor.py.
+        "api/auth/sso/ticket/",
         "api/auth/sso/logout/",
         # Canjea una aserción firmada por una sesión de la persona que nombra. Su
         # barrido propio está en apps/tenants/tests/test_application_sessions.py, e

@@ -465,6 +465,14 @@ FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY", default="")
 # petición, que vale en desarrollo; en producción se fija, porque tiene que coincidir
 # **exactamente** con lo registrado en el proveedor.
 SSO_REDIRECT_URI = env("SSO_REDIRECT_URI", default="")
+
+#: Dónde vive la aplicación web, para devolver a ella al que vuelve del proveedor.
+#:
+#: Sin esto, el navegador de quien entra por su empresa acaba mirando un JSON: la
+#: vuelta del proveedor la recibe la API, y la sesión la necesita la web. Vacío
+#: mantiene la respuesta en JSON, que es lo que esperan las instalaciones que solo
+#: usan la API.
+SSO_WEB_URL = env("SSO_WEB_URL", default="")
 # Contacto al que el servicio de push del navegador escribiría si algo va mal.
 # Lo exige el estándar VAPID; ha de ser un mailto: o una URL.
 WEBPUSH_SUBJECT = env("WEBPUSH_SUBJECT", default=f"mailto:{DEFAULT_FROM_EMAIL}")

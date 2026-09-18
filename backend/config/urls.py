@@ -40,6 +40,7 @@ from apps.tenants.sso_views import (
     SsoCallbackView,
     SsoDiscoverView,
     SsoStartView,
+    SsoTicketView,
 )
 from apps.tenants.views import CompanyView, PublicHolidayViewSet, RecordArrangementView
 from apps.users.views import (
@@ -88,6 +89,7 @@ auth_patterns = [
     path("sso/discover/", SsoDiscoverView.as_view(), name="sso-discover"),
     path("sso/start/<slug:slug>/", SsoStartView.as_view(), name="sso-start"),
     path("sso/callback/", SsoCallbackView.as_view(), name="sso-callback"),
+    path("sso/ticket/", SsoTicketView.as_view(), name="sso-ticket"),
     path("sso/logout/", SsoBackChannelLogoutView.as_view(), name="sso-logout"),
     path("password-reset/", PasswordResetRequestView.as_view(), name="password-reset"),
     path("set-password/", PasswordSetView.as_view(), name="set-password"),
