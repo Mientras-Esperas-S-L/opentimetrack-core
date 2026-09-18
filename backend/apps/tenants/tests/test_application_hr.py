@@ -266,7 +266,13 @@ def test_the_catalogue_gives_the_codes_that_requesting_leave_expects(company):
 
     assert answer.status_code == 200
     kinds = answer.json()["leave_types"]
-    assert {"code": "es.vacation", "name": "Vacaciones", "family": "VACATION", "basis": "art. 38 ET"} in kinds
+    esperado = {
+        "code": "es.vacation",
+        "name": "Vacaciones",
+        "family": "VACATION",
+        "basis": "art. 38 ET",
+    }
+    assert esperado in kinds
 
 
 @pytest.mark.django_db

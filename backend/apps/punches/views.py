@@ -219,6 +219,7 @@ class PunchViewSet(
             user_agent=request.META.get("HTTP_USER_AGENT", "")[:255],
             trigger=data.get("trigger") or "MANUAL",
             evidence={**(data.get("evidence") or {}), **excepcion},
+            declared_at=data.get("declared_at"),
         )
 
         data = PunchSerializer(punch).data

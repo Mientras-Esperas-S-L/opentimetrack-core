@@ -138,6 +138,18 @@ concepto en concepto del Core, y le ahorra a la aplicación depender solo de su 
 
 ## A5. Hora declarada y hora de recepción
 
+**Hecha el 18/09/2026.** `Punch.declared_at` y `Punch.received_at`, el ajuste
+`Tenant.offline_punch_grace_hours` (24 h por defecto, cero = todo cuenta desde la
+llegada), sello v5 que incluye el par de horas ---sin él se podría borrar el desfase
+sin romper nada--- y la marca en el informe de Inspección con la hora de llegada.
+`declared_at` entra por `POST /api/punches/` y por el fichaje delegado. Un reloj
+adelantado menos de cinco minutos se recorta en vez de rechazarse; más, se rechaza.
+11 tests en `apps/punches/tests/test_el_fichaje_sin_cobertura.py`.
+
+Falta la otra mitad, que es del cliente: **la cola en el móvil** (IndexedDB y
+service worker, con `Idempotency-Key` generada al guardar) para que lo que se
+encola llegue una vez y no dos.
+
 Decidido el 13/08/2026 y pendiente desde entonces. Quien ficha en campo sin
 cobertura se queda en la cola del dispositivo y llega tarde.
 

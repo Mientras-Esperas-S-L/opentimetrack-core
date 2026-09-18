@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-17 21:58+0000\n"
+"POT-Creation-Date: 2026-09-18 01:01+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -107,17 +107,17 @@ msgstr "cada vez"
 msgid "a day"
 msgstr "ao día"
 
-#: apps/absences/models.py:87 apps/reports/services.py:169
+#: apps/absences/models.py:87 apps/reports/services.py:176
 #: apps/users/models.py:277
 msgid "a week"
 msgstr "á semana"
 
-#: apps/absences/models.py:88 apps/reports/services.py:169
+#: apps/absences/models.py:88 apps/reports/services.py:176
 #: apps/users/models.py:278
 msgid "a month"
 msgstr "ao mes"
 
-#: apps/absences/models.py:89 apps/reports/services.py:169
+#: apps/absences/models.py:89 apps/reports/services.py:176
 #: apps/users/models.py:279
 msgid "a year"
 msgstr "ao ano"
@@ -133,7 +133,7 @@ msgid "name"
 msgstr ""
 
 #: apps/absences/models.py:112 apps/punches/corrections.py:82
-#: apps/punches/models.py:488
+#: apps/punches/models.py:578
 msgid "kind"
 msgstr "clase"
 
@@ -219,7 +219,7 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:203 apps/absences/models.py:559
-#: apps/audit/models.py:196 apps/punches/models.py:538
+#: apps/audit/models.py:196 apps/punches/models.py:628
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:577 apps/tenants/rules.py:661 apps/users/models.py:906
 #: apps/users/models.py:984
@@ -228,7 +228,7 @@ msgstr ""
 
 #: apps/absences/models.py:204 apps/shifts/models.py:84
 #: apps/tenants/applications.py:59 apps/tenants/identity.py:116
-#: apps/tenants/models.py:190 apps/users/models.py:42 apps/users/models.py:205
+#: apps/tenants/models.py:202 apps/users/models.py:42 apps/users/models.py:205
 #: apps/users/models.py:607
 msgid "active"
 msgstr ""
@@ -264,15 +264,15 @@ msgstr "Cancelada"
 
 #: apps/absences/models.py:269 apps/absences/models.py:519
 #: apps/notifications/models.py:34 apps/punches/corrections.py:80
-#: apps/punches/models.py:150 apps/punches/models.py:485
-#: apps/punches/models.py:527 apps/reports/payroll.py:97
+#: apps/punches/models.py:162 apps/punches/models.py:575
+#: apps/punches/models.py:617 apps/reports/payroll.py:97
 #: apps/shifts/models.py:111 apps/users/models.py:104 apps/users/models.py:888
 #: apps/users/models.py:960 apps/users/models.py:1063
 msgid "employee"
 msgstr "persoa traballadora"
 
 #: apps/absences/models.py:286 apps/audit/models.py:189
-#: apps/punches/corrections.py:94 apps/punches/models.py:152
+#: apps/punches/corrections.py:94 apps/punches/models.py:164
 msgid "type"
 msgstr "tipo"
 
@@ -309,12 +309,12 @@ msgid "reason"
 msgstr "motivo"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/absences/models.py:340 apps/punches/models.py:232
+#: apps/absences/models.py:340 apps/punches/models.py:269
 msgid "recorded by"
 msgstr "rexistrado por"
 
 #: apps/absences/models.py:344 apps/absences/models.py:548
-#: apps/punches/corrections.py:104 apps/punches/models.py:531
+#: apps/punches/corrections.py:104 apps/punches/models.py:621
 #: apps/users/models.py:1075
 msgid "status"
 msgstr "estado"
@@ -825,7 +825,7 @@ msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/audit/models.py:168 apps/common/models.py:117
-#: apps/tenants/models.py:193 apps/tenants/models.py:221
+#: apps/tenants/models.py:205 apps/tenants/models.py:233
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:359
 msgid "company"
@@ -1016,7 +1016,7 @@ msgstr ""
 "Aquí non se le «%(bad)s», así que pedilo así daríache un documento distinto "
 "sen dicircho. Este punto de acceso le: %(good)s."
 
-#: apps/common/tests/test_exceptions.py:194 apps/punches/services.py:393
+#: apps/common/tests/test_exceptions.py:194 apps/punches/services.py:398
 msgid "You clocked a moment ago. Check the screen before clocking again."
 msgstr "Acabas de fichar. Mira a pantalla antes de volver premer."
 
@@ -1053,7 +1053,7 @@ msgstr ""
 msgid "authentication secret"
 msgstr ""
 
-#: apps/notifications/models.py:43 apps/punches/models.py:240
+#: apps/notifications/models.py:43 apps/punches/models.py:277
 msgid "device"
 msgstr ""
 
@@ -1359,12 +1359,12 @@ msgstr "Anulouse a fichaxe rexistrada ás %(when)s."
 msgid "Your working time record has changed"
 msgstr "O teu rexistro de xornada cambiou"
 
-#: apps/punches/delegated.py:92
+#: apps/punches/delegated.py:102
 msgid "The reference matches more than one person."
 msgstr "A referencia coincide con máis dunha persoa."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/delegated.py:155
+#: apps/punches/delegated.py:165
 msgid ""
 "Send an Idempotency-Key header naming this operation, so a retry is not "
 "recorded as a second event."
@@ -1373,362 +1373,371 @@ msgstr ""
 "reintento non quede rexistrado como unha segunda fichaxe."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/delegated.py:173 apps/punches/delegated.py:198
+#: apps/punches/delegated.py:183 apps/punches/delegated.py:208
 msgid "That operation is still being recorded. Try again shortly."
 msgstr "Esa operación aínda se está a rexistrar. Téntao de novo axiña."
 
-#: apps/punches/delegated.py:181 apps/tenants/attendance_api.py:93
+#: apps/punches/delegated.py:191 apps/tenants/attendance_api.py:93
 #: apps/tenants/hr_api.py:63
 msgid "No active person matches that reference."
 msgstr "Ningunha persoa activa coincide con esa referencia."
 
-#: apps/punches/models.py:34
+#: apps/punches/models.py:46
 msgid "Clock in"
 msgstr "Entrada"
 
-#: apps/punches/models.py:35
+#: apps/punches/models.py:47
 msgid "Clock out"
 msgstr "Saída"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:54
+#: apps/punches/models.py:66
 msgid "Working day"
 msgstr "Xornada"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:55
+#: apps/punches/models.py:67
 msgid "Break that is not working time"
 msgstr "Descanso que non é tempo de traballo"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:56
+#: apps/punches/models.py:68
 msgid "Waiting or on-call time"
 msgstr "Tempo de presenza ou de garda"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:57
+#: apps/punches/models.py:69
 msgid "Interruption of the right to disconnect"
 msgstr "Interrupción do dereito á desconexión"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:68 apps/users/models.py:538
+#: apps/punches/models.py:80 apps/users/models.py:538
 msgid "On site"
 msgstr "Presencial"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:69 apps/users/models.py:538
+#: apps/punches/models.py:81 apps/users/models.py:538
 msgid "Remote"
 msgstr "A distancia"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:79
+#: apps/punches/models.py:91
 msgid "Ordinary"
 msgstr "Ordinarias"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:80 apps/reports/services.py:594
+#: apps/punches/models.py:92 apps/reports/services.py:616
 msgid "Overtime"
 msgstr "Horas extras"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:81
+#: apps/punches/models.py:93
 msgid "Complementary"
 msgstr "Complementarias"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:87
+#: apps/punches/models.py:99
 msgid "Compensated with rest"
 msgstr "Compensadas con descanso"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:88
+#: apps/punches/models.py:100
 msgid "Paid"
 msgstr "Retribuído"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:100
+#: apps/punches/models.py:112
 msgid "None"
 msgstr "Ningún"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:101
+#: apps/punches/models.py:113
 msgid "Care or family reasons (art. 34.8 ET)"
 msgstr "Motivos de coidado ou familiares (art. 34.8 ET)"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:102
+#: apps/punches/models.py:114
 msgid "Flexible hours"
 msgstr "Horario flexible"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:103
+#: apps/punches/models.py:115
 msgid "Irregular distribution (art. 34.2 ET)"
 msgstr "Distribución irregular (art. 34.2 ET)"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:104
+#: apps/punches/models.py:116
 msgid "Another arrangement"
 msgstr "Outra organización"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:115
+#: apps/punches/models.py:127
 msgid "Web panel"
 msgstr "Panel web"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:116
+#: apps/punches/models.py:128
 msgid "Mobile app"
 msgstr "Aplicación móbil"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:117
+#: apps/punches/models.py:129
 msgid "External application, employee identity"
 msgstr "Aplicación externa, coa identidade da persoa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:118
+#: apps/punches/models.py:130
 msgid "External application, on behalf of the employee"
 msgstr "Aplicación externa, en nome da persoa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:119
+#: apps/punches/models.py:131
 msgid "Shared terminal"
 msgstr "Terminal compartido"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:120
+#: apps/punches/models.py:132
 msgid "Manual correction by an administrator"
 msgstr "Corrección manual da administración"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:121
+#: apps/punches/models.py:133
 msgid "Data import"
 msgstr "Importación de datos"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:137
+#: apps/punches/models.py:149
 msgid "A person pressed the button"
 msgstr "Unha persoa premeu o botón"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:138
+#: apps/punches/models.py:150
 msgid "Entering or leaving a worksite"
 msgstr "Entrar ou saír dun centro"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:139
+#: apps/punches/models.py:151
 msgid "Joining or leaving a work network"
 msgstr "Conectarse ou desconectarse dunha rede de traballo"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:140
+#: apps/punches/models.py:152
 msgid "Another system's presence event"
 msgstr "Evento de presenza doutro sistema"
 
-#: apps/punches/models.py:158
+#: apps/punches/models.py:170
 msgid "interval"
 msgstr ""
 
-#: apps/punches/models.py:164
+#: apps/punches/models.py:176
 msgid "mode"
 msgstr ""
 
-#: apps/punches/models.py:166
+#: apps/punches/models.py:178
 msgid "nature of the hours"
 msgstr ""
 
-#: apps/punches/models.py:172
+#: apps/punches/models.py:184
 msgid "how the overtime is settled"
 msgstr ""
 
-#: apps/punches/models.py:176
+#: apps/punches/models.py:188
 msgid "Required for overtime: art. 3.f asks whether it is rested or paid."
 msgstr ""
 
-#: apps/punches/models.py:179
+#: apps/punches/models.py:191
 msgid "to prevent or repair urgent damage"
 msgstr ""
 
-#: apps/punches/models.py:182
+#: apps/punches/models.py:194
 msgid ""
 "Art. 35.3 ET: hours worked to prevent or repair accidents and other "
 "extraordinary and urgent damage. They do not count towards the annual "
 "overtime limit, so they have to be distinguishable."
 msgstr ""
 
-#: apps/punches/models.py:188
+#: apps/punches/models.py:200
 msgid "arrangement"
 msgstr ""
 
-#: apps/punches/models.py:196
+#: apps/punches/models.py:212
 msgid "timestamp"
 msgstr ""
 
-#: apps/punches/models.py:214 apps/tenants/models.py:53
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/punches/models.py:226
+msgid "declared by the device"
+msgstr "declarouno o dispositivo"
+
+#: apps/punches/models.py:233
+msgid "received at"
+msgstr "recibido o"
+
+#: apps/punches/models.py:251 apps/tenants/models.py:53
 #: apps/users/models.py:195
 msgid "time zone"
 msgstr ""
 
-#: apps/punches/models.py:218
+#: apps/punches/models.py:255
 msgid "source"
 msgstr ""
 
-#: apps/punches/models.py:221
+#: apps/punches/models.py:258
 msgid "source application"
 msgstr ""
 
-#: apps/punches/models.py:224
+#: apps/punches/models.py:261
 msgid "Which application recorded it, when it was not this one."
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:233
+#: apps/punches/models.py:270
 msgid "Set when somebody other than the employee created the record."
 msgstr "Énchese cando a fichaxe a crea alguén que non é a persoa."
 
-#: apps/punches/models.py:239
+#: apps/punches/models.py:276
 msgid "IP address"
 msgstr ""
 
-#: apps/punches/models.py:241
+#: apps/punches/models.py:278
 msgid "user agent"
 msgstr ""
 
-#: apps/punches/models.py:254
+#: apps/punches/models.py:291
 msgid "trigger"
 msgstr ""
 
-#: apps/punches/models.py:257
+#: apps/punches/models.py:294
 msgid "trigger evidence"
 msgstr ""
 
-#: apps/punches/models.py:260
+#: apps/punches/models.py:297
 msgid ""
 "What proves the trigger: coordinates, a network name, an external event id."
 msgstr ""
 
-#: apps/punches/models.py:263
+#: apps/punches/models.py:300
 msgid "integrity hash"
 msgstr ""
 
-#: apps/punches/models.py:265
+#: apps/punches/models.py:302
 msgid "hash version"
 msgstr ""
 
-#: apps/punches/models.py:269
+#: apps/punches/models.py:306
 msgid "valid"
 msgstr ""
 
-#: apps/punches/models.py:270
+#: apps/punches/models.py:307
 msgid "voided at"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:277
+#: apps/punches/models.py:314
 msgid "replaced by"
 msgstr "substituído por"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:281
+#: apps/punches/models.py:318
 msgid "clock event"
 msgstr "fichaxe"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:282 apps/users/erase.py:77
+#: apps/punches/models.py:319 apps/users/erase.py:77
 msgid "clock events"
 msgstr "fichaxes"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:478
+#: apps/punches/models.py:568
 msgid "Missing entry"
 msgstr "Entrada que falta"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:479
+#: apps/punches/models.py:569
 msgid "Day left open"
 msgstr "Xornada que quedou aberta"
 
-#: apps/punches/models.py:487 apps/punches/models.py:529
+#: apps/punches/models.py:577 apps/punches/models.py:619
 #: apps/shifts/models.py:113 apps/tenants/holidays.py:63
 msgid "day"
 msgstr ""
 
-#: apps/punches/models.py:489
+#: apps/punches/models.py:579
 msgid "sent at"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:492
+#: apps/punches/models.py:582
 msgid "clock reminder"
 msgstr "recordatorio de fichaxe"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:493
+#: apps/punches/models.py:583
 msgid "clock reminders"
 msgstr "recordatorios de fichaxe"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:520
+#: apps/punches/models.py:610
 msgid "Authorised"
 msgstr "Autorizada"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:521
+#: apps/punches/models.py:611
 msgid "Not authorised"
 msgstr "Non autorizada"
 
-#: apps/punches/models.py:530
+#: apps/punches/models.py:620
 msgid "overtime minutes ruled on"
 msgstr ""
 
-#: apps/punches/models.py:536
+#: apps/punches/models.py:626
 msgid "settlement"
 msgstr ""
 
-#: apps/punches/models.py:546
+#: apps/punches/models.py:636
 msgid "decided by"
 msgstr "resolta por"
 
-#: apps/punches/models.py:551
+#: apps/punches/models.py:641
 msgid "decided alone"
 msgstr ""
 
-#: apps/punches/models.py:552
+#: apps/punches/models.py:642
 msgid "decided at"
 msgstr "resolta o"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:555
+#: apps/punches/models.py:645
 msgid "overtime decision"
 msgstr "decisión sobre horas extras"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:556 apps/users/erase.py:81
+#: apps/punches/models.py:646 apps/users/erase.py:81
 msgid "overtime decisions"
 msgstr "decisións sobre horas extras"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:604 apps/tenants/applications.py:70
+#: apps/punches/models.py:694 apps/tenants/applications.py:70
 #: apps/tenants/applications.py:96
 msgid "application"
 msgstr "aplicación"
 
-#: apps/punches/models.py:606
+#: apps/punches/models.py:696
 msgid "idempotency key"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:613
+#: apps/punches/models.py:703
 msgid "event"
 msgstr "evento"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:617
+#: apps/punches/models.py:707
 msgid "delegated punch receipt"
 msgstr "recibo de fichaxe delegada"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:618
+#: apps/punches/models.py:708
 msgid "delegated punch receipts"
 msgstr "recibos de fichaxe delegada"
 
@@ -1736,7 +1745,7 @@ msgstr "recibos de fichaxe delegada"
 msgid "That day has no overtime to rule on."
 msgstr "Ese día non ten horas extraordinarias que resolver."
 
-#: apps/punches/overtime.py:243 apps/punches/services.py:497
+#: apps/punches/overtime.py:243 apps/punches/services.py:508
 msgid "Say whether the overtime is paid or compensated with rest."
 msgstr ""
 "Indica se as horas extraordinarias se pagan ou se compensan con descanso."
@@ -1762,28 +1771,28 @@ msgid "Your day is still open. Clock out when you finish."
 msgstr "Tes a xornada aberta. Ficha a saída cando remates."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/serializers.py:89
+#: apps/punches/serializers.py:95
 #, python-format
 msgid ""
 "The evidence is too large: %(size)s characters, and the limit is %(max)s."
 msgstr ""
 "A evidencia é demasiado grande: %(size)s caracteres, e o límite é %(max)s."
 
-#: apps/punches/services.py:425
+#: apps/punches/services.py:436
 msgid "This person is deactivated and cannot clock in or out."
 msgstr "Esta persoa está dada de baixa e non pode fichar."
 
-#: apps/punches/services.py:458
+#: apps/punches/services.py:469
 msgid "The working day has to be open first."
 msgstr "A xornada ten que estar aberta antes."
 
-#: apps/punches/services.py:479
+#: apps/punches/services.py:490
 #, python-format
 msgid "%(basis)s: workers under eighteen may not work overtime."
 msgstr ""
 "%(basis)s: os menores de dezaoito anos non poden facer horas extraordinarias."
 
-#: apps/punches/services.py:487
+#: apps/punches/services.py:498
 msgid ""
 "Art. 12.4.c ET: part-time work admits no overtime, only complementary hours "
 "--- except hours to prevent or repair urgent damage."
@@ -1792,7 +1801,23 @@ msgstr ""
 "complementarias, agás as de forza maior para previr ou reparar danos "
 "urxentes."
 
-#: apps/punches/services.py:562
+#: apps/punches/services.py:574
+msgid "The device says this punch happened later than it arrived."
+msgstr "O dispositivo di que esta marcaxe ocorreu despois de chegar."
+
+#: apps/punches/services.py:581
+msgid "This company records every punch from the moment it reaches the system."
+msgstr "Esta empresa rexistra todas as marcaxes desde que chegan ao sistema."
+
+#: apps/punches/services.py:587
+#, python-format
+msgid ""
+"This punch was made more than %(hours)s hours ago, so it is not recorded "
+"directly. Ask for it through the correction flow, where it is approved and "
+"the change is on the record."
+msgstr "Esta marcaxe fíxose hai máis de %(hours)s horas, así que non se rexistra directamente. Pídea por corrección, onde se aproba e queda constancia do cambio."
+
+#: apps/punches/services.py:631
 msgid "You cannot clock in: you have approved leave for today."
 msgstr "Non podes fichar: tes unha ausencia aprobada para hoxe."
 
@@ -1822,17 +1847,17 @@ msgid "the person concerned, through their delivery link"
 msgstr "a persoa interesada, pola súa ligazón de entrega"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/payroll.py:37 apps/tenants/models.py:149
+#: apps/reports/payroll.py:37 apps/tenants/models.py:161
 msgid "Monthly"
 msgstr "Mensual"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/payroll.py:38 apps/tenants/models.py:150
+#: apps/reports/payroll.py:38 apps/tenants/models.py:162
 msgid "Every two weeks"
 msgstr "Cada dúas semanas"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/payroll.py:39 apps/tenants/models.py:151
+#: apps/reports/payroll.py:39 apps/tenants/models.py:163
 msgid "Weekly"
 msgstr "Semanal"
 
@@ -1866,16 +1891,16 @@ msgstr "resumo para a nómina"
 msgid "payroll summaries"
 msgstr "resumos para a nómina"
 
-#: apps/reports/pdf.py:57 apps/reports/services.py:553
+#: apps/reports/pdf.py:57 apps/reports/services.py:575
 msgid "Summary of the working time record"
 msgstr "Resumo do rexistro de xornada"
 
-#: apps/reports/pdf.py:57 apps/reports/services.py:553
+#: apps/reports/pdf.py:57 apps/reports/services.py:575
 msgid "Working time record"
 msgstr "Rexistro de xornada"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:98 apps/reports/services.py:556
+#: apps/reports/pdf.py:98 apps/reports/services.py:578
 msgid "Delivered with the payslip (art. 6.1)"
 msgstr "Entrégase co recibo de salarios (art. 6.1)"
 
@@ -1884,79 +1909,79 @@ msgstr "Entrégase co recibo de salarios (art. 6.1)"
 msgid "Article 34.9 of the Spanish Workers' Statute (Royal Decree-Law 8/2019)"
 msgstr "Artigo 34.9 do Estatuto dos Traballadores (Real decreto lei 8/2019)"
 
-#: apps/reports/pdf.py:108 apps/reports/services.py:557
+#: apps/reports/pdf.py:108 apps/reports/services.py:579
 #: apps/tenants/holidays.py:57
 msgid "Company"
 msgstr "Empresa"
 
-#: apps/reports/pdf.py:108 apps/reports/services.py:557
+#: apps/reports/pdf.py:108 apps/reports/services.py:579
 msgid "Tax number"
 msgstr "CIF/NIF"
 
-#: apps/reports/pdf.py:110 apps/reports/services.py:559
+#: apps/reports/pdf.py:110 apps/reports/services.py:581
 #: apps/users/models.py:310
 msgid "Employee"
 msgstr "Persoa traballadora"
 
-#: apps/reports/pdf.py:112 apps/reports/services.py:559
+#: apps/reports/pdf.py:112 apps/reports/services.py:581
 msgid "Staff number"
 msgstr "Nº de empregado"
 
-#: apps/reports/pdf.py:116 apps/reports/services.py:562
+#: apps/reports/pdf.py:116 apps/reports/services.py:584
 msgid "Period"
 msgstr "Período"
 
-#: apps/reports/pdf.py:118 apps/reports/services.py:562
+#: apps/reports/pdf.py:118 apps/reports/services.py:584
 msgid "Time zone"
 msgstr "Fuso horario"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:125 apps/reports/services.py:571
+#: apps/reports/pdf.py:125 apps/reports/services.py:593
 msgid "Break"
 msgstr "Descanso"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:126 apps/reports/services.py:572
+#: apps/reports/pdf.py:126 apps/reports/services.py:594
 msgid "counts as working time"
 msgstr "conta como tempo de traballo"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:128 apps/reports/services.py:574
+#: apps/reports/pdf.py:128 apps/reports/services.py:596
 msgid "does not count as working time"
 msgstr "non conta como tempo de traballo"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:129 apps/reports/services.py:575
+#: apps/reports/pdf.py:129 apps/reports/services.py:597
 msgid "Maximum open day (hours)"
 msgstr "Xornada aberta máxima (horas)"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:138 apps/reports/services.py:586
+#: apps/reports/pdf.py:138 apps/reports/services.py:608
 msgid "Regime"
 msgstr "Réxime"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:140 apps/reports/services.py:588
+#: apps/reports/pdf.py:140 apps/reports/services.py:610
 msgid "Contracted hours"
 msgstr "Horas contratadas"
 
-#: apps/reports/pdf.py:167 apps/reports/services.py:602
+#: apps/reports/pdf.py:167 apps/reports/services.py:624
 msgid "Date"
 msgstr "Data"
 
-#: apps/reports/pdf.py:167 apps/reports/services.py:602
+#: apps/reports/pdf.py:167 apps/reports/services.py:624
 msgid "Entry"
 msgstr "Entrada"
 
-#: apps/reports/pdf.py:167 apps/reports/services.py:602
+#: apps/reports/pdf.py:167 apps/reports/services.py:624
 msgid "Exit"
 msgstr "Saída"
 
-#: apps/reports/pdf.py:167 apps/reports/services.py:602
+#: apps/reports/pdf.py:167 apps/reports/services.py:624
 msgid "Hours"
 msgstr "Horas"
 
-#: apps/reports/pdf.py:167 apps/reports/services.py:602
+#: apps/reports/pdf.py:167 apps/reports/services.py:624
 msgid "Notes"
 msgstr "Observacións"
 
@@ -1970,11 +1995,11 @@ msgstr "Ningún rexistro neste período"
 msgid "Total for the period"
 msgstr "Total do período"
 
-#: apps/reports/pdf.py:222 apps/reports/services.py:628
+#: apps/reports/pdf.py:222 apps/reports/services.py:650
 msgid "Breaks, not counted as working time"
 msgstr "Pausas, que non computan como xornada"
 
-#: apps/reports/pdf.py:227 apps/reports/services.py:633
+#: apps/reports/pdf.py:227 apps/reports/services.py:655
 msgid "Waiting time, not counted as working time"
 msgstr "Tempo de espera, que non computa como xornada"
 
@@ -1987,32 +2012,32 @@ msgstr ""
 "As horas rexístraas o servidor, nunca o dispositivo que as pide, e amósanse "
 "no fuso horario indicado enriba."
 
-#: apps/reports/pdf.py:260 apps/reports/services.py:637
+#: apps/reports/pdf.py:260 apps/reports/services.py:659
 msgid "Generated"
 msgstr "Xerado"
 
-#: apps/reports/pdf.py:261 apps/reports/services.py:638
+#: apps/reports/pdf.py:261 apps/reports/services.py:660
 msgid "Verification hash"
 msgstr "Pegada de verificación"
 
-#: apps/reports/services.py:334
+#: apps/reports/services.py:344
 msgid "two entries with no exit in between"
 msgstr "dúas entradas sen saída polo medio"
 
-#: apps/reports/services.py:341
+#: apps/reports/services.py:351
 msgid "exit with no matching entry"
 msgstr "saída sen entrada previa"
 
-#: apps/reports/services.py:363
+#: apps/reports/services.py:373
 msgid "entry with no exit"
 msgstr "entrada sen saída"
 
-#: apps/reports/services.py:366
+#: apps/reports/services.py:376
 msgid "break with no end"
 msgstr "pausa sen fin"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/services.py:389
+#: apps/reports/services.py:399
 msgid ""
 "an entry no longer matches its integrity seal: it was altered outside the app"
 msgstr ""
@@ -2020,36 +2045,45 @@ msgstr ""
 "aplicación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/services.py:509
+#: apps/reports/services.py:519
 #, python-format
 msgid "this day was also recorded as: %(absence)s"
 msgstr "este día tamén consta como: %(absence)s"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/services.py:511
+#: apps/reports/services.py:521
 msgid "recorded by an application on the person's behalf"
 msgstr "rexistrado por unha aplicación en nome da persoa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/services.py:516
+#: apps/reports/services.py:526
 msgid "corrected by the company"
 msgstr "corrixido pola empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/services.py:518
+#: apps/reports/services.py:528
 msgid "imported from another system"
 msgstr "importado doutro sistema"
 
-#: apps/reports/services.py:523
+#: apps/reports/services.py:537
+#, python-format
+msgid "recorded offline and received later (at %(times)s)"
+msgstr "rexistrado sen cobertura e recibido despois (ás %(times)s)"
+
+#: apps/reports/services.py:539
+msgid "recorded offline and received later"
+msgstr "rexistrado sen cobertura e recibido despois"
+
+#: apps/reports/services.py:545
 msgid "changed without the person's agreement (art. 4.b)"
 msgstr "modificado sen a conformidade da persoa (art. 4.b)"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/services.py:596
+#: apps/reports/services.py:618
 msgid "Days with activity"
 msgstr "Días con actividade"
 
-#: apps/reports/services.py:622
+#: apps/reports/services.py:644
 msgid "Total"
 msgstr "Total"
 
@@ -3304,21 +3338,34 @@ msgstr ""
 "este."
 
 #: apps/tenants/models.py:145
+msgid "how late an offline punch may arrive"
+msgstr "canto pode tardar en chegar unha marcaxe feita sen cobertura"
+
+#: apps/tenants/models.py:148
+msgid ""
+"Somebody clocking in out in the field with no signal stays queued on their "
+"device and arrives late. Within this many hours the punch is accepted with "
+"the time the device declares, and both times are kept. Past it, it goes "
+"through the correction flow instead, where somebody approves it and that is "
+"on the record. Zero means every punch counts from when it reached the server."
+msgstr ""
+
+#: apps/tenants/models.py:157
 msgid "pay period"
 msgstr ""
 
-#: apps/tenants/models.py:154
+#: apps/tenants/models.py:166
 msgid ""
 "Art. 6.1: a copy of the summary for this period goes out with the payslip. "
 "Not necessarily a calendar month --- art. 29.1 ET only caps the interval at "
 "one."
 msgstr ""
 
-#: apps/tenants/models.py:169
+#: apps/tenants/models.py:181
 msgid "record retention (years)"
 msgstr ""
 
-#: apps/tenants/models.py:172
+#: apps/tenants/models.py:184
 msgid ""
 "How long clock events are kept, after which they are deleted. Four years is "
 "the floor set by art. 34.9 ET; a longer period needs its own justification, "
@@ -3332,32 +3379,32 @@ msgstr ""
 "base. As ausencias e os contratos non se ven afectados: non son o rexistro "
 "de xornada e non viven deste prazo."
 
-#: apps/tenants/models.py:180
+#: apps/tenants/models.py:192
 msgid "security metadata retention (days)"
 msgstr ""
 
-#: apps/tenants/models.py:183
+#: apps/tenants/models.py:195
 msgid ""
 "How long the IP address, device and user agent of each event are kept. They "
 "serve to spot anomalies, not to prove working time: purging them leaves the "
 "record intact."
 msgstr ""
 
-#: apps/tenants/models.py:189
+#: apps/tenants/models.py:201
 msgid "settings"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/models.py:194
+#: apps/tenants/models.py:206
 msgid "companies"
 msgstr "empresas"
 
-#: apps/tenants/models.py:236
+#: apps/tenants/models.py:248
 msgid "enabled features"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/models.py:239 apps/tenants/models.py:240
+#: apps/tenants/models.py:251 apps/tenants/models.py:252
 msgid "company limits"
 msgstr "límites da empresa"
 

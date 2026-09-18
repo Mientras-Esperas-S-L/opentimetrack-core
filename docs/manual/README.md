@@ -552,6 +552,19 @@ cuando lo dice el convenio. El convenio de jardinería sí lo dice. Con el valor
 por defecto, una empresa de ese sector registraría unos quince minutos de menos
 al día por persona: unas 55 horas al año.
 
+**Fichajes hechos sin cobertura.** Quien ficha en campo sin señal se queda en la
+cola de su dispositivo y el fichaje llega cuando vuelve la cobertura. Este ajuste
+dice **cuánto puede tardar** en llegar: dentro del plazo (24 horas por defecto)
+cuenta la hora que marcó el dispositivo, y se guardan **las dos**, la declarada y
+la de llegada. Pasado el plazo, no entra por ahí: se pide por corrección, que es
+donde alguien lo aprueba y queda constancia.
+
+Puesto a cero, todos los fichajes cuentan desde que llegan al sistema.
+
+El informe de la Inspección dice de cada día si hubo fichajes en diferido y a qué
+hora llegaron. No se elige entre una hora y la otra: se enseñan las dos, porque la
+diferencia es justo lo que explica el asiento.
+
 Los valores del convenio se pueden cargar desde una ficha; ver
 `agreements/README.md`.
 

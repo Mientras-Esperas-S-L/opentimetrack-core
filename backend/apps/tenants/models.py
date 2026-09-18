@@ -141,6 +141,18 @@ class Tenant(BaseModel):
         ),
     )
 
+    offline_punch_grace_hours = models.PositiveSmallIntegerField(
+        _("how late an offline punch may arrive"),
+        default=24,
+        help_text=_(
+            "Somebody clocking in out in the field with no signal stays queued on their "
+            "device and arrives late. Within this many hours the punch is accepted with the "
+            "time the device declares, and both times are kept. Past it, it goes through the "
+            "correction flow instead, where somebody approves it and that is on the record. "
+            "Zero means every punch counts from when it reached the server."
+        ),
+    )
+
     payroll_period = models.CharField(
         _("pay period"),
         max_length=16,

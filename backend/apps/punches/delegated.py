@@ -34,8 +34,10 @@ User = get_user_model()
 class DelegatedPunchSerializer(serializers.Serializer):
     """What an application may send.
 
-    Still no timestamp and no type: delegating who presses the button does not
-    delegate who owns the clock.
+    Still no type: delegating who presses the button does not delegate who reads the
+    state of the day. The clock stays ours too, with the same one exception as the
+    ordinary door --- `declared_at`, for what a terminal or a phone recorded while it
+    could not reach us.
     """
 
     employee_ref = serializers.CharField(
@@ -55,6 +57,14 @@ class DelegatedPunchSerializer(serializers.Serializer):
         choices=PunchTrigger.choices, required=False, default=PunchTrigger.MANUAL
     )
     evidence = serializers.JSONField(required=False, default=dict, validators=[validate_evidence])
+    declared_at = serializers.DateTimeField(
+        required=False,
+        allow_null=True,
+        help_text=(
+            "When the device says it happened, for a punch taken offline and sent later. "
+            "Accepted inside the company's grace period; the arrival time is kept beside it."
+        ),
+    )
 
 
 def resolve_employee(reference: str, company):
@@ -211,6 +221,7 @@ class DelegatedPunchView(APIView):
             user_agent=request.META.get("HTTP_USER_AGENT", "")[:255],
             trigger=serializer.validated_data.get("trigger") or "MANUAL",
             evidence=serializer.validated_data.get("evidence") or {},
+            declared_at=serializer.validated_data.get("declared_at"),
         )
 
         receipt.punch = punch
