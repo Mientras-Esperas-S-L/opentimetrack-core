@@ -189,20 +189,37 @@ cerrado deja de decir lo que decía. Ocurre pocas veces y en silencio, que es la
 combinación.
 
 El departamento ya resolvió esto: `DepartmentAssignment` guarda quién estaba dónde y
-desde cuándo, y el informe de un periodo lee la adscripción **de ese periodo**. Falta
-lo mismo para el centro:
+desde cuándo, y el informe de un periodo lee la adscripción **de ese periodo**.
+
+**Hecha el 18/09/2026** con el mismo patrón:
 
 - `WorkplaceAssignment` con `starts_on` / `ends_on`, la primera sin fecha de inicio
-  («no consta desde cuándo»), igual que en la adscripción de departamento.
-- Los festivos de una persona en un día se resuelven por el centro **de ese día**.
-- La zona horaria, igual.
-- El informe del art. 34.9 por centro lee la adscripción del periodo pedido.
-- La aplicación de gestión puede empujar el cambio con la fecha en que ocurrió, no
-  con la de hoy.
+  («no consta desde cuándo»), y una señal que la anota al guardar la ficha.
+- Los festivos de una persona en un día se resuelven por el centro **de ese día**:
+  `holidays_for` pregunta al historial, y acepta el reparto ya traído para no volver a
+  ser un N+1 dentro de la revisión del cuadrante.
+- El informe del art. 34.9 admite `?workplace=` y lee la adscripción del periodo
+  pedido. No existía ese filtro, y es el que usa una inspección: llega a un sitio y
+  pide el registro de ese sitio.
+- `remember_workplace(on=)` permite fechar el traslado en el día en que ocurrió.
+- 11 pruebas en `apps/users/tests/test_el_centro_de_entonces.py`.
 
-Prioridad: baja mientras nadie traslade a nadie, y alta el primer traslado, porque
-antes del traslado se arregla en un rato y después hay que decidir qué hacer con lo
-que ya se reescribió.
+**Lo que no se hizo, y por qué.** Este plan decía que «la aplicación de gestión puede
+empujar el cambio con la fecha en que ocurrió», y eso contradice una decisión anterior
+del propio Core: `PersonFromApplicationSerializer` deja fuera a propósito todo lo que
+decide **cómo se mide** la jornada ---el régimen, las horas contratadas, la
+nocturnidad y el centro---, porque si un conector pudiera cambiarlo estaría decidiendo
+sobre el registro legal sin saberlo. El centro decide festivos y huso, así que es
+exactamente eso. Se mantiene la decisión vieja y se retira el punto.
+
+Queda pendiente, y es de aquí: un campo «desde cuándo» al cambiar el centro en la
+ficha, para que quien lo gestiona pueda fechar un traslado que ya ocurrió en vez de
+anotarlo con la fecha de hoy. La función ya lo admite; falta la pantalla.
+
+**La zona horaria por día tampoco hizo falta**: cada fichaje **congela su huso** en
+`Punch.time_zone` desde que existe ese campo, así que un traslado no reescribe la hora
+de nada ya registrado ---que es el daño que había que evitar---. Lo único que sigue
+leyendo el huso de hoy es un día **sin** fichajes, donde no hay hora que releer.
 
 ## A2 bis. Tres huecos pequeños de la API de personas ✔ hecho el 17/09/2026
 

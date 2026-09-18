@@ -2173,13 +2173,19 @@ def _check_rostered_on_a_holiday(by_person, first, last) -> list[Finding]:
 
     # De una vez y por centro: la respuesta no depende de la persona.
     por_centro = holidays_by_workplace(first, last)
+    # Y el centro que le tocaba a cada quien cada día, también de una vez: dentro del
+    # bucle sería una consulta por persona.
+    from apps.users.workplace_history import workplaces_by_person
+
+    gente = [r[0].employee for r in by_person.values() if r]
+    por_persona = workplaces_by_person(gente, first, last)
 
     found = []
     for roster in by_person.values():
         if not roster:
             continue
         person = roster[0].employee
-        off = holidays_for(person, first, last, por_centro)
+        off = holidays_for(person, first, last, por_centro, por_persona)
         if not off:
             continue
         for shift in roster:

@@ -71,6 +71,14 @@ MAX_PEOPLE_PER_EXPORT = 200
             ),
         ),
         OpenApiParameter("department", str, description="Everybody in that department."),
+        OpenApiParameter(
+            "workplace",
+            str,
+            description=(
+                "Everybody who worked at that site during the period. This is what an "
+                "inspector asks for: they turn up at a site and want its record."
+            ),
+        ),
     ],
     responses={200: None},
 )
@@ -94,7 +102,11 @@ class ReportView(APIView):
         # An inspection asks for the workforce, not for one person at a time.
         # Producing two hundred documents one by one was the only way, which in
         # practice means it does not get done.
-        if request.query_params.get("scope") == "company" or request.query_params.get("department"):
+        if (
+            request.query_params.get("scope") == "company"
+            or request.query_params.get("department")
+            or request.query_params.get("workplace")
+        ):
             return self._many(request, company, date_from, date_to)
 
         employee = request.user
@@ -195,6 +207,17 @@ class ReportView(APIView):
 
             people = people_in_department(people, department, date_from, date_to)
 
+        workplace = request.query_params.get("workplace")
+        if workplace:
+            # Lo mismo por el otro eje, y con más motivo: el registro se guarda y se
+            # inspecciona **por centro**, así que este es el filtro con el que llega una
+            # inspección. Por la adscripción del periodo, no por la de hoy: a quien se
+            # trasladó en abril hay que traerlo al informe de marzo de su centro de
+            # entonces, no al del nuevo.
+            from apps.users.workplace_history import people_in_workplace
+
+            people = people_in_workplace(people, workplace, date_from, date_to)
+
         if not people:
             raise ValidationError({"detail": _("Nobody worked in that period.")})
         if len(people) > MAX_PEOPLE_PER_EXPORT:
@@ -266,7 +289,7 @@ class PayrollRunRequestSerializer(serializers.Serializer):
 #: aquí y no derivadas del esquema para que añadir un parámetro sea una decisión
 #: consciente en un solo sitio.
 PARAMS_DEL_INFORME = frozenset(
-    {"employee", "date_from", "date_to", "format", "scope", "department"}
+    {"employee", "date_from", "date_to", "format", "scope", "department", "workplace"}
 )
 
 #: Y los del resumen del art. 6.1, que son otros: el periodo no se elige, se

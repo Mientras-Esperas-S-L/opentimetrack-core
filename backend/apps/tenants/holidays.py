@@ -131,22 +131,54 @@ def holidays_by_workplace(first, last) -> dict:
     return por_centro
 
 
-def holidays_for(person, first, last, por_centro=None) -> set:
+def holidays_for(person, first, last, por_centro=None, por_persona=None) -> set:
     """The days in the range that are holidays **for that person**.
 
     Their workplace's, plus the company-wide ones. Asked of the person rather
     than of the company because that is the only level at which the answer is
     single: two sites of the same firm do not share their last two days.
 
-    `por_centro` es lo que devuelve `holidays_by_workplace`, ya traído de una
-    vez. Sin él consulta por su cuenta, que está bien para una llamada suelta y
-    era un N+1 dentro de un bucle.
-    """
-    if por_centro is None:
-        rows = PublicHoliday.objects.filter(day__gte=first, day__lte=last).filter(
-            models.Q(workplace__isnull=True) | models.Q(workplace_id=person.workplace_id)
-        )
-        return set(rows.values_list("day", flat=True))
+    Y del centro **de cada día**, no del de hoy. Quien se trasladó en abril tiene los
+    festivos de un centro hasta abril y los del otro después; resolver el tramo entero
+    con el centro actual le reescribía los meses anteriores, y con ellos el informe de
+    un mes ya cerrado. Ver `apps.users.workplace_history`.
 
-    # Los de la empresa entera más los de su centro.
-    return por_centro.get(None, set()) | por_centro.get(person.workplace_id, set())
+    `por_centro` es lo que devuelve `holidays_by_workplace` y `por_persona` lo que
+    devuelve `workplaces_by_person`, los dos ya traídos de una vez. Sin ellos consulta
+    por su cuenta, que está bien para una llamada suelta y es un N+1 dentro de un
+    bucle: pásalos siempre que esto vaya dentro de uno.
+    """
+    from apps.users.workplace_history import workplaces_over
+
+    # Quien no tiene historial ---la inmensa mayoría, y todo el mundo hasta que se
+    # estrenó--- se resuelve con su centro de hoy.
+    if por_persona is not None:
+        por_dia = por_persona.get(person.pk, {})
+    else:
+        por_dia = workplaces_over(person, first, last)
+
+    if por_centro is None:
+        centros = {c.id for c in por_dia.values() if c} or {person.workplace_id}
+        rows = PublicHoliday.objects.filter(day__gte=first, day__lte=last).filter(
+            models.Q(workplace__isnull=True) | models.Q(workplace_id__in=centros)
+        )
+        if not por_dia:
+            return set(rows.values_list("day", flat=True))
+        de_la_empresa = set(rows.filter(workplace__isnull=True).values_list("day", flat=True))
+        locales = {
+            (centro_id, dia)
+            for centro_id, dia in rows.filter(workplace__isnull=False).values_list(
+                "workplace_id", "day"
+            )
+        }
+        return de_la_empresa | {
+            dia for dia, centro in por_dia.items() if centro and (centro.id, dia) in locales
+        }
+
+    # Los de la empresa entera más los del centro que le tocaba cada día.
+    de_la_empresa = por_centro.get(None, set())
+    if not por_dia:
+        return de_la_empresa | por_centro.get(person.workplace_id, set())
+    return de_la_empresa | {
+        dia for dia, centro in por_dia.items() if centro and dia in por_centro.get(centro.id, set())
+    }
