@@ -27,6 +27,7 @@ from apps.tenants.application_views import ApplicationViewSet
 from apps.tenants.attendance_api import ApplicationAttendanceRangeView, ApplicationAttendanceView
 from apps.tenants.hr_api import (
     ApplicationAbsencesView,
+    ApplicationAvailabilityView,
     ApplicationCalendarView,
     ApplicationLeaveTypesView,
     ApplicationRosterView,
@@ -143,6 +144,11 @@ urlpatterns = [
         "api/app/leave-types/",
         ApplicationLeaveTypesView.as_view(),
         name="app-leave-types",
+    ),
+    path(
+        "api/app/availability/",
+        ApplicationAvailabilityView.as_view(),
+        name="app-availability",
     ),
     path("api/app/sessions/", ApplicationSessionView.as_view(), name="app-sessions"),
     path("api/overtime/", OvertimeView.as_view(), name="overtime"),

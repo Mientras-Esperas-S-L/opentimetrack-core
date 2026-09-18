@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-18 02:03+0000\n"
+"POT-Creation-Date: 2026-09-18 02:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan\n"
@@ -127,7 +127,7 @@ msgid "code"
 msgstr ""
 
 #: apps/absences/models.py:109 apps/shifts/models.py:72
-#: apps/tenants/applications.py:50 apps/tenants/holidays.py:64
+#: apps/tenants/applications.py:51 apps/tenants/holidays.py:64
 #: apps/tenants/identity.py:33 apps/users/models.py:38 apps/users/models.py:167
 msgid "name"
 msgstr ""
@@ -227,7 +227,7 @@ msgid "note"
 msgstr ""
 
 #: apps/absences/models.py:204 apps/shifts/models.py:84
-#: apps/tenants/applications.py:59 apps/tenants/identity.py:116
+#: apps/tenants/applications.py:60 apps/tenants/identity.py:116
 #: apps/tenants/models.py:202 apps/users/models.py:42 apps/users/models.py:205
 #: apps/users/models.py:682
 msgid "active"
@@ -1058,7 +1058,7 @@ msgstr ""
 msgid "device"
 msgstr ""
 
-#: apps/notifications/models.py:44 apps/tenants/applications.py:110
+#: apps/notifications/models.py:44 apps/tenants/applications.py:111
 msgid "last used"
 msgstr ""
 
@@ -1719,8 +1719,8 @@ msgid "overtime decisions"
 msgstr "decisions sobre hores extres"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:694 apps/tenants/applications.py:70
-#: apps/tenants/applications.py:96
+#: apps/punches/models.py:694 apps/tenants/applications.py:71
+#: apps/tenants/applications.py:97
 msgid "application"
 msgstr "aplicació"
 
@@ -2889,79 +2889,83 @@ msgstr "Llegir els torns planificats"
 msgid "Read public holidays"
 msgstr "Llegir els festius"
 
-# revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/tenants/applications.py:43
+msgid "Read who can work on a given day"
+msgstr "Llegir qui pot treballar cada dia"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/applications.py:44
 msgid "Create and update people"
 msgstr "Crear i actualitzar persones"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:44
+#: apps/tenants/applications.py:45
 msgid "Receive outbound events"
 msgstr "Rebre esdeveniments de sortida"
 
-#: apps/tenants/applications.py:51 apps/users/models.py:40
+#: apps/tenants/applications.py:52 apps/users/models.py:40
 msgid "description"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:54
+#: apps/tenants/applications.py:55
 msgid "permissions"
 msgstr "permisos"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:56
+#: apps/tenants/applications.py:57
 msgid "List of granted scopes. Empty means the application can do nothing."
 msgstr ""
 "Llista de permisos concedits. Buida vol dir que l'aplicació no pot fer res."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:66
+#: apps/tenants/applications.py:67
 msgid "authorised by"
 msgstr "autoritzada per"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:71
+#: apps/tenants/applications.py:72
 msgid "applications"
 msgstr "aplicacions"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:98
+#: apps/tenants/applications.py:99
 msgid "label"
 msgstr "etiqueta"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:100
+#: apps/tenants/applications.py:101
 msgid "token hash"
 msgstr "resum del testimoni"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:102
+#: apps/tenants/applications.py:103
 msgid "hint"
 msgstr "pista"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:105
+#: apps/tenants/applications.py:106
 msgid "Last characters, to tell one credential from another in the interface."
 msgstr ""
 "Últims caràcters, per distingir una credencial d'una altra a la interfície."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:108
+#: apps/tenants/applications.py:109
 msgid "expires at"
 msgstr "caduca el"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:109
+#: apps/tenants/applications.py:110
 msgid "revoked at"
 msgstr "revocada el"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:113
+#: apps/tenants/applications.py:114
 msgid "application credential"
 msgstr "credencial d'aplicació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/applications.py:114
+#: apps/tenants/applications.py:115
 msgid "application credentials"
 msgstr "credencials d'aplicació"
 

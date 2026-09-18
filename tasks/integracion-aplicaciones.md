@@ -136,7 +136,7 @@ interpretar, como ya hace con la evidencia del fichaje delegado. No convierte es
 concepto en concepto del Core, y le ahorra a la aplicación depender solo de su propio
 índice para saber dónde ocurrió cada fichaje.
 
-## A5. Hora declarada y hora de recepción
+## A5. Hora declarada y hora de recepción ✔ hecha el 18/09/2026
 
 **Hecha el 18/09/2026.** `Punch.declared_at` y `Punch.received_at`, el ajuste
 `Tenant.offline_punch_grace_hours` (24 h por defecto, cero = todo cuenta desde la
@@ -161,20 +161,35 @@ pasa por el flujo de corrección.
 Lo que la norma exige es fiabilidad, objetividad y trazabilidad, no simultaneidad:
 se conserva la procedencia entera y nada es editable después.
 
-## A6. Disponibilidad, para quien planifica
+## A6. Disponibilidad, para quien planifica ✔ hecha el 18/09/2026
 
-Una aplicación que asigna trabajo pregunta antes de asignar: quién puede trabajar
-tal día. Es la regla del ADR-0011: el Core dice cuándo se puede trabajar, la
-aplicación dice qué se hace en ese tiempo.
+`GET /api/app/availability/?from=&to=` bajo el permiso propio `read:availability`,
+con, por persona y día: si está disponible, los minutos que ya tiene planificados, el
+festivo de su centro y el permiso que cubre el día. 9 pruebas en
+`apps/tenants/tests/test_la_disponibilidad_no_cuenta_de_mas.py`.
 
-`GET /api/app/availability/?from=&to=` con, por persona y día: si tiene turno, si
-está de ausencia, y si el día es festivo en su centro. Sin decir por qué falta
-cuando la causa es médica: la disponibilidad no necesita el diagnóstico.
+Tres decisiones que conviene entender:
 
-No bloquea el fichaje. Bloquea que una aplicación retire su módulo propio sin
-perder la planificación.
+- **Permiso propio y no la suma de los otros tres.** Leer el cuadrante o las ausencias
+  no da derecho a esto ni al revés: se concede uno a uno, como el resto.
+- **La baja médica se dice sin nombrarla.** Quien planifica necesita saber que el
+  martes esa persona no está; no necesita el diagnóstico, que es dato de salud del
+  art. 9 RGPD. El resto de permisos sí se nombran, y esa diferencia no es cosmética:
+  unas vacaciones se pueden pedir mover y una baja no.
+- **Tener turno no es estar ocupado.** `available` dice si se le *puede* dar trabajo;
+  los minutos planificados van aparte para que quien asigna decida con los dos datos.
 
-## A7. El centro de trabajo, con fechas
+El festivo se resuelve por el centro **de ese día** (ver A7), y todo se trae de una
+vez: por persona y día serían tres consultas por celda, y el mes de una plantilla de
+cien son nueve mil.
+
+Una aclaración del razonamiento original, que sigue valiendo: es la regla del
+ADR-0011 ---el Core dice cuándo se puede trabajar, la aplicación dice qué se hace en
+ese tiempo---. No bloquea el fichaje: quien se presenta y trabaja tiene su jornada
+registrada dijera lo que dijera esto, porque el registro es de lo que pasó y no de lo
+que se preveía.
+
+## A7. El centro de trabajo, con fechas ✔ hecha el 18/09/2026
 
 **No la pide ningún integrador: la pide el traslado.** Salió mirando a una persona que
 trabaja en varios sitios, y ahí resultó no hacer falta: quien se desplaza un día al

@@ -528,6 +528,33 @@ registro tiene derecho a distinguirlas.
 pero sigue en la lista: lo que grabó es suyo, y quitarla dejaría esos fichajes
 sin autor.
 
+### Qué le deja ver cada permiso
+
+Se conceden uno a uno porque no son lo mismo. Una aplicación que solo pinta horas no
+tiene por qué saber por qué alguien falta.
+
+| Permiso | Qué abre |
+|---|---|
+| `punch:self` | Fichar con la identidad de la persona |
+| `punch:delegated` | Fichar en nombre de alguien (terminal, lector) |
+| `read:attendance` | Lo trabajado: tramos y estado del día |
+| `read:people` / `write:people` | La plantilla: leerla, o dar de alta y de baja |
+| `read:absences` / `write:absences` | Los permisos y bajas: leerlos, o **pedirlos** |
+| `read:roster` | Lo que el cuadrante tenía previsto |
+| `read:calendar` | Los festivos de la empresa y de cada centro |
+| `read:availability` | **Quién puede trabajar cada día** |
+
+El último es el que usa una aplicación que reparte trabajo, y responde con lo justo:
+si esa persona está disponible ese día, los minutos que ya tiene planificados, el
+festivo de su centro y el permiso que cubre el día.
+
+**De una baja médica solo dice que no está disponible.** Ni el tipo ni el nombre. Un
+cuadrante se hace igual de bien sin el diagnóstico, y el diagnóstico es dato de salud.
+Los demás permisos sí se nombran: unas vacaciones se pueden pedir mover, una baja no.
+
+Que alguien no esté disponible **no le impide fichar**. Si se presenta y trabaja, su
+jornada queda registrada: el registro es de lo que pasó, no de lo que estaba previsto.
+
 ---
 
 ## 15. Ajustes de la empresa

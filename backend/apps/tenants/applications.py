@@ -40,6 +40,7 @@ class ApplicationScope(models.TextChoices):
     WRITE_ABSENCES = "write:absences", _("Request leave on behalf of an employee")
     READ_ROSTER = "read:roster", _("Read planned shifts")
     READ_CALENDAR = "read:calendar", _("Read public holidays")
+    READ_AVAILABILITY = "read:availability", _("Read who can work on a given day")
     WRITE_PEOPLE = "write:people", _("Create and update people")
     RECEIVE_EVENTS = "receive:events", _("Receive outbound events")
 

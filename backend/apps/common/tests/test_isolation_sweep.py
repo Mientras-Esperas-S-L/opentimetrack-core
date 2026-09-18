@@ -658,6 +658,10 @@ def test_every_route_is_covered_by_this_sweep():
         # permiso, no personas--- y la empresa sale de la credencial igual que en las
         # tres de arriba, así que se barre con ellas en test_application_hr.py.
         "api/app/leave-types/",
+        # Quién puede trabajar cada día. La empresa sale de la credencial y el
+        # `employee_ref` se resuelve dentro de ella, igual que en las lecturas de
+        # RRHH; su barrido propio está en test_la_disponibilidad_no_cuenta_de_mas.py.
+        "api/app/availability/",
         # Sin sesión a propósito, y de quién es el registro **no llega en la
         # petición**: sale del identificador firmado del enlace, así que no hay
         # ningún parámetro que se pueda cambiar para alcanzar a otra persona ---la

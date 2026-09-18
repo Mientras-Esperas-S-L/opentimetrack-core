@@ -413,3 +413,167 @@ class ApplicationLeaveTypesView(APIView):
                 ]
             }
         )
+
+
+# --------------------------------------------------------------- availability
+
+
+class DayAvailabilitySerializer(serializers.Serializer):
+    day = serializers.DateField()
+    available = serializers.BooleanField(help_text="Whether they can be given work that day.")
+    rostered_minutes = serializers.IntegerField(help_text="0 when nothing was planned.")
+    holiday = serializers.CharField(
+        allow_null=True, help_text="The name of the public holiday at their site, or null."
+    )
+    absence = serializers.CharField(
+        allow_null=True,
+        help_text=(
+            "Why they are off, when saying so is proportionate. Sick leave answers "
+            "`unavailable` without naming anything."
+        ),
+    )
+
+
+class PersonAvailabilitySerializer(serializers.Serializer):
+    employee = serializers.UUIDField()
+    employee_id = serializers.CharField()
+    days = DayAvailabilitySerializer(many=True)
+
+
+class AvailabilityAnswerSerializer(serializers.Serializer):
+    people = PersonAvailabilitySerializer(many=True)
+
+
+@extend_schema(tags=["applications"])
+class ApplicationAvailabilityView(APIView):
+    """Who can be given work on a given day, and who cannot.
+
+    The question an application asks **before** assigning, and the reason it can drop
+    its own planning module without losing the planning. This system says when somebody
+    can work; the application says what they do with that time.
+
+    It answers the three things that make a day unavailable and it answers them
+    together, because separately they are three calls and a join at the other end: the
+    shift that was planned, the leave that covers the day, and whether the day is a
+    public holiday **at their site** --- at the site they were assigned to *that day*,
+    which is not the same as today's once somebody has been transferred.
+
+    **It does not say why somebody is off when the reason is medical.** A planner needs
+    to know that Tuesday is not available; they do not need the diagnosis, and health
+    data is special category under art. 9 GDPR. Everything else names its leave type,
+    which is what lets a planner tell a holiday they could ask to move from a legal
+    permit they cannot.
+
+    It does not block clocking in. Somebody who turns up and works gets their day
+    recorded whatever this said --- the record is of what happened, not of what was
+    foreseen.
+    """
+
+    permission_classes = [HasApplicationScope]
+    required_scope = ApplicationScope.READ_AVAILABILITY
+
+    @extend_schema(
+        summary="Who can work over a range",
+        description=(
+            "Per person and day: whether they are available, the minutes rostered, the "
+            "public holiday at their workplace, and the leave that covers the day. Sick "
+            "leave is reported as unavailable **without naming it**. Requires "
+            "`read:availability`."
+        ),
+        parameters=[
+            OpenApiParameter("from", str, required=True),
+            OpenApiParameter("to", str, required=True),
+            OpenApiParameter("employee_ref", str),
+        ],
+        responses={200: AvailabilityAnswerSerializer},
+    )
+    def get(self, request):
+        from datetime import timedelta
+
+        from apps.absences.models import STOPS_THE_WHOLE_DAY, Absence, AbsenceStatus, AbsenceType
+        from apps.shifts.models import Shift
+        from apps.tenants.holidays import PublicHoliday
+        from apps.users.workplace_history import workplaces_by_person
+
+        company = request.user.application.tenant
+        first, last = _range(request.query_params)
+        people = _people_of(request, company)
+
+        # Todo de una vez: por persona y día serían tres consultas por celda, y el mes
+        # de una plantilla de cien son nueve mil.
+        turnos: dict = {}
+        for shift in Shift.objects.filter(employee__in=people, day__gte=first, day__lte=last):
+            turnos[(shift.employee_id, shift.day)] = shift.minutes
+
+        ausencias: dict = {}
+        for row in (
+            Absence.objects.filter(employee__in=people, start_date__lte=last, end_date__gte=first)
+            .filter(STOPS_THE_WHOLE_DAY)
+            .filter(status=AbsenceStatus.APPROVED)
+            .select_related("leave_type")
+        ):
+            dia = max(row.start_date, first)
+            while dia <= min(row.end_date, last):
+                ausencias.setdefault((row.employee_id, dia), row)
+                dia += timedelta(days=1)
+
+        festivos: dict = {}
+        for centro_id, dia, nombre in PublicHoliday.objects.filter(
+            tenant=company, day__gte=first, day__lte=last
+        ).values_list("workplace_id", "day", "name"):
+            festivos[(centro_id, dia)] = nombre
+
+        # El centro **de cada día**: a quien se trasladó en abril, los festivos de marzo
+        # le tocan por su centro de entonces. Ver apps/users/workplace_history.py.
+        centros = workplaces_by_person(people, first, last)
+
+        return Response(
+            {
+                "people": [
+                    {
+                        "employee": str(person.id),
+                        "employee_id": person.employee_id,
+                        "days": [
+                            self._day(
+                                person, dia, turnos, ausencias, festivos, centros, AbsenceType
+                            )
+                            for dia in _every_day(first, last)
+                        ],
+                    }
+                    for person in people
+                ]
+            }
+        )
+
+    @staticmethod
+    def _day(person, dia, turnos, ausencias, festivos, centros, AbsenceType) -> dict:
+        centro = centros.get(person.id, {}).get(dia) or person.workplace
+        festivo = festivos.get((None, dia)) or (festivos.get((centro.id, dia)) if centro else None)
+        ausencia = ausencias.get((person.id, dia))
+
+        # La baja médica se dice como «no disponible» y nada más: quien planifica no
+        # necesita el diagnóstico, y es dato de salud (art. 9 RGPD).
+        motivo = None
+        if ausencia is not None and ausencia.absence_type != AbsenceType.SICK_LEAVE:
+            motivo = (
+                ausencia.leave_type.name
+                if ausencia.leave_type_id
+                else ausencia.get_absence_type_display()
+            )
+
+        return {
+            "day": dia.isoformat(),
+            "available": ausencia is None and festivo is None,
+            "rostered_minutes": turnos.get((person.id, dia), 0),
+            "holiday": festivo,
+            "absence": motivo,
+        }
+
+
+def _every_day(first: date, last: date):
+    from datetime import timedelta
+
+    dia = first
+    while dia <= last:
+        yield dia
+        dia += timedelta(days=1)
