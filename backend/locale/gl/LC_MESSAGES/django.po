@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-18 08:17+0000\n"
+"POT-Creation-Date: 2026-09-21 13:33+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -2966,49 +2966,49 @@ msgstr "credencial de aplicación"
 msgid "application credentials"
 msgstr "credenciais de aplicación"
 
-#: apps/tenants/assertions.py:62
+#: apps/tenants/assertions.py:63
 msgid "The assertion is not a readable JWT."
 msgstr "A aserción non é un JWT lexible."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/assertions.py:67
+#: apps/tenants/assertions.py:68
 msgid "This company does not trust that issuer."
 msgstr "Esta empresa non confía nese emisor."
 
-#: apps/tenants/assertions.py:71
+#: apps/tenants/assertions.py:72
 msgid "That provider may sign people in, but not act for them."
 msgstr "Ese provedor pode identificar ás persoas, pero non actuar por elas."
 
-#: apps/tenants/assertions.py:85
+#: apps/tenants/assertions.py:86
 msgid "Could not obtain the issuer's signing keys."
 msgstr "Non se puideron obter as chaves de sinatura do emisor."
 
-#: apps/tenants/assertions.py:98
+#: apps/tenants/assertions.py:99
 msgid "The assertion has expired."
 msgstr "A aserción caducou."
 
-#: apps/tenants/assertions.py:100
+#: apps/tenants/assertions.py:101
 msgid "The assertion is not addressed to this system."
 msgstr "A aserción non vai dirixida a este sistema."
 
-#: apps/tenants/assertions.py:103
+#: apps/tenants/assertions.py:104
 msgid "The assertion is missing a required claim."
 msgstr "Á aserción fáltalle un dato obrigatorio."
 
-#: apps/tenants/assertions.py:106
+#: apps/tenants/assertions.py:107
 msgid "The assertion did not pass verification."
 msgstr "A aserción non superou a verificación."
 
-#: apps/tenants/assertions.py:111
+#: apps/tenants/assertions.py:112
 #, python-format
 msgid "An assertion may live at most %(seconds)d seconds."
 msgstr "Unha aserción dura como moito %(seconds)d segundos."
 
-#: apps/tenants/assertions.py:119
+#: apps/tenants/assertions.py:120
 msgid "That assertion was already used."
 msgstr "Esa aserción xa se usou."
 
-#: apps/tenants/assertions.py:136
+#: apps/tenants/assertions.py:137
 msgid "No active person matches the assertion's reference."
 msgstr "Ningunha persoa activa coincide coa referencia da aserción."
 
@@ -3216,23 +3216,23 @@ msgstr "provedor de identidade"
 msgid "identity providers"
 msgstr "provedores de identidade"
 
-#: apps/tenants/identity.py:190
+#: apps/tenants/identity.py:183
 msgid "provider"
 msgstr "provedor"
 
-#: apps/tenants/identity.py:193
+#: apps/tenants/identity.py:186
 msgid "domain"
 msgstr "dominio"
 
-#: apps/tenants/identity.py:195
+#: apps/tenants/identity.py:188
 msgid "Just the domain, lowercase and without the @: contrata.example"
 msgstr "Só o dominio, en minúsculas e sen a @: contrata.example"
 
-#: apps/tenants/identity.py:199
+#: apps/tenants/identity.py:192
 msgid "federated domain"
 msgstr "dominio federado"
 
-#: apps/tenants/identity.py:200
+#: apps/tenants/identity.py:193
 msgid "federated domains"
 msgstr "dominios federados"
 
@@ -3902,42 +3902,46 @@ msgstr "Non se puido chegar ao provedor de identidade."
 msgid "The provider describes itself with a different issuer."
 msgstr "O provedor descríbese cun emisor distinto."
 
-#: apps/tenants/sso.py:191
+#: apps/tenants/sso.py:137
+msgid "The provider does not say where its keys are."
+msgstr "O provedor non di onde están as súas chaves."
+
+#: apps/tenants/sso.py:213
 msgid "That sign-in attempt expired or was already used."
 msgstr "Ese intento de entrada caducou ou xa se usou."
 
-#: apps/tenants/sso.py:222
+#: apps/tenants/sso.py:244
 msgid "That sign-in expired or was already collected."
 msgstr "Esa entrada caducou ou xa se recolleu."
 
-#: apps/tenants/sso.py:243
+#: apps/tenants/sso.py:265
 msgid "The provider did not return a valid token."
 msgstr "O provedor non devolveu un token válido."
 
-#: apps/tenants/sso.py:256
+#: apps/tenants/sso.py:281
 msgid "Could not obtain the provider's signing keys."
 msgstr "Non se puideron obter as chaves de sinatura do provedor."
 
-#: apps/tenants/sso.py:271
+#: apps/tenants/sso.py:296
 msgid "The provider's token did not pass verification."
 msgstr "O token do provedor non superou a verificación."
 
-#: apps/tenants/sso.py:277
+#: apps/tenants/sso.py:302
 msgid "The provider's answer does not match this sign-in attempt."
 msgstr "A resposta do provedor non corresponde a este intento de entrada."
 
-#: apps/tenants/sso.py:298
+#: apps/tenants/sso.py:323
 msgid "The provider's token does not identify anybody."
 msgstr "O token do provedor non identifica a ninguén."
 
-#: apps/tenants/sso.py:316
+#: apps/tenants/sso.py:341
 msgid ""
 "Nobody here matches that account, and this provider does not create people."
 msgstr ""
 "Ninguén de aquí coincide con esa conta, e este provedor non dá de alta a "
 "ninguén."
 
-#: apps/tenants/sso.py:319
+#: apps/tenants/sso.py:344
 msgid "The provider's token carries no address to create anybody with."
 msgstr ""
 "O token do provedor non trae ningún enderezo co que dar de alta a ninguén."

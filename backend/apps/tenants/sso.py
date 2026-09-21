@@ -116,6 +116,28 @@ def discovery(provider: SsoProvider) -> dict:
     return document
 
 
+def keys_url(provider: SsoProvider) -> str:
+    """Where the provider's signing keys are.
+
+    The field wins when somebody filled it in. Blank asks the provider, which is
+    what its help text promises and what OpenID Connect Discovery says.
+
+    There used to be a second, different answer for the assertion flow ---
+    `issuer + /.well-known/jwks.json`, a location no standard defines. Against a
+    provider that publishes its keys anywhere else the browser flow worked and the
+    assertion flow refused every single time, with a message that reads "could not
+    obtain the issuer's signing keys" and sends whoever debugs it to look at the
+    network instead of at the URL. Found against GreenCityControl, which serves them
+    at `/o/jwks.json` and announces them in its document, exactly as it should.
+    """
+    if provider.jwks_uri:
+        return provider.jwks_uri
+    found = discovery(provider).get("jwks_uri")
+    if not found:
+        _refuse("provider_keys_unavailable", _("The provider does not say where its keys are."))
+    return found
+
+
 # --------------------------------------------------------------- who signs in where
 
 
@@ -246,10 +268,13 @@ def exchange_code(provider: SsoProvider, code: str, verifier: str, redirect_uri:
 
 def validated_claims(provider: SsoProvider, id_token: str, nonce: str) -> dict:
     """The claims, once the signature and the envelope check out."""
-    document = discovery(provider)
+    # Called for what it checks, not for what it returns: it refuses a document that
+    # describes itself with a different issuer than the one configured. `keys_url`
+    # below reads it again from the cache, so this costs nothing.
+    discovery(provider)
     try:
         key = jwt.PyJWKClient(
-            document["jwks_uri"], cache_keys=True, lifespan=DISCOVERY_TTL_SECONDS
+            keys_url(provider), cache_keys=True, lifespan=DISCOVERY_TTL_SECONDS
         ).get_signing_key_from_jwt(id_token)
     except Exception as exc:  # red, JWKS inservible, kid desconocido: misma respuesta
         logger.warning("sso: no key for %s: %s", provider.issuer, exc)

@@ -72,6 +72,14 @@ def jwks(keypair, monkeypatch):
             return PyJWK.from_dict(key)
 
     monkeypatch.setattr(jwt, "PyJWKClient", FakeJWKClient)
+    # Y de dónde sale la URL de las claves, que desde que hay una sola respuesta
+    # para los dos flujos la pregunta al proveedor: sin esto el fixture serviría la
+    # clave y la resolución de la URL saldría a la red de verdad.
+    from apps.tenants import sso
+
+    monkeypatch.setattr(
+        sso, "discovery", lambda p: {"issuer": p.issuer, "jwks_uri": f"{p.issuer}/jwks.json"}
+    )
     return key
 
 
@@ -305,3 +313,39 @@ def test_only_the_jwt_bearer_grant_is_accepted(connector, provider, rosa, keypai
         format="json",
     )
     assert answer.status_code == 400
+
+
+def test_las_claves_se_piden_donde_dice_el_proveedor(provider, monkeypatch):
+    """Con el campo en blanco, la URL sale del documento de descubrimiento.
+
+    Antes se derivaba `issuer + /.well-known/jwks.json`, que no es un sitio que
+    defina ningún estándar: contra un proveedor que publica sus claves en otra ruta
+    ---y la anuncia, como manda OpenID Connect Discovery--- esto daba 404 y el
+    rechazo decía «no se han podido obtener las claves», que no señala a la URL.
+    """
+    from apps.tenants import sso
+
+    provider.jwks_uri = ""
+    provider.save(update_fields=["jwks_uri"])
+    monkeypatch.setattr(
+        sso,
+        "discovery",
+        lambda p: {"issuer": p.issuer, "jwks_uri": "https://gcc.example/o/jwks.json"},
+    )
+
+    assert sso.keys_url(provider) == "https://gcc.example/o/jwks.json"
+
+
+def test_el_campo_manda_sobre_el_descubrimiento(provider, monkeypatch):
+    """Y quien lo rellena a mano ---una instalación sin descubrimiento--- gana."""
+    from apps.tenants import sso
+
+    provider.jwks_uri = "https://gcc.example/claves-a-mano"
+    provider.save(update_fields=["jwks_uri"])
+
+    def no_deberia_llamarse(p):
+        raise AssertionError("con el campo puesto no hace falta preguntar al proveedor")
+
+    monkeypatch.setattr(sso, "discovery", no_deberia_llamarse)
+
+    assert sso.keys_url(provider) == "https://gcc.example/claves-a-mano"

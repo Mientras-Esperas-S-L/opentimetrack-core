@@ -29,6 +29,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.common.exceptions import BusinessRuleError
 from apps.tenants.identity import SsoProvider
+from apps.tenants.sso import keys_url
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +79,7 @@ def _verified_claims(assertion: str, provider: SsoProvider) -> dict:
     """The claims, once the signature and the envelope check out."""
     try:
         signing_key = jwt.PyJWKClient(
-            provider.keys_url, cache_keys=True, lifespan=_JWKS_CACHE_SECONDS
+            keys_url(provider), cache_keys=True, lifespan=_JWKS_CACHE_SECONDS
         ).get_signing_key_from_jwt(assertion)
     except Exception as exc:  # red caída, JWKS inservible, kid desconocido: misma respuesta
         logger.warning("assertion: no key for %s: %s", provider.issuer, exc)

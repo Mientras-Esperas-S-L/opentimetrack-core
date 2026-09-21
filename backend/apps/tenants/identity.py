@@ -152,13 +152,6 @@ class SsoProvider(TenantOwnedModel):
         return super().save(*args, **kwargs)
 
     @property
-    def keys_url(self) -> str:
-        """Explicit, or the conventional one derived from the issuer."""
-        if self.jwks_uri:
-            return self.jwks_uri
-        return self.issuer.rstrip("/") + "/.well-known/jwks.json"
-
-    @property
     def expected_audience(self) -> str:
         return self.audience or self.issuer
 

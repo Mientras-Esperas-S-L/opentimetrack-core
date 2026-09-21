@@ -74,6 +74,13 @@ def jwks(keypair, monkeypatch):
             return PyJWK.from_dict(key)
 
     monkeypatch.setattr(jwt, "PyJWKClient", FakeJWKClient)
+    # Y de dónde sale la URL de las claves, que ahora se le pregunta al proveedor:
+    # sin esto el fixture serviría la clave y la resolución saldría a la red.
+    from apps.tenants import sso
+
+    monkeypatch.setattr(
+        sso, "discovery", lambda p: {"issuer": p.issuer, "jwks_uri": f"{p.issuer}/jwks.json"}
+    )
     return key
 
 
