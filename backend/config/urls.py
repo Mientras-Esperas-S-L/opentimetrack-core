@@ -24,8 +24,24 @@ from apps.reports.overview import OverviewView
 from apps.reports.views import PayrollSummaryView, ReportView
 from apps.shifts.views import ShiftPatternViewSet, ShiftViewSet, WorkingTimeRulesView
 from apps.tenants.application_views import ApplicationViewSet
-from apps.tenants.attendance_api import ApplicationAttendanceView
+from apps.tenants.attendance_api import ApplicationAttendanceRangeView, ApplicationAttendanceView
+from apps.tenants.hr_api import (
+    ApplicationAbsencesView,
+    ApplicationAvailabilityView,
+    ApplicationCalendarView,
+    ApplicationLeaveTypesView,
+    ApplicationRosterView,
+)
+from apps.tenants.me_api import ApplicationMeView
 from apps.tenants.people_api import ApplicationPeopleView, ApplicationPersonView
+from apps.tenants.session_api import ApplicationSessionView
+from apps.tenants.sso_views import (
+    SsoBackChannelLogoutView,
+    SsoCallbackView,
+    SsoDiscoverView,
+    SsoStartView,
+    SsoTicketView,
+)
 from apps.tenants.views import CompanyView, PublicHolidayViewSet, RecordArrangementView
 from apps.users.views import (
     ActivityPeriodViewSet,
@@ -68,6 +84,13 @@ auth_patterns = [
     path("refresh/", RefreshView.as_view(), name="refresh"),
     path("logout/", SignOutView.as_view(), name="logout"),
     path("me/", MeView.as_view(), name="me"),
+    # Identidad federada: descubrir, empezar, volver, y que el proveedor nos diga
+    # que una sesión se acabó. Ver apps/tenants/sso.py.
+    path("sso/discover/", SsoDiscoverView.as_view(), name="sso-discover"),
+    path("sso/start/<slug:slug>/", SsoStartView.as_view(), name="sso-start"),
+    path("sso/callback/", SsoCallbackView.as_view(), name="sso-callback"),
+    path("sso/ticket/", SsoTicketView.as_view(), name="sso-ticket"),
+    path("sso/logout/", SsoBackChannelLogoutView.as_view(), name="sso-logout"),
     path("password-reset/", PasswordResetRequestView.as_view(), name="password-reset"),
     path("set-password/", PasswordSetView.as_view(), name="set-password"),
 ]
@@ -110,6 +133,26 @@ urlpatterns = [
         name="app-person",
     ),
     path("api/app/attendance/", ApplicationAttendanceView.as_view(), name="app-attendance"),
+    path(
+        "api/app/attendance/range/",
+        ApplicationAttendanceRangeView.as_view(),
+        name="app-attendance-range",
+    ),
+    path("api/app/me/", ApplicationMeView.as_view(), name="app-me"),
+    path("api/app/absences/", ApplicationAbsencesView.as_view(), name="app-absences"),
+    path("api/app/roster/", ApplicationRosterView.as_view(), name="app-roster"),
+    path("api/app/calendar/", ApplicationCalendarView.as_view(), name="app-calendar"),
+    path(
+        "api/app/leave-types/",
+        ApplicationLeaveTypesView.as_view(),
+        name="app-leave-types",
+    ),
+    path(
+        "api/app/availability/",
+        ApplicationAvailabilityView.as_view(),
+        name="app-availability",
+    ),
+    path("api/app/sessions/", ApplicationSessionView.as_view(), name="app-sessions"),
     path("api/overtime/", OvertimeView.as_view(), name="overtime"),
     path(
         "api/holiday-recoveries/",

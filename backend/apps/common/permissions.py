@@ -146,3 +146,23 @@ class HasApplicationScope(BasePermission):
         set_current_tenant(caller.tenant_id)
         activate_for(caller)
         return True
+
+
+class IsApplication(BasePermission):
+    """The caller is an application with a valid credential, whatever its scopes.
+
+    For the one door every application may use without asking for any permission:
+    finding out who it is. Everything else keeps declaring its scope.
+    """
+
+    message = _("An application credential is required.")
+
+    def has_permission(self, request, view) -> bool:
+        caller = request.user
+        if not (caller and getattr(caller, "is_authenticated", False)):
+            return False
+        if not hasattr(caller, "allows"):
+            return False  # a person, not an application
+        set_current_tenant(caller.tenant_id)
+        activate_for(caller)
+        return True

@@ -2,8 +2,12 @@
 
 Three rules govern this module, and none of them is negotiable:
 
-1. **The server owns the time.** The timestamp is never taken from the client.
-   A client clock can be wrong, or set on purpose.
+1. **The server owns the time**, with one stated exception. A client clock can
+   be wrong, or set on purpose, so the timestamp is ours. The exception is the
+   punch made with no signal, which physically cannot reach us when it happens:
+   there the device's own time is accepted inside a window the company sets, and
+   **both** times are kept side by side. Never one instead of the other --- what
+   makes that entry defensible is that the gap is on the record.
 2. **Nothing is deleted.** Correcting a mistake voids the original and writes a
    new one, so the history stays intact.
 3. **Every event records how it got here.** A record created by the person from
@@ -15,7 +19,7 @@ Three rules govern this module, and none of them is negotiable:
 from __future__ import annotations
 
 import hashlib
-from datetime import UTC
+from datetime import UTC, timedelta
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -27,7 +31,15 @@ from apps.common.models import TenantOwnedModel
 #: Never rewrite a stored hash to match a new payload: that is exactly the
 #: manipulation the hash exists to make visible. Add a version instead, and let
 #: old events keep verifying under the rules they were recorded with.
-CURRENT_HASH_VERSION = 4
+CURRENT_HASH_VERSION = 5
+
+#: A punch counts as deferred from this much delay between being made and arriving.
+#:
+#: Below it, the gap is the round trip of a request: a phone on a slow connection
+#: takes seconds. Marking those would put a flag on almost every mobile punch and
+#: teach whoever reads the report to ignore the flag, which is the opposite of what
+#: it is for.
+DEFERRED_FROM = timedelta(minutes=1)
 
 
 class PunchType(models.TextChoices):
@@ -192,8 +204,33 @@ class Punch(TenantOwnedModel):
         default="",
     )
 
-    # Server time, in UTC. Never supplied by the client.
+    #: When the event counts as having happened. In UTC.
+    #:
+    #: Normally the server's clock. It is the device's own time when the punch was
+    #: made offline and arrived late, within the company's grace period --- see
+    #: `declared_at`, which is what makes that case readable afterwards.
     timestamp = models.DateTimeField(_("timestamp"), db_index=True)
+
+    #: What the device said the time was, when it said anything.
+    #:
+    #: Somebody clocking in at the far end of a park with no signal cannot reach us,
+    #: and their day is real all the same. The queue on their phone sends it when the
+    #: signal comes back, and without this field the record would say they started
+    #: work when they got back to the van.
+    #:
+    #: Empty for the ordinary punch, made against our own clock with nothing to
+    #: reconcile. Never trusted on its own: it is accepted within a stated window and
+    #: **both** times are kept, so an inspector sees the gap instead of a tidy figure
+    #: that hides it. Art. 34.9 asks for a reliable, objective and traceable record;
+    #: it does not ask for the recording to be simultaneous with the work.
+    declared_at = models.DateTimeField(_("declared by the device"), null=True, blank=True)
+
+    #: When it actually reached us. Always the server's clock.
+    #:
+    #: Equal to `timestamp` for a punch made online, and that is why it is not
+    #: redundant: the pair is the evidence. Empty in events recorded before this
+    #: field existed, where `timestamp` is both answers.
+    received_at = models.DateTimeField(_("received at"), null=True, blank=True)
 
     #: El huso en el que se vivió esa hora, **congelado aquí**.
     #:
@@ -314,7 +351,9 @@ class Punch(TenantOwnedModel):
             return self._hash_v2()
         if self.hash_version == 3:
             return self._hash_v3()
-        return self._hash_v4()
+        if self.hash_version == 4:
+            return self._hash_v4()
+        return self._hash_v5()
 
     def _hash_v1(self) -> str:
         """Original payload. Included the IP, which turned out to be a mistake.
@@ -412,6 +451,35 @@ class Punch(TenantOwnedModel):
             self.flexibility_measure,
         )
 
+    def _hash_v5(self) -> str:
+        """Igual que la v4, sellando también **cuándo se dijo y cuándo llegó**.
+
+        Un fichaje que se hizo sin cobertura vale por el par de horas, no por una
+        sola: la que el dispositivo declara y la que el servidor recibe. Si el par
+        quedara fuera del sello, se podría borrar el desfase de un asiento ---dejarlo
+        como si hubiera llegado en el momento--- sin que nada se rompiera, y el
+        desfase es justo la parte que hay que poder enseñar.
+
+        Las dos van en UTC, por lo mismo que el instante en la v4.
+        """
+        return self._digest(
+            str(self.employee_id),
+            str(self.tenant_id),
+            self.timestamp.astimezone(UTC).isoformat(),
+            self.punch_type,
+            self.source,
+            self.source_application,
+            str(self.recorded_by_id or ""),
+            self.interval,
+            self.work_mode,
+            self.hours_nature,
+            self.overtime_settlement,
+            "1" if self.force_majeure else "0",
+            self.flexibility_measure,
+            self.declared_at.astimezone(UTC).isoformat() if self.declared_at else "",
+            self.received_at.astimezone(UTC).isoformat() if self.received_at else "",
+        )
+
     @staticmethod
     def _digest(*parts: str) -> str:
         return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
@@ -463,6 +531,28 @@ class Punch(TenantOwnedModel):
     def was_delegated(self) -> bool:
         """True when somebody other than the employee produced the record."""
         return self.source in {PunchSource.DELEGATED, PunchSource.ADMIN, PunchSource.IMPORT}
+
+    @property
+    def arrival_delay(self) -> timedelta | None:
+        """How long the punch took to reach us, or `None` if we cannot tell.
+
+        `None` rather than zero for the events recorded before the two times existed:
+        saying "no delay" about something nobody measured would be inventing a fact.
+        """
+        if self.declared_at is None or self.received_at is None:
+            return None
+        return self.received_at - self.declared_at
+
+    @property
+    def was_deferred(self) -> bool:
+        """True when the device recorded this before it could send it.
+
+        What the inspection report shows next to the time. A minute of ordinary
+        network latency is not a deferred punch, and calling it one would bury the
+        real cases among thousands of meaningless marks.
+        """
+        delay = self.arrival_delay
+        return delay is not None and delay >= DEFERRED_FROM
 
 
 class PunchReminder(TenantOwnedModel):

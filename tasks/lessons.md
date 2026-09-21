@@ -2,6 +2,22 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Una prueba que se salta sola no protege nada (29/08/2026)
+
+Escribí la prueba del desglose con `test.skip(deuda?.settled_hours > 0, ...)`
+para que no fallara si la demostración traía descansos disfrutados. Suena
+prudente. Con la demostración recién sembrada **nadie ha disfrutado nada**, así
+que la condición que importaba ---qué pasa cuando sí--- no llegaba a correr
+nunca, y la suite la contaba como «skipped» sin que nadie lo mirara.
+
+El contraste lo destapó: saboteé la línea arreglada y la tanda siguió verde.
+
+**Cómo evitarlo:** una prueba **construye** el estado que necesita en vez de
+esperar a encontrárselo. `skip` vale para lo que el entorno no puede dar ---un
+navegador sin cámara--- no para lo que la prueba podría crear en tres líneas. Y
+si aparece un `skip` sobre datos, comprobar cuántas veces se salta de verdad:
+casi siempre es «siempre».
+
 ## Un ajuste que casi nadie cambia esconde los fallos de quien lo cambia (29/08/2026)
 
 El mes en que empieza el periodo de vacaciones es configurable y por defecto es

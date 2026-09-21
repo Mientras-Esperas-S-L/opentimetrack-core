@@ -65,6 +65,16 @@ class PersonFromApplicationSerializer(serializers.Serializer):
     #: El ancla. Único por empresa, y lo fija quien empuja.
     employee_id = serializers.CharField(max_length=50, required=False, allow_blank=True, default="")
     oidc_sub = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+    #: With `oidc_sub`, which provider issued it. A subject without its issuer names
+    #: nobody once a company has two providers (its own and the application's).
+    oidc_issuer = serializers.CharField(
+        max_length=255, required=False, allow_blank=True, default=""
+    )
+    #: Honoured **only when the person is created**. Whoever administers time here
+    #: decides the role of people who already exist, not the connector.
+    role = serializers.ChoiceField(
+        choices=Role.choices, required=False, allow_blank=True, default=""
+    )
     department = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
 
 
@@ -95,6 +105,8 @@ def _as_dict(person: User) -> dict:
         "last_name": person.last_name,
         "employee_id": person.employee_id,
         "oidc_sub": person.oidc_sub,
+        "oidc_issuer": person.oidc_issuer,
+        "role": person.role,
         "is_active": person.is_active,
         "department": person.department.name if person.department_id else "",
     }
@@ -109,6 +121,8 @@ class PersonInTheAnswerSerializer(serializers.Serializer):
     last_name = serializers.CharField()
     employee_id = serializers.CharField()
     oidc_sub = serializers.CharField()
+    oidc_issuer = serializers.CharField()
+    role = serializers.CharField()
     is_active = serializers.BooleanField()
     department = serializers.CharField()
 
@@ -296,6 +310,10 @@ class ApplicationPersonView(APIView):
             person.employee_id = data["employee_id"].strip()
         if data.get("oidc_sub"):
             person.oidc_sub = data["oidc_sub"].strip()
+        if data.get("oidc_issuer"):
+            person.oidc_issuer = data["oidc_issuer"].strip()
+        if creado and data.get("role"):
+            person.role = data["role"]
         # Reactivar es parte del empuje: alguien de temporada vuelve, y la
         # aplicación de gestión lo da de alta otra vez con el mismo número.
         person.is_active = True

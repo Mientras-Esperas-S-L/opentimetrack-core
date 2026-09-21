@@ -351,6 +351,11 @@ def _span(opening: Punch, end) -> DaySegment:
 #: segundo se crea. Ver `_refuse_a_double_tap`.
 DOUBLE_TAP_SECONDS = 5
 
+#: Cuánto puede adelantarse el reloj de un dispositivo sin que lo tratemos como una
+#: hora del futuro. Los relojes de los móviles van sincronizados pero no al segundo,
+#: y rechazar un fichaje por dos segundos de deriva sería rechazarlo por nada.
+_CLOCK_SKEW = timedelta(minutes=5)
+
 
 def _refuse_a_double_tap(employee, company, interval: str) -> None:
     """Dos eventos seguidos de la misma persona son un dedo, no dos hechos.
@@ -413,11 +418,17 @@ def register_punch(
     flexibility_measure: str = "",
     trigger: str = PunchTrigger.MANUAL,
     evidence: dict | None = None,
+    declared_at=None,
 ) -> Punch:
     """Record a clock event. The only supported way to create one.
 
-    Everything that must be true of every event happens here: server timestamp,
-    inferred type, business checks and integrity hash.
+    Everything that must be true of every event happens here: the timestamp, the
+    inferred type, the business checks and the integrity hash.
+
+    `declared_at` is for the punch that was made where there was no signal and queued
+    on the device. Inside the company's grace period it becomes the time that counts,
+    with the arrival kept beside it; outside it, the punch is refused here and goes
+    through the correction flow, where a person approves it and that is on the record.
     """
     if not employee.is_active:
         raise BusinessRuleError(
@@ -497,12 +508,18 @@ def register_punch(
             message=_("Say whether the overtime is paid or compensated with rest."),
         )
 
+    recibido = timezone.now()
+    cuenta_a = _accepted_time(company, declared_at=declared_at, received_at=recibido)
+
     punch = Punch(
         tenant=company,
         employee=employee,
         punch_type=punch_type,
-        # Server time. Never from the client, ever.
-        timestamp=timezone.now(),
+        # Nuestra hora, salvo la excepción declarada: un fichaje hecho sin cobertura
+        # trae la del dispositivo y las dos se guardan. Ver `_accepted_time`.
+        timestamp=cuenta_a,
+        declared_at=declared_at,
+        received_at=recibido,
         # Y el huso en el que se vive esa hora, congelado con ella: leerla más
         # tarde con el huso de hoy convierte un cambio de organización en un
         # cambio del registro.
@@ -524,6 +541,58 @@ def register_punch(
     )
     punch.save()
     return punch
+
+
+def _accepted_time(company, *, declared_at, received_at):
+    """Which of the two times the entry counts by, refusing the ones that cannot count.
+
+    The ordinary punch declares nothing and counts by our clock, which is the rule
+    this only narrows. What narrows it is the field: somebody clocking in at the far
+    end of a park with no signal cannot reach us at the moment they work, and an
+    entry that says they started when they got back to the van is not a reliable
+    record of the day either.
+
+    Three refusals, and each is a different problem:
+
+    - **A time in the future** is a wrong or manipulated clock. There is nothing to
+      reconcile and nowhere to put it.
+    - **Past the grace period** is not refused because it is false but because
+      nobody vouched for it. That is what the correction flow is: somebody asks,
+      somebody approves, and both are on the record.
+    - **A company that set the period to zero** has decided every punch counts from
+      when it arrived, and says so rather than silently ignoring the device.
+
+    Neither time is ever discarded: the caller stores both, and the gap between them
+    is what makes the entry defensible.
+    """
+    if declared_at is None:
+        return received_at
+
+    if declared_at > received_at + _CLOCK_SKEW:
+        raise BusinessRuleError(
+            code="declared_time_in_the_future",
+            message=_("The device says this punch happened later than it arrived."),
+        )
+
+    margen = timedelta(hours=company.offline_punch_grace_hours)
+    if not margen:
+        raise BusinessRuleError(
+            code="declared_time_not_accepted",
+            message=_("This company records every punch from the moment it reaches the system."),
+        )
+    if received_at - declared_at > margen:
+        raise BusinessRuleError(
+            code="declared_time_too_late",
+            message=_(
+                "This punch was made more than %(hours)s hours ago, so it is not recorded "
+                "directly. Ask for it through the correction flow, where it is approved and "
+                "the change is on the record."
+            )
+            % {"hours": company.offline_punch_grace_hours},
+        )
+    # Un reloj adelantado unos segundos no es un fichaje del futuro, pero tampoco es
+    # una hora que podamos anotar: se recorta a la de llegada y ahí acaba el asunto.
+    return min(declared_at, received_at)
 
 
 def _check_no_approved_absence(employee, company) -> None:

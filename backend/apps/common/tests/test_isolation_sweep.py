@@ -623,6 +623,51 @@ def test_every_route_is_covered_by_this_sweep():
         "api/app/people/",
         "api/app/people/<str:reference>/",
         "api/app/attendance/",
+        # El rango de asistencia, con su barrido propio en
+        # apps/tenants/tests/test_application_attendance_range.py: incluye que una
+        # credencial de otra empresa no vea a nadie de esta, ni por referencia ni
+        # pidiendo la plantilla entera.
+        "api/app/attendance/range/",
+        # Solo dice quién es la credencial que llama y a qué empresa apunta, así que
+        # no hay nada de nadie que alcanzar. Que una sesión de persona no entre por
+        # esta puerta está en apps/tenants/tests/test_application_me_and_identity.py.
+        "api/app/me/",
+        # Identidad federada. Las cuatro son anónimas a propósito ---quien va a entrar
+        # todavía no tiene sesión--- y lo que autoriza cada una es criptográfico: el
+        # estado de un solo uso, el código con su PKCE, y la firma del proveedor. Su
+        # barrido propio está en apps/tenants/tests/test_entrar_por_el_proveedor.py,
+        # con el token firmado por otro, el de otra sesión y el emisor desconocido.
+        "api/auth/sso/discover/",
+        "api/auth/sso/start/<slug:slug>/",
+        "api/auth/sso/callback/",
+        # Donde la aplicación web recoge la sesión que dejó el proveedor. Anónima
+        # a propósito ---quien llega todavía no tiene sesión, la viene a buscar---
+        # y lo que la autoriza es el vale: de un solo uso, de un minuto, y emitido
+        # por el callback para ese navegador. Su barrido está en
+        # apps/tenants/tests/test_entrar_por_el_proveedor.py.
+        "api/auth/sso/ticket/",
+        "api/auth/sso/logout/",
+        # Canjea una aserción firmada por una sesión de la persona que nombra. Su
+        # barrido propio está en apps/tenants/tests/test_application_sessions.py, e
+        # incluye que una credencial de otra empresa no obtenga sesión de nadie de
+        # esta, que el emisor tenga que estar autorizado a actuar, y que una aserción
+        # no se pueda reutilizar.
+        "api/app/sessions/",
+        # Las tres lecturas de RRHH para aplicaciones, cada una con su permiso y su
+        # empresa sacada de la credencial. Su barrido propio está en
+        # apps/tenants/tests/test_application_hr.py, e incluye que una credencial de
+        # otra empresa no vea a nadie de esta y que leer no dé permiso para pedir.
+        "api/app/absences/",
+        "api/app/roster/",
+        "api/app/calendar/",
+        # El catálogo de permisos de la empresa. No nombra a nadie ---son tipos de
+        # permiso, no personas--- y la empresa sale de la credencial igual que en las
+        # tres de arriba, así que se barre con ellas en test_application_hr.py.
+        "api/app/leave-types/",
+        # Quién puede trabajar cada día. La empresa sale de la credencial y el
+        # `employee_ref` se resuelve dentro de ella, igual que en las lecturas de
+        # RRHH; su barrido propio está en test_la_disponibilidad_no_cuenta_de_mas.py.
+        "api/app/availability/",
         # Sin sesión a propósito, y de quién es el registro **no llega en la
         # petición**: sale del identificador firmado del enlace, así que no hay
         # ningún parámetro que se pueda cambiar para alcanzar a otra persona ---la

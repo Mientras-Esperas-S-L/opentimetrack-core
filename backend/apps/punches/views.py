@@ -5,15 +5,18 @@ The heart of the product: one tap, and the server decides everything else.
 
 from __future__ import annotations
 
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from django.utils.translation import gettext_lazy as _
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.audit.services import record_view_of_others
+from apps.common.exceptions import BusinessRuleError
 from apps.common.filters import LocalDayRangeFilter
 from apps.common.permissions import IsAuthenticatedInTenant
 from apps.common.scope import person_in_scope, visible_people
+from apps.punches import idempotency
 from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource
 from apps.punches.serializers import PunchSerializer, PunchWriteSerializer
 from apps.punches.services import build_day_status, register_punch
@@ -49,12 +52,78 @@ def source_for(request) -> str:
     utilizable», que es mirar el agente del navegador, y un número es
     exactamente eso.
     """
+    # Una sesión obtenida con una aserción de aplicación lo dice en el propio token,
+    # y eso manda sobre lo que declare el cuerpo: el origen es parte de la prueba, no
+    # una preferencia del cliente. Ver apps/tenants/session_api.py.
+    if acting_application_name(request):
+        return PunchSource.APPLICATION
+
     declarado = (request.data or {}).get("source")
     declared = declarado.upper() if isinstance(declarado, str) else ""
     if declared in {PunchSource.MOBILE, PunchSource.WEB, PunchSource.TERMINAL}:
         return declared
     agent = request.META.get("HTTP_USER_AGENT", "").lower()
     return PunchSource.MOBILE if "expo" in agent or "okhttp" in agent else PunchSource.WEB
+
+
+def _refuse_unless_justified(request, data) -> dict:
+    """When the company expects punches from an application, this door asks why.
+
+    It asks, it does not close. If the application is unavailable -- it is being
+    deployed, the network is down, the phone is dead -- somebody would be working with
+    no way to record their day, and the system that answers to an inspection is this
+    one. A record whose availability depends on a third party is not a reliable record.
+
+    So the answer is a reason, kept with the punch and visible in the report, rather
+    than a refusal.
+    """
+    from apps.punches.serializers import EXCEPTION_REASON_MIN
+
+    company = request.user.tenant
+    if company.punch_entry != company.PunchEntry.APPLICATION:
+        return {}
+    # An application acting for the person is the expected door, not the exception.
+    if acting_application_name(request):
+        return {}
+
+    reason = (data.get("exception_reason") or "").strip()
+    if len(reason) < EXCEPTION_REASON_MIN:
+        raise BusinessRuleError(
+            code="exception_reason_required",
+            message=_(
+                "This company clocks in through its management application. You can still "
+                "clock in here, but say why in a line."
+            ),
+            details={"field": "exception_reason", "min_length": EXCEPTION_REASON_MIN},
+        )
+    return {"exception": {"reason": reason}}
+
+
+def acting_application_name(request) -> str:
+    """The application acting for the person, when the session came from an assertion."""
+    return _claim(request, "act_app")
+
+
+def acting_application(request):
+    """The application itself, or `None` when the person is acting for themselves.
+
+    Needed rather than just its name for the idempotency receipt, which is scoped to
+    the application: two connectors numbering their own operations must not collide.
+    """
+    from apps.tenants.models import Application
+
+    identifier = _claim(request, "act_app_id")
+    if not identifier:
+        return None
+    return Application.objects.filter(pk=identifier).first()
+
+
+def _claim(request, name: str) -> str:
+    token = getattr(request, "auth", None)
+    try:
+        return str(token[name]) if token is not None and name in token else ""
+    except TypeError, KeyError:
+        return ""
 
 
 @extend_schema(tags=["punches"])
@@ -141,20 +210,66 @@ class PunchViewSet(
         summary="Clock in or out",
         description=(
             "Records a clock event. The client sends neither the time nor the type: "
-            "the server sets the timestamp and infers whether it is an entry or an exit."
+            "the server infers whether it is an entry or an exit, and sets the timestamp "
+            "unless the punch was made offline and says when (`declared_at`).\n\n"
+            "**`Idempotency-Key` is accepted when an application holds the session.** "
+            "That is the case with a queue at the other end --- a phone that recorded a "
+            "punch with no signal and sends it when the signal returns. Repeating a call "
+            "with the same key returns the event already recorded, with `200` instead of "
+            "`201`. Without it a retry would not repeat the entry: it would record an "
+            "**exit**, because the type is inferred from the current state."
         ),
+        parameters=[
+            OpenApiParameter(
+                name="Idempotency-Key",
+                type=str,
+                location=OpenApiParameter.HEADER,
+                required=False,
+                description=(
+                    "Identifies the operation so a retry is not recorded twice. Only for a "
+                    "session obtained by an application; up to 200 characters."
+                ),
+            )
+        ],
         request=PunchWriteSerializer,
-        responses={201: PunchSerializer},
+        responses={201: PunchSerializer, 200: PunchSerializer},
     )
     def create(self, request):
         serializer = PunchWriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
+        excepcion = _refuse_unless_justified(request, data)
+
+        # La clave es de la aplicación que sostiene la sesión, porque es la que tiene
+        # la cola. Una persona fichando desde la web no tiene nada que reintentar, y
+        # aceptarle una clave sería ofrecerle una garantía que no hay quien dé.
+        application = acting_application(request)
+        key = idempotency.key_from(request)
+        if key and application is None:
+            raise BusinessRuleError(
+                code="idempotency_key_not_accepted",
+                message=_(
+                    "This key only means something for a session held by an application, "
+                    "which is where a queue of unsent punches lives."
+                ),
+                details={"header": "Idempotency-Key"},
+            )
+
+        receipt = None
+        if key:
+            ya = idempotency.already_recorded(application, key)
+            if ya is not None:
+                return self._answer(ya, status.HTTP_200_OK)
+            receipt, ya = idempotency.claim(request.user.tenant, application, key)
+            if ya is not None:
+                return self._answer(ya, status.HTTP_200_OK)
+
         punch = register_punch(
             employee=request.user,
             company=request.user.tenant,
             source=source_for(request),
+            source_application=acting_application_name(request),
             interval=data.get("interval") or PunchInterval.WORK,
             work_mode=data.get("work_mode", ""),
             hours_nature=data.get("hours_nature") or HoursNature.ORDINARY,
@@ -165,12 +280,20 @@ class PunchViewSet(
             device_id=data.get("device_id", ""),
             user_agent=request.META.get("HTTP_USER_AGENT", "")[:255],
             trigger=data.get("trigger") or "MANUAL",
-            evidence=data.get("evidence") or {},
+            evidence={**(data.get("evidence") or {}), **excepcion},
+            declared_at=data.get("declared_at"),
         )
 
+        if receipt is not None:
+            idempotency.settle(receipt, punch)
+
+        return self._answer(punch, status.HTTP_201_CREATED)
+
+    @staticmethod
+    def _answer(punch, code: int) -> Response:
         data = PunchSerializer(punch).data
-        data["day_status"] = build_day_status(request.user, request.user.tenant).as_dict()
-        return Response(data, status=status.HTTP_201_CREATED)
+        data["day_status"] = build_day_status(punch.employee, punch.tenant).as_dict()
+        return Response(data, status=code)
 
     @extend_schema(
         summary="Today's status",

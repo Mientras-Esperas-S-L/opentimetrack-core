@@ -55,6 +55,13 @@ class DayRow:
     imported: bool = False
     arrangements: list[str] = field(default_factory=list)
 
+    # Un fichaje hecho sin cobertura y enviado al recuperarla. La hora que cuenta es
+    # la que declaró el dispositivo, y eso hay que poder verlo: leído sin la marca, el
+    # asiento parece tomado en el momento y la explicación del desfase se pierde.
+    # `deferred_marks` lleva la hora de llegada de cada uno, que es la otra mitad.
+    deferred: bool = False
+    deferred_marks: list[tuple[datetime, datetime]] = field(default_factory=list)
+
     # Art. 4.b. A day whose entries were changed over the person's objection,
     # and what they said. Both, or neither: a report that showed the change
     # without the objection would be hiding the disagreement the article
@@ -326,6 +333,10 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
             elif event.was_delegated:
                 row.delegated = True
             local = event.timestamp.astimezone(zone_of(event, zone))
+            if event.was_deferred:
+                row.deferred = True
+                llegada = event.received_at.astimezone(zone_of(event, zone))
+                row.deferred_marks.append((local, llegada))
             kind = event.interval
 
             if event.punch_type == PunchType.IN:
@@ -516,6 +527,20 @@ def day_notes(row: DayRow) -> str:
         notes.append(_("corrected by the company"))
     if row.imported:
         notes.append(_("imported from another system"))
+    if row.deferred:
+        # La hora que consta es la que el dispositivo declaró, no la de llegada, y
+        # quien lee el registro tiene que poder verlo: es la diferencia entre un
+        # asiento tomado en el momento y uno reconstruido después. Se dice **cuándo
+        # llegó cada uno**, porque «se registró en diferido» sin el par de horas no
+        # se puede comprobar contra nada.
+        llegadas = ", ".join(
+            sorted({recibido.strftime("%H:%M") for _declarado, recibido in row.deferred_marks})
+        )
+        notes.append(
+            _("recorded offline and received later (at %(times)s)") % {"times": llegadas}
+            if llegadas
+            else _("recorded offline and received later")
+        )
     if row.disputed:
         # Primero la marca, y después lo que dijo la persona. Sin la marca, un
         # día sin texto de discrepancia ---puede no haberlo escrito--- se leería

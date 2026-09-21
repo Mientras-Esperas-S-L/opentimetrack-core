@@ -90,7 +90,19 @@ def test_los_nuevos_se_sellan_en_utc(gente):
         creado = _ficha(empresa, quien, CUANDO.astimezone(empresa.tzinfo))
 
     assert creado.hash_version == CURRENT_HASH_VERSION >= 4
-    assert creado.hash_integrity == creado._hash_v4()
+
+    # La propiedad, y no el método de una versión concreta: lo que la v4 vino a
+    # arreglar es que el mismo instante escrito en dos husos daba dos sellos. Fijarlo
+    # contra `_hash_v4` hacía que añadir una versión rompiera esta prueba sin que
+    # nada estuviera mal, y lo que hay que seguir cumpliendo es esto.
+    original = creado.timestamp
+    try:
+        creado.timestamp = original.astimezone(empresa.tzinfo)
+        assert creado.compute_hash() == creado.hash_integrity, (
+            "el sello del vigente tiene que salir igual escriba quien escriba la hora"
+        )
+    finally:
+        creado.timestamp = original
 
 
 @pytest.mark.django_db

@@ -341,6 +341,29 @@ export const updateMe = async (payload) => (await api.patch('/auth/me/', payload
  *  out who works where, so the screen says the same thing either way. */
 export const requestPasswordReset = (email) => post('/auth/password-reset/', { email })
 
+/**
+ * Whether that address signs in here or at their company's provider.
+ *
+ * Asked as they type their address, because that is the only thing they know:
+ * nobody should have to recognise which of their employer's identity systems is
+ * theirs. The answer says nothing about whether the address exists.
+ */
+export const discoverSso = (email) => post('/auth/sso/discover/', { email })
+
+/** Where to send the browser to sign in at the provider. */
+export const ssoStartUrl = (slug) => `${baseURL.replace(/\/$/, '')}/auth/sso/start/${slug}/`
+
+/** Collects the session the provider left behind, with the one-use ticket.
+ *
+ *  The browser comes back from the provider to the API, and the API sends it here
+ *  with a ticket instead of the tokens: those would end up in the history, in the
+ *  web server's log and in the `Referer` of the first image the page loads. */
+export const collectSsoSession = async (ticket) => {
+  const data = await post('/auth/sso/ticket/', { ticket })
+  tokens.save(data)
+  return data
+}
+
 /** Sets the password from the link and signs in with it, so nobody has to type
  *  the password they have just chosen. */
 export const setPasswordFromLink = async (payload) => {

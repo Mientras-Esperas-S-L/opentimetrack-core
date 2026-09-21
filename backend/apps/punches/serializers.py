@@ -29,6 +29,7 @@ class PunchSerializer(serializers.ModelSerializer):
     #: no tiene otra forma de saberlo.
     time_zone = serializers.SerializerMethodField()
     source_display = serializers.CharField(source="get_source_display", read_only=True)
+    was_deferred = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Punch
@@ -45,6 +46,11 @@ class PunchSerializer(serializers.ModelSerializer):
             "force_majeure",
             "flexibility_measure",
             "timestamp",
+            # Las dos horas del fichaje hecho sin cobertura. Van juntas a propósito:
+            # una sola no dice nada y el par es la prueba.
+            "declared_at",
+            "received_at",
+            "was_deferred",
             "source",
             "source_display",
             "source_application",
@@ -92,14 +98,33 @@ def validate_evidence(value):
     return value
 
 
+#: Lo que hay que escribir para fichar por la puerta que no es la normal. Corto, pero
+#: no vacío: la excepción se justifica, y ese texto llega al informe de Inspección.
+EXCEPTION_REASON_MIN = 10
+
+
 class PunchWriteSerializer(serializers.Serializer):
     """What a client is allowed to send.
 
-    Note what is missing: neither the timestamp nor the type. Accepting either
-    would hand the client control over the legal record.
+    Note what is missing: the type. Inferring it here is what keeps a client from
+    writing two openings in a row and calling the result a working day.
+
+    The time is ours too, with the one exception this field carries: `declared_at`,
+    for the punch that was made where there was no signal. It is not accepted on
+    trust --- it has a window, and both times end up stored.
     """
 
     device_id = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    declared_at = serializers.DateTimeField(
+        required=False,
+        allow_null=True,
+        help_text=(
+            "When the device says the punch happened, for one made offline and sent later. "
+            "Leave it out for an ordinary punch: without it the server's own clock is used, "
+            "and that is the normal case. Accepted only inside the company's grace period; "
+            "the arrival time is recorded alongside it either way."
+        ),
+    )
     source = serializers.CharField(max_length=16, required=False, allow_blank=True)
 
     # How the punch was triggered, and its proof. The default is a person
@@ -109,6 +134,17 @@ class PunchWriteSerializer(serializers.Serializer):
         choices=PunchTrigger.choices, required=False, default=PunchTrigger.MANUAL
     )
     evidence = serializers.JSONField(required=False, default=dict, validators=[validate_evidence])
+    #: Solo se mira cuando la empresa dice que la puerta normal es la aplicación
+    #: integrada. Ver `Tenant.punch_entry` y apps/punches/views.py.
+    exception_reason = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200,
+        help_text=(
+            "Why you are clocking in here rather than through the usual application. "
+            "Required when the company expects punches to come from an application."
+        ),
+    )
 
     # Art. 3 of the pending decree. The client says *what kind* of span this is
     # and under what arrangement --- facts only the person can supply --- but

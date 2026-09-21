@@ -96,7 +96,12 @@ def test_pero_la_puerta_de_entrada_no_declara_un_401(esquema):
     abiertas = [(r, m, op) for r, m, op in _operaciones(esquema) if not op.get("security")]
     # Contraste del contraste: si `security` dejara de emitirse, esta lista
     # sería todo el esquema y la comprobación pasaría sin significar nada.
-    assert 3 <= len(abiertas) <= 8, (
+    # El tope subió de 8 a 12 el 17/09/2026 al entrar la identidad federada, que son
+    # cuatro operaciones necesariamente anónimas: preguntar dónde se entra, ir al
+    # proveedor, volver de él, y que el proveedor avise de que una sesión se acabó.
+    # Sigue siendo un tope: lo que vigila es que la puerta no se ensanche sin que
+    # alguien lo mire.
+    assert 3 <= len(abiertas) <= 12, (
         f"las operaciones abiertas deberían ser un puñado: {len(abiertas)}"
     )
 

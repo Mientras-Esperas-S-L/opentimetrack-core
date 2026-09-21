@@ -46,3 +46,4 @@ minio-data/
 
 # Uploaded files. Test runs leave sample documents here.
 backend/media/
+compose.override.yml

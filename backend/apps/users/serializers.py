@@ -661,8 +661,21 @@ class SignInSerializer(serializers.Serializer):
         return attrs
 
 
-def issue_tokens(user) -> dict:
+def issue_tokens(user, *, acting_application=None) -> dict:
+    """The person's session.
+
+    `acting_application` marks a session an application obtained by presenting a
+    signed assertion (RFC 7523). The mark travels **inside the token** rather than
+    being declared per request, so what a punch says about its origin cannot be
+    chosen by whoever sends it: anything clocked with this session is recorded as
+    coming from an application, with its name, and the inspection report shows it.
+    """
     refresh = RefreshToken.for_user(user)
+    if acting_application is not None:
+        refresh["act_app"] = acting_application.name
+        refresh["act_app_id"] = str(acting_application.id)
+        # The access token is derived from the refresh, so it inherits both claims,
+        # and so does every access token refreshed from it later.
     return {"access": str(refresh.access_token), "refresh": str(refresh)}
 
 

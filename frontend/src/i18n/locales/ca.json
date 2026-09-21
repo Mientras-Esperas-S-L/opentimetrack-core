@@ -279,6 +279,7 @@
   "Entrada": "Entrada",
   "Entrando…": "Entrant…",
   "Entrar": "Entrar",
+  "Entrar con {{provider}}": "Entra amb {{provider}}",
   "Enviando…": "Enviant…",
   "Enviar enlace de acceso": "Enviar enllaç d'accés",
   "Enviar mi versión": "Enviar la meva versió",
@@ -737,6 +738,7 @@
   "Tramos horarios": "Trams horaris",
   "Tu convenio suma días por antigüedad y no consta tu fecha de inicio de contrato, así que no se han podido contar.": "El teu conveni suma dies per antiguitat i no consta la teva data d'inici de contracte, així que no s'han pogut comptar.",
   "Tu empresa trabaja en {{sector}}, donde el {{norma}} amplía la jornada y fija descansos compensatorios propios. Esos no se cuentan aquí: mira tu convenio.": "La teva empresa treballa en {{sector}}, on el {{norma}} amplia la jornada i fixa descansos compensatoris propis. Aquests no es compten aquí: mira el teu conveni.",
+  "Tu empresa usa {{provider}} para identificarte.": "La teva empresa fa servir {{provider}} per identificar-te.",
   "Tu registro completo. Tienes derecho a consultarlo, y se conserva cuatro años.": "El teu registre complet. Tens dret a consultar-lo, i es conserva quatre anys.",
   "Tu registro no se cambia ahora: se envía la petición y la resuelve un responsable. El fichaje original nunca se borra.": "El teu registre no canvia ara: s'envia la petició i la resol una persona responsable. El fitxatge original no s'esborra mai.",
   "Tu sesión sigue guardada: no hace falta volver a entrar.": "La teva sessió continua desada: no cal tornar a entrar.",
@@ -796,6 +798,7 @@
   "Volver a hoy": "Tornar a avui",
   "Volver de la pausa": "Tornar de la pausa",
   "Web": "Web",
+  "Ya has disfrutado {{cuanto}} h, que se restan del total y no de una línea: un descanso no dice de cuál sale.": "Ja has gaudit {{cuanto}} h, que es resten del total i no d'una línia: un descans no diu de quina surt.",
   "Ya lleva {{horas}} h autorizadas este año, por encima del tope de {{tope}} h (art. 35.2 ET).": "Ja porta {{horas}} h autoritzades aquest any, per sobre del límit de {{tope}} h (art. 35.2 ET).",
   "Ya lo tengo": "Ja el tinc",
   "Zona horaria": "Fus horari",
@@ -911,5 +914,7 @@
   "· resuelto antes con {{antes}}": "· resolt abans amb {{antes}}",
   "· sin cubrir": "· sense cobrir",
   "· sin sueldo": "· sense sou",
-  "· sobre {{quien}}": "· sobre {{quien}}"
+  "· sobre {{quien}}": "· sobre {{quien}}",
+  "Volver a la pantalla de acceso": "Tornar a la pantalla d'accés",
+  "Falta el identificador de la entrada. Vuelve a intentarlo desde la pantalla de acceso.": "Falta l'identificador de l'entrada. Torna-ho a provar des de la pantalla d'accés."
 }

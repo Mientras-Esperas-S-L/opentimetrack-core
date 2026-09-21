@@ -13,6 +13,8 @@ entonces las garantías serían opcionales.
 
 from __future__ import annotations
 
+from datetime import date
+
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import serializers
@@ -193,3 +195,255 @@ def _day_of(person, company, *, events=None, rules=None) -> dict:
             for s in estado.segments
         ],
     }
+
+
+# ------------------------------------------------------------------ the range
+#
+# A month at a time, for the application that draws a calendar. `read:attendance`
+# used to answer only "today", so a human resources screen had to call thirty
+# times and still knew nothing about absences or holidays. This is one call per
+# person-page with everything a day needs to be painted: what was worked, whether
+# the roster expected work, whether it was a holiday at their workplace, and the
+# absence that explains a gap. Still read-only, still without capture metadata.
+
+#: Two months. Longer ranges are what reports are for, and a calendar never shows more.
+MAX_RANGE_DAYS = 62
+#: People per page. The cost is per person-day, so the page keeps the answer bounded.
+PEOPLE_PER_PAGE = 100
+
+
+class AbsenceInTheRangeSerializer(serializers.Serializer):
+    code = serializers.CharField(
+        help_text="The leave type's code, or the absence type when there is none."
+    )
+    name = serializers.CharField()
+    status = serializers.ChoiceField(choices=["PENDING", "APPROVED"])
+    partial = serializers.BooleanField(
+        help_text="True when the absence covers hours, not the whole day."
+    )
+
+
+class DayInTheRangeSerializer(serializers.Serializer):
+    day = serializers.DateField(help_text="In the person's zone.")
+    state = serializers.ChoiceField(choices=["NOT_STARTED", "WORKING", "ON_BREAK", "OFF"])
+    worked_seconds = serializers.IntegerField()
+    segments = TramoSerializer(many=True)
+    scheduled = serializers.BooleanField(
+        allow_null=True,
+        help_text="Whether the roster expected work; `null` if they have no roster in the range.",
+    )
+    holiday = serializers.CharField(
+        allow_null=True, help_text="The holiday's name at their workplace, or `null`."
+    )
+    absence = AbsenceInTheRangeSerializer(allow_null=True)
+
+
+class PersonInTheRangeSerializer(serializers.Serializer):
+    employee = serializers.UUIDField()
+    employee_id = serializers.CharField()
+    name = serializers.CharField()
+    is_active = serializers.BooleanField()
+    days = DayInTheRangeSerializer(many=True)
+
+
+class AttendanceRangeSerializer(serializers.Serializer):
+    time_zone = serializers.CharField(help_text="The company's.")
+    from_day = serializers.DateField(
+        help_text="In the JSON the field is called `from`.", source="from"
+    )
+    to = serializers.DateField()
+    count = serializers.IntegerField(help_text="How many people match, in total.")
+    page = serializers.IntegerField()
+    has_more = serializers.BooleanField()
+    people = PersonInTheRangeSerializer(many=True)
+
+
+def _parse_range(params) -> tuple[date, date, int]:
+    """`from`, `to` (both included) and `page`, or a 400 that names the field."""
+    from django.utils.dateparse import parse_date
+
+    errors = {}
+    first = parse_date(params.get("from") or "")
+    last = parse_date(params.get("to") or "")
+    if first is None:
+        errors["from"] = [_("A date is required, as YYYY-MM-DD.")]
+    if last is None:
+        errors["to"] = [_("A date is required, as YYYY-MM-DD.")]
+    if errors:
+        raise serializers.ValidationError(errors)
+    if last < first:
+        raise serializers.ValidationError({"to": [_("Must not be before `from`.")]})
+    if (last - first).days + 1 > MAX_RANGE_DAYS:
+        raise serializers.ValidationError(
+            {"to": [_("At most %(days)d days per call.") % {"days": MAX_RANGE_DAYS}]}
+        )
+    try:
+        page = max(1, int(params.get("page", 1)))
+    except TypeError, ValueError:
+        raise serializers.ValidationError({"page": [_("Must be a whole number.")]}) from None
+    return first, last, page
+
+
+def _absence_as_dict(absence) -> dict | None:
+    if absence is None:
+        return None
+    leave_type = absence.leave_type if absence.leave_type_id else None
+    return {
+        "code": (leave_type.code if leave_type and leave_type.code else absence.absence_type),
+        "name": leave_type.name if leave_type else absence.get_absence_type_display(),
+        "status": absence.status,
+        "partial": bool(absence.start_time or absence.end_time),
+    }
+
+
+@extend_schema(tags=["applications"])
+class ApplicationAttendanceRangeView(APIView):
+    """A range of days, per person, with what a calendar needs to paint each one."""
+
+    permission_classes = [HasApplicationScope]
+    required_scope = ApplicationScope.READ_ATTENDANCE
+
+    @extend_schema(
+        summary="Attendance over a range of days",
+        description=(
+            "For every person and every day between `from` and `to` (both included, at most "
+            "62 days): state, worked seconds, segments, whether the roster expected work, the "
+            "holiday at their workplace and the absence covering the day. Paged by person. "
+            "With `employee_ref`, just that person, active or not. Requires `read:attendance`."
+        ),
+        parameters=[
+            OpenApiParameter("from", str, required=True, description="YYYY-MM-DD"),
+            OpenApiParameter("to", str, required=True, description="YYYY-MM-DD, included"),
+            OpenApiParameter("employee_ref", str, description="External reference of one person"),
+            OpenApiParameter("page", int, description="Page of people, from 1"),
+        ],
+        responses={200: AttendanceRangeSerializer},
+    )
+    def get(self, request):
+        from datetime import datetime, time, timedelta
+
+        from apps.absences.models import Absence, AbsenceStatus
+        from apps.punches.models import Punch
+        from apps.punches.services import local_day_bounds
+        from apps.shifts.models import Shift, working_days_between
+        from apps.tenants.holidays import PublicHoliday
+        from apps.tenants.people_api import _resolve
+        from apps.tenants.rules import WorkingTimeRules
+        from apps.users.models import User
+
+        company = request.user.application.tenant
+        first, last, page = _parse_range(request.query_params)
+        wanted = request.query_params.get("employee_ref")
+
+        if wanted:
+            # Active or not: the calendar of somebody who left mid-month is still theirs.
+            person = _resolve(wanted, company)
+            if person is None:
+                raise BusinessRuleError(
+                    code="employee_not_found",
+                    message=_("No person matches that reference."),
+                    details={"employee_ref": wanted},
+                )
+            people, count, has_more = [person], 1, False
+        else:
+            everybody = (
+                User.objects.filter(tenant=company, is_active=True)
+                .select_related("workplace__tenant", "tenant")
+                .order_by("last_name", "first_name", "id")
+            )
+            count = everybody.count()
+            people = list(everybody[(page - 1) * PEOPLE_PER_PAGE : page * PEOPLE_PER_PAGE])
+            has_more = page * PEOPLE_PER_PAGE < count
+
+        rules = WorkingTimeRules.for_company(company)
+        # The window in the company's zone with a day of margin each side, then cut
+        # per person in memory: two workplaces an hour apart do not share a midnight.
+        noon = time(12)
+        start, _ignored = local_day_bounds(
+            company, datetime.combine(first, noon, tzinfo=company.tzinfo)
+        )
+        _ignored, end = local_day_bounds(
+            company, datetime.combine(last, noon, tzinfo=company.tzinfo)
+        )
+        events = Punch.objects.filter(
+            employee__in=people,
+            is_active=True,
+            timestamp__gte=start - timedelta(days=1),
+            timestamp__lt=end + timedelta(days=1),
+        ).order_by("timestamp")
+        by_person = {person.id: person for person in people}
+        by_person_day: dict = {}
+        for event in events:
+            owner = by_person[event.employee_id]
+            day = event.timestamp.astimezone(owner.tzinfo).date()
+            by_person_day.setdefault((owner.id, day), []).append(event)
+
+        absences: dict = {}
+        for absence in (
+            Absence.objects.filter(employee__in=people, start_date__lte=last, end_date__gte=first)
+            .exclude(status=AbsenceStatus.REJECTED)
+            .select_related("leave_type")
+            .order_by("start_date")
+        ):
+            absences.setdefault(absence.employee_id, []).append(absence)
+
+        rostered: dict = {}
+        for employee_id, day in Shift.objects.filter(
+            employee__in=people, day__gte=first, day__lte=last
+        ).values_list("employee_id", "day"):
+            rostered.setdefault(employee_id, set()).add(day)
+
+        holiday_names: dict = {}
+        for workplace_id, day, name in PublicHoliday.objects.filter(
+            day__gte=first, day__lte=last
+        ).values_list("workplace_id", "day", "name"):
+            holiday_names[(workplace_id, day)] = name
+
+        answer = []
+        for person in people:
+            roster = rostered.get(person.id)
+            days = []
+            for day in working_days_between(first, last):
+                status = build_day_status(
+                    person, company, events=by_person_day.get((person.id, day), []), rules=rules
+                )
+                covering = next(
+                    (a for a in absences.get(person.id, []) if a.start_date <= day <= a.end_date),
+                    None,
+                )
+                days.append(
+                    {
+                        "day": day.isoformat(),
+                        "state": status.state,
+                        "worked_seconds": status.worked_seconds,
+                        "segments": [
+                            {"in": s.start.isoformat(), "out": s.end.isoformat() if s.end else None}
+                            for s in status.segments
+                        ],
+                        "scheduled": (day in roster) if roster is not None else None,
+                        "holiday": holiday_names.get((person.workplace_id, day))
+                        or holiday_names.get((None, day)),
+                        "absence": _absence_as_dict(covering),
+                    }
+                )
+            answer.append(
+                {
+                    "employee": str(person.id),
+                    "employee_id": person.employee_id,
+                    "name": person.get_full_name(),
+                    "is_active": person.is_active,
+                    "days": days,
+                }
+            )
+
+        return Response(
+            {
+                "time_zone": company.time_zone,
+                "from": first.isoformat(),
+                "to": last.isoformat(),
+                "count": count,
+                "page": page,
+                "has_more": has_more,
+                "people": answer,
+            }
+        )

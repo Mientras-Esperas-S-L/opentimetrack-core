@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -23,7 +22,8 @@ from rest_framework.views import APIView
 
 from apps.common.exceptions import BusinessRuleError, IncompleteRequest
 from apps.common.permissions import HasApplicationScope
-from apps.punches.models import DelegatedPunchReceipt, PunchSource, PunchTrigger
+from apps.punches import idempotency
+from apps.punches.models import PunchSource, PunchTrigger
 from apps.punches.serializers import PunchSerializer, validate_evidence
 from apps.punches.services import build_day_status, register_punch
 from apps.tenants.applications import ApplicationScope
@@ -34,8 +34,10 @@ User = get_user_model()
 class DelegatedPunchSerializer(serializers.Serializer):
     """What an application may send.
 
-    Still no timestamp and no type: delegating who presses the button does not
-    delegate who owns the clock.
+    Still no type: delegating who presses the button does not delegate who reads the
+    state of the day. The clock stays ours too, with the same one exception as the
+    ordinary door --- `declared_at`, for what a terminal or a phone recorded while it
+    could not reach us.
     """
 
     employee_ref = serializers.CharField(
@@ -55,6 +57,14 @@ class DelegatedPunchSerializer(serializers.Serializer):
         choices=PunchTrigger.choices, required=False, default=PunchTrigger.MANUAL
     )
     evidence = serializers.JSONField(required=False, default=dict, validators=[validate_evidence])
+    declared_at = serializers.DateTimeField(
+        required=False,
+        allow_null=True,
+        help_text=(
+            "When the device says it happened, for a punch taken offline and sent later. "
+            "Accepted inside the company's grace period; the arrival time is kept beside it."
+        ),
+    )
 
 
 def resolve_employee(reference: str, company):
@@ -147,7 +157,7 @@ class DelegatedPunchView(APIView):
         # thirty seconds --- and it would find that out in production, on a
         # record that then needs the art. 4.b procedure to put right. Refusing
         # here moves the discovery to the first call in development.
-        key = (request.headers.get("Idempotency-Key") or "").strip()[:200]
+        key = idempotency.key_from(request)
         if not key:
             raise IncompleteRequest(
                 code="idempotency_key_required",
@@ -161,18 +171,9 @@ class DelegatedPunchView(APIView):
         # The retry, answered before anything is written: a connector whose
         # answer got lost sends the same key again, and gets the event it
         # already recorded rather than an exit it never meant.
-        done = DelegatedPunchReceipt.objects.filter(application=application, key=key).first()
-        if done is not None:
-            if done.punch is None:
-                # Reserved, not finished: the first request is still in flight
-                # or died before committing. Saying "in progress" sends the
-                # connector back later; answering 201 with nothing would be a
-                # lie.
-                raise BusinessRuleError(
-                    code="in_progress",
-                    message=_("That operation is still being recorded. Try again shortly."),
-                )
-            return self._answer(done.punch, status.HTTP_200_OK)
+        ya = idempotency.already_recorded(application, key)
+        if ya is not None:
+            return self._answer(ya, status.HTTP_200_OK)
 
         employee = resolve_employee(serializer.validated_data["employee_ref"], company)
         if employee is None:
@@ -184,19 +185,9 @@ class DelegatedPunchView(APIView):
 
         # Claim the key **before** recording, so two simultaneous retries cannot
         # both get past the check above.
-        try:
-            with transaction.atomic():
-                receipt = DelegatedPunchReceipt.objects.create(
-                    tenant=company, application=application, key=key
-                )
-        except IntegrityError:
-            done = DelegatedPunchReceipt.objects.filter(application=application, key=key).first()
-            if done is not None and done.punch is not None:
-                return self._answer(done.punch, status.HTTP_200_OK)
-            raise BusinessRuleError(
-                code="in_progress",
-                message=_("That operation is still being recorded. Try again shortly."),
-            ) from None
+        receipt, ya = idempotency.claim(company, application, key)
+        if ya is not None:
+            return self._answer(ya, status.HTTP_200_OK)
 
         punch = register_punch(
             employee=employee,
@@ -211,10 +202,10 @@ class DelegatedPunchView(APIView):
             user_agent=request.META.get("HTTP_USER_AGENT", "")[:255],
             trigger=serializer.validated_data.get("trigger") or "MANUAL",
             evidence=serializer.validated_data.get("evidence") or {},
+            declared_at=serializer.validated_data.get("declared_at"),
         )
 
-        receipt.punch = punch
-        receipt.save(update_fields=["punch", "updated_at"])
+        idempotency.settle(receipt, punch)
 
         return self._answer(punch, status.HTTP_201_CREATED)
 

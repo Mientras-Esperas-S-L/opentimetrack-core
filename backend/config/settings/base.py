@@ -276,6 +276,13 @@ SPECTACULAR_SETTINGS = {
         # Igual: cómo se salda una hora extra sale en la propuesta y en el
         # intervalo ya saldado, y son el mismo juego de valores.
         "OvertimeSettlementEnum": "apps.punches.models.OvertimeSettlement.choices",
+        # El estado de una ausencia sale en su propia API y, recortado, en la de
+        # aplicaciones: allí nunca viaja una rechazada, porque no explica ningún hueco.
+        # Son dos conjuntos distintos a propósito, así que cada uno lleva su nombre;
+        # sin esto el generador bautiza uno «Status7f3Enum», que no dice nada a quien
+        # lea el esquema.
+        "AbsenceStatusEnum": "apps.absences.models.AbsenceStatus.choices",
+        "AbsenceStatusForApplicationsEnum": [("PENDING", "PENDING"), ("APPROVED", "APPROVED")],
     },
 }
 
@@ -446,6 +453,26 @@ CELERY_TASK_SOFT_TIME_LIMIT = env.int("CELERY_TASK_SOFT_TIME_LIMIT", default=300
 # requisito, y el producto tiene que poder instalarse sin ella.
 WEBPUSH_PUBLIC_KEY = env("WEBPUSH_PUBLIC_KEY", default="")
 WEBPUSH_PRIVATE_KEY = env("WEBPUSH_PRIVATE_KEY", default="")
+
+# La clave con la que se cifran los secretos que el sistema tiene que poder leer ---hoy
+# solo el del proveedor de identidad---. Fuera de la base de datos y **sin derivar de
+# SECRET_KEY**, porque rotar aquella es la respuesta normal a un incidente y dejaría
+# ilegible lo guardado. Solo hace falta si se usa identidad federada:
+#   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY", default="")
+
+# Dónde vuelve el navegador desde el proveedor de identidad. Vacío lo deduce de la
+# petición, que vale en desarrollo; en producción se fija, porque tiene que coincidir
+# **exactamente** con lo registrado en el proveedor.
+SSO_REDIRECT_URI = env("SSO_REDIRECT_URI", default="")
+
+#: Dónde vive la aplicación web, para devolver a ella al que vuelve del proveedor.
+#:
+#: Sin esto, el navegador de quien entra por su empresa acaba mirando un JSON: la
+#: vuelta del proveedor la recibe la API, y la sesión la necesita la web. Vacío
+#: mantiene la respuesta en JSON, que es lo que esperan las instalaciones que solo
+#: usan la API.
+SSO_WEB_URL = env("SSO_WEB_URL", default="")
 # Contacto al que el servicio de push del navegador escribiría si algo va mal.
 # Lo exige el estándar VAPID; ha de ser un mailto: o una URL.
 WEBPUSH_SUBJECT = env("WEBPUSH_SUBJECT", default=f"mailto:{DEFAULT_FROM_EMAIL}")

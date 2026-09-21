@@ -42,42 +42,46 @@ X_FRAME_OPTIONS = "DENY"
 # Do not describe this bucket as encrypted anywhere unless that variable is set:
 # a private ACL and short-lived signed URLs are access control, which is a
 # different thing.
-_storage_options = {
-    "endpoint_url": env("STORAGE_ENDPOINT"),
-    "access_key": env("STORAGE_ACCESS_KEY"),
-    "secret_key": env("STORAGE_SECRET_KEY"),
-    "bucket_name": env("STORAGE_BUCKET"),
-    "file_overwrite": False,
-    "default_acl": "private",
-    "querystring_auth": True,
-    "querystring_expire": 300,
-    # Signature version 4, explicitly. Left to the default, boto signs with v2
-    # (AWSAccessKeyId=…&Signature=…), which AWS no longer accepts in regions
-    # created after 2014 and which several providers reject outright. It works
-    # against SeaweedFS in development, so the failure would only appear on the
-    # day of the first real deployment.
-    "signature_version": "s3v4",
-    # Downloaded, never rendered. This path redirects to a signed URL, so the
-    # file comes back from the storage domain and not from ours: without this
-    # header an uploaded .html would render there, on a domain the company
-    # trusts, carrying somebody else's document. The extension whitelist in
-    # apps/absences/uploads.py is the other half.
-    "object_parameters": {"ContentDisposition": "attachment"},
-    # Providers that are not AWS still want a region in the signature; without
-    # one boto sends an empty string and some of them refuse it.
-    "region_name": env("STORAGE_REGION", default="us-east-1"),
-}
-
-STORAGE_ENCRYPTION = env("STORAGE_ENCRYPTION", default="")
-if STORAGE_ENCRYPTION:
-    # Merged, not replaced: assigning here used to be safe and now would drop
-    # the ContentDisposition above, so turning encryption on would quietly turn
-    # the download-only header off.
-    _storage_options["object_parameters"]["ServerSideEncryption"] = STORAGE_ENCRYPTION
-
 STORAGE_BACKEND = env("STORAGE_BACKEND", default="s3")
 
 if STORAGE_BACKEND == "s3":
+    # Read inside the branch, not above it. Read at module level, the four S3
+    # variables are mandatory for everyone, and a single-server install that
+    # asked for STORAGE_BACKEND=filesystem refuses to start over a bucket it
+    # will never use.
+    _storage_options = {
+        "endpoint_url": env("STORAGE_ENDPOINT"),
+        "access_key": env("STORAGE_ACCESS_KEY"),
+        "secret_key": env("STORAGE_SECRET_KEY"),
+        "bucket_name": env("STORAGE_BUCKET"),
+        "file_overwrite": False,
+        "default_acl": "private",
+        "querystring_auth": True,
+        "querystring_expire": 300,
+        # Signature version 4, explicitly. Left to the default, boto signs with v2
+        # (AWSAccessKeyId=…&Signature=…), which AWS no longer accepts in regions
+        # created after 2014 and which several providers reject outright. It works
+        # against SeaweedFS in development, so the failure would only appear on the
+        # day of the first real deployment.
+        "signature_version": "s3v4",
+        # Downloaded, never rendered. This path redirects to a signed URL, so the
+        # file comes back from the storage domain and not from ours: without this
+        # header an uploaded .html would render there, on a domain the company
+        # trusts, carrying somebody else's document. The extension whitelist in
+        # apps/absences/uploads.py is the other half.
+        "object_parameters": {"ContentDisposition": "attachment"},
+        # Providers that are not AWS still want a region in the signature; without
+        # one boto sends an empty string and some of them refuse it.
+        "region_name": env("STORAGE_REGION", default="us-east-1"),
+    }
+
+    STORAGE_ENCRYPTION = env("STORAGE_ENCRYPTION", default="")
+    if STORAGE_ENCRYPTION:
+        # Merged, not replaced: assigning here used to be safe and now would drop
+        # the ContentDisposition above, so turning encryption on would quietly turn
+        # the download-only header off.
+        _storage_options["object_parameters"]["ServerSideEncryption"] = STORAGE_ENCRYPTION
+
     STORAGES["default"] = {
         "BACKEND": "storages.backends.s3.S3Storage",
         "OPTIONS": _storage_options,
@@ -98,3 +102,18 @@ else:
     )
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+# Where that SMTP server is. Without these, Django writes to localhost:25, which
+# on a container is nothing at all: the password reset link, the punch reminder
+# and the delivery link of somebody who no longer works there are all sent and
+# all lost. The defaults keep the previous behaviour for whoever does run a relay
+# on the same host.
+EMAIL_HOST = env("EMAIL_HOST", default="localhost")
+EMAIL_PORT = env.int("EMAIL_PORT", default=25)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+# A mail server that stops answering must not hold a web request open: the
+# default is no timeout at all.
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)

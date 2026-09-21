@@ -224,6 +224,81 @@ class Workplace(TenantOwnedModel):
         return zoneinfo.ZoneInfo(self.time_zone) if self.time_zone else self.tenant.tzinfo
 
 
+class WorkplaceAssignment(TenantOwnedModel):
+    """En qué centro de trabajo estaba alguien, y desde cuándo.
+
+    El mismo problema que `DepartmentAssignment` y una consecuencia peor. La persona
+    lleva su centro **actual** en una columna, y del centro cuelgan tres cosas que no
+    son organizativas sino del sitio: los dos festivos locales (art. 34.6 ET, el
+    calendario laboral es del centro), la zona horaria en la que se lee su jornada, y
+    dónde una inspección pide el registro.
+
+    Sin historial, el día que alguien se traslada se le reescriben esas tres cosas
+    **hacia atrás**: sus festivos de marzo pasan a ser los del centro nuevo y el
+    informe de un mes ya cerrado deja de decir lo que decía. Ocurre pocas veces y en
+    silencio, que es la peor combinación --- y un registro que se relee distinto según
+    dónde trabaje hoy la persona no es el registro fiable que pide el art. 34.9.
+
+    No es el desplazamiento de un día: quien va al municipio de al lado a echar una
+    mano sigue adscrito a su centro y conserva sus festivos. Es el **traslado**, el de
+    quien cambia de centro para quedarse.
+
+    **El historial empieza el día que se estrena**, igual que el de departamento: del
+    pasado no hay dato, así que la primera asignación va sin `starts_on` ---«no consta
+    desde cuándo»--- y cuenta para cualquier periodo, que es como se comportaba el
+    producto antes.
+    """
+
+    employee = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="workplace_history",
+        verbose_name=_("employee"),
+    )
+    workplace = models.ForeignKey(
+        Workplace,
+        on_delete=models.CASCADE,
+        related_name="assignments",
+        verbose_name=_("workplace"),
+    )
+    starts_on = models.DateField(
+        _("from"),
+        null=True,
+        blank=True,
+        help_text=_("Empty means it is not on record since when, so it counts for any period."),
+    )
+    ends_on = models.DateField(
+        _("until"),
+        null=True,
+        blank=True,
+        help_text=_("Empty means it is the current one."),
+    )
+
+    class Meta:
+        verbose_name = _("workplace assignment")
+        verbose_name_plural = _("workplace assignments")
+        ordering = ["-starts_on"]
+        indexes = [models.Index(fields=["employee", "starts_on", "ends_on"])]
+
+    def __str__(self) -> str:
+        return f"{self.employee} · {self.workplace}"
+
+    def covers(self, first, last) -> bool:
+        """Si la asignación se solapa con ese periodo."""
+        if self.starts_on and self.starts_on > last:
+            return False
+        return not (self.ends_on and self.ends_on < first)
+
+    def covers_day(self, day) -> bool:
+        """Si estaba en ese centro **ese día**.
+
+        Lo que hace falta para los festivos y la zona horaria, que se resuelven día a
+        día y no por periodo: en el mes del traslado los primeros días son de un centro
+        y el resto del otro.
+        """
+        return self.covers(day, day)
+
+
 class WorkingTimeRegime(models.TextChoices):
     """Which set of rules applies to somebody's working day.
 
@@ -1155,3 +1230,21 @@ def _anotar_la_adscripcion(sender, instance, **kwargs):
     from apps.users.adscription import remember_department
 
     remember_department(instance)
+
+
+@receiver(post_save, sender=User)
+def _anotar_el_centro(sender, instance, **kwargs):
+    """Y lo mismo con el centro de trabajo, por las mismas razones.
+
+    Aparte del de departamento y no dentro, porque los campos que los disparan son
+    distintos: un guardado que solo toca `workplace` no debe pagar la consulta del
+    departamento, ni al revés. Lo que cuelga de este es más caro de perder --- los
+    festivos locales y la zona horaria de todos los meses anteriores.
+    """
+    campos = kwargs.get("update_fields")
+    if campos is not None and "workplace" not in campos:
+        return
+
+    from apps.users.workplace_history import remember_workplace
+
+    remember_workplace(instance)
