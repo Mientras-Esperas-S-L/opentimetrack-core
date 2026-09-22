@@ -130,7 +130,10 @@ export default function AppShell() {
       )}
       {administraLaInstalacion && (
         <>
-          <Divider sx={{ my: 1, mx: 2 }} />
+          {/* El divisor solo si hay algo que separar. Para la cuenta que
+              administra la instalación no hay secciones encima, y salía una
+              raya suelta en lo alto del menú. */}
+          {(company || canManage) && <Divider sx={{ my: 1, mx: 2 }} />}
           <NavSection title={t('Instalación')} items={NAV_PLATFORM} onNavigate={alCerrar} />
         </>
       )}
