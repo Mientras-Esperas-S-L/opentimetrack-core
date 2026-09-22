@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-21 13:33+0000\n"
+"POT-Creation-Date: 2026-09-22 11:46+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -202,7 +202,7 @@ msgid "needs a supporting document"
 msgstr "necesita justificante"
 
 #: apps/absences/models.py:203 apps/absences/models.py:559
-#: apps/audit/models.py:196 apps/punches/models.py:628
+#: apps/audit/models.py:201 apps/punches/models.py:628
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:577 apps/tenants/rules.py:661 apps/users/models.py:981
 #: apps/users/models.py:1059
@@ -249,7 +249,7 @@ msgstr "Cancelada"
 msgid "employee"
 msgstr "persona trabajadora"
 
-#: apps/absences/models.py:286 apps/audit/models.py:189
+#: apps/absences/models.py:286 apps/audit/models.py:194
 #: apps/punches/corrections.py:94 apps/punches/models.py:164
 msgid "type"
 msgstr "tipo"
@@ -725,62 +725,66 @@ msgstr "Obtuvo una sesión de una persona"
 msgid "Ended somebody's sessions"
 msgstr "Cerró las sesiones de una persona"
 
-#: apps/audit/models.py:126
+#: apps/audit/models.py:128
+msgid "Changed how people sign in"
+msgstr "Cambió por dónde entra la gente"
+
+#: apps/audit/models.py:131
 msgid "Purged security metadata"
 msgstr "Purgó metadatos de seguridad"
 
-#: apps/audit/models.py:133
+#: apps/audit/models.py:138
 msgid "Purged expired working time records"
 msgstr "Purgó el registro que cumplió su plazo"
 
-#: apps/audit/models.py:138
+#: apps/audit/models.py:143
 msgid "Delivered somebody their own record"
 msgstr "Le entregó a alguien su propio registro"
 
-#: apps/audit/models.py:144
+#: apps/audit/models.py:149
 msgid "Erased a person who left no record"
 msgstr "Retiró un alta que no dejó rastro"
 
-#: apps/audit/models.py:162
+#: apps/audit/models.py:167
 msgid "when"
 msgstr "cuándo"
 
-#: apps/audit/models.py:168 apps/common/models.py:117
+#: apps/audit/models.py:173 apps/common/models.py:117
 #: apps/tenants/models.py:205 apps/tenants/models.py:233
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:434
 msgid "company"
 msgstr "empresa"
 
-#: apps/audit/models.py:178
+#: apps/audit/models.py:183
 msgid "who"
 msgstr "quién"
 
-#: apps/audit/models.py:182
+#: apps/audit/models.py:187
 msgid "who (as recorded)"
 msgstr "quién (tal y como se registró)"
 
-#: apps/audit/models.py:184
+#: apps/audit/models.py:189
 msgid "action"
 msgstr "acción"
 
-#: apps/audit/models.py:190 apps/tenants/identity.py:58
+#: apps/audit/models.py:195 apps/tenants/identity.py:58
 msgid "identifier"
 msgstr "identificador"
 
-#: apps/audit/models.py:191
+#: apps/audit/models.py:196
 msgid "what (as recorded)"
 msgstr "sobre qué (tal y como se registró)"
 
-#: apps/audit/models.py:195
+#: apps/audit/models.py:200
 msgid "changes"
 msgstr "cambios"
 
-#: apps/audit/models.py:218
+#: apps/audit/models.py:223
 msgid "audit entry"
 msgstr "entrada de auditoría"
 
-#: apps/audit/models.py:219
+#: apps/audit/models.py:224
 msgid "audit trail"
 msgstr "registro de actividad"
 
@@ -3203,6 +3207,14 @@ msgstr "Otra persona de esta empresa ya usa ese número de empleado."
 msgid "Somebody else in this company already uses that identity."
 msgstr "Otra persona de esta empresa ya usa esa identidad."
 
+#: apps/tenants/platform_views.py:44
+msgid "Only a platform superuser can administer the installation."
+msgstr "Solo un superusuario de plataforma puede administrar la instalación."
+
+#: apps/tenants/platform_views.py:161 apps/tenants/platform_views.py:209
+msgid "No such company."
+msgstr "Esa empresa no existe."
+
 #: apps/tenants/rules.py:43
 msgid "Seniority steps are a list."
 msgstr "Los tramos de antigüedad son una lista."
@@ -4482,19 +4494,19 @@ msgstr "Una adaptación de jornada solo la puede pedir la propia persona."
 msgid "Only an administrator answers a schedule adaptation."
 msgstr "Solo administración contesta una adaptación de jornada."
 
-#: config/settings/base.py:336
+#: config/settings/base.py:345
 msgid "Spanish"
 msgstr "Español"
 
-#: config/settings/base.py:337
+#: config/settings/base.py:346
 msgid "Catalan"
 msgstr "Catalán"
 
-#: config/settings/base.py:338
+#: config/settings/base.py:347
 msgid "Galician"
 msgstr "Gallego"
 
-#: config/settings/base.py:339
+#: config/settings/base.py:348
 msgid "English"
 msgstr "Inglés"
 

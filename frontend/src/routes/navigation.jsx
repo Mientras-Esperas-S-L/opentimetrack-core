@@ -4,6 +4,7 @@ import PlaceIcon from '@mui/icons-material/Place'
 import ApartmentIcon from '@mui/icons-material/Apartment'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import EditCalendarIcon from '@mui/icons-material/EditCalendar'
+import DomainIcon from '@mui/icons-material/Domain'
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import ScheduleIcon from '@mui/icons-material/Schedule'
 import DescriptionIcon from '@mui/icons-material/Description'
@@ -68,4 +69,13 @@ export const NAV_ADMIN = [
     adminOnly: true,
   },
   { to: '/panel/ajustes', label: alCatalogo('Ajustes'), icon: <SettingsIcon /> },
+]
+
+/** Administrar la instalación: las empresas que viven aquí.
+ *
+ *  Sección aparte y no una entrada más de «Gestión»: no es de quien administra
+ *  una empresa, y mezclarlas haría pensar que sí.
+ */
+export const NAV_PLATFORM = [
+  { to: '/panel/instalacion', label: alCatalogo('Instalación'), icon: <DomainIcon /> },
 ]

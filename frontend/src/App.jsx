@@ -8,6 +8,7 @@ import CircularProgress from '@mui/material/CircularProgress'
 import AppShell from './routes/AppShell.jsx'
 import RequireManager from './routes/RequireManager.jsx'
 import RequireAdmin from './routes/RequireAdmin.jsx'
+import RequirePlatformAdmin from './routes/RequirePlatformAdmin.jsx'
 import SignIn from './pages/SignIn.jsx'
 import SsoLanding from './pages/SsoLanding.jsx'
 import SetPassword from './pages/SetPassword.jsx'
@@ -25,6 +26,7 @@ import LeaveTypes from './pages/admin/LeaveTypes.jsx'
 import ShiftPatterns from './pages/admin/ShiftPatterns.jsx'
 import Settings from './pages/admin/Settings.jsx'
 import Applications from './pages/admin/Applications.jsx'
+import Installation from './pages/admin/Installation.jsx'
 import Timesheet from './pages/admin/Timesheet.jsx'
 import Decisions from './pages/admin/Decisions.jsx'
 import Reports from './pages/admin/Reports.jsx'
@@ -110,6 +112,12 @@ export default function App() {
                 esconder no es prohibir: la dirección se puede escribir. */}
               <Route element={<RequireAdmin />}>
                 <Route path="aplicaciones" element={<Applications />} />
+              </Route>
+
+              {/* Y la instalación, que no es de quien administra una empresa:
+                dar de alta otras es de quien administra el sistema entero. */}
+              <Route element={<RequirePlatformAdmin />}>
+                <Route path="instalacion" element={<Installation />} />
               </Route>
             </Route>
 

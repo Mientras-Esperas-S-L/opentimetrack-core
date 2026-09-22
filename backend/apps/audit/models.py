@@ -121,6 +121,11 @@ class AuditAction(models.TextChoices):
     APPLICATION_REVOKED = "APPLICATION_REVOKED", _("Revoked an application credential")
     APPLICATION_ACTED_AS = "APPLICATION_ACTED_AS", _("Obtained a session for a person")
     SESSIONS_ENDED = "SESSIONS_ENDED", _("Ended somebody's sessions")
+    #: Por dónde entra la gente de una empresa: su proveedor de identidad y los
+    #: dominios de correo que van a él. No es «estructura» ---no cambia cómo se
+    #: mide la jornada--- es control de acceso: quien toque esto decide con qué
+    #: sistema se demuestra ser alguien aquí, y eso tiene que constar con nombre.
+    IDENTITY_CHANGED = "IDENTITY_CHANGED", _("Changed how people sign in")
 
     # Housekeeping that removes data.
     METADATA_PURGED = "METADATA_PURGED", _("Purged security metadata")
