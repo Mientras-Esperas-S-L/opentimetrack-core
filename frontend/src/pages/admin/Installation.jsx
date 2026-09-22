@@ -80,9 +80,17 @@ export default function Installation() {
           sistema, así que `justifyContent` y `gap` escritos así no llegaban al
           CSS --medido, `justify-content: normal`-- y el botón se montaba encima
           de la línea que explica la pantalla. */}
+      {/* Apilada en el móvil. Compartiendo fila, el título y su explicación se
+          quedaban en una columna de ciento cuarenta píxeles: «Quién administra esta
+          instalación» salía en cuatro líneas de una palabra. */}
       <Stack
-        direction="row"
-        sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}
+        direction={{ xs: 'column', sm: 'row' }}
+        sx={{
+          alignItems: { xs: 'stretch', sm: 'center' },
+          justifyContent: 'space-between',
+          gap: 2,
+          mb: 2,
+        }}
       >
         <Box>
           <Typography variant="h5">{t('Instalación')}</Typography>
@@ -677,7 +685,15 @@ function PlatformAdmins() {
 
   return (
     <Box sx={{ mt: 4 }}>
-      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        sx={{
+          alignItems: { xs: 'stretch', sm: 'center' },
+          justifyContent: 'space-between',
+          gap: 2,
+          mb: 2,
+        }}
+      >
         <Box>
           <Typography variant="h6">{t('Quién administra esta instalación')}</Typography>
           <Typography variant="body2" color="text.secondary">
