@@ -49,7 +49,7 @@ function TokenDialog({ token, onClose }) {
 
   return (
     <Dialog open={Boolean(token)} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{t('Copia el token ahora')}</DialogTitle>
+      <DialogTitle>{t('Copia la credencial ahora')}</DialogTitle>
       <DialogContent>
         <Alert severity="warning" variant="outlined" sx={{ mb: 2 }}>
           {t(
@@ -72,7 +72,7 @@ function TokenDialog({ token, onClose }) {
           </Typography>
           <IconButton
             size="small"
-            aria-label={t('Copiar el token')}
+            aria-label={t('Copiar la credencial')}
             onClick={() => {
               navigator.clipboard?.writeText(token)
               setCopied(true)
@@ -323,7 +323,7 @@ export default function Applications() {
                       disabled={issue.isPending}
                       onClick={() => issue.mutate(application.id)}
                     >
-                      {t('Emitir token')}
+                      {t('Emitir credencial')}
                     </Button>
                     <Button
                       size="small"
@@ -338,7 +338,7 @@ export default function Applications() {
                           title: t('Revocar la aplicación'),
                           body: application.name,
                           detail: t(
-                            'Deja de funcionar de inmediato, con todos sus tokens. No se borra: lo que registró sigue siendo suyo, y quitarla dejaría esos fichajes sin autor.',
+                            'Deja de funcionar de inmediato, con todas sus credenciales. No se borra: lo que registró sigue siendo suyo, y quitarla dejaría esos fichajes sin autor.',
                           ),
                           verb: t('Revocar'),
                           run: () => revoke.mutate({ application: application.id }),
@@ -379,15 +379,15 @@ export default function Applications() {
                           <Button
                             size="small"
                             color="inherit"
-                            aria-label={t('Revocar el token {{cual}}', {
+                            aria-label={t('Revocar la credencial {{cual}}', {
                               cual: credential.label ?? '',
                             }).trim()}
                             onClick={() =>
                               setConfirming({
-                                title: t('Revocar el token'),
+                                title: t('Revocar la credencial'),
                                 body: `…${credential.token_hint}`,
                                 detail: t(
-                                  'Deja de valer de inmediato. Los demás tokens de esta aplicación siguen funcionando, que es lo que permite cambiarlos sin cortar el servicio.',
+                                  'Deja de valer de inmediato. Las demás credenciales de esta aplicación siguen funcionando, que es lo que permite cambiarlas sin cortar el servicio.',
                                 ),
                                 verb: t('Revocar'),
                                 run: () =>
