@@ -32,10 +32,34 @@ from rest_framework.views import APIView
 from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.common.models import set_current_tenant
+from apps.tenants.application_views import (
+    ApplicationSerializer,
+    CredentialSerializer,
+    IssueSerializer,
+)
 from apps.tenants.identity import SsoDomain, SsoProvider
-from apps.tenants.models import Tenant
+from apps.tenants.models import Application, ApplicationCredential, ApplicationScope, Tenant
 from apps.users.models import Role, User
 from apps.users.serializers import SignUpSerializer
+
+#: Lo que la integración con GreenCityControl usa, para marcarlo de una vez.
+#:
+#: Es una sugerencia de la pantalla, no una regla del servidor: la lista viaja en
+#: la petición como cualquier otra, y quien da de alta puede quitar lo que no
+#: quiera conceder. Existe porque marcar diez casillas a mano es donde se olvida
+#: una y el alta parece buena hasta que, semanas después, algo contesta 403.
+GREENCITY_SCOPES = [
+    ApplicationScope.READ_PEOPLE,
+    ApplicationScope.WRITE_PEOPLE,
+    ApplicationScope.PUNCH_SELF,
+    ApplicationScope.PUNCH_DELEGATED,
+    ApplicationScope.READ_ATTENDANCE,
+    ApplicationScope.READ_ABSENCES,
+    ApplicationScope.WRITE_ABSENCES,
+    ApplicationScope.READ_ROSTER,
+    ApplicationScope.READ_CALENDAR,
+    ApplicationScope.READ_AVAILABILITY,
+]
 
 
 class IsPlatformSuperuser(BasePermission):
@@ -57,6 +81,12 @@ def _empresa(company: Tenant, *, personas: int | None = None) -> dict:
         "country": company.country,
         "time_zone": company.time_zone,
         "people": personas if personas is not None else User.objects.filter(tenant=company).count(),
+        # Cuántas aplicaciones puede usar hoy. Sin esto, la lista no distingue una
+        # empresa lista para integrarse de otra a la que le falta la credencial, que
+        # es el hueco con el que la gente se queda encallada.
+        "applications": Application.objects_all_tenants.filter(
+            tenant=company, is_active=True
+        ).count(),
         "identity": None
         if proveedor is None
         else {
@@ -223,6 +253,274 @@ class CompanyIdentityView(APIView):
                 note="retirado: su gente vuelve a entrar con contraseña",
             )
             fuera.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class NewApplicationSerializer(serializers.Serializer):
+    """La aplicación que va a hablar con esta empresa desde fuera."""
+
+    name = serializers.CharField(max_length=100)
+    description = serializers.CharField(required=False, allow_blank=True, default="")
+    #: Vacío significa el preajuste de GreenCityControl, que es el caso de nueve de
+    #: cada diez altas. Quien quiera otra cosa manda su lista.
+    scopes = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+
+    def validate_scopes(self, value):
+        permitidos = set(ApplicationScope.values)
+        desconocidos = sorted(set(value) - permitidos)
+        if desconocidos:
+            raise serializers.ValidationError(
+                _("Unknown permissions: %(list)s.") % {"list": ", ".join(desconocidos)}
+            )
+        return value
+
+
+class ApplicationChangeSerializer(serializers.Serializer):
+    """Lo que se puede cambiar de una aplicación ya dada de alta."""
+
+    scopes = serializers.ListField(child=serializers.CharField(), required=False)
+    is_active = serializers.BooleanField(required=False)
+
+    validate_scopes = NewApplicationSerializer.validate_scopes
+
+
+class _PorEmpresa(APIView):
+    """Lo común a las vistas que trabajan dentro de una empresa concreta.
+
+    Fijar el inquilino es **obligatorio** aquí y no una optimización: los gestores
+    de estos modelos devuelven *nada* sin él, así que sin esta llamada la lista
+    saldría vacía y el alta fallaría por una empresa que sí existe.
+    """
+
+    permission_classes = [IsPlatformSuperuser]
+
+    def empresa(self, company_id):
+        company = Tenant.objects.filter(pk=company_id).first()
+        if company is not None:
+            set_current_tenant(company.id)
+        return company
+
+    def no_esta(self, que=None):
+        return Response({"detail": que or _("No such company.")}, status=status.HTTP_404_NOT_FOUND)
+
+
+@extend_schema(tags=["platform"])
+class CompanyApplicationsView(_PorEmpresa):
+    """Las aplicaciones de una empresa, desde la consola de la instalación.
+
+    Existían solo dentro de la empresa, en la pantalla de su administrador, y eso
+    partía el alta en dos: quien da de alta al cliente tenía que salir, entrar con
+    otra cuenta y volver. La credencial es lo que hace falta para enchufar
+    GreenCity, así que se emite donde se da el alta.
+
+    **Lo que esto NO abre.** Se administra la aplicación, no se miran sus datos: de
+    la empresa se sigue viendo lo mismo que antes. Y el testigo se enseña **una vez**
+    ---se guarda cifrado de un solo sentido--- exactamente igual que en la pantalla
+    de la empresa; que lo emita la consola no lo hace recuperable.
+    """
+
+    @extend_schema(request=None, responses={200: dict})
+    def get(self, request, company_id):
+        company = self.empresa(company_id)
+        if company is None:
+            return self.no_esta()
+        aplicaciones = Application.objects.prefetch_related("credentials").order_by(
+            "-is_active", "-created_at"
+        )
+        return Response(
+            {
+                "applications": ApplicationSerializer(aplicaciones, many=True).data,
+                # Para que la pantalla ofrezca las casillas sin conocer el catálogo.
+                "all_scopes": [
+                    {"value": valor, "label": str(etiqueta)}
+                    for valor, etiqueta in ApplicationScope.choices
+                ],
+                "greencity_scopes": [str(s) for s in GREENCITY_SCOPES],
+            }
+        )
+
+    @extend_schema(request=NewApplicationSerializer, responses={201: dict})
+    @transaction.atomic
+    def post(self, request, company_id):
+        company = self.empresa(company_id)
+        if company is None:
+            return self.no_esta()
+
+        datos = NewApplicationSerializer(data=request.data)
+        datos.is_valid(raise_exception=True)
+        v = datos.validated_data
+
+        aplicacion = Application.objects.create(
+            tenant=company,
+            name=v["name"],
+            description=v.get("description", ""),
+            scopes=[str(s) for s in (v.get("scopes") or GREENCITY_SCOPES)],
+            created_by=None,  # la cuenta de la instalación no es de esta empresa
+        )
+        credencial, testigo = ApplicationCredential.issue(aplicacion, label=v["name"])
+
+        record(
+            action=AuditAction.APPLICATION_CREATED,
+            actor=request.user,
+            company=company,
+            target=aplicacion,
+            target_label=aplicacion.name,
+            changes={"scopes": aplicacion.scopes},
+            note=str(_("Authorised from the installation console")),
+        )
+
+        return Response(
+            {
+                **ApplicationSerializer(aplicacion).data,
+                # La única vez que existe fuera de quien lo va a guardar.
+                "token": testigo,
+                "token_hint": credencial.token_hint,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+@extend_schema(tags=["platform"])
+class CompanyApplicationView(_PorEmpresa):
+    """Cambiar los permisos de una aplicación, o retirarla."""
+
+    def _aplicacion(self, application_id):
+        return Application.objects.filter(pk=application_id).first()
+
+    @extend_schema(request=ApplicationChangeSerializer, responses={200: dict})
+    def patch(self, request, company_id, application_id):
+        if self.empresa(company_id) is None:
+            return self.no_esta()
+        aplicacion = self._aplicacion(application_id)
+        if aplicacion is None:
+            return self.no_esta(_("No such application."))
+
+        datos = ApplicationChangeSerializer(data=request.data)
+        datos.is_valid(raise_exception=True)
+        v = datos.validated_data
+        antes = list(aplicacion.scopes)
+
+        if "scopes" in v:
+            aplicacion.scopes = [str(s) for s in v["scopes"]]
+        if "is_active" in v:
+            aplicacion.is_active = v["is_active"]
+        aplicacion.save(update_fields=["scopes", "is_active"])
+
+        if aplicacion.scopes != antes:
+            record(
+                action=AuditAction.APPLICATION_CREATED,
+                actor=request.user,
+                company=aplicacion.tenant,
+                target=aplicacion,
+                target_label=aplicacion.name,
+                changes={"scopes": [antes, aplicacion.scopes]},
+                note=str(_("Permissions changed")),
+            )
+        return Response(ApplicationSerializer(aplicacion).data)
+
+    @extend_schema(request=None, responses={204: None})
+    def delete(self, request, company_id, application_id):
+        """Retira la aplicación: la desactiva y revoca lo que tuviera.
+
+        No se borra, por lo mismo que en la pantalla de la empresa: lo que registró
+        sigue siendo suyo, y una fila menos dejaría esos fichajes sin dueño.
+        """
+        if self.empresa(company_id) is None:
+            return self.no_esta()
+        aplicacion = self._aplicacion(application_id)
+        if aplicacion is None:
+            return self.no_esta(_("No such application."))
+
+        aplicacion.is_active = False
+        aplicacion.save(update_fields=["is_active"])
+        for credencial in aplicacion.credentials.filter(revoked_at__isnull=True):
+            credencial.revoke()
+
+        record(
+            action=AuditAction.APPLICATION_REVOKED,
+            actor=request.user,
+            company=aplicacion.tenant,
+            target=aplicacion,
+            target_label=aplicacion.name,
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["platform"])
+class CompanyCredentialsView(_PorEmpresa):
+    """Emitir otra credencial.
+
+    Varias conviven a propósito: es lo que permite rotar sin cortar el servicio
+    ---se emite la nueva, se cambia donde toque, se revoca la vieja---.
+
+    Revocar vive en su propia clase, y no es manía: una sola clase para las dos
+    rutas deja dos operaciones con el mismo nombre en el esquema ---la colección y
+    el elemento--- y el generador las desempata con un número. Quien lea el
+    contrato se encuentra `…_create_2` y no sabe cuál es cuál.
+    """
+
+    def _aplicacion(self, application_id):
+        return Application.objects.filter(pk=application_id).first()
+
+    @extend_schema(request=IssueSerializer, responses={201: dict})
+    def post(self, request, company_id, application_id):
+        company = self.empresa(company_id)
+        if company is None:
+            return self.no_esta()
+        aplicacion = self._aplicacion(application_id)
+        if aplicacion is None:
+            return self.no_esta(_("No such application."))
+        if not aplicacion.is_active:
+            return Response(
+                {"detail": _("Reactivate the application before issuing a credential.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        form = IssueSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+        credencial, testigo = ApplicationCredential.issue(
+            aplicacion,
+            label=form.validated_data["label"],
+            expires_at=form.validated_data.get("expires_at"),
+        )
+        record(
+            action=AuditAction.APPLICATION_CREATED,
+            actor=request.user,
+            company=company,
+            target=aplicacion,
+            target_label=aplicacion.name,
+            note=str(_("Credential issued: …%(hint)s")) % {"hint": credencial.token_hint},
+        )
+        return Response(
+            {**CredentialSerializer(credencial).data, "token": testigo},
+            status=status.HTTP_201_CREATED,
+        )
+
+
+@extend_schema(tags=["platform"])
+class CompanyCredentialView(_PorEmpresa):
+    """Revocar una credencial concreta, sin tocar las demás."""
+
+    @extend_schema(request=None, responses={204: None})
+    def delete(self, request, company_id, application_id, credential_id):
+        company = self.empresa(company_id)
+        if company is None:
+            return self.no_esta()
+        credencial = ApplicationCredential.objects.filter(
+            pk=credential_id, application_id=application_id
+        ).first()
+        if credencial is None:
+            return self.no_esta(_("No such credential."))
+        if credencial.revoked_at is None:
+            credencial.revoke()
+            record(
+                action=AuditAction.APPLICATION_REVOKED,
+                actor=request.user,
+                company=company,
+                target=credencial.application,
+                target_label=credencial.application.name,
+                note=str(_("Credential revoked: …%(hint)s")) % {"hint": credencial.token_hint},
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

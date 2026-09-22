@@ -777,3 +777,27 @@ export const saveCompanyIdentity = async (companyId, payload) =>
   (await api.put(`/platform/companies/${companyId}/identity/`, payload)).data
 
 export const removeCompanyIdentity = (companyId) => api.delete(`/platform/companies/${companyId}/identity/`)
+
+// Las de la consola de la instalación llevan `OfCompany`: hacen lo mismo que las
+// de arriba pero **desde fuera de la empresa**, con la cuenta que la administra, y
+// por eso necesitan decir de qué empresa hablan.
+export const getApplicationsOfCompany = (companyId) =>
+  get(`/platform/companies/${companyId}/applications/`)
+
+/** Devuelve el testigo en claro. Es la única vez que existe fuera de quien lo guarda. */
+export const authoriseApplicationOfCompany = (companyId, payload) =>
+  post(`/platform/companies/${companyId}/applications/`, payload)
+
+export const changeApplicationOfCompany = async (companyId, applicationId, payload) =>
+  (await api.patch(`/platform/companies/${companyId}/applications/${applicationId}/`, payload)).data
+
+export const withdrawApplicationOfCompany = (companyId, applicationId) =>
+  api.delete(`/platform/companies/${companyId}/applications/${applicationId}/`)
+
+export const issueCredentialOfCompany = (companyId, applicationId, payload = {}) =>
+  post(`/platform/companies/${companyId}/applications/${applicationId}/credentials/`, payload)
+
+export const revokeCredentialOfCompany = (companyId, applicationId, credentialId) =>
+  api.delete(
+    `/platform/companies/${companyId}/applications/${applicationId}/credentials/${credentialId}/`,
+  )
