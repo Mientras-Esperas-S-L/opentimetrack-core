@@ -66,15 +66,13 @@ export default function Installation() {
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
-      {/* `gap` y el botón sin encoger, o el botón se monta encima de la línea
-          que explica la pantalla: la fila reparte el hueco y el texto de debajo
-          es más ancho que el título. */}
+      {/* Por `sx` y no como props sueltas: MUI dejó de aceptar las props del
+          sistema, así que `justifyContent` y `gap` escritos así no llegaban al
+          CSS --medido, `justify-content: normal`-- y el botón se montaba encima
+          de la línea que explica la pantalla. */}
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        gap={2}
-        sx={{ mb: 2 }}
+        sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}
       >
         <Box>
           <Typography variant="h5">{t('Instalación')}</Typography>
