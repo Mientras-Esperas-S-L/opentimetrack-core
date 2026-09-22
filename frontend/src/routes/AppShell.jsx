@@ -21,6 +21,10 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
 
 import LogoutIcon from '@mui/icons-material/Logout'
+import HelpIcon from '@mui/icons-material/Help'
+
+import HelpDrawer from '../components/HelpDrawer.jsx'
+import { temaDeAyuda } from '../components/temaDeAyuda.js'
 import MenuIcon from '@mui/icons-material/Menu'
 
 import ThemeToggle from '../components/ThemeToggle.jsx'
@@ -111,6 +115,10 @@ export default function AppShell() {
   // servidor, porque el superusuario de plataforma es el que no pertenece a
   // ninguna y eso no viaja en la sesión.
   const administraLaInstalacion = usePlatformAdmin()
+  //  La ayuda de la pantalla que se está mirando. El tema sale de la ruta, así que
+  //  una pantalla nueva no tiene que acordarse de pasar nada: si no hay artículo
+  //  para ella, el cajón abre por el índice.
+  const [ayudaAbierta, setAyudaAbierta] = useState(false)
 
   // `alCerrar` es lo que `NavSection` esperaba en su `onNavigate` desde el
   // principio y nadie le pasaba: en un cajón que se superpone, elegir una
@@ -208,6 +216,11 @@ export default function AppShell() {
             }
             sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           />
+          <Tooltip title={t('Ayuda')}>
+            <IconButton onClick={() => setAyudaAbierta(true)} aria-label={t('Ayuda')}>
+              <HelpIcon />
+            </IconButton>
+          </Tooltip>
           <ThemeToggle />
           <Tooltip title={user ? `${user.first_name} ${user.last_name}`.trim() : ''}>
             <Avatar sx={{ width: 34, height: 34, bgcolor: 'primary.main', fontSize: '0.85rem' }}>
@@ -277,6 +290,16 @@ export default function AppShell() {
       </Box>
 
       {!isDesktop && <BottomNav canManage={canManage} />}
+
+      {/* El tema sale de la ruta: `/panel/personas` pide `personas`. Así una
+          pantalla nueva no tiene que acordarse de nada, y si no hay artículo para
+          ella el cajón se abre por el índice y lo dice. */}
+      <HelpDrawer
+        key={ayudaAbierta ? temaDeAyuda(location.pathname) : 'cerrada'}
+        abierto={ayudaAbierta}
+        tema={temaDeAyuda(location.pathname)}
+        onClose={() => setAyudaAbierta(false)}
+      />
     </Box>
   )
 }
