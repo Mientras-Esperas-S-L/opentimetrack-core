@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-22 15:34+0000\n"
+"POT-Creation-Date: 2026-09-22 21:46+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -111,10 +111,10 @@ msgstr "código"
 msgid "name"
 msgstr "nombre"
 
-#: apps/absences/models.py:112 apps/punches/corrections.py:82
-#: apps/punches/models.py:578
+#: apps/absences/models.py:112 apps/help/models.py:126
+#: apps/punches/corrections.py:82 apps/punches/models.py:578
 msgid "kind"
-msgstr "clase"
+msgstr "tipo"
 
 #: apps/absences/models.py:123
 msgid ""
@@ -209,7 +209,7 @@ msgstr "necesita justificante"
 msgid "note"
 msgstr "nota"
 
-#: apps/absences/models.py:204 apps/shifts/models.py:84
+#: apps/absences/models.py:204 apps/help/models.py:52 apps/shifts/models.py:84
 #: apps/tenants/applications.py:60 apps/tenants/identity.py:116
 #: apps/tenants/models.py:202 apps/users/models.py:43 apps/users/models.py:206
 #: apps/users/models.py:683
@@ -871,9 +871,9 @@ msgstr ""
 msgid "created at"
 msgstr "creado el"
 
-#: apps/common/models.py:51
+#: apps/common/models.py:51 apps/help/models.py:82
 msgid "updated at"
-msgstr "actualizado el"
+msgstr "actualizado"
 
 #: apps/common/permissions.py:23
 msgid "A valid session is required."
@@ -956,6 +956,92 @@ msgstr ""
 #: apps/common/transitions.py:76 apps/punches/corrections.py:628
 msgid "This request has already been resolved."
 msgstr "Esta solicitud ya está resuelta."
+
+#: apps/help/models.py:35
+msgid ""
+"Use lowercase words separated by dots or hyphens, like «clocking.general»."
+msgstr "Usa palabras en minúscula separadas por puntos o guiones, como «clocking.general»."
+
+#: apps/help/models.py:47 apps/help/models.py:71
+msgid "slug"
+msgstr "identificador"
+
+#: apps/help/models.py:48 apps/help/models.py:72 apps/tenants/models.py:60
+#: apps/users/models.py:478
+msgid "language"
+msgstr "idioma"
+
+#: apps/help/models.py:49 apps/help/models.py:79
+msgid "title"
+msgstr "título"
+
+#: apps/help/models.py:50
+msgid "icon"
+msgstr "icono"
+
+#: apps/help/models.py:51 apps/help/models.py:125
+msgid "order"
+msgstr "orden"
+
+#: apps/help/models.py:55
+msgid "help section"
+msgstr "sección de ayuda"
+
+#: apps/help/models.py:56
+msgid "help sections"
+msgstr "secciones de ayuda"
+
+#: apps/help/models.py:77
+msgid "section"
+msgstr "sección"
+
+#: apps/help/models.py:80
+msgid "summary"
+msgstr "resumen"
+
+#: apps/help/models.py:81
+msgid "published"
+msgstr "publicado"
+
+#: apps/help/models.py:85
+msgid "help article"
+msgstr "artículo de ayuda"
+
+#: apps/help/models.py:86
+msgid "help articles"
+msgstr "artículos de ayuda"
+
+#: apps/help/models.py:117
+msgid "Paragraph"
+msgstr "Párrafo"
+
+#: apps/help/models.py:118
+msgid "Heading"
+msgstr "Título"
+
+#: apps/help/models.py:119
+msgid "List"
+msgstr "Lista"
+
+#: apps/help/models.py:120
+msgid "Callout"
+msgstr "Aviso"
+
+#: apps/help/models.py:123
+msgid "article"
+msgstr "artículo"
+
+#: apps/help/models.py:129
+msgid "content"
+msgstr "contenido"
+
+#: apps/help/models.py:132
+msgid "help block"
+msgstr "bloque de ayuda"
+
+#: apps/help/models.py:133
+msgid "help blocks"
+msgstr "bloques de ayuda"
 
 #: apps/notifications/models.py:38
 msgid "endpoint"
@@ -2606,7 +2692,7 @@ msgstr ""
 "mismo código que %(other)s: el REGCON es lo que distingue dos convenios "
 "parecidos"
 
-#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:273
+#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:304
 #, python-format
 msgid "Unknown permissions: %(list)s."
 msgstr "Permisos desconocidos: %(list)s."
@@ -2615,15 +2701,15 @@ msgstr "Permisos desconocidos: %(list)s."
 msgid "Grant at least one permission, or the application can do nothing."
 msgstr "Concede al menos un permiso; si no, la aplicación no puede hacer nada."
 
-#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:417
+#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:448
 msgid "Permissions changed"
 msgstr "Cambió los permisos"
 
-#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:475
+#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:506
 msgid "Reactivate the application before issuing a credential."
 msgstr "Reactiva la aplicación antes de emitir una credencial."
 
-#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:492
+#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:523
 #, python-format
 msgid "Credential issued: …%(hint)s"
 msgstr "Credencial emitida: …%(hint)s"
@@ -2632,7 +2718,7 @@ msgstr "Credencial emitida: …%(hint)s"
 msgid "That credential does not exist or is already revoked."
 msgstr "Esa credencial no existe o ya está revocada."
 
-#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:522
+#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:553
 #, python-format
 msgid "Credential revoked: …%(hint)s"
 msgstr "Credencial revocada: …%(hint)s"
@@ -3027,10 +3113,6 @@ msgstr ""
 "Nombre IANA. El almacenamiento siempre es UTC; esto solo afecta a cómo se "
 "muestra."
 
-#: apps/tenants/models.py:60 apps/users/models.py:478
-msgid "language"
-msgstr "idioma"
-
 #: apps/tenants/models.py:65
 msgid ""
 "Language the company works in. A person can override it for themselves; the "
@@ -3219,41 +3301,43 @@ msgstr "Otra persona de esta empresa ya usa esa identidad."
 msgid "Only a platform superuser can administer the installation."
 msgstr "Solo un superusuario de plataforma puede administrar la instalación."
 
-#: apps/tenants/platform_views.py:194 apps/tenants/platform_views.py:243
-#: apps/tenants/platform_views.py:304
+#: apps/tenants/platform_views.py:225 apps/tenants/platform_views.py:274
+#: apps/tenants/platform_views.py:335
 msgid "No such company."
 msgstr "Esa empresa no existe."
 
-#: apps/tenants/platform_views.py:369
+#: apps/tenants/platform_views.py:400
 msgid "Authorised from the installation console"
 msgstr "Autorizada desde la consola de la instalación"
 
-#: apps/tenants/platform_views.py:396 apps/tenants/platform_views.py:432
-#: apps/tenants/platform_views.py:472
+#: apps/tenants/platform_views.py:427 apps/tenants/platform_views.py:463
+#: apps/tenants/platform_views.py:503
 msgid "No such application."
 msgstr "Esa aplicación no existe."
 
-#: apps/tenants/platform_views.py:513
+#: apps/tenants/platform_views.py:544
 msgid "No such credential."
 msgstr "Esa credencial no existe."
 
-#: apps/tenants/platform_views.py:581
+#: apps/tenants/platform_views.py:612
 msgid "There is already an installation account with that address."
 msgstr "Ya hay una cuenta de la instalación con esa dirección."
 
-#: apps/tenants/platform_views.py:620 apps/tenants/platform_views.py:640
+#: apps/tenants/platform_views.py:660 apps/tenants/platform_views.py:685
 msgid "No such installation account."
 msgstr "Esa cuenta de la instalación no existe."
 
-#: apps/tenants/platform_views.py:644
+#: apps/tenants/platform_views.py:689
 msgid "You cannot deactivate the account you are using."
 msgstr "No puedes desactivar la cuenta con la que estás dentro."
 
-#: apps/tenants/platform_views.py:651
+#: apps/tenants/platform_views.py:696
 msgid ""
 "This is the only account that can administer the installation. Create "
 "another one before deactivating it."
-msgstr "Es la única cuenta que puede administrar la instalación. Crea otra antes de desactivarla."
+msgstr ""
+"Es la única cuenta que puede administrar la instalación. Crea otra antes de "
+"desactivarla."
 
 #: apps/tenants/rules.py:43
 msgid "Seniority steps are a list."
@@ -4534,19 +4618,19 @@ msgstr "Una adaptación de jornada solo la puede pedir la propia persona."
 msgid "Only an administrator answers a schedule adaptation."
 msgstr "Solo administración contesta una adaptación de jornada."
 
-#: config/settings/base.py:345
+#: config/settings/base.py:346
 msgid "Spanish"
 msgstr "Español"
 
-#: config/settings/base.py:346
+#: config/settings/base.py:347
 msgid "Catalan"
 msgstr "Catalán"
 
-#: config/settings/base.py:347
+#: config/settings/base.py:348
 msgid "Galician"
 msgstr "Gallego"
 
-#: config/settings/base.py:348
+#: config/settings/base.py:349
 msgid "English"
 msgstr "Inglés"
 
