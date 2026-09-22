@@ -8,6 +8,7 @@ telling us somebody's session must end.
 from __future__ import annotations
 
 import logging
+from urllib.parse import quote
 
 from django.conf import settings
 from django.shortcuts import redirect
@@ -61,7 +62,7 @@ class SsoDiscoverView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes: list = []
-    throttle_scope = "login"
+    throttle_scope = "sso"
 
     @extend_schema(
         summary="Where does this address sign in",
@@ -91,7 +92,7 @@ class SsoStartView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes: list = []
-    throttle_scope = "login"
+    throttle_scope = "sso"
 
     @extend_schema(
         summary="Start signing in at the provider",
@@ -123,7 +124,7 @@ class SsoCallbackView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes: list = []
-    throttle_scope = "login"
+    throttle_scope = "sso"
 
     @extend_schema(
         summary="Return from the provider",
@@ -135,6 +136,25 @@ class SsoCallbackView(APIView):
         auth=[],
     )
     def get(self, request):
+        """La vuelta del proveedor, con lo que salga bien o mal.
+
+        Lo que falla aquí lo lee **una persona en su navegador**, no una
+        integración: un JSON de la API en pantalla ---«person_not_here», con su
+        traza y su cabecera--- no le dice nada a quien solo quería fichar. Así que
+        el rechazo se devuelve a la pantalla de entrada con el motivo, igual que el
+        acierto se devuelve con el vale. Sin aplicación web configurada se responde
+        como antes, que es lo que esperan las instalaciones que solo usan la API.
+        """
+        try:
+            return self._volver(request)
+        except BusinessRuleError as refusal:
+            destino = _web_url(request)
+            if not destino:
+                raise
+            logger.info("sso: sign-in refused (%s)", refusal.code)
+            return redirect(f"{destino}/?sso_error={quote(refusal.code)}")
+
+    def _volver(self, request):
         from apps.users.serializers import issue_tokens
 
         error = request.query_params.get("error")
@@ -200,7 +220,7 @@ class SsoTicketView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes: list = []
-    throttle_scope = "login"
+    throttle_scope = "sso"
 
     @extend_schema(
         summary="Collect the session left by the provider",

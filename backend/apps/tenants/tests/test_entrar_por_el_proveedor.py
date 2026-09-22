@@ -283,7 +283,8 @@ def test_un_token_firmado_por_otro_no_entra(provider, idp, keypair, monkeypatch)
         lambda url, data: (200, {"id_token": id_token((otra, otra.public_key()))}),
     )
 
-    answer = client.get("/api/auth/sso/callback/", {"code": "x", "state": params["state"][0]})
+    with override_settings(SSO_WEB_URL=""):
+        answer = client.get("/api/auth/sso/callback/", {"code": "x", "state": params["state"][0]})
     assert answer.json()["error"]["code"] == "invalid_id_token"
 
 
@@ -303,7 +304,8 @@ def test_un_token_de_otra_sesion_no_vale_para_esta(provider, idp, keypair, monke
         lambda url, data: (200, {"id_token": id_token(keypair, nonce="de-otra-entrada")}),
     )
 
-    answer = client.get("/api/auth/sso/callback/", {"code": "x", "state": params["state"][0]})
+    with override_settings(SSO_WEB_URL=""):
+        answer = client.get("/api/auth/sso/callback/", {"code": "x", "state": params["state"][0]})
     assert answer.json()["error"]["code"] == "nonce_mismatch"
 
 
@@ -332,7 +334,8 @@ def test_sin_alta_al_vuelo_no_entra_quien_no_esta(provider, idp, keypair, monkey
         ),
     )
 
-    answer = client.get("/api/auth/sso/callback/", {"code": "x", "state": params["state"][0]})
+    with override_settings(SSO_WEB_URL=""):
+        answer = client.get("/api/auth/sso/callback/", {"code": "x", "state": params["state"][0]})
     assert answer.json()["error"]["code"] == "person_not_here"
 
 
@@ -510,3 +513,29 @@ def test_sin_aplicacion_web_configurada_responde_como_siempre(
 
     assert answer.status_code == 200
     assert answer.json()["access"]
+
+
+def test_un_rechazo_vuelve_a_la_pantalla_y_no_a_un_json(client, provider, settings, monkeypatch):
+    """Quien vuelve del proveedor es un navegador, no una integración.
+
+    Antes, que no hubiera nadie con esa cuenta dejaba a la persona mirando la
+    página de la API con «person_not_here», su traza y su cabecera. Ahora vuelve a
+    la pantalla de entrada con el motivo en la dirección, y allí se convierte en
+    una frase.
+    """
+    settings.SSO_WEB_URL = "https://ott.example"
+
+    respuesta = client.get("/api/auth/sso/callback/", {"state": "el-que-sea", "code": "x"})
+
+    assert respuesta.status_code == 302
+    assert respuesta.headers["Location"].startswith("https://ott.example/?sso_error=")
+
+
+def test_sin_aplicacion_web_el_rechazo_sigue_siendo_json(client, provider, settings):
+    """Una instalación que solo usa la API espera lo de siempre."""
+    settings.SSO_WEB_URL = ""
+
+    respuesta = client.get("/api/auth/sso/callback/", {"state": "el-que-sea", "code": "x"})
+
+    assert respuesta.status_code == 409
+    assert respuesta.json()["error"]["code"]

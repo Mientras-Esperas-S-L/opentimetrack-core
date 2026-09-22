@@ -220,6 +220,15 @@ REST_FRAMEWORK = {
         # solo uso (rota y se invalida el anterior), así que probar a ciegas no
         # es un ataque realista. El límite está para que nadie martillee.
         "session_renewal": "60/min",
+        # Entrar por el proveedor de la empresa NO comparte cubeta con el login, y
+        # la razón se vio en la primera instalación de verdad: **una sola entrada
+        # gasta cuatro llamadas** ---descubrir el dominio, empezar, volver del
+        # proveedor y canjear el vale---, así que con cinco por minuto la segunda
+        # persona que entra desde la misma oficina se encuentra un 429, y quien se
+        # equivoca de correo se bloquea a sí mismo. Aquí no se adivina ninguna
+        # credencial: la contraseña se prueba en el proveedor, que tiene su propio
+        # límite, y lo único que se puede repetir es un código de un solo uso.
+        "sso": "30/min",
         "punch": "10/min",
         # An integration polls, so it gets more room than a person --- and its
         # own bucket, so a loop in one client cannot starve the staff.

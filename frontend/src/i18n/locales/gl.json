@@ -916,5 +916,13 @@
   "· sin sueldo": "· sen soldo",
   "· sobre {{quien}}": "· sobre {{quien}}",
   "Volver a la pantalla de acceso": "Volver á pantalla de acceso",
-  "Falta el identificador de la entrada. Vuelve a intentarlo desde la pantalla de acceso.": "Falta o identificador da entrada. Téntao de novo desde a pantalla de acceso."
+  "Falta el identificador de la entrada. Vuelve a intentarlo desde la pantalla de acceso.": "Falta o identificador da entrada. Téntao de novo desde a pantalla de acceso.",
+  "Tu empresa usa este sistema, pero aquí no consta nadie con esa cuenta. Habla con quien lleve el registro de jornada.": "A túa empresa usa este sistema, pero aquí non consta ninguén con esa conta. Fala con quen leve o rexistro de xornada.",
+  "Esa cuenta ya no está activa aquí.": "Esa conta xa non está activa aquí.",
+  "Tu empresa no ha autorizado la entrada.": "A túa empresa non autorizou a entrada.",
+  "El proveedor de identidad de tu empresa ya no está disponible aquí.": "O provedor de identidade da túa empresa xa non está dispoñible aquí.",
+  "El proveedor de identidad no es el que esta instalación tiene configurado.": "O provedor de identidade non é o que esta instalación ten configurado.",
+  "No se han podido comprobar las claves de tu proveedor de identidad.": "Non se puideron comprobar as chaves do teu provedor de identidade.",
+  "No se ha podido hablar con el proveedor de identidad de tu empresa.": "Non se puido falar co provedor de identidade da túa empresa.",
+  "No se ha podido completar la entrada. Vuelve a intentarlo.": "Non se puido completar a entrada. Téntao de novo."
 }
