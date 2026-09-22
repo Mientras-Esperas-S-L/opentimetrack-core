@@ -217,7 +217,11 @@ export default function AppShell() {
             sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           />
           <Tooltip title={t('Ayuda')}>
-            <IconButton onClick={() => setAyudaAbierta(true)} aria-label={t('Ayuda')}>
+            <IconButton
+              onClick={() => setAyudaAbierta(true)}
+              aria-label={t('Ayuda')}
+              sx={{ minWidth: 44, minHeight: 44 }}
+            >
               <HelpIcon />
             </IconButton>
           </Tooltip>
@@ -228,7 +232,12 @@ export default function AppShell() {
             </Avatar>
           </Tooltip>
           <Tooltip title={t('Cerrar sesión')}>
-            <IconButton onClick={signOut} edge="end" aria-label={t('Cerrar sesión')}>
+            <IconButton
+              onClick={signOut}
+              edge="end"
+              aria-label={t('Cerrar sesión')}
+              sx={{ minWidth: 44, minHeight: 44 }}
+            >
               <LogoutIcon />
             </IconButton>
           </Tooltip>
