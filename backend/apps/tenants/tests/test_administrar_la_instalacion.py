@@ -6,7 +6,10 @@ secreto del proveedor entra pero no sale.
 
 from __future__ import annotations
 
+import base64
+
 import pytest
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APIClient
 
@@ -16,6 +19,18 @@ from apps.tenants.models import Tenant
 from apps.users.models import Role, User
 
 pytestmark = pytest.mark.django_db
+
+#: El secreto del proveedor es un campo cifrado, así que guardarlo necesita clave.
+#: Se fija aquí y no se hereda del entorno: en el runner no existe, y una prueba que
+#: pasa en el puesto y falla en la puerta no prueba nada. Mismo patrón que
+#: `test_entrar_por_el_proveedor`.
+FERNET_KEY = base64.urlsafe_b64encode(b"0" * 32).decode()
+
+
+@pytest.fixture(autouse=True)
+def _con_clave_de_cifrado():
+    with override_settings(FIELD_ENCRYPTION_KEY=FERNET_KEY):
+        yield
 
 
 @pytest.fixture
