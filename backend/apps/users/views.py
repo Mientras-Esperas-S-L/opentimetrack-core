@@ -251,6 +251,9 @@ class SignOutView(APIView):
     """Invalidates the refresh token, so signing out actually signs out."""
 
     permission_classes = [IsAuthenticatedInTenant]
+    # Salir no es un dato de empresa. Sin esto, el superusuario de plataforma
+    # ---que no pertenece a ninguna--- entraba y no podía cerrar su sesión.
+    sin_empresa = True
 
     @extend_schema(request=RefreshRequestSerializer, responses={204: None})
     def post(self, request):
@@ -316,15 +319,19 @@ class MeEnvelopeSerializer(serializers.Serializer):
 @extend_schema(tags=["auth"])
 class MeView(APIView):
     permission_classes = [IsAuthenticatedInTenant]
+    # Quién soy vale sin empresa: es lo que el frontal pide al arrancar, y el
+    # superusuario de plataforma no tiene ninguna. `tenant` sale nulo, que es
+    # exactamente lo que hay que decir.
+    sin_empresa = True
 
     @extend_schema(responses={200: MeEnvelopeSerializer})
     def get(self, request):
-        return Response(
-            {
-                "user": UserSerializer(request.user).data,
-                "tenant": TenantSerializer(request.user.tenant).data,
-            }
-        )
+        # Sin empresa la respuesta es `null`, no una empresa en blanco. Quien
+        # administra la instalación no pertenece a ninguna, y serializar `None`
+        # daba un objeto con el nombre, el CIF y la zona vacíos: la interfaz lo
+        # leía como «hay empresa y no tiene nombre».
+        empresa = TenantSerializer(request.user.tenant).data if request.user.tenant_id else None
+        return Response({"user": UserSerializer(request.user).data, "tenant": empresa})
 
     @extend_schema(request=MePreferencesSerializer, responses={200: UserSerializer})
     def patch(self, request):

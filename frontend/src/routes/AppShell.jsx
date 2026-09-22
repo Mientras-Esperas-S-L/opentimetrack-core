@@ -114,7 +114,11 @@ export default function AppShell() {
   // pantalla tiene que cerrarlo. En el permanente no hay nada que cerrar.
   const menu = (alCerrar) => (
     <Box sx={{ overflowY: 'auto', pb: 2 }}>
-      <NavSection title={t('Mi trabajo')} items={NAV_ME} onNavigate={alCerrar} />
+      {/* «Mi trabajo» es de quien trabaja en una empresa. La cuenta que
+          administra la instalación no está en ninguna, y cada una de estas
+          pantallas le contestaría 403: enseñar un enlace que no va a abrirse es
+          el mismo error de interfaz que el de abajo, al revés. */}
+      {company && <NavSection title={t('Mi trabajo')} items={NAV_ME} onNavigate={alCerrar} />}
       {canManage && (
         <>
           <Divider sx={{ my: 1, mx: 2 }} />

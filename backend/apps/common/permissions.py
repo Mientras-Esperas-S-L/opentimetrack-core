@@ -50,8 +50,28 @@ class IsAuthenticatedInTenant(BasePermission):
 
         # A platform superuser without a company only exists on self-hosted
         # installs and does not operate on service data.
+        #
+        # «No opera sobre datos del servicio» era la intención, pero este
+        # `return True` le abría **todo** el servicio sin empresa que fijar, y
+        # las vistas de dentro dan por hecho que hay una. Medido el 22/09/2026
+        # nada más entrar: `/punches/today/` y `/shifts/today/` contestaban
+        # **500** ---`WorkingTimeRules.for_company(None)` intentaba crear la
+        # fila de reglas con `tenant_id` nulo y la base lo rechazaba---, y el
+        # panel de la instalación salía con dos errores encima.
+        #
+        # Así que sin empresa solo se pasa a lo que dice valer sin ella. El
+        # resto es un 403 con su motivo, que es la respuesta correcta: no es
+        # que el servidor se rompa, es que esa cuenta no tiene jornada, ni
+        # cuadrante, ni compañeros.
         if user.tenant_id is None:
-            return bool(user.is_superuser)
+            if not (user.is_superuser and getattr(view, "sin_empresa", False)):
+                self.message = _(
+                    "This account administers the installation and does not belong to any "
+                    "company, so it has no data of its own here."
+                )
+                return False
+            activate_for(user)
+            return True
 
         set_current_tenant(user.tenant_id)
         # Aquí y no en el middleware, por lo mismo que el tenant: con un token

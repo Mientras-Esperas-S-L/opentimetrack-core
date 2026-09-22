@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-22 11:46+0000\n"
+"POT-Creation-Date: 2026-09-22 12:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -108,17 +108,17 @@ msgid "a day"
 msgstr "ao día"
 
 #: apps/absences/models.py:87 apps/reports/services.py:176
-#: apps/users/models.py:352
+#: apps/users/models.py:353
 msgid "a week"
 msgstr "á semana"
 
 #: apps/absences/models.py:88 apps/reports/services.py:176
-#: apps/users/models.py:353
+#: apps/users/models.py:354
 msgid "a month"
 msgstr "ao mes"
 
 #: apps/absences/models.py:89 apps/reports/services.py:176
-#: apps/users/models.py:354
+#: apps/users/models.py:355
 msgid "a year"
 msgstr "ao ano"
 
@@ -128,7 +128,7 @@ msgstr ""
 
 #: apps/absences/models.py:109 apps/shifts/models.py:72
 #: apps/tenants/applications.py:51 apps/tenants/holidays.py:64
-#: apps/tenants/identity.py:33 apps/users/models.py:38 apps/users/models.py:167
+#: apps/tenants/identity.py:33 apps/users/models.py:39 apps/users/models.py:168
 msgid "name"
 msgstr ""
 
@@ -221,15 +221,15 @@ msgstr ""
 #: apps/absences/models.py:203 apps/absences/models.py:559
 #: apps/audit/models.py:201 apps/punches/models.py:628
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
-#: apps/tenants/rules.py:577 apps/tenants/rules.py:661 apps/users/models.py:981
-#: apps/users/models.py:1059
+#: apps/tenants/rules.py:577 apps/tenants/rules.py:661 apps/users/models.py:992
+#: apps/users/models.py:1070
 msgid "note"
 msgstr ""
 
 #: apps/absences/models.py:204 apps/shifts/models.py:84
 #: apps/tenants/applications.py:60 apps/tenants/identity.py:116
-#: apps/tenants/models.py:202 apps/users/models.py:42 apps/users/models.py:205
-#: apps/users/models.py:682
+#: apps/tenants/models.py:202 apps/users/models.py:43 apps/users/models.py:206
+#: apps/users/models.py:683
 msgid "active"
 msgstr ""
 
@@ -266,8 +266,8 @@ msgstr "Cancelada"
 #: apps/notifications/models.py:34 apps/punches/corrections.py:80
 #: apps/punches/models.py:162 apps/punches/models.py:575
 #: apps/punches/models.py:617 apps/reports/payroll.py:97
-#: apps/shifts/models.py:111 apps/users/models.py:104 apps/users/models.py:256
-#: apps/users/models.py:963 apps/users/models.py:1035 apps/users/models.py:1138
+#: apps/shifts/models.py:111 apps/users/models.py:105 apps/users/models.py:257
+#: apps/users/models.py:974 apps/users/models.py:1046 apps/users/models.py:1149
 msgid "employee"
 msgstr "persoa traballadora"
 
@@ -277,7 +277,7 @@ msgid "type"
 msgstr "tipo"
 
 #: apps/absences/models.py:288 apps/absences/models.py:536
-#: apps/reports/payroll.py:99 apps/users/models.py:113 apps/users/models.py:265
+#: apps/reports/payroll.py:99 apps/users/models.py:114 apps/users/models.py:266
 msgid "from"
 msgstr "desde"
 
@@ -315,7 +315,7 @@ msgstr "rexistrado por"
 
 #: apps/absences/models.py:344 apps/absences/models.py:548
 #: apps/punches/corrections.py:104 apps/punches/models.py:621
-#: apps/users/models.py:1150
+#: apps/users/models.py:1161
 msgid "status"
 msgstr "estado"
 
@@ -567,13 +567,13 @@ msgstr "o tempo indispensable"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/absences/views.py:242 apps/shifts/views.py:204
-#: apps/tenants/views.py:181 apps/users/views.py:757 apps/users/views.py:827
-#: apps/users/views.py:985 apps/users/views.py:1036 apps/users/views.py:1073
+#: apps/tenants/views.py:181 apps/users/views.py:764 apps/users/views.py:834
+#: apps/users/views.py:992 apps/users/views.py:1043 apps/users/views.py:1080
 msgid "Added"
 msgstr "Engadido"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/absences/views.py:270 apps/audit/trail.py:74 apps/users/views.py:1009
+#: apps/absences/views.py:270 apps/audit/trail.py:74 apps/users/views.py:1016
 msgid "Changed"
 msgstr "Cambiado"
 
@@ -831,7 +831,7 @@ msgstr ""
 #: apps/audit/models.py:173 apps/common/models.py:117
 #: apps/tenants/models.py:205 apps/tenants/models.py:233
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
-#: apps/tenants/rules.py:639 apps/users/models.py:434
+#: apps/tenants/rules.py:639 apps/users/models.py:435
 msgid "company"
 msgstr "empresa"
 
@@ -974,28 +974,36 @@ msgstr ""
 "Este punto de acceso é para persoas. Unha aplicación usa /api/app/ coa súa "
 "credencial e os seus permisos."
 
+#: apps/common/permissions.py:69
+msgid ""
+"This account administers the installation and does not belong to any "
+"company, so it has no data of its own here."
+msgstr ""
+"Esta conta administra a instalación e non pertence a ningunha empresa, así "
+"que aquí non ten datos propios."
+
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/common/permissions.py:65
+#: apps/common/permissions.py:85
 msgid "Only an administrator may perform this operation."
 msgstr "Só a administración pode facer esta operación."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/common/permissions.py:72
+#: apps/common/permissions.py:92
 msgid "Manager or administrator profile required."
 msgstr "Precísase perfil de responsable ou de administración."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/common/permissions.py:81
+#: apps/common/permissions.py:101
 msgid "Only an administrator may modify this resource."
 msgstr "Só a administración pode modificar este recurso."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/common/permissions.py:127
+#: apps/common/permissions.py:147
 msgid "The application does not carry the required permission."
 msgstr "A aplicación non leva o permiso que fai falta."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/common/permissions.py:158
+#: apps/common/permissions.py:178
 msgid "An application credential is required."
 msgstr "Fai falta unha credencial de aplicación."
 
@@ -1415,12 +1423,12 @@ msgid "Interruption of the right to disconnect"
 msgstr "Interrupción do dereito á desconexión"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:80 apps/users/models.py:613
+#: apps/punches/models.py:80 apps/users/models.py:614
 msgid "On site"
 msgstr "Presencial"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/punches/models.py:81 apps/users/models.py:613
+#: apps/punches/models.py:81 apps/users/models.py:614
 msgid "Remote"
 msgstr "A distancia"
 
@@ -1578,7 +1586,7 @@ msgid "received at"
 msgstr "recibido o"
 
 #: apps/punches/models.py:251 apps/tenants/models.py:53
-#: apps/users/models.py:195
+#: apps/users/models.py:196
 msgid "time zone"
 msgstr ""
 
@@ -1934,7 +1942,7 @@ msgid "Tax number"
 msgstr "CIF/NIF"
 
 #: apps/reports/pdf.py:110 apps/reports/services.py:584
-#: apps/users/models.py:385
+#: apps/users/models.py:386
 msgid "Employee"
 msgstr "Persoa traballadora"
 
@@ -2903,7 +2911,7 @@ msgstr "Crear e actualizar persoas"
 msgid "Receive outbound events"
 msgstr "Recibir eventos de saída"
 
-#: apps/tenants/applications.py:52 apps/users/models.py:40
+#: apps/tenants/applications.py:52 apps/users/models.py:41
 msgid "description"
 msgstr ""
 
@@ -3061,8 +3069,8 @@ msgid "origin"
 msgstr "orixe"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/holidays.py:81 apps/users/models.py:208
-#: apps/users/models.py:262 apps/users/models.py:448
+#: apps/tenants/holidays.py:81 apps/users/models.py:209
+#: apps/users/models.py:263 apps/users/models.py:449
 msgid "workplace"
 msgstr "centro de traballo"
 
@@ -3090,7 +3098,7 @@ msgstr "Esta empresa non ten ningún tipo de permiso con ese código."
 msgid "Display name, e.g. 'GreenCityControl'."
 msgstr "Nome visible, por exemplo «GreenCityControl»."
 
-#: apps/tenants/identity.py:36 apps/users/models.py:680
+#: apps/tenants/identity.py:36 apps/users/models.py:681
 msgid "issuer"
 msgstr ""
 
@@ -3270,7 +3278,7 @@ msgstr ""
 msgid "IANA name. Storage is always UTC; this only affects display."
 msgstr ""
 
-#: apps/tenants/models.py:60 apps/users/models.py:477
+#: apps/tenants/models.py:60 apps/users/models.py:478
 msgid "language"
 msgstr ""
 
@@ -3280,7 +3288,7 @@ msgid ""
 "browser's setting is only used when neither is set."
 msgstr ""
 
-#: apps/tenants/models.py:73 apps/users/models.py:659
+#: apps/tenants/models.py:73 apps/users/models.py:660
 msgid "annual leave days"
 msgstr ""
 
@@ -3453,7 +3461,7 @@ msgid "Only a platform superuser can administer the installation."
 msgstr "Só un superusuario de plataforma pode administrar a instalación."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:161 apps/tenants/platform_views.py:209
+#: apps/tenants/platform_views.py:164 apps/tenants/platform_views.py:213
 msgid "No such company."
 msgstr "Esa empresa non existe."
 
@@ -4037,276 +4045,276 @@ msgstr "cambios no xeito de contar o tempo"
 msgid "application credentials they created"
 msgstr "credenciais de aplicación que creou"
 
-#: apps/users/models.py:55
+#: apps/users/models.py:56
 msgid "managers"
 msgstr ""
 
-#: apps/users/models.py:57
+#: apps/users/models.py:58
 msgid ""
 "Who may read and resolve for the people in it. Only has an effect on the "
 "manager profile: an administrator sees the whole company."
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:63 apps/users/models.py:110 apps/users/models.py:456
+#: apps/users/models.py:64 apps/users/models.py:111 apps/users/models.py:457
 msgid "department"
 msgstr "departamento"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:64
+#: apps/users/models.py:65
 msgid "departments"
 msgstr "departamentos"
 
-#: apps/users/models.py:116 apps/users/models.py:268
+#: apps/users/models.py:117 apps/users/models.py:269
 msgid ""
 "Empty means it is not on record since when, so it counts for any period."
 msgstr ""
 "Baleiro significa que non consta desde cando, así que conta para calquera "
 "período."
 
-#: apps/users/models.py:119 apps/users/models.py:271
+#: apps/users/models.py:120 apps/users/models.py:272
 msgid "until"
 msgstr "ata"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:122 apps/users/models.py:274
+#: apps/users/models.py:123 apps/users/models.py:275
 msgid "Empty means it is the current one."
 msgstr "Baleiro significa que é a actual."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:126
+#: apps/users/models.py:127
 msgid "department assignment"
 msgstr "adscrición a departamento"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:127
+#: apps/users/models.py:128
 msgid "department assignments"
 msgstr "adscricións a departamento"
 
-#: apps/users/models.py:168
+#: apps/users/models.py:169
 msgid "address"
 msgstr ""
 
-#: apps/users/models.py:171
+#: apps/users/models.py:172
 msgid "municipality"
 msgstr ""
 
-#: apps/users/models.py:174
+#: apps/users/models.py:175
 msgid "Decides the two local public holidays."
 msgstr ""
 
-#: apps/users/models.py:180
+#: apps/users/models.py:181
 msgid "municipality code"
 msgstr ""
 
-#: apps/users/models.py:183
+#: apps/users/models.py:184
 msgid "INE code in Spain. Names repeat between provinces; codes do not."
 msgstr ""
 
-#: apps/users/models.py:186
+#: apps/users/models.py:187
 msgid "region"
 msgstr ""
 
-#: apps/users/models.py:190
+#: apps/users/models.py:191
 msgid ""
 "Decides the public holidays the region sets. Empty uses only the national "
 "ones."
 msgstr ""
 
-#: apps/users/models.py:200
+#: apps/users/models.py:201
 msgid ""
 "Empty uses the company's. Only needed where a workplace is in another zone: "
 "in Spain, the Canary Islands."
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:209
+#: apps/users/models.py:210
 msgid "workplaces"
 msgstr "centros de traballo"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:278
+#: apps/users/models.py:279
 msgid "workplace assignment"
 msgstr "adscrición a centro de traballo"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:279
+#: apps/users/models.py:280
 msgid "workplace assignments"
 msgstr "adscricións a centro de traballo"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:322
+#: apps/users/models.py:323
 msgid "Full time"
 msgstr "Xornada completa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:323
+#: apps/users/models.py:324
 msgid "Part time"
 msgstr "Xornada parcial"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:324
+#: apps/users/models.py:325
 msgid "Reduced working day"
 msgstr "Xornada reducida"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:327
+#: apps/users/models.py:328
 msgid "Training contract, alternating"
 msgstr "Contrato formativo en alternancia"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:330
+#: apps/users/models.py:331
 msgid "Training contract, work practice"
 msgstr "Contrato formativo para práctica profesional"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:338
+#: apps/users/models.py:339
 msgid "Training contract, kind not stated"
 msgstr "Contrato formativo, sen concretar cal"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:339
+#: apps/users/models.py:340
 msgid "No agreed figure"
 msgstr "Sen cifra pactada"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:379
+#: apps/users/models.py:380
 msgid "Read from the roster"
 msgstr "Lido do cadro"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:380
+#: apps/users/models.py:381
 msgid "Yes"
 msgstr "Si"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:381
+#: apps/users/models.py:382
 msgid "No"
 msgstr "Non"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:386
+#: apps/users/models.py:387
 msgid "Manager"
 msgstr "Responsable"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:387
+#: apps/users/models.py:388
 msgid "Administrator"
 msgstr "Administración"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:435
+#: apps/users/models.py:436
 msgid "Null only for platform superusers on self-hosted installs."
 msgstr ""
 "Baleiro só para os superusuarios da plataforma en instalacións propias."
 
-#: apps/users/models.py:459
+#: apps/users/models.py:460
 msgid "email address"
 msgstr ""
 
-#: apps/users/models.py:461
+#: apps/users/models.py:462
 msgid "first name"
 msgstr ""
 
-#: apps/users/models.py:464
+#: apps/users/models.py:465
 msgid "last name"
 msgstr ""
 
-#: apps/users/models.py:466
+#: apps/users/models.py:467
 msgid "role"
 msgstr ""
 
-#: apps/users/models.py:468
+#: apps/users/models.py:469
 msgid "staff number"
 msgstr ""
 
-#: apps/users/models.py:472
+#: apps/users/models.py:473
 msgid ""
 "The person's identifier in the company's own systems. Acts as a bridge when "
 "an external application records clock events on their behalf."
 msgstr ""
 
-#: apps/users/models.py:480
+#: apps/users/models.py:481
 msgid "Overrides the company language for this person."
 msgstr ""
 
-#: apps/users/models.py:492
+#: apps/users/models.py:493
 msgid "working-time regime"
 msgstr ""
 
-#: apps/users/models.py:496
+#: apps/users/models.py:497
 msgid "Art. 3.b. Decides which limits apply, not just how many hours."
 msgstr ""
 
-#: apps/users/models.py:499
+#: apps/users/models.py:500
 msgid "contracted hours"
 msgstr ""
 
-#: apps/users/models.py:505
+#: apps/users/models.py:506
 msgid ""
 "The figure the contract agreed. Empty on a full-time contract means the "
 "company's own; empty with no agreed figure means there is none."
 msgstr ""
 
-#: apps/users/models.py:510
+#: apps/users/models.py:511
 msgid "over"
 msgstr ""
 
-#: apps/users/models.py:514
+#: apps/users/models.py:515
 msgid "Whether the figure above is a week, a month or a year."
 msgstr ""
 
-#: apps/users/models.py:523
+#: apps/users/models.py:524
 msgid "contract starts"
 msgstr ""
 
-#: apps/users/models.py:526
+#: apps/users/models.py:527
 msgid "Empty means it was already running when the company started here."
 msgstr ""
 
-#: apps/users/models.py:529
+#: apps/users/models.py:530
 msgid "contract ends"
 msgstr ""
 
-#: apps/users/models.py:532
+#: apps/users/models.py:533
 msgid "Empty means open-ended. A date makes it fixed-term."
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:551
+#: apps/users/models.py:552
 msgid "relieves"
 msgstr "releva a"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:552
+#: apps/users/models.py:553
 msgid "Art. 12.7: who this relief contract stands in for."
 msgstr "Art. 12.7: a quen substitúe este contrato de remuda."
 
-#: apps/users/models.py:556
+#: apps/users/models.py:557
 msgid "permanent seasonal"
 msgstr ""
 
-#: apps/users/models.py:559
+#: apps/users/models.py:560
 msgid ""
 "Art. 16 ET: the work comes in periods of activity. Outside them there is no "
 "expected working day, and the roster says so instead of reporting an absence."
 msgstr ""
 
-#: apps/users/models.py:565
+#: apps/users/models.py:566
 msgid "agreed hours"
 msgstr ""
 
-#: apps/users/models.py:569
+#: apps/users/models.py:570
 msgid ""
 "Art. 3.b: the agreed working hours, as text. For example 'L-V 09:00-17:00'. "
 "Free text because a schedule is not a shape a closed field can hold."
 msgstr ""
 
-#: apps/users/models.py:579
+#: apps/users/models.py:580
 msgid "night worker"
 msgstr ""
 
-#: apps/users/models.py:584
+#: apps/users/models.py:585
 msgid ""
 "Art. 36.1 ET. A status, not a shift: three hours of the daily working day at "
 "night as a rule, or a third of the year. It brings an eight-hour average "
@@ -4314,43 +4322,43 @@ msgid ""
 "from the roster."
 msgstr ""
 
-#: apps/users/models.py:591
+#: apps/users/models.py:592
 msgid "rotating shifts"
 msgstr ""
 
-#: apps/users/models.py:594
+#: apps/users/models.py:595
 msgid ""
 "Art. 36.3 ET. The person rotates between shift teams. This does not add "
 "limits: it stops the ordinary ones being applied to a changeover, where a "
 "shorter rest is lawful and owed back rather than a breach."
 msgstr ""
 
-#: apps/users/models.py:600
+#: apps/users/models.py:601
 msgid "volunteered for nights"
 msgstr ""
 
-#: apps/users/models.py:603
+#: apps/users/models.py:604
 msgid ""
 "Art. 36.3 ET allows more than two consecutive weeks on the night shift only "
 "when the person asked for it. Recorded here because the roster cannot tell a "
 "volunteer from somebody left there."
 msgstr ""
 
-#: apps/users/models.py:610
+#: apps/users/models.py:611
 msgid "usual mode"
 msgstr ""
 
-#: apps/users/models.py:615
+#: apps/users/models.py:616
 msgid ""
 "Art. 3.e. What a clock event assumes when it says nothing; each event can "
 "still record the other."
 msgstr ""
 
-#: apps/users/models.py:621
+#: apps/users/models.py:622
 msgid "date of birth"
 msgstr ""
 
-#: apps/users/models.py:625
+#: apps/users/models.py:626
 msgid ""
 "Only used to apply the protections the law gives workers under eighteen: "
 "eight hours a day, a thirty-minute break from four and a half, two days of "
@@ -4359,77 +4367,77 @@ msgid ""
 "an adult."
 msgstr ""
 
-#: apps/users/models.py:637
+#: apps/users/models.py:638
 msgid "workers' representative"
 msgstr ""
 
-#: apps/users/models.py:640
+#: apps/users/models.py:641
 msgid ""
 "Informed when somebody disagrees with a change to their record (art. 4.b), "
 "and entitled to consult the register (art. 6.2)."
 msgstr ""
 
-#: apps/users/models.py:650
+#: apps/users/models.py:651
 msgid "wants clock reminders"
 msgstr ""
 
-#: apps/users/models.py:653
+#: apps/users/models.py:654
 msgid ""
 "Send a reminder when a shift starts and there is no entry, or when a day is "
 "left open. It prompts the real punch; it never records one."
 msgstr ""
 
-#: apps/users/models.py:663
+#: apps/users/models.py:664
 msgid ""
 "Overrides the company figure for this person. Empty means the company's. "
 "Part-time and mid-year joiners are the usual reason."
 msgstr ""
 
-#: apps/users/models.py:675
+#: apps/users/models.py:676
 msgid "identity provider subject"
 msgstr ""
 
-#: apps/users/models.py:683
+#: apps/users/models.py:684
 msgid "admin site access"
 msgstr ""
 
-#: apps/users/models.py:684
+#: apps/users/models.py:685
 msgid "date joined"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:692
+#: apps/users/models.py:693
 msgid "person"
 msgstr "persoa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:693
+#: apps/users/models.py:694
 msgid "people"
 msgstr "persoas"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:965
+#: apps/users/models.py:976
 msgid "activity starts"
 msgstr "a actividade comeza"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:967
+#: apps/users/models.py:978
 msgid "activity ends"
 msgstr "a actividade acaba"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:970
+#: apps/users/models.py:981
 msgid "Empty while the season is open: a campaign knows when it starts."
 msgstr ""
 "Baleiro mentres a temporada siga aberta: unha campaña sabe cando comeza."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:973
+#: apps/users/models.py:984
 msgid "called up on"
 msgstr "chamamento o"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:977
+#: apps/users/models.py:988
 msgid ""
 "Art. 16.3 ET: the call-up is in writing and with notice. The date is what "
 "shows the notice was given; a tick would not."
@@ -4438,47 +4446,47 @@ msgstr ""
 "demostra que se avisou; unha caixa marcada, non."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:984
+#: apps/users/models.py:995
 msgid "period of activity"
 msgstr "período de actividade"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:985
+#: apps/users/models.py:996
 msgid "periods of activity"
 msgstr "períodos de actividade"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1038
+#: apps/users/models.py:1049
 msgid "signed on"
 msgstr "asinado o"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1039
+#: apps/users/models.py:1050
 msgid "Art. 5.1: the agreement comes before the remote work starts."
 msgstr "Art. 5.1: o acordo vai antes de que comece o traballo a distancia."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1041
+#: apps/users/models.py:1052
 msgid "remote work starts"
 msgstr "o traballo a distancia comeza"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1043
+#: apps/users/models.py:1054
 msgid "remote work ends"
 msgstr "o traballo a distancia acaba"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1046
+#: apps/users/models.py:1057
 msgid "Empty for an open-ended agreement, which is the usual one."
 msgstr "Baleiro para un acordo sen data de fin, que é o corrente."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1049
+#: apps/users/models.py:1060
 msgid "share agreed (%)"
 msgstr "porcentaxe pactada (%)"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1055
+#: apps/users/models.py:1066
 msgid ""
 "Art. 7.f asks the agreement to state it. Left empty it is not checked "
 "against what is actually worked: the figure that binds is on paper."
@@ -4487,74 +4495,74 @@ msgstr ""
 "traballa de verdade: a cifra que obriga é a do papel."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1062
+#: apps/users/models.py:1073
 msgid "remote work agreement"
 msgstr "acordo de traballo a distancia"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1063
+#: apps/users/models.py:1074
 msgid "remote work agreements"
 msgstr "acordos de traballo a distancia"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1099
+#: apps/users/models.py:1110
 msgid "In negotiation"
 msgstr "En negociación"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1100
+#: apps/users/models.py:1111
 msgid "Accepted"
 msgstr "Aceptada"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1101
+#: apps/users/models.py:1112
 msgid "An alternative was proposed"
 msgstr "Propúxose unha alternativa"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1102
+#: apps/users/models.py:1113
 msgid "Refused"
 msgstr "Denegada"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1103
+#: apps/users/models.py:1114
 msgid "Withdrawn by the person"
 msgstr "Retirada pola persoa"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1141
+#: apps/users/models.py:1152
 msgid "requested on"
 msgstr "solicitada o"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1142
+#: apps/users/models.py:1153
 msgid "The fifteen days of art. 34.8 count from here."
 msgstr "Os quince días do art. 34.8 cóntanse desde aquí."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1145
+#: apps/users/models.py:1156
 msgid "what is being asked"
 msgstr "que se pide"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1147
+#: apps/users/models.py:1158
 msgid ""
 "Duration, distribution, or the way the work is done --- remote included."
 msgstr ""
 "Duración, distribución ou forma de prestación ---incluído a distancia---."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1155
+#: apps/users/models.py:1166
 msgid "answered on"
 msgstr "contestada o"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1157
+#: apps/users/models.py:1168
 msgid "answer"
 msgstr "resposta"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1161
+#: apps/users/models.py:1172
 msgid ""
 "Art. 34.8 asks for this in writing, and for a reason when the answer is not "
 "a plain yes."
@@ -4563,17 +4571,17 @@ msgstr ""
 "secas."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1171
+#: apps/users/models.py:1182
 msgid "answered by"
 msgstr "contestada por"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1175
+#: apps/users/models.py:1186
 msgid "schedule adaptation"
 msgstr "adaptación de xornada"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1176
+#: apps/users/models.py:1187
 msgid "schedule adaptations"
 msgstr "adaptacións de xornada"
 
@@ -4751,11 +4759,11 @@ msgid "The session has expired. Sign in again."
 msgstr "A sesión caducou. Volve entrar."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:266
+#: apps/users/views.py:269
 msgid "Send the refresh token to close the session."
 msgstr "Envía o testemuño de refresco para pechar a sesión."
 
-#: apps/users/views.py:459
+#: apps/users/views.py:466
 msgid ""
 "This is the only active administrator. Appoint another one first, or the "
 "company is left with nobody able to manage it."
@@ -4763,37 +4771,37 @@ msgstr ""
 "É o único administrador activo. Nomea antes outro, ou a empresa queda sen "
 "ninguén que a poida xestionar."
 
-#: apps/users/views.py:514
+#: apps/users/views.py:521
 msgid "This account signs in through your identity provider."
 msgstr "Esta conta entra a través do voso provedor de identidade."
 
-#: apps/users/views.py:516
+#: apps/users/views.py:523
 msgid "Reactivate the account before inviting them."
 msgstr "Volve dar de alta a conta antes de convidala."
 
-#: apps/users/views.py:542
+#: apps/users/views.py:549
 msgid "There is no address to send it to. Add one first."
 msgstr "Non hai ningún enderezo ao que mandalo. Engade un antes."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:617
+#: apps/users/views.py:624
 msgid "You cannot erase your own account."
 msgstr "Non podes borrar a túa propia conta."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:629
+#: apps/users/views.py:636
 #, python-format
 msgid "what is theirs: %(cosas)s"
 msgstr "o que é seu: %(cosas)s"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:632
+#: apps/users/views.py:639
 #, python-format
 msgid "what they decided about other people: %(cosas)s"
 msgstr "o que decidiu sobre outras persoas: %(cosas)s"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:638
+#: apps/users/views.py:645
 #, python-format
 msgid ""
 "%(quien)s left a record, so their file has to stay and explain it --- "
@@ -4802,12 +4810,12 @@ msgstr ""
 "%(quien)s deixou rastro, así que a súa ficha ten que quedar e explicalo --- "
 "%(que)s. Dálle de baixa no seu lugar."
 
-#: apps/users/views.py:680
+#: apps/users/views.py:687
 msgid "You cannot deactivate your own account."
 msgstr "Non podes dar de baixa a túa propia conta."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:736
+#: apps/users/views.py:743
 #, python-format
 msgid "Left on %(day)s. %(count)s shift(s) still rostered after that."
 msgstr ""
@@ -4815,13 +4823,13 @@ msgstr ""
 "data."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:739
+#: apps/users/views.py:746
 #, python-format
 msgid "Left on %(day)s."
 msgstr "Marchou o %(day)s."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:795
+#: apps/users/views.py:802
 #, python-format
 msgid ""
 "%(count)s people answer for this department. Move them first: leaving them "
@@ -4832,7 +4840,7 @@ msgstr ""
 "fronte de nada quere dicir que xa non poderán ler o rexistro de ninguén agás "
 "o seu."
 
-#: apps/users/views.py:843
+#: apps/users/views.py:850
 #, python-format
 msgid ""
 "%(count)s people work there. Move them first: without a workplace they lose "
@@ -4841,17 +4849,17 @@ msgstr ""
 "Alí traballan %(count)s persoas. Móveas primeiro: sen centro perden os seus "
 "festivos locais e o seu fuso horario."
 
-#: apps/users/views.py:898
+#: apps/users/views.py:905
 msgid "The link is not valid or has already been used."
 msgstr "A ligazón non é válida ou xa se usou."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/views.py:978
+#: apps/users/views.py:985
 msgid "A schedule adaptation can only be asked for by the person themselves."
 msgstr "Unha adaptación de xornada só a pode pedir a propia persoa."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/views.py:998
+#: apps/users/views.py:1005
 msgid "Only an administrator answers a schedule adaptation."
 msgstr "Só administración contesta unha adaptación de xornada."
 
