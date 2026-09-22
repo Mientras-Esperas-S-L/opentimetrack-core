@@ -205,3 +205,39 @@ def test_el_superusuario_de_plataforma_puede_entrar(plataforma, client):
 def test_y_la_zona_que_se_le_supone_es_la_de_la_instalacion(plataforma, settings):
     settings.DEFAULT_TENANT_TIME_ZONE = "Atlantic/Canary"
     assert str(plataforma.tzinfo) == "Atlantic/Canary"
+
+
+# --------------------------------------------------- lo que NO puede esta cuenta
+#
+# La cuenta de la instalación no pertenece a ninguna empresa, así que dentro del
+# servicio no hay nada suyo que enseñar. Eso lo tenía escrito el permiso ---«does
+# not operate on service data»--- y no lo cumplía: dejaba pasar a todo y las
+# vistas de dentro, que dan por hecha una empresa, reventaban. Medido el
+# 22/09/2026 contra la instalación de pruebas, nada más entrar: dos **500**.
+
+
+def test_su_jornada_de_hoy_no_revienta_el_servidor(plataforma):
+    """La jornada de quien no tiene empresa: 403, nunca 500."""
+    respuesta = cliente(plataforma).get("/api/punches/today/")
+
+    assert respuesta.status_code == 403
+
+
+def test_su_turno_de_hoy_no_revienta_el_servidor(plataforma):
+    respuesta = cliente(plataforma).get("/api/shifts/today/")
+
+    assert respuesta.status_code == 403
+
+
+def test_sigue_pudiendo_decir_quien_es_y_salir(plataforma):
+    """Y lo que sí necesita para tener sesión sigue abierto."""
+    api = cliente(plataforma)
+
+    yo = api.get(reverse("auth:me"))
+
+    assert yo.status_code == 200
+    assert yo.data["tenant"] is None
+
+    # Salir sin token de refresco se queja del token que falta, no de quién
+    # pide: lo que se comprueba aquí es que la puerta no le echa.
+    assert api.post(reverse("auth:logout"), {}, format="json").status_code == 409

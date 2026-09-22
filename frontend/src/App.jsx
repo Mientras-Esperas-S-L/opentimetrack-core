@@ -86,7 +86,16 @@ export default function App() {
           <Route path="*" element={<SignIn />} />
         ) : (
           <Route element={<AppShell />}>
-            <Route index element={<Clock />} />
+            {/* Quien administra la instalación no pertenece a ninguna empresa, así
+                que no tiene jornada que fichar: su pantalla de entrada es la suya.
+                Aterrizando en el reloj, la pantalla pedía su jornada y su turno de
+                hoy ---dos peticiones que para esa cuenta no significan nada--- y
+                salía con sendos errores encima antes de que le diera tiempo a
+                mirar. Se redirige a la ruta de siempre, que ya tiene su guarda. */}
+            <Route
+              index
+              element={session.tenant ? <Clock /> : <Navigate to="/panel/instalacion" replace />}
+            />
             <Route path="mi-jornada" element={<MyTime />} />
             <Route path="mis-ausencias" element={<MyLeave />} />
             <Route path="actividad" element={<AuditTrail />} />
