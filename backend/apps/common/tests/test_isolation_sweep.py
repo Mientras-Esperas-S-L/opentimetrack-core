@@ -652,6 +652,13 @@ def test_every_route_is_covered_by_this_sweep():
         # inquilino ---el aislamiento aquí es justo el contrario, y lo que se
         # comprueba es que el administrador de UNA empresa no entre---. Su barrido
         # propio está en apps/tenants/tests/test_administrar_la_instalacion.py.
+        # La ayuda de la aplicación: no son datos de una empresa, son el manual del
+        # producto, y lo lee cualquiera que haya entrado. Su barrido propio ---quién
+        # la lee, qué no se sirve y en qué idioma--- está en
+        # apps/help/tests/test_la_ayuda_se_lee.py.
+        "api/help/",
+        "api/help/search/",
+        "api/help/articles/<slug>/",
         "api/platform/me/",
         "api/platform/admins/",
         "api/platform/admins/<uuid:admin_id>/",

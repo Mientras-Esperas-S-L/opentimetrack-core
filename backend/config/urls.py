@@ -6,7 +6,7 @@ and omitted while only one version exists.
 
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.routers import DefaultRouter
 
@@ -14,6 +14,7 @@ from apps.absences.recovery_views import HolidayRecoveryView
 from apps.absences.views import AbsenceViewSet, LeaveTypeViewSet
 from apps.audit.views import AuditLogViewSet
 from apps.common.views import HealthView
+from apps.help.views import HelpArticleView, HelpIndexView, HelpSearchView
 from apps.notifications.views import PushKeyView, PushSubscriptionView
 from apps.punches.correction_views import CorrectionViewSet
 from apps.punches.delegated import DelegatedPunchView
@@ -172,6 +173,15 @@ urlpatterns = [
         name="holiday-recoveries",
     ),
     # La instalación, no una empresa: solo el superusuario de plataforma.
+    # La ayuda de la aplicación. La lee cualquiera que haya entrado, incluida la
+    # cuenta que administra la instalación: no son datos de una empresa.
+    path("api/help/", HelpIndexView.as_view(), name="help-index"),
+    path("api/help/search/", HelpSearchView.as_view(), name="help-search"),
+    re_path(
+        r"^api/help/articles/(?P<slug>[a-z0-9]+(?:[.\-][a-z0-9]+)*)/$",
+        HelpArticleView.as_view(),
+        name="help-article",
+    ),
     path("api/platform/me/", WhoAmIView.as_view(), name="platform-me"),
     path("api/platform/admins/", PlatformAdminsView.as_view(), name="platform-admins"),
     path(
