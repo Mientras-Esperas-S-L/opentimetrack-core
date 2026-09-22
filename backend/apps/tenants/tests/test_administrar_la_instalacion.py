@@ -491,3 +491,85 @@ def test_el_administrador_de_una_empresa_no_ve_las_cuentas(company):
     )
 
     assert cliente(suyo).get("/api/platform/admins/").status_code == 403
+
+
+# ----------------------------------------------- qué le falta a cada empresa
+#
+# El «¿y ahora qué?» de quien acaba de dar un alta. La lista lo dice sin que haya
+# que abrir tres diálogos para averiguarlo.
+
+
+def test_una_empresa_recien_creada_dice_que_le_falta_todo(plataforma):
+    creada = cliente(plataforma).post(
+        reverse("platform-companies"),
+        {
+            "company_name": "Nueva SL",
+            "tax_id": "B22222222",
+            "email": "jefa@nueva.test",
+            "first_name": "Ana",
+            "last_name": "Nueva",
+        },
+        format="json",
+    )
+
+    assert creada.status_code == 201
+    # Identidad y credencial no las trae el alta, y dentro solo está quien la creó.
+    assert creada.data["missing"] == ["identity", "application", "people"]
+
+
+def test_cada_hueco_se_cierra_por_separado(plataforma, company):
+    api = cliente(plataforma)
+
+    def huecos():
+        empresas = api.get(reverse("platform-companies")).data["companies"]
+        return next(e for e in empresas if e["tax_id"] == company.tax_id)["missing"]
+
+    assert "application" in huecos()
+
+    api.post(
+        f"/api/platform/companies/{company.id}/applications/",
+        {"name": "GreenCityControl"},
+        format="json",
+    )
+
+    assert "application" not in huecos()
+    assert "identity" in huecos()
+
+    api.put(
+        reverse("platform-company-identity", args=[company.id]),
+        {
+            "name": "GreenCityControl",
+            "issuer": "https://api.ejemplo.test/o",
+            "domains": ["acme.test"],
+        },
+        format="json",
+    )
+
+    assert "identity" not in huecos()
+
+
+def test_un_proveedor_apagado_cuenta_como_que_falta(plataforma, company):
+    """Estar y no valer es lo mismo que no estar, y cuesta más de ver."""
+    api = cliente(plataforma)
+    api.put(
+        reverse("platform-company-identity", args=[company.id]),
+        {
+            "name": "GreenCityControl",
+            "issuer": "https://api.ejemplo.test/o",
+            "domains": ["acme.test"],
+            "is_active": False,
+        },
+        format="json",
+    )
+
+    empresas = api.get(reverse("platform-companies")).data["companies"]
+    assert "identity" in next(e for e in empresas if e["tax_id"] == company.tax_id)["missing"]
+
+
+def test_con_su_gente_dentro_ya_no_falta_gente(plataforma, company):
+    User.objects.create_user(email="uno@acme.test", password="X" * 14, tenant=company)
+    User.objects.create_user(email="dos@acme.test", password="X" * 14, tenant=company)
+
+    empresas = cliente(plataforma).get(reverse("platform-companies")).data["companies"]
+
+    assert "people" not in next(e for e in empresas if e["tax_id"] == company.tax_id)["missing"]
