@@ -220,7 +220,6 @@ export default function AppShell() {
             <IconButton
               onClick={() => setAyudaAbierta(true)}
               aria-label={t('Ayuda')}
-              sx={{ minWidth: 44, minHeight: 44 }}
             >
               <HelpIcon />
             </IconButton>
@@ -236,7 +235,6 @@ export default function AppShell() {
               onClick={signOut}
               edge="end"
               aria-label={t('Cerrar sesión')}
-              sx={{ minWidth: 44, minHeight: 44 }}
             >
               <LogoutIcon />
             </IconButton>

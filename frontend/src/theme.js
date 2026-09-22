@@ -89,6 +89,27 @@ export const buildTheme = (mode = 'light', idioma = 'es') =>
             root: { backgroundImage: 'none' },
           },
         },
+        // Lo que se toca con el dedo necesita más sitio del que ocupa su icono.
+        // Medido en devel a 360 px: los botones de mes del cuadrante salían de
+        // 40x40 y los de la barra de 30 y 40, cuando lo que se acierta sin mirar
+        // son 44. Va aquí y no botón por botón porque son decenas y el siguiente
+        // que alguien añada nacería otra vez pequeño.
+        //
+        // El icono no crece: crece su área. Y los que viven **dentro de un campo**
+        // quedan fuera: ahí el dedo apunta al campo entero, y agrandarlos
+        // descolocaría la caja que los contiene.
+        MuiIconButton: {
+          styleOverrides: {
+            root: {
+              minWidth: 44,
+              minHeight: 44,
+              '&.MuiAutocomplete-popupIndicator, &.MuiAutocomplete-clearIndicator': {
+                minWidth: 'auto',
+                minHeight: 'auto',
+              },
+            },
+          },
+        },
         // La inicial de una persona, legible.
         //
         // El avatar por defecto de MUI pone texto del color del fondo de la
