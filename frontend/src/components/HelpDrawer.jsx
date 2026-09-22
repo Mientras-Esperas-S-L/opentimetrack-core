@@ -90,20 +90,24 @@ export default function HelpDrawer({ abierto, tema, onClose }) {
       anchor="right"
       open={abierto}
       onClose={onClose}
+      //  Por `slotProps` y **no** por `PaperProps`, que esta versión de MUI ignora en
+      //  silencio. Medido en devel: con `PaperProps` el panel salía con relleno cero
+      //  y 364 px de ancho en vez de los 420 pedidos, así que el aviso aparecía
+      //  pegado al borde y la cabecera, debajo de la barra de arriba ---que va en un
+      //  plano por encima del cajón: 1201 contra 1200---.
+      //
       //  `keepMounted` no: el cajón pide su contenido al abrirse y mantenerlo montado
       //  dejaría el artículo de la vez anterior a la vista durante un instante.
-      //
-      //  Y con sitio para la barra de arriba: el cajón ocupa la altura entera de la
-      //  ventana y la barra va por encima, así que sin este hueco su cabecera queda
-      //  debajo ---medido en devel: no se veían ni el título ni el botón de cerrar,
-      //  y el primer aviso salía cortado por la mitad---.
-      PaperProps={{
-        sx: {
-          width: { xs: '100%', sm: 420 },
-          p: 2,
-          pt: { xs: 9, md: 11 },
-          display: 'flex',
-          flexDirection: 'column',
+      slotProps={{
+        paper: {
+          sx: {
+            width: { xs: '100%', sm: 420 },
+            p: 2,
+            //  El hueco de la barra, que mide 65 px y va por encima.
+            pt: { xs: 10, md: 11 },
+            display: 'flex',
+            flexDirection: 'column',
+          },
         },
       }}
     >
