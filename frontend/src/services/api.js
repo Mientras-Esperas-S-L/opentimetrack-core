@@ -781,6 +781,15 @@ export const removeCompanyIdentity = (companyId) => api.delete(`/platform/compan
 // Las de la consola de la instalación llevan `OfCompany`: hacen lo mismo que las
 // de arriba pero **desde fuera de la empresa**, con la cuenta que la administra, y
 // por eso necesitan decir de qué empresa hablan.
+//  La ayuda de la aplicación. La lee cualquiera que haya entrado, incluida la cuenta
+//  que administra la instalación, así que no hace falta comprobar nada antes.
+export const getHelpIndex = (language) => get('/help/', language ? { language } : undefined)
+
+export const getHelpArticle = (slug, language) =>
+  get(`/help/articles/${slug}/`, language ? { language } : undefined)
+
+export const searchHelp = (q, language) => get('/help/search/', { q, ...(language ? { language } : {}) })
+
 export const getPlatformAdmins = async () => (await get('/platform/admins/')).admins
 
 /** Devuelve la contraseña en claro: es la única vez que se enseña. */
