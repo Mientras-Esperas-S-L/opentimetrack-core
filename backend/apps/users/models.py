@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import zoneinfo
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.db.models.functions import Lower
@@ -838,8 +839,18 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
         the company because the answer differs between two people on the same
         payroll --- Madrid and Las Palmas is one hour, and one hour is the
         difference between a punch landing on Monday and on Sunday.
+
+        And the installation's when there is neither, which is the platform
+        superuser: they belong to no company on purpose, so there is no working
+        day of theirs to measure. Without this, signing in crashed with
+        `'NoneType' object has no attribute 'tzinfo'` --- the account the model
+        provides for could not get through the front door.
         """
-        return self.workplace.tzinfo if self.workplace_id else self.tenant.tzinfo
+        if self.workplace_id:
+            return self.workplace.tzinfo
+        if self.tenant_id is None:
+            return zoneinfo.ZoneInfo(settings.DEFAULT_TENANT_TIME_ZONE)
+        return self.tenant.tzinfo
 
     def is_engaged_on(self, day) -> bool:
         """Whether the relationship covers that day.
