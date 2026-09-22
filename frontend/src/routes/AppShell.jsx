@@ -99,7 +99,10 @@ export default function AppShell() {
 
   const user = session?.user
   const company = session?.tenant
-  const canManage = user?.role === 'MANAGER' || user?.role === 'ADMIN'
+  // Y de una empresa: la cuenta que administra la instalación trae rol de
+  // administración y no está en ninguna, así que estas pantallas le contestan
+  // 403 una por una. El menú no debe ofrecérselas.
+  const canManage = Boolean(company) && (user?.role === 'MANAGER' || user?.role === 'ADMIN')
   // Alguna entrada de gestión es solo de administración. Ocultar un enlace no
   // es un permiso ---el API decide--- pero enseñar uno que va a contestar 403 sí
   // es un error de interfaz.
