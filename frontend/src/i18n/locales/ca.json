@@ -916,5 +916,13 @@
   "· sin sueldo": "· sense sou",
   "· sobre {{quien}}": "· sobre {{quien}}",
   "Volver a la pantalla de acceso": "Tornar a la pantalla d'accés",
-  "Falta el identificador de la entrada. Vuelve a intentarlo desde la pantalla de acceso.": "Falta l'identificador de l'entrada. Torna-ho a provar des de la pantalla d'accés."
+  "Falta el identificador de la entrada. Vuelve a intentarlo desde la pantalla de acceso.": "Falta l'identificador de l'entrada. Torna-ho a provar des de la pantalla d'accés.",
+  "Tu empresa usa este sistema, pero aquí no consta nadie con esa cuenta. Habla con quien lleve el registro de jornada.": "La teva empresa fa servir aquest sistema, però aquí no consta ningú amb aquest compte. Parla amb qui porti el registre de jornada.",
+  "Esa cuenta ya no está activa aquí.": "Aquest compte ja no està actiu aquí.",
+  "Tu empresa no ha autorizado la entrada.": "La teva empresa no ha autoritzat l'entrada.",
+  "El proveedor de identidad de tu empresa ya no está disponible aquí.": "El proveïdor d'identitat de la teva empresa ja no està disponible aquí.",
+  "El proveedor de identidad no es el que esta instalación tiene configurado.": "El proveïdor d'identitat no és el que aquesta instal·lació té configurat.",
+  "No se han podido comprobar las claves de tu proveedor de identidad.": "No s'han pogut comprovar les claus del teu proveïdor d'identitat.",
+  "No se ha podido hablar con el proveedor de identidad de tu empresa.": "No s'ha pogut parlar amb el proveïdor d'identitat de la teva empresa.",
+  "No se ha podido completar la entrada. Vuelve a intentarlo.": "No s'ha pogut completar l'entrada. Torna-ho a provar."
 }

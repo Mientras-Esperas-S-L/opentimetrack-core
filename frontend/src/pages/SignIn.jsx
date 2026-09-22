@@ -22,6 +22,42 @@ export default function SignIn() {
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
 
+  // Por qué el proveedor no dejó entrar, si es que se vuelve de él. Se lee **al
+  // montar** y no en un efecto que escriba estado: el motivo ya está en la
+  // dirección cuando la pantalla aparece, así que es un valor inicial, no algo
+  // que pase después.
+  //
+  // Llega por la dirección porque quien vuelve es un navegador, no una
+  // integración: antes acababa mirando el JSON de la API, que no le dice nada a
+  // quien solo quería fichar.
+  const [rechazoDelProveedor] = useState(() => new URLSearchParams(window.location.search).get('sso_error'))
+
+  useEffect(() => {
+    // Se limpia de la barra para que recargar no repita el aviso.
+    if (rechazoDelProveedor) window.history.replaceState({}, '', window.location.pathname)
+  }, [rechazoDelProveedor])
+
+  // El servidor manda un código; aquí se convierte en una frase que dice qué
+  // hacer. `person_not_here` es el caso frecuente y el que más despista: la
+  // empresa sí usa este sistema, pero a esa persona no la ha dado de alta nadie,
+  // y este proveedor no da de alta por su cuenta, a propósito.
+  const porQueNoEntro = {
+    person_not_here: t(
+      'Tu empresa usa este sistema, pero aquí no consta nadie con esa cuenta. Habla con quien lleve el registro de jornada.'
+    ),
+    person_inactive: t('Esa cuenta ya no está activa aquí.'),
+    provider_refused: t('Tu empresa no ha autorizado la entrada.'),
+    provider_unknown: t('El proveedor de identidad de tu empresa ya no está disponible aquí.'),
+    issuer_mismatch: t('El proveedor de identidad no es el que esta instalación tiene configurado.'),
+    provider_keys_unavailable: t('No se han podido comprobar las claves de tu proveedor de identidad.'),
+    provider_unreachable: t('No se ha podido hablar con el proveedor de identidad de tu empresa.'),
+  }
+  const avisoDeError =
+    error ??
+    (rechazoDelProveedor
+      ? (porQueNoEntro[rechazoDelProveedor] ?? t('No se ha podido completar la entrada. Vuelve a intentarlo.'))
+      : null)
+
   // 'in' | 'recover' | 'sent'. Inline rather than a dialog: the screen has one
   // job and losing it behind a modal for a flow this short is noise.
   const [mode, setMode] = useState('in')
@@ -123,9 +159,9 @@ export default function SignIn() {
         ) : (
           <Box component="form" onSubmit={mode === 'in' ? submit : recover} noValidate>
             <Stack spacing={2.5}>
-              {error && (
+              {avisoDeError && (
                 <Alert severity="error" variant="outlined">
-                  {error}
+                  {avisoDeError}
                 </Alert>
               )}
 
