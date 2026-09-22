@@ -129,11 +129,17 @@ class SignInView(APIView):
         user = serializer.validated_data["user"]
         set_current_tenant(user.tenant_id)
 
+        # `null` si no hay empresa, por lo mismo que en `MeView`: quien
+        # administra la instalación no pertenece a ninguna, y una empresa con
+        # todos los campos en blanco no es «ninguna empresa». La sesión del
+        # navegador sale de aquí, no de `/me/`, así que arreglarlo solo allí no
+        # se notaba: la pantalla de entrada seguía siendo el reloj y pedía la
+        # jornada de quien no la tiene.
         return Response(
             {
                 **issue_tokens(user),
                 "user": UserSerializer(user).data,
-                "tenant": TenantSerializer(user.tenant).data,
+                "tenant": TenantSerializer(user.tenant).data if user.tenant_id else None,
             }
         )
 

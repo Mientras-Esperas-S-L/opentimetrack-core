@@ -229,6 +229,26 @@ def test_su_turno_de_hoy_no_revienta_el_servidor(plataforma):
     assert respuesta.status_code == 403
 
 
+def test_al_entrar_la_sesion_dice_que_no_hay_empresa(plataforma):
+    """Y lo dice **al entrar**, que es de donde el navegador saca la sesión.
+
+    Estaba arreglado en `/me/` y no aquí, y no se notaba de cerca: la pantalla
+    de entrada se elige con lo que devuelve el login, así que la cuenta de la
+    instalación seguía aterrizando en el reloj.
+    """
+    plataforma.set_password("X" * 14)
+    plataforma.save(update_fields=["password"])
+
+    respuesta = APIClient().post(
+        reverse("auth:token"),
+        {"email": plataforma.email, "password": "X" * 14},
+        format="json",
+    )
+
+    assert respuesta.status_code == 200
+    assert respuesta.data["tenant"] is None
+
+
 def test_sigue_pudiendo_decir_quien_es_y_salir(plataforma):
     """Y lo que sí necesita para tener sesión sigue abierto."""
     api = cliente(plataforma)
