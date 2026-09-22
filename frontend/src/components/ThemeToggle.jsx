@@ -50,6 +50,10 @@ export default function ThemeToggle() {
           onClick={(event) => setAnchor(event.currentTarget)}
           aria-label={t('Cambiar entre claro y oscuro')}
           aria-haspopup="menu"
+          //  Con el dedo hace falta más sitio del que ocupa el icono. Medido en
+          //  devel: este botón salía de 30x30, y los de la barra de 40x40, cuando
+          //  lo que se acierta sin mirar son 44. El icono no crece; crece su área.
+          sx={{ minWidth: 44, minHeight: 44 }}
         >
           {/* El icono dice lo que se está viendo, no lo que se elegiría al
               pulsar: un sol cuando la pantalla está clara. Al revés se lee como
