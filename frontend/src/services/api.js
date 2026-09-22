@@ -781,6 +781,16 @@ export const removeCompanyIdentity = (companyId) => api.delete(`/platform/compan
 // Las de la consola de la instalación llevan `OfCompany`: hacen lo mismo que las
 // de arriba pero **desde fuera de la empresa**, con la cuenta que la administra, y
 // por eso necesitan decir de qué empresa hablan.
+export const getPlatformAdmins = async () => (await get('/platform/admins/')).admins
+
+/** Devuelve la contraseña en claro: es la única vez que se enseña. */
+export const addPlatformAdmin = (payload) => post('/platform/admins/', payload)
+
+export const resetPlatformAdminPassword = (adminId) =>
+  post(`/platform/admins/${adminId}/password/`, {})
+
+export const deactivatePlatformAdmin = (adminId) => api.delete(`/platform/admins/${adminId}/`)
+
 export const getApplicationsOfCompany = (companyId) =>
   get(`/platform/companies/${companyId}/applications/`)
 

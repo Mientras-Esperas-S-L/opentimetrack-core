@@ -389,3 +389,105 @@ def test_el_administrador_de_una_empresa_no_entra_en_la_consola(company):
     respuesta = cliente(suyo).get(f"/api/platform/companies/{company.id}/applications/")
 
     assert respuesta.status_code == 403
+
+
+# ------------------------------------------- quién administra esta instalación
+#
+# La primera cuenta se crea con `create_installation_admin` y no hay forma de
+# evitarlo: no hay sesión con la que autorizar su alta. La segunda sí, y que
+# siguiera pidiendo un shell dejaba la instalación con una sola persona capaz de
+# operarla.
+
+
+def test_da_de_alta_otra_cuenta_de_la_instalacion(plataforma):
+    respuesta = cliente(plataforma).post(
+        "/api/platform/admins/",
+        {"email": "relevo@ejemplo.test", "first_name": "Ada", "last_name": "Lovelace"},
+        format="json",
+    )
+
+    assert respuesta.status_code == 201
+    assert respuesta.data["password"]
+    nueva = User.objects.get(email="relevo@ejemplo.test")
+    assert nueva.tenant_id is None
+    assert nueva.is_superuser is True
+    assert nueva.check_password(respuesta.data["password"])
+
+
+def test_la_lista_son_solo_las_de_la_instalacion(plataforma, company):
+    """Quien administra una empresa no sale aquí: no administra la instalación."""
+    User.objects.create_user(
+        email="jefa@acme.test", password="X" * 14, tenant=company, role=Role.ADMIN
+    )
+
+    respuesta = cliente(plataforma).get("/api/platform/admins/")
+
+    assert respuesta.status_code == 200
+    assert [a["email"] for a in respuesta.data["admins"]] == [plataforma.email]
+
+
+def test_no_se_repite_el_correo(plataforma):
+    api = cliente(plataforma)
+    datos = {"email": "relevo@ejemplo.test", "first_name": "Ada", "last_name": "Lovelace"}
+    api.post("/api/platform/admins/", datos, format="json")
+
+    otra = api.post("/api/platform/admins/", datos, format="json")
+
+    assert otra.status_code == 400
+
+
+def test_restablecer_la_contrasena_la_enseña_una_vez(plataforma):
+    api = cliente(plataforma)
+    creada = api.post(
+        "/api/platform/admins/",
+        {"email": "relevo@ejemplo.test", "first_name": "Ada", "last_name": "Lovelace"},
+        format="json",
+    ).data
+
+    nueva = api.post(f"/api/platform/admins/{creada['id']}/password/", format="json")
+
+    assert nueva.status_code == 200
+    assert nueva.data["password"] != creada["password"]
+    assert User.objects.get(pk=creada["id"]).check_password(nueva.data["password"])
+
+
+def test_no_se_puede_desactivar_la_unica_cuenta(plataforma):
+    """Quedarse sin ninguna deja la instalación sin quien la administre.
+
+    Y de ahí solo se sale abriendo un shell, que es lo que esta pantalla existe
+    para no tener que hacer.
+    """
+    otra = User.objects.create_superuser(email="otra@ejemplo.test", password="X" * 14, tenant=None)
+
+    # Con dos cuentas, desactivar una de ellas se puede.
+    assert cliente(plataforma).delete(f"/api/platform/admins/{otra.pk}/").status_code == 204
+
+    # Con una sola, no. Se intenta desde la otra, ya reactivada, para no chocar
+    # antes con la regla de no desactivarse a uno mismo.
+    otra.refresh_from_db()
+    otra.is_active = True
+    otra.save(update_fields=["is_active"])
+    plataforma.is_active = False
+    plataforma.save(update_fields=["is_active"])
+
+    ultima = cliente(otra).delete(f"/api/platform/admins/{otra.pk}/")
+
+    assert ultima.status_code == 400
+
+
+def test_nadie_se_deja_a_si_mismo_fuera(plataforma):
+    User.objects.create_superuser(email="otra@ejemplo.test", password="X" * 14, tenant=None)
+
+    respuesta = cliente(plataforma).delete(f"/api/platform/admins/{plataforma.pk}/")
+
+    assert respuesta.status_code == 400
+    plataforma.refresh_from_db()
+    assert plataforma.is_active is True
+
+
+def test_el_administrador_de_una_empresa_no_ve_las_cuentas(company):
+    suyo = User.objects.create_user(
+        email="jefe@acme.test", password="X" * 14, tenant=company, role=Role.ADMIN
+    )
+
+    assert cliente(suyo).get("/api/platform/admins/").status_code == 403

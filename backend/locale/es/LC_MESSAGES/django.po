@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-22 15:18+0000\n"
+"POT-Creation-Date: 2026-09-22 15:34+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
 "Language-Team: Español\n"
@@ -2619,11 +2619,11 @@ msgstr "Concede al menos un permiso; si no, la aplicación no puede hacer nada."
 msgid "Permissions changed"
 msgstr "Cambió los permisos"
 
-#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:470
+#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:475
 msgid "Reactivate the application before issuing a credential."
 msgstr "Reactiva la aplicación antes de emitir una credencial."
 
-#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:487
+#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:492
 #, python-format
 msgid "Credential issued: …%(hint)s"
 msgstr "Credencial emitida: …%(hint)s"
@@ -2632,7 +2632,7 @@ msgstr "Credencial emitida: …%(hint)s"
 msgid "That credential does not exist or is already revoked."
 msgstr "Esa credencial no existe o ya está revocada."
 
-#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:512
+#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:522
 #, python-format
 msgid "Credential revoked: …%(hint)s"
 msgstr "Credencial revocada: …%(hint)s"
@@ -3229,13 +3229,31 @@ msgid "Authorised from the installation console"
 msgstr "Autorizada desde la consola de la instalación"
 
 #: apps/tenants/platform_views.py:396 apps/tenants/platform_views.py:432
-#: apps/tenants/platform_views.py:467
+#: apps/tenants/platform_views.py:472
 msgid "No such application."
 msgstr "Esa aplicación no existe."
 
-#: apps/tenants/platform_views.py:503
+#: apps/tenants/platform_views.py:513
 msgid "No such credential."
 msgstr "Esa credencial no existe."
+
+#: apps/tenants/platform_views.py:581
+msgid "There is already an installation account with that address."
+msgstr "Ya hay una cuenta de la instalación con esa dirección."
+
+#: apps/tenants/platform_views.py:620 apps/tenants/platform_views.py:640
+msgid "No such installation account."
+msgstr "Esa cuenta de la instalación no existe."
+
+#: apps/tenants/platform_views.py:644
+msgid "You cannot deactivate the account you are using."
+msgstr "No puedes desactivar la cuenta con la que estás dentro."
+
+#: apps/tenants/platform_views.py:651
+msgid ""
+"This is the only account that can administer the installation. Create "
+"another one before deactivating it."
+msgstr "Es la única cuenta que puede administrar la instalación. Crea otra antes de desactivarla."
 
 #: apps/tenants/rules.py:43
 msgid "Seniority steps are a list."

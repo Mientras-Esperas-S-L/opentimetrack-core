@@ -201,6 +201,14 @@ SIN_RASTRO_A_PROPOSITO = {
     "SignUpView": "el alta crea la empresa: todavía no hay a quién adscribir la entrada",
     "SignUpSerializer": "igual que SignUpView",
     "CompaniesView": "el alta crea la empresa: mismo hecho que SignUpView, ya exento",
+    # El registro va **por empresa**, y estas cuentas no tienen ninguna: una entrada
+    # sin empresa no se puede adscribir, y `audit.services.record` la descarta. Lo
+    # que hacen estas tres queda en la lista de cuentas, que se ve entera desde la
+    # pantalla de Instalación.
+    "PlatformAdminsView": "cuentas sin empresa: no hay registro al que adscribir la entrada",
+    "PlatformAdminView": "igual que PlatformAdminsView",
+    "PlatformAdminPasswordView": "igual que PlatformAdminsView",
+    "NewAdminSerializer": "solo valida; quien escribe es PlatformAdminsView",
     "NewCompanySerializer": "igual que CompaniesView",
     "IdentitySerializer": "solo valida; quien escribe y anota es CompanyIdentityView",
     "PasswordResetRequestView": "anotar quién lo pide sería una forma de averiguar quién existe",

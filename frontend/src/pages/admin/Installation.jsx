@@ -21,8 +21,12 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 
 import {
+  addPlatformAdmin,
   authoriseApplicationOfCompany,
   createCompany,
+  deactivatePlatformAdmin,
+  getPlatformAdmins,
+  resetPlatformAdminPassword,
   getApplicationsOfCompany,
   getCompanies,
   issueCredentialOfCompany,
@@ -216,6 +220,8 @@ export default function Installation() {
           cargar()
         }}
       />
+
+      <PlatformAdmins />
 
       <CredentialsDialog
         key={credencialesDe?.id ?? 'sin-credenciales'}
@@ -610,6 +616,184 @@ function CredentialsDialog({ empresa, onClose, onCambio }) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>{t('Cerrar')}</Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+/** Quién puede administrar esta instalación.
+ *
+ *  La primera cuenta se crea en el contenedor y no hay forma de evitarlo: no hay
+ *  sesión con la que autorizar su alta. Pero que la segunda siguiera pidiendo un
+ *  shell dejaba la instalación con **una sola persona** capaz de operarla, y sin
+ *  relevo en cuanto esa persona se va.
+ */
+function PlatformAdmins() {
+  const { t } = useTranslation()
+  const [cuentas, setCuentas] = useState([])
+  const [error, setError] = useState(null)
+  const [trabajando, setTrabajando] = useState(false)
+  const [reciénDicha, setReciénDicha] = useState(null)
+  const [nueva, setNueva] = useState(null)
+  const [vuelta, setVuelta] = useState(0)
+
+  useEffect(() => {
+    let vivo = true
+    getPlatformAdmins()
+      .then((d) => vivo && setCuentas(d))
+      .catch(() => vivo && setError(t('No he podido leer quién administra esta instalación.')))
+    return () => {
+      vivo = false
+    }
+  }, [t, vuelta])
+
+  const hacer = async (accion) => {
+    setError(null)
+    setTrabajando(true)
+    try {
+      await accion()
+      setVuelta((n) => n + 1)
+    } catch (fallo) {
+      const dicho = fallo?.response?.data?.detail ?? fallo?.response?.data?.error?.message
+      setError(dicho || t('No ha salido bien.'))
+    } finally {
+      setTrabajando(false)
+    }
+  }
+
+  return (
+    <Box sx={{ mt: 4 }}>
+      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}>
+        <Box>
+          <Typography variant="h6">{t('Quién administra esta instalación')}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {t('Estas cuentas no pertenecen a ninguna empresa y no ven los datos de ninguna.')}
+          </Typography>
+        </Box>
+        <Button
+          sx={{ flexShrink: 0 }}
+          onClick={() => setNueva({ email: '', first_name: '', last_name: '' })}
+        >
+          {t('Añadir cuenta')}
+        </Button>
+      </Stack>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {reciénDicha && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setReciénDicha(null)}>
+          <Typography variant="body2">{t('Cópiala ahora: no se vuelve a enseñar.')}</Typography>
+          <Typography variant="body2" sx={{ fontFamily: 'monospace', mt: 0.5 }}>
+            {reciénDicha.email} · {reciénDicha.password}
+          </Typography>
+        </Alert>
+      )}
+
+      <Paper variant="outlined">
+        <Table size="small">
+          <TableBody>
+            {cuentas.map((cuenta) => (
+              <TableRow key={cuenta.id}>
+                <TableCell>
+                  {cuenta.first_name} {cuenta.last_name}
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    {cuenta.email}
+                    {!cuenta.is_active && ` · ${t('desactivada')}`}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Button
+                    size="small"
+                    disabled={trabajando}
+                    onClick={() =>
+                      hacer(async () => {
+                        const dicha = await resetPlatformAdminPassword(cuenta.id)
+                        setReciénDicha(dicha)
+                      })
+                    }
+                  >
+                    {t('Nueva contraseña')}
+                  </Button>
+                  {cuenta.is_active && (
+                    <Button
+                      size="small"
+                      color="error"
+                      disabled={trabajando}
+                      onClick={() => hacer(() => deactivatePlatformAdmin(cuenta.id))}
+                    >
+                      {t('Desactivar')}
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Paper>
+
+      <NewAdminDialog
+        key={nueva ? 'nueva-cuenta' : 'sin-cuenta'}
+        valores={nueva}
+        onClose={() => setNueva(null)}
+        onCreada={(dicha) => {
+          setReciénDicha(dicha)
+          setNueva(null)
+          setVuelta((n) => n + 1)
+        }}
+      />
+    </Box>
+  )
+}
+
+function NewAdminDialog({ valores, onClose, onCreada }) {
+  const { t } = useTranslation()
+  const [form, setForm] = useState(() => valores ?? {})
+  const [error, setError] = useState(null)
+  const [guardando, setGuardando] = useState(false)
+
+  const cambiar = (campo) => (e) => setForm((f) => ({ ...f, [campo]: e.target.value }))
+
+  const guardar = async () => {
+    setError(null)
+    setGuardando(true)
+    try {
+      onCreada(await addPlatformAdmin(form))
+    } catch (fallo) {
+      const datos = fallo?.response?.data ?? {}
+      const dicho = datos?.detail ?? datos?.error?.message ?? Object.values(datos).flat().join(' ')
+      setError(dicho || t('No se ha podido crear la cuenta.'))
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  return (
+    <Dialog open={Boolean(valores)} onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle>{t('Añadir cuenta')}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          {error && <Alert severity="error">{error}</Alert>}
+          <TextField
+            label={t('Correo electrónico')}
+            value={form.email ?? ''}
+            onChange={cambiar('email')}
+          />
+          <TextField label={t('Nombre')} value={form.first_name ?? ''} onChange={cambiar('first_name')} />
+          <TextField label={t('Apellidos')} value={form.last_name ?? ''} onChange={cambiar('last_name')} />
+          <Typography variant="caption" color="text.secondary">
+            {t('Su contraseña se genera y se enseña una sola vez.')}
+          </Typography>
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>{t('Cancelar')}</Button>
+        <Button variant="contained" onClick={guardar} disabled={guardando}>
+          {t('Crear')}
+        </Button>
       </DialogActions>
     </Dialog>
   )

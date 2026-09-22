@@ -653,6 +653,9 @@ def test_every_route_is_covered_by_this_sweep():
         # comprueba es que el administrador de UNA empresa no entre---. Su barrido
         # propio está en apps/tenants/tests/test_administrar_la_instalacion.py.
         "api/platform/me/",
+        "api/platform/admins/",
+        "api/platform/admins/<uuid:admin_id>/",
+        "api/platform/admins/<uuid:admin_id>/password/",
         "api/platform/companies/",
         "api/platform/companies/<uuid:company_id>/identity/",
         "api/platform/companies/<uuid:company_id>/applications/",

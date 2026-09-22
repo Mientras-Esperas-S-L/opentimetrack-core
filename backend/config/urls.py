@@ -41,6 +41,9 @@ from apps.tenants.platform_views import (
     CompanyCredentialsView,
     CompanyCredentialView,
     CompanyIdentityView,
+    PlatformAdminPasswordView,
+    PlatformAdminsView,
+    PlatformAdminView,
     WhoAmIView,
 )
 from apps.tenants.session_api import ApplicationSessionView
@@ -170,6 +173,17 @@ urlpatterns = [
     ),
     # La instalación, no una empresa: solo el superusuario de plataforma.
     path("api/platform/me/", WhoAmIView.as_view(), name="platform-me"),
+    path("api/platform/admins/", PlatformAdminsView.as_view(), name="platform-admins"),
+    path(
+        "api/platform/admins/<uuid:admin_id>/",
+        PlatformAdminView.as_view(),
+        name="platform-admin",
+    ),
+    path(
+        "api/platform/admins/<uuid:admin_id>/password/",
+        PlatformAdminPasswordView.as_view(),
+        name="platform-admin-password",
+    ),
     path("api/platform/companies/", CompaniesView.as_view(), name="platform-companies"),
     path(
         "api/platform/companies/<uuid:company_id>/applications/",
