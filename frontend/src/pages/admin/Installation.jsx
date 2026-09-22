@@ -136,8 +136,14 @@ export default function Installation() {
         </Alert>
       )}
 
-      <Paper variant="outlined">
-        <Table size="small">
+      {/* La tabla se desliza dentro de su caja en vez de estirar la página.
+          Medido en devel a 360 px: con siete columnas, el navegador del móvil se
+          rendía y usaba un viewport de **978 px**, o sea que enseñaba la pantalla
+          entera a un tercio de su tamaño ---título incluido, que salía en una
+          columna de palabra por línea---. Así el documento se queda en 360 y lo
+          único que se arrastra es la tabla. */}
+      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+        <Table size="small" sx={{ minWidth: 720 }}>
           <TableHead>
             <TableRow>
               <TableCell>{t('Empresa')}</TableCell>
