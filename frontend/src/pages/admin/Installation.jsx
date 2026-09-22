@@ -115,6 +115,14 @@ export default function Installation() {
           <Typography variant="body2" sx={{ fontFamily: 'monospace', mt: 0.5 }}>
             {reciénCreada.email} · {reciénCreada.password}
           </Typography>
+          {/* Y qué viene después, que es la pregunta que deja esta pantalla:
+              desde aquí no se entra en ninguna empresa, así que lo demás se
+              hace con la cuenta que se acaba de crear. */}
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            {t(
+              'Lo que falta se hace entrando con esa cuenta: su gente, sus centros y la credencial con la que GreenCity habla con esta empresa.',
+            )}
+          </Typography>
         </Alert>
       )}
 
