@@ -162,3 +162,31 @@ def test_buscar_una_letra_no_devuelve_media_ayuda(quien_ficha):
     respuesta = cliente(quien_ficha).get(reverse("help-search"), {"q": "f"})
 
     assert respuesta.data["results"] == []
+
+
+# ------------------------------------------------------ el contenido que se siembra
+
+
+def test_el_seeder_deja_los_articulos_con_el_nombre_de_su_ruta():
+    """El cajón pide el artículo por el último trozo de la ruta, así que un slug que
+    no se llame como la pantalla no lo encuentra nadie."""
+    from django.core.management import call_command
+
+    call_command("seed_help", verbosity=0)
+
+    slugs = set(HelpArticle.objects.values_list("slug", flat=True))
+    # Las rutas que hoy existen en el frontal, en App.jsx.
+    assert {"fichar", "mi-jornada", "mis-ausencias", "personas", "cuadrante"} <= slugs
+    assert {"aplicaciones", "instalacion"} <= slugs
+
+
+def test_sembrar_dos_veces_no_duplica_ni_deja_restos():
+    from django.core.management import call_command
+
+    call_command("seed_help", verbosity=0)
+    bloques_primera = HelpBlock.objects.filter(article__slug="fichar").count()
+
+    call_command("seed_help", verbosity=0)
+
+    assert HelpArticle.objects.filter(slug="fichar").count() == 1
+    assert HelpBlock.objects.filter(article__slug="fichar").count() == bloques_primera

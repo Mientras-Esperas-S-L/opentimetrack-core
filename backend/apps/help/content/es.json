@@ -1,0 +1,279 @@
+{
+  "language": "es",
+  "sections": [
+    {
+      "slug": "mi-trabajo",
+      "title": "Mi trabajo",
+      "order": 1
+    },
+    {
+      "slug": "gestion",
+      "title": "Gestión",
+      "order": 2
+    },
+    {
+      "slug": "instalacion",
+      "title": "La instalación",
+      "order": 3
+    }
+  ],
+  "articles": [
+    {
+      "slug": "fichar",
+      "section": "mi-trabajo",
+      "title": "Fichar",
+      "summary": "Registrar la entrada, las pausas y la salida del día.",
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "La pantalla de fichar tiene un botón grande que cambia según dónde estés: entrar, pausar, volver o salir. Debajo se ve lo que llevas registrado hoy, tramo a tramo, y el total acumulado."
+          }
+        },
+        {
+          "kind": "heading",
+          "data": {
+            "text": "La hora que cuenta",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "La que se guarda es la del momento en que pulsas, no la que tú escribas: el registro de jornada es un documento y por eso no se puede retocar a voluntad. Si te equivocaste, se corrige con una corrección, que deja constancia de quién la pidió y por qué."
+          }
+        },
+        {
+          "kind": "heading",
+          "data": {
+            "text": "Tu hora, no la de la empresa",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "El reloj de esta pantalla es el de tu centro de trabajo. Para alguien en Canarias dentro de una empresa con sede en Madrid, eso son sesenta minutos de diferencia, y es lo que decide qué día es «hoy» cuando se ficha de madrugada."
+          }
+        },
+        {
+          "kind": "callout",
+          "data": {
+            "variant": "info",
+            "text": "Quien entra a las diez de la noche y sale a las seis de la mañana sigue en la jornada del día anterior. La pantalla lo cuenta así, no por día natural."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "mi-jornada",
+      "section": "mi-trabajo",
+      "title": "Mi jornada",
+      "summary": "Lo que llevas trabajado, por día y por semana, y de dónde sale cada número.",
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Aquí ves tus días con lo que registraste en cada uno, el total de la semana y la diferencia con lo que tenías previsto. Cada día se puede abrir para ver sus tramos."
+          }
+        },
+        {
+          "kind": "heading",
+          "data": {
+            "text": "Si algo no cuadra",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Un día sin salida registrada aparece marcado: se cierra pidiendo una corrección, no reescribiendo la hora. La corrección pasa por quien te lleva y queda anotada."
+          }
+        },
+        {
+          "kind": "callout",
+          "data": {
+            "variant": "info",
+            "text": "Lo que ves es tu registro, y tienes derecho a consultarlo cuando quieras. Consultarlo no deja rastro; que otra persona lo mire, sí."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "mis-ausencias",
+      "section": "mi-trabajo",
+      "title": "Mis ausencias",
+      "summary": "Pedir vacaciones o un permiso, y ver en qué estado está lo pedido.",
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Se pide eligiendo el tipo, las fechas y, si hace falta, adjuntando el justificante. Lo pedido queda a la espera hasta que quien te lleva lo decide, y aquí se ve en qué punto está."
+          }
+        },
+        {
+          "kind": "heading",
+          "data": {
+            "text": "Pedir no es tener concedido",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Mientras está pendiente, esos días siguen contando como laborables en tu jornada. Solo cuando se concede cambian de color y dejan de esperarse."
+          }
+        },
+        {
+          "kind": "callout",
+          "data": {
+            "variant": "warning",
+            "text": "El saldo que ves arriba es el que queda **después** de descontar lo ya concedido, no lo pedido. Dos peticiones a la vez pueden pasarse del saldo."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "personas",
+      "section": "gestion",
+      "title": "Personas",
+      "summary": "Quién trabaja en la empresa, con qué perfil y en qué centro.",
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "La lista trae a quien está dado de alta, con su perfil ---persona trabajadora, responsable o administración--- y su centro de trabajo. Desde aquí se da de alta a alguien nuevo y se cambia lo suyo."
+          }
+        },
+        {
+          "kind": "heading",
+          "data": {
+            "text": "El centro no es un detalle",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Decide la zona horaria de su jornada y qué festivos locales se le aplican. Alguien sin centro se mide con la hora de la empresa, que puede no ser la suya."
+          }
+        },
+        {
+          "kind": "callout",
+          "data": {
+            "variant": "info",
+            "text": "A quien viene de GreenCity no hay que darle de alta: entra solo al enlazar su grupo, y se da de baja al salir del último grupo enlazado."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "cuadrante",
+      "section": "gestion",
+      "title": "Cuadrante",
+      "summary": "Quién trabaja cada día, y dónde falta gente.",
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "El cuadrante reparte turnos por día y por persona. Lo que se ve en gris es lo previsto; lo que ya se ha fichado aparece confirmado."
+          }
+        },
+        {
+          "kind": "heading",
+          "data": {
+            "text": "Los huecos",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Un día sin nadie asignado se marca como descubierto, y al abrirlo se ofrece quién puede cubrirlo. La lista incluye también a quien no puede, con el motivo: sin eso no se sabe si está corta porque no hay nadie o porque el filtro se pasó de listo."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "aplicaciones",
+      "section": "gestion",
+      "title": "Aplicaciones",
+      "summary": "Los productos que hablan con esta empresa desde fuera, y con qué permisos.",
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Una aplicación es un producto autorizado a actuar contra esta empresa: GreenCity, un reloj de entrada, una tableta en obra. Lleva solo los permisos que se le concedan, uno a uno, y se puede revocar sin tocar la cuenta de nadie."
+          }
+        },
+        {
+          "kind": "heading",
+          "data": {
+            "text": "La credencial se enseña una vez",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Al autorizarla aparece un testigo que empieza por «ott_app_». Se guarda cifrado de un solo sentido, así que no hay forma de volver a verlo: si se pierde, se emite otro y se revoca el anterior. Conviven, y por eso cambiarlo no corta el servicio."
+          }
+        },
+        {
+          "kind": "callout",
+          "data": {
+            "variant": "warning",
+            "text": "Retirar una aplicación no la borra. Lo que registró sigue siendo suyo, y una fila menos dejaría esos fichajes sin dueño."
+          }
+        }
+      ]
+    },
+    {
+      "slug": "instalacion",
+      "section": "instalacion",
+      "title": "Instalación",
+      "summary": "Las empresas que viven en este OpenTimeTrack y cómo entra su gente.",
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Esta pantalla es de quien administra la instalación entera, no una empresa. Desde aquí se da de alta una empresa con su primer administrador, se configura cómo entra su gente y se emite la credencial con la que otro producto le habla."
+          }
+        },
+        {
+          "kind": "heading",
+          "data": {
+            "text": "Qué le falta a cada empresa",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "La lista lo dice en su fila: si le falta el proveedor de identidad, la credencial, o su gente. Los dos primeros se pulsan y abren donde se arreglan; la gente entra sola al enlazar los grupos en GreenCity."
+          }
+        },
+        {
+          "kind": "heading",
+          "data": {
+            "text": "Lo que se enseña una sola vez",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "La contraseña del administrador que crea el alta y la credencial de aplicación. Las dos se copian en el momento o se vuelven a emitir."
+          }
+        },
+        {
+          "kind": "callout",
+          "data": {
+            "variant": "info",
+            "text": "Esta cuenta no ve los datos de ninguna empresa, y es a propósito: administra el sistema, no trabaja dentro de él."
+          }
+        }
+      ]
+    }
+  ]
+}
