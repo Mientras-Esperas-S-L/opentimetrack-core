@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-21 13:33+0000\n"
+"POT-Creation-Date: 2026-09-22 11:46+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan\n"
@@ -219,7 +219,7 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:203 apps/absences/models.py:559
-#: apps/audit/models.py:196 apps/punches/models.py:628
+#: apps/audit/models.py:201 apps/punches/models.py:628
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:577 apps/tenants/rules.py:661 apps/users/models.py:981
 #: apps/users/models.py:1059
@@ -271,7 +271,7 @@ msgstr "Cancel·lada"
 msgid "employee"
 msgstr "persona treballadora"
 
-#: apps/absences/models.py:286 apps/audit/models.py:189
+#: apps/absences/models.py:286 apps/audit/models.py:194
 #: apps/punches/corrections.py:94 apps/punches/models.py:164
 msgid "type"
 msgstr "tipus"
@@ -802,30 +802,34 @@ msgstr "Va obtenir una sessió d'una persona"
 msgid "Ended somebody's sessions"
 msgstr "Va tancar les sessions d'una persona"
 
+#: apps/audit/models.py:128
+msgid "Changed how people sign in"
+msgstr "Va canviar per on entra la gent"
+
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:126
+#: apps/audit/models.py:131
 msgid "Purged security metadata"
 msgstr "Va purgar metadades de seguretat"
 
-#: apps/audit/models.py:133
+#: apps/audit/models.py:138
 msgid "Purged expired working time records"
 msgstr "Va purgar el registre que va complir el seu termini"
 
-#: apps/audit/models.py:138
+#: apps/audit/models.py:143
 msgid "Delivered somebody their own record"
 msgstr "Va entregar a algú el seu propi registre"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:144
+#: apps/audit/models.py:149
 msgid "Erased a person who left no record"
 msgstr "Va retirar una alta que no va deixar rastre"
 
-#: apps/audit/models.py:162
+#: apps/audit/models.py:167
 msgid "when"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:168 apps/common/models.py:117
+#: apps/audit/models.py:173 apps/common/models.py:117
 #: apps/tenants/models.py:205 apps/tenants/models.py:233
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:434
@@ -833,37 +837,37 @@ msgid "company"
 msgstr "empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:178
+#: apps/audit/models.py:183
 msgid "who"
 msgstr "qui"
 
-#: apps/audit/models.py:182
+#: apps/audit/models.py:187
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:184
+#: apps/audit/models.py:189
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:190 apps/tenants/identity.py:58
+#: apps/audit/models.py:195 apps/tenants/identity.py:58
 msgid "identifier"
 msgstr "identificador"
 
-#: apps/audit/models.py:191
+#: apps/audit/models.py:196
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:195
+#: apps/audit/models.py:200
 msgid "changes"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:218
+#: apps/audit/models.py:223
 msgid "audit entry"
 msgstr "assentament del rastre"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:219
+#: apps/audit/models.py:224
 msgid "audit trail"
 msgstr "rastre d'auditoria"
 
@@ -3446,6 +3450,16 @@ msgstr "Una altra persona d'aquesta empresa ja fa servir aquest número."
 msgid "Somebody else in this company already uses that identity."
 msgstr "Una altra persona d'aquesta empresa ja fa servir aquesta identitat."
 
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/platform_views.py:44
+msgid "Only a platform superuser can administer the installation."
+msgstr "Només un superusuari de plataforma pot administrar la instal·lació."
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/platform_views.py:161 apps/tenants/platform_views.py:209
+msgid "No such company."
+msgstr "Aquesta empresa no existeix."
+
 #: apps/tenants/rules.py:43
 msgid "Seniority steps are a list."
 msgstr "Els trams d'antiguitat són una llista."
@@ -4843,22 +4857,22 @@ msgid "Only an administrator answers a schedule adaptation."
 msgstr "Només administració contesta una adaptació de jornada."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:336
+#: config/settings/base.py:345
 msgid "Spanish"
 msgstr "Castellà"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:337
+#: config/settings/base.py:346
 msgid "Catalan"
 msgstr "Català"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:338
+#: config/settings/base.py:347
 msgid "Galician"
 msgstr "Gallec"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:339
+#: config/settings/base.py:348
 msgid "English"
 msgstr "Anglès"
 

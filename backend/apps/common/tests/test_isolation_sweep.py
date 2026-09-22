@@ -647,6 +647,14 @@ def test_every_route_is_covered_by_this_sweep():
         # apps/tenants/tests/test_entrar_por_el_proveedor.py.
         "api/auth/sso/ticket/",
         "api/auth/sso/logout/",
+        # Administrar la instalación: no son rutas de una empresa, son de quien
+        # administra el sistema entero, y por eso no hay nada que aislar por
+        # inquilino ---el aislamiento aquí es justo el contrario, y lo que se
+        # comprueba es que el administrador de UNA empresa no entre---. Su barrido
+        # propio está en apps/tenants/tests/test_administrar_la_instalacion.py.
+        "api/platform/me/",
+        "api/platform/companies/",
+        "api/platform/companies/<uuid:company_id>/identity/",
         # Canjea una aserción firmada por una sesión de la persona que nombra. Su
         # barrido propio está en apps/tenants/tests/test_application_sessions.py, e
         # incluye que una credencial de otra empresa no obtenga sesión de nadie de

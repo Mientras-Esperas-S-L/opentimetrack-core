@@ -752,3 +752,28 @@ export const downloadReport = async (params) => {
     fingerprint: response.headers['x-report-hash'] ?? '',
   }
 }
+
+// ------------------------------------------------- administrar la instalación
+//
+// Solo contesta al superusuario de plataforma ---el que no pertenece a ninguna
+// empresa---. Un administrador de empresa recibe 403, y por eso el frontal
+// pregunta antes de enseñar el menú: esconderlo no es el permiso, pero ofrecer
+// una pantalla que va a contestar 403 sí es un error de interfaz.
+
+export const amIPlatformAdmin = async () => {
+  try {
+    await get('/platform/me/')
+    return true
+  } catch {
+    return false
+  }
+}
+
+export const getCompanies = async () => (await get('/platform/companies/')).companies
+
+export const createCompany = (payload) => post('/platform/companies/', payload)
+
+export const saveCompanyIdentity = async (companyId, payload) =>
+  (await api.put(`/platform/companies/${companyId}/identity/`, payload)).data
+
+export const removeCompanyIdentity = (companyId) => api.delete(`/platform/companies/${companyId}/identity/`)

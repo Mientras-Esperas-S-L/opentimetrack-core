@@ -24,8 +24,9 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import MenuIcon from '@mui/icons-material/Menu'
 
 import ThemeToggle from '../components/ThemeToggle.jsx'
+import { usePlatformAdmin } from '../hooks/usePlatformAdmin.js'
 import { useAuth } from '../hooks/useAuth.js'
-import { NAV_ADMIN, NAV_ME } from './navigation.jsx'
+import { NAV_ADMIN, NAV_PLATFORM, NAV_ME } from './navigation.jsx'
 import BottomNav from './BottomNav.jsx'
 
 const DRAWER_WIDTH = 232
@@ -103,6 +104,10 @@ export default function AppShell() {
   // es un permiso ---el API decide--- pero enseñar uno que va a contestar 403 sí
   // es un error de interfaz.
   const management = NAV_ADMIN.filter((item) => !item.adminOnly || user?.role === 'ADMIN')
+  // Y la instalación, que no es de quien administra una empresa: se pregunta al
+  // servidor, porque el superusuario de plataforma es el que no pertenece a
+  // ninguna y eso no viaja en la sesión.
+  const administraLaInstalacion = usePlatformAdmin()
 
   // `alCerrar` es lo que `NavSection` esperaba en su `onNavigate` desde el
   // principio y nadie le pasaba: en un cajón que se superpone, elegir una
@@ -114,6 +119,12 @@ export default function AppShell() {
         <>
           <Divider sx={{ my: 1, mx: 2 }} />
           <NavSection title={t('Gestión')} items={management} onNavigate={alCerrar} />
+        </>
+      )}
+      {administraLaInstalacion && (
+        <>
+          <Divider sx={{ my: 1, mx: 2 }} />
+          <NavSection title={t('Instalación')} items={NAV_PLATFORM} onNavigate={alCerrar} />
         </>
       )}
     </Box>
