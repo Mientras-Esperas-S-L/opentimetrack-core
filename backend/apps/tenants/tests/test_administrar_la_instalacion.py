@@ -180,3 +180,28 @@ def test_la_lista_dice_cuanta_gente_y_si_tiene_identidad(plataforma, company):
     fila = next(c for c in respuesta.data["companies"] if c["tax_id"] == company.tax_id)
     assert fila["identity"] is None
     assert fila["people"] == User.objects.filter(tenant=company).count()
+
+
+def test_el_superusuario_de_plataforma_puede_entrar(plataforma, client):
+    """La cuenta que el modelo prevé tiene que poder pasar por la puerta.
+
+    No podía: al no tener empresa, la zona horaria de su jornada ---que no existe,
+    porque no tiene jornada--- reventaba la respuesta del acceso con
+    `'NoneType' object has no attribute 'tzinfo'`. Ahora cae a la de la instalación.
+    """
+    plataforma.set_password("una-contraseña-larguísima")
+    plataforma.save(update_fields=["password"])
+
+    respuesta = client.post(
+        "/api/auth/token/",
+        {"email": plataforma.email, "password": "una-contraseña-larguísima"},
+        content_type="application/json",
+    )
+
+    assert respuesta.status_code == 200
+    assert respuesta.json()["access"]
+
+
+def test_y_la_zona_que_se_le_supone_es_la_de_la_instalacion(plataforma, settings):
+    settings.DEFAULT_TENANT_TIME_ZONE = "Atlantic/Canary"
+    assert str(plataforma.tzinfo) == "Atlantic/Canary"
