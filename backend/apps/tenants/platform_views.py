@@ -524,6 +524,155 @@ class CompanyCredentialView(_PorEmpresa):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class NewAdminSerializer(serializers.Serializer):
+    """Otra cuenta que administre esta instalación."""
+
+    email = serializers.EmailField()
+    first_name = serializers.CharField(max_length=100)
+    last_name = serializers.CharField(max_length=100)
+    #: Si se deja, se genera y se enseña una sola vez.
+    password = serializers.CharField(required=False, allow_blank=True, min_length=12)
+
+
+def _administrador(user: User) -> dict:
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "is_active": user.is_active,
+        "last_login": user.last_login,
+    }
+
+
+def _los_de_la_instalacion():
+    """Las cuentas sin empresa. Es lo que las define, no una bandera aparte."""
+    return User.objects.filter(tenant__isnull=True, is_superuser=True).order_by("email")
+
+
+@extend_schema(tags=["platform"])
+class PlatformAdminsView(APIView):
+    """Quién administra esta instalación, y el alta de otra cuenta.
+
+    La **primera** se crea en el contenedor y no hay forma de evitarlo: es el huevo
+    y la gallina, no hay sesión con la que autorizar el alta. Pero que la segunda
+    siguiera pidiendo un shell sí era evitable, y es lo que deja una instalación con
+    una sola persona capaz de operarla ---y sin relevo si se va de vacaciones.
+
+    No se crean aquí cuentas de ninguna empresa: el alta de una empresa ya trae su
+    administrador, y esta puerta es para quien administra el sistema entero.
+    """
+
+    permission_classes = [IsPlatformSuperuser]
+
+    @extend_schema(request=None, responses={200: dict})
+    def get(self, request):
+        return Response({"admins": [_administrador(u) for u in _los_de_la_instalacion()]})
+
+    @extend_schema(request=NewAdminSerializer, responses={201: dict})
+    def post(self, request):
+        datos = NewAdminSerializer(data=request.data)
+        datos.is_valid(raise_exception=True)
+        v = datos.validated_data
+
+        correo = v["email"].lower()
+        if User.objects.filter(email__iexact=correo, tenant__isnull=True).exists():
+            return Response(
+                {"detail": _("There is already an installation account with that address.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        clave = v.get("password") or f"Ott-{secrets.token_urlsafe(12)}"
+        creado = User.objects.create_superuser(
+            email=correo,
+            password=clave,
+            first_name=v["first_name"],
+            last_name=v["last_name"],
+            tenant=None,
+        )
+        # Sin empresa no hay rastro que escribir: el registro va por empresa y una
+        # entrada sin ella sería una que otra podría leer. Lo dice `audit.services`.
+        return Response(
+            {**_administrador(creado), "password": clave}, status=status.HTTP_201_CREATED
+        )
+
+
+class _UnaCuenta(APIView):
+    """Lo común: encontrar una cuenta de la instalación por su identificador."""
+
+    permission_classes = [IsPlatformSuperuser]
+
+    def _cuenta(self, admin_id):
+        return _los_de_la_instalacion().filter(pk=admin_id).first()
+
+
+@extend_schema(tags=["platform"])
+class PlatformAdminPasswordView(_UnaCuenta):
+    """Una contraseña nueva para una cuenta de la instalación.
+
+    En su propia ruta y no como otro método de la de al lado: dos POST bajo el
+    mismo nombre dejan el esquema con `…_create` y `…_create_2`, y quien lee el
+    contrato no sabe cuál es cuál.
+    """
+
+    @extend_schema(request=None, responses={200: dict})
+    def post(self, request, admin_id):
+        """Una contraseña nueva, enseñada una sola vez.
+
+        No se manda por correo a propósito: en una instalación recién puesta el
+        correo es lo último que funciona, y una cuenta que no entra porque el envío
+        falló es exactamente el problema que esta pantalla viene a quitar.
+        """
+        cuenta = self._cuenta(admin_id)
+        if cuenta is None:
+            return Response(
+                {"detail": _("No such installation account.")}, status=status.HTTP_404_NOT_FOUND
+            )
+        clave = f"Ott-{secrets.token_urlsafe(12)}"
+        cuenta.set_password(clave)
+        cuenta.is_active = True
+        cuenta.save(update_fields=["password", "is_active"])
+        return Response({**_administrador(cuenta), "password": clave})
+
+
+@extend_schema(tags=["platform"])
+class PlatformAdminView(_UnaCuenta):
+    """Desactivar una cuenta de la instalación."""
+
+    @extend_schema(request=None, responses={204: None})
+    def delete(self, request, admin_id):
+        """Desactiva, no borra. Y nunca la última, ni la propia.
+
+        Quedarse sin ninguna cuenta activa deja la instalación **sin quien la
+        administre** y solo se sale de ahí abriendo un shell, que es justo lo que
+        esto existe para no tener que hacer. Y desactivarse a uno mismo es la forma
+        rápida de conseguir lo mismo con dos cuentas.
+        """
+        cuenta = self._cuenta(admin_id)
+        if cuenta is None:
+            return Response(
+                {"detail": _("No such installation account.")}, status=status.HTTP_404_NOT_FOUND
+            )
+        if cuenta.pk == request.user.pk:
+            return Response(
+                {"detail": _("You cannot deactivate the account you are using.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if _los_de_la_instalacion().filter(is_active=True).exclude(pk=cuenta.pk).count() == 0:
+            return Response(
+                {
+                    "detail": _(
+                        "This is the only account that can administer the installation. "
+                        "Create another one before deactivating it."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        cuenta.is_active = False
+        cuenta.save(update_fields=["is_active"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 @extend_schema(tags=["platform"])
 class WhoAmIView(APIView):
     """Si quien pregunta administra la instalación.
