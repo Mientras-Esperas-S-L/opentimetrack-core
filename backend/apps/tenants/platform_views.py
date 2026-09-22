@@ -72,21 +72,52 @@ class IsPlatformSuperuser(BasePermission):
         return bool(user and user.is_authenticated and user.is_superuser and user.tenant_id is None)
 
 
+#: Lo que le falta a una empresa para estar enchufada, en el orden en que se hace.
+#:
+#: Se calcula **aquí y no en la pantalla** porque es una regla del producto, no una
+#: decoración: el asistente de alta necesita la misma respuesta, y dos sitios que
+#: contestan «¿está lista?» acaban contestando cosas distintas.
+#:
+#: Los códigos viajan sin traducir a propósito: el texto lo pone quien pinta, con su
+#: catálogo, que es donde se corrige un idioma sin tocar el servidor.
+FALTA_IDENTIDAD = "identity"
+FALTA_APLICACION = "application"
+FALTA_GENTE = "people"
+
+
+def _le_falta(company: Tenant, *, personas: int, aplicaciones: int, proveedor) -> list[str]:
+    huecos = []
+    if proveedor is None or not proveedor.is_active:
+        huecos.append(FALTA_IDENTIDAD)
+    if aplicaciones == 0:
+        huecos.append(FALTA_APLICACION)
+    # Una sola persona es la que creó el alta: la empresa existe y no hay nadie
+    # dentro. No es un error ---puede estar recién dada de alta--- pero sí es lo
+    # siguiente que hay que hacer, y sin decirlo la lista no lo distingue de una
+    # empresa con su plantilla enlazada.
+    if personas <= 1:
+        huecos.append(FALTA_GENTE)
+    return huecos
+
+
 def _empresa(company: Tenant, *, personas: int | None = None) -> dict:
     proveedor = SsoProvider.objects_all_tenants.filter(tenant=company).first()
+    cuanta_gente = personas if personas is not None else User.objects.filter(tenant=company).count()
+    cuantas_apps = Application.objects_all_tenants.filter(tenant=company, is_active=True).count()
     return {
         "id": str(company.id),
         "name": company.name,
         "tax_id": company.tax_id,
         "country": company.country,
         "time_zone": company.time_zone,
-        "people": personas if personas is not None else User.objects.filter(tenant=company).count(),
+        "people": cuanta_gente,
         # Cuántas aplicaciones puede usar hoy. Sin esto, la lista no distingue una
         # empresa lista para integrarse de otra a la que le falta la credencial, que
         # es el hueco con el que la gente se queda encallada.
-        "applications": Application.objects_all_tenants.filter(
-            tenant=company, is_active=True
-        ).count(),
+        "applications": cuantas_apps,
+        "missing": _le_falta(
+            company, personas=cuanta_gente, aplicaciones=cuantas_apps, proveedor=proveedor
+        ),
         "identity": None
         if proveedor is None
         else {

@@ -145,6 +145,7 @@ export default function Installation() {
               <TableCell align="right">{t('Personas')}</TableCell>
               <TableCell>{t('Cómo entran')}</TableCell>
               <TableCell>{t('Con qué se conectan')}</TableCell>
+              <TableCell>{t('Qué le falta')}</TableCell>
               <TableCell />
             </TableRow>
           </TableHead>
@@ -187,6 +188,13 @@ export default function Installation() {
                     </Typography>
                   )}
                 </TableCell>
+                <TableCell>
+                  <LeFalta
+                    empresa={empresa}
+                    onIdentidad={() => setIdentidadDe(empresa)}
+                    onCredencial={() => setCredencialesDe(empresa)}
+                  />
+                </TableCell>
                 <TableCell align="right">
                   <Button size="small" onClick={() => setCredencialesDe(empresa)}>
                     {t('Credenciales')}
@@ -199,7 +207,7 @@ export default function Installation() {
             ))}
             {!cargando && empresas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6}>
+                <TableCell colSpan={7}>
                   <Typography variant="body2" color="text.secondary">
                     {t('Todavía no hay ninguna empresa.')}
                   </Typography>
@@ -796,5 +804,55 @@ function NewAdminDialog({ valores, onClose, onCreada }) {
         </Button>
       </DialogActions>
     </Dialog>
+  )
+}
+
+/** Lo que le falta a una empresa para estar enchufada, y por dónde se arregla.
+ *
+ *  El «¿y ahora qué?» de quien acaba de dar un alta: la empresa existe, y averiguar
+ *  qué queda obligaba a abrir tres diálogos uno por uno. Quién decide qué falta es
+ *  el servidor ---viene en `missing`---, porque es una regla del producto y el
+ *  asistente de alta de GreenCity contesta con la misma.
+ */
+function LeFalta({ empresa, onIdentidad, onCredencial }) {
+  const { t } = useTranslation()
+  const huecos = empresa.missing ?? []
+
+  if (huecos.length === 0) {
+    return (
+      <Chip size="small" color="success" variant="outlined" label={t('Lista')} />
+    )
+  }
+
+  // Lo que se puede arreglar desde aquí lleva su botón; lo que no ---que entre su
+  // gente--- se dice y ya, porque pasa solo al enlazar los grupos en GreenCity.
+  const comoSeArregla = {
+    identity: { texto: t('Cómo entran'), accion: onIdentidad },
+    application: { texto: t('Credencial'), accion: onCredencial },
+    people: { texto: t('Su gente'), accion: null },
+  }
+
+  return (
+    <Stack direction="row" sx={{ gap: 0.5, flexWrap: 'wrap' }}>
+      {huecos.map((hueco) => {
+        const como = comoSeArregla[hueco]
+        if (!como) return null
+        return (
+          <Chip
+            key={hueco}
+            size="small"
+            color="warning"
+            variant="outlined"
+            label={como.texto}
+            onClick={como.accion ?? undefined}
+            title={
+              como.accion
+                ? t('Pulsa para arreglarlo')
+                : t('Su gente entra sola al enlazar los grupos en GreenCity.')
+            }
+          />
+        )
+      })}
+    </Stack>
   )
 }
