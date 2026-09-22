@@ -81,7 +81,9 @@ export const buildTheme = (mode = 'light', idioma = 'es') =>
       components: {
         MuiButton: {
           styleOverrides: {
-            root: { paddingInline: 20, paddingBlock: 10 },
+            // El mínimo táctil también aquí: con este relleno, un botón pequeño
+            // salía de 43 px, uno por debajo de lo que se acierta sin mirar.
+            root: { paddingInline: 20, paddingBlock: 10, minHeight: 44 },
           },
         },
         MuiPaper: {
