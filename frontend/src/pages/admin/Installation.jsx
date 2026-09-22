@@ -66,7 +66,16 @@ export default function Installation() {
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+      {/* `gap` y el botón sin encoger, o el botón se monta encima de la línea
+          que explica la pantalla: la fila reparte el hueco y el texto de debajo
+          es más ancho que el título. */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        gap={2}
+        sx={{ mb: 2 }}
+      >
         <Box>
           <Typography variant="h5">{t('Instalación')}</Typography>
           <Typography variant="body2" color="text.secondary">
@@ -75,6 +84,7 @@ export default function Installation() {
         </Box>
         <Button
           variant="contained"
+          sx={{ flexShrink: 0 }}
           onClick={() =>
             setNueva({
               company_name: '',
