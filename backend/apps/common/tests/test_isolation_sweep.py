@@ -655,6 +655,11 @@ def test_every_route_is_covered_by_this_sweep():
         "api/platform/me/",
         "api/platform/companies/",
         "api/platform/companies/<uuid:company_id>/identity/",
+        "api/platform/companies/<uuid:company_id>/applications/",
+        "api/platform/companies/<uuid:company_id>/applications/<uuid:application_id>/",
+        "api/platform/companies/<uuid:company_id>/applications/<uuid:application_id>/credentials/",
+        "api/platform/companies/<uuid:company_id>/applications/<uuid:application_id>"
+        "/credentials/<uuid:credential_id>/",
         # Canjea una aserción firmada por una sesión de la persona que nombra. Su
         # barrido propio está en apps/tenants/tests/test_application_sessions.py, e
         # incluye que una credencial de otra empresa no obtenga sesión de nadie de

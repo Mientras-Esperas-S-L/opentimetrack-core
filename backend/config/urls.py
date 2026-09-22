@@ -34,7 +34,15 @@ from apps.tenants.hr_api import (
 )
 from apps.tenants.me_api import ApplicationMeView
 from apps.tenants.people_api import ApplicationPeopleView, ApplicationPersonView
-from apps.tenants.platform_views import CompaniesView, CompanyIdentityView, WhoAmIView
+from apps.tenants.platform_views import (
+    CompaniesView,
+    CompanyApplicationsView,
+    CompanyApplicationView,
+    CompanyCredentialsView,
+    CompanyCredentialView,
+    CompanyIdentityView,
+    WhoAmIView,
+)
 from apps.tenants.session_api import ApplicationSessionView
 from apps.tenants.sso_views import (
     SsoBackChannelLogoutView,
@@ -163,6 +171,27 @@ urlpatterns = [
     # La instalación, no una empresa: solo el superusuario de plataforma.
     path("api/platform/me/", WhoAmIView.as_view(), name="platform-me"),
     path("api/platform/companies/", CompaniesView.as_view(), name="platform-companies"),
+    path(
+        "api/platform/companies/<uuid:company_id>/applications/",
+        CompanyApplicationsView.as_view(),
+        name="platform-company-applications",
+    ),
+    path(
+        "api/platform/companies/<uuid:company_id>/applications/<uuid:application_id>/",
+        CompanyApplicationView.as_view(),
+        name="platform-company-application",
+    ),
+    path(
+        "api/platform/companies/<uuid:company_id>/applications/<uuid:application_id>/credentials/",
+        CompanyCredentialsView.as_view(),
+        name="platform-company-credentials",
+    ),
+    path(
+        "api/platform/companies/<uuid:company_id>/applications/<uuid:application_id>"
+        "/credentials/<uuid:credential_id>/",
+        CompanyCredentialView.as_view(),
+        name="platform-company-credential",
+    ),
     path(
         "api/platform/companies/<uuid:company_id>/identity/",
         CompanyIdentityView.as_view(),

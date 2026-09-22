@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-22 12:36+0000\n"
+"POT-Creation-Date: 2026-09-22 15:18+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan\n"
@@ -568,13 +568,13 @@ msgstr "el temps indispensable"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/absences/views.py:242 apps/shifts/views.py:204
-#: apps/tenants/views.py:181 apps/users/views.py:764 apps/users/views.py:834
-#: apps/users/views.py:992 apps/users/views.py:1043 apps/users/views.py:1080
+#: apps/tenants/views.py:181 apps/users/views.py:770 apps/users/views.py:840
+#: apps/users/views.py:998 apps/users/views.py:1049 apps/users/views.py:1086
 msgid "Added"
 msgstr "Afegit"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/absences/views.py:270 apps/audit/trail.py:74 apps/users/views.py:1016
+#: apps/absences/views.py:270 apps/audit/trail.py:74 apps/users/views.py:1022
 msgid "Changed"
 msgstr "Canviat"
 
@@ -980,8 +980,8 @@ msgid ""
 "This account administers the installation and does not belong to any "
 "company, so it has no data of its own here."
 msgstr ""
-"Aquest compte administra la instal·lació i no pertany a cap empresa, així que "
-"aquí no té dades pròpies."
+"Aquest compte administra la instal·lació i no pertany a cap empresa, així "
+"que aquí no té dades pròpies."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/common/permissions.py:85
@@ -2831,7 +2831,7 @@ msgstr ""
 "mateix codi que %(other)s: el REGCON és el que distingeix dos convenis "
 "semblants"
 
-#: apps/tenants/application_views.py:86
+#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:273
 #, python-format
 msgid "Unknown permissions: %(list)s."
 msgstr "Permisos desconeguts: %(list)s."
@@ -2840,15 +2840,15 @@ msgstr "Permisos desconeguts: %(list)s."
 msgid "Grant at least one permission, or the application can do nothing."
 msgstr "Concedeix almenys un permís; si no, l'aplicació no pot fer res."
 
-#: apps/tenants/application_views.py:152
+#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:417
 msgid "Permissions changed"
 msgstr "Va canviar els permisos"
 
-#: apps/tenants/application_views.py:186
+#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:470
 msgid "Reactivate the application before issuing a credential."
 msgstr "Reactiva l'aplicació abans d'emetre una credencial."
 
-#: apps/tenants/application_views.py:202
+#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:487
 #, python-format
 msgid "Credential issued: …%(hint)s"
 msgstr "Credencial emesa: …%(hint)s"
@@ -2857,7 +2857,7 @@ msgstr "Credencial emesa: …%(hint)s"
 msgid "That credential does not exist or is already revoked."
 msgstr "Aquesta credencial no existeix o ja està revocada."
 
-#: apps/tenants/application_views.py:245
+#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:512
 #, python-format
 msgid "Credential revoked: …%(hint)s"
 msgstr "Credencial revocada: …%(hint)s"
@@ -3459,14 +3459,30 @@ msgid "Somebody else in this company already uses that identity."
 msgstr "Una altra persona d'aquesta empresa ja fa servir aquesta identitat."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:44
+#: apps/tenants/platform_views.py:68
 msgid "Only a platform superuser can administer the installation."
 msgstr "Només un superusuari de plataforma pot administrar la instal·lació."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:164 apps/tenants/platform_views.py:213
+#: apps/tenants/platform_views.py:194 apps/tenants/platform_views.py:243
+#: apps/tenants/platform_views.py:304
 msgid "No such company."
 msgstr "Aquesta empresa no existeix."
+
+#: apps/tenants/platform_views.py:369
+msgid "Authorised from the installation console"
+msgstr "Autoritzada des de la consola de la instal·lació"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/platform_views.py:396 apps/tenants/platform_views.py:432
+#: apps/tenants/platform_views.py:467
+msgid "No such application."
+msgstr "Aquesta aplicació no existeix."
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/platform_views.py:503
+msgid "No such credential."
+msgstr "Aquesta credencial no existeix."
 
 #: apps/tenants/rules.py:43
 msgid "Seniority steps are a list."
@@ -4751,20 +4767,20 @@ msgstr "La crida va abans que comenci la temporada, no després."
 msgid "It overlaps the period that starts on %(day)s."
 msgstr "Se superposa amb el període que comença el %(day)s."
 
-#: apps/users/views.py:214
+#: apps/users/views.py:220
 msgid "No session to renew."
 msgstr "No hi ha cap sessió per renovar."
 
-#: apps/users/views.py:243
+#: apps/users/views.py:249
 msgid "The session has expired. Sign in again."
 msgstr "La sessió ha caducat. Torna a entrar."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:269
+#: apps/users/views.py:275
 msgid "Send the refresh token to close the session."
 msgstr "Envia el testimoni de refresc per tancar la sessió."
 
-#: apps/users/views.py:466
+#: apps/users/views.py:472
 msgid ""
 "This is the only active administrator. Appoint another one first, or the "
 "company is left with nobody able to manage it."
@@ -4772,37 +4788,37 @@ msgstr ""
 "És l'únic administrador actiu. Nomena'n un altre abans, o l'empresa es queda "
 "sense ningú que la pugui gestionar."
 
-#: apps/users/views.py:521
+#: apps/users/views.py:527
 msgid "This account signs in through your identity provider."
 msgstr "Aquest compte entra a través del vostre proveïdor d'identitat."
 
-#: apps/users/views.py:523
+#: apps/users/views.py:529
 msgid "Reactivate the account before inviting them."
 msgstr "Torna a donar d'alta el compte abans de convidar-lo."
 
-#: apps/users/views.py:549
+#: apps/users/views.py:555
 msgid "There is no address to send it to. Add one first."
 msgstr "No hi ha cap adreça on enviar-ho. Afegeix-ne una abans."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:624
+#: apps/users/views.py:630
 msgid "You cannot erase your own account."
 msgstr "No pots esborrar el teu propi compte."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:636
+#: apps/users/views.py:642
 #, python-format
 msgid "what is theirs: %(cosas)s"
 msgstr "el que és seu: %(cosas)s"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:639
+#: apps/users/views.py:645
 #, python-format
 msgid "what they decided about other people: %(cosas)s"
 msgstr "el que va decidir sobre altres persones: %(cosas)s"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:645
+#: apps/users/views.py:651
 #, python-format
 msgid ""
 "%(quien)s left a record, so their file has to stay and explain it --- "
@@ -4811,12 +4827,12 @@ msgstr ""
 "%(quien)s va deixar rastre, així que la seva fitxa s'ha de quedar i explicar-"
 "ho --- %(que)s. Dóna-li de baixa en comptes d'això."
 
-#: apps/users/views.py:687
+#: apps/users/views.py:693
 msgid "You cannot deactivate your own account."
 msgstr "No pots donar de baixa el teu propi compte."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:743
+#: apps/users/views.py:749
 #, python-format
 msgid "Left on %(day)s. %(count)s shift(s) still rostered after that."
 msgstr ""
@@ -4824,13 +4840,13 @@ msgstr ""
 "d'aquesta data."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:746
+#: apps/users/views.py:752
 #, python-format
 msgid "Left on %(day)s."
 msgstr "Va marxar el %(day)s."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:802
+#: apps/users/views.py:808
 #, python-format
 msgid ""
 "%(count)s people answer for this department. Move them first: leaving them "
@@ -4841,7 +4857,7 @@ msgstr ""
 "al capdavant de res vol dir que ja no podran llegir el registre de ningú "
 "tret del seu."
 
-#: apps/users/views.py:850
+#: apps/users/views.py:856
 #, python-format
 msgid ""
 "%(count)s people work there. Move them first: without a workplace they lose "
@@ -4850,17 +4866,17 @@ msgstr ""
 "Allà hi treballen %(count)s persones. Mou-les primer: sense centre perden "
 "els seus festius locals i la seva zona horària."
 
-#: apps/users/views.py:905
+#: apps/users/views.py:911
 msgid "The link is not valid or has already been used."
 msgstr "L'enllaç no és vàlid o ja s'ha fet servir."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/views.py:985
+#: apps/users/views.py:991
 msgid "A schedule adaptation can only be asked for by the person themselves."
 msgstr "Una adaptació de jornada només la pot demanar la mateixa persona."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/views.py:1005
+#: apps/users/views.py:1011
 msgid "Only an administrator answers a schedule adaptation."
 msgstr "Només administració contesta una adaptació de jornada."
 

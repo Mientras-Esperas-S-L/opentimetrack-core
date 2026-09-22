@@ -261,3 +261,131 @@ def test_sigue_pudiendo_decir_quien_es_y_salir(plataforma):
     # Salir sin token de refresco se queja del token que falta, no de quién
     # pide: lo que se comprueba aquí es que la puerta no le echa.
     assert api.post(reverse("auth:logout"), {}, format="json").status_code == 409
+
+
+# ------------------------------------------------ la credencial, desde la consola
+#
+# Antes había que salir de la consola, entrar como administrador de esa empresa y
+# volver: el alta de un cliente se partía en dos sesiones por una casilla de diez.
+
+
+def test_da_de_alta_la_aplicacion_con_su_credencial(plataforma, company):
+    respuesta = cliente(plataforma).post(
+        f"/api/platform/companies/{company.id}/applications/",
+        {"name": "GreenCityControl"},
+        format="json",
+    )
+
+    assert respuesta.status_code == 201
+    # El testigo, una vez y entero.
+    assert respuesta.data["token"].startswith("ott_app_")
+    # Y sin decir qué permisos, los que la integración usa.
+    assert "read:people" in respuesta.data["scopes"]
+    assert "punch:delegated" in respuesta.data["scopes"]
+    assert len(respuesta.data["scopes"]) == 10
+
+
+def test_la_credencial_no_se_vuelve_a_ver(plataforma, company):
+    api = cliente(plataforma)
+    creada = api.post(
+        f"/api/platform/companies/{company.id}/applications/",
+        {"name": "GreenCityControl"},
+        format="json",
+    )
+    testigo = creada.data["token"]
+
+    lista = api.get(f"/api/platform/companies/{company.id}/applications/")
+
+    assert lista.status_code == 200
+    assert testigo not in str(lista.data)
+    # Lo que sí se ve es el rabito, para distinguir una credencial de otra.
+    assert lista.data["applications"][0]["credentials"][0]["token_hint"] == testigo[-6:]
+
+
+def test_se_pueden_pedir_permisos_a_medida(plataforma, company):
+    respuesta = cliente(plataforma).post(
+        f"/api/platform/companies/{company.id}/applications/",
+        {"name": "Reloj de la entrada", "scopes": ["punch:delegated"]},
+        format="json",
+    )
+
+    assert respuesta.status_code == 201
+    assert respuesta.data["scopes"] == ["punch:delegated"]
+
+
+def test_un_permiso_que_no_existe_se_rechaza(plataforma, company):
+    respuesta = cliente(plataforma).post(
+        f"/api/platform/companies/{company.id}/applications/",
+        {"name": "Cualquiera", "scopes": ["read:todo"]},
+        format="json",
+    )
+
+    assert respuesta.status_code == 400
+
+
+def test_rotar_deja_las_dos_credenciales_y_revocar_quita_una(plataforma, company):
+    api = cliente(plataforma)
+    app = api.post(
+        f"/api/platform/companies/{company.id}/applications/",
+        {"name": "GreenCityControl"},
+        format="json",
+    ).data
+    base = f"/api/platform/companies/{company.id}/applications/{app['id']}"
+
+    otra = api.post(f"{base}/credentials/", {"label": "la nueva"}, format="json")
+
+    assert otra.status_code == 201
+    assert otra.data["token"] != app["token"]
+    # Conviven: es lo que permite cambiarla sin cortar el servicio.
+    vivas = api.get(f"/api/platform/companies/{company.id}/applications/").data["applications"][0]
+    assert sum(1 for c in vivas["credentials"] if c["is_valid"]) == 2
+
+    fuera = api.delete(f"{base}/credentials/{otra.data['id']}/")
+
+    assert fuera.status_code == 204
+    quedan = api.get(f"/api/platform/companies/{company.id}/applications/").data["applications"][0]
+    assert sum(1 for c in quedan["credentials"] if c["is_valid"]) == 1
+
+
+def test_retirar_una_aplicacion_no_la_borra(plataforma, company):
+    """Lo que registró sigue siendo suyo; una fila menos dejaría fichajes sin dueño."""
+    api = cliente(plataforma)
+    app = api.post(
+        f"/api/platform/companies/{company.id}/applications/",
+        {"name": "GreenCityControl"},
+        format="json",
+    ).data
+
+    fuera = api.delete(f"/api/platform/companies/{company.id}/applications/{app['id']}/")
+
+    assert fuera.status_code == 204
+    lista = api.get(f"/api/platform/companies/{company.id}/applications/").data["applications"]
+    assert len(lista) == 1
+    assert lista[0]["is_active"] is False
+    assert all(not c["is_valid"] for c in lista[0]["credentials"])
+
+
+def test_la_ficha_de_la_empresa_dice_cuantas_aplicaciones_tiene(plataforma, company):
+    api = cliente(plataforma)
+    antes = api.get("/api/platform/companies/").data["companies"]
+    assert next(e for e in antes if e["tax_id"] == company.tax_id)["applications"] == 0
+
+    api.post(
+        f"/api/platform/companies/{company.id}/applications/",
+        {"name": "GreenCityControl"},
+        format="json",
+    )
+
+    despues = api.get("/api/platform/companies/").data["companies"]
+    assert next(e for e in despues if e["tax_id"] == company.tax_id)["applications"] == 1
+
+
+def test_el_administrador_de_una_empresa_no_entra_en_la_consola(company):
+    """La puerta es la misma para todo lo de plataforma, y esto lo fija aquí."""
+    suyo = User.objects.create_user(
+        email="jefa@acme.test", password="X" * 14, tenant=company, role=Role.ADMIN
+    )
+
+    respuesta = cliente(suyo).get(f"/api/platform/companies/{company.id}/applications/")
+
+    assert respuesta.status_code == 403

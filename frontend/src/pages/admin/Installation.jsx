@@ -21,10 +21,15 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 
 import {
+  authoriseApplicationOfCompany,
   createCompany,
+  getApplicationsOfCompany,
   getCompanies,
+  issueCredentialOfCompany,
   removeCompanyIdentity,
+  revokeCredentialOfCompany,
   saveCompanyIdentity,
+  withdrawApplicationOfCompany,
 } from '../../services/api.js'
 
 /** Administrar la instalación: las empresas que hay y cómo entra su gente.
@@ -45,6 +50,7 @@ export default function Installation() {
   const [error, setError] = useState(null)
   const [nueva, setNueva] = useState(null)
   const [identidadDe, setIdentidadDe] = useState(null)
+  const [credencialesDe, setCredencialesDe] = useState(null)
   const [reciénCreada, setReciénCreada] = useState(null)
 
   // La lista se pide en el efecto y se escribe **dentro de la promesa**: un
@@ -134,6 +140,7 @@ export default function Installation() {
               <TableCell>{t('CIF')}</TableCell>
               <TableCell align="right">{t('Personas')}</TableCell>
               <TableCell>{t('Cómo entran')}</TableCell>
+              <TableCell>{t('Con qué se conectan')}</TableCell>
               <TableCell />
             </TableRow>
           </TableHead>
@@ -163,7 +170,23 @@ export default function Installation() {
                     </Typography>
                   )}
                 </TableCell>
+                <TableCell>
+                  {empresa.applications > 0 ? (
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      label={t('{{cuantas}} aplicación(es)', { cuantas: empresa.applications })}
+                    />
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      {t('Ninguna todavía')}
+                    </Typography>
+                  )}
+                </TableCell>
                 <TableCell align="right">
+                  <Button size="small" onClick={() => setCredencialesDe(empresa)}>
+                    {t('Credenciales')}
+                  </Button>
                   <Button size="small" onClick={() => setIdentidadDe(empresa)}>
                     {t('Identidad')}
                   </Button>
@@ -172,7 +195,7 @@ export default function Installation() {
             ))}
             {!cargando && empresas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5}>
+                <TableCell colSpan={6}>
                   <Typography variant="body2" color="text.secondary">
                     {t('Todavía no hay ninguna empresa.')}
                   </Typography>
@@ -192,6 +215,13 @@ export default function Installation() {
           setNueva(null)
           cargar()
         }}
+      />
+
+      <CredentialsDialog
+        key={credencialesDe?.id ?? 'sin-credenciales'}
+        empresa={credencialesDe}
+        onClose={() => setCredencialesDe(null)}
+        onCambio={cargar}
       />
 
       <IdentityDialog
@@ -411,6 +441,175 @@ function IdentityDialog({ empresa, onClose, onGuardada }) {
         <Button variant="contained" onClick={guardar} disabled={guardando || !form.name || !form.issuer}>
           {t('Guardar')}
         </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+/** Las aplicaciones de una empresa, desde fuera de ella.
+ *
+ *  Es lo que enchufa GreenCity: sin esta credencial, el alta se queda en una
+ *  empresa vacía. Vivía solo dentro de la empresa, así que darla de alta obligaba
+ *  a salir de aquí, entrar con la cuenta de su administrador y volver.
+ *
+ *  **El testigo se enseña una vez.** Se guarda cifrado de un solo sentido, así que
+ *  no hay forma de volver a verlo: si se pierde, se emite otro. La pantalla lo dice
+ *  en vez de dejar que se descubra.
+ */
+function CredentialsDialog({ empresa, onClose, onCambio }) {
+  const { t } = useTranslation()
+  const [datos, setDatos] = useState(null)
+  const [error, setError] = useState(null)
+  const [trabajando, setTrabajando] = useState(false)
+  const [testigo, setTestigo] = useState(null)
+  const [vuelta, setVuelta] = useState(0)
+
+  useEffect(() => {
+    if (!empresa) return undefined
+    let vivo = true
+    getApplicationsOfCompany(empresa.id)
+      .then((d) => vivo && setDatos(d))
+      .catch(() => vivo && setError(t('No he podido leer sus aplicaciones.')))
+    return () => {
+      vivo = false
+    }
+  }, [empresa, t, vuelta])
+
+  const recargar = () => {
+    setVuelta((n) => n + 1)
+    onCambio?.()
+  }
+
+  const hacer = async (accion) => {
+    setError(null)
+    setTrabajando(true)
+    try {
+      await accion()
+      recargar()
+    } catch (fallo) {
+      const dicho = fallo?.response?.data?.detail ?? fallo?.response?.data?.error?.message
+      setError(dicho || t('No ha salido bien.'))
+    } finally {
+      setTrabajando(false)
+    }
+  }
+
+  const aplicaciones = datos?.applications ?? []
+  const laDeGreenCity = aplicaciones.find((a) => a.is_active)
+
+  return (
+    <Dialog open={Boolean(empresa)} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>{t('Credenciales de {{empresa}}', { empresa: empresa?.name ?? '' })}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          {error && <Alert severity="error">{error}</Alert>}
+
+          {testigo && (
+            <Alert severity="success" onClose={() => setTestigo(null)}>
+              <Typography variant="body2">
+                {t('Cópiala ahora: no se vuelve a enseñar.')}
+              </Typography>
+              <Typography variant="body2" sx={{ fontFamily: 'monospace', mt: 0.5, wordBreak: 'break-all' }}>
+                {testigo}
+              </Typography>
+            </Alert>
+          )}
+
+          {aplicaciones.length === 0 && (
+            <Typography variant="body2" color="text.secondary">
+              {t('Esta empresa no tiene ninguna aplicación autorizada. Sin credencial, GreenCity no puede hablar con ella.')}
+            </Typography>
+          )}
+
+          {aplicaciones.map((app) => (
+            <Paper key={app.id} variant="outlined" sx={{ p: 1.5 }}>
+              <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                <Box>
+                  <Typography variant="body2">
+                    {app.name}
+                    {!app.is_active && ` · ${t('retirada')}`}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {t('{{cuantos}} permiso(s)', { cuantos: app.scopes.length })}
+                  </Typography>
+                </Box>
+                {app.is_active && (
+                  <Box>
+                    <Button
+                      size="small"
+                      disabled={trabajando}
+                      onClick={() =>
+                        hacer(async () => {
+                          const nueva = await issueCredentialOfCompany(empresa.id, app.id)
+                          setTestigo(nueva.token)
+                        })
+                      }
+                    >
+                      {t('Emitir otra')}
+                    </Button>
+                    <Button
+                      size="small"
+                      color="error"
+                      disabled={trabajando}
+                      onClick={() => hacer(() => withdrawApplicationOfCompany(empresa.id, app.id))}
+                    >
+                      {t('Retirar')}
+                    </Button>
+                  </Box>
+                )}
+              </Stack>
+
+              {app.credentials.map((c) => (
+                <Stack
+                  key={c.id}
+                  direction="row"
+                  sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 1 }}
+                >
+                  <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
+                    …{c.token_hint}
+                    {c.label ? ` · ${c.label}` : ''}
+                    {!c.is_valid && ` · ${t('revocada')}`}
+                  </Typography>
+                  {c.is_valid && (
+                    <Button
+                      size="small"
+                      color="error"
+                      disabled={trabajando}
+                      onClick={() =>
+                        hacer(() => revokeCredentialOfCompany(empresa.id, app.id, c.id))
+                      }
+                    >
+                      {t('Revocar')}
+                    </Button>
+                  )}
+                </Stack>
+              ))}
+            </Paper>
+          ))}
+
+          {!laDeGreenCity && (
+            <Button
+              variant="contained"
+              disabled={trabajando}
+              onClick={() =>
+                hacer(async () => {
+                  const creada = await authoriseApplicationOfCompany(empresa.id, {
+                    name: 'GreenCityControl',
+                  })
+                  setTestigo(creada.token)
+                })
+              }
+            >
+              {t('Autorizar GreenCity')}
+            </Button>
+          )}
+          <Typography variant="caption" color="text.secondary">
+            {t('«Autorizar GreenCity» concede de una vez los diez permisos que la integración usa. Esta credencial es la que se pega en GreenCity, en Gestión de Permisos.')}
+          </Typography>
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>{t('Cerrar')}</Button>
       </DialogActions>
     </Dialog>
   )
