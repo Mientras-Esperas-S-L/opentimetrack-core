@@ -8,10 +8,16 @@ import { NAV_ADMIN, NAV_ME } from './navigation.jsx'
 
 /** Phone navigation.
  *
- *  Only four slots, because five is where the labels start truncating. The
- *  worker's three screens always fit; management collapses to a single entry
- *  that lands on the panel, which is where somebody managing from a phone is
- *  going anyway.
+ *  Four entries for whoever only clocks in, five for whoever also manages:
+ *  management collapses into a single one that lands on the panel, which is where
+ *  somebody managing from a phone is going anyway.
+ *
+ *  **The five have to be told to share the width.** MUI gives each action a minimum
+ *  of 80px plus padding, and five of those do not fit in a phone: measured in devel,
+ *  the first started at -20 and the last ended at 380 on a 360px screen, and at -40
+ *  and 360 on a 320px one. Both ends were cut off, which is the header comment this
+ *  file used to carry --- «five is where the labels start truncating» --- describing
+ *  a case the code then went and created.
  */
 export default function BottomNav({ canManage }) {
   const { t } = useTranslation()
@@ -48,7 +54,14 @@ export default function BottomNav({ canManage }) {
         sx={{ bgcolor: 'background.paper' }}
       >
         {items.map((item) => (
-          <BottomNavigationAction key={item.to} label={t(item.label)} icon={item.icon} />
+          <BottomNavigationAction
+            key={item.to}
+            label={t(item.label)}
+            icon={item.icon}
+            //  Sin mínimo: que se repartan lo que hay. Con el mínimo de MUI, cinco
+            //  no caben y se salen por los dos lados.
+            sx={{ minWidth: 0, px: 0.5 }}
+          />
         ))}
       </BottomNavigation>
     </Paper>
