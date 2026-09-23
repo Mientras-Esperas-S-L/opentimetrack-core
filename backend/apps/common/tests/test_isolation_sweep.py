@@ -660,6 +660,9 @@ def test_every_route_is_covered_by_this_sweep():
         "api/help/search/",
         "api/help/articles/<slug>/",
         "api/platform/me/",
+        # Su barrido ---que el administrador de una empresa no lo lee--- está en
+        # apps/tenants/tests/test_registro_de_la_instalacion.py.
+        "api/platform/audit/",
         "api/platform/admins/",
         "api/platform/admins/<uuid:admin_id>/",
         "api/platform/admins/<uuid:admin_id>/password/",

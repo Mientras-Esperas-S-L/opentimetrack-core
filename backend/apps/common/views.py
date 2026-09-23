@@ -28,6 +28,17 @@ def _check_database() -> tuple[bool, str]:
 #: Los tres guardianes de `audit.0002_append_only_trigger`.
 GUARDIANES = ("audit_log_no_update", "audit_log_no_delete", "audit_log_no_truncate")
 
+#: Las dos tablas inmutables y los guardianes de cada una. La de la instalación
+#: llegó después: lo que hacen sus cuentas tampoco se puede reescribir.
+GUARDIANES_POR_TABLA = {
+    "audit_auditlog": GUARDIANES,
+    "audit_platformauditentry": (
+        "platform_audit_no_update",
+        "platform_audit_no_delete",
+        "platform_audit_no_truncate",
+    ),
+}
+
 
 def _check_audit_is_append_only() -> tuple[bool, str]:
     """Que el rastro siga siendo inmutable **en esta base**, no en la migración.
@@ -57,13 +68,16 @@ def _check_audit_is_append_only() -> tuple[bool, str]:
     """
     if connection.vendor != "postgresql":
         return True, "no aplica"
+    estado: dict[str, str] = {}
     try:
         with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT tgname, tgenabled FROM pg_trigger "
-                "WHERE tgrelid = 'audit_auditlog'::regclass AND NOT tgisinternal"
-            )
-            estado = dict(cursor.fetchall())
+            for tabla in GUARDIANES_POR_TABLA:
+                cursor.execute(
+                    "SELECT tgname, tgenabled FROM pg_trigger "
+                    "WHERE tgrelid = %s::regclass AND NOT tgisinternal",
+                    [tabla],
+                )
+                estado.update(cursor.fetchall())
     except Exception as exc:
         return False, exc.__class__.__name__
 
@@ -72,10 +86,9 @@ def _check_audit_is_append_only() -> tuple[bool, str]:
     #: el servidor que atiende no ocurre.
     ENCENDIDOS = {"O", "A"}
 
-    faltan = [nombre for nombre in GUARDIANES if nombre not in estado]
-    apagados = [
-        nombre for nombre in GUARDIANES if nombre in estado and estado[nombre] not in ENCENDIDOS
-    ]
+    todos = [nombre for nombres in GUARDIANES_POR_TABLA.values() for nombre in nombres]
+    faltan = [nombre for nombre in todos if nombre not in estado]
+    apagados = [nombre for nombre in todos if nombre in estado and estado[nombre] not in ENCENDIDOS]
     if faltan or apagados:
         partes = []
         if faltan:

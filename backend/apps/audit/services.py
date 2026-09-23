@@ -96,3 +96,40 @@ def record_view_of_others(*, request, target_employee, note: str = "") -> None:
         target_label=target_employee.get_full_name() or target_employee.email,
         note=note,
     )
+
+
+def record_platform(
+    *,
+    action: str,
+    actor,
+    company=None,
+    target=None,
+    target_type: str = "",
+    target_label: str = "",
+    changes: dict | None = None,
+    note: str = "",
+) -> None:
+    """Adds an entry to the installation's own trail. Same promises as `record`.
+
+    Never raises, lands only if the request commits, and copies the labels. It
+    is the installation's side only: what it does to a company also goes to
+    that company's trail, with `record`, so its administrator can see it.
+    """
+    from apps.audit.models import PlatformAuditEntry
+
+    try:
+        entry = PlatformAuditEntry(
+            actor=actor if getattr(actor, "pk", None) else None,
+            actor_label=_label_of(actor),
+            action=action,
+            company=company,
+            company_label=(company.name[:255] if company is not None else ""),
+            target_type=target_type or (type(target).__name__.lower() if target else ""),
+            target_id=getattr(target, "pk", None),
+            target_label=target_label or (str(target)[:200] if target else ""),
+            changes=changes or {},
+            note=note[:300],
+        )
+        transaction.on_commit(entry.save)
+    except Exception:
+        log.exception("Could not record an installation audit entry: %s", action)

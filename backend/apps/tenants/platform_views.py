@@ -25,12 +25,13 @@ from django.db.models import Count
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import BasePermission
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.audit.models import AuditAction
-from apps.audit.services import record
+from apps.audit.models import AuditAction, PlatformAction, PlatformAuditEntry
+from apps.audit.services import record, record_platform
 from apps.common.models import set_current_tenant
 from apps.tenants.application_views import (
     ApplicationSerializer,
@@ -178,6 +179,14 @@ class CompaniesView(APIView):
         creado = alta.save()
         company, admin = creado["company"], creado["user"]
         set_current_tenant(company.id)
+        record_platform(
+            action=PlatformAction.COMPANY_CREATED,
+            actor=request.user,
+            company=company,
+            target=company,
+            target_label=company.name,
+            changes={"tax_id": company.tax_id, "administrator": admin.email},
+        )
 
         return Response(
             {**_empresa(company), "administrator": {"email": admin.email, "password": clave}},
@@ -263,6 +272,14 @@ class CompanyIdentityView(APIView):
             target_label=f"{proveedor.name} ({proveedor.issuer})",
             note=", ".join(sorted(pedidos)) or "sin dominios",
         )
+        record_platform(
+            action=PlatformAction.IDENTITY_CHANGED,
+            actor=request.user,
+            company=company,
+            target_type="identity provider",
+            target_label=f"{proveedor.name} ({proveedor.issuer})",
+            note=", ".join(sorted(pedidos)) or "sin dominios",
+        )
 
         company.refresh_from_db()
         return Response(_empresa(company))
@@ -277,6 +294,14 @@ class CompanyIdentityView(APIView):
         if fuera is not None:
             record(
                 action=AuditAction.IDENTITY_CHANGED,
+                actor=request.user,
+                company=company,
+                target_type="identity provider",
+                target_label=f"{fuera.name} ({fuera.issuer})",
+                note="retirado: su gente vuelve a entrar con contraseña",
+            )
+            record_platform(
+                action=PlatformAction.IDENTITY_CHANGED,
                 actor=request.user,
                 company=company,
                 target_type="identity provider",
@@ -399,6 +424,14 @@ class CompanyApplicationsView(_PorEmpresa):
             changes={"scopes": aplicacion.scopes},
             note=str(_("Authorised from the installation console")),
         )
+        record_platform(
+            action=PlatformAction.APPLICATION_AUTHORISED,
+            actor=request.user,
+            company=company,
+            target=aplicacion,
+            target_label=aplicacion.name,
+            changes={"scopes": aplicacion.scopes},
+        )
 
         return Response(
             {
@@ -430,6 +463,7 @@ class CompanyApplicationView(_PorEmpresa):
         datos.is_valid(raise_exception=True)
         v = datos.validated_data
         antes = list(aplicacion.scopes)
+        activa_antes = aplicacion.is_active
 
         if "scopes" in v:
             aplicacion.scopes = [str(s) for s in v["scopes"]]
@@ -446,6 +480,20 @@ class CompanyApplicationView(_PorEmpresa):
                 target_label=aplicacion.name,
                 changes={"scopes": [antes, aplicacion.scopes]},
                 note=str(_("Permissions changed")),
+            )
+        cambios = {}
+        if aplicacion.scopes != antes:
+            cambios["scopes"] = [antes, aplicacion.scopes]
+        if aplicacion.is_active != activa_antes:
+            cambios["is_active"] = [activa_antes, aplicacion.is_active]
+        if cambios:
+            record_platform(
+                action=PlatformAction.APPLICATION_CHANGED,
+                actor=request.user,
+                company=aplicacion.tenant,
+                target=aplicacion,
+                target_label=aplicacion.name,
+                changes=cambios,
             )
         return Response(ApplicationSerializer(aplicacion).data)
 
@@ -469,6 +517,13 @@ class CompanyApplicationView(_PorEmpresa):
 
         record(
             action=AuditAction.APPLICATION_REVOKED,
+            actor=request.user,
+            company=aplicacion.tenant,
+            target=aplicacion,
+            target_label=aplicacion.name,
+        )
+        record_platform(
+            action=PlatformAction.APPLICATION_WITHDRAWN,
             actor=request.user,
             company=aplicacion.tenant,
             target=aplicacion,
@@ -522,6 +577,15 @@ class CompanyCredentialsView(_PorEmpresa):
             target_label=aplicacion.name,
             note=str(_("Credential issued: …%(hint)s")) % {"hint": credencial.token_hint},
         )
+        # La pista, que es lo que la pantalla ya enseña de cada una. El testigo, nunca.
+        record_platform(
+            action=PlatformAction.CREDENTIAL_ISSUED,
+            actor=request.user,
+            company=company,
+            target=aplicacion,
+            target_label=aplicacion.name,
+            note=f"…{credencial.token_hint}",
+        )
         return Response(
             {**CredentialSerializer(credencial).data, "token": testigo},
             status=status.HTTP_201_CREATED,
@@ -551,6 +615,14 @@ class CompanyCredentialView(_PorEmpresa):
                 target=credencial.application,
                 target_label=credencial.application.name,
                 note=str(_("Credential revoked: …%(hint)s")) % {"hint": credencial.token_hint},
+            )
+            record_platform(
+                action=PlatformAction.CREDENTIAL_REVOKED,
+                actor=request.user,
+                company=company,
+                target=credencial.application,
+                target_label=credencial.application.name,
+                note=f"…{credencial.token_hint}",
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -640,8 +712,15 @@ class PlatformAdminsView(APIView):
             last_name=v["last_name"],
             tenant=None,
         )
-        # Sin empresa no hay rastro que escribir: el registro va por empresa y una
-        # entrada sin ella sería una que otra podría leer. Lo dice `audit.services`.
+        # En el registro de la instalación, que no va por empresa. El de las
+        # empresas no: una entrada sin empresa sería una que otra podría leer.
+        record_platform(
+            action=PlatformAction.ADMIN_CREATED,
+            actor=request.user,
+            target=creado,
+            target_type="installation account",
+            target_label=creado.email,
+        )
         return Response(
             {**_administrador(creado), "password": clave}, status=status.HTTP_201_CREATED
         )
@@ -682,6 +761,13 @@ class PlatformAdminPasswordView(_UnaCuenta):
         cuenta.set_password(clave)
         cuenta.is_active = True
         cuenta.save(update_fields=["password", "is_active"])
+        record_platform(
+            action=PlatformAction.ADMIN_PASSWORD_RESET,
+            actor=request.user,
+            target=cuenta,
+            target_type="installation account",
+            target_label=cuenta.email,
+        )
         return Response({**_administrador(cuenta), "password": clave})
 
 
@@ -720,6 +806,13 @@ class PlatformAdminView(_UnaCuenta):
             )
         cuenta.is_active = False
         cuenta.save(update_fields=["is_active"])
+        record_platform(
+            action=PlatformAction.ADMIN_DEACTIVATED,
+            actor=request.user,
+            target=cuenta,
+            target_type="installation account",
+            target_label=cuenta.email,
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -736,3 +829,38 @@ class WhoAmIView(APIView):
     @extend_schema(request=None, responses={200: dict})
     def get(self, request):
         return Response({"platform_admin": True, "roles": [r.value for r in Role]})
+
+
+def _asiento(entrada: PlatformAuditEntry) -> dict:
+    return {
+        "id": str(entrada.id),
+        "at": entrada.at.isoformat(),
+        "actor": entrada.actor_label,
+        "action": entrada.action,
+        "action_label": entrada.get_action_display(),
+        "company": str(entrada.company_id) if entrada.company_id else None,
+        "company_label": entrada.company_label,
+        "target_type": entrada.target_type,
+        "target_label": entrada.target_label,
+        "changes": entrada.changes,
+        "note": entrada.note,
+    }
+
+
+@extend_schema(tags=["platform"])
+class PlatformAuditView(APIView):
+    """Lo que han hecho las cuentas de la instalación, lo más reciente arriba.
+
+    Solo lo de la instalación. Lo que pasa **dentro** de una empresa está en el
+    rastro de esa empresa y aquí no se ve: esta pantalla no es una puerta lateral.
+    """
+
+    permission_classes = [IsPlatformSuperuser]
+
+    @extend_schema(request=None, responses={200: dict})
+    def get(self, request):
+        pagina = PageNumberPagination()
+        filas = pagina.paginate_queryset(
+            PlatformAuditEntry.objects.order_by("-at"), request, view=self
+        )
+        return pagina.get_paginated_response([_asiento(e) for e in filas])
