@@ -5,17 +5,44 @@ Estado entre pasadas. El prompt está en `consola-instalacion-loop.md`.
 | # | Trozo | Estado |
 |---|---|---|
 | T1 | Registro de lo que hacen las cuentas de instalación | **hecho** (PR core 26) |
-| T2 | Editar y desactivar una empresa | **hecho** (PR core 27) |
-| T3 | Los administradores de cada empresa y su contraseña | pendiente |
+| T2 | Editar y desactivar una empresa | **hecho** (PR core 27 y 28) |
+| T3 | Los administradores de cada empresa y su contraseña | **hecho** (PR core 29) |
 | T4 | El estado de cada empresa de un vistazo | pendiente |
 
 ## Qué toca ahora
 
-T3: los administradores de cada empresa y su contraseña.
+T4: el estado de cada empresa de un vistazo.
 
 ## Qué se hizo en la última pasada
 
-**T2**, 23/09/2026.
+**T3**, 23/09/2026.
+
+En la ficha de cada empresa, «Quién la administra»: solo administradores, con su
+último acceso y si entran con la cuenta de su empresa. «Mandar enlace» les envía
+a su correo el enlace para poner contraseña; la consola no lo ve nunca.
+
+**Dos fallos de fondo que salieron midiendo:**
+
+- **`last_login` no se guardaba nunca.** La cuenta de instalación recién entrada
+  seguía con él vacío, así que la columna nueva habría dicho «No ha entrado nunca»
+  de todo el mundo. Y el enlace de contraseña firma con ese campo para morir
+  cuando la persona entra: seguía valiendo. Arreglado en `issue_tokens`, salvo
+  para las sesiones que pide una aplicación en nombre de alguien. Comprobado en
+  devel después.
+- **El relé rechaza la dirección y la pantalla pedía reintentar.** Con
+  `alcaldia@bucle.test` el relé contesta 554; ahora se nombra la dirección y se
+  pide comprobarla.
+
+**Sin medir en devel: un envío que llegue.** Las direcciones de las empresas de
+prueba son `.test` y el relé las rechaza; las demás son buzones de verdad y no
+quise escribir a nadie. El envío correcto lo cubre la prueba con `mail.outbox`.
+
+**Y el rojo del PR 27**: la prueba de la vuelta del proveedor dependía de
+`SSO_WEB_URL`, que el contenedor trae y el CI no. Arreglada en el PR 28, y
+`como-el-ci.sh` corre ya las pruebas sin esa variable.
+
+### Antes: T2
+23/09/2026.
 
 `PATCH /api/platform/companies/<id>/` para la ficha y el estado, y el botón
 «Ficha» en cada fila. Desactivar pide el nombre escrito, también en el servidor.
@@ -93,6 +120,10 @@ lo rechaza por eso y no por el guardián. Se prueba por la sonda de salud.
 
 ## Lo que espera decisión del usuario
 
-- **Producción, cuando se despliegue, trae tres migraciones** (`audit/0021` a
-  `0023`): copia previa de la base antes. Y hasta entonces, en producción los
+- **`main` de opentimetrack-core no tiene ninguna protección**: ni PR obligatorio
+  ni comprobaciones. El PR 27 entró con el backend en rojo por eso. Protegerla es
+  un cambio de configuración del repositorio y lo decides tú.
+
+- **Producción, cuando se despliegue, trae cuatro migraciones** (`audit/0021` a
+  `0024`): copia previa de la base antes. Y hasta entonces, en producción los
   rechazos de la consola salen con el mensaje genérico.
