@@ -162,11 +162,10 @@ export default function Installation() {
           columna de palabra por línea---. Así el documento se queda en 360 y lo
           único que se arrastra es la tabla. */}
       <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
-        <Table size="small" sx={{ minWidth: 900 }}>
+        <Table size="small" sx={{ minWidth: 820 }}>
           <TableHead>
             <TableRow>
               <TableCell>{t('Empresa')}</TableCell>
-              <TableCell>{t('CIF')}</TableCell>
               <TableCell align="right">{t('Personas')}</TableCell>
               <TableCell>{t('Cómo entran')}</TableCell>
               <TableCell>{t('Actividad')}</TableCell>
@@ -189,10 +188,11 @@ export default function Installation() {
                     />
                   )}
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                    {empresa.time_zone}
+                    {/* Aquí y no en su columna: 106 px que, a 1280, dejaban los
+                        botones fuera. */}
+                    {empresa.tax_id} · {empresa.time_zone}
                   </Typography>
                 </TableCell>
-                <TableCell>{empresa.tax_id}</TableCell>
                 <TableCell align="right">
                   {/* Las activas: una baja no ficha, y contarla hacía parecer viva a
                       una empresa que ya no tiene a nadie dentro. */}
@@ -267,7 +267,7 @@ export default function Installation() {
             ))}
             {!cargando && empresas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7}>
+                <TableCell colSpan={6}>
                   <Typography variant="body2" color="text.secondary">
                     {t('Todavía no hay ninguna empresa.')}
                   </Typography>
