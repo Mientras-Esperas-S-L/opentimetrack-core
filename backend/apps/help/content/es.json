@@ -288,6 +288,25 @@
         {
           "kind": "heading",
           "data": {
+            "text": "Cuando el responsable no puede entrar",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "En la ficha de la empresa sale quién la administra y cuándo entró por última vez. El botón Mandar enlace le envía a su correo un enlace para poner contraseña nueva. El enlace no aparece aquí: si apareciera, podrías entrar como esa persona en los datos de su empresa."
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Si esa persona entra con la cuenta de su empresa, aquí no tiene contraseña y el botón no sale: el problema está en su proveedor de identidad."
+          }
+        },
+        {
+          "kind": "heading",
+          "data": {
             "text": "El registro",
             "level": 3
           }

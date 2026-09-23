@@ -37,6 +37,8 @@ from apps.tenants.me_api import ApplicationMeView
 from apps.tenants.people_api import ApplicationPeopleView, ApplicationPersonView
 from apps.tenants.platform_views import (
     CompaniesView,
+    CompanyAdminLinkView,
+    CompanyAdminsView,
     CompanyApplicationsView,
     CompanyApplicationView,
     CompanyCredentialsView,
@@ -223,6 +225,16 @@ urlpatterns = [
         "/credentials/<uuid:credential_id>/",
         CompanyCredentialView.as_view(),
         name="platform-company-credential",
+    ),
+    path(
+        "api/platform/companies/<uuid:company_id>/admins/",
+        CompanyAdminsView.as_view(),
+        name="platform-company-admins",
+    ),
+    path(
+        "api/platform/companies/<uuid:company_id>/admins/<uuid:person_id>/link/",
+        CompanyAdminLinkView.as_view(),
+        name="platform-company-admin-link",
     ),
     path(
         "api/platform/companies/<uuid:company_id>/identity/",

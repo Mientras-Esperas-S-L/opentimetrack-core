@@ -43,7 +43,12 @@ en_el_api() { podman exec "$API" "$@"; }
 paso 'ruff check .' en_el_api ruff check .
 paso 'ruff format --check .' en_el_api ruff format --check .
 paso 'migraciones sin generar' en_el_api python manage.py makemigrations --check --dry-run
-paso 'pytest' en_el_api python -m pytest -q
+# Con el entorno del CI, no con el del contenedor. El contenedor trae variables
+# que el CI no tiene, y una prueba que dependa de ellas sin fijarlas pasa aquí y
+# falla allí: le pasó el 23/09/2026 a la de la empresa desactivada con
+# `SSO_WEB_URL`, y el PR 27 entró en main en rojo. Si aparece otra, va a la lista.
+SIN_EL_ENTORNO_LOCAL=(-e SSO_WEB_URL=)
+paso 'pytest' podman exec "${SIN_EL_ENTORNO_LOCAL[@]}" "$API" python -m pytest -q
 paso 'el esquema OpenAPI compila' en_el_api python manage.py spectacular --fail-on-warn --file /dev/null
 
 # --- Frontend ----------------------------------------------------------------

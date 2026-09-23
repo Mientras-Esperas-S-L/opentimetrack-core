@@ -668,6 +668,8 @@ def test_every_route_is_covered_by_this_sweep():
         "api/platform/admins/<uuid:admin_id>/password/",
         "api/platform/companies/",
         "api/platform/companies/<uuid:company_id>/",
+        "api/platform/companies/<uuid:company_id>/admins/",
+        "api/platform/companies/<uuid:company_id>/admins/<uuid:person_id>/link/",
         "api/platform/companies/<uuid:company_id>/identity/",
         "api/platform/companies/<uuid:company_id>/applications/",
         "api/platform/companies/<uuid:company_id>/applications/<uuid:application_id>/",
