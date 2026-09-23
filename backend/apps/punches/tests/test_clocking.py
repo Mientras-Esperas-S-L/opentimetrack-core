@@ -132,13 +132,13 @@ def test_the_source_is_recorded_and_delegation_is_distinguishable(company, emplo
             employee=employee,
             company=company,
             source=PunchSource.DELEGATED,
-            source_application="GreenCity",
+            source_application="Conector",
             recorded_by=admin,
         )
 
     assert not own.was_delegated
     assert delegated.was_delegated
-    assert delegated.source_application == "GreenCity"
+    assert delegated.source_application == "Conector"
     assert delegated.recorded_by == admin
 
 

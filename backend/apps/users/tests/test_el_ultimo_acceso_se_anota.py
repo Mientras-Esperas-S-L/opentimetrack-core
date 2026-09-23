@@ -58,7 +58,7 @@ def test_entrar_mata_el_enlace_de_contrasena_de_antes(jefa):
 def test_una_sesion_pedida_por_una_aplicacion_no_cuenta_como_entrar(jefa):
     with tenant_context(jefa.tenant_id):
         app = Application.objects.create(
-            tenant=jefa.tenant, name="GreenCity", scopes=[s.value for s in ApplicationScope]
+            tenant=jefa.tenant, name="Conector", scopes=[s.value for s in ApplicationScope]
         )
     issue_tokens(jefa, acting_application=app)
     jefa.refresh_from_db()

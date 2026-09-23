@@ -12,9 +12,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-23 12:46+0000\n"
+"POT-Creation-Date: 2026-09-23 13:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Last-Translator: OpenTimeTrack contributors\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
@@ -3012,7 +3012,7 @@ msgstr ""
 "mateix codi que %(other)s: el REGCON és el que distingeix dos convenis "
 "semblants"
 
-#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:463
+#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:464
 #, python-format
 msgid "Unknown permissions: %(list)s."
 msgstr "Permisos desconeguts: %(list)s."
@@ -3021,15 +3021,15 @@ msgstr "Permisos desconeguts: %(list)s."
 msgid "Grant at least one permission, or the application can do nothing."
 msgstr "Concedeix almenys un permís; si no, l'aplicació no pot fer res."
 
-#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:847
+#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:848
 msgid "Permissions changed"
 msgstr "Va canviar els permisos"
 
-#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:926
+#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:927
 msgid "Reactivate the application before issuing a credential."
 msgstr "Reactiva l'aplicació abans d'emetre una credencial."
 
-#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:943
+#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:944
 #, python-format
 msgid "Credential issued: …%(hint)s"
 msgstr "Credencial emesa: …%(hint)s"
@@ -3038,7 +3038,7 @@ msgstr "Credencial emesa: …%(hint)s"
 msgid "That credential does not exist or is already revoked."
 msgstr "Aquesta credencial no existeix o ja està revocada."
 
-#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:982
+#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:983
 #, python-format
 msgid "Credential revoked: …%(hint)s"
 msgstr "Credencial revocada: …%(hint)s"
@@ -3280,8 +3280,8 @@ msgid "This company has no leave type with that code."
 msgstr "Aquesta empresa no té cap tipus de permís amb aquest codi."
 
 #: apps/tenants/identity.py:33
-msgid "Display name, e.g. 'GreenCityControl'."
-msgstr "Nom visible, per exemple «GreenCityControl»."
+msgid "Display name, e.g. 'Company directory'."
+msgstr "Nom visible, per exemple «Directori de l'empresa»."
 
 #: apps/tenants/identity.py:36 apps/users/models.py:681
 msgid "issuer"
@@ -3636,92 +3636,92 @@ msgid "Somebody else in this company already uses that identity."
 msgstr "Una altra persona d'aquesta empresa ja fa servir aquesta identitat."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:84
+#: apps/tenants/platform_views.py:85
 msgid "Only a platform superuser can administer the installation."
 msgstr "Només un superusuari de plataforma pot administrar la instal·lació."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:368 apps/tenants/platform_views.py:425
-#: apps/tenants/platform_views.py:494
+#: apps/tenants/platform_views.py:369 apps/tenants/platform_views.py:426
+#: apps/tenants/platform_views.py:495
 msgid "No such company."
 msgstr "Aquesta empresa no existeix."
 
-#: apps/tenants/platform_views.py:513
+#: apps/tenants/platform_views.py:514
 msgid "The name cannot be empty."
 msgstr "El nom no pot quedar buit."
 
-#: apps/tenants/platform_views.py:519
+#: apps/tenants/platform_views.py:520
 msgid "The tax number cannot be empty."
 msgstr "L'identificador fiscal no pot quedar buit."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:522 apps/users/serializers.py:582
+#: apps/tenants/platform_views.py:523 apps/users/serializers.py:582
 msgid "A company with this tax number already exists."
 msgstr "Ja existeix una empresa amb aquest NIF."
 
-#: apps/tenants/platform_views.py:537
+#: apps/tenants/platform_views.py:538
 msgid "Type the company's name exactly to deactivate it."
 msgstr "Escriu el nom de l'empresa tal qual per desactivar-la."
 
-#: apps/tenants/platform_views.py:592 apps/tenants/platform_views.py:610
+#: apps/tenants/platform_views.py:593 apps/tenants/platform_views.py:611
 msgid "Changed from the installation console"
 msgstr "Canviat des de la consola de la instal·lació"
 
-#: apps/tenants/platform_views.py:669
+#: apps/tenants/platform_views.py:670
 msgid "That person does not administer this company."
 msgstr "Aquesta persona no administra aquesta empresa."
 
-#: apps/tenants/platform_views.py:673
+#: apps/tenants/platform_views.py:674
 msgid "The company is deactivated: the link would not let anybody in."
 msgstr "L'empresa està desactivada: l'enllaç no deixaria entrar ningú."
 
-#: apps/tenants/platform_views.py:675
+#: apps/tenants/platform_views.py:676
 msgid "That account is deactivated: the link would not let them in."
 msgstr "Aquest compte està desactivat: l'enllaç no el deixaria entrar."
 
-#: apps/tenants/platform_views.py:678
+#: apps/tenants/platform_views.py:679
 msgid ""
 "That person signs in with their company's account and has no password here."
 msgstr ""
 "Aquesta persona entra amb el compte de la seva empresa i aquí no té "
 "contrasenya."
 
-#: apps/tenants/platform_views.py:693
+#: apps/tenants/platform_views.py:694
 #, python-format
 msgid "The mail server refuses the address %(email)s. Check that it is right."
 msgstr ""
 "El servidor de correu rebutja l'adreça %(email)s. Comprova que és correcta."
 
-#: apps/tenants/platform_views.py:704
+#: apps/tenants/platform_views.py:705
 msgid "The email could not be sent. Nothing has changed; try again later."
 msgstr ""
 "No s'ha pogut enviar el correu. No ha canviat res; torna-ho a provar més "
 "tard."
 
-#: apps/tenants/platform_views.py:715
+#: apps/tenants/platform_views.py:716
 msgid "Sent from the installation console"
 msgstr "Enviat des de la consola de la instal·lació"
 
-#: apps/tenants/platform_views.py:790
+#: apps/tenants/platform_views.py:791
 msgid "Authorised from the installation console"
 msgstr "Autoritzada des de la consola de la instal·lació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:825 apps/tenants/platform_views.py:876
-#: apps/tenants/platform_views.py:923
+#: apps/tenants/platform_views.py:826 apps/tenants/platform_views.py:877
+#: apps/tenants/platform_views.py:924
 msgid "No such application."
 msgstr "Aquesta aplicació no existeix."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:973
+#: apps/tenants/platform_views.py:974
 msgid "No such credential."
 msgstr "Aquesta credencial no existeix."
 
-#: apps/tenants/platform_views.py:1049
+#: apps/tenants/platform_views.py:1050
 msgid "There is already an installation account with that address."
 msgstr "Ja hi ha un compte de la instal·lació amb aquesta adreça."
 
-#: apps/tenants/platform_views.py:1062
+#: apps/tenants/platform_views.py:1063
 #, python-format
 msgid ""
 "That address already belongs to somebody in %(company)s. An installation "
@@ -3735,15 +3735,15 @@ msgstr ""
 "una altra adreça."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:1123 apps/tenants/platform_views.py:1155
+#: apps/tenants/platform_views.py:1124 apps/tenants/platform_views.py:1156
 msgid "No such installation account."
 msgstr "Aquest compte de la instal·lació no existeix."
 
-#: apps/tenants/platform_views.py:1159
+#: apps/tenants/platform_views.py:1160
 msgid "You cannot deactivate the account you are using."
 msgstr "No pots desactivar el compte amb què has entrat."
 
-#: apps/tenants/platform_views.py:1166
+#: apps/tenants/platform_views.py:1167
 msgid ""
 "This is the only account that can administer the installation. Create "
 "another one before deactivating it."
@@ -5135,7 +5135,8 @@ msgstr "Una aplicació no pot canviar la contrasenya de ningú."
 #: apps/users/views.py:937
 msgid ""
 "You sign in with your company's account: your password is changed there."
-msgstr "Entres amb el compte de la teva empresa: la contrasenya es canvia allà."
+msgstr ""
+"Entres amb el compte de la teva empresa: la contrasenya es canvia allà."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/users/views.py:945

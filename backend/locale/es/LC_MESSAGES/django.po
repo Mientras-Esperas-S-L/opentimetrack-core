@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-23 12:46+0000\n"
+"POT-Creation-Date: 2026-09-23 13:06+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
-"Last-Translator: Green City Control <desarrollo@greencitycontrol.com>\n"
+"Last-Translator: OpenTimeTrack contributors\n"
 "Language-Team: Español\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -2768,7 +2768,7 @@ msgstr ""
 "mismo código que %(other)s: el REGCON es lo que distingue dos convenios "
 "parecidos"
 
-#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:463
+#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:464
 #, python-format
 msgid "Unknown permissions: %(list)s."
 msgstr "Permisos desconocidos: %(list)s."
@@ -2777,15 +2777,15 @@ msgstr "Permisos desconocidos: %(list)s."
 msgid "Grant at least one permission, or the application can do nothing."
 msgstr "Concede al menos un permiso; si no, la aplicación no puede hacer nada."
 
-#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:847
+#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:848
 msgid "Permissions changed"
 msgstr "Cambió los permisos"
 
-#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:926
+#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:927
 msgid "Reactivate the application before issuing a credential."
 msgstr "Reactiva la aplicación antes de emitir una credencial."
 
-#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:943
+#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:944
 #, python-format
 msgid "Credential issued: …%(hint)s"
 msgstr "Credencial emitida: …%(hint)s"
@@ -2794,7 +2794,7 @@ msgstr "Credencial emitida: …%(hint)s"
 msgid "That credential does not exist or is already revoked."
 msgstr "Esa credencial no existe o ya está revocada."
 
-#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:982
+#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:983
 #, python-format
 msgid "Credential revoked: …%(hint)s"
 msgstr "Credencial revocada: …%(hint)s"
@@ -3005,8 +3005,8 @@ msgid "This company has no leave type with that code."
 msgstr "Esta empresa no tiene ningún tipo de permiso con ese código."
 
 #: apps/tenants/identity.py:33
-msgid "Display name, e.g. 'GreenCityControl'."
-msgstr "Nombre visible, por ejemplo «GreenCityControl»."
+msgid "Display name, e.g. 'Company directory'."
+msgstr "Nombre visible, por ejemplo «Directorio de la empresa»."
 
 #: apps/tenants/identity.py:36 apps/users/models.py:681
 msgid "issuer"
@@ -3373,88 +3373,88 @@ msgstr "Otra persona de esta empresa ya usa ese número de empleado."
 msgid "Somebody else in this company already uses that identity."
 msgstr "Otra persona de esta empresa ya usa esa identidad."
 
-#: apps/tenants/platform_views.py:84
+#: apps/tenants/platform_views.py:85
 msgid "Only a platform superuser can administer the installation."
 msgstr "Solo un superusuario de plataforma puede administrar la instalación."
 
-#: apps/tenants/platform_views.py:368 apps/tenants/platform_views.py:425
-#: apps/tenants/platform_views.py:494
+#: apps/tenants/platform_views.py:369 apps/tenants/platform_views.py:426
+#: apps/tenants/platform_views.py:495
 msgid "No such company."
 msgstr "Esa empresa no existe."
 
-#: apps/tenants/platform_views.py:513
+#: apps/tenants/platform_views.py:514
 msgid "The name cannot be empty."
 msgstr "El nombre no puede quedar vacío."
 
-#: apps/tenants/platform_views.py:519
+#: apps/tenants/platform_views.py:520
 msgid "The tax number cannot be empty."
 msgstr "El identificador fiscal no puede quedar vacío."
 
-#: apps/tenants/platform_views.py:522 apps/users/serializers.py:582
+#: apps/tenants/platform_views.py:523 apps/users/serializers.py:582
 msgid "A company with this tax number already exists."
 msgstr "Ya existe una empresa con este identificador fiscal."
 
-#: apps/tenants/platform_views.py:537
+#: apps/tenants/platform_views.py:538
 msgid "Type the company's name exactly to deactivate it."
 msgstr "Escribe el nombre de la empresa tal cual para desactivarla."
 
-#: apps/tenants/platform_views.py:592 apps/tenants/platform_views.py:610
+#: apps/tenants/platform_views.py:593 apps/tenants/platform_views.py:611
 msgid "Changed from the installation console"
 msgstr "Cambiado desde la consola de la instalación"
 
-#: apps/tenants/platform_views.py:669
+#: apps/tenants/platform_views.py:670
 msgid "That person does not administer this company."
 msgstr "Esa persona no administra esta empresa."
 
-#: apps/tenants/platform_views.py:673
+#: apps/tenants/platform_views.py:674
 msgid "The company is deactivated: the link would not let anybody in."
 msgstr "La empresa está desactivada: el enlace no dejaría entrar a nadie."
 
-#: apps/tenants/platform_views.py:675
+#: apps/tenants/platform_views.py:676
 msgid "That account is deactivated: the link would not let them in."
 msgstr "Esa cuenta está desactivada: el enlace no la dejaría entrar."
 
-#: apps/tenants/platform_views.py:678
+#: apps/tenants/platform_views.py:679
 msgid ""
 "That person signs in with their company's account and has no password here."
 msgstr ""
 "Esa persona entra con la cuenta de su empresa y aquí no tiene contraseña."
 
-#: apps/tenants/platform_views.py:693
+#: apps/tenants/platform_views.py:694
 #, python-format
 msgid "The mail server refuses the address %(email)s. Check that it is right."
 msgstr ""
 "El servidor de correo rechaza la dirección %(email)s. Comprueba que es "
 "correcta."
 
-#: apps/tenants/platform_views.py:704
+#: apps/tenants/platform_views.py:705
 msgid "The email could not be sent. Nothing has changed; try again later."
 msgstr ""
 "No se ha podido enviar el correo. No ha cambiado nada; vuelve a intentarlo "
 "más tarde."
 
-#: apps/tenants/platform_views.py:715
+#: apps/tenants/platform_views.py:716
 msgid "Sent from the installation console"
 msgstr "Enviado desde la consola de la instalación"
 
-#: apps/tenants/platform_views.py:790
+#: apps/tenants/platform_views.py:791
 msgid "Authorised from the installation console"
 msgstr "Autorizada desde la consola de la instalación"
 
-#: apps/tenants/platform_views.py:825 apps/tenants/platform_views.py:876
-#: apps/tenants/platform_views.py:923
+#: apps/tenants/platform_views.py:826 apps/tenants/platform_views.py:877
+#: apps/tenants/platform_views.py:924
 msgid "No such application."
 msgstr "Esa aplicación no existe."
 
-#: apps/tenants/platform_views.py:973
+#: apps/tenants/platform_views.py:974
 msgid "No such credential."
 msgstr "Esa credencial no existe."
 
-#: apps/tenants/platform_views.py:1049
+#: apps/tenants/platform_views.py:1050
 msgid "There is already an installation account with that address."
 msgstr "Ya hay una cuenta de la instalación con esa dirección."
 
-#: apps/tenants/platform_views.py:1062
+#: apps/tenants/platform_views.py:1063
 #, python-format
 msgid ""
 "That address already belongs to somebody in %(company)s. An installation "
@@ -3466,15 +3466,15 @@ msgstr ""
 "con una dirección repetida no podría entrar, porque la pantalla de acceso "
 "preguntaría de qué empresa es y esta no tiene ninguna. Usa otra dirección."
 
-#: apps/tenants/platform_views.py:1123 apps/tenants/platform_views.py:1155
+#: apps/tenants/platform_views.py:1124 apps/tenants/platform_views.py:1156
 msgid "No such installation account."
 msgstr "Esa cuenta de la instalación no existe."
 
-#: apps/tenants/platform_views.py:1159
+#: apps/tenants/platform_views.py:1160
 msgid "You cannot deactivate the account you are using."
 msgstr "No puedes desactivar la cuenta con la que estás dentro."
 
-#: apps/tenants/platform_views.py:1166
+#: apps/tenants/platform_views.py:1167
 msgid ""
 "This is the only account that can administer the installation. Create "
 "another one before deactivating it."

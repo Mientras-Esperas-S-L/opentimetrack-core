@@ -1,7 +1,7 @@
 """Clocking in from an external application.
 
-This is the reason the project exists: a product like GreenCity records the
-working time of its field operatives against this service instead of keeping its
+This is the reason the project exists: a product that manages field work records
+the working time of its operatives against this service instead of keeping its
 own module. What is checked here is that it works, that it does not become a way
 around isolation, and that the resulting record still says what it is.
 """
@@ -51,7 +51,7 @@ def employee(company):
         )
 
 
-def authorise(company, scopes, name="GreenCity"):
+def authorise(company, scopes, name="Conector"):
     with tenant_context(company.id):
         application = Application.objects.create(tenant=company, name=name, scopes=scopes)
         _credential, raw = ApplicationCredential.issue(application)
@@ -85,7 +85,7 @@ def test_an_application_clocks_in_for_an_employee(client, company, employee):
 
     assert response.status_code == 201
     assert response.data["source"] == PunchSource.DELEGATED
-    assert response.data["source_application"] == "GreenCity"
+    assert response.data["source_application"] == "Conector"
     assert response.data["day_status"]["state"] == "WORKING"
 
 
@@ -185,7 +185,7 @@ def test_a_deactivated_application_stops_working(client, company, employee):
 def test_a_revoked_credential_stops_working(client, company, employee):
     with tenant_context(company.id):
         application = Application.objects.create(
-            tenant=company, name="GreenCity", scopes=[ApplicationScope.PUNCH_DELEGATED]
+            tenant=company, name="Conector", scopes=[ApplicationScope.PUNCH_DELEGATED]
         )
         credential, token = ApplicationCredential.issue(application)
         credential.revoke()
@@ -293,7 +293,7 @@ def test_the_delegation_note_is_translated(client, company, employee):
 def test_credentials_are_not_stored_in_the_clear(company):
     """A secret the server can read back is a secret the server can leak."""
     with tenant_context(company.id):
-        application = Application.objects.create(tenant=company, name="GreenCity", scopes=[])
+        application = Application.objects.create(tenant=company, name="Conector", scopes=[])
         credential, raw = ApplicationCredential.issue(application)
 
         assert credential.token_hash != raw
@@ -451,7 +451,7 @@ def test_lo_que_detecto_el_sensor_llega_al_registro(client, company, employee):
         guardado = Punch.objects.get(employee=employee)
         assert guardado.trigger == PunchTrigger.GEOFENCE
         assert guardado.evidence == {"zona": "Nave 3", "precision_m": 12}
-        assert guardado.source_application == "GreenCity"
+        assert guardado.source_application == "Conector"
 
 
 @pytest.mark.django_db

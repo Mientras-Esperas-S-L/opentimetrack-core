@@ -83,7 +83,7 @@ def test_da_fechas_y_recuentos_y_ni_una_persona(plataforma):
             interval=PunchInterval.WORK,
         )
         app = Application.objects.create(
-            tenant=empresa, name="GreenCityControl", scopes=[s.value for s in ApplicationScope]
+            tenant=empresa, name="Conector de ejemplo", scopes=[s.value for s in ApplicationScope]
         )
         credencial, _testigo = ApplicationCredential.issue(app, label="prueba")
         ApplicationCredential.objects_all_tenants.filter(pk=credencial.pk).update(
@@ -100,7 +100,7 @@ def test_da_fechas_y_recuentos_y_ni_una_persona(plataforma):
     assert estado["last_identity_sign_in_day"] == "2026-09-18"
     assert estado["identity_people"] == 1
     assert estado["applications_detail"] == [
-        {"name": "GreenCityControl", "last_used": "2026-09-21", "quiet": False}
+        {"name": "Conector de ejemplo", "last_used": "2026-09-21", "quiet": False}
     ]
 
     texto = str(respuesta.data)

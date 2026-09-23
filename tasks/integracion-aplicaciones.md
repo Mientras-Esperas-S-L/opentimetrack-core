@@ -7,8 +7,8 @@ credencial y sus permisos, empuja personas, ficha en nombre de alguien y lee la
 asistencia del día. Con eso una aplicación puede **fichar**, pero no puede sustituir
 del todo a su propio módulo de recursos humanos, y esa es la promesa del producto.
 
-Este plan recoge las piezas que faltan para cerrarla. El primer integrador es
-GreenCity, pero ninguna pieza es suya: todas son mecanismo general.
+Este plan recoge las piezas que faltan para cerrarla. Ninguna pieza es de un
+integrador concreto: todas son mecanismo general.
 
 ## A1. Entrada por un proveedor de identidad (OIDC) ✔ hecho el 17/09/2026
 

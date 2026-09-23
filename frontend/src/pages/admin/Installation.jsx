@@ -149,7 +149,7 @@ export default function Installation() {
               hace con la cuenta que se acaba de crear. */}
           <Typography variant="body2" sx={{ mt: 1 }}>
             {t(
-              'Lo que falta se hace entrando con esa cuenta: su gente, sus centros y la credencial con la que GreenCity habla con esta empresa.',
+              'Lo que falta se hace entrando con esa cuenta: su gente, sus centros y la credencial con la que otra aplicación habla con esta empresa.',
             )}
           </Typography>
         </Alert>
@@ -580,8 +580,8 @@ function IdentityDialog({ empresa, onClose, onGuardada }) {
 
 /** Las aplicaciones de una empresa, desde fuera de ella.
  *
- *  Es lo que enchufa GreenCity: sin esta credencial, el alta se queda en una
- *  empresa vacía. Vivía solo dentro de la empresa, así que darla de alta obligaba
+ *  Es lo que enchufa una aplicación externa: sin esta credencial, el alta se
+ *  queda en una empresa vacía. Vivía solo dentro de la empresa, así que darla de alta obligaba
  *  a salir de aquí, entrar con la cuenta de su administrador y volver.
  *
  *  **El testigo se enseña una vez.** Se guarda cifrado de un solo sentido, así que
@@ -595,6 +595,7 @@ function CredentialsDialog({ empresa, onClose, onCambio }) {
   const [trabajando, setTrabajando] = useState(false)
   const [testigo, setTestigo] = useState(null)
   const [vuelta, setVuelta] = useState(0)
+  const [nombreNueva, setNombreNueva] = useState('')
 
   useEffect(() => {
     if (!empresa) return undefined
@@ -626,7 +627,6 @@ function CredentialsDialog({ empresa, onClose, onCambio }) {
   }
 
   const aplicaciones = datos?.applications ?? []
-  const laDeGreenCity = aplicaciones.find((a) => a.is_active)
 
   return (
     <Dialog open={Boolean(empresa)} onClose={onClose} fullWidth maxWidth="sm">
@@ -652,7 +652,7 @@ function CredentialsDialog({ empresa, onClose, onCambio }) {
           {aplicaciones.length === 0 && (
             <Typography variant="body2" color="text.secondary">
               {t(
-                'Esta empresa no tiene ninguna aplicación autorizada. Sin credencial, GreenCity no puede hablar con ella.',
+                'Esta empresa no tiene ninguna aplicación autorizada. Sin credencial, ninguna aplicación puede hablar con ella.',
               )}
             </Typography>
           )}
@@ -726,25 +726,41 @@ function CredentialsDialog({ empresa, onClose, onCambio }) {
             </Paper>
           ))}
 
-          {!laDeGreenCity && (
+          {/* El nombre lo pone quien autoriza: es el que sale en el registro de
+              cada fichaje que haga esa aplicación. Antes venía escrito aquí, con el
+              de un producto concreto, en un programa que usa cualquiera. */}
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            sx={{ gap: 1, alignItems: { sm: 'flex-start' } }}
+          >
+            <TextField
+              size="small"
+              fullWidth
+              label={t('Nombre de la aplicación')}
+              value={nombreNueva}
+              onChange={(e) => setNombreNueva(e.target.value)}
+              helperText={t('El que saldrá en cada fichaje que haga.')}
+            />
             <Button
               variant="contained"
-              disabled={trabajando}
+              sx={{ flexShrink: 0 }}
+              disabled={trabajando || !nombreNueva.trim()}
               onClick={() =>
                 hacer(async () => {
                   const creada = await authoriseApplicationOfCompany(empresa.id, {
-                    name: 'GreenCityControl',
+                    name: nombreNueva.trim(),
                   })
                   setTestigo(creada.token)
+                  setNombreNueva('')
                 })
               }
             >
-              {t('Autorizar GreenCity')}
+              {t('Autorizar')}
             </Button>
-          )}
+          </Stack>
           <Typography variant="caption" color="text.secondary">
             {t(
-              '«Autorizar GreenCity» concede de una vez los diez permisos que la integración usa. Esta credencial es la que se pega en GreenCity, en Gestión de Permisos.',
+              'Autorizar concede de una vez los diez permisos de una integración completa: altas de personas, fichaje en su nombre, ausencias, cuadrante, calendario y disponibilidad. La credencial que sale es la que se pega en la aplicación.',
             )}
           </Typography>
         </Stack>
@@ -956,7 +972,7 @@ function NewAdminDialog({ valores, onClose, onCreada }) {
  *  El «¿y ahora qué?» de quien acaba de dar un alta: la empresa existe, y averiguar
  *  qué queda obligaba a abrir tres diálogos uno por uno. Quién decide qué falta es
  *  el servidor ---viene en `missing`---, porque es una regla del producto y el
- *  asistente de alta de GreenCity contesta con la misma.
+ *  asistente de alta de cualquier integrador tiene que contestar con la misma.
  */
 function LeFalta({ empresa, onIdentidad, onCredencial }) {
   const { t } = useTranslation()
@@ -967,7 +983,7 @@ function LeFalta({ empresa, onIdentidad, onCredencial }) {
   }
 
   // Lo que se puede arreglar desde aquí lleva su botón; lo que no ---que entre su
-  // gente--- se dice y ya, porque pasa solo al enlazar los grupos en GreenCity.
+  // gente--- se dice y ya, porque llega sola cuando la da de alta la aplicación.
   const comoSeArregla = {
     identity: { texto: t('Cómo entran'), accion: onIdentidad },
     application: { texto: t('Credencial'), accion: onCredencial },
@@ -990,7 +1006,7 @@ function LeFalta({ empresa, onIdentidad, onCredencial }) {
             title={
               como.accion
                 ? t('Pulsa para arreglarlo')
-                : t('Su gente entra sola al enlazar los grupos en GreenCity.')
+                : t('Su gente llega sola cuando la da de alta la aplicación integrada.')
             }
           />
         )
@@ -1181,7 +1197,7 @@ function CompanyDialog({ empresa, onClose, onGuardada }) {
           {cambiaElCif && (
             <Alert severity="warning">
               {t(
-                'Quien entre escribiendo el CIF de la empresa tendrá que usar el nuevo. El enlace con GreenCity no se rompe: solo usa el CIF al dar de alta.',
+                'Quien entre escribiendo el CIF de la empresa tendrá que usar el nuevo. Las aplicaciones conectadas siguen funcionando: hablan con la empresa por su credencial, no por el CIF.',
               )}
             </Alert>
           )}
@@ -1223,7 +1239,7 @@ function CompanyDialog({ empresa, onClose, onGuardada }) {
                 <Typography variant="subtitle2">{t('Desactivar la empresa')}</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
                   {t(
-                    'Nadie de dentro podrá entrar, tampoco quien ya tenga la sesión abierta, y GreenCity dejará de poder fichar en su nombre. No se borra nada: su registro se guarda y se puede volver a activar tal como estaba.',
+                    'Nadie de dentro podrá entrar, tampoco quien ya tenga la sesión abierta, y sus aplicaciones dejarán de poder fichar en su nombre. No se borra nada: su registro se guarda y se puede volver a activar tal como estaba.',
                   )}
                 </Typography>
                 <TextField

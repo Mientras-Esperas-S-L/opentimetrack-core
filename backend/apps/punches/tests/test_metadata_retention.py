@@ -102,7 +102,7 @@ def test_the_hash_still_pins_down_who_produced_the_event(company, employee):
     assert not punch.verify_hash()  # changing the origin is detectable
 
     punch.refresh_from_db()
-    punch.source_application = "greencity"
+    punch.source_application = "conector"
     assert not punch.verify_hash()
 
 

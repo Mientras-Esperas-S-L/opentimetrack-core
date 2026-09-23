@@ -60,8 +60,8 @@ def test_da_de_alta_una_empresa_con_su_administrador(plataforma):
     respuesta = cliente(plataforma).post(
         reverse("platform-companies"),
         {
-            "company_name": "UTE Zonas Verdes Algeciras",
-            "tax_id": "U27686062",
+            "company_name": "Jardines de Ejemplo, S.L.",
+            "tax_id": "U00000000",
             "country": "ES",
             "time_zone": "Europe/Madrid",
             "email": "quien.administre@empresa.example",
@@ -72,12 +72,12 @@ def test_da_de_alta_una_empresa_con_su_administrador(plataforma):
     )
 
     assert respuesta.status_code == 201
-    assert respuesta.data["tax_id"] == "U27686062"
+    assert respuesta.data["tax_id"] == "U00000000"
     # La contraseña se enseña una vez, como la credencial de aplicación: así el alta
     # no depende de que el correo salga.
     assert len(respuesta.data["administrator"]["password"]) >= 12
 
-    empresa = Tenant.objects.get(tax_id="U27686062")
+    empresa = Tenant.objects.get(tax_id="U00000000")
     admin = User.objects.get(email="quien.administre@empresa.example")
     assert admin.tenant_id == empresa.id and admin.role == Role.ADMIN
     # Y la empresa nace utilizable: con el catálogo legal de permisos sembrado, que
@@ -112,14 +112,14 @@ def test_pone_el_proveedor_de_identidad_con_sus_dominios(plataforma, company):
     respuesta = cliente(plataforma).put(
         reverse("platform-company-identity", args=[company.id]),
         {
-            "name": "GreenCityControl",
-            "issuer": "https://api.greencitycontrol.com/o/",
+            "name": "Conector de ejemplo",
+            "issuer": "https://idp.example/o/",
             "slug": "gcc",
-            "jwks_uri": "https://api.greencitycontrol.com/o/jwks.json",
+            "jwks_uri": "https://idp.example/o/jwks.json",
             "client_id": "opentimetrack-prod",
             "client_secret": "un-secreto-larguísimo",
             "may_act_for_people": True,
-            "domains": ["ZVAlgeciras.es", "@utealgeciras.com", " "],
+            "domains": ["ZVEjemplo.es", "@uteejemplo.test", " "],
         },
         format="json",
     )
@@ -127,8 +127,8 @@ def test_pone_el_proveedor_de_identidad_con_sus_dominios(plataforma, company):
     assert respuesta.status_code == 200
     identidad = respuesta.data["identity"]
     # La barra final del emisor se quita: tiene que ser **exactamente** el `iss`.
-    assert identidad["issuer"] == "https://api.greencitycontrol.com/o"
-    assert identidad["domains"] == ["utealgeciras.com", "zvalgeciras.es"]
+    assert identidad["issuer"] == "https://idp.example/o"
+    assert identidad["domains"] == ["uteejemplo.test", "zvejemplo.es"]
     assert identidad["has_secret"] is True
     # El secreto entra y no vuelve a salir.
     assert "un-secreto" not in str(respuesta.data)
@@ -143,11 +143,11 @@ def test_editar_sin_secreto_deja_el_que_habia(plataforma, company):
         format="json",
     )
 
-    api.put(url, {"name": "GreenCityControl", "issuer": "https://gcc.example/o"}, format="json")
+    api.put(url, {"name": "Conector de ejemplo", "issuer": "https://gcc.example/o"}, format="json")
 
     proveedor = SsoProvider.objects_all_tenants.get(tenant=company)
     assert proveedor.client_secret == "el-de-antes"
-    assert proveedor.name == "GreenCityControl"
+    assert proveedor.name == "Conector de ejemplo"
 
 
 def test_quitar_los_dominios_es_mandar_la_lista_sin_ellos(plataforma, company):
@@ -272,7 +272,7 @@ def test_sigue_pudiendo_decir_quien_es_y_salir(plataforma):
 def test_da_de_alta_la_aplicacion_con_su_credencial(plataforma, company):
     respuesta = cliente(plataforma).post(
         f"/api/platform/companies/{company.id}/applications/",
-        {"name": "GreenCityControl"},
+        {"name": "Conector de ejemplo"},
         format="json",
     )
 
@@ -289,7 +289,7 @@ def test_la_credencial_no_se_vuelve_a_ver(plataforma, company):
     api = cliente(plataforma)
     creada = api.post(
         f"/api/platform/companies/{company.id}/applications/",
-        {"name": "GreenCityControl"},
+        {"name": "Conector de ejemplo"},
         format="json",
     )
     testigo = creada.data["token"]
@@ -327,7 +327,7 @@ def test_rotar_deja_las_dos_credenciales_y_revocar_quita_una(plataforma, company
     api = cliente(plataforma)
     app = api.post(
         f"/api/platform/companies/{company.id}/applications/",
-        {"name": "GreenCityControl"},
+        {"name": "Conector de ejemplo"},
         format="json",
     ).data
     base = f"/api/platform/companies/{company.id}/applications/{app['id']}"
@@ -352,7 +352,7 @@ def test_retirar_una_aplicacion_no_la_borra(plataforma, company):
     api = cliente(plataforma)
     app = api.post(
         f"/api/platform/companies/{company.id}/applications/",
-        {"name": "GreenCityControl"},
+        {"name": "Conector de ejemplo"},
         format="json",
     ).data
 
@@ -372,7 +372,7 @@ def test_la_ficha_de_la_empresa_dice_cuantas_aplicaciones_tiene(plataforma, comp
 
     api.post(
         f"/api/platform/companies/{company.id}/applications/",
-        {"name": "GreenCityControl"},
+        {"name": "Conector de ejemplo"},
         format="json",
     )
 
@@ -528,7 +528,7 @@ def test_cada_hueco_se_cierra_por_separado(plataforma, company):
 
     api.post(
         f"/api/platform/companies/{company.id}/applications/",
-        {"name": "GreenCityControl"},
+        {"name": "Conector de ejemplo"},
         format="json",
     )
 
@@ -538,7 +538,7 @@ def test_cada_hueco_se_cierra_por_separado(plataforma, company):
     api.put(
         reverse("platform-company-identity", args=[company.id]),
         {
-            "name": "GreenCityControl",
+            "name": "Conector de ejemplo",
             "issuer": "https://api.ejemplo.test/o",
             "domains": ["acme.test"],
         },
@@ -554,7 +554,7 @@ def test_un_proveedor_apagado_cuenta_como_que_falta(plataforma, company):
     api.put(
         reverse("platform-company-identity", args=[company.id]),
         {
-            "name": "GreenCityControl",
+            "name": "Conector de ejemplo",
             "issuer": "https://api.ejemplo.test/o",
             "domains": ["acme.test"],
             "is_active": False,
