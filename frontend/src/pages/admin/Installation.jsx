@@ -864,87 +864,98 @@ function PlatformAdmins({ onCambio }) {
         </Alert>
       )}
 
+      {/* Filas apiladas y no una tabla: a 360 px, el nombre quedaba en una columna
+          de una palabra y los cuatro botones en torre. Así el nombre ocupa el ancho
+          y las acciones van debajo, en las líneas que hagan falta. */}
       <Paper variant="outlined">
-        <Table size="small">
-          <TableBody>
-            {cuentas.map((cuenta) => (
-              <TableRow key={cuenta.id}>
-                <TableCell>
+        <Stack divider={<Box sx={{ borderTop: 1, borderColor: 'divider' }} />}>
+          {cuentas.map((cuenta) => (
+            <Stack
+              key={cuenta.id}
+              direction={{ xs: 'column', sm: 'row' }}
+              sx={{
+                px: 2,
+                py: 1,
+                gap: 0.5,
+                alignItems: { sm: 'center' },
+                justifyContent: 'space-between',
+              }}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="body2">
                   {cuenta.first_name} {cuenta.last_name}
                   {cuenta.id === session?.user?.id && ` (${t('tú')})`}
-                  {/* Por `sx`: la prop `display` suelta ya no llega al CSS ---MUI dejó de
-                      aceptar las del sistema--- y el correo salía pegado al nombre. */}
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', overflowWrap: 'anywhere' }}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', overflowWrap: 'anywhere' }}
+                >
+                  {cuenta.email}
+                  {!cuenta.is_active && ` · ${t('desactivada')}`}
+                </Typography>
+              </Box>
+              <Stack
+                direction="row"
+                sx={{
+                  flexWrap: 'wrap',
+                  justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                  columnGap: 0.5,
+                }}
+              >
+                <Button size="small" disabled={trabajando} onClick={() => setEditando(cuenta)}>
+                  {t('Editar')}
+                </Button>
+                {cuenta.is_active && (
+                  <Button
+                    size="small"
+                    disabled={trabajando}
+                    onClick={() =>
+                      hacer(async () => {
+                        const { sent_to: a } = await sendPlatformAdminLink(cuenta.id)
+                        setEnviadoA(a)
+                      })
+                    }
                   >
-                    {cuenta.email}
-                    {!cuenta.is_active && ` · ${t('desactivada')}`}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
-                  {/* En varias líneas si no caben: a 360 px, cuatro botones en fila
-                      empujaban el nombre a una columna de una palabra. */}
-                  <Stack
-                    direction="row"
-                    sx={{ flexWrap: 'wrap', justifyContent: 'flex-end', columnGap: 0.5 }}
+                    {t('Mandar enlace')}
+                  </Button>
+                )}
+                <Button
+                  size="small"
+                  disabled={trabajando}
+                  onClick={() =>
+                    hacer(async () => {
+                      const dicha = await resetPlatformAdminPassword(cuenta.id)
+                      setReciénDicha(dicha)
+                    })
+                  }
+                >
+                  {t('Nueva contraseña')}
+                </Button>
+                {/* La propia no: el servidor no deja desactivarse a uno mismo, y
+                    un botón que siempre contesta que no es un error de pantalla. */}
+                {cuenta.id === session?.user?.id ? null : cuenta.is_active ? (
+                  <Button
+                    size="small"
+                    color="error"
+                    disabled={trabajando}
+                    onClick={() => hacer(() => deactivatePlatformAdmin(cuenta.id))}
                   >
-                    <Button size="small" disabled={trabajando} onClick={() => setEditando(cuenta)}>
-                      {t('Editar')}
-                    </Button>
-                    {cuenta.is_active && (
-                      <Button
-                        size="small"
-                        disabled={trabajando}
-                        onClick={() =>
-                          hacer(async () => {
-                            const { sent_to: a } = await sendPlatformAdminLink(cuenta.id)
-                            setEnviadoA(a)
-                          })
-                        }
-                      >
-                        {t('Mandar enlace')}
-                      </Button>
-                    )}
-                    <Button
-                      size="small"
-                      disabled={trabajando}
-                      onClick={() =>
-                        hacer(async () => {
-                          const dicha = await resetPlatformAdminPassword(cuenta.id)
-                          setReciénDicha(dicha)
-                        })
-                      }
-                    >
-                      {t('Nueva contraseña')}
-                    </Button>
-                    {cuenta.is_active ? (
-                      <Button
-                        size="small"
-                        color="error"
-                        disabled={trabajando}
-                        onClick={() => hacer(() => deactivatePlatformAdmin(cuenta.id))}
-                      >
-                        {t('Desactivar')}
-                      </Button>
-                    ) : (
-                      <Button
-                        size="small"
-                        disabled={trabajando}
-                        onClick={() =>
-                          hacer(() => updatePlatformAdmin(cuenta.id, { is_active: true }))
-                        }
-                      >
-                        {t('Reactivar')}
-                      </Button>
-                    )}
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                    {t('Desactivar')}
+                  </Button>
+                ) : (
+                  <Button
+                    size="small"
+                    disabled={trabajando}
+                    onClick={() => hacer(() => updatePlatformAdmin(cuenta.id, { is_active: true }))}
+                  >
+                    {t('Reactivar')}
+                  </Button>
+                )}
+              </Stack>
+            </Stack>
+          ))}
+        </Stack>
       </Paper>
 
       <EditAdminDialog
