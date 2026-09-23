@@ -9,6 +9,7 @@ a quien administra, y el enlace va al correo de esa persona y no a la pantalla.
 
 from __future__ import annotations
 
+import smtplib
 from unittest import mock
 
 import pytest
@@ -128,3 +129,14 @@ def test_el_administrador_de_una_empresa_no_lo_usa(mundo):
     api = cliente(mundo["jefa"])
     assert api.get(url(mundo["empresa"])).status_code == 403
     assert api.post(url(mundo["empresa"], mundo["jefa"])).status_code == 403
+
+
+def test_si_el_rele_rechaza_la_direccion_lo_dice_y_no_pide_reintentar(plataforma, mundo):
+    """Medido en devel: el relé contesta 554 a una dirección que no acepta, y la
+    pantalla decía «vuelve a intentarlo más tarde», que no lo arregla nunca."""
+    rechazo = smtplib.SMTPRecipientsRefused({"jefa@acme.test": (554, b"5.7.1 Access denied")})
+    with mock.patch("apps.tenants.platform_views.send_account_email", side_effect=rechazo):
+        respuesta = cliente(plataforma).post(url(mundo["empresa"], mundo["jefa"]))
+    assert respuesta.status_code == 502
+    assert "jefa@acme.test" in respuesta.data["detail"]
+    assert PlatformAuditEntry.objects.count() == 0

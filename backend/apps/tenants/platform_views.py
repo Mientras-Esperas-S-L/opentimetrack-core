@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import logging
 import secrets
+import smtplib
 
 from django.conf import settings
 from django.db import transaction
@@ -561,6 +562,20 @@ class CompanyAdminLinkView(_PorEmpresa):
 
         try:
             send_account_email(persona, base_url=settings.FRONTEND_URL)
+        except smtplib.SMTPRecipientsRefused:
+            # Rechazo de la dirección, no avería: reintentar no lo arregla. Medido en
+            # devel con un `.test`: el relé contesta 554 y la pantalla decía «vuelve a
+            # intentarlo más tarde».
+            log.warning("The mail relay refused %s", persona.email)
+            return Response(
+                {
+                    "detail": _(
+                        "The mail server refuses the address %(email)s. Check that it is right."
+                    )
+                    % {"email": persona.email}
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
         except Exception:
             # El correo es lo único que esto hace: si no sale, se dice, en vez de
             # contestar «enviado» a un enlace que no va a llegar.
