@@ -267,6 +267,25 @@
           }
         },
         {
+          "kind": "heading",
+          "data": {
+            "text": "El registro",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Al final de la pantalla queda escrito lo que han hecho las cuentas de la instalación: quién creó cada empresa, quién emitió o revocó una credencial, quién dio de alta otra cuenta o le puso contraseña nueva. La propia base de datos se niega a cambiarlo o borrarlo."
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Nunca aparece una contraseña ni una credencial entera: solo que se emitió. Y lo que se hace sobre una empresa queda también en el registro de esa empresa, para que quien la administra vea que alguien de fuera tocó su configuración."
+          }
+        },
+        {
           "kind": "callout",
           "data": {
             "variant": "info",

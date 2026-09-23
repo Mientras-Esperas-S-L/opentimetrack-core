@@ -251,3 +251,85 @@ class AuditLog(models.Model):
             "The audit trail is append-only: entries are not deleted. "
             "Retention is handled by the documented policy, not by hand."
         )
+
+
+class PlatformAction(models.TextChoices):
+    """What an installation account did. A closed list, for the same reason."""
+
+    COMPANY_CREATED = "COMPANY_CREATED", _("Created a company")
+    IDENTITY_CHANGED = "IDENTITY_CHANGED", _("Changed how a company's people sign in")
+    APPLICATION_AUTHORISED = "APPLICATION_AUTHORISED", _("Authorised an application")
+    APPLICATION_CHANGED = "APPLICATION_CHANGED", _("Changed an application's permissions")
+    APPLICATION_WITHDRAWN = "APPLICATION_WITHDRAWN", _("Withdrew an application")
+    CREDENTIAL_ISSUED = "CREDENTIAL_ISSUED", _("Issued a credential")
+    CREDENTIAL_REVOKED = "CREDENTIAL_REVOKED", _("Revoked a credential")
+    ADMIN_CREATED = "ADMIN_CREATED", _("Created an installation account")
+    ADMIN_PASSWORD_RESET = "ADMIN_PASSWORD_RESET", _("Gave an installation account a new password")
+    ADMIN_DEACTIVATED = "ADMIN_DEACTIVATED", _("Deactivated an installation account")
+
+
+class PlatformAuditEntry(models.Model):
+    """One thing an installation account did.
+
+    **Its own table, and not `AuditLog` with the company made optional.** Some of
+    what the installation does has no company ---creating another installation
+    account--- and `AuditLog` is scoped by company precisely so that no company
+    can read another's trail. A null there would be an entry every company's
+    query has to remember to exclude, in the one table where forgetting is a leak.
+
+    What the installation does **to a company** is also written to that
+    company's own trail, so its administrator can see that somebody from outside
+    touched its configuration. This table is the installation's side of it.
+
+    Append-only, with the same three triggers as `AuditLog`, and never a secret:
+    that a credential or a password was issued, never what it was.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    at = models.DateTimeField(_("when"), auto_now_add=True, db_index=True)
+
+    actor = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="platform_audit_entries",
+        verbose_name=_("who"),
+    )
+    actor_label = models.CharField(_("who (as recorded)"), max_length=160, blank=True)
+
+    action = models.CharField(_("action"), max_length=32, choices=PlatformAction, db_index=True)
+
+    company = models.ForeignKey(
+        "tenants.Tenant",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="platform_audit_entries",
+        verbose_name=_("company"),
+    )
+    company_label = models.CharField(_("company (as recorded)"), max_length=255, blank=True)
+
+    target_type = models.CharField(_("type"), max_length=32, blank=True)
+    target_id = models.UUIDField(_("identifier"), null=True, blank=True)
+    target_label = models.CharField(_("what (as recorded)"), max_length=200, blank=True)
+    changes = models.JSONField(_("changes"), default=dict, blank=True)
+    note = models.CharField(_("note"), max_length=300, blank=True)
+
+    class Meta:
+        verbose_name = _("installation audit entry")
+        verbose_name_plural = _("installation audit trail")
+        ordering = ["-at"]
+
+    def __str__(self) -> str:
+        return f"{self.at:%Y-%m-%d %H:%M} {self.action} {self.actor_label}"
+
+    def save(self, *args, **kwargs):
+        if self._state.adding is False:
+            raise RuntimeError(
+                "The installation audit trail is append-only: an entry cannot be modified."
+            )
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise RuntimeError("The installation audit trail is append-only: entries are not deleted.")

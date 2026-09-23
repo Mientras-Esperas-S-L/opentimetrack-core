@@ -26,6 +26,8 @@ import {
   createCompany,
   deactivatePlatformAdmin,
   getPlatformAdmins,
+  getPlatformAudit,
+  PAGE_SIZE,
   resetPlatformAdminPassword,
   getApplicationsOfCompany,
   getCompanies,
@@ -35,6 +37,8 @@ import {
   saveCompanyIdentity,
   withdrawApplicationOfCompany,
 } from '../../services/api.js'
+import { Pager } from '../../components/common.jsx'
+import { alCatalogo, localeDeFechas } from '../../i18n/index.js'
 
 /** Administrar la instalación: las empresas que hay y cómo entra su gente.
  *
@@ -168,7 +172,7 @@ export default function Installation() {
               <TableRow key={empresa.id}>
                 <TableCell>
                   {empresa.name}
-                  <Typography variant="caption" color="text.secondary" display="block">
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                     {empresa.time_zone}
                   </Typography>
                 </TableCell>
@@ -243,7 +247,9 @@ export default function Installation() {
         }}
       />
 
-      <PlatformAdmins />
+      <PlatformAdmins onCambio={cargar} />
+
+      <PlatformAudit vuelta={vuelta} />
 
       <CredentialsDialog
         key={credencialesDe?.id ?? 'sin-credenciales'}
@@ -650,7 +656,7 @@ function CredentialsDialog({ empresa, onClose, onCambio }) {
  *  shell dejaba la instalación con **una sola persona** capaz de operarla, y sin
  *  relevo en cuanto esa persona se va.
  */
-function PlatformAdmins() {
+function PlatformAdmins({ onCambio }) {
   const { t } = useTranslation()
   const [cuentas, setCuentas] = useState([])
   const [error, setError] = useState(null)
@@ -675,6 +681,7 @@ function PlatformAdmins() {
     try {
       await accion()
       setVuelta((n) => n + 1)
+      onCambio?.()
     } catch (fallo) {
       const dicho = fallo?.response?.data?.detail ?? fallo?.response?.data?.error?.message
       setError(dicho || t('No ha salido bien.'))
@@ -730,7 +737,9 @@ function PlatformAdmins() {
               <TableRow key={cuenta.id}>
                 <TableCell>
                   {cuenta.first_name} {cuenta.last_name}
-                  <Typography variant="caption" color="text.secondary" display="block">
+                  {/* Por `sx`: la prop `display` suelta ya no llega al CSS ---MUI dejó de
+                      aceptar las del sistema--- y el correo salía pegado al nombre. */}
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                     {cuenta.email}
                     {!cuenta.is_active && ` · ${t('desactivada')}`}
                   </Typography>
@@ -773,6 +782,7 @@ function PlatformAdmins() {
           setReciénDicha(dicha)
           setNueva(null)
           setVuelta((n) => n + 1)
+          onCambio?.()
         }}
       />
     </Box>
@@ -876,5 +886,92 @@ function LeFalta({ empresa, onIdentidad, onCredencial }) {
         )
       })}
     </Stack>
+  )
+}
+
+/** Lo que han hecho las cuentas de la instalación.
+ *
+ *  Una lista y no una tabla: a 360 px una tabla de cuatro columnas obliga a
+ *  arrastrar para leer quién lo hizo, y aquí cada entrada se lee de una vez.
+ *
+ *  `vuelta` la sube la pantalla cada vez que algo cambia, para que lo recién hecho
+ *  aparezca arriba sin recargar.
+ */
+function PlatformAudit({ vuelta }) {
+  const { t } = useTranslation()
+  const [pagina, setPagina] = useState(1)
+  const [datos, setDatos] = useState(null)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let vivo = true
+    getPlatformAudit({ page: pagina })
+      .then((d) => vivo && setDatos(d))
+      .catch(() => vivo && setError(t('No he podido leer el registro de la instalación.')))
+    return () => {
+      vivo = false
+    }
+  }, [t, pagina, vuelta])
+
+  const cuando = (iso) =>
+    new Date(iso).toLocaleString(localeDeFechas(), {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+  return (
+    <Box sx={{ mt: 4 }}>
+      <Typography variant="h6">{t('Registro')}</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        {t(
+          'Lo que han hecho las cuentas de esta instalación. No se puede cambiar ni borrar. Lo que toca a una empresa también queda en el registro de esa empresa.',
+        )}
+      </Typography>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {datos && datos.rows.length === 0 && (
+        <Typography variant="body2" color="text.secondary">
+          {t('Todavía no hay nada anotado.')}
+        </Typography>
+      )}
+
+      {datos && datos.rows.length > 0 && (
+        <Paper variant="outlined">
+          <Stack divider={<Box sx={{ borderTop: 1, borderColor: 'divider' }} />}>
+            {datos.rows.map((entrada) => (
+              <Box key={entrada.id} sx={{ px: 2, py: 1.25 }}>
+                <Typography variant="body2">
+                  <strong>{entrada.action_label}</strong>
+                  {entrada.target_label && ` · ${entrada.target_label}`}
+                  {entrada.company_label &&
+                    entrada.company_label !== entrada.target_label &&
+                    ` · ${entrada.company_label}`}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" component="div">
+                  {cuando(entrada.at)} · {entrada.actor || t('sistema')}
+                  {entrada.note && ` · ${entrada.note}`}
+                </Typography>
+              </Box>
+            ))}
+          </Stack>
+        </Paper>
+      )}
+
+      <Pager
+        count={datos?.count ?? 0}
+        page={pagina}
+        pageSize={PAGE_SIZE}
+        onChange={setPagina}
+        noun={{ singular: alCatalogo('entrada'), plural: alCatalogo('entradas') }}
+      />
+    </Box>
   )
 }

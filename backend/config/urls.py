@@ -45,6 +45,7 @@ from apps.tenants.platform_views import (
     PlatformAdminPasswordView,
     PlatformAdminsView,
     PlatformAdminView,
+    PlatformAuditView,
     WhoAmIView,
 )
 from apps.tenants.session_api import ApplicationSessionView
@@ -183,6 +184,7 @@ urlpatterns = [
         name="help-article",
     ),
     path("api/platform/me/", WhoAmIView.as_view(), name="platform-me"),
+    path("api/platform/audit/", PlatformAuditView.as_view(), name="platform-audit"),
     path("api/platform/admins/", PlatformAdminsView.as_view(), name="platform-admins"),
     path(
         "api/platform/admins/<uuid:admin_id>/",

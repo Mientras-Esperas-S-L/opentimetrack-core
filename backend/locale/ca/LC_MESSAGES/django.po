@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-23 05:36+0000\n"
+"POT-Creation-Date: 2026-09-23 06:13+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Catalan\n"
@@ -219,7 +219,7 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:203 apps/absences/models.py:559
-#: apps/audit/models.py:201 apps/punches/models.py:628
+#: apps/audit/models.py:201 apps/audit/models.py:317 apps/punches/models.py:628
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:577 apps/tenants/rules.py:661 apps/users/models.py:992
 #: apps/users/models.py:1070
@@ -272,7 +272,8 @@ msgid "employee"
 msgstr "persona treballadora"
 
 #: apps/absences/models.py:286 apps/audit/models.py:194
-#: apps/punches/corrections.py:94 apps/punches/models.py:164
+#: apps/audit/models.py:313 apps/punches/corrections.py:94
+#: apps/punches/models.py:164
 msgid "type"
 msgstr "tipus"
 
@@ -824,12 +825,12 @@ msgstr "Va entregar a algú el seu propi registre"
 msgid "Erased a person who left no record"
 msgstr "Va retirar una alta que no va deixar rastre"
 
-#: apps/audit/models.py:167
+#: apps/audit/models.py:167 apps/audit/models.py:289
 msgid "when"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:173 apps/common/models.py:117
+#: apps/audit/models.py:173 apps/audit/models.py:309 apps/common/models.py:117
 #: apps/tenants/models.py:205 apps/tenants/models.py:233
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:435
@@ -837,27 +838,28 @@ msgid "company"
 msgstr "empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:183
+#: apps/audit/models.py:183 apps/audit/models.py:297
 msgid "who"
 msgstr "qui"
 
-#: apps/audit/models.py:187
+#: apps/audit/models.py:187 apps/audit/models.py:299
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:189
+#: apps/audit/models.py:189 apps/audit/models.py:301
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:195 apps/tenants/identity.py:58
+#: apps/audit/models.py:195 apps/audit/models.py:314
+#: apps/tenants/identity.py:58
 msgid "identifier"
 msgstr "identificador"
 
-#: apps/audit/models.py:196
+#: apps/audit/models.py:196 apps/audit/models.py:315
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:200
+#: apps/audit/models.py:200 apps/audit/models.py:316
 msgid "changes"
 msgstr ""
 
@@ -870,6 +872,68 @@ msgstr "assentament del rastre"
 #: apps/audit/models.py:224
 msgid "audit trail"
 msgstr "rastre d'auditoria"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:259
+msgid "Created a company"
+msgstr "Va crear una empresa"
+
+#: apps/audit/models.py:260
+msgid "Changed how a company's people sign in"
+msgstr "Va canviar per on entra la gent d'una empresa"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:261
+msgid "Authorised an application"
+msgstr "Va autoritzar una aplicació"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:262
+msgid "Changed an application's permissions"
+msgstr "Va canviar els permisos d'una aplicació"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:263
+msgid "Withdrew an application"
+msgstr "Va retirar una aplicació"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:264
+msgid "Issued a credential"
+msgstr "Va emetre una credencial"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:265
+msgid "Revoked a credential"
+msgstr "Va revocar una credencial"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:266
+msgid "Created an installation account"
+msgstr "Va crear un compte de la instal·lació"
+
+#: apps/audit/models.py:267
+msgid "Gave an installation account a new password"
+msgstr "Va donar una contrasenya nova a un compte de la instal·lació"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:268
+msgid "Deactivated an installation account"
+msgstr "Va desactivar un compte de la instal·lació"
+
+#: apps/audit/models.py:311
+msgid "company (as recorded)"
+msgstr "empresa (tal com es va registrar)"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:320
+msgid "installation audit entry"
+msgstr "entrada del registre de la instal·lació"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:321
+msgid "installation audit trail"
+msgstr "registre de la instal·lació"
 
 #: apps/audit/views.py:130
 msgid "When"
@@ -2923,7 +2987,7 @@ msgstr ""
 "mateix codi que %(other)s: el REGCON és el que distingeix dos convenis "
 "semblants"
 
-#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:304
+#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:329
 #, python-format
 msgid "Unknown permissions: %(list)s."
 msgstr "Permisos desconeguts: %(list)s."
@@ -2932,15 +2996,15 @@ msgstr "Permisos desconeguts: %(list)s."
 msgid "Grant at least one permission, or the application can do nothing."
 msgstr "Concedeix almenys un permís; si no, l'aplicació no pot fer res."
 
-#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:448
+#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:482
 msgid "Permissions changed"
 msgstr "Va canviar els permisos"
 
-#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:506
+#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:561
 msgid "Reactivate the application before issuing a credential."
 msgstr "Reactiva l'aplicació abans d'emetre una credencial."
 
-#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:523
+#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:578
 #, python-format
 msgid "Credential issued: …%(hint)s"
 msgstr "Credencial emesa: …%(hint)s"
@@ -2949,7 +3013,7 @@ msgstr "Credencial emesa: …%(hint)s"
 msgid "That credential does not exist or is already revoked."
 msgstr "Aquesta credencial no existeix o ja està revocada."
 
-#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:553
+#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:617
 #, python-format
 msgid "Credential revoked: …%(hint)s"
 msgstr "Credencial revocada: …%(hint)s"
@@ -3547,36 +3611,36 @@ msgid "Somebody else in this company already uses that identity."
 msgstr "Una altra persona d'aquesta empresa ja fa servir aquesta identitat."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:68
+#: apps/tenants/platform_views.py:69
 msgid "Only a platform superuser can administer the installation."
 msgstr "Només un superusuari de plataforma pot administrar la instal·lació."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:225 apps/tenants/platform_views.py:274
-#: apps/tenants/platform_views.py:335
+#: apps/tenants/platform_views.py:234 apps/tenants/platform_views.py:291
+#: apps/tenants/platform_views.py:360
 msgid "No such company."
 msgstr "Aquesta empresa no existeix."
 
-#: apps/tenants/platform_views.py:400
+#: apps/tenants/platform_views.py:425
 msgid "Authorised from the installation console"
 msgstr "Autoritzada des de la consola de la instal·lació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:427 apps/tenants/platform_views.py:463
-#: apps/tenants/platform_views.py:503
+#: apps/tenants/platform_views.py:460 apps/tenants/platform_views.py:511
+#: apps/tenants/platform_views.py:558
 msgid "No such application."
 msgstr "Aquesta aplicació no existeix."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:544
+#: apps/tenants/platform_views.py:608
 msgid "No such credential."
 msgstr "Aquesta credencial no existeix."
 
-#: apps/tenants/platform_views.py:612
+#: apps/tenants/platform_views.py:684
 msgid "There is already an installation account with that address."
 msgstr "Ja hi ha un compte de la instal·lació amb aquesta adreça."
 
-#: apps/tenants/platform_views.py:625
+#: apps/tenants/platform_views.py:697
 #, python-format
 msgid ""
 "That address already belongs to somebody in %(company)s. An installation "
@@ -3590,15 +3654,15 @@ msgstr ""
 "una altra adreça."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:679 apps/tenants/platform_views.py:704
+#: apps/tenants/platform_views.py:758 apps/tenants/platform_views.py:790
 msgid "No such installation account."
 msgstr "Aquest compte de la instal·lació no existeix."
 
-#: apps/tenants/platform_views.py:708
+#: apps/tenants/platform_views.py:794
 msgid "You cannot deactivate the account you are using."
 msgstr "No pots desactivar el compte amb què has entrat."
 
-#: apps/tenants/platform_views.py:715
+#: apps/tenants/platform_views.py:801
 msgid ""
 "This is the only account that can administer the installation. Create "
 "another one before deactivating it."

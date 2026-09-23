@@ -800,6 +800,9 @@ export const resetPlatformAdminPassword = (adminId) =>
 
 export const deactivatePlatformAdmin = (adminId) => api.delete(`/platform/admins/${adminId}/`)
 
+/** Lo que han hecho las cuentas de la instalación, lo más reciente primero. */
+export const getPlatformAudit = async (params) => page(await get('/platform/audit/', params))
+
 export const getApplicationsOfCompany = (companyId) =>
   get(`/platform/companies/${companyId}/applications/`)
 
