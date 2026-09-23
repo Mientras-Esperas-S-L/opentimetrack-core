@@ -21,10 +21,13 @@ from __future__ import annotations
 import logging
 import secrets
 import smtplib
+from datetime import date, timedelta
+from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Max, Q
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status
@@ -113,6 +116,107 @@ def _le_falta(company: Tenant, *, personas: int, aplicaciones: int, proveedor) -
     return huecos
 
 
+def _callado(desde: date | None, hoy: date) -> bool:
+    """Si ha pasado al menos un día laborable entero sin nada desde `desde`.
+
+    De lunes a viernes, sin festivos: esto es un aviso para mirar, no un cómputo de
+    jornada, y un festivo de más solo da un aviso de más. El viernes y el lunes
+    siguiente no avisan; el jueves y el lunes, sí.
+    """
+    if desde is None:
+        return False
+    dia = desde + timedelta(days=1)
+    while dia < hoy:
+        if dia.weekday() < 5:
+            return True
+        dia += timedelta(days=1)
+    return False
+
+
+def _estado_de_todas() -> dict:
+    """Cómo está cada empresa, **en cuatro consultas para todas**, no cuatro por empresa.
+
+    Solo fechas y recuentos. Del último fichaje se da **el día**, sin la hora y sin
+    quién: la instalación no ve el registro de jornada de nadie, y en una empresa de
+    una sola persona la hora ya sería su dato.
+
+    Con `objects_all_tenants`: el gestor normal no devuelve nada sin inquilino, y
+    esta lista saldría con todo a cero sin decir por qué.
+    """
+    from apps.punches.models import Punch
+
+    estado: dict = {}
+
+    def de(tenant_id):
+        return estado.setdefault(
+            tenant_id,
+            {"active_people": 0, "last_punch": None, "last_identity_sign_in": None, "apps": []},
+        )
+
+    for fila in (
+        User.objects.filter(tenant__isnull=False, is_active=True)
+        .values("tenant_id")
+        .annotate(n=Count("id"))
+    ):
+        de(fila["tenant_id"])["active_people"] = fila["n"]
+
+    for fila in Punch.objects_all_tenants.values("tenant_id").annotate(ultimo=Max("timestamp")):
+        de(fila["tenant_id"])["last_punch"] = fila["ultimo"]
+
+    for fila in (
+        User.objects.filter(tenant__isnull=False)
+        .exclude(Q(oidc_sub="") | Q(oidc_sub__isnull=True))
+        .values("tenant_id")
+        .annotate(ultimo=Max("last_login"))
+    ):
+        de(fila["tenant_id"])["last_identity_sign_in"] = fila["ultimo"]
+
+    for app in (
+        Application.objects_all_tenants.filter(is_active=True)
+        .annotate(ultimo=Max("credentials__last_used_at"))
+        .order_by("name")
+    ):
+        de(app.tenant_id)["apps"].append({"name": app.name, "last_used": app.ultimo})
+
+    return estado
+
+
+def _estado(company: Tenant, crudo: dict | None) -> dict:
+    """El estado de una empresa, en su zona horaria y con lo callado marcado."""
+    crudo = crudo or {
+        "active_people": 0,
+        "last_punch": None,
+        "last_identity_sign_in": None,
+        "apps": [],
+    }
+    try:
+        zona = ZoneInfo(company.time_zone)
+    except Exception:
+        zona = ZoneInfo("UTC")
+    hoy = timezone.now().astimezone(zona).date()
+
+    def dia(instante):
+        return instante.astimezone(zona).date() if instante else None
+
+    fichaje = dia(crudo["last_punch"])
+    identidad = dia(crudo["last_identity_sign_in"])
+    aplicaciones = [
+        {
+            "name": a["name"],
+            "last_used": dia(a["last_used"]).isoformat() if a["last_used"] else None,
+            "quiet": _callado(dia(a["last_used"]), hoy),
+        }
+        for a in crudo["apps"]
+    ]
+    return {
+        "active_people": crudo["active_people"],
+        "last_punch_day": fichaje.isoformat() if fichaje else None,
+        "punches_quiet": _callado(fichaje, hoy),
+        "last_identity_sign_in_day": identidad.isoformat() if identidad else None,
+        "applications_detail": aplicaciones,
+    }
+
+
 def _empresa(company: Tenant, *, personas: int | None = None) -> dict:
     proveedor = SsoProvider.objects_all_tenants.filter(tenant=company).first()
     cuanta_gente = personas if personas is not None else User.objects.filter(tenant=company).count()
@@ -174,7 +278,15 @@ class CompaniesView(APIView):
     @extend_schema(request=None, responses={200: dict})
     def get(self, request):
         empresas = Tenant.objects.all().annotate(cuantos=Count("users")).order_by("name")
-        return Response({"companies": [_empresa(e, personas=e.cuantos) for e in empresas]})
+        estado = _estado_de_todas()
+        return Response(
+            {
+                "companies": [
+                    {**_empresa(e, personas=e.cuantos), "status": _estado(e, estado.get(e.id))}
+                    for e in empresas
+                ]
+            }
+        )
 
     @extend_schema(request=NewCompanySerializer, responses={201: dict})
     @transaction.atomic

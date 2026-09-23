@@ -160,7 +160,7 @@ export default function Installation() {
           columna de palabra por línea---. Así el documento se queda en 360 y lo
           único que se arrastra es la tabla. */}
       <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
-        <Table size="small" sx={{ minWidth: 720 }}>
+        <Table size="small" sx={{ minWidth: 900 }}>
           <TableHead>
             <TableRow>
               <TableCell>{t('Empresa')}</TableCell>
@@ -168,6 +168,7 @@ export default function Installation() {
               <TableCell align="right">{t('Personas')}</TableCell>
               <TableCell>{t('Cómo entran')}</TableCell>
               <TableCell>{t('Con qué se conectan')}</TableCell>
+              <TableCell>{t('Actividad')}</TableCell>
               <TableCell>{t('Qué le falta')}</TableCell>
               <TableCell />
             </TableRow>
@@ -185,16 +186,32 @@ export default function Installation() {
                   </Typography>
                 </TableCell>
                 <TableCell>{empresa.tax_id}</TableCell>
-                <TableCell align="right">{empresa.people}</TableCell>
+                <TableCell align="right">
+                  {/* Las activas: una baja no ficha, y contarla hacía parecer viva a
+                      una empresa que ya no tiene a nadie dentro. */}
+                  {empresa.status?.active_people ?? empresa.people}
+                  {empresa.status && empresa.status.active_people !== empresa.people && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      {t('de {{total}}', { total: empresa.people })}
+                    </Typography>
+                  )}
+                </TableCell>
                 <TableCell>
                   {empresa.identity ? (
-                    <Chip
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                      label={empresa.identity.name}
-                      title={empresa.identity.domains.join(', ')}
-                    />
+                    <>
+                      <Chip
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        label={empresa.identity.name}
+                        title={empresa.identity.domains.join(', ')}
+                      />
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                        {empresa.status?.last_identity_sign_in_day
+                          ? t('Último acceso con ella: {{dia}}', { dia: diaCorto(empresa.status.last_identity_sign_in_day) })
+                          : t('Nadie ha entrado todavía con ella')}
+                      </Typography>
+                    </>
                   ) : (
                     <Typography variant="body2" color="text.secondary">
                       {t('Con contraseña')}
@@ -213,6 +230,9 @@ export default function Installation() {
                       {t('Ninguna todavía')}
                     </Typography>
                   )}
+                </TableCell>
+                <TableCell>
+                  <Actividad estado={empresa.status} />
                 </TableCell>
                 <TableCell>
                   <LeFalta
@@ -236,7 +256,7 @@ export default function Installation() {
             ))}
             {!cargando && empresas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7}>
+                <TableCell colSpan={8}>
                   <Typography variant="body2" color="text.secondary">
                     {t('Todavía no hay ninguna empresa.')}
                   </Typography>
@@ -1282,5 +1302,52 @@ function CompanyAdmins({ empresa }) {
         )}
       </Stack>
     </Box>
+  )
+}
+
+/** Un día del servidor (`AAAA-MM-DD`), corto y en el idioma de quien mira.
+ *
+ *  A mediodía y no a medianoche: `new Date('2026-09-17')` es medianoche **en UTC**,
+ *  y en cualquier zona al oeste de Greenwich eso ya es el día anterior.
+ */
+function diaCorto(dia) {
+  return new Date(`${dia}T12:00:00`).toLocaleDateString(localeDeFechas(), { day: 'numeric', month: 'short' })
+}
+
+/** Si su gente ficha y si sus aplicaciones hablan. Lo callado se dice con palabras,
+ *  no solo con color: el color no se lee en voz alta ni en una pantalla al sol. */
+function Actividad({ estado }) {
+  const { t } = useTranslation()
+  if (!estado) return null
+  const linea = (texto, callado) => (
+    <Typography variant="body2" color={callado ? 'warning.main' : 'text.primary'} sx={{ fontWeight: callado ? 600 : 400 }}>
+      {texto}
+    </Typography>
+  )
+  return (
+    <Stack spacing={0.5}>
+      {estado.last_punch_day
+        ? linea(
+            estado.punches_quiet
+              ? t('Sin fichajes desde el {{dia}}', { dia: diaCorto(estado.last_punch_day) })
+              : t('Último fichaje: {{dia}}', { dia: diaCorto(estado.last_punch_day) }),
+            estado.punches_quiet,
+          )
+        : linea(t('Sin fichajes todavía'), false)}
+      {estado.applications_detail.map((app) => (
+        <Typography
+          key={app.name}
+          variant="caption"
+          color={app.quiet ? 'warning.main' : 'text.secondary'}
+          sx={{ display: 'block', fontWeight: app.quiet ? 600 : 400 }}
+        >
+          {app.last_used
+            ? app.quiet
+              ? t('{{app}}: callada desde el {{dia}}', { app: app.name, dia: diaCorto(app.last_used) })
+              : t('{{app}}: usada el {{dia}}', { app: app.name, dia: diaCorto(app.last_used) })
+            : t('{{app}}: sin usar todavía', { app: app.name })}
+        </Typography>
+      ))}
+    </Stack>
   )
 }

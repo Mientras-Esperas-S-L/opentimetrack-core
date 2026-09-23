@@ -508,6 +508,7 @@
   "Nadie coincide con esa búsqueda.": "Ningú no coincideix amb aquesta cerca.",
   "Nadie coincide.": "No hi coincideix ningú.",
   "Nadie de dentro podrá entrar, tampoco quien ya tenga la sesión abierta, y GreenCity dejará de poder fichar en su nombre. No se borra nada: su registro se guarda y se puede volver a activar tal como estaba.": "Ningú de dins no podrà entrar, tampoc qui ja tingui la sessió oberta, i GreenCity deixarà de poder fitxar en nom seu. No s'esborra res: el seu registre es guarda i es pot tornar a activar tal com estava.",
+  "Nadie ha entrado todavía con ella": "Encara no hi ha entrat ningú",
   "Nadie ha fichado la entrada todavía.": "Encara no ha fitxat l'entrada ningú.",
   "Nadie puede sin incumplir algo": "Ningú no pot sense incomplir alguna cosa",
   "Nadie tiene ausencia aprobada para hoy.": "Ningú no té cap absència aprovada per avui.",
@@ -774,6 +775,8 @@
   "Sin empezar": "Sense començar",
   "Sin especificar": "Sense especificar",
   "Sin fecha de llamamiento": "Sense data de crida",
+  "Sin fichajes desde el {{dia}}": "Sense fitxatges des del {{dia}}",
+  "Sin fichajes todavía": "Encara sense fitxatges",
   "Sin guardar": "Sense desar",
   "Sin herramienta, arrastra un turno para moverlo de día o de persona.": "Sense eina, arrossega un torn per moure'l de dia o de persona.",
   "Sin horas en el periodo, y por tanto sin resumen: {{quienes}}.": "Sense hores en el període, i per tant sense resum: {{quienes}}.",
@@ -933,6 +936,7 @@
   "corrección": "correcció",
   "de baja": "de baixa",
   "de más sobre lo previsto": "de més sobre el previst",
+  "de {{total}}": "de {{total}}",
   "dejó la empresa": "va deixar l'empresa",
   "desde las {{hora}}": "des de les {{hora}}",
   "día": "dia",
@@ -984,6 +988,9 @@
   "turnos asignados": "torns assignats",
   "y acaba": "i acaba",
   "ya va en el salario": "ja va inclòs al salari",
+  "{{app}}: callada desde el {{dia}}": "{{app}}: en silenci des del {{dia}}",
+  "{{app}}: sin usar todavía": "{{app}}: encara sense fer servir",
+  "{{app}}: usada el {{dia}}": "{{app}}: feta servir el {{dia}}",
   "{{codigo}} (ya no disponible; responde en español)": "{{codigo}} (ja no disponible; respon en castellà)",
   "{{cuantas}} aplicación(es)": "{{cuantas}} aplicació(ns)",
   "{{cuantas}} puede sin incumplir nada": "{{cuantas}} pot sense incomplir res",
@@ -1028,5 +1035,7 @@
   "· sin cubrir": "· sense cobrir",
   "· sin sueldo": "· sense sou",
   "· sobre {{quien}}": "· sobre {{quien}}",
-  "Último acceso: {{cuando}}": "Últim accés: {{cuando}}"
+  "Último acceso con ella: {{dia}}": "Últim accés amb ella: {{dia}}",
+  "Último acceso: {{cuando}}": "Últim accés: {{cuando}}",
+  "Último fichaje: {{dia}}": "Últim fitxatge: {{dia}}"
 }
