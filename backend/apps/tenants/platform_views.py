@@ -612,6 +612,25 @@ class PlatformAdminsView(APIView):
                 {"detail": _("There is already an installation account with that address.")},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        #  Y tampoco si alguien de una empresa lo usa ya. Con dos cuentas del mismo
+        #  correo, la pantalla de entrada pide el identificador fiscal para saber a
+        #  cuál se refiere ---y la de la instalación no tiene ninguno---, así que la
+        #  cuenta nacería sin forma de entrar. Pasó en producción el 23/09/2026: se
+        #  creó una, no pudo entrar, y hubo que desactivarla.
+        de_una_empresa = User.objects.filter(email__iexact=correo, tenant__isnull=False).first()
+        if de_una_empresa is not None:
+            return Response(
+                {
+                    "detail": _(
+                        "That address already belongs to somebody in %(company)s. An "
+                        "installation account with a repeated address could not sign in, "
+                        "because the sign-in screen would ask which company it is, and this "
+                        "one has none. Use a different address."
+                    )
+                    % {"company": de_una_empresa.tenant.name}
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         clave = v.get("password") or f"Ott-{secrets.token_urlsafe(12)}"
         creado = User.objects.create_superuser(

@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-22 21:46+0000\n"
+"POT-Creation-Date: 2026-09-23 05:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -1056,7 +1056,9 @@ msgstr "Esta solicitude xa está resolta."
 #: apps/help/models.py:35
 msgid ""
 "Use lowercase words separated by dots or hyphens, like «clocking.general»."
-msgstr "Usa palabras en minúscula separadas por puntos ou guións, como «clocking.general»."
+msgstr ""
+"Usa palabras en minúscula separadas por puntos ou guións, como "
+"«clocking.general»."
 
 #: apps/help/models.py:47 apps/help/models.py:71
 msgid "slug"
@@ -3571,16 +3573,28 @@ msgstr "Esa credencial non existe."
 msgid "There is already an installation account with that address."
 msgstr "Xa hai unha conta da instalación con ese enderezo."
 
+#: apps/tenants/platform_views.py:625
+#, python-format
+msgid ""
+"That address already belongs to somebody in %(company)s. An installation "
+"account with a repeated address could not sign in, because the sign-in "
+"screen would ask which company it is, and this one has none. Use a different "
+"address."
+msgstr ""
+"Ese enderezo xa o usa alguén de %(company)s. Unha conta da instalación cun "
+"enderezo repetido non podería entrar, porque a pantalla de acceso "
+"preguntaría de que empresa é e esta non ten ningunha. Usa outro enderezo."
+
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:660 apps/tenants/platform_views.py:685
+#: apps/tenants/platform_views.py:679 apps/tenants/platform_views.py:704
 msgid "No such installation account."
 msgstr "Esa conta da instalación non existe."
 
-#: apps/tenants/platform_views.py:689
+#: apps/tenants/platform_views.py:708
 msgid "You cannot deactivate the account you are using."
 msgstr "Non podes desactivar a conta coa que estás dentro."
 
-#: apps/tenants/platform_views.py:696
+#: apps/tenants/platform_views.py:715
 msgid ""
 "This is the only account that can administer the installation. Create "
 "another one before deactivating it."
