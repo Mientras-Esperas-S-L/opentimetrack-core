@@ -542,10 +542,16 @@ def test_sin_aplicacion_web_el_rechazo_sigue_siendo_json(client, provider, setti
 
 
 def test_una_empresa_desactivada_no_entra_por_su_proveedor(
-    provider, idp, keypair, monkeypatch, company
+    provider, idp, keypair, monkeypatch, company, settings
 ):
     """Con la empresa desactivada, el proveedor abría sesión igual: la sesión moría en
-    la primera petición, pero contestar «adelante» a quien no puede entrar es mentir."""
+    la primera petición, pero contestar «adelante» a quien no puede entrar es mentir.
+
+    La dirección de la web se fija aquí: en el puesto venía del entorno y en el CI no
+    existe, y con ella vacía el rechazo sale como JSON y no como redirección. Así la
+    prueba pasó en local y falló en la puerta.
+    """
+    settings.SSO_WEB_URL = "https://ott.example"
     with tenant_context(company.id):
         User.objects.create_user(
             email="marta@contrata.example", password=PASSWORD, tenant=company, first_name="Marta"
@@ -575,5 +581,5 @@ def test_una_empresa_desactivada_no_entra_por_su_proveedor(
 
     # Con la aplicación web configurada, el rechazo vuelve a la pantalla con su motivo.
     assert answer.status_code == 302
-    assert "sso_error=company_inactive" in answer["Location"]
+    assert answer["Location"].startswith("https://ott.example/?sso_error=company_inactive")
     assert "ticket" not in answer["Location"]
