@@ -46,6 +46,7 @@ from apps.tenants.platform_views import (
     PlatformAdminsView,
     PlatformAdminView,
     PlatformAuditView,
+    PlatformCompanyView,
     WhoAmIView,
 )
 from apps.tenants.session_api import ApplicationSessionView
@@ -197,6 +198,11 @@ urlpatterns = [
         name="platform-admin-password",
     ),
     path("api/platform/companies/", CompaniesView.as_view(), name="platform-companies"),
+    path(
+        "api/platform/companies/<uuid:company_id>/",
+        PlatformCompanyView.as_view(),
+        name="platform-company",
+    ),
     path(
         "api/platform/companies/<uuid:company_id>/applications/",
         CompanyApplicationsView.as_view(),

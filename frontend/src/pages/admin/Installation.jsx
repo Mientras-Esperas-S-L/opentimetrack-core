@@ -9,6 +9,7 @@ import DialogActions from '@mui/material/DialogActions'
 import DialogContent from '@mui/material/DialogContent'
 import DialogTitle from '@mui/material/DialogTitle'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import MenuItem from '@mui/material/MenuItem'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Switch from '@mui/material/Switch'
@@ -24,6 +25,7 @@ import {
   addPlatformAdmin,
   authoriseApplicationOfCompany,
   createCompany,
+  updateCompanyOfInstallation,
   deactivatePlatformAdmin,
   getPlatformAdmins,
   getPlatformAudit,
@@ -59,6 +61,7 @@ export default function Installation() {
   const [nueva, setNueva] = useState(null)
   const [identidadDe, setIdentidadDe] = useState(null)
   const [credencialesDe, setCredencialesDe] = useState(null)
+  const [fichaDe, setFichaDe] = useState(null)
   const [reciénCreada, setReciénCreada] = useState(null)
 
   // La lista se pide en el efecto y se escribe **dentro de la promesa**: un
@@ -172,6 +175,9 @@ export default function Installation() {
               <TableRow key={empresa.id}>
                 <TableCell>
                   {empresa.name}
+                  {!empresa.is_active && (
+                    <Chip size="small" color="error" variant="outlined" label={t('Desactivada')} sx={{ ml: 1 }} />
+                  )}
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                     {empresa.time_zone}
                   </Typography>
@@ -214,6 +220,9 @@ export default function Installation() {
                   />
                 </TableCell>
                 <TableCell align="right">
+                  <Button size="small" onClick={() => setFichaDe(empresa)}>
+                    {t('Ficha')}
+                  </Button>
                   <Button size="small" onClick={() => setCredencialesDe(empresa)}>
                     {t('Credenciales')}
                   </Button>
@@ -256,6 +265,16 @@ export default function Installation() {
         empresa={credencialesDe}
         onClose={() => setCredencialesDe(null)}
         onCambio={cargar}
+      />
+
+      <CompanyDialog
+        key={fichaDe?.id ?? 'sin-ficha'}
+        empresa={fichaDe}
+        onClose={() => setFichaDe(null)}
+        onGuardada={() => {
+          setFichaDe(null)
+          cargar()
+        }}
       />
 
       <IdentityDialog
@@ -973,5 +992,169 @@ function PlatformAudit({ vuelta }) {
         noun={{ singular: alCatalogo('entrada'), plural: alCatalogo('entradas') }}
       />
     </Box>
+  )
+}
+
+/** Lo que dice el servidor cuando rechaza, campo a campo.
+ *
+ *  El mensaje general es «Los datos enviados no son válidos», que no dice cuál. El
+ *  detalle sí, y es lo que se enseña al lado de cada casilla.
+ */
+function porCampo(fallo) {
+  const detalles = fallo?.response?.data?.error?.details ?? {}
+  return Object.fromEntries(
+    Object.entries(detalles).map(([campo, dichos]) => [campo, [].concat(dichos).join(' ')]),
+  )
+}
+
+/** La ficha de una empresa: cambiarla, desactivarla o volver a activarla.
+ *
+ *  Desactivar está aquí dentro y no en la fila de la lista: es lo único de esta
+ *  pantalla que deja a una empresa entera sin entrar, y un botón al alcance del
+ *  dedo en una tabla que se arrastra en el móvil es un accidente esperando.
+ */
+function CompanyDialog({ empresa, onClose, onGuardada }) {
+  const { t } = useTranslation()
+  const [form, setForm] = useState(() =>
+    empresa
+      ? {
+          name: empresa.name,
+          tax_id: empresa.tax_id,
+          country: empresa.country,
+          time_zone: empresa.time_zone,
+          language: empresa.language,
+        }
+      : {},
+  )
+  const [confirmacion, setConfirmacion] = useState('')
+  const [errores, setErrores] = useState({})
+  const [error, setError] = useState(null)
+  const [trabajando, setTrabajando] = useState(false)
+
+  const cambiar = (campo) => (e) => setForm((previo) => ({ ...previo, [campo]: e.target.value }))
+
+  const enviar = async (cuerpo) => {
+    setTrabajando(true)
+    setError(null)
+    setErrores({})
+    try {
+      await updateCompanyOfInstallation(empresa.id, cuerpo)
+      onGuardada()
+    } catch (fallo) {
+      const campos = porCampo(fallo)
+      setErrores(campos)
+      const general = fallo?.response?.data?.error?.message ?? fallo?.response?.data?.detail
+      setError(Object.keys(campos).length ? null : general || t('No ha salido bien.'))
+    } finally {
+      setTrabajando(false)
+    }
+  }
+
+  if (!empresa) return null
+  const cambiaElCif = form.tax_id?.trim().toUpperCase() !== empresa.tax_id
+
+  return (
+    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>{t('Ficha de {{empresa}}', { empresa: empresa.name })}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          {error && <Alert severity="error">{error}</Alert>}
+          <TextField
+            label={t('Nombre fiscal')}
+            value={form.name ?? ''}
+            onChange={cambiar('name')}
+            error={Boolean(errores.name)}
+            helperText={errores.name}
+          />
+          <TextField
+            label={t('CIF')}
+            value={form.tax_id ?? ''}
+            onChange={cambiar('tax_id')}
+            error={Boolean(errores.tax_id)}
+            helperText={errores.tax_id}
+          />
+          {cambiaElCif && (
+            <Alert severity="warning">
+              {t(
+                'Quien entre escribiendo el CIF de la empresa tendrá que usar el nuevo. El enlace con GreenCity no se rompe: solo usa el CIF al dar de alta.',
+              )}
+            </Alert>
+          )}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <TextField
+              label={t('País')}
+              value={form.country ?? ''}
+              onChange={cambiar('country')}
+              error={Boolean(errores.country)}
+              helperText={errores.country}
+              sx={{ width: { sm: 120 } }}
+            />
+            <TextField
+              fullWidth
+              label={t('Zona horaria')}
+              value={form.time_zone ?? ''}
+              onChange={cambiar('time_zone')}
+              error={Boolean(errores.time_zone)}
+              helperText={errores.time_zone}
+            />
+          </Stack>
+          <TextField select label={t('Idioma')} value={form.language ?? 'es'} onChange={cambiar('language')}>
+            <MenuItem value="es">{t('Castellano')}</MenuItem>
+            <MenuItem value="ca">{t('Catalán')}</MenuItem>
+            <MenuItem value="gl">{t('Gallego')}</MenuItem>
+            <MenuItem value="en">{t('Inglés')}</MenuItem>
+          </TextField>
+
+          <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
+            {empresa.is_active ? (
+              <>
+                <Typography variant="subtitle2">{t('Desactivar la empresa')}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                  {t(
+                    'Nadie de dentro podrá entrar, tampoco quien ya tenga la sesión abierta, y GreenCity dejará de poder fichar en su nombre. No se borra nada: su registro se guarda y se puede volver a activar tal como estaba.',
+                  )}
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label={t('Escribe «{{nombre}}» para confirmar', { nombre: empresa.name })}
+                  value={confirmacion}
+                  onChange={(e) => setConfirmacion(e.target.value)}
+                  error={Boolean(errores.confirm)}
+                  helperText={errores.confirm}
+                />
+                <Button
+                  color="error"
+                  variant="outlined"
+                  sx={{ mt: 1.5 }}
+                  disabled={trabajando || confirmacion.trim() !== empresa.name}
+                  onClick={() => enviar({ is_active: false, confirm: confirmacion })}
+                >
+                  {t('Desactivar')}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Typography variant="subtitle2">{t('Empresa desactivada')}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                  {t('Al reactivarla, su gente y sus aplicaciones vuelven a entrar como antes.')}
+                </Typography>
+                <Button variant="outlined" disabled={trabajando} onClick={() => enviar({ is_active: true })}>
+                  {t('Reactivar')}
+                </Button>
+              </>
+            )}
+          </Box>
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={trabajando}>
+          {t('Cancelar')}
+        </Button>
+        <Button variant="contained" disabled={trabajando || !form.name || !form.tax_id} onClick={() => enviar(form)}>
+          {trabajando ? t('Guardando…') : t('Guardar')}
+        </Button>
+      </DialogActions>
+    </Dialog>
   )
 }

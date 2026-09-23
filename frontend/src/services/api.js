@@ -773,6 +773,10 @@ export const getCompanies = async () => (await get('/platform/companies/')).comp
 
 export const createCompany = (payload) => post('/platform/companies/', payload)
 
+/** Cambia la ficha de una empresa, o su estado. Desactivar exige `confirm` con su nombre. */
+export const updateCompanyOfInstallation = async (companyId, payload) =>
+  (await api.patch(`/platform/companies/${companyId}/`, payload)).data
+
 export const saveCompanyIdentity = async (companyId, payload) =>
   (await api.put(`/platform/companies/${companyId}/identity/`, payload)).data
 
