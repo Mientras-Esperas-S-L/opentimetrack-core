@@ -107,7 +107,7 @@ def test_una_federada_no_tiene_contrasena_que_cambiar(jefa):
 def test_una_aplicacion_no_cambia_la_contrasena_de_nadie(jefa):
     with tenant_context(jefa.tenant_id):
         app = Application.objects.create(
-            tenant=jefa.tenant, name="GreenCity", scopes=[s.value for s in ApplicationScope]
+            tenant=jefa.tenant, name="Conector", scopes=[s.value for s in ApplicationScope]
         )
     sesion = issue_tokens(jefa, acting_application=app)
     api = APIClient()
