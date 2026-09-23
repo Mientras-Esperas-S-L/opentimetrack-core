@@ -1360,7 +1360,28 @@ class Command(BaseCommand):
         # jornada del día siguiente** y ese día cuenta cero---. Salió al día
         # siguiente de escribirlo, y solo porque la fecha cayó donde tenía que
         # caer para que se viera.
-        el_dia = (now - timedelta(days=11)).date()
+        #
+        # **El día se elige por un fichaje que exista, no por el calendario.**
+        # Antes era «hace once días» a secas. El 23/09/2026 eso cayó en sábado,
+        # que no tiene jornada: no había entrada que quitar, la corrección añadió
+        # una que no cerraba nunca, y la prueba de la demostración se puso roja
+        # sola, sin que nadie tocara el código. Una fecha fija se pudre con el
+        # calendario; un fichaje real, no.
+        referencia = (
+            Punch.objects.filter(
+                employee=people["annual"],
+                punch_type=PunchType.IN,
+                interval=PunchInterval.WORK,
+                timestamp__date__lt=(now - timedelta(days=7)).date(),
+            )
+            .order_by("-timestamp")
+            .first()
+        )
+        if referencia is None:
+            # Sin un día con entrada esta historia no se puede contar, y contarla
+            # a medias deja la apertura huérfana que el párrafo de arriba explica.
+            return
+        el_dia = referencia.timestamp.astimezone(company.tzinfo).date()
         quitada = (
             Punch.objects.filter(
                 employee=people["annual"],
