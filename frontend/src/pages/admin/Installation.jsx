@@ -172,7 +172,7 @@ export default function Installation() {
               <TableRow key={empresa.id}>
                 <TableCell>
                   {empresa.name}
-                  <Typography variant="caption" color="text.secondary" display="block">
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                     {empresa.time_zone}
                   </Typography>
                 </TableCell>
@@ -737,7 +737,9 @@ function PlatformAdmins({ onCambio }) {
               <TableRow key={cuenta.id}>
                 <TableCell>
                   {cuenta.first_name} {cuenta.last_name}
-                  <Typography variant="caption" color="text.secondary" display="block">
+                  {/* Por `sx`: la prop `display` suelta ya no llega al CSS ---MUI dejó de
+                      aceptar las del sistema--- y el correo salía pegado al nombre. */}
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                     {cuenta.email}
                     {!cuenta.is_active && ` · ${t('desactivada')}`}
                   </Typography>
