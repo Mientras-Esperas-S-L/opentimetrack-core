@@ -162,7 +162,7 @@
           "kind": "callout",
           "data": {
             "variant": "info",
-            "text": "A quien viene de GreenCity no hay que darle de alta: entra solo al enlazar su grupo, y se da de baja al salir del último grupo enlazado."
+            "text": "A quien da de alta una aplicación integrada no hay que darle de alta aquí: llega sola, y sale cuando esa aplicación la retira."
           }
         }
       ]
@@ -203,7 +203,7 @@
         {
           "kind": "paragraph",
           "data": {
-            "text": "Una aplicación es un producto autorizado a actuar contra esta empresa: GreenCity, un reloj de entrada, una tableta en obra. Lleva solo los permisos que se le concedan, uno a uno, y se puede revocar sin tocar la cuenta de nadie."
+            "text": "Una aplicación es un producto autorizado a actuar contra esta empresa: un programa de gestión, un reloj de entrada, una tableta en obra. Lleva solo los permisos que se le concedan, uno a uno, y se puede revocar sin tocar la cuenta de nadie."
           }
         },
         {
@@ -250,7 +250,7 @@
         {
           "kind": "paragraph",
           "data": {
-            "text": "La lista lo dice en su fila: si le falta el proveedor de identidad, la credencial, o su gente. Los dos primeros se pulsan y abren donde se arreglan; la gente entra sola al enlazar los grupos en GreenCity."
+            "text": "La lista lo dice en su fila: si le falta el proveedor de identidad, la credencial, o su gente. Los dos primeros se pulsan y abren donde se arreglan; la gente llega sola cuando la da de alta la aplicación integrada."
           }
         },
         {
@@ -295,13 +295,13 @@
         {
           "kind": "paragraph",
           "data": {
-            "text": "El botón Ficha de cada fila abre su nombre, CIF, país, zona horaria e idioma. Si cambias el CIF, quien entre escribiéndolo tendrá que usar el nuevo; el enlace con GreenCity no se rompe."
+            "text": "El botón Ficha de cada fila abre su nombre, CIF, país, zona horaria e idioma. Si cambias el CIF, quien entre escribiéndolo tendrá que usar el nuevo; las aplicaciones conectadas siguen funcionando."
           }
         },
         {
           "kind": "paragraph",
           "data": {
-            "text": "Desde la misma ficha se desactiva, escribiendo su nombre para confirmar. Mientras está desactivada nadie de dentro entra, tampoco quien ya tenía la sesión abierta, y GreenCity no puede fichar en su nombre. No se borra nada: al reactivarla queda exactamente como estaba."
+            "text": "Desde la misma ficha se desactiva, escribiendo su nombre para confirmar. Mientras está desactivada nadie de dentro entra, tampoco quien ya tenía la sesión abierta, y ninguna aplicación puede fichar en su nombre. No se borra nada: al reactivarla queda exactamente como estaba."
           }
         },
         {

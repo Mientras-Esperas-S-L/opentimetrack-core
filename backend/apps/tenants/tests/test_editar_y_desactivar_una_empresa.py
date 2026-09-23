@@ -41,7 +41,7 @@ def mundo():
             email="jefa@acme.test", password=CLAVE, tenant=empresa, role=Role.ADMIN
         )
         app = Application.objects.create(
-            tenant=empresa, name="GreenCityControl", scopes=[s.value for s in ApplicationScope]
+            tenant=empresa, name="Conector de ejemplo", scopes=[s.value for s in ApplicationScope]
         )
         _cred, testigo = ApplicationCredential.issue(app, label="prueba")
     return {"empresa": empresa, "jefa": jefa, "testigo": testigo}

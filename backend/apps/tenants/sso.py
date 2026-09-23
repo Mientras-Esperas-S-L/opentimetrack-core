@@ -127,8 +127,8 @@ def keys_url(provider: SsoProvider) -> str:
     provider that publishes its keys anywhere else the browser flow worked and the
     assertion flow refused every single time, with a message that reads "could not
     obtain the issuer's signing keys" and sends whoever debugs it to look at the
-    network instead of at the URL. Found against GreenCityControl, which serves them
-    at `/o/jwks.json` and announces them in its document, exactly as it should.
+    network instead of at the URL. Found against a provider that serves them at
+    `/o/jwks.json` and announces them in its document, exactly as it should.
     """
     if provider.jwks_uri:
         return provider.jwks_uri

@@ -30,7 +30,7 @@ class SsoProvider(TenantOwnedModel):
     """An OpenID Connect issuer this company trusts."""
 
     name = models.CharField(
-        _("name"), max_length=120, help_text=_("Display name, e.g. 'GreenCityControl'.")
+        _("name"), max_length=120, help_text=_("Display name, e.g. 'Company directory'.")
     )
     issuer = models.CharField(
         _("issuer"),

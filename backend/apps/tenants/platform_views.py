@@ -58,13 +58,14 @@ from apps.users.serializers import SignUpSerializer
 
 log = logging.getLogger(__name__)
 
-#: Lo que la integración con GreenCityControl usa, para marcarlo de una vez.
+#: Lo que usa una integración completa ---altas, fichaje en nombre de otros,
+#: ausencias, cuadrante, calendario y disponibilidad---, para marcarlo de una vez.
 #:
 #: Es una sugerencia de la pantalla, no una regla del servidor: la lista viaja en
 #: la petición como cualquier otra, y quien da de alta puede quitar lo que no
 #: quiera conceder. Existe porque marcar diez casillas a mano es donde se olvida
 #: una y el alta parece buena hasta que, semanas después, algo contesta 403.
-GREENCITY_SCOPES = [
+FULL_INTEGRATION_SCOPES = [
     ApplicationScope.READ_PEOPLE,
     ApplicationScope.WRITE_PEOPLE,
     ApplicationScope.PUNCH_SELF,
@@ -451,8 +452,8 @@ class NewApplicationSerializer(serializers.Serializer):
 
     name = serializers.CharField(max_length=100)
     description = serializers.CharField(required=False, allow_blank=True, default="")
-    #: Vacío significa el preajuste de GreenCityControl, que es el caso de nueve de
-    #: cada diez altas. Quien quiera otra cosa manda su lista.
+    #: Vacío significa el preajuste de una integración completa. Quien quiera otra
+    #: cosa manda su lista.
     scopes = serializers.ListField(child=serializers.CharField(), required=False, default=list)
 
     def validate_scopes(self, value):
@@ -731,8 +732,8 @@ class CompanyApplicationsView(_PorEmpresa):
 
     Existían solo dentro de la empresa, en la pantalla de su administrador, y eso
     partía el alta en dos: quien da de alta al cliente tenía que salir, entrar con
-    otra cuenta y volver. La credencial es lo que hace falta para enchufar
-    GreenCity, así que se emite donde se da el alta.
+    otra cuenta y volver. La credencial es lo que hace falta para enchufar una
+    aplicación, así que se emite donde se da el alta.
 
     **Lo que esto NO abre.** Se administra la aplicación, no se miran sus datos: de
     la empresa se sigue viendo lo mismo que antes. Y el testigo se enseña **una vez**
@@ -756,7 +757,7 @@ class CompanyApplicationsView(_PorEmpresa):
                     {"value": valor, "label": str(etiqueta)}
                     for valor, etiqueta in ApplicationScope.choices
                 ],
-                "greencity_scopes": [str(s) for s in GREENCITY_SCOPES],
+                "integration_scopes": [str(s) for s in FULL_INTEGRATION_SCOPES],
             }
         )
 
@@ -775,7 +776,7 @@ class CompanyApplicationsView(_PorEmpresa):
             tenant=company,
             name=v["name"],
             description=v.get("description", ""),
-            scopes=[str(s) for s in (v.get("scopes") or GREENCITY_SCOPES)],
+            scopes=[str(s) for s in (v.get("scopes") or FULL_INTEGRATION_SCOPES)],
             created_by=None,  # la cuenta de la instalación no es de esta empresa
         )
         credencial, testigo = ApplicationCredential.issue(aplicacion, label=v["name"])

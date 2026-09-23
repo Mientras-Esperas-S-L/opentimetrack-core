@@ -14,7 +14,7 @@ with the deployment, can be put back into a fresh installation and survives a re
 Whatever is edited by hand later sits on top of that, it is not the original. This is
 also how the other product does it, and the reason is written in its authoring guide.
 
-There is deliberately less here than in GreenCity's help centre: no media table, no
+There is deliberately less here than in a full help centre: no media table, no
 guided tours and no analytics in this first version. They are additions, not
 foundations, and leaving them out keeps the first version something a person can read
 in one sitting.

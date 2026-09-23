@@ -57,8 +57,8 @@ def test_crear_una_empresa_queda_escrito_sin_su_contrasena(
         respuesta = cliente(plataforma).post(
             "/api/platform/companies/",
             {
-                "company_name": "UTE Zonas Verdes Algeciras",
-                "tax_id": "U27686062",
+                "company_name": "Jardines de Ejemplo, S.L.",
+                "tax_id": "U00000000",
                 "country": "ES",
                 "time_zone": "Europe/Madrid",
                 "email": "quien.administre@empresa.example",
@@ -72,8 +72,8 @@ def test_crear_una_empresa_queda_escrito_sin_su_contrasena(
     entrada = PlatformAuditEntry.objects.get()
     assert entrada.action == PlatformAction.COMPANY_CREATED
     assert entrada.actor == plataforma
-    assert entrada.company.tax_id == "U27686062"
-    assert entrada.company_label == "UTE Zonas Verdes Algeciras"
+    assert entrada.company.tax_id == "U00000000"
+    assert entrada.company_label == "Jardines de Ejemplo, S.L."
     assert respuesta.data["administrator"]["password"] not in _todo_el_registro()
 
 
@@ -114,7 +114,7 @@ def test_lo_que_toca_a_una_empresa_va_a_los_dos_rastros_y_sin_el_testigo(
     with django_capture_on_commit_callbacks(execute=True):
         alta = api.post(
             f"/api/platform/companies/{company.id}/applications/",
-            {"name": "GreenCityControl"},
+            {"name": "Conector de ejemplo"},
             format="json",
         )
     aplicacion = alta.data["id"]

@@ -111,7 +111,7 @@ def company(db):
 @pytest.fixture
 def provider(company):
     return SsoProvider.objects.create(
-        tenant=company, name="GreenCityControl", issuer=ISSUER, may_act_for_people=True
+        tenant=company, name="Conector de ejemplo", issuer=ISSUER, may_act_for_people=True
     )
 
 
