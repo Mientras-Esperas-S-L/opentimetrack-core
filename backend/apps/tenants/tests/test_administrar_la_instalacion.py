@@ -573,3 +573,24 @@ def test_con_su_gente_dentro_ya_no_falta_gente(plataforma, company):
     empresas = cliente(plataforma).get(reverse("platform-companies")).data["companies"]
 
     assert "people" not in next(e for e in empresas if e["tax_id"] == company.tax_id)["missing"]
+
+
+def test_no_se_crea_una_cuenta_que_no_podria_entrar(plataforma, company):
+    """Un correo que ya usa alguien de una empresa deja la cuenta sin forma de entrar.
+
+    Con dos cuentas del mismo correo, la pantalla de entrada pide el identificador
+    fiscal para saber a cuál se refiere, y la de la instalación no tiene ninguno.
+    Pasó en producción el 23/09/2026: se creó una, no pudo entrar, y hubo que
+    desactivarla.
+    """
+    User.objects.create_user(email="repetido@acme.test", password="X" * 14, tenant=company)
+
+    respuesta = cliente(plataforma).post(
+        "/api/platform/admins/",
+        {"email": "repetido@acme.test", "first_name": "Quien", "last_name": "Sea"},
+        format="json",
+    )
+
+    assert respuesta.status_code == 400
+    assert company.name in respuesta.data["detail"]
+    assert User.objects.filter(email="repetido@acme.test", tenant__isnull=True).count() == 0

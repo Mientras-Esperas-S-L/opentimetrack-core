@@ -26,6 +26,7 @@ from django.core.management import call_command
 from django.db import transaction
 from django.test import override_settings
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.common.models import tenant_context
 from apps.punches.models import HoursNature, Punch, PunchInterval, PunchType
@@ -255,3 +256,39 @@ def test_solo_queda_una_entrada_sin_cerrar_y_es_la_de_hoy(sembrada):
             f"{email} {cuando:%Y-%m-%d %H:%M}" for email, cuando in viejas[:5]
         )
         assert de_hoy, "la de hoy tiene que seguir ahí: es la jornada en curso de la pantalla"
+
+
+@pytest.mark.django_db
+@freeze_time("2026-09-23 10:00:00+02:00")
+def test_la_correccion_impuesta_aguanta_aunque_su_dia_caiga_en_sabado():
+    """El día de la corrección impuesta se elegía por calendario, y se pudrió.
+
+    La semilla contaba «faltaba la entrada de ese día»: quitaba la entrada de
+    hace once días y la reponía con una corrección. El 23/09/2026 ese día cayó
+    en **sábado**, que no tiene jornada: no había nada que quitar, la corrección
+    añadió una entrada que no cerraba nunca, y la prueba de arriba se puso roja
+    sola, sin que nadie tocara el código.
+
+    La fecha de aquí está congelada a propósito en ese día: es el caso que se
+    escapó, y así lo sigue comprobando cuando el calendario haya pasado de largo.
+    """
+    with override_settings(DEBUG=True):
+        call_command("seed_demo", "--reset", verbosity=0)
+
+    empresa = Tenant.objects.filter(name="Jardines Demo S.L.").first()
+    with tenant_context(empresa.id):
+        sueltas = []
+        for quien in User.objects.filter(tenant=empresa):
+            balance: dict[str, list] = {}
+            for punch in Punch.objects.filter(employee=quien).order_by("timestamp"):
+                cola = balance.setdefault(punch.interval, [])
+                if punch.punch_type == PunchType.IN:
+                    cola.append(punch)
+                elif cola:
+                    cola.pop()
+            sueltas += [(quien.email, p.timestamp) for cola in balance.values() for p in cola]
+
+    viejas = [x for x in sueltas if x[1].date() < timezone.localdate() - timedelta(days=1)]
+    assert viejas == [], "entradas sin cerrar en días pasados:\n  " + "\n  ".join(
+        f"{email} {cuando:%Y-%m-%d %H:%M}" for email, cuando in viejas[:5]
+    )
