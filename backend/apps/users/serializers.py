@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.models import update_last_login
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -676,6 +677,17 @@ def issue_tokens(user, *, acting_application=None) -> dict:
         refresh["act_app_id"] = str(acting_application.id)
         # The access token is derived from the refresh, so it inherits both claims,
         # and so does every access token refreshed from it later.
+    else:
+        # La persona ha entrado, y eso se anota. `UPDATE_LAST_LOGIN` de simplejwt
+        # solo actúa en sus propias vistas, y aquí no se usa ninguna, así que
+        # `last_login` **no se guardaba nunca**: medido en devel el 23/09/2026, una
+        # cuenta recién entrada seguía con él vacío. Y no era solo una columna
+        # que mentía: los enlaces para poner contraseña lo meten en su firma para
+        # morir cuando la persona entra, y sin él seguían valiendo.
+        #
+        # No cuando la sesión la pide una aplicación en nombre de alguien: eso no
+        # es que esa persona haya entrado.
+        update_last_login(None, user)
     return {"access": str(refresh.access_token), "refresh": str(refresh)}
 
 
