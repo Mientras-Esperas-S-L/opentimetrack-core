@@ -7,15 +7,42 @@ Estado entre pasadas. El prompt está en `consola-instalacion-loop.md`.
 | T1 | Registro de lo que hacen las cuentas de instalación | **hecho** (PR core 26) |
 | T2 | Editar y desactivar una empresa | **hecho** (PR core 27 y 28) |
 | T3 | Los administradores de cada empresa y su contraseña | **hecho** (PR core 29) |
-| T4 | El estado de cada empresa de un vistazo | pendiente |
+| T4 | El estado de cada empresa de un vistazo | **hecho** (PR core 30) |
 
 ## Qué toca ahora
 
-T4: el estado de cada empresa de un vistazo.
+Nada: los cuatro trozos están hechos. Lo que queda son las decisiones de abajo.
 
 ## Qué se hizo en la última pasada
 
-**T3**, 23/09/2026.
+**T4**, 23/09/2026.
+
+En la lista de empresas: «Actividad» con el día del último fichaje y cuándo habló
+cada aplicación, el último acceso con la identidad en «Cómo entran», y las personas
+activas. Lo que lleva un día laborable entero sin nada sale en negrita y con
+palabras («sin fichajes desde», «callada desde»). Cuatro consultas para todas las
+empresas.
+
+**Solo días y recuentos**: ni la hora del fichaje ni quién. En una empresa de una
+persona, la hora ya sería su dato.
+
+Medido en devel: GreenCity Pruebas sale «Sin fichajes desde el 21 sept» (hoy es
+miércoles 23: el martes entero sin nada) y su aplicación «usada el 22 sept».
+
+**Tres cosas que salieron midiendo:**
+
+- **«Nadie ha entrado todavía con ella»** en GreenCity Pruebas, donde 16 personas
+  entran con la identidad. La fecha no se anotaba hasta hoy (ver T3). Ahora se
+  cuenta quién ha entrado alguna vez, que sí se sabe. Y «No ha entrado nunca» de
+  la ficha pasa a «No consta ningún acceso».
+- **A 1280 px la tabla no cabía**: 994 px en una caja de 934, con los botones
+  cortados. «Con qué se conectan» va dentro de «Actividad», el CIF bajo el nombre
+  y los botones apilados. Medido después: 934 de 934.
+- Sin festivos en «callado»: un festivo da un aviso de más. Es un aviso para
+  mirar, no un cómputo.
+
+### Antes: T3
+23/09/2026.
 
 En la ficha de cada empresa, «Quién la administra»: solo administradores, con su
 último acceso y si entran con la cuenta de su empresa. «Mandar enlace» les envía
@@ -101,6 +128,10 @@ transacción de pytest, porque hay eventos de clave foránea pendientes y la bas
 lo rechaza por eso y no por el guardián. Se prueba por la sonda de salud.
 
 ## Decisiones tomadas sin preguntar
+
+- **El último fichaje, por día y no por hora**, y sin quién.
+- **«Callado» es un día laborable entero sin nada**, de lunes a viernes y sin
+  festivos. Una empresa sin ningún fichaje todavía no avisa.
 
 - **El CIF se puede cambiar**, con aviso. El caso real es corregir un error del
   alta. Un CIF que cambia de verdad suele ser otra empresa, y eso es darla de alta
