@@ -212,7 +212,9 @@ api.interceptors.response.use(
     // hay una cuenta de la instalación con esa dirección». Medido en devel el
     // 23/09/2026.
     const detalleSuelto =
-      !payload && typeof error.response?.data?.detail === 'string' ? error.response.data.detail : null
+      !payload && typeof error.response?.data?.detail === 'string'
+        ? error.response.data.detail
+        : null
 
     // `network_error` y un plazo agotado no son lo mismo, y la diferencia
     // decide qué se le puede decir a quien acaba de fichar. Sin respuesta y sin
@@ -227,7 +229,8 @@ api.interceptors.response.use(
       //  `rejected` y no `network_error` cuando el servidor sí contestó con su
       //  motivo: quien mira el código para decidir si reintentar ---el fichaje sin
       //  cobertura--- no debe reintentar algo que el servidor ya ha rechazado.
-      code: payload?.code ?? (detalleSuelto ? 'rejected' : plazoAgotado ? 'timeout' : 'network_error'),
+      code:
+        payload?.code ?? (detalleSuelto ? 'rejected' : plazoAgotado ? 'timeout' : 'network_error'),
       // En castellano, como el resto del producto. Estaba en inglés, y es el
       // único texto que lee quien está en una obra y no consigue fichar: el
       // peor sitio posible para el idioma equivocado.
@@ -353,6 +356,17 @@ export const updateMe = async (payload) => (await api.patch('/auth/me/', payload
  *  exists or not: telling the two apart would turn this into a way of finding
  *  out who works where, so the screen says the same thing either way. */
 export const requestPasswordReset = (email) => post('/auth/password-reset/', { email })
+
+/** Cambia la contraseña propia. Vuelve con una sesión nueva: las demás se cierran,
+ *  y esta también, así que se guarda la que viene para no echar a quien la cambia. */
+export const changePassword = async (currentPassword, newPassword) => {
+  const data = await post('/auth/password/', {
+    current_password: currentPassword,
+    new_password: newPassword,
+  })
+  tokens.save(data)
+  return data
+}
 
 /**
  * Whether that address signs in here or at their company's provider.
@@ -801,7 +815,8 @@ export const updateCompanyOfInstallation = async (companyId, payload) =>
 export const saveCompanyIdentity = async (companyId, payload) =>
   (await api.put(`/platform/companies/${companyId}/identity/`, payload)).data
 
-export const removeCompanyIdentity = (companyId) => api.delete(`/platform/companies/${companyId}/identity/`)
+export const removeCompanyIdentity = (companyId) =>
+  api.delete(`/platform/companies/${companyId}/identity/`)
 
 // Las de la consola de la instalación llevan `OfCompany`: hacen lo mismo que las
 // de arriba pero **desde fuera de la empresa**, con la cuenta que la administra, y
@@ -813,7 +828,8 @@ export const getHelpIndex = (language) => get('/help/', language ? { language } 
 export const getHelpArticle = (slug, language) =>
   get(`/help/articles/${slug}/`, language ? { language } : undefined)
 
-export const searchHelp = (q, language) => get('/help/search/', { q, ...(language ? { language } : {}) })
+export const searchHelp = (q, language) =>
+  get('/help/search/', { q, ...(language ? { language } : {}) })
 
 export const getPlatformAdmins = async () => (await get('/platform/admins/')).admins
 

@@ -64,6 +64,7 @@ from apps.users.views import (
     ActivityPeriodViewSet,
     DepartmentViewSet,
     MeView,
+    PasswordChangeView,
     PasswordResetRequestView,
     PasswordSetView,
     RefreshView,
@@ -110,6 +111,7 @@ auth_patterns = [
     path("sso/logout/", SsoBackChannelLogoutView.as_view(), name="sso-logout"),
     path("password-reset/", PasswordResetRequestView.as_view(), name="password-reset"),
     path("set-password/", PasswordSetView.as_view(), name="set-password"),
+    path("password/", PasswordChangeView.as_view(), name="password-change"),
 ]
 
 urlpatterns = [
