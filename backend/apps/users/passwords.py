@@ -127,9 +127,28 @@ def send_account_email(user, *, base_url: str, invitation: bool = False) -> None
     uid, token = build_token(user)
     link = f"{base_url.rstrip('/')}/set-password/{uid}/{token}/"
 
-    idioma = user.locale or (user.tenant.language if user.tenant else "")
-    with translation.override(idioma or None):
+    with translation.override(mail_language(user)):
         _enviar_enlace(user, link=link, invitation=invitation)
+
+
+def mail_language(user) -> str:
+    """El idioma de un correo para esa persona. Nunca vacío.
+
+    El suyo, si lo eligió; si no, el de su empresa. Y quien no tiene empresa ---una
+    cuenta de la instalación--- recibía el correo **en inglés**: el idioma salía
+    vacío, `translation.override(None)` apaga las traducciones, y lo que queda es el
+    texto original del código. Medido en producción el 23/09/2026 con «He olvidado
+    mi contraseña»: «Reset your password at the platform».
+
+    Para ella, el idioma de quien lo pide ---en la recuperación, el de su propio
+    navegador--- y, si no hay ninguno activo, el de la instalación.
+    """
+    return (
+        user.locale
+        or (user.tenant.language if user.tenant_id else "")
+        or translation.get_language()
+        or settings.LANGUAGE_CODE
+    )
 
 
 def _enviar_enlace(user, *, link: str, invitation: bool) -> None:
