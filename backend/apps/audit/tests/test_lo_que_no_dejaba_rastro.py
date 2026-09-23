@@ -213,6 +213,7 @@ SIN_RASTRO_A_PROPOSITO = {
     "IdentitySerializer": "solo valida; quien escribe y anota es CompanyIdentityView",
     "PasswordResetRequestView": "anotar quién lo pide sería una forma de averiguar quién existe",
     "PasswordSetView": "poner la contraseña propia no cambia el registro de nadie",
+    "PasswordChangeView": "igual que PasswordSetView: la contraseña propia, estando dentro",
     "SsoDiscoverView": "solo dice si un dominio entra por un proveedor; no cambia nada",
     "SsoTicketView": (
         "es el último paso de una entrada, y entrar ya no deja rastro aquí: lo que "

@@ -13,6 +13,8 @@ import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
 import ListSubheader from '@mui/material/ListSubheader'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import Toolbar from '@mui/material/Toolbar'
 import Tooltip from '@mui/material/Tooltip'
@@ -23,6 +25,7 @@ import { useTheme } from '@mui/material/styles'
 import LogoutIcon from '@mui/icons-material/Logout'
 import HelpIcon from '@mui/icons-material/Help'
 
+import ChangePasswordDialog from '../components/ChangePasswordDialog.jsx'
 import HelpDrawer from '../components/HelpDrawer.jsx'
 import { temaDeAyuda } from '../components/temaDeAyuda.js'
 import MenuIcon from '@mui/icons-material/Menu'
@@ -100,6 +103,8 @@ export default function AppShell() {
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
   const location = useLocation()
   const [menuAbierto, setMenuAbierto] = useState(false)
+  const [cuentaEn, setCuentaEn] = useState(null)
+  const [cambiandoClave, setCambiandoClave] = useState(0)
 
   const user = session?.user
   const company = session?.tenant
@@ -217,25 +222,53 @@ export default function AppShell() {
             sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           />
           <Tooltip title={t('Ayuda')}>
-            <IconButton
-              onClick={() => setAyudaAbierta(true)}
-              aria-label={t('Ayuda')}
-            >
+            <IconButton onClick={() => setAyudaAbierta(true)} aria-label={t('Ayuda')}>
               <HelpIcon />
             </IconButton>
           </Tooltip>
           <ThemeToggle />
+          {/* Botón y no solo dibujo: abre la cuenta propia. La etiqueta va aquí y no
+              en el Tooltip, que en MUI no deja `aria-label` en el DOM. */}
           <Tooltip title={user ? `${user.first_name} ${user.last_name}`.trim() : ''}>
-            <Avatar sx={{ width: 34, height: 34, bgcolor: 'primary.main', fontSize: '0.85rem' }}>
-              {initialsOf(user)}
-            </Avatar>
-          </Tooltip>
-          <Tooltip title={t('Cerrar sesión')}>
             <IconButton
-              onClick={signOut}
-              edge="end"
-              aria-label={t('Cerrar sesión')}
+              onClick={(e) => setCuentaEn(e.currentTarget)}
+              aria-label={t('Tu cuenta')}
+              aria-haspopup="menu"
+              aria-expanded={Boolean(cuentaEn)}
             >
+              <Avatar sx={{ width: 34, height: 34, bgcolor: 'primary.main', fontSize: '0.85rem' }}>
+                {initialsOf(user)}
+              </Avatar>
+            </IconButton>
+          </Tooltip>
+          <Menu anchorEl={cuentaEn} open={Boolean(cuentaEn)} onClose={() => setCuentaEn(null)}>
+            {/* Quien entra con la cuenta de su empresa no tiene contraseña aquí. */}
+            {!user?.is_federated && (
+              <MenuItem
+                onClick={() => {
+                  setCuentaEn(null)
+                  setCambiandoClave((n) => n + 1)
+                }}
+              >
+                {t('Cambiar la contraseña')}
+              </MenuItem>
+            )}
+            <MenuItem
+              onClick={() => {
+                setCuentaEn(null)
+                signOut()
+              }}
+            >
+              {t('Cerrar sesión')}
+            </MenuItem>
+          </Menu>
+          <ChangePasswordDialog
+            key={cambiandoClave}
+            abierto={cambiandoClave > 0}
+            onClose={() => setCambiandoClave(0)}
+          />
+          <Tooltip title={t('Cerrar sesión')}>
+            <IconButton onClick={signOut} edge="end" aria-label={t('Cerrar sesión')}>
               <LogoutIcon />
             </IconButton>
           </Tooltip>

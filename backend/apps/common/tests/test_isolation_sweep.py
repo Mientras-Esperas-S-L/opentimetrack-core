@@ -613,6 +613,9 @@ def test_every_route_is_covered_by_this_sweep():
         "api/schema/",
         # Own session only; no object of anybody else's to reach.
         "api/auth/me/",
+        # La contraseña propia: no hay objeto de nadie más que alcanzar. Sus
+        # pruebas, en apps/users/tests/test_cambiar_la_contrasena.py.
+        "api/auth/password/",
         "api/auth/logout/",
         # Application credential, covered in apps/punches/tests/test_delegated.py.
         "api/punches/delegated/",

@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-23 07:19+0000\n"
+"POT-Creation-Date: 2026-09-23 12:46+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -359,7 +359,7 @@ msgid "Give both times, or neither: half of a range is not one."
 msgstr "Pon as dúas horas ou ningunha: media franxa non é unha franxa."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/absences/models.py:446 apps/users/serializers.py:490
+#: apps/absences/models.py:446 apps/users/serializers.py:491
 msgid "It ends before it starts."
 msgstr "Acaba antes de comezar."
 
@@ -569,12 +569,12 @@ msgstr "o tempo indispensable"
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/absences/views.py:242 apps/shifts/views.py:204
 #: apps/tenants/views.py:181 apps/users/views.py:774 apps/users/views.py:844
-#: apps/users/views.py:1002 apps/users/views.py:1053 apps/users/views.py:1090
+#: apps/users/views.py:1072 apps/users/views.py:1123 apps/users/views.py:1160
 msgid "Added"
 msgstr "Engadido"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/absences/views.py:270 apps/audit/trail.py:74 apps/users/views.py:1026
+#: apps/absences/views.py:270 apps/audit/trail.py:74 apps/users/views.py:1096
 msgid "Changed"
 msgstr "Cambiado"
 
@@ -594,8 +594,8 @@ msgstr "Borrado"
 
 #: apps/absences/views.py:315 apps/absences/views.py:560
 #: apps/punches/correction_views.py:246 apps/reports/views.py:436
-#: apps/users/serializers.py:480 apps/users/serializers.py:745
-#: apps/users/serializers.py:819 apps/users/serializers.py:907
+#: apps/users/serializers.py:481 apps/users/serializers.py:757
+#: apps/users/serializers.py:831 apps/users/serializers.py:919
 msgid "That person is not in this company."
 msgstr "Esa persoa non pertence a esta empresa."
 
@@ -2429,7 +2429,7 @@ msgid "Choose at least one day."
 msgstr "Escolle polo menos un día."
 
 #: apps/shifts/services.py:151 apps/shifts/views.py:324
-#: apps/users/serializers.py:218
+#: apps/users/serializers.py:219
 msgid "Somebody in that list is not in this company."
 msgstr "Alguén desa lista non pertence a esta empresa."
 
@@ -3007,7 +3007,7 @@ msgstr ""
 "mesmo código que %(other)s: o REGCON é o que distingue dous convenios "
 "semellantes"
 
-#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:343
+#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:463
 #, python-format
 msgid "Unknown permissions: %(list)s."
 msgstr "Permisos descoñecidos: %(list)s."
@@ -3017,15 +3017,15 @@ msgid "Grant at least one permission, or the application can do nothing."
 msgstr ""
 "Concede polo menos un permiso; se non, a aplicación non pode facer nada."
 
-#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:727
+#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:847
 msgid "Permissions changed"
 msgstr "Cambiou os permisos"
 
-#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:806
+#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:926
 msgid "Reactivate the application before issuing a credential."
 msgstr "Reactiva a aplicación antes de emitir unha credencial."
 
-#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:823
+#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:943
 #, python-format
 msgid "Credential issued: …%(hint)s"
 msgstr "Credencial emitida: …%(hint)s"
@@ -3034,7 +3034,7 @@ msgstr "Credencial emitida: …%(hint)s"
 msgid "That credential does not exist or is already revoked."
 msgstr "Esa credencial non existe ou xa está revogada."
 
-#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:862
+#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:982
 #, python-format
 msgid "Credential revoked: …%(hint)s"
 msgstr "Credencial revogada: …%(hint)s"
@@ -3633,88 +3633,89 @@ msgid "Somebody else in this company already uses that identity."
 msgstr "Outra persoa desta empresa xa usa esa identidade."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:81
+#: apps/tenants/platform_views.py:84
 msgid "Only a platform superuser can administer the installation."
 msgstr "Só un superusuario de plataforma pode administrar a instalación."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:248 apps/tenants/platform_views.py:305
-#: apps/tenants/platform_views.py:374
+#: apps/tenants/platform_views.py:368 apps/tenants/platform_views.py:425
+#: apps/tenants/platform_views.py:494
 msgid "No such company."
 msgstr "Esa empresa non existe."
 
-#: apps/tenants/platform_views.py:393
+#: apps/tenants/platform_views.py:513
 msgid "The name cannot be empty."
 msgstr "O nome non pode quedar baleiro."
 
-#: apps/tenants/platform_views.py:399
+#: apps/tenants/platform_views.py:519
 msgid "The tax number cannot be empty."
 msgstr "O identificador fiscal non pode quedar baleiro."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:402 apps/users/serializers.py:581
+#: apps/tenants/platform_views.py:522 apps/users/serializers.py:582
 msgid "A company with this tax number already exists."
 msgstr "Xa existe unha empresa con ese NIF."
 
-#: apps/tenants/platform_views.py:417
+#: apps/tenants/platform_views.py:537
 msgid "Type the company's name exactly to deactivate it."
 msgstr "Escribe o nome da empresa tal cal para desactivala."
 
-#: apps/tenants/platform_views.py:472 apps/tenants/platform_views.py:490
+#: apps/tenants/platform_views.py:592 apps/tenants/platform_views.py:610
 msgid "Changed from the installation console"
 msgstr "Cambiado desde a consola da instalación"
 
-#: apps/tenants/platform_views.py:549
+#: apps/tenants/platform_views.py:669
 msgid "That person does not administer this company."
 msgstr "Esa persoa non administra esta empresa."
 
-#: apps/tenants/platform_views.py:553
+#: apps/tenants/platform_views.py:673
 msgid "The company is deactivated: the link would not let anybody in."
 msgstr "A empresa está desactivada: a ligazón non deixaría entrar a ninguén."
 
-#: apps/tenants/platform_views.py:555
+#: apps/tenants/platform_views.py:675
 msgid "That account is deactivated: the link would not let them in."
 msgstr "Esa conta está desactivada: a ligazón non a deixaría entrar."
 
-#: apps/tenants/platform_views.py:558
+#: apps/tenants/platform_views.py:678
 msgid ""
 "That person signs in with their company's account and has no password here."
 msgstr "Esa persoa entra coa conta da súa empresa e aquí non ten contrasinal."
 
-#: apps/tenants/platform_views.py:573
+#: apps/tenants/platform_views.py:693
 #, python-format
 msgid "The mail server refuses the address %(email)s. Check that it is right."
-msgstr "O servidor de correo rexeita o enderezo %(email)s. Comproba que é correcto."
+msgstr ""
+"O servidor de correo rexeita o enderezo %(email)s. Comproba que é correcto."
 
-#: apps/tenants/platform_views.py:584
+#: apps/tenants/platform_views.py:704
 msgid "The email could not be sent. Nothing has changed; try again later."
 msgstr ""
 "Non se puido enviar o correo. Non cambiou nada; volve intentalo máis tarde."
 
-#: apps/tenants/platform_views.py:595
+#: apps/tenants/platform_views.py:715
 msgid "Sent from the installation console"
 msgstr "Enviado desde a consola da instalación"
 
-#: apps/tenants/platform_views.py:670
+#: apps/tenants/platform_views.py:790
 msgid "Authorised from the installation console"
 msgstr "Autorizada desde a consola da instalación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:705 apps/tenants/platform_views.py:756
-#: apps/tenants/platform_views.py:803
+#: apps/tenants/platform_views.py:825 apps/tenants/platform_views.py:876
+#: apps/tenants/platform_views.py:923
 msgid "No such application."
 msgstr "Esa aplicación non existe."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:853
+#: apps/tenants/platform_views.py:973
 msgid "No such credential."
 msgstr "Esa credencial non existe."
 
-#: apps/tenants/platform_views.py:929
+#: apps/tenants/platform_views.py:1049
 msgid "There is already an installation account with that address."
 msgstr "Xa hai unha conta da instalación con ese enderezo."
 
-#: apps/tenants/platform_views.py:942
+#: apps/tenants/platform_views.py:1062
 #, python-format
 msgid ""
 "That address already belongs to somebody in %(company)s. An installation "
@@ -3727,15 +3728,15 @@ msgstr ""
 "preguntaría de que empresa é e esta non ten ningunha. Usa outro enderezo."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:1003 apps/tenants/platform_views.py:1035
+#: apps/tenants/platform_views.py:1123 apps/tenants/platform_views.py:1155
 msgid "No such installation account."
 msgstr "Esa conta da instalación non existe."
 
-#: apps/tenants/platform_views.py:1039
+#: apps/tenants/platform_views.py:1159
 msgid "You cannot deactivate the account you are using."
 msgstr "Non podes desactivar a conta coa que estás dentro."
 
-#: apps/tenants/platform_views.py:1046
+#: apps/tenants/platform_views.py:1166
 msgid ""
 "This is the only account that can administer the installation. Create "
 "another one before deactivating it."
@@ -4264,7 +4265,7 @@ msgstr ""
 "Unha consulta previa pertence á vía da decisión empresarial. Un acordo é a "
 "negociación."
 
-#: apps/tenants/views.py:142 apps/users/serializers.py:391
+#: apps/tenants/views.py:142 apps/users/serializers.py:392
 msgid "That workplace belongs to another company."
 msgstr "Ese centro de traballo é doutra empresa."
 
@@ -4874,13 +4875,13 @@ msgid "Reset your password at %(company)s"
 msgstr "Restablecer o teu contrasinal en %(company)s"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:87
+#: apps/users/serializers.py:88
 #, python-format
 msgid "%(code)s is not a region of %(country)s."
 msgstr "%(code)s non é unha rexión de %(country)s."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:223
+#: apps/users/serializers.py:224
 #, python-format
 msgid ""
 "%(name)s does not have a manager profile, so putting them in charge would "
@@ -4890,28 +4891,28 @@ msgstr ""
 "concedería nada."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:350
+#: apps/users/serializers.py:351
 msgid "Somebody in this company already uses it."
 msgstr "Alguén desta empresa xa o usa."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:382
+#: apps/users/serializers.py:383
 #, python-format
 msgid "%(name)s already uses that staff number."
 msgstr "%(name)s xa usa ese número."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:398
+#: apps/users/serializers.py:399
 msgid "That department belongs to another company."
 msgstr "Ese departamento é doutra empresa."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:414
+#: apps/users/serializers.py:415
 msgid "It cannot be today or a future date."
 msgstr "Non pode ser hoxe nin unha data futura."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:423
+#: apps/users/serializers.py:424
 #, python-format
 msgid "That gives an age of %(age)s, below the minimum working age. %(basis)s"
 msgstr ""
@@ -4919,12 +4920,12 @@ msgstr ""
 "%(basis)s"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:427
+#: apps/users/serializers.py:428
 msgid "That gives an age of over a hundred years."
 msgstr "Iso dá unha idade de máis de cen anos."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:452
+#: apps/users/serializers.py:453
 msgid ""
 "There is no agreed figure on this regime. Clear it, or choose one that has "
 "hours."
@@ -4933,22 +4934,22 @@ msgstr ""
 "horas."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:469
+#: apps/users/serializers.py:470
 msgid "Art. 3.b asks for the agreed hours on this regime."
 msgstr "O art. 3.b pide as horas pactadas neste réxime."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:484
+#: apps/users/serializers.py:485
 msgid "A relief contract stands in for somebody else."
 msgstr "Un contrato de remuda substitúe a outra persoa."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:493
+#: apps/users/serializers.py:494
 msgid "It has to be above zero."
 msgstr "Ten que ser maior que cero."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:513
+#: apps/users/serializers.py:514
 #, python-format
 msgid ""
 "%(basis)s: workers under eighteen may not work at night, so the status "
@@ -4958,7 +4959,7 @@ msgstr ""
 "así que a condición non se lles pode aplicar."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:532
+#: apps/users/serializers.py:533
 #, python-format
 msgid ""
 "%(hours)s h a week is above the company's %(ceiling)s h. A contract cannot "
@@ -4968,12 +4969,12 @@ msgstr ""
 "non pode pactar máis alá do máximo legal."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:645 apps/users/serializers.py:658
+#: apps/users/serializers.py:646 apps/users/serializers.py:659
 msgid "Wrong credentials."
 msgstr "Credenciais incorrectas."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:772
+#: apps/users/serializers.py:784
 msgid ""
 "Art. 34.8 asks for a reason when the answer is an alternative or a refusal."
 msgstr ""
@@ -4981,44 +4982,44 @@ msgstr ""
 "negativa."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:787
+#: apps/users/serializers.py:799
 msgid "An answer needs the date it was given."
 msgstr "Unha resposta precisa a data na que se deu."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:831
+#: apps/users/serializers.py:843
 msgid "A share goes from 0 to 100."
 msgstr "Unha porcentaxe vai de 0 a 100."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:851
+#: apps/users/serializers.py:863
 msgid "The agreement cannot end before it starts."
 msgstr "O acordo non pode acabar antes de comezar."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:869
+#: apps/users/serializers.py:881
 #, python-format
 msgid "It overlaps the agreement that starts on %(day)s."
 msgstr "Solápase co acordo que comeza o %(day)s."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:910
+#: apps/users/serializers.py:922
 msgid "Periods of activity are for permanent-seasonal contracts (art. 16 ET)."
 msgstr ""
 "Os períodos de actividade son para contratos fixos descontinuos (art. 16 ET)."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:929
+#: apps/users/serializers.py:941
 msgid "The season cannot end before it starts."
 msgstr "A temporada non pode acabar antes de comezar."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:936
+#: apps/users/serializers.py:948
 msgid "The call-up comes before the season starts, not after."
 msgstr "O chamamento vai antes de que comece a temporada, non despois."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:949
+#: apps/users/serializers.py:961
 #, python-format
 msgid "It overlaps the period that starts on %(day)s."
 msgstr "Solápase co período que comeza o %(day)s."
@@ -5122,17 +5123,31 @@ msgstr ""
 "Alí traballan %(count)s persoas. Móveas primeiro: sen centro perden os seus "
 "festivos locais e o seu fuso horario."
 
-#: apps/users/views.py:915
+#: apps/users/views.py:932
+msgid "An application cannot change somebody's password."
+msgstr "Unha aplicación non pode cambiar o contrasinal de ninguén."
+
+#: apps/users/views.py:937
+msgid ""
+"You sign in with your company's account: your password is changed there."
+msgstr "Entras coa conta da túa empresa: o contrasinal cámbiase alí."
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/users/views.py:945
+msgid "That is not your current password."
+msgstr "Ese non é o teu contrasinal actual."
+
+#: apps/users/views.py:985
 msgid "The link is not valid or has already been used."
 msgstr "A ligazón non é válida ou xa se usou."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/views.py:995
+#: apps/users/views.py:1065
 msgid "A schedule adaptation can only be asked for by the person themselves."
 msgstr "Unha adaptación de xornada só a pode pedir a propia persoa."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/views.py:1015
+#: apps/users/views.py:1085
 msgid "Only an administrator answers a schedule adaptation."
 msgstr "Só administración contesta unha adaptación de xornada."
 

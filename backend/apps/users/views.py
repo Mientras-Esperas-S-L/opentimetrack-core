@@ -896,6 +896,76 @@ class PasswordResetRequestView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class PasswordChangeSerializer(serializers.Serializer):
+    """La contraseña de ahora y la nueva. La de ahora, para que un ordenador que
+    alguien dejó con la sesión abierta no baste para quedarse con la cuenta."""
+
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=12)
+
+
+@extend_schema(tags=["auth"])
+class PasswordChangeView(APIView):
+    """Cambiar la contraseña propia estando dentro.
+
+    No existía: la única forma de cambiarla era pedir el enlace de «He olvidado
+    mi contraseña», y eso depende de que el correo salga. Para alguien que acaba
+    de recibir una contraseña generada ---el alta de una empresa, una cuenta de
+    la instalación--- era la única salida, y en producción el correo no salía.
+
+    Cierra las demás sesiones, igual que poner una contraseña con el enlace: quien
+    cambia su clave suele estar haciéndolo porque cree que se la han visto. Y
+    devuelve una sesión nueva, para no echar a quien la acaba de cambiar.
+    """
+
+    permission_classes = [IsAuthenticatedInTenant]
+    # También la cuenta de la instalación, que no tiene empresa.
+    sin_empresa = True
+    throttle_scope = "login"
+
+    @extend_schema(request=PasswordChangeSerializer, responses={200: SessionSerializer})
+    def post(self, request):
+        user = request.user
+        # Una sesión que pidió una aplicación en nombre de alguien no es esa
+        # persona escribiendo: no cambia su contraseña.
+        if getattr(request, "auth", None) is not None and request.auth.get("act_app"):
+            raise PermissionDenied(_("An application cannot change somebody's password."))
+        if user.is_federated:
+            raise BusinessRuleError(
+                code="federated_account",
+                message=_(
+                    "You sign in with your company's account: your password is changed there."
+                ),
+            )
+
+        form = PasswordChangeSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+        if not user.check_password(form.validated_data["current_password"]):
+            raise DRFValidationError(
+                {"current_password": [_("That is not your current password.")]}
+            )
+
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        nueva = form.validated_data["new_password"]
+        try:
+            validate_password(nueva, user)
+        except DjangoValidationError as exc:
+            raise DRFValidationError({"new_password": list(exc.messages)}) from exc
+
+        user.set_password(nueva)
+        user.save(update_fields=["password"])
+        revoke_sessions(user)
+        return Response(
+            {
+                **issue_tokens(user),
+                "user": UserSerializer(user).data,
+                "tenant": TenantSerializer(user.tenant).data if user.tenant else None,
+            }
+        )
+
+
 @extend_schema(tags=["auth"])
 class PasswordSetView(APIView):
     """Sets the password from the link, and signs the person in."""
