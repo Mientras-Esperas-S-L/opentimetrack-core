@@ -123,9 +123,9 @@ def send_delivery_email(person, *, base_url: str) -> str:
 
     link = build_delivery_link(person, base_url=base_url)
     company = person.tenant.name if person.tenant else _("the platform")
-    idioma = person.locale or (person.tenant.language if person.tenant else "")
+    from apps.users.passwords import mail_language
 
-    with translation.override(idioma or None):
+    with translation.override(mail_language(person)):
         cuerpo = render_to_string(
             "emails/record_delivery.txt",
             {
