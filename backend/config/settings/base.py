@@ -154,7 +154,8 @@ REST_FRAMEWORK = {
         # Applications first: their token carries a prefix, so it is cheap to
         # recognise and it hands over to JWT when it is not one of theirs.
         "apps.common.authentication.ApplicationAuthentication",
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        # Not simplejwt's own: this one also refuses a deactivated company.
+        "apps.common.authentication.TenantJWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     # The three of them. Only DjangoFilterBackend was enabled, so every

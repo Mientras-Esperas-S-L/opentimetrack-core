@@ -539,3 +539,41 @@ def test_sin_aplicacion_web_el_rechazo_sigue_siendo_json(client, provider, setti
 
     assert respuesta.status_code == 409
     assert respuesta.json()["error"]["code"]
+
+
+def test_una_empresa_desactivada_no_entra_por_su_proveedor(
+    provider, idp, keypair, monkeypatch, company
+):
+    """Con la empresa desactivada, el proveedor abría sesión igual: la sesión moría en
+    la primera petición, pero contestar «adelante» a quien no puede entrar es mentir."""
+    with tenant_context(company.id):
+        User.objects.create_user(
+            email="marta@contrata.example", password=PASSWORD, tenant=company, first_name="Marta"
+        )
+    company.is_active = False
+    company.save(update_fields=["is_active"])
+
+    client = APIClient()
+    params = parse_qs(
+        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+    )
+    from django.core.cache import cache as django_cache
+
+    from apps.tenants import sso
+
+    estado = sso.take_state(params["state"][0])
+    django_cache.set(f"sso:state:{params['state'][0]}", estado, 600)
+    monkeypatch.setattr(
+        sso,
+        "_post_form",
+        lambda url, data: (200, {"id_token": id_token(keypair, nonce=estado["nonce"])}),
+    )
+
+    answer = client.get(
+        "/api/auth/sso/callback/", {"code": "un-codigo", "state": params["state"][0]}
+    )
+
+    # Con la aplicación web configurada, el rechazo vuelve a la pantalla con su motivo.
+    assert answer.status_code == 302
+    assert "sso_error=company_inactive" in answer["Location"]
+    assert "ticket" not in answer["Location"]

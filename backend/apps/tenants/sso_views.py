@@ -185,6 +185,13 @@ class SsoCallbackView(APIView):
             raise BusinessRuleError(
                 code="person_inactive", message="That account is not active here."
             )
+        # La empresa, también. Sin esto el proveedor abría sesión a la gente de
+        # una empresa desactivada; la sesión moría en la primera petición, pero
+        # contestar «adelante» a quien no puede entrar es mentirle.
+        if not provider.tenant.is_active:
+            raise BusinessRuleError(
+                code="company_inactive", message="This company has been deactivated."
+            )
 
         sesion = {**issue_tokens(person), "created": created}
 

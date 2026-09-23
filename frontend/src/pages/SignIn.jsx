@@ -46,6 +46,7 @@ export default function SignIn() {
       'Tu empresa usa este sistema, pero aquí no consta nadie con esa cuenta. Habla con quien lleve el registro de jornada.'
     ),
     person_inactive: t('Esa cuenta ya no está activa aquí.'),
+    company_inactive: t('El acceso de tu empresa está desactivado. Habla con quien lleve el registro de jornada.'),
     provider_refused: t('Tu empresa no ha autorizado la entrada.'),
     provider_unknown: t('El proveedor de identidad de tu empresa ya no está disponible aquí.'),
     issuer_mismatch: t('El proveedor de identidad no es el que esta instalación tiene configurado.'),

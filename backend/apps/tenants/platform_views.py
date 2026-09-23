@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import secrets
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Count
 from django.utils.translation import gettext as _
@@ -39,7 +40,13 @@ from apps.tenants.application_views import (
     IssueSerializer,
 )
 from apps.tenants.identity import SsoDomain, SsoProvider
-from apps.tenants.models import Application, ApplicationCredential, ApplicationScope, Tenant
+from apps.tenants.models import (
+    Application,
+    ApplicationCredential,
+    ApplicationScope,
+    Tenant,
+    validate_time_zone,
+)
 from apps.users.models import Role, User
 from apps.users.serializers import SignUpSerializer
 
@@ -111,6 +118,8 @@ def _empresa(company: Tenant, *, personas: int | None = None) -> dict:
         "tax_id": company.tax_id,
         "country": company.country,
         "time_zone": company.time_zone,
+        "language": company.language,
+        "is_active": company.is_active,
         "people": cuanta_gente,
         # Cuántas aplicaciones puede usar hoy. Sin esto, la lista no distingue una
         # empresa lista para integrarse de otra a la que le falta la credencial, que
@@ -358,6 +367,133 @@ class _PorEmpresa(APIView):
 
     def no_esta(self, que=None):
         return Response({"detail": que or _("No such company.")}, status=status.HTTP_404_NOT_FOUND)
+
+
+class CompanyChangeSerializer(serializers.Serializer):
+    """Lo que se puede cambiar de una empresa desde la consola. Todo opcional."""
+
+    name = serializers.CharField(max_length=255, required=False)
+    tax_id = serializers.CharField(max_length=32, required=False)
+    country = serializers.CharField(max_length=2, required=False)
+    time_zone = serializers.CharField(max_length=64, required=False)
+    language = serializers.ChoiceField(choices=settings.LANGUAGES, required=False)
+    is_active = serializers.BooleanField(required=False)
+    #: El nombre de la empresa, escrito a mano, para desactivarla. Lo pide también
+    #: la pantalla, pero la regla vive aquí: una petición suelta no se la salta.
+    confirm = serializers.CharField(required=False, allow_blank=True)
+
+    def validate_name(self, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError(_("The name cannot be empty."))
+        return value
+
+    def validate_tax_id(self, value: str) -> str:
+        value = value.strip().upper()
+        if not value:
+            raise serializers.ValidationError(_("The tax number cannot be empty."))
+        otra = Tenant.objects.filter(tax_id=value).exclude(pk=self.context["company"].pk)
+        if otra.exists():
+            raise serializers.ValidationError(_("A company with this tax number already exists."))
+        return value
+
+    def validate_country(self, value: str) -> str:
+        return value.strip().upper()
+
+    def validate_time_zone(self, value: str) -> str:
+        validate_time_zone(value)
+        return value
+
+    def validate(self, attrs):
+        company = self.context["company"]
+        if attrs.get("is_active") is False and company.is_active:
+            if (attrs.get("confirm") or "").strip() != company.name:
+                raise serializers.ValidationError(
+                    {"confirm": _("Type the company's name exactly to deactivate it.")}
+                )
+        return attrs
+
+
+#: Lo que se copia al rastro cuando cambia. El estado va aparte: tiene su acción.
+CAMPOS_DE_LA_FICHA = ("name", "tax_id", "country", "time_zone", "language")
+
+
+@extend_schema(tags=["platform"])
+class PlatformCompanyView(_PorEmpresa):
+    """Cambiar la ficha de una empresa, o desactivarla y volver a activarla.
+
+    **Desactivar no borra nada ni toca nada más**: ni su gente, ni sus
+    credenciales, ni su registro, que se guarda los años que diga su plazo. Solo
+    cambia `is_active`, y por eso reactivar la deja exactamente como estaba.
+
+    Mientras está desactivada nadie de dentro entra ---ni con contraseña, ni con
+    su proveedor, ni con una sesión que ya tuviera abierta--- y sus aplicaciones
+    reciben 401.
+    """
+
+    @extend_schema(request=CompanyChangeSerializer, responses={200: dict})
+    @transaction.atomic
+    def patch(self, request, company_id):
+        company = self.empresa(company_id)
+        if company is None:
+            return self.no_esta()
+
+        datos = CompanyChangeSerializer(data=request.data, context={"company": company})
+        datos.is_valid(raise_exception=True)
+        v = datos.validated_data
+
+        cambios = {}
+        for campo in CAMPOS_DE_LA_FICHA:
+            if campo in v and getattr(company, campo) != v[campo]:
+                cambios[campo] = [getattr(company, campo), v[campo]]
+                setattr(company, campo, v[campo])
+        estado_antes = company.is_active
+        if "is_active" in v:
+            company.is_active = v["is_active"]
+
+        if not cambios and company.is_active == estado_antes:
+            return Response(_empresa(company))
+
+        company.save()
+
+        if cambios:
+            record(
+                action=AuditAction.SETTINGS_CHANGED,
+                actor=request.user,
+                company=company,
+                target=company,
+                target_label=company.name,
+                changes=cambios,
+                note=str(_("Changed from the installation console")),
+            )
+            record_platform(
+                action=PlatformAction.COMPANY_CHANGED,
+                actor=request.user,
+                company=company,
+                target=company,
+                target_label=company.name,
+                changes=cambios,
+            )
+        if company.is_active != estado_antes:
+            record(
+                action=AuditAction.SETTINGS_CHANGED,
+                actor=request.user,
+                company=company,
+                target=company,
+                target_label=company.name,
+                changes={"is_active": [estado_antes, company.is_active]},
+                note=str(_("Changed from the installation console")),
+            )
+            record_platform(
+                action=PlatformAction.COMPANY_REACTIVATED
+                if company.is_active
+                else PlatformAction.COMPANY_DEACTIVATED,
+                actor=request.user,
+                company=company,
+                target=company,
+                target_label=company.name,
+            )
+        return Response(_empresa(company))
 
 
 @extend_schema(tags=["platform"])

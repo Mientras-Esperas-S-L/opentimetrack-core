@@ -9,8 +9,10 @@ happens to be nearby.
 from __future__ import annotations
 
 from django.utils.translation import gettext_lazy as _
+from drf_spectacular.contrib.rest_framework_simplejwt import SimpleJWTScheme
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from rest_framework import authentication, exceptions
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from apps.common.models import set_current_tenant
 from apps.tenants.applications import TOKEN_PREFIX, ApplicationCredential
@@ -119,3 +121,30 @@ class ApplicationAuthenticationScheme(OpenApiAuthenticationExtension):
                 "application and can be revoked without affecting anyone's account."
             ),
         }
+
+
+class TenantJWTAuthentication(JWTAuthentication):
+    """A person's session, refused the moment their company is deactivated.
+
+    `JWTAuthentication` only asks whether the person is active. Deactivating a
+    company used to stop new sign-ins and nothing else: whoever was already in
+    kept working until the access token expired, and the refresh token kept
+    renewing it for a week. Measured on 23/09/2026 before this existed.
+
+    One more query per request, on the company row. The price of a deactivation
+    that means what it says.
+    """
+
+    def get_user(self, validated_token):
+        user = super().get_user(validated_token)
+        if user.tenant_id is not None and not user.tenant.is_active:
+            raise exceptions.AuthenticationFailed(
+                _("This company has been deactivated."), code="company_inactive"
+            )
+        return user
+
+
+class TenantJWTScheme(SimpleJWTScheme):
+    """Documents the sessions as what they are: simplejwt's bearer, unchanged."""
+
+    target_class = "apps.common.authentication.TenantJWTAuthentication"

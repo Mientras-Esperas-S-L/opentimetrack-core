@@ -235,6 +235,10 @@ class RefreshView(APIView):
             quien = refresh.payload.get(jwt_settings.USER_ID_CLAIM)
             if not User.objects.filter(pk=quien, is_active=True).exists():
                 raise TokenError("the account behind this token is no longer active")
+            # Ni quien es de una empresa desactivada: sin esto, la sesión que ya
+            # estaba abierta se renovaba una semana entera después de la baja.
+            if User.objects.filter(pk=quien, tenant__is_active=False).exists():
+                raise TokenError("the company behind this token is deactivated")
             access = str(refresh.access_token)
             if settings.SIMPLE_JWT.get("ROTATE_REFRESH_TOKENS"):
                 if settings.SIMPLE_JWT.get("BLACKLIST_AFTER_ROTATION"):

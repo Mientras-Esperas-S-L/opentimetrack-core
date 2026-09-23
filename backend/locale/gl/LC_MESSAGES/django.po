@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-23 06:13+0000\n"
+"POT-Creation-Date: 2026-09-23 06:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Galician\n"
@@ -219,7 +219,7 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:203 apps/absences/models.py:559
-#: apps/audit/models.py:201 apps/audit/models.py:317 apps/punches/models.py:628
+#: apps/audit/models.py:201 apps/audit/models.py:320 apps/punches/models.py:628
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:577 apps/tenants/rules.py:661 apps/users/models.py:992
 #: apps/users/models.py:1070
@@ -272,7 +272,7 @@ msgid "employee"
 msgstr "persoa traballadora"
 
 #: apps/absences/models.py:286 apps/audit/models.py:194
-#: apps/audit/models.py:313 apps/punches/corrections.py:94
+#: apps/audit/models.py:316 apps/punches/corrections.py:94
 #: apps/punches/models.py:164
 msgid "type"
 msgstr "tipo"
@@ -568,13 +568,13 @@ msgstr "o tempo indispensable"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/absences/views.py:242 apps/shifts/views.py:204
-#: apps/tenants/views.py:181 apps/users/views.py:770 apps/users/views.py:840
-#: apps/users/views.py:998 apps/users/views.py:1049 apps/users/views.py:1086
+#: apps/tenants/views.py:181 apps/users/views.py:774 apps/users/views.py:844
+#: apps/users/views.py:1002 apps/users/views.py:1053 apps/users/views.py:1090
 msgid "Added"
 msgstr "Engadido"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/absences/views.py:270 apps/audit/trail.py:74 apps/users/views.py:1022
+#: apps/absences/views.py:270 apps/audit/trail.py:74 apps/users/views.py:1026
 msgid "Changed"
 msgstr "Cambiado"
 
@@ -824,12 +824,12 @@ msgstr "Entregoulle a alguén o seu propio rexistro"
 msgid "Erased a person who left no record"
 msgstr "Retirou unha alta que non deixou rastro"
 
-#: apps/audit/models.py:167 apps/audit/models.py:289
+#: apps/audit/models.py:167 apps/audit/models.py:292
 msgid "when"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:173 apps/audit/models.py:309 apps/common/models.py:117
+#: apps/audit/models.py:173 apps/audit/models.py:312 apps/common/models.py:117
 #: apps/tenants/models.py:205 apps/tenants/models.py:233
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:435
@@ -837,28 +837,28 @@ msgid "company"
 msgstr "empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:183 apps/audit/models.py:297
+#: apps/audit/models.py:183 apps/audit/models.py:300
 msgid "who"
 msgstr "quen"
 
-#: apps/audit/models.py:187 apps/audit/models.py:299
+#: apps/audit/models.py:187 apps/audit/models.py:302
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:189 apps/audit/models.py:301
+#: apps/audit/models.py:189 apps/audit/models.py:304
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:195 apps/audit/models.py:314
+#: apps/audit/models.py:195 apps/audit/models.py:317
 #: apps/tenants/identity.py:58
 msgid "identifier"
 msgstr "identificador"
 
-#: apps/audit/models.py:196 apps/audit/models.py:315
+#: apps/audit/models.py:196 apps/audit/models.py:318
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:200 apps/audit/models.py:316
+#: apps/audit/models.py:200 apps/audit/models.py:319
 msgid "changes"
 msgstr ""
 
@@ -877,60 +877,75 @@ msgstr "rastro de auditoría"
 msgid "Created a company"
 msgstr "Creou unha empresa"
 
+# revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/audit/models.py:260
+msgid "Changed a company's details"
+msgstr "Cambiou a ficha dunha empresa"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:261
+msgid "Deactivated a company"
+msgstr "Desactivou unha empresa"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:262
+msgid "Reactivated a company"
+msgstr "Reactivou unha empresa"
+
+#: apps/audit/models.py:263
 msgid "Changed how a company's people sign in"
 msgstr "Cambiou por onde entra a xente dunha empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:261
+#: apps/audit/models.py:264
 msgid "Authorised an application"
 msgstr "Autorizou unha aplicación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:262
+#: apps/audit/models.py:265
 msgid "Changed an application's permissions"
 msgstr "Cambiou os permisos dunha aplicación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:263
+#: apps/audit/models.py:266
 msgid "Withdrew an application"
 msgstr "Retirou unha aplicación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:264
+#: apps/audit/models.py:267
 msgid "Issued a credential"
 msgstr "Emitiu unha credencial"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:265
+#: apps/audit/models.py:268
 msgid "Revoked a credential"
 msgstr "Revogou unha credencial"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:266
+#: apps/audit/models.py:269
 msgid "Created an installation account"
 msgstr "Creou unha conta da instalación"
 
-#: apps/audit/models.py:267
+#: apps/audit/models.py:270
 msgid "Gave an installation account a new password"
 msgstr "Deu un contrasinal novo a unha conta da instalación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:268
+#: apps/audit/models.py:271
 msgid "Deactivated an installation account"
 msgstr "Desactivou unha conta da instalación"
 
-#: apps/audit/models.py:311
+#: apps/audit/models.py:314
 msgid "company (as recorded)"
 msgstr "empresa (tal como se rexistrou)"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:320
+#: apps/audit/models.py:323
 msgid "installation audit entry"
 msgstr "entrada do rexistro da instalación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:321
+#: apps/audit/models.py:324
 msgid "installation audit trail"
 msgstr "rexistro da instalación"
 
@@ -967,9 +982,14 @@ msgid "Activity trail"
 msgstr "Rexistro de actividade"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/common/authentication.py:86 apps/common/authentication.py:89
+#: apps/common/authentication.py:88 apps/common/authentication.py:91
 msgid "Invalid credential."
 msgstr "Credencial non válida."
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/common/authentication.py:142
+msgid "This company has been deactivated."
+msgstr "Esta empresa está desactivada."
 
 #: apps/common/crypto.py:51
 msgid "Text stored encrypted at rest"
@@ -2982,7 +3002,7 @@ msgstr ""
 "mesmo código que %(other)s: o REGCON é o que distingue dous convenios "
 "semellantes"
 
-#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:329
+#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:338
 #, python-format
 msgid "Unknown permissions: %(list)s."
 msgstr "Permisos descoñecidos: %(list)s."
@@ -2992,15 +3012,15 @@ msgid "Grant at least one permission, or the application can do nothing."
 msgstr ""
 "Concede polo menos un permiso; se non, a aplicación non pode facer nada."
 
-#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:482
+#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:618
 msgid "Permissions changed"
 msgstr "Cambiou os permisos"
 
-#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:561
+#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:697
 msgid "Reactivate the application before issuing a credential."
 msgstr "Reactiva a aplicación antes de emitir unha credencial."
 
-#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:578
+#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:714
 #, python-format
 msgid "Credential issued: …%(hint)s"
 msgstr "Credencial emitida: …%(hint)s"
@@ -3009,7 +3029,7 @@ msgstr "Credencial emitida: …%(hint)s"
 msgid "That credential does not exist or is already revoked."
 msgstr "Esa credencial non existe ou xa está revogada."
 
-#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:617
+#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:753
 #, python-format
 msgid "Credential revoked: …%(hint)s"
 msgstr "Credencial revogada: …%(hint)s"
@@ -3608,36 +3628,57 @@ msgid "Somebody else in this company already uses that identity."
 msgstr "Outra persoa desta empresa xa usa esa identidade."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:69
+#: apps/tenants/platform_views.py:76
 msgid "Only a platform superuser can administer the installation."
 msgstr "Só un superusuario de plataforma pode administrar a instalación."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:234 apps/tenants/platform_views.py:291
-#: apps/tenants/platform_views.py:360
+#: apps/tenants/platform_views.py:243 apps/tenants/platform_views.py:300
+#: apps/tenants/platform_views.py:369
 msgid "No such company."
 msgstr "Esa empresa non existe."
 
-#: apps/tenants/platform_views.py:425
+#: apps/tenants/platform_views.py:388
+msgid "The name cannot be empty."
+msgstr "O nome non pode quedar baleiro."
+
+#: apps/tenants/platform_views.py:394
+msgid "The tax number cannot be empty."
+msgstr "O identificador fiscal non pode quedar baleiro."
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/tenants/platform_views.py:397 apps/users/serializers.py:581
+msgid "A company with this tax number already exists."
+msgstr "Xa existe unha empresa con ese NIF."
+
+#: apps/tenants/platform_views.py:412
+msgid "Type the company's name exactly to deactivate it."
+msgstr "Escribe o nome da empresa tal cal para desactivala."
+
+#: apps/tenants/platform_views.py:467 apps/tenants/platform_views.py:485
+msgid "Changed from the installation console"
+msgstr "Cambiado desde a consola da instalación"
+
+#: apps/tenants/platform_views.py:561
 msgid "Authorised from the installation console"
 msgstr "Autorizada desde a consola da instalación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:460 apps/tenants/platform_views.py:511
-#: apps/tenants/platform_views.py:558
+#: apps/tenants/platform_views.py:596 apps/tenants/platform_views.py:647
+#: apps/tenants/platform_views.py:694
 msgid "No such application."
 msgstr "Esa aplicación non existe."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:608
+#: apps/tenants/platform_views.py:744
 msgid "No such credential."
 msgstr "Esa credencial non existe."
 
-#: apps/tenants/platform_views.py:684
+#: apps/tenants/platform_views.py:820
 msgid "There is already an installation account with that address."
 msgstr "Xa hai unha conta da instalación con ese enderezo."
 
-#: apps/tenants/platform_views.py:697
+#: apps/tenants/platform_views.py:833
 #, python-format
 msgid ""
 "That address already belongs to somebody in %(company)s. An installation "
@@ -3650,15 +3691,15 @@ msgstr ""
 "preguntaría de que empresa é e esta non ten ningunha. Usa outro enderezo."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:758 apps/tenants/platform_views.py:790
+#: apps/tenants/platform_views.py:894 apps/tenants/platform_views.py:926
 msgid "No such installation account."
 msgstr "Esa conta da instalación non existe."
 
-#: apps/tenants/platform_views.py:794
+#: apps/tenants/platform_views.py:930
 msgid "You cannot deactivate the account you are using."
 msgstr "Non podes desactivar a conta coa que estás dentro."
 
-#: apps/tenants/platform_views.py:801
+#: apps/tenants/platform_views.py:937
 msgid ""
 "This is the only account that can administer the installation. Create "
 "another one before deactivating it."
@@ -4891,11 +4932,6 @@ msgstr ""
 "non pode pactar máis alá do máximo legal."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:581
-msgid "A company with this tax number already exists."
-msgstr "Xa existe unha empresa con ese NIF."
-
-# revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/users/serializers.py:645 apps/users/serializers.py:658
 msgid "Wrong credentials."
 msgstr "Credenciais incorrectas."
@@ -4955,16 +4991,16 @@ msgstr "Solápase co período que comeza o %(day)s."
 msgid "No session to renew."
 msgstr "Non hai sesión que renovar."
 
-#: apps/users/views.py:249
+#: apps/users/views.py:253
 msgid "The session has expired. Sign in again."
 msgstr "A sesión caducou. Volve entrar."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:275
+#: apps/users/views.py:279
 msgid "Send the refresh token to close the session."
 msgstr "Envía o testemuño de refresco para pechar a sesión."
 
-#: apps/users/views.py:472
+#: apps/users/views.py:476
 msgid ""
 "This is the only active administrator. Appoint another one first, or the "
 "company is left with nobody able to manage it."
@@ -4972,37 +5008,37 @@ msgstr ""
 "É o único administrador activo. Nomea antes outro, ou a empresa queda sen "
 "ninguén que a poida xestionar."
 
-#: apps/users/views.py:527
+#: apps/users/views.py:531
 msgid "This account signs in through your identity provider."
 msgstr "Esta conta entra a través do voso provedor de identidade."
 
-#: apps/users/views.py:529
+#: apps/users/views.py:533
 msgid "Reactivate the account before inviting them."
 msgstr "Volve dar de alta a conta antes de convidala."
 
-#: apps/users/views.py:555
+#: apps/users/views.py:559
 msgid "There is no address to send it to. Add one first."
 msgstr "Non hai ningún enderezo ao que mandalo. Engade un antes."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:630
+#: apps/users/views.py:634
 msgid "You cannot erase your own account."
 msgstr "Non podes borrar a túa propia conta."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:642
+#: apps/users/views.py:646
 #, python-format
 msgid "what is theirs: %(cosas)s"
 msgstr "o que é seu: %(cosas)s"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:645
+#: apps/users/views.py:649
 #, python-format
 msgid "what they decided about other people: %(cosas)s"
 msgstr "o que decidiu sobre outras persoas: %(cosas)s"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:651
+#: apps/users/views.py:655
 #, python-format
 msgid ""
 "%(quien)s left a record, so their file has to stay and explain it --- "
@@ -5011,12 +5047,12 @@ msgstr ""
 "%(quien)s deixou rastro, así que a súa ficha ten que quedar e explicalo --- "
 "%(que)s. Dálle de baixa no seu lugar."
 
-#: apps/users/views.py:693
+#: apps/users/views.py:697
 msgid "You cannot deactivate your own account."
 msgstr "Non podes dar de baixa a túa propia conta."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:749
+#: apps/users/views.py:753
 #, python-format
 msgid "Left on %(day)s. %(count)s shift(s) still rostered after that."
 msgstr ""
@@ -5024,13 +5060,13 @@ msgstr ""
 "data."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:752
+#: apps/users/views.py:756
 #, python-format
 msgid "Left on %(day)s."
 msgstr "Marchou o %(day)s."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/views.py:808
+#: apps/users/views.py:812
 #, python-format
 msgid ""
 "%(count)s people answer for this department. Move them first: leaving them "
@@ -5041,7 +5077,7 @@ msgstr ""
 "fronte de nada quere dicir que xa non poderán ler o rexistro de ninguén agás "
 "o seu."
 
-#: apps/users/views.py:856
+#: apps/users/views.py:860
 #, python-format
 msgid ""
 "%(count)s people work there. Move them first: without a workplace they lose "
@@ -5050,37 +5086,37 @@ msgstr ""
 "Alí traballan %(count)s persoas. Móveas primeiro: sen centro perden os seus "
 "festivos locais e o seu fuso horario."
 
-#: apps/users/views.py:911
+#: apps/users/views.py:915
 msgid "The link is not valid or has already been used."
 msgstr "A ligazón non é válida ou xa se usou."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/views.py:991
+#: apps/users/views.py:995
 msgid "A schedule adaptation can only be asked for by the person themselves."
 msgstr "Unha adaptación de xornada só a pode pedir a propia persoa."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/views.py:1011
+#: apps/users/views.py:1015
 msgid "Only an administrator answers a schedule adaptation."
 msgstr "Só administración contesta unha adaptación de xornada."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:346
+#: config/settings/base.py:347
 msgid "Spanish"
 msgstr "Castelán"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:347
+#: config/settings/base.py:348
 msgid "Catalan"
 msgstr "Catalán"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:348
+#: config/settings/base.py:349
 msgid "Galician"
 msgstr "Galego"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: config/settings/base.py:349
+#: config/settings/base.py:350
 msgid "English"
 msgstr "Inglés"
 

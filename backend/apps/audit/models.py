@@ -257,6 +257,9 @@ class PlatformAction(models.TextChoices):
     """What an installation account did. A closed list, for the same reason."""
 
     COMPANY_CREATED = "COMPANY_CREATED", _("Created a company")
+    COMPANY_CHANGED = "COMPANY_CHANGED", _("Changed a company's details")
+    COMPANY_DEACTIVATED = "COMPANY_DEACTIVATED", _("Deactivated a company")
+    COMPANY_REACTIVATED = "COMPANY_REACTIVATED", _("Reactivated a company")
     IDENTITY_CHANGED = "IDENTITY_CHANGED", _("Changed how a company's people sign in")
     APPLICATION_AUTHORISED = "APPLICATION_AUTHORISED", _("Authorised an application")
     APPLICATION_CHANGED = "APPLICATION_CHANGED", _("Changed an application's permissions")

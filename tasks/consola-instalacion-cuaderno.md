@@ -5,17 +5,52 @@ Estado entre pasadas. El prompt está en `consola-instalacion-loop.md`.
 | # | Trozo | Estado |
 |---|---|---|
 | T1 | Registro de lo que hacen las cuentas de instalación | **hecho** (PR core 26) |
-| T2 | Editar y desactivar una empresa | pendiente |
+| T2 | Editar y desactivar una empresa | **hecho** (PR core 27) |
 | T3 | Los administradores de cada empresa y su contraseña | pendiente |
 | T4 | El estado de cada empresa de un vistazo | pendiente |
 
 ## Qué toca ahora
 
-T2: editar y desactivar una empresa.
+T3: los administradores de cada empresa y su contraseña.
 
 ## Qué se hizo en la última pasada
 
-**T1**, 23/09/2026.
+**T2**, 23/09/2026.
+
+`PATCH /api/platform/companies/<id>/` para la ficha y el estado, y el botón
+«Ficha» en cada fila. Desactivar pide el nombre escrito, también en el servidor.
+
+**El arreglo de verdad era otro, como avisaba el prompt.** `is_active` solo
+frenaba la entrada con contraseña. Medido con una prueba antes del cambio: con la
+empresa desactivada, la sesión abierta seguía, el refresco la renovaba una semana
+y el proveedor de identidad abría sesión nueva. Ahora las tres puertas lo miran
+(`TenantJWTAuthentication`, el refresco y la vuelta del proveedor), cada una con su
+prueba calibrada.
+
+**Y un fallo de antes, más gordo de lo que parecía**: los diálogos de Instalación
+nunca enseñaban el motivo de un rechazo. Leían el error de axios crudo y el
+interceptor ya lo entrega normalizado. Medido: correo repetido, servidor «Ya hay
+una cuenta de la instalación con esa dirección», pantalla «No se ha podido crear la
+cuenta». Eso incluye **el aviso del PR 25, que en producción no se ve** hasta que
+llegue este PR. Arreglado en el interceptor (lee también `{"detail"}`) y en los
+seis diálogos.
+
+Medido en devel a 1280 y 360, con «Ayuntamiento del Bucle»: el CIF repetido sale
+bajo su casilla, «Desactivar» está bloqueado sin el nombre, desactivar pone la
+marca «Desactivada» en la fila y reactivar la quita. Diálogo sin desborde, ventana
+en el ancho pedido. El único error de consola es el propio 400 del CIF repetido,
+que la pantalla explica.
+
+**Sin medir en devel**: que una sesión real de una empresa muera al desactivarla.
+No tenía contraseña de ninguna cuenta de dentro de una empresa de prueba; lo
+cubren las pruebas. T3 da la forma de conseguirla.
+
+**GreenCity y el CIF**: solo lo usa al dar de alta, para el nombre del cliente de
+identidad (`opentimetrack-<cif>`) y el de la conexión. Cambiarlo después no rompe
+el enlace; el nombre del cliente se queda con el CIF viejo, que es cosmético.
+
+### Antes: T1
+23/09/2026.
 
 Tabla propia, `PlatformAuditEntry`, con los tres disparadores de `AuditLog`.
 La sonda de salud y `ensure_append_only` vigilan ya las dos tablas. Once acciones
@@ -40,6 +75,13 @@ lo rechaza por eso y no por el guardián. Se prueba por la sonda de salud.
 
 ## Decisiones tomadas sin preguntar
 
+- **El CIF se puede cambiar**, con aviso. El caso real es corregir un error del
+  alta. Un CIF que cambia de verdad suele ser otra empresa, y eso es darla de alta
+  aparte; la consola no lo impide, pero el cambio queda con su antes y después en
+  los dos rastros.
+- **Desactivar no revoca credenciales ni desactiva personas**: solo cambia el
+  estado. Así reactivar la deja exactamente igual, que es lo que pedía el prompt.
+
 - **Tabla propia para la instalación** y no `tenant` nulo en `AuditLog`: esa tabla
   va por empresa para que ninguna lea la de otra, y un nulo ahí es una fila que
   cada consulta tendría que acordarse de excluir.
@@ -51,5 +93,6 @@ lo rechaza por eso y no por el guardián. Se prueba por la sonda de salud.
 
 ## Lo que espera decisión del usuario
 
-- **Producción, cuando se despliegue T1, trae dos migraciones** (`audit/0021` y
-  `0022`): copia previa de la base antes.
+- **Producción, cuando se despliegue, trae tres migraciones** (`audit/0021` a
+  `0023`): copia previa de la base antes. Y hasta entonces, en producción los
+  rechazos de la consola salen con el mensaje genérico.

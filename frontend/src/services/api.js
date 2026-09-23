@@ -205,6 +205,15 @@ api.interceptors.response.use(
     const { non_field_errors: general, ...porCampo } = payload?.details ?? {}
     const concreto = Array.isArray(general) ? general[0] : general
 
+    // Y el otro formato. Algunas vistas contestan `{"detail": "…"}` a mano, como
+    // hace DRF por defecto, y eso no pasa por el manejador que lo envuelve en
+    // `error`. Sin leerlo, el motivo se perdía entero: la consola de Instalación
+    // decía «No se ha podido crear la cuenta» donde el servidor había dicho «Ya
+    // hay una cuenta de la instalación con esa dirección». Medido en devel el
+    // 23/09/2026.
+    const detalleSuelto =
+      !payload && typeof error.response?.data?.detail === 'string' ? error.response.data.detail : null
+
     // `network_error` y un plazo agotado no son lo mismo, y la diferencia
     // decide qué se le puede decir a quien acaba de fichar. Sin respuesta y sin
     // haber salido, no ha quedado nada. Sin respuesta **después** de que la
@@ -215,13 +224,17 @@ api.interceptors.response.use(
       !error.response && (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT')
 
     return Promise.reject({
-      code: payload?.code ?? (plazoAgotado ? 'timeout' : 'network_error'),
+      //  `rejected` y no `network_error` cuando el servidor sí contestó con su
+      //  motivo: quien mira el código para decidir si reintentar ---el fichaje sin
+      //  cobertura--- no debe reintentar algo que el servidor ya ha rechazado.
+      code: payload?.code ?? (detalleSuelto ? 'rejected' : plazoAgotado ? 'timeout' : 'network_error'),
       // En castellano, como el resto del producto. Estaba en inglés, y es el
       // único texto que lee quien está en una obra y no consigue fichar: el
       // peor sitio posible para el idioma equivocado.
       message:
         concreto ||
         payload?.message ||
+        detalleSuelto ||
         (plazoAgotado
           ? i18next.t('El servidor tarda en contestar.')
           : i18next.t('No hay conexión con el servidor.')),
@@ -772,6 +785,10 @@ export const amIPlatformAdmin = async () => {
 export const getCompanies = async () => (await get('/platform/companies/')).companies
 
 export const createCompany = (payload) => post('/platform/companies/', payload)
+
+/** Cambia la ficha de una empresa, o su estado. Desactivar exige `confirm` con su nombre. */
+export const updateCompanyOfInstallation = async (companyId, payload) =>
+  (await api.patch(`/platform/companies/${companyId}/`, payload)).data
 
 export const saveCompanyIdentity = async (companyId, payload) =>
   (await api.put(`/platform/companies/${companyId}/identity/`, payload)).data

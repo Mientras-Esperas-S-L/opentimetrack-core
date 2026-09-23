@@ -269,6 +269,25 @@
         {
           "kind": "heading",
           "data": {
+            "text": "Cambiar la ficha o desactivar una empresa",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "El botón Ficha de cada fila abre su nombre, CIF, país, zona horaria e idioma. Si cambias el CIF, quien entre escribiéndolo tendrá que usar el nuevo; el enlace con GreenCity no se rompe."
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Desde la misma ficha se desactiva, escribiendo su nombre para confirmar. Mientras está desactivada nadie de dentro entra, tampoco quien ya tenía la sesión abierta, y GreenCity no puede fichar en su nombre. No se borra nada: al reactivarla queda exactamente como estaba."
+          }
+        },
+        {
+          "kind": "heading",
+          "data": {
             "text": "El registro",
             "level": 3
           }
