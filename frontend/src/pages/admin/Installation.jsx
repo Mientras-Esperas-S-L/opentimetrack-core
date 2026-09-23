@@ -307,9 +307,7 @@ function NewCompanyDialog({ valores, onClose, onCreada }) {
     try {
       onCreada(await createCompany(form))
     } catch (fallo) {
-      const datos = fallo?.response?.data ?? {}
-      const dicho = datos?.error?.message ?? Object.values(datos).flat().join(' ')
-      setError(dicho || t('No se ha podido crear la empresa.'))
+      setError(motivo(fallo) || t('No se ha podido crear la empresa.'))
     } finally {
       setGuardando(false)
     }
@@ -406,9 +404,7 @@ function IdentityDialog({ empresa, onClose, onGuardada }) {
       })
       onGuardada()
     } catch (fallo) {
-      const datos = fallo?.response?.data ?? {}
-      const dicho = datos?.error?.message ?? Object.values(datos).flat().join(' ')
-      setError(dicho || t('No se ha podido guardar.'))
+      setError(motivo(fallo) || t('No se ha podido guardar.'))
     } finally {
       setGuardando(false)
     }
@@ -540,8 +536,7 @@ function CredentialsDialog({ empresa, onClose, onCambio }) {
       await accion()
       recargar()
     } catch (fallo) {
-      const dicho = fallo?.response?.data?.detail ?? fallo?.response?.data?.error?.message
-      setError(dicho || t('No ha salido bien.'))
+      setError(motivo(fallo) || t('No ha salido bien.'))
     } finally {
       setTrabajando(false)
     }
@@ -702,8 +697,7 @@ function PlatformAdmins({ onCambio }) {
       setVuelta((n) => n + 1)
       onCambio?.()
     } catch (fallo) {
-      const dicho = fallo?.response?.data?.detail ?? fallo?.response?.data?.error?.message
-      setError(dicho || t('No ha salido bien.'))
+      setError(motivo(fallo) || t('No ha salido bien.'))
     } finally {
       setTrabajando(false)
     }
@@ -822,9 +816,7 @@ function NewAdminDialog({ valores, onClose, onCreada }) {
     try {
       onCreada(await addPlatformAdmin(form))
     } catch (fallo) {
-      const datos = fallo?.response?.data ?? {}
-      const dicho = datos?.detail ?? datos?.error?.message ?? Object.values(datos).flat().join(' ')
-      setError(dicho || t('No se ha podido crear la cuenta.'))
+      setError(motivo(fallo) || t('No se ha podido crear la cuenta.'))
     } finally {
       setGuardando(false)
     }
@@ -995,13 +987,28 @@ function PlatformAudit({ vuelta }) {
   )
 }
 
+/** Lo que dice el servidor cuando rechaza, en una frase.
+ *
+ *  **El error ya llega normalizado** por el interceptor de `api.js`: `{code,
+ *  message, details, status}`, sin `response`. Esta pantalla lo leía como un
+ *  error de axios crudo ---`fallo.response.data`--- y no encontraba nada, así que
+ *  todo rechazo acababa en el genérico: «No se ha podido crear la cuenta» donde el
+ *  servidor decía que ese correo ya existía. Medido en devel el 23/09/2026.
+ *
+ *  El mensaje general de validación no dice qué campo; si hay detalle, se añade.
+ */
+function motivo(fallo) {
+  const campos = Object.values(fallo?.details ?? {}).flat()
+  return [fallo?.message, ...campos].filter(Boolean).join(' ')
+}
+
 /** Lo que dice el servidor cuando rechaza, campo a campo.
  *
  *  El mensaje general es «Los datos enviados no son válidos», que no dice cuál. El
  *  detalle sí, y es lo que se enseña al lado de cada casilla.
  */
 function porCampo(fallo) {
-  const detalles = fallo?.response?.data?.error?.details ?? {}
+  const detalles = fallo?.details ?? {}
   return Object.fromEntries(
     Object.entries(detalles).map(([campo, dichos]) => [campo, [].concat(dichos).join(' ')]),
   )
@@ -1043,8 +1050,7 @@ function CompanyDialog({ empresa, onClose, onGuardada }) {
     } catch (fallo) {
       const campos = porCampo(fallo)
       setErrores(campos)
-      const general = fallo?.response?.data?.error?.message ?? fallo?.response?.data?.detail
-      setError(Object.keys(campos).length ? null : general || t('No ha salido bien.'))
+      setError(Object.keys(campos).length ? null : motivo(fallo) || t('No ha salido bien.'))
     } finally {
       setTrabajando(false)
     }
