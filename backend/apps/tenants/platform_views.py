@@ -18,7 +18,9 @@ sigue siendo el de siempre, y esta pantalla no es una puerta lateral.
 
 from __future__ import annotations
 
+import logging
 import secrets
+import smtplib
 
 from django.conf import settings
 from django.db import transaction
@@ -48,7 +50,10 @@ from apps.tenants.models import (
     validate_time_zone,
 )
 from apps.users.models import Role, User
+from apps.users.passwords import send_account_email
 from apps.users.serializers import SignUpSerializer
+
+log = logging.getLogger(__name__)
 
 #: Lo que la integración con GreenCityControl usa, para marcarlo de una vez.
 #:
@@ -494,6 +499,110 @@ class PlatformCompanyView(_PorEmpresa):
                 target_label=company.name,
             )
         return Response(_empresa(company))
+
+
+def _administrador_de_empresa(persona: User) -> dict:
+    return {
+        "id": str(persona.id),
+        "first_name": persona.first_name,
+        "last_name": persona.last_name,
+        "email": persona.email,
+        "is_active": persona.is_active,
+        #: Entra con la cuenta de su empresa: aquí no tiene contraseña que poner.
+        "federated": persona.is_federated,
+        "last_login": persona.last_login.isoformat() if persona.last_login else None,
+    }
+
+
+@extend_schema(tags=["platform"])
+class CompanyAdminsView(_PorEmpresa):
+    """Quién administra una empresa. Solo quien administra: el resto de la plantilla
+    es dato de la empresa y desde la instalación no se ve."""
+
+    @extend_schema(request=None, responses={200: dict})
+    def get(self, request, company_id):
+        company = self.empresa(company_id)
+        if company is None:
+            return self.no_esta()
+        quienes = User.objects.filter(tenant=company, role=Role.ADMIN).order_by(
+            "first_name", "last_name", "email"
+        )
+        return Response({"admins": [_administrador_de_empresa(p) for p in quienes]})
+
+
+@extend_schema(tags=["platform"])
+class CompanyAdminLinkView(_PorEmpresa):
+    """Mandar a un administrador de una empresa el enlace para poner contraseña.
+
+    **Por correo y a esa persona**: la instalación no ve el enlace ni elige la
+    contraseña. Si la viera, podría entrar como esa persona en los datos de su
+    empresa, y esta consola existe precisamente para no ser esa puerta.
+    """
+
+    @extend_schema(request=None, responses={200: dict})
+    def post(self, request, company_id, person_id):
+        company = self.empresa(company_id)
+        if company is None:
+            return self.no_esta()
+        persona = User.objects.filter(tenant=company, role=Role.ADMIN, pk=person_id).first()
+        if persona is None:
+            return self.no_esta(_("That person does not administer this company."))
+
+        motivo = None
+        if not company.is_active:
+            motivo = _("The company is deactivated: the link would not let anybody in.")
+        elif not persona.is_active:
+            motivo = _("That account is deactivated: the link would not let them in.")
+        elif persona.is_federated:
+            motivo = _(
+                "That person signs in with their company's account and has no password here."
+            )
+        if motivo:
+            return Response({"detail": motivo}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            send_account_email(persona, base_url=settings.FRONTEND_URL)
+        except smtplib.SMTPRecipientsRefused:
+            # Rechazo de la dirección, no avería: reintentar no lo arregla. Medido en
+            # devel con un `.test`: el relé contesta 554 y la pantalla decía «vuelve a
+            # intentarlo más tarde».
+            log.warning("The mail relay refused %s", persona.email)
+            return Response(
+                {
+                    "detail": _(
+                        "The mail server refuses the address %(email)s. Check that it is right."
+                    )
+                    % {"email": persona.email}
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        except Exception:
+            # El correo es lo único que esto hace: si no sale, se dice, en vez de
+            # contestar «enviado» a un enlace que no va a llegar.
+            log.exception("Could not send the password link to %s", persona.email)
+            return Response(
+                {"detail": _("The email could not be sent. Nothing has changed; try again later.")},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        etiqueta = persona.get_full_name() or persona.email
+        record(
+            action=AuditAction.INVITATION_SENT,
+            actor=request.user,
+            company=company,
+            target=persona,
+            target_label=etiqueta,
+            note=str(_("Sent from the installation console")),
+        )
+        record_platform(
+            action=PlatformAction.COMPANY_ADMIN_LINK_SENT,
+            actor=request.user,
+            company=company,
+            target=persona,
+            target_type="person",
+            target_label=etiqueta,
+        )
+        return Response({"sent_to": persona.email})
 
 
 @extend_schema(tags=["platform"])

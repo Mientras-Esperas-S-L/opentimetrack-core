@@ -787,6 +787,14 @@ export const getCompanies = async () => (await get('/platform/companies/')).comp
 export const createCompany = (payload) => post('/platform/companies/', payload)
 
 /** Cambia la ficha de una empresa, o su estado. Desactivar exige `confirm` con su nombre. */
+/** Quién administra una empresa. Solo administradores: el resto no se ve. */
+export const getCompanyAdmins = async (companyId) =>
+  (await get(`/platform/companies/${companyId}/admins/`)).admins
+
+/** Manda al correo de esa persona el enlace para poner contraseña. El enlace no vuelve. */
+export const sendCompanyAdminLink = (companyId, personId) =>
+  post(`/platform/companies/${companyId}/admins/${personId}/link/`, {})
+
 export const updateCompanyOfInstallation = async (companyId, payload) =>
   (await api.patch(`/platform/companies/${companyId}/`, payload)).data
 

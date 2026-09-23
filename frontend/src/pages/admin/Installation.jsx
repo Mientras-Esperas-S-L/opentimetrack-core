@@ -28,7 +28,9 @@ import {
   updateCompanyOfInstallation,
   deactivatePlatformAdmin,
   getPlatformAdmins,
+  getCompanyAdmins,
   getPlatformAudit,
+  sendCompanyAdminLink,
   PAGE_SIZE,
   resetPlatformAdminPassword,
   getApplicationsOfCompany,
@@ -1111,6 +1113,8 @@ function CompanyDialog({ empresa, onClose, onGuardada }) {
             <MenuItem value="en">{t('Inglés')}</MenuItem>
           </TextField>
 
+          <CompanyAdmins empresa={empresa} />
+
           <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
             {empresa.is_active ? (
               <>
@@ -1162,5 +1166,121 @@ function CompanyDialog({ empresa, onClose, onGuardada }) {
         </Button>
       </DialogActions>
     </Dialog>
+  )
+}
+
+/** Quién administra la empresa, y el enlace para que pongan contraseña.
+ *
+ *  Es la llamada de soporte más habitual: «el responsable no puede entrar». El
+ *  enlace va a **su** correo; aquí no se ve. Si se viera, quien administra la
+ *  instalación podría entrar como esa persona en los datos de su empresa.
+ */
+function CompanyAdmins({ empresa }) {
+  const { t } = useTranslation()
+  const [quienes, setQuienes] = useState(null)
+  const [error, setError] = useState(null)
+  const [enviado, setEnviado] = useState(null)
+  const [enviando, setEnviando] = useState(null)
+
+  useEffect(() => {
+    let vivo = true
+    getCompanyAdmins(empresa.id)
+      .then((d) => vivo && setQuienes(d))
+      .catch(() => vivo && setError(t('No he podido leer quién administra esta empresa.')))
+    return () => {
+      vivo = false
+    }
+  }, [empresa.id, t])
+
+  const mandar = async (persona) => {
+    setError(null)
+    setEnviado(null)
+    setEnviando(persona.id)
+    try {
+      const { sent_to: a } = await sendCompanyAdminLink(empresa.id, persona.id)
+      setEnviado(a)
+    } catch (fallo) {
+      setError(motivo(fallo) || t('No se ha podido mandar el enlace.'))
+    } finally {
+      setEnviando(null)
+    }
+  }
+
+  const ultimoAcceso = (persona) =>
+    persona.last_login
+      ? t('Último acceso: {{cuando}}', {
+          cuando: new Date(persona.last_login).toLocaleString(localeDeFechas(), {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          }),
+        })
+      : t('No ha entrado nunca')
+
+  return (
+    <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
+      <Typography variant="subtitle2">{t('Quién la administra')}</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+        {t('Si alguien no puede entrar, mándale un enlace para poner contraseña. Le llega a su correo; aquí no se ve.')}
+      </Typography>
+      {error && (
+        <Alert severity="error" sx={{ mb: 1 }}>
+          {error}
+        </Alert>
+      )}
+      {enviado && (
+        <Alert severity="success" sx={{ mb: 1 }} onClose={() => setEnviado(null)}>
+          {t('Enlace enviado a {{correo}}.', { correo: enviado })}
+        </Alert>
+      )}
+      {quienes === null && !error && (
+        <Typography variant="body2" color="text.secondary">
+          {t('Cargando…')}
+        </Typography>
+      )}
+      <Stack spacing={1}>
+        {(quienes ?? []).map((persona) => {
+          const porQueNo = persona.federated
+            ? t('Entra con la cuenta de su empresa: aquí no tiene contraseña.')
+            : !persona.is_active
+              ? t('Cuenta desactivada.')
+              : !empresa.is_active
+                ? t('La empresa está desactivada.')
+                : null
+          return (
+            <Stack
+              key={persona.id}
+              direction={{ xs: 'column', sm: 'row' }}
+              sx={{ gap: 1, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between' }}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
+                  {[persona.first_name, persona.last_name].filter(Boolean).join(' ') || persona.email}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', overflowWrap: 'anywhere' }}>
+                  {persona.email} · {porQueNo ?? ultimoAcceso(persona)}
+                </Typography>
+              </Box>
+              {!porQueNo && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  sx={{ flexShrink: 0 }}
+                  disabled={enviando !== null}
+                  onClick={() => mandar(persona)}
+                >
+                  {enviando === persona.id ? t('Enviando…') : t('Mandar enlace')}
+                </Button>
+              )}
+            </Stack>
+          )
+        })}
+        {quienes?.length === 0 && (
+          <Typography variant="body2" color="text.secondary">
+            {t('Esta empresa no tiene a nadie que la administre.')}
+          </Typography>
+        )}
+      </Stack>
+    </Box>
   )
 }
