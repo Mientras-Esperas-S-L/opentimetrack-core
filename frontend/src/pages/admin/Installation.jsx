@@ -137,7 +137,9 @@ export default function Installation() {
         // única salida es restablecer la contraseña de esa persona.
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setReciénCreada(null)}>
           <Typography variant="body2">
-            {t('Empresa creada. Apunta ahora la contraseña de quien la administra: no se vuelve a enseñar.')}
+            {t(
+              'Empresa creada. Apunta ahora la contraseña de quien la administra: no se vuelve a enseñar.',
+            )}
           </Typography>
           <Typography variant="body2" sx={{ fontFamily: 'monospace', mt: 0.5 }}>
             {reciénCreada.email} · {reciénCreada.password}
@@ -167,7 +169,6 @@ export default function Installation() {
               <TableCell>{t('CIF')}</TableCell>
               <TableCell align="right">{t('Personas')}</TableCell>
               <TableCell>{t('Cómo entran')}</TableCell>
-              <TableCell>{t('Con qué se conectan')}</TableCell>
               <TableCell>{t('Actividad')}</TableCell>
               <TableCell>{t('Qué le falta')}</TableCell>
               <TableCell />
@@ -179,7 +180,13 @@ export default function Installation() {
                 <TableCell>
                   {empresa.name}
                   {!empresa.is_active && (
-                    <Chip size="small" color="error" variant="outlined" label={t('Desactivada')} sx={{ ml: 1 }} />
+                    <Chip
+                      size="small"
+                      color="error"
+                      variant="outlined"
+                      label={t('Desactivada')}
+                      sx={{ ml: 1 }}
+                    />
                   )}
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                     {empresa.time_zone}
@@ -206,11 +213,19 @@ export default function Installation() {
                         label={empresa.identity.name}
                         title={empresa.identity.domains.join(', ')}
                       />
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: 'block', mt: 0.5 }}
+                      >
                         {empresa.status?.last_identity_sign_in_day
-                          ? t('Último acceso con ella: {{dia}}', { dia: diaCorto(empresa.status.last_identity_sign_in_day) })
+                          ? t('Último acceso con ella: {{dia}}', {
+                              dia: diaCorto(empresa.status.last_identity_sign_in_day),
+                            })
                           : empresa.status?.identity_people
-                            ? t('{{n}} persona(s) han entrado con ella', { n: empresa.status.identity_people })
+                            ? t('{{n}} persona(s) han entrado con ella', {
+                                n: empresa.status.identity_people,
+                              })
                             : t('Nadie ha entrado todavía con ella')}
                       </Typography>
                     </>
@@ -220,20 +235,10 @@ export default function Installation() {
                     </Typography>
                   )}
                 </TableCell>
-                <TableCell>
-                  {empresa.applications > 0 ? (
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      label={t('{{cuantas}} aplicación(es)', { cuantas: empresa.applications })}
-                    />
-                  ) : (
-                    <Typography variant="body2" color="text.secondary">
-                      {t('Ninguna todavía')}
-                    </Typography>
-                  )}
-                </TableCell>
-                <TableCell>
+                {/* «Con qué se conectan» vivía en su columna; ahora va aquí, con el
+                    día en que cada aplicación habló. Con ocho columnas, a 1280 px la
+                    de los botones quedaba cortada y esta salía palabra a palabra. */}
+                <TableCell sx={{ minWidth: 190 }}>
                   <Actividad estado={empresa.status} />
                 </TableCell>
                 <TableCell>
@@ -244,21 +249,25 @@ export default function Installation() {
                   />
                 </TableCell>
                 <TableCell align="right">
-                  <Button size="small" onClick={() => setFichaDe(empresa)}>
-                    {t('Ficha')}
-                  </Button>
-                  <Button size="small" onClick={() => setCredencialesDe(empresa)}>
-                    {t('Credenciales')}
-                  </Button>
-                  <Button size="small" onClick={() => setIdentidadDe(empresa)}>
-                    {t('Identidad')}
-                  </Button>
+                  {/* Uno debajo de otro: en fila, los tres ocupaban la anchura de dos
+                      columnas. */}
+                  <Stack sx={{ alignItems: 'flex-end' }}>
+                    <Button size="small" onClick={() => setFichaDe(empresa)}>
+                      {t('Ficha')}
+                    </Button>
+                    <Button size="small" onClick={() => setCredencialesDe(empresa)}>
+                      {t('Credenciales')}
+                    </Button>
+                    <Button size="small" onClick={() => setIdentidadDe(empresa)}>
+                      {t('Identidad')}
+                    </Button>
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}
             {!cargando && empresas.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8}>
+                <TableCell colSpan={7}>
                   <Typography variant="body2" color="text.secondary">
                     {t('Todavía no hay ninguna empresa.')}
                   </Typography>
@@ -343,7 +352,11 @@ function NewCompanyDialog({ valores, onClose, onCreada }) {
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
-          <TextField label={t('Nombre fiscal')} value={form.company_name ?? ''} onChange={cambiar('company_name')} />
+          <TextField
+            label={t('Nombre fiscal')}
+            value={form.company_name ?? ''}
+            onChange={cambiar('company_name')}
+          />
           <TextField
             label={t('CIF')}
             value={form.tax_id ?? ''}
@@ -351,7 +364,12 @@ function NewCompanyDialog({ valores, onClose, onCreada }) {
             helperText={t('Es lo que distingue a una empresa de otra: no puede repetirse.')}
           />
           <Stack direction="row" spacing={2}>
-            <TextField label={t('País')} value={form.country ?? 'ES'} onChange={cambiar('country')} sx={{ width: 120 }} />
+            <TextField
+              label={t('País')}
+              value={form.country ?? 'ES'}
+              onChange={cambiar('country')}
+              sx={{ width: 120 }}
+            />
             <TextField
               fullWidth
               label={t('Zona horaria')}
@@ -363,10 +381,24 @@ function NewCompanyDialog({ valores, onClose, onCreada }) {
           <Typography variant="subtitle2" sx={{ pt: 1 }}>
             {t('Quien la administra')}
           </Typography>
-          <TextField label={t('Correo electrónico')} value={form.email ?? ''} onChange={cambiar('email')} />
+          <TextField
+            label={t('Correo electrónico')}
+            value={form.email ?? ''}
+            onChange={cambiar('email')}
+          />
           <Stack direction="row" spacing={2}>
-            <TextField fullWidth label={t('Nombre')} value={form.first_name ?? ''} onChange={cambiar('first_name')} />
-            <TextField fullWidth label={t('Apellidos')} value={form.last_name ?? ''} onChange={cambiar('last_name')} />
+            <TextField
+              fullWidth
+              label={t('Nombre')}
+              value={form.first_name ?? ''}
+              onChange={cambiar('first_name')}
+            />
+            <TextField
+              fullWidth
+              label={t('Apellidos')}
+              value={form.last_name ?? ''}
+              onChange={cambiar('last_name')}
+            />
           </Stack>
           <Alert severity="info">
             {t('Su contraseña se genera y se enseña una sola vez al crear la empresa.')}
@@ -424,7 +456,10 @@ function IdentityDialog({ empresa, onClose, onGuardada }) {
     try {
       await saveCompanyIdentity(empresa.id, {
         ...form,
-        domains: form.domains.split('\n').map((d) => d.trim()).filter(Boolean),
+        domains: form.domains
+          .split('\n')
+          .map((d) => d.trim())
+          .filter(Boolean),
       })
       onGuardada()
     } catch (fallo) {
@@ -456,9 +491,15 @@ function IdentityDialog({ empresa, onClose, onGuardada }) {
         <Stack spacing={2} sx={{ mt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
           <Alert severity="info">
-            {t('Sin proveedor, su gente entra con correo y contraseña de aquí. Con proveedor, entra con el sistema de su empresa.')}
+            {t(
+              'Sin proveedor, su gente entra con correo y contraseña de aquí. Con proveedor, entra con el sistema de su empresa.',
+            )}
           </Alert>
-          <TextField label={t('Nombre del proveedor')} value={form.name ?? ''} onChange={cambiar('name')} />
+          <TextField
+            label={t('Nombre del proveedor')}
+            value={form.name ?? ''}
+            onChange={cambiar('name')}
+          />
           <TextField
             label={t('Emisor')}
             value={form.issuer ?? ''}
@@ -473,14 +514,21 @@ function IdentityDialog({ empresa, onClose, onGuardada }) {
             helperText={t('En blanco se le pregunta al proveedor. Ponerlo evita depender de eso.')}
           />
           <Stack direction="row" spacing={2}>
-            <TextField fullWidth label={t('Identificador de cliente')} value={form.client_id ?? ''} onChange={cambiar('client_id')} />
+            <TextField
+              fullWidth
+              label={t('Identificador de cliente')}
+              value={form.client_id ?? ''}
+              onChange={cambiar('client_id')}
+            />
             <TextField
               fullWidth
               type="password"
               label={t('Secreto')}
               value={form.client_secret ?? ''}
               onChange={cambiar('client_secret')}
-              helperText={form.has_secret ? t('Hay uno guardado. En blanco se deja como está.') : ''}
+              helperText={
+                form.has_secret ? t('Hay uno guardado. En blanco se deja como está.') : ''
+              }
             />
           </Stack>
           <TextField
@@ -489,10 +537,17 @@ function IdentityDialog({ empresa, onClose, onGuardada }) {
             onChange={cambiar('domains')}
             multiline
             minRows={2}
-            helperText={t('Uno por línea. Nada de dominios personales: mandaría al proveedor a cualquiera que escriba uno.')}
+            helperText={t(
+              'Uno por línea. Nada de dominios personales: mandaría al proveedor a cualquiera que escriba uno.',
+            )}
           />
           <FormControlLabel
-            control={<Switch checked={Boolean(form.may_act_for_people)} onChange={cambiar('may_act_for_people')} />}
+            control={
+              <Switch
+                checked={Boolean(form.may_act_for_people)}
+                onChange={cambiar('may_act_for_people')}
+              />
+            }
             label={t('Su aplicación puede fichar en nombre de su gente')}
           />
           <FormControlLabel
@@ -511,7 +566,11 @@ function IdentityDialog({ empresa, onClose, onGuardada }) {
         <Button onClick={onClose} disabled={guardando}>
           {t('Cancelar')}
         </Button>
-        <Button variant="contained" onClick={guardar} disabled={guardando || !form.name || !form.issuer}>
+        <Button
+          variant="contained"
+          onClick={guardar}
+          disabled={guardando || !form.name || !form.issuer}
+        >
           {t('Guardar')}
         </Button>
       </DialogActions>
@@ -571,17 +630,20 @@ function CredentialsDialog({ empresa, onClose, onCambio }) {
 
   return (
     <Dialog open={Boolean(empresa)} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{t('Credenciales de {{empresa}}', { empresa: empresa?.name ?? '' })}</DialogTitle>
+      <DialogTitle>
+        {t('Credenciales de {{empresa}}', { empresa: empresa?.name ?? '' })}
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
 
           {testigo && (
             <Alert severity="success" onClose={() => setTestigo(null)}>
-              <Typography variant="body2">
-                {t('Cópiala ahora: no se vuelve a enseñar.')}
-              </Typography>
-              <Typography variant="body2" sx={{ fontFamily: 'monospace', mt: 0.5, wordBreak: 'break-all' }}>
+              <Typography variant="body2">{t('Cópiala ahora: no se vuelve a enseñar.')}</Typography>
+              <Typography
+                variant="body2"
+                sx={{ fontFamily: 'monospace', mt: 0.5, wordBreak: 'break-all' }}
+              >
                 {testigo}
               </Typography>
             </Alert>
@@ -589,13 +651,18 @@ function CredentialsDialog({ empresa, onClose, onCambio }) {
 
           {aplicaciones.length === 0 && (
             <Typography variant="body2" color="text.secondary">
-              {t('Esta empresa no tiene ninguna aplicación autorizada. Sin credencial, GreenCity no puede hablar con ella.')}
+              {t(
+                'Esta empresa no tiene ninguna aplicación autorizada. Sin credencial, GreenCity no puede hablar con ella.',
+              )}
             </Typography>
           )}
 
           {aplicaciones.map((app) => (
             <Paper key={app.id} variant="outlined" sx={{ p: 1.5 }}>
-              <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+              <Stack
+                direction="row"
+                sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1 }}
+              >
                 <Box>
                   <Typography variant="body2">
                     {app.name}
@@ -676,7 +743,9 @@ function CredentialsDialog({ empresa, onClose, onCambio }) {
             </Button>
           )}
           <Typography variant="caption" color="text.secondary">
-            {t('«Autorizar GreenCity» concede de una vez los diez permisos que la integración usa. Esta credencial es la que se pega en GreenCity, en Gestión de Permisos.')}
+            {t(
+              '«Autorizar GreenCity» concede de una vez los diez permisos que la integración usa. Esta credencial es la que se pega en GreenCity, en Gestión de Permisos.',
+            )}
           </Typography>
         </Stack>
       </DialogContent>
@@ -857,8 +926,16 @@ function NewAdminDialog({ valores, onClose, onCreada }) {
             value={form.email ?? ''}
             onChange={cambiar('email')}
           />
-          <TextField label={t('Nombre')} value={form.first_name ?? ''} onChange={cambiar('first_name')} />
-          <TextField label={t('Apellidos')} value={form.last_name ?? ''} onChange={cambiar('last_name')} />
+          <TextField
+            label={t('Nombre')}
+            value={form.first_name ?? ''}
+            onChange={cambiar('first_name')}
+          />
+          <TextField
+            label={t('Apellidos')}
+            value={form.last_name ?? ''}
+            onChange={cambiar('last_name')}
+          />
           <Typography variant="caption" color="text.secondary">
             {t('Su contraseña se genera y se enseña una sola vez.')}
           </Typography>
@@ -886,9 +963,7 @@ function LeFalta({ empresa, onIdentidad, onCredencial }) {
   const huecos = empresa.missing ?? []
 
   if (huecos.length === 0) {
-    return (
-      <Chip size="small" color="success" variant="outlined" label={t('Lista')} />
-    )
+    return <Chip size="small" color="success" variant="outlined" label={t('Lista')} />
   }
 
   // Lo que se puede arreglar desde aquí lleva su botón; lo que no ---que entre su
@@ -1128,7 +1203,12 @@ function CompanyDialog({ empresa, onClose, onGuardada }) {
               helperText={errores.time_zone}
             />
           </Stack>
-          <TextField select label={t('Idioma')} value={form.language ?? 'es'} onChange={cambiar('language')}>
+          <TextField
+            select
+            label={t('Idioma')}
+            value={form.language ?? 'es'}
+            onChange={cambiar('language')}
+          >
             <MenuItem value="es">{t('Castellano')}</MenuItem>
             <MenuItem value="ca">{t('Catalán')}</MenuItem>
             <MenuItem value="gl">{t('Gallego')}</MenuItem>
@@ -1171,7 +1251,11 @@ function CompanyDialog({ empresa, onClose, onGuardada }) {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
                   {t('Al reactivarla, su gente y sus aplicaciones vuelven a entrar como antes.')}
                 </Typography>
-                <Button variant="outlined" disabled={trabajando} onClick={() => enviar({ is_active: true })}>
+                <Button
+                  variant="outlined"
+                  disabled={trabajando}
+                  onClick={() => enviar({ is_active: true })}
+                >
                   {t('Reactivar')}
                 </Button>
               </>
@@ -1183,7 +1267,11 @@ function CompanyDialog({ empresa, onClose, onGuardada }) {
         <Button onClick={onClose} disabled={trabajando}>
           {t('Cancelar')}
         </Button>
-        <Button variant="contained" disabled={trabajando || !form.name || !form.tax_id} onClick={() => enviar(form)}>
+        <Button
+          variant="contained"
+          disabled={trabajando || !form.name || !form.tax_id}
+          onClick={() => enviar(form)}
+        >
           {trabajando ? t('Guardando…') : t('Guardar')}
         </Button>
       </DialogActions>
@@ -1244,7 +1332,9 @@ function CompanyAdmins({ empresa }) {
     <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
       <Typography variant="subtitle2">{t('Quién la administra')}</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-        {t('Si alguien no puede entrar, mándale un enlace para poner contraseña. Le llega a su correo; aquí no se ve.')}
+        {t(
+          'Si alguien no puede entrar, mándale un enlace para poner contraseña. Le llega a su correo; aquí no se ve.',
+        )}
       </Typography>
       {error && (
         <Alert severity="error" sx={{ mb: 1 }}>
@@ -1274,13 +1364,22 @@ function CompanyAdmins({ empresa }) {
             <Stack
               key={persona.id}
               direction={{ xs: 'column', sm: 'row' }}
-              sx={{ gap: 1, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between' }}
+              sx={{
+                gap: 1,
+                alignItems: { xs: 'stretch', sm: 'center' },
+                justifyContent: 'space-between',
+              }}
             >
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="body2" sx={{ overflowWrap: 'anywhere' }}>
-                  {[persona.first_name, persona.last_name].filter(Boolean).join(' ') || persona.email}
+                  {[persona.first_name, persona.last_name].filter(Boolean).join(' ') ||
+                    persona.email}
                 </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', overflowWrap: 'anywhere' }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', overflowWrap: 'anywhere' }}
+                >
                   {persona.email} · {porQueNo ?? ultimoAcceso(persona)}
                 </Typography>
               </Box>
@@ -1314,7 +1413,10 @@ function CompanyAdmins({ empresa }) {
  *  y en cualquier zona al oeste de Greenwich eso ya es el día anterior.
  */
 function diaCorto(dia) {
-  return new Date(`${dia}T12:00:00`).toLocaleDateString(localeDeFechas(), { day: 'numeric', month: 'short' })
+  return new Date(`${dia}T12:00:00`).toLocaleDateString(localeDeFechas(), {
+    day: 'numeric',
+    month: 'short',
+  })
 }
 
 /** Si su gente ficha y si sus aplicaciones hablan. Lo callado se dice con palabras,
@@ -1323,7 +1425,11 @@ function Actividad({ estado }) {
   const { t } = useTranslation()
   if (!estado) return null
   const linea = (texto, callado) => (
-    <Typography variant="body2" color={callado ? 'warning.main' : 'text.primary'} sx={{ fontWeight: callado ? 600 : 400 }}>
+    <Typography
+      variant="body2"
+      color={callado ? 'warning.main' : 'text.primary'}
+      sx={{ fontWeight: callado ? 600 : 400 }}
+    >
       {texto}
     </Typography>
   )
@@ -1337,6 +1443,11 @@ function Actividad({ estado }) {
             estado.punches_quiet,
           )
         : linea(t('Sin fichajes todavía'), false)}
+      {estado.applications_detail.length === 0 && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+          {t('Sin aplicaciones conectadas')}
+        </Typography>
+      )}
       {estado.applications_detail.map((app) => (
         <Typography
           key={app.name}
@@ -1346,7 +1457,10 @@ function Actividad({ estado }) {
         >
           {app.last_used
             ? app.quiet
-              ? t('{{app}}: callada desde el {{dia}}', { app: app.name, dia: diaCorto(app.last_used) })
+              ? t('{{app}}: callada desde el {{dia}}', {
+                  app: app.name,
+                  dia: diaCorto(app.last_used),
+                })
               : t('{{app}}: usada el {{dia}}', { app: app.name, dia: diaCorto(app.last_used) })
             : t('{{app}}: sin usar todavía', { app: app.name })}
         </Typography>
