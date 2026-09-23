@@ -133,6 +133,16 @@ def _callado(desde: date | None, hoy: date) -> bool:
     return False
 
 
+def _sin_nada() -> dict:
+    return {
+        "active_people": 0,
+        "last_punch": None,
+        "last_identity_sign_in": None,
+        "identity_people": 0,
+        "apps": [],
+    }
+
+
 def _estado_de_todas() -> dict:
     """Cómo está cada empresa, **en cuatro consultas para todas**, no cuatro por empresa.
 
@@ -148,10 +158,7 @@ def _estado_de_todas() -> dict:
     estado: dict = {}
 
     def de(tenant_id):
-        return estado.setdefault(
-            tenant_id,
-            {"active_people": 0, "last_punch": None, "last_identity_sign_in": None, "apps": []},
-        )
+        return estado.setdefault(tenant_id, _sin_nada())
 
     for fila in (
         User.objects.filter(tenant__isnull=False, is_active=True)
@@ -163,13 +170,18 @@ def _estado_de_todas() -> dict:
     for fila in Punch.objects_all_tenants.values("tenant_id").annotate(ultimo=Max("timestamp")):
         de(fila["tenant_id"])["last_punch"] = fila["ultimo"]
 
+    # Quién ha entrado alguna vez con la identidad se sabe siempre: el sujeto se
+    # ancla en la primera entrada. **Cuándo**, solo desde el 23/09/2026, que es
+    # cuando se empezó a anotar `last_login`. Por eso van los dos: sin el recuento,
+    # una identidad en uso desde hace días decía «nadie ha entrado».
     for fila in (
         User.objects.filter(tenant__isnull=False)
         .exclude(Q(oidc_sub="") | Q(oidc_sub__isnull=True))
         .values("tenant_id")
-        .annotate(ultimo=Max("last_login"))
+        .annotate(ultimo=Max("last_login"), n=Count("id"))
     ):
         de(fila["tenant_id"])["last_identity_sign_in"] = fila["ultimo"]
+        de(fila["tenant_id"])["identity_people"] = fila["n"]
 
     for app in (
         Application.objects_all_tenants.filter(is_active=True)
@@ -183,12 +195,7 @@ def _estado_de_todas() -> dict:
 
 def _estado(company: Tenant, crudo: dict | None) -> dict:
     """El estado de una empresa, en su zona horaria y con lo callado marcado."""
-    crudo = crudo or {
-        "active_people": 0,
-        "last_punch": None,
-        "last_identity_sign_in": None,
-        "apps": [],
-    }
+    crudo = crudo or _sin_nada()
     try:
         zona = ZoneInfo(company.time_zone)
     except Exception:
@@ -213,6 +220,7 @@ def _estado(company: Tenant, crudo: dict | None) -> dict:
         "last_punch_day": fichaje.isoformat() if fichaje else None,
         "punches_quiet": _callado(fichaje, hoy),
         "last_identity_sign_in_day": identidad.isoformat() if identidad else None,
+        "identity_people": crudo["identity_people"],
         "applications_detail": aplicaciones,
     }
 

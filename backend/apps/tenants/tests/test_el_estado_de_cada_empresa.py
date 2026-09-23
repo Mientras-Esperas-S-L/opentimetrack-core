@@ -98,6 +98,7 @@ def test_da_fechas_y_recuentos_y_ni_una_persona(plataforma):
     assert estado["last_punch_day"] == "2026-09-17"
     assert estado["punches_quiet"] is True
     assert estado["last_identity_sign_in_day"] == "2026-09-18"
+    assert estado["identity_people"] == 1
     assert estado["applications_detail"] == [
         {"name": "GreenCityControl", "last_used": "2026-09-21", "quiet": False}
     ]
@@ -119,3 +120,16 @@ def test_cuatro_consultas_para_todas_por_muchas_que_haya(django_assert_num_queri
         Tenant.objects.create(name=f"Empresa {n}", tax_id=f"B0000000{n}")
     with django_assert_num_queries(4):
         _estado_de_todas()
+
+
+def test_una_identidad_usada_antes_de_anotar_fechas_no_dice_que_nadie_entro(plataforma):
+    """Medido en devel: una persona entraba con la identidad desde hacía días, y como
+    la fecha no se anotaba, la lista decía «Nadie ha entrado todavía con ella»."""
+    empresa = Tenant.objects.create(name="ACME Ltd", tax_id="B11111111")
+    with tenant_context(empresa.id):
+        User.objects.create_user(
+            email="fede@acme.test", password="X" * 14, tenant=empresa, oidc_sub="sub-fede"
+        )
+    estado = cliente(plataforma).get("/api/platform/companies/").data["companies"][0]["status"]
+    assert estado["last_identity_sign_in_day"] is None
+    assert estado["identity_people"] == 1

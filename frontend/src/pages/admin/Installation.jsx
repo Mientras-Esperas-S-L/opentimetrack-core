@@ -209,7 +209,9 @@ export default function Installation() {
                       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                         {empresa.status?.last_identity_sign_in_day
                           ? t('Último acceso con ella: {{dia}}', { dia: diaCorto(empresa.status.last_identity_sign_in_day) })
-                          : t('Nadie ha entrado todavía con ella')}
+                          : empresa.status?.identity_people
+                            ? t('{{n}} persona(s) han entrado con ella', { n: empresa.status.identity_people })
+                            : t('Nadie ha entrado todavía con ella')}
                       </Typography>
                     </>
                   ) : (
@@ -1235,7 +1237,8 @@ function CompanyAdmins({ empresa }) {
             year: 'numeric',
           }),
         })
-      : t('No ha entrado nunca')
+      : // «Nunca» no se puede afirmar: la fecha solo se anota desde el 23/09/2026.
+        t('No consta ningún acceso')
 
   return (
     <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
