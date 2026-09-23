@@ -256,6 +256,25 @@
         {
           "kind": "heading",
           "data": {
+            "text": "La actividad de cada empresa",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "La columna Actividad dice el día del último fichaje de la empresa y cuándo habló por última vez cada aplicación. Si ha pasado un día laborable entero sin nada, sale resaltado y con las palabras «sin fichajes desde» o «callada desde»: es la señal para mirar antes de que llame el cliente."
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Solo se ve el día, nunca la hora ni quién fichó: el registro de jornada es de la empresa. Una empresa recién dada de alta sale «sin fichajes todavía», y eso no es una avería."
+          }
+        },
+        {
+          "kind": "heading",
+          "data": {
             "text": "Lo que se enseña una sola vez",
             "level": 3
           }
