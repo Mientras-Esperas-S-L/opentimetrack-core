@@ -326,6 +326,25 @@
         {
           "kind": "heading",
           "data": {
+            "text": "Las cuentas de la instalación",
+            "level": 3
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "En «Quién administra esta instalación» se añade una cuenta, se corrige su nombre o su correo, se le manda el enlace para poner contraseña y se desactiva o se reactiva. El correo no puede ser el de otra cuenta ni el de alguien de una empresa: con dos cuentas del mismo correo, esta no podría entrar."
+          }
+        },
+        {
+          "kind": "paragraph",
+          "data": {
+            "text": "Si el correo no sale, «Nueva contraseña» la enseña una sola vez en pantalla. Tu propia contraseña se cambia desde tu avatar, arriba a la derecha."
+          }
+        },
+        {
+          "kind": "heading",
+          "data": {
             "text": "El registro",
             "level": 3
           }

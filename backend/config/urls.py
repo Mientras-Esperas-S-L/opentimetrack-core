@@ -44,6 +44,7 @@ from apps.tenants.platform_views import (
     CompanyCredentialsView,
     CompanyCredentialView,
     CompanyIdentityView,
+    PlatformAdminLinkView,
     PlatformAdminPasswordView,
     PlatformAdminsView,
     PlatformAdminView,
@@ -195,6 +196,11 @@ urlpatterns = [
         "api/platform/admins/<uuid:admin_id>/",
         PlatformAdminView.as_view(),
         name="platform-admin",
+    ),
+    path(
+        "api/platform/admins/<uuid:admin_id>/link/",
+        PlatformAdminLinkView.as_view(),
+        name="platform-admin-link",
     ),
     path(
         "api/platform/admins/<uuid:admin_id>/password/",
