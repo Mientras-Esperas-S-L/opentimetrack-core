@@ -1010,8 +1010,36 @@ def _administrador(user: User) -> dict:
         "first_name": user.first_name,
         "last_name": user.last_name,
         "is_active": user.is_active,
-        "last_login": user.last_login,
+        "last_login": user.last_login.isoformat() if user.last_login else None,
     }
+
+
+def _correo_ocupado(correo: str, *, salvo=None) -> str | None:
+    """Por qué no vale ese correo para una cuenta de la instalación, o nada.
+
+    Ni repetido entre ellas, ni de alguien de una empresa. Lo segundo porque con
+    dos cuentas del mismo correo la pantalla de entrada pide el identificador
+    fiscal para saber a cuál se refiere ---y la de la instalación no tiene ninguno---,
+    así que la cuenta se quedaría sin forma de entrar. Pasó en producción el
+    23/09/2026: se creó una, no pudo entrar, y hubo que desactivarla.
+    """
+    fuera = {"pk": salvo.pk} if salvo is not None else {}
+    de_la_instalacion = User.objects.filter(email__iexact=correo, tenant__isnull=True)
+    if de_la_instalacion.exclude(**fuera).exists():
+        return _("There is already an installation account with that address.")
+    de_una_empresa = (
+        User.objects.filter(email__iexact=correo, tenant__isnull=False)
+        .select_related("tenant")
+        .first()
+    )
+    if de_una_empresa is not None:
+        return _(
+            "That address already belongs to somebody in %(company)s. An "
+            "installation account with a repeated address could not sign in, "
+            "because the sign-in screen would ask which company it is, and this "
+            "one has none. Use a different address."
+        ) % {"company": de_una_empresa.tenant.name}
+    return None
 
 
 def _los_de_la_instalacion():
@@ -1045,30 +1073,9 @@ class PlatformAdminsView(APIView):
         v = datos.validated_data
 
         correo = v["email"].lower()
-        if User.objects.filter(email__iexact=correo, tenant__isnull=True).exists():
-            return Response(
-                {"detail": _("There is already an installation account with that address.")},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        #  Y tampoco si alguien de una empresa lo usa ya. Con dos cuentas del mismo
-        #  correo, la pantalla de entrada pide el identificador fiscal para saber a
-        #  cuál se refiere ---y la de la instalación no tiene ninguno---, así que la
-        #  cuenta nacería sin forma de entrar. Pasó en producción el 23/09/2026: se
-        #  creó una, no pudo entrar, y hubo que desactivarla.
-        de_una_empresa = User.objects.filter(email__iexact=correo, tenant__isnull=False).first()
-        if de_una_empresa is not None:
-            return Response(
-                {
-                    "detail": _(
-                        "That address already belongs to somebody in %(company)s. An "
-                        "installation account with a repeated address could not sign in, "
-                        "because the sign-in screen would ask which company it is, and this "
-                        "one has none. Use a different address."
-                    )
-                    % {"company": de_una_empresa.tenant.name}
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        motivo = _correo_ocupado(correo)
+        if motivo:
+            return Response({"detail": motivo}, status=status.HTTP_400_BAD_REQUEST)
 
         clave = v.get("password") or f"Ott-{secrets.token_urlsafe(12)}"
         creado = User.objects.create_superuser(
@@ -1137,9 +1144,126 @@ class PlatformAdminPasswordView(_UnaCuenta):
         return Response({**_administrador(cuenta), "password": clave})
 
 
+class AdminChangeSerializer(serializers.Serializer):
+    """Lo que se puede cambiar de una cuenta de la instalación. Todo opcional."""
+
+    email = serializers.EmailField(required=False)
+    first_name = serializers.CharField(max_length=100, required=False)
+    last_name = serializers.CharField(max_length=100, required=False)
+    #: Solo `true`: reactivar. Desactivar tiene sus reglas y va por DELETE.
+    is_active = serializers.BooleanField(required=False)
+
+    def validate_is_active(self, value):
+        if value is False:
+            raise serializers.ValidationError(_("To deactivate an account, use its own action."))
+        return value
+
+
+@extend_schema(tags=["platform"])
+class PlatformAdminLinkView(_UnaCuenta):
+    """Mandar a una cuenta de la instalación el enlace para poner contraseña.
+
+    La otra salida, la contraseña nueva enseñada una vez, sigue ahí para cuando el
+    correo no sale. Esta es la buena cuando sí: la contraseña no pasa por las manos
+    de quien la da de alta.
+    """
+
+    @extend_schema(request=None, responses={200: dict})
+    def post(self, request, admin_id):
+        cuenta = self._cuenta(admin_id)
+        if cuenta is None:
+            return Response(
+                {"detail": _("No such installation account.")}, status=status.HTTP_404_NOT_FOUND
+            )
+        if not cuenta.is_active:
+            return Response(
+                {
+                    "detail": _(
+                        "That account is deactivated: reactivate it before sending the link."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            send_account_email(cuenta, base_url=settings.FRONTEND_URL)
+        except smtplib.SMTPRecipientsRefused:
+            log.warning("The mail relay refused %s", cuenta.email)
+            return Response(
+                {
+                    "detail": _(
+                        "The mail server refuses the address %(email)s. Check that it is right."
+                    )
+                    % {"email": cuenta.email}
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        except Exception:
+            log.exception("Could not send the password link to %s", cuenta.email)
+            return Response(
+                {"detail": _("The email could not be sent. Nothing has changed; try again later.")},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        record_platform(
+            action=PlatformAction.ADMIN_LINK_SENT,
+            actor=request.user,
+            target=cuenta,
+            target_type="installation account",
+            target_label=cuenta.email,
+        )
+        return Response({"sent_to": cuenta.email})
+
+
 @extend_schema(tags=["platform"])
 class PlatformAdminView(_UnaCuenta):
-    """Desactivar una cuenta de la instalación."""
+    """Cambiar, reactivar o desactivar una cuenta de la instalación."""
+
+    @extend_schema(request=AdminChangeSerializer, responses={200: dict})
+    def patch(self, request, admin_id):
+        cuenta = self._cuenta(admin_id)
+        if cuenta is None:
+            return Response(
+                {"detail": _("No such installation account.")}, status=status.HTTP_404_NOT_FOUND
+            )
+        datos = AdminChangeSerializer(data=request.data)
+        datos.is_valid(raise_exception=True)
+        v = datos.validated_data
+
+        if "email" in v:
+            v["email"] = v["email"].lower()
+            if v["email"] != cuenta.email.lower():
+                motivo = _correo_ocupado(v["email"], salvo=cuenta)
+                if motivo:
+                    return Response({"detail": motivo}, status=status.HTTP_400_BAD_REQUEST)
+
+        cambios = {}
+        for campo in ("email", "first_name", "last_name"):
+            if campo in v and getattr(cuenta, campo) != v[campo]:
+                cambios[campo] = [getattr(cuenta, campo), v[campo]]
+                setattr(cuenta, campo, v[campo])
+        reactivada = v.get("is_active") is True and not cuenta.is_active
+        if reactivada:
+            cuenta.is_active = True
+
+        if cambios or reactivada:
+            cuenta.save()
+        if cambios:
+            record_platform(
+                action=PlatformAction.ADMIN_CHANGED,
+                actor=request.user,
+                target=cuenta,
+                target_type="installation account",
+                target_label=cuenta.email,
+                changes=cambios,
+            )
+        if reactivada:
+            record_platform(
+                action=PlatformAction.ADMIN_REACTIVATED,
+                actor=request.user,
+                target=cuenta,
+                target_type="installation account",
+                target_label=cuenta.email,
+            )
+        return Response(_administrador(cuenta))
 
     @extend_schema(request=None, responses={204: None})
     def delete(self, request, admin_id):

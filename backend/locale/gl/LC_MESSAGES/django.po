@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-23 13:06+0000\n"
+"POT-Creation-Date: 2026-09-23 16:38+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: OpenTimeTrack contributors\n"
 "Language-Team: Galician\n"
@@ -219,7 +219,7 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:203 apps/absences/models.py:559
-#: apps/audit/models.py:201 apps/audit/models.py:324 apps/punches/models.py:628
+#: apps/audit/models.py:201 apps/audit/models.py:327 apps/punches/models.py:628
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:577 apps/tenants/rules.py:661 apps/users/models.py:992
 #: apps/users/models.py:1070
@@ -272,7 +272,7 @@ msgid "employee"
 msgstr "persoa traballadora"
 
 #: apps/absences/models.py:286 apps/audit/models.py:194
-#: apps/audit/models.py:320 apps/punches/corrections.py:94
+#: apps/audit/models.py:323 apps/punches/corrections.py:94
 #: apps/punches/models.py:164
 msgid "type"
 msgstr "tipo"
@@ -824,12 +824,12 @@ msgstr "Entregoulle a alguén o seu propio rexistro"
 msgid "Erased a person who left no record"
 msgstr "Retirou unha alta que non deixou rastro"
 
-#: apps/audit/models.py:167 apps/audit/models.py:296
+#: apps/audit/models.py:167 apps/audit/models.py:299
 msgid "when"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:173 apps/audit/models.py:316 apps/common/models.py:117
+#: apps/audit/models.py:173 apps/audit/models.py:319 apps/common/models.py:117
 #: apps/tenants/models.py:205 apps/tenants/models.py:233
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:435
@@ -837,28 +837,28 @@ msgid "company"
 msgstr "empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:183 apps/audit/models.py:304
+#: apps/audit/models.py:183 apps/audit/models.py:307
 msgid "who"
 msgstr "quen"
 
-#: apps/audit/models.py:187 apps/audit/models.py:306
+#: apps/audit/models.py:187 apps/audit/models.py:309
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:189 apps/audit/models.py:308
+#: apps/audit/models.py:189 apps/audit/models.py:311
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:195 apps/audit/models.py:321
+#: apps/audit/models.py:195 apps/audit/models.py:324
 #: apps/tenants/identity.py:58
 msgid "identifier"
 msgstr "identificador"
 
-#: apps/audit/models.py:196 apps/audit/models.py:322
+#: apps/audit/models.py:196 apps/audit/models.py:325
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:200 apps/audit/models.py:323
+#: apps/audit/models.py:200 apps/audit/models.py:326
 msgid "changes"
 msgstr ""
 
@@ -940,17 +940,31 @@ msgstr "Deu un contrasinal novo a unha conta da instalación"
 msgid "Deactivated an installation account"
 msgstr "Desactivou unha conta da instalación"
 
-#: apps/audit/models.py:318
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:276
+msgid "Changed an installation account"
+msgstr "Cambiou unha conta da instalación"
+
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:277
+msgid "Reactivated an installation account"
+msgstr "Reactivou unha conta da instalación"
+
+#: apps/audit/models.py:278
+msgid "Sent an installation account a link to set a password"
+msgstr "Enviou a unha conta da instalación a ligazón para poñer contrasinal"
+
+#: apps/audit/models.py:321
 msgid "company (as recorded)"
 msgstr "empresa (tal como se rexistrou)"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:327
+#: apps/audit/models.py:330
 msgid "installation audit entry"
 msgstr "entrada do rexistro da instalación"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:328
+#: apps/audit/models.py:331
 msgid "installation audit trail"
 msgstr "rexistro da instalación"
 
@@ -2033,7 +2047,7 @@ msgstr ""
 "Esta chave só significa algo nunha sesión que sostén unha aplicación, que é "
 "onde hai unha cola de marcaxes sen enviar."
 
-#: apps/reports/delivery.py:125 apps/users/passwords.py:136
+#: apps/reports/delivery.py:125 apps/users/passwords.py:155
 msgid "the platform"
 msgstr "a plataforma"
 
@@ -3681,13 +3695,13 @@ msgid ""
 "That person signs in with their company's account and has no password here."
 msgstr "Esa persoa entra coa conta da súa empresa e aquí non ten contrasinal."
 
-#: apps/tenants/platform_views.py:694
+#: apps/tenants/platform_views.py:694 apps/tenants/platform_views.py:1191
 #, python-format
 msgid "The mail server refuses the address %(email)s. Check that it is right."
 msgstr ""
 "O servidor de correo rexeita o enderezo %(email)s. Comproba que é correcto."
 
-#: apps/tenants/platform_views.py:705
+#: apps/tenants/platform_views.py:705 apps/tenants/platform_views.py:1200
 msgid "The email could not be sent. Nothing has changed; try again later."
 msgstr ""
 "Non se puido enviar o correo. Non cambiou nada; volve intentalo máis tarde."
@@ -3711,11 +3725,11 @@ msgstr "Esa aplicación non existe."
 msgid "No such credential."
 msgstr "Esa credencial non existe."
 
-#: apps/tenants/platform_views.py:1050
+#: apps/tenants/platform_views.py:1030
 msgid "There is already an installation account with that address."
 msgstr "Xa hai unha conta da instalación con ese enderezo."
 
-#: apps/tenants/platform_views.py:1063
+#: apps/tenants/platform_views.py:1034
 #, python-format
 msgid ""
 "That address already belongs to somebody in %(company)s. An installation "
@@ -3728,15 +3742,24 @@ msgstr ""
 "preguntaría de que empresa é e esta non ten ningunha. Usa outro enderezo."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:1124 apps/tenants/platform_views.py:1156
+#: apps/tenants/platform_views.py:1128 apps/tenants/platform_views.py:1173
+#: apps/tenants/platform_views.py:1222 apps/tenants/platform_views.py:1277
 msgid "No such installation account."
 msgstr "Esa conta da instalación non existe."
 
-#: apps/tenants/platform_views.py:1160
+#: apps/tenants/platform_views.py:1155
+msgid "To deactivate an account, use its own action."
+msgstr "Para desactivar unha conta, usa a súa propia acción."
+
+#: apps/tenants/platform_views.py:1179
+msgid "That account is deactivated: reactivate it before sending the link."
+msgstr "Esa conta está desactivada: reactívaa antes de mandarlle a ligazón."
+
+#: apps/tenants/platform_views.py:1281
 msgid "You cannot deactivate the account you are using."
 msgstr "Non podes desactivar a conta coa que estás dentro."
 
-#: apps/tenants/platform_views.py:1167
+#: apps/tenants/platform_views.py:1288
 msgid ""
 "This is the only account that can administer the installation. Create "
 "another one before deactivating it."
@@ -4864,12 +4887,12 @@ msgstr "adaptación de xornada"
 msgid "schedule adaptations"
 msgstr "adaptacións de xornada"
 
-#: apps/users/passwords.py:138
+#: apps/users/passwords.py:157
 #, python-format
 msgid "Your account at %(company)s"
 msgstr "A túa conta en %(company)s"
 
-#: apps/users/passwords.py:140
+#: apps/users/passwords.py:159
 #, python-format
 msgid "Reset your password at %(company)s"
 msgstr "Restablecer o teu contrasinal en %(company)s"

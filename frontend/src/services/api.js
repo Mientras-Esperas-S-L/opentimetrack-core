@@ -841,6 +841,13 @@ export const resetPlatformAdminPassword = (adminId) =>
 
 export const deactivatePlatformAdmin = (adminId) => api.delete(`/platform/admins/${adminId}/`)
 
+/** Corrige el nombre o el correo de una cuenta de la instalación, o la reactiva. */
+export const updatePlatformAdmin = async (adminId, payload) =>
+  (await api.patch(`/platform/admins/${adminId}/`, payload)).data
+
+/** Manda a esa cuenta el enlace para poner contraseña. El enlace no vuelve. */
+export const sendPlatformAdminLink = (adminId) => post(`/platform/admins/${adminId}/link/`, {})
+
 /** Lo que han hecho las cuentas de la instalación, lo más reciente primero. */
 export const getPlatformAudit = async (params) => page(await get('/platform/audit/', params))
 

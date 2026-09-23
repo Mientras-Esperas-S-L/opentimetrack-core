@@ -28,6 +28,8 @@ import {
   updateCompanyOfInstallation,
   deactivatePlatformAdmin,
   getPlatformAdmins,
+  sendPlatformAdminLink,
+  updatePlatformAdmin,
   getCompanyAdmins,
   getPlatformAudit,
   sendCompanyAdminLink,
@@ -42,6 +44,7 @@ import {
   withdrawApplicationOfCompany,
 } from '../../services/api.js'
 import { Pager } from '../../components/common.jsx'
+import { useAuth } from '../../hooks/useAuth.js'
 import { alCatalogo, localeDeFechas } from '../../i18n/index.js'
 
 /** Administrar la instalación: las empresas que hay y cómo entra su gente.
@@ -781,6 +784,9 @@ function CredentialsDialog({ empresa, onClose, onCambio }) {
  */
 function PlatformAdmins({ onCambio }) {
   const { t } = useTranslation()
+  const { session } = useAuth()
+  const [editando, setEditando] = useState(null)
+  const [enviadoA, setEnviadoA] = useState(null)
   const [cuentas, setCuentas] = useState([])
   const [error, setError] = useState(null)
   const [trabajando, setTrabajando] = useState(false)
@@ -843,6 +849,12 @@ function PlatformAdmins({ onCambio }) {
         </Alert>
       )}
 
+      {enviadoA && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setEnviadoA(null)}>
+          {t('Enlace enviado a {{correo}}.', { correo: enviadoA })}
+        </Alert>
+      )}
+
       {reciénDicha && (
         <Alert severity="success" sx={{ mb: 2 }} onClose={() => setReciénDicha(null)}>
           <Typography variant="body2">{t('Cópiala ahora: no se vuelve a enseñar.')}</Typography>
@@ -852,49 +864,110 @@ function PlatformAdmins({ onCambio }) {
         </Alert>
       )}
 
+      {/* Filas apiladas y no una tabla: a 360 px, el nombre quedaba en una columna
+          de una palabra y los cuatro botones en torre. Así el nombre ocupa el ancho
+          y las acciones van debajo, en las líneas que hagan falta. */}
       <Paper variant="outlined">
-        <Table size="small">
-          <TableBody>
-            {cuentas.map((cuenta) => (
-              <TableRow key={cuenta.id}>
-                <TableCell>
+        <Stack divider={<Box sx={{ borderTop: 1, borderColor: 'divider' }} />}>
+          {cuentas.map((cuenta) => (
+            <Stack
+              key={cuenta.id}
+              direction={{ xs: 'column', sm: 'row' }}
+              sx={{
+                px: 2,
+                py: 1,
+                gap: 0.5,
+                alignItems: { sm: 'center' },
+                justifyContent: 'space-between',
+              }}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="body2">
                   {cuenta.first_name} {cuenta.last_name}
-                  {/* Por `sx`: la prop `display` suelta ya no llega al CSS ---MUI dejó de
-                      aceptar las del sistema--- y el correo salía pegado al nombre. */}
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                    {cuenta.email}
-                    {!cuenta.is_active && ` · ${t('desactivada')}`}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
+                  {cuenta.id === session?.user?.id && ` (${t('tú')})`}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', overflowWrap: 'anywhere' }}
+                >
+                  {cuenta.email}
+                  {!cuenta.is_active && ` · ${t('desactivada')}`}
+                </Typography>
+              </Box>
+              <Stack
+                direction="row"
+                sx={{
+                  flexWrap: 'wrap',
+                  justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                  columnGap: 0.5,
+                }}
+              >
+                <Button size="small" disabled={trabajando} onClick={() => setEditando(cuenta)}>
+                  {t('Editar')}
+                </Button>
+                {cuenta.is_active && (
                   <Button
                     size="small"
                     disabled={trabajando}
                     onClick={() =>
                       hacer(async () => {
-                        const dicha = await resetPlatformAdminPassword(cuenta.id)
-                        setReciénDicha(dicha)
+                        const { sent_to: a } = await sendPlatformAdminLink(cuenta.id)
+                        setEnviadoA(a)
                       })
                     }
                   >
-                    {t('Nueva contraseña')}
+                    {t('Mandar enlace')}
                   </Button>
-                  {cuenta.is_active && (
-                    <Button
-                      size="small"
-                      color="error"
-                      disabled={trabajando}
-                      onClick={() => hacer(() => deactivatePlatformAdmin(cuenta.id))}
-                    >
-                      {t('Desactivar')}
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                )}
+                <Button
+                  size="small"
+                  disabled={trabajando}
+                  onClick={() =>
+                    hacer(async () => {
+                      const dicha = await resetPlatformAdminPassword(cuenta.id)
+                      setReciénDicha(dicha)
+                    })
+                  }
+                >
+                  {t('Nueva contraseña')}
+                </Button>
+                {/* La propia no: el servidor no deja desactivarse a uno mismo, y
+                    un botón que siempre contesta que no es un error de pantalla. */}
+                {cuenta.id === session?.user?.id ? null : cuenta.is_active ? (
+                  <Button
+                    size="small"
+                    color="error"
+                    disabled={trabajando}
+                    onClick={() => hacer(() => deactivatePlatformAdmin(cuenta.id))}
+                  >
+                    {t('Desactivar')}
+                  </Button>
+                ) : (
+                  <Button
+                    size="small"
+                    disabled={trabajando}
+                    onClick={() => hacer(() => updatePlatformAdmin(cuenta.id, { is_active: true }))}
+                  >
+                    {t('Reactivar')}
+                  </Button>
+                )}
+              </Stack>
+            </Stack>
+          ))}
+        </Stack>
       </Paper>
+
+      <EditAdminDialog
+        key={editando?.id ?? 'sin-edicion'}
+        cuenta={editando}
+        onClose={() => setEditando(null)}
+        onGuardada={() => {
+          setEditando(null)
+          setVuelta((n) => n + 1)
+          onCambio?.()
+        }}
+      />
 
       <NewAdminDialog
         key={nueva ? 'nueva-cuenta' : 'sin-cuenta'}
@@ -1482,5 +1555,72 @@ function Actividad({ estado }) {
         </Typography>
       ))}
     </Stack>
+  )
+}
+
+/** Corregir el nombre o el correo de una cuenta de la instalación.
+ *
+ *  El correo no se puede poner si ya lo usa otra cuenta, de la instalación o de una
+ *  empresa: con dos del mismo correo, esta se quedaría sin forma de entrar. Lo
+ *  decide el servidor y aquí se enseña su motivo.
+ */
+function EditAdminDialog({ cuenta, onClose, onGuardada }) {
+  const { t } = useTranslation()
+  const [form, setForm] = useState(() =>
+    cuenta
+      ? { first_name: cuenta.first_name, last_name: cuenta.last_name, email: cuenta.email }
+      : {},
+  )
+  const [error, setError] = useState(null)
+  const [guardando, setGuardando] = useState(false)
+  const cambiar = (campo) => (e) => setForm((f) => ({ ...f, [campo]: e.target.value }))
+
+  if (!cuenta) return null
+
+  const guardar = async () => {
+    setError(null)
+    setGuardando(true)
+    try {
+      await updatePlatformAdmin(cuenta.id, form)
+      onGuardada()
+    } catch (fallo) {
+      setError(motivo(fallo) || t('No se ha podido guardar.'))
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  return (
+    <Dialog open onClose={onClose} fullWidth maxWidth="xs">
+      <DialogTitle>{t('Editar la cuenta')}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          {error && <Alert severity="error">{error}</Alert>}
+          <TextField
+            label={t('Correo electrónico')}
+            value={form.email ?? ''}
+            onChange={cambiar('email')}
+          />
+          <TextField
+            label={t('Nombre')}
+            value={form.first_name ?? ''}
+            onChange={cambiar('first_name')}
+          />
+          <TextField
+            label={t('Apellidos')}
+            value={form.last_name ?? ''}
+            onChange={cambiar('last_name')}
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={guardando}>
+          {t('Cancelar')}
+        </Button>
+        <Button variant="contained" onClick={guardar} disabled={guardando || !form.email}>
+          {guardando ? t('Guardando…') : t('Guardar')}
+        </Button>
+      </DialogActions>
+    </Dialog>
   )
 }

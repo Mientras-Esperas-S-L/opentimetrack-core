@@ -273,6 +273,9 @@ class PlatformAction(models.TextChoices):
     ADMIN_CREATED = "ADMIN_CREATED", _("Created an installation account")
     ADMIN_PASSWORD_RESET = "ADMIN_PASSWORD_RESET", _("Gave an installation account a new password")
     ADMIN_DEACTIVATED = "ADMIN_DEACTIVATED", _("Deactivated an installation account")
+    ADMIN_CHANGED = "ADMIN_CHANGED", _("Changed an installation account")
+    ADMIN_REACTIVATED = "ADMIN_REACTIVATED", _("Reactivated an installation account")
+    ADMIN_LINK_SENT = "ADMIN_LINK_SENT", _("Sent an installation account a link to set a password")
 
 
 class PlatformAuditEntry(models.Model):

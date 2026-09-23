@@ -323,13 +323,16 @@ export default function AppShell() {
           px: { xs: 2, md: 4 },
           pt: { xs: 10, md: 12 },
           // Room for the bottom bar on a phone, so the last row is reachable.
-          pb: { xs: 12, md: 5 },
+          pb: { xs: company ? 12 : 4, md: 5 },
         }}
       >
         <Outlet />
       </Box>
 
-      {!isDesktop && <BottomNav canManage={canManage} />}
+      {/* Sin empresa, fuera. Fichar, Mi jornada y Mis ausencias son de quien trabaja
+          en una, y a la cuenta de la instalación le contestan 403: en el móvil las
+          tenía abajo igual. Lo suyo, Instalación, está en el menú. */}
+      {!isDesktop && company && <BottomNav canManage={canManage} />}
 
       {/* El tema sale de la ruta: `/panel/personas` pide `personas`. Así una
           pantalla nueva no tiene que acordarse de nada, y si no hay artículo para
