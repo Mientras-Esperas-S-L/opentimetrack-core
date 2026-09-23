@@ -101,7 +101,8 @@ else:
         f"STORAGE_BACKEND must be 's3' or 'filesystem', not {STORAGE_BACKEND!r}."
     )
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# Django's own, plus the option of trusting one certificate: see apps/common/mail.py.
+EMAIL_BACKEND = "apps.common.mail.SMTPBackend"
 
 # Where that SMTP server is. Without these, Django writes to localhost:25, which
 # on a container is nothing at all: the password reset link, the punch reminder
@@ -117,3 +118,9 @@ EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
 # A mail server that stops answering must not hold a web request open: the
 # default is no timeout at all.
 EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
+# For a relay with a certificate of its own: the file with that certificate, so the
+# connection is verified against it instead of switching verification off. And,
+# when the relay is reached by an address its certificate does not name, whether to
+# check the name. Both empty or default keep Django's behaviour.
+EMAIL_SSL_CAFILE = env("EMAIL_SSL_CAFILE", default="")
+EMAIL_SSL_CHECK_HOSTNAME = env.bool("EMAIL_SSL_CHECK_HOSTNAME", default=True)
