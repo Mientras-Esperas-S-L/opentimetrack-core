@@ -627,3 +627,87 @@ def test_a_blank_key_is_no_key(client, company, employee):
 
     assert response.status_code == 400
     assert response.data["error"]["code"] == "idempotency_key_required"
+
+
+# ---------------------------------------------------------- a tap during a break
+
+
+@pytest.mark.django_db
+def test_a_tap_during_a_break_ends_the_break_not_the_day(client, company, employee):
+    """The application knows nothing of breaks: it sends one tap. During a break
+    that tap is "back from the break". Recording it as the end of the working day
+    closed a day the person had not finished, and left the break open."""
+    from apps.punches.models import PunchInterval
+    from apps.punches.services import register_punch
+
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+
+    with tenant_context(company.id):
+        with freeze_time("2026-08-13 08:00:00"):
+            register_punch(employee=employee, company=company)
+        with freeze_time("2026-08-13 10:00:00"):
+            register_punch(employee=employee, company=company, interval=PunchInterval.BREAK)
+
+    with freeze_time("2026-08-13 10:20:00"):
+        response = as_application(client, token).post(
+            reverse("punch-delegated"), {"employee_ref": "EMP-0003"}
+        )
+
+    assert response.status_code == 201
+    assert response.data["day_status"]["state"] == "WORKING"
+    with tenant_context(company.id):
+        ultimo = Punch.objects.filter(employee=employee).order_by("-timestamp").first()
+    assert ultimo.interval == PunchInterval.BREAK
+    assert ultimo.punch_type == PunchType.OUT
+
+
+@pytest.mark.django_db
+def test_outside_a_break_the_tap_is_still_the_working_day(client, company, employee):
+    from apps.punches.models import PunchInterval
+    from apps.punches.services import register_punch
+
+    _app, token = authorise(company, [ApplicationScope.PUNCH_DELEGATED])
+
+    with tenant_context(company.id):
+        with freeze_time("2026-08-13 08:00:00"):
+            register_punch(employee=employee, company=company)
+        with freeze_time("2026-08-13 10:00:00"):
+            register_punch(employee=employee, company=company, interval=PunchInterval.BREAK)
+        with freeze_time("2026-08-13 10:20:00"):
+            register_punch(employee=employee, company=company)
+
+    with freeze_time("2026-08-13 15:00:00"):
+        response = as_application(client, token).post(
+            reverse("punch-delegated"), {"employee_ref": "EMP-0003"}
+        )
+
+    assert response.status_code == 201
+    assert response.data["day_status"]["state"] == "OFF"
+
+
+@pytest.mark.django_db
+def test_the_personal_door_reads_a_bare_tap_the_same_way(client, company, employee):
+    """An application acting as the person (`punch:self`) comes in by the person's
+    own door and sends no interval either. Asking for the working day explicitly
+    still closes it: only leaving it out is inferred."""
+    from apps.punches.models import PunchInterval
+    from apps.punches.services import register_punch
+
+    with tenant_context(company.id):
+        with freeze_time("2026-08-13 08:00:00"):
+            register_punch(employee=employee, company=company)
+        with freeze_time("2026-08-13 10:00:00"):
+            register_punch(employee=employee, company=company, interval=PunchInterval.BREAK)
+    client.force_authenticate(user=employee)
+
+    with freeze_time("2026-08-13 10:20:00"):
+        response = client.post(reverse("punch-list"), {}, format="json")
+    assert response.status_code == 201, response.data
+    assert response.data["day_status"]["state"] == "WORKING"
+
+    with freeze_time("2026-08-13 15:00:00"):
+        response = client.post(
+            reverse("punch-list"), {"interval": PunchInterval.WORK}, format="json"
+        )
+    assert response.status_code == 201, response.data
+    assert response.data["day_status"]["state"] == "OFF"
