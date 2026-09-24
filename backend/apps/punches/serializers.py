@@ -149,9 +149,9 @@ class PunchWriteSerializer(serializers.Serializer):
     # Art. 3 of the pending decree. The client says *what kind* of span this is
     # and under what arrangement --- facts only the person can supply --- but
     # still never the time nor whether it opens or closes.
-    interval = serializers.ChoiceField(
-        choices=PunchInterval.choices, required=False, default=PunchInterval.WORK
-    )
+    # Left out, the server works it out: a tap during an open break ends the
+    # break, anything else is the working day. See `register_punch`.
+    interval = serializers.ChoiceField(choices=PunchInterval.choices, required=False)
     work_mode = serializers.ChoiceField(
         choices=WorkMode.choices, required=False, allow_blank=True, default=""
     )

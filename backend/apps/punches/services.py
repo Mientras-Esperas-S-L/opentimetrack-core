@@ -244,6 +244,12 @@ def work_is_open(employee, *, rules=None) -> bool:
     return ultimo is not None and ultimo.punch_type == PunchType.IN
 
 
+def break_is_open(employee, *, rules=None) -> bool:
+    """Whether a break is open right now, read the same way as `work_is_open`."""
+    ultimo = _last_open(employee, PunchInterval.BREAK, rules=rules)
+    return ultimo is not None and ultimo.punch_type == PunchType.IN
+
+
 def infer_type(employee, company, interval: str = PunchInterval.WORK, *, rules=None) -> str:
     """Opens or closes, worked out from the last event **of that interval**.
 
@@ -410,7 +416,7 @@ def register_punch(
     ip_address: str | None = None,
     device_id: str = "",
     user_agent: str = "",
-    interval: str = PunchInterval.WORK,
+    interval: str | None = None,
     work_mode: str = "",
     hours_nature: str = HoursNature.ORDINARY,
     overtime_settlement: str = "",
@@ -429,6 +435,12 @@ def register_punch(
     on the device. Inside the company's grace period it becomes the time that counts,
     with the arrival kept beside it; outside it, the punch is refused here and goes
     through the correction flow, where a person approves it and that is on the record.
+
+    `interval` left out means "the one tap": it ends an open break, and otherwise
+    opens or closes the working day. That is what a caller that knows nothing of
+    breaks needs --- an integrated application, a terminal --- and without it a tap
+    meant as "back from the break" was recorded as the **end of the working day**,
+    with the break left open.
     """
     if not employee.is_active:
         raise BusinessRuleError(
@@ -444,6 +456,10 @@ def register_punch(
     # Se bloquea a la persona porque no hay fila de estado que bloquear: un
     # fichaje no modifica al anterior. Serializa solo sus propias pulsaciones.
     hold(type(employee), employee.pk)
+
+    # Read after the lock, for the same reason as the last punch below.
+    if interval is None:
+        interval = PunchInterval.BREAK if break_is_open(employee) else PunchInterval.WORK
 
     _refuse_a_double_tap(employee, company, interval)
 

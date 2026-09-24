@@ -17,7 +17,7 @@ from apps.common.filters import LocalDayRangeFilter
 from apps.common.permissions import IsAuthenticatedInTenant
 from apps.common.scope import person_in_scope, visible_people
 from apps.punches import idempotency
-from apps.punches.models import HoursNature, Punch, PunchInterval, PunchSource
+from apps.punches.models import HoursNature, Punch, PunchSource
 from apps.punches.serializers import PunchSerializer, PunchWriteSerializer
 from apps.punches.services import build_day_status, register_punch
 
@@ -270,7 +270,7 @@ class PunchViewSet(
             company=request.user.tenant,
             source=source_for(request),
             source_application=acting_application_name(request),
-            interval=data.get("interval") or PunchInterval.WORK,
+            interval=data.get("interval"),
             work_mode=data.get("work_mode", ""),
             hours_nature=data.get("hours_nature") or HoursNature.ORDINARY,
             overtime_settlement=data.get("overtime_settlement", ""),
