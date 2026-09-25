@@ -3,7 +3,12 @@ import axios from 'axios'
 import { noteServerTime } from './serverClock.js'
 import i18next from '../i18n/index.js'
 
-const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
+// Relativa por defecto: la web y la API en la misma dirección, detrás del mismo
+// proxy, que es la instalación normal y funciona con cualquier nombre de host. Una
+// dirección absoluta aquí se queda metida en el build: `localhost:8000` hacía que
+// el navegador de cada persona buscara la API en su propio equipo. Con `||` y no
+// con `??`, porque una variable vacía también es «no la han puesto».
+const baseURL = import.meta.env.VITE_API_URL || '/api'
 
 const ACCESS = 'ott.access'
 const REFRESH = 'ott.refresh'
@@ -817,6 +822,9 @@ export const saveCompanyIdentity = async (companyId, payload) =>
 
 export const removeCompanyIdentity = (companyId) =>
   api.delete(`/platform/companies/${companyId}/identity/`)
+
+/** Qué instalación es esta y dónde vive, incluida la vuelta exacta del proveedor. */
+export const getInstance = () => get('/instance/')
 
 // Las de la consola de la instalación llevan `OfCompany`: hacen lo mismo que las
 // de arriba pero **desde fuera de la empresa**, con la cuenta que la administra, y

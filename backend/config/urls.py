@@ -13,7 +13,7 @@ from rest_framework.routers import DefaultRouter
 from apps.absences.recovery_views import HolidayRecoveryView
 from apps.absences.views import AbsenceViewSet, LeaveTypeViewSet
 from apps.audit.views import AuditLogViewSet
-from apps.common.views import HealthView
+from apps.common.views import HealthView, InstanceView
 from apps.help.views import HelpArticleView, HelpIndexView, HelpSearchView
 from apps.notifications.views import PushKeyView, PushSubscriptionView
 from apps.punches.correction_views import CorrectionViewSet
@@ -117,6 +117,7 @@ auth_patterns = [
 
 urlpatterns = [
     path("api/health/", HealthView.as_view(), name="health"),
+    path("api/instance/", InstanceView.as_view(), name="instance"),
     path("api/auth/", include((auth_patterns, "auth"))),
     path("api/reports/working-time/", ReportView.as_view(), name="working-time-report"),
     path("api/reports/payroll-summary/", PayrollSummaryView.as_view(), name="payroll-summary"),

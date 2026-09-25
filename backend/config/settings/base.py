@@ -11,13 +11,34 @@ import environ
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext_lazy as _
 
+from config.public_address import api_url_for, clean, host
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 env = environ.Env()
 
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env.bool("DEBUG", default=False)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+
+# ------------------------------------------------------------ dirección pública
+#
+# The address people type to reach this installation, such as
+# https://time.example.com. The links in the mail, the return from an identity
+# provider, the hosts this server answers to and the origins the API accepts
+# all come from it; each of those settings still wins when it is set. See
+# config/public_address.py. Production requires it; development runs without.
+PUBLIC_URL = clean(env("PUBLIC_URL", default=""), "PUBLIC_URL")
+# Only when the API is served from a host of its own: https://api.time.example.com/api.
+PUBLIC_API_URL = clean(env("PUBLIC_API_URL", default=""), "PUBLIC_API_URL")
+_PUBLIC_API = api_url_for(PUBLIC_URL, PUBLIC_API_URL)
+# Where the API is, for the links that point at it. In development, where the
+# compose publishes it.
+API_URL = _PUBLIC_API or f"http://localhost:{env.int('OTT_PORT_API', default=8000)}/api"
+
+ALLOWED_HOSTS = env.list(
+    "ALLOWED_HOSTS",
+    default=sorted({host(PUBLIC_URL), host(_PUBLIC_API)} - {""}) or ["localhost", "127.0.0.1"],
+)
 
 # ---------------------------------------------------------------- aplicaciones
 
@@ -407,7 +428,9 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-reply@opentimetrack.l
 
 # Where the password links point. The panel lives apart from the API, so it
 # cannot be derived from the request.
-FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
+FRONTEND_URL = clean(
+    env("FRONTEND_URL", default=PUBLIC_URL or "http://localhost:3000"), "FRONTEND_URL"
+)
 
 # How long an account link lasts, in seconds.
 PASSWORD_RESET_TIMEOUT = env.int("PASSWORD_RESET_TIMEOUT", default=60 * 60 * 24)
@@ -487,18 +510,20 @@ WEBPUSH_PRIVATE_KEY = env("WEBPUSH_PRIVATE_KEY", default="")
 #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY", default="")
 
-# Dónde vuelve el navegador desde el proveedor de identidad. Vacío lo deduce de la
-# petición, que vale en desarrollo; en producción se fija, porque tiene que coincidir
-# **exactamente** con lo registrado en el proveedor.
-SSO_REDIRECT_URI = env("SSO_REDIRECT_URI", default="")
+# Dónde vuelve el navegador desde el proveedor de identidad. Tiene que coincidir
+# **exactamente** con lo registrado en el proveedor, así que no se deduce de la
+# petición ---detrás de un proxy sale con el esquema o el host del otro lado---: sale
+# de PUBLIC_URL. Solo sin ella, en desarrollo, se deduce de la petición.
+SSO_REDIRECT_URI = env(
+    "SSO_REDIRECT_URI", default=f"{_PUBLIC_API}/auth/sso/callback/" if _PUBLIC_API else ""
+)
 
 #: Dónde vive la aplicación web, para devolver a ella al que vuelve del proveedor.
 #:
-#: Sin esto, el navegador de quien entra por su empresa acaba mirando un JSON: la
-#: vuelta del proveedor la recibe la API, y la sesión la necesita la web. Vacío
-#: mantiene la respuesta en JSON, que es lo que esperan las instalaciones que solo
-#: usan la API.
-SSO_WEB_URL = env("SSO_WEB_URL", default="")
+#: Sin esto, el navegador de quien entra por su empresa acaba mirando un JSON con
+#: sus credenciales de sesión: la vuelta del proveedor la recibe la API, y la sesión
+#: la necesita la web. Sale de PUBLIC_URL; en producción nunca queda vacío.
+SSO_WEB_URL = env("SSO_WEB_URL", default=PUBLIC_URL)
 # Contacto al que el servicio de push del navegador escribiría si algo va mal.
 # Lo exige el estándar VAPID; ha de ser un mailto: o una URL.
 WEBPUSH_SUBJECT = env("WEBPUSH_SUBJECT", default=f"mailto:{DEFAULT_FROM_EMAIL}")

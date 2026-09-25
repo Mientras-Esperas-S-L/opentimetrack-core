@@ -601,6 +601,9 @@ def test_every_route_is_covered_by_this_sweep():
         "api/push/key/",
         # Public on purpose.
         "api/health/",
+        # Qué instalación es y dónde vive: lo que ve un navegador al entrar, sin
+        # nada de ninguna empresa. Su prueba está en test_la_direccion_publica.py.
+        "api/instance/",
         "api/auth/token/",
         # Sin sesión a propósito: el acceso ya caducó, ese es el motivo de la
         # llamada. Lo que la autoriza es el propio token de refresco, y lo que

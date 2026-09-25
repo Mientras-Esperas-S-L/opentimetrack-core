@@ -37,6 +37,7 @@ import {
   resetPlatformAdminPassword,
   getApplicationsOfCompany,
   getCompanies,
+  getInstance,
   issueCredentialOfCompany,
   removeCompanyIdentity,
   revokeCredentialOfCompany,
@@ -446,6 +447,19 @@ function IdentityDialog({ empresa, onClose, onGuardada }) {
   })
   const [error, setError] = useState(null)
   const [guardando, setGuardando] = useState(false)
+  // La vuelta que hay que registrar en el proveedor, tal como esta instalación la
+  // va a mandar. Se compara letra a letra, y deducirla de la barra del navegador
+  // falla con la API en otro host o detrás de un proxy.
+  const [vuelta, setVuelta] = useState('')
+  useEffect(() => {
+    let vigente = true
+    getInstance()
+      .then((instalacion) => vigente && setVuelta(instalacion.sso_callback_url ?? ''))
+      .catch(() => {})
+    return () => {
+      vigente = false
+    }
+  }, [])
 
   const cambiar = (campo) => (e) =>
     setForm((previo) => ({
@@ -498,6 +512,14 @@ function IdentityDialog({ empresa, onClose, onGuardada }) {
               'Sin proveedor, su gente entra con correo y contraseña de aquí. Con proveedor, entra con el sistema de su empresa.',
             )}
           </Alert>
+          {vuelta && (
+            <TextField
+              label={t('Dirección de vuelta para registrar en el proveedor')}
+              value={vuelta}
+              slotProps={{ input: { readOnly: true } }}
+              helperText={t('Cópiala tal cual: el proveedor la compara letra a letra.')}
+            />
+          )}
           <TextField
             label={t('Nombre del proveedor')}
             value={form.name ?? ''}

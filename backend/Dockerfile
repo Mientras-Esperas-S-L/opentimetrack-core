@@ -44,6 +44,9 @@ RUN pip install -r requirements/prod.txt \
 
 COPY . /app/
 
+# La imagen de producción arranca con los ajustes de producción aunque nadie lo diga.
+ENV DJANGO_SETTINGS_MODULE=config.settings.prod
+
 # El proceso no corre como root.
 RUN useradd --system --create-home --uid 1000 ott \
     && mkdir -p /app/staticfiles /app/media \

@@ -559,7 +559,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 message=_("There is no address to send it to. Add one first."),
             )
 
-        send_delivery_email(person, base_url=settings.FRONTEND_URL)
+        send_delivery_email(person, api_url=settings.API_URL)
         record(
             action=AuditAction.RECORD_DELIVERED,
             actor=request.user,

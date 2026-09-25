@@ -28,8 +28,15 @@ from apps.tenants.identity import SsoProvider
 logger = logging.getLogger(__name__)
 
 
-def _redirect_uri(request) -> str:
-    """Where the provider sends the browser back. Registered there, so it must match."""
+def redirect_uri(request) -> str:
+    """Where the provider sends the browser back. Registered there, so it must match.
+
+    From the settings, which derive it from PUBLIC_URL. Only without one, in
+    development, from the request: behind a proxy the request carries the
+    proxy's view of the scheme and host, which is not what was registered.
+    `/api/instance/` publishes this same value, so whoever registers it does not
+    have to guess.
+    """
     configured = getattr(settings, "SSO_REDIRECT_URI", "") or ""
     return configured or request.build_absolute_uri("/api/auth/sso/callback/")
 
@@ -37,10 +44,8 @@ def _redirect_uri(request) -> str:
 def _web_url(request) -> str:
     """La aplicación web de esta instalación, sin barra final.
 
-    De los ajustes, y si no están, del origen de la propia petición: en un despliegue
-    normal la web y la API comparten dominio, así que esa suposición acierta y evita
-    un ajuste obligatorio más. En desarrollo, donde van en puertos distintos, hay que
-    ponerlo.
+    Solo de los ajustes: sale de PUBLIC_URL y en producción nunca está vacía. Vacía,
+    en desarrollo, la vuelta del proveedor contesta en JSON.
     """
     configurada = (getattr(settings, "SSO_WEB_URL", "") or "").rstrip("/")
     return configurada
@@ -109,7 +114,7 @@ class SsoStartView(APIView):
                 message="No such identity provider.",
                 details={"slug": slug},
             )
-        return redirect(sso.authorize_url(provider, _redirect_uri(request)))
+        return redirect(sso.authorize_url(provider, redirect_uri(request)))
 
 
 class SessionAnswerSerializer(serializers.Serializer):

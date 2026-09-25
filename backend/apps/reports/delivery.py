@@ -83,9 +83,14 @@ class RecordDeliveryTokenGenerator(PasswordResetTokenGenerator):
 token_generator = RecordDeliveryTokenGenerator()
 
 
-def build_delivery_link(user, *, base_url: str) -> str:
+def build_delivery_link(user, *, api_url: str) -> str:
+    """A link to the API, not to the web app: the download is an API route.
+
+    It used to hang off the web's address, which only works when both share a
+    host; with the API on its own, the link landed on the web's sign-in page.
+    """
     uid = urlsafe_base64_encode(force_bytes(user.pk))
-    return f"{base_url.rstrip('/')}/api/record-delivery/{uid}/{token_generator.make_token(user)}/"
+    return f"{api_url.rstrip('/')}/record-delivery/{uid}/{token_generator.make_token(user)}/"
 
 
 def resolve_delivery_token(uid: str, token: str):
@@ -109,7 +114,7 @@ def resolve_delivery_token(uid: str, token: str):
     return user
 
 
-def send_delivery_email(person, *, base_url: str) -> str:
+def send_delivery_email(person, *, api_url: str) -> str:
     """Manda el enlace, en el idioma de quien lo recibe. Devuelve el enlace.
 
     El idioma va explícito y no heredado del contexto: lo genera quien
@@ -121,7 +126,7 @@ def send_delivery_email(person, *, base_url: str) -> str:
     from django.template.loader import render_to_string
     from django.utils import translation
 
-    link = build_delivery_link(person, base_url=base_url)
+    link = build_delivery_link(person, api_url=api_url)
     company = person.tenant.name if person.tenant else _("the platform")
     from apps.users.passwords import mail_language
 
