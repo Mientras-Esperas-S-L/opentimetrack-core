@@ -4238,6 +4238,10 @@ msgstr "Ese intento de entrada caducou ou xa se usou."
 msgid "That sign-in expired or was already collected."
 msgstr "Esa entrada caducou ou xa se recolleu."
 
+#: apps/tenants/sso.py
+msgid "That sign-in was started in another browser. Start again from this one."
+msgstr "Esa entrada comezouse noutro navegador. Volve comezar desde este."
+
 #: apps/tenants/sso.py:265
 msgid "The provider did not return a valid token."
 msgstr "O provedor non devolveu un token válido."

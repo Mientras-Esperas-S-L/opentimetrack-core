@@ -29,6 +29,8 @@ PASSWORD = "a-sufficiently-long-password"
 ISSUER = "https://idp.example"
 CLIENT_ID = "ott-en-casa-del-cliente"
 FERNET_KEY = base64.urlsafe_b64encode(b"0" * 32).decode()
+#: El secreto que la aplicación web guarda en el navegador al empezar la entrada.
+PRUEBA = "el-secreto-de-este-navegador-0123456789abcdef"
 
 
 @pytest.fixture(autouse=True)
@@ -199,7 +201,7 @@ def test_un_proveedor_a_medio_configurar_no_se_ofrece(company):
 
 @pytest.mark.django_db
 def test_el_navegador_va_con_pkce_y_un_estado_de_un_solo_uso(provider, idp):
-    answer = APIClient().get(f"/api/auth/sso/start/{provider.slug}/")
+    answer = APIClient().get(f"/api/auth/sso/start/{provider.slug}/", {"binding": PRUEBA})
 
     assert answer.status_code == 302
     params = parse_qs(urlparse(answer["Location"]).query)
@@ -227,7 +229,9 @@ def sesion_de(answer, client):
     """
     if answer.status_code == 302:
         vale = parse_qs(urlparse(answer["Location"]).query)["ticket"][0]
-        return client.post("/api/auth/sso/ticket/", {"ticket": vale}, format="json").json()
+        return client.post(
+            "/api/auth/sso/ticket/", {"ticket": vale, "proof": PRUEBA}, format="json"
+        ).json()
     return answer.json()
 
 
@@ -240,7 +244,9 @@ def test_vuelve_con_una_sesion_de_esa_persona(provider, idp, keypair, monkeypatc
 
     client = APIClient()
     params = parse_qs(
-        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+        urlparse(
+            client.get(f"/api/auth/sso/start/{provider.slug}/", {"binding": PRUEBA})["Location"]
+        ).query
     )
     from apps.tenants import sso
 
@@ -272,7 +278,9 @@ def test_un_token_firmado_por_otro_no_entra(provider, idp, keypair, monkeypatch)
     otra = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     client = APIClient()
     params = parse_qs(
-        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+        urlparse(
+            client.get(f"/api/auth/sso/start/{provider.slug}/", {"binding": PRUEBA})["Location"]
+        ).query
     )
 
     from apps.tenants import sso
@@ -293,7 +301,9 @@ def test_un_token_de_otra_sesion_no_vale_para_esta(provider, idp, keypair, monke
     """El nonce ata el token a esta entrada concreta."""
     client = APIClient()
     params = parse_qs(
-        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+        urlparse(
+            client.get(f"/api/auth/sso/start/{provider.slug}/", {"binding": PRUEBA})["Location"]
+        ).query
     )
 
     from apps.tenants import sso
@@ -313,7 +323,9 @@ def test_un_token_de_otra_sesion_no_vale_para_esta(provider, idp, keypair, monke
 def test_sin_alta_al_vuelo_no_entra_quien_no_esta(provider, idp, keypair, monkeypatch):
     client = APIClient()
     params = parse_qs(
-        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+        urlparse(
+            client.get(f"/api/auth/sso/start/{provider.slug}/", {"binding": PRUEBA})["Location"]
+        ).query
     )
     from apps.tenants import sso
 
@@ -348,7 +360,9 @@ def test_con_alta_al_vuelo_entra_sin_contraseña_y_sin_permisos(
 
     client = APIClient()
     params = parse_qs(
-        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+        urlparse(
+            client.get(f"/api/auth/sso/start/{provider.slug}/", {"binding": PRUEBA})["Location"]
+        ).query
     )
     from apps.tenants import sso
 
@@ -432,7 +446,9 @@ def _hasta_el_callback(client, provider, keypair, monkeypatch):
     from apps.tenants import sso
 
     params = parse_qs(
-        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+        urlparse(
+            client.get(f"/api/auth/sso/start/{provider.slug}/", {"binding": PRUEBA})["Location"]
+        ).query
     )
     estado = sso.take_state(params["state"][0])
     django_cache.set(f"sso:state:{params['state'][0]}", estado, 600)
@@ -481,11 +497,13 @@ def test_el_vale_se_cambia_por_la_sesion_una_sola_vez(provider, idp, keypair, mo
         vuelta = _hasta_el_callback(client, provider, keypair, monkeypatch)
     vale = parse_qs(urlparse(vuelta["Location"]).query)["ticket"][0]
 
-    primera = client.post("/api/auth/sso/ticket/", {"ticket": vale}, format="json")
+    primera = client.post("/api/auth/sso/ticket/", {"ticket": vale, "proof": PRUEBA}, format="json")
     assert primera.status_code == 200
     assert primera.json()["access"]
 
-    repetida = client.post("/api/auth/sso/ticket/", {"ticket": vale}, format="json")
+    repetida = client.post(
+        "/api/auth/sso/ticket/", {"ticket": vale, "proof": PRUEBA}, format="json"
+    )
     assert repetida.json()["error"]["code"] == "ticket_unknown", (
         "repetirlo es reutilizar una sesión"
     )
@@ -493,7 +511,9 @@ def test_el_vale_se_cambia_por_la_sesion_una_sola_vez(provider, idp, keypair, mo
 
 @pytest.mark.django_db
 def test_un_vale_inventado_no_da_sesion(provider):
-    answer = APIClient().post("/api/auth/sso/ticket/", {"ticket": "me-lo-invento"}, format="json")
+    answer = APIClient().post(
+        "/api/auth/sso/ticket/", {"ticket": "me-lo-invento", "proof": PRUEBA}, format="json"
+    )
 
     assert answer.json()["error"]["code"] == "ticket_unknown"
 
@@ -561,7 +581,9 @@ def test_una_empresa_desactivada_no_entra_por_su_proveedor(
 
     client = APIClient()
     params = parse_qs(
-        urlparse(client.get(f"/api/auth/sso/start/{provider.slug}/")["Location"]).query
+        urlparse(
+            client.get(f"/api/auth/sso/start/{provider.slug}/", {"binding": PRUEBA})["Location"]
+        ).query
     )
     from django.core.cache import cache as django_cache
 
@@ -583,3 +605,78 @@ def test_una_empresa_desactivada_no_entra_por_su_proveedor(
     assert answer.status_code == 302
     assert answer["Location"].startswith("https://ott.example/?sso_error=company_inactive")
     assert "ticket" not in answer["Location"]
+
+
+# ------------------------------------- la entrada, atada a su navegador
+#
+# La entrada forzada con la cuenta de otro: quien tiene cuenta en un proveedor
+# empieza una entrada suya, se para antes de volver y manda el enlace a otra
+# persona. Sin atar la entrada al navegador que la empezó, esa persona acababa
+# dentro de la cuenta de quien lo mandó, y lo que registrara quedaba a su vista.
+
+
+def _vale(client, provider, keypair, monkeypatch, company):
+    with tenant_context(company.id):
+        User.objects.create_user(
+            email="marta@contrata.example", password=PASSWORD, tenant=company, first_name="Marta"
+        )
+    with override_settings(SSO_WEB_URL="https://ott.example"):
+        vuelta = _hasta_el_callback(client, provider, keypair, monkeypatch)
+    return parse_qs(urlparse(vuelta["Location"]).query)["ticket"][0]
+
+
+@pytest.mark.django_db
+def test_un_vale_mandado_a_otro_navegador_no_da_sesion(
+    provider, idp, keypair, monkeypatch, company
+):
+    vale = _vale(APIClient(), provider, keypair, monkeypatch, company)
+
+    # El otro navegador tiene su propio secreto, no el de quien empezó.
+    otra = APIClient().post(
+        "/api/auth/sso/ticket/",
+        {"ticket": vale, "proof": "el-secreto-de-otro-navegador-0123456789abcdef"},
+        format="json",
+    )
+    assert "access" not in otra.json()
+    assert otra.json()["error"]["code"] == "ticket_other_browser"
+
+
+@pytest.mark.django_db
+def test_un_vale_que_salio_de_su_navegador_ya_no_vale_ni_en_el_suyo(
+    provider, idp, keypair, monkeypatch, company
+):
+    """Se gasta aunque la prueba no case: si no, bastaría con probar hasta acertar."""
+    client = APIClient()
+    vale = _vale(client, provider, keypair, monkeypatch, company)
+
+    mal = client.post(
+        "/api/auth/sso/ticket/", {"ticket": vale, "proof": "otra-cosa-" + "x" * 32}, format="json"
+    )
+    assert mal.json()["error"]["code"] == "ticket_other_browser"
+
+    bien = client.post("/api/auth/sso/ticket/", {"ticket": vale, "proof": PRUEBA}, format="json")
+    assert bien.json()["error"]["code"] == "ticket_unknown"
+
+
+@pytest.mark.django_db
+def test_con_web_no_se_empieza_una_entrada_sin_atar(provider, idp, settings):
+    """Si no, quien quisiera forzar la entrada empezaría la suya sin secreto."""
+    settings.SSO_WEB_URL = "https://ott.example"
+
+    for sin in ({}, {"binding": "corto"}, {"binding": "con espacios " * 4}):
+        answer = APIClient().get(f"/api/auth/sso/start/{provider.slug}/", sin)
+        assert answer.status_code == 302
+        assert answer["Location"] == "https://ott.example/?sso_error=start_from_sign_in"
+
+
+@pytest.mark.django_db
+def test_el_secreto_no_se_guarda_tal_cual(provider, idp):
+    """Solo su huella: un volcado de la caché no le da a nadie una prueba."""
+    answer = APIClient().get(f"/api/auth/sso/start/{provider.slug}/", {"binding": PRUEBA})
+    state = parse_qs(urlparse(answer["Location"]).query)["state"][0]
+
+    from apps.tenants import sso
+
+    guardado = sso.take_state(state)
+    assert PRUEBA not in str(guardado)
+    assert guardado["binding"]

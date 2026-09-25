@@ -4245,6 +4245,10 @@ msgstr "Aquest intent d'entrada ha caducat o ja es va fer servir."
 msgid "That sign-in expired or was already collected."
 msgstr "Aquesta entrada ha caducat o ja s'ha recollit."
 
+#: apps/tenants/sso.py
+msgid "That sign-in was started in another browser. Start again from this one."
+msgstr "Aquesta entrada es va començar en un altre navegador. Torna a començar des d'aquest."
+
 #: apps/tenants/sso.py:265
 msgid "The provider did not return a valid token."
 msgstr "El proveïdor no ha retornat un token vàlid."
