@@ -114,7 +114,17 @@ class SsoStartView(APIView):
                 message="No such identity provider.",
                 details={"slug": slug},
             )
-        return redirect(sso.authorize_url(provider, redirect_uri(request)))
+
+        # El secreto con el que la aplicación web ata esta entrada a su navegador
+        # (ver `sso.take_ticket`). Obligatorio cuando la vuelta acaba en un vale, que
+        # es cuando hay web: sin él, cualquiera podría empezar una entrada sin atar y
+        # mandar su vale a otra persona. Quien llega sin él ---un enlace guardado, una
+        # pestaña de antes--- vuelve a la pantalla de entrada, que lo genera.
+        binding = request.query_params.get("binding", "")
+        destino = _web_url(request)
+        if destino and not sso.valid_binding(binding):
+            return redirect(f"{destino}/?sso_error=start_from_sign_in")
+        return redirect(sso.authorize_url(provider, redirect_uri(request), binding))
 
 
 class SessionAnswerSerializer(serializers.Serializer):
@@ -210,7 +220,8 @@ class SsoCallbackView(APIView):
         # imagen que cargara la página.
         destino = _web_url(request)
         if destino:
-            return redirect(f"{destino}/entrando?ticket={sso.leave_ticket(sesion)}")
+            ticket = sso.leave_ticket(sesion, kept.get("binding", ""))
+            return redirect(f"{destino}/entrando?ticket={ticket}")
 
         # Sin aplicación web configurada ---una instalación que solo use la API---
         # se responde como antes, que es lo que esperan sus integraciones.
@@ -219,6 +230,9 @@ class SsoCallbackView(APIView):
 
 class TicketSerializer(serializers.Serializer):
     ticket = serializers.CharField()
+    proof = serializers.CharField(
+        help_text="The secret the web app kept when it started this sign-in, in this browser."
+    )
 
 
 @extend_schema(tags=["auth"])
@@ -227,7 +241,8 @@ class SsoTicketView(APIView):
 
     El último paso del viaje: el navegador vuelve del proveedor a la API, la API lo
     devuelve a la aplicación web con un vale, y la aplicación lo cambia por la sesión.
-    El vale no sirve para nada más, se canjea **una vez** y caduca en un minuto.
+    El vale no sirve para nada más, se canjea **una vez**, caduca en un minuto y solo
+    lo recoge el navegador que empezó la entrada, que lo demuestra con su secreto.
     """
 
     permission_classes = [AllowAny]
@@ -243,7 +258,9 @@ class SsoTicketView(APIView):
     def post(self, request):
         form = TicketSerializer(data=request.data)
         form.is_valid(raise_exception=True)
-        return Response(sso.take_ticket(form.validated_data["ticket"]))
+        return Response(
+            sso.take_ticket(form.validated_data["ticket"], form.validated_data["proof"])
+        )
 
 
 class LogoutTokenSerializer(serializers.Serializer):

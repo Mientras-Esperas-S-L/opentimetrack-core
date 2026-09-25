@@ -383,7 +383,33 @@ export const changePassword = async (currentPassword, newPassword) => {
 export const discoverSso = (email) => post('/auth/sso/discover/', { email })
 
 /** Where to send the browser to sign in at the provider. */
-export const ssoStartUrl = (slug) => `${baseURL.replace(/\/$/, '')}/auth/sso/start/${slug}/`
+export const ssoStartUrl = (slug, binding) =>
+  `${baseURL.replace(/\/$/, '')}/auth/sso/start/${slug}/?binding=${encodeURIComponent(binding)}`
+
+//  El secreto que ata una entrada por el proveedor a este navegador. En
+//  `localStorage` y no en `sessionStorage`: una pestaña abierta desde el botón no
+//  siempre hereda la segunda, y la entrada fallaría sin motivo visible.
+const SSO_PROOF = 'ott.sso.proof'
+
+/** Sends the browser to its provider, with this sign-in tied to this browser.
+ *
+ *  A random secret stays here and a copy goes with the start. The session is only
+ *  handed over to whoever shows it again, so a return link opened anywhere else
+ *  --- one somebody started with their own account and sent to you --- does not
+ *  sign you into their account. */
+export const startSso = (slug) => {
+  const bytes = crypto.getRandomValues(new Uint8Array(32))
+  const secret = btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
+  try {
+    localStorage.setItem(SSO_PROOF, secret)
+  } catch {
+    // Sin almacenamiento no hay con qué demostrarlo luego, y la recogida lo dirá.
+  }
+  window.location.assign(ssoStartUrl(slug, secret))
+}
 
 /** Collects the session the provider left behind, with the one-use ticket.
  *
@@ -391,7 +417,14 @@ export const ssoStartUrl = (slug) => `${baseURL.replace(/\/$/, '')}/auth/sso/sta
  *  with a ticket instead of the tokens: those would end up in the history, in the
  *  web server's log and in the `Referer` of the first image the page loads. */
 export const collectSsoSession = async (ticket) => {
-  const data = await post('/auth/sso/ticket/', { ticket })
+  let proof = ''
+  try {
+    proof = localStorage.getItem(SSO_PROOF) ?? ''
+    localStorage.removeItem(SSO_PROOF)
+  } catch {
+    // Sin almacenamiento la prueba va vacía y el servidor lo rechaza con su motivo.
+  }
+  const data = await post('/auth/sso/ticket/', { ticket, proof })
   tokens.save(data)
   return data
 }

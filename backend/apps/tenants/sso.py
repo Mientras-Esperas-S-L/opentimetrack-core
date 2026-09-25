@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import hmac
 import json
 import logging
 import secrets
@@ -49,6 +50,13 @@ LEEWAY_SECONDS = 60
 HTTP_TIMEOUT = 5
 
 _STATE_PREFIX = "sso:state:"
+
+#: The secret the web app keeps while the browser is away at the provider. Long
+#: enough not to be guessed within a ticket's minute, and in the URL-safe
+#: alphabet, since it travels in the query string of the start.
+BINDING_MIN_LENGTH = 32
+BINDING_MAX_LENGTH = 128
+_BINDING_ALPHABET = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_")
 _DISCOVERY_PREFIX = "sso:discovery:"
 
 
@@ -175,8 +183,24 @@ def _pkce() -> tuple[str, str]:
     return verifier, challenge
 
 
-def authorize_url(provider: SsoProvider, redirect_uri: str) -> str:
-    """Where to send the browser, with the transient state kept here."""
+def valid_binding(binding: str) -> bool:
+    return (
+        isinstance(binding, str)
+        and BINDING_MIN_LENGTH <= len(binding) <= BINDING_MAX_LENGTH
+        and set(binding) <= _BINDING_ALPHABET
+    )
+
+
+def _digest(binding: str) -> str:
+    """Only this is kept, never the secret itself: a dump of the cache hands nobody a proof."""
+    return hashlib.sha256((binding or "").encode()).hexdigest()
+
+
+def authorize_url(provider: SsoProvider, redirect_uri: str, binding: str = "") -> str:
+    """Where to send the browser, with the transient state kept here.
+
+    `binding` ties this sign-in to the browser that started it; see `take_ticket`.
+    """
     document = discovery(provider)
     state = secrets.token_urlsafe(32)
     nonce = secrets.token_urlsafe(24)
@@ -189,6 +213,7 @@ def authorize_url(provider: SsoProvider, redirect_uri: str) -> str:
             "nonce": nonce,
             "verifier": verifier,
             "redirect_uri": redirect_uri,
+            "binding": _digest(binding) if binding else "",
         },
         STATE_TTL_SECONDS,
     )
@@ -221,7 +246,7 @@ TICKET_TTL_SECONDS = 60
 _TICKET_PREFIX = "sso:ticket:"
 
 
-def leave_ticket(session: dict) -> str:
+def leave_ticket(session: dict, binding_digest: str = "") -> str:
     """Guarda la sesión recién emitida y devuelve el vale con el que se recoge.
 
     El proveedor devuelve el navegador a una dirección del **servidor**, y la sesión
@@ -230,20 +255,44 @@ def leave_ticket(session: dict) -> str:
     registro del servidor web y en el `Referer` de la primera imagen que cargue la
     página. Viaja este vale, que no vale para nada más, se canjea una vez y caduca en
     un minuto.
+
+    Guarda también la huella del secreto con el que empezó la entrada, para que solo
+    lo recoja el navegador que la empezó.
     """
     ticket = secrets.token_urlsafe(32)
-    cache.set(f"{_TICKET_PREFIX}{ticket}", session, TICKET_TTL_SECONDS)
+    cache.set(
+        f"{_TICKET_PREFIX}{ticket}",
+        {"session": session, "binding": binding_digest},
+        TICKET_TTL_SECONDS,
+    )
     return ticket
 
 
-def take_ticket(ticket: str) -> dict:
-    """La sesión que guarda ese vale, **una sola vez**."""
+def take_ticket(ticket: str, proof: str) -> dict:
+    """La sesión que guarda ese vale, **una sola vez** y **solo para quien la empezó**.
+
+    Sin la prueba, el vale era de quien tuviera el enlace. Quien tiene cuenta en un
+    proveedor podía empezar una entrada suya, pararse antes de la vuelta y mandarle
+    el enlace a otra persona: esa persona acababa dentro **de la cuenta de quien lo
+    mandó**, sin notarlo, y lo que registrara ---un fichaje, el justificante de una
+    baja--- quedaba a la vista de él. Es la entrada forzada con la cuenta de otro.
+
+    La prueba es el secreto que la aplicación web guardó al empezar, en ese
+    navegador. Un enlace abierto en cualquier otro no lo tiene. Se gasta el vale
+    aunque la prueba no case: un vale que ha salido de su navegador ya no es de fiar.
+    """
     key = f"{_TICKET_PREFIX}{ticket or ''}"
     kept = cache.get(key)
     if not kept:
         _refuse("ticket_unknown", _("That sign-in expired or was already collected."))
     cache.delete(key)
-    return kept
+    if not kept.get("binding") or not hmac.compare_digest(kept["binding"], _digest(proof)):
+        logger.warning("sso: a ticket was presented by a browser that did not start the sign-in")
+        _refuse(
+            "ticket_other_browser",
+            _("That sign-in was started in another browser. Start again from this one."),
+        )
+    return kept["session"]
 
 
 def exchange_code(provider: SsoProvider, code: str, verifier: str, redirect_uri: str) -> dict:

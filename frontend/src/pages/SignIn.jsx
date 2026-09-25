@@ -10,7 +10,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 
-import { discoverSso, requestPasswordReset, ssoStartUrl } from '../services/api.js'
+import { discoverSso, requestPasswordReset, startSso } from '../services/api.js'
 import { useAuth } from '../hooks/useAuth.js'
 
 export default function SignIn() {
@@ -52,6 +52,9 @@ export default function SignIn() {
     issuer_mismatch: t('El proveedor de identidad no es el que esta instalación tiene configurado.'),
     provider_keys_unavailable: t('No se han podido comprobar las claves de tu proveedor de identidad.'),
     provider_unreachable: t('No se ha podido hablar con el proveedor de identidad de tu empresa.'),
+    // Se llegó al inicio sin el secreto que ata la entrada a este navegador: un
+    // enlace guardado o una pestaña de antes. Basta con volver a pulsar el botón.
+    start_from_sign_in: t('Vuelve a pulsar el botón de tu empresa para entrar.'),
   }
   const avisoDeError =
     error ??
@@ -191,7 +194,7 @@ export default function SignIn() {
                     variant="contained"
                     size="large"
                     fullWidth
-                    href={ssoStartUrl(provider.slug)}
+                    onClick={() => startSso(provider.slug)}
                   >
                     {t('Entrar con {{provider}}', { provider: provider.provider })}
                   </Button>
