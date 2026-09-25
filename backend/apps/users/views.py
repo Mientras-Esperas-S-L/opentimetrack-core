@@ -26,6 +26,7 @@ from apps.audit.trail import StructureTrail
 from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError
 from apps.common.models import set_current_tenant
+from apps.common.network import client_ip
 from apps.common.permissions import (
     IsAdmin,
     IsAuthenticatedInTenant,
@@ -174,8 +175,7 @@ class SignInView(APIView):
         logger.warning(
             "Failed sign-in for %s from %s",
             email or "(no address)",
-            request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
-            or request.META.get("REMOTE_ADDR"),
+            client_ip(request),
         )
 
 

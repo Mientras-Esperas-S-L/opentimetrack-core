@@ -1,7 +1,11 @@
-"""Sets the tenant of the request, and the language it is answered in."""
+"""Sets the tenant of the request and its language, and checks the proxy setting."""
 
 from __future__ import annotations
 
+import ipaddress
+import logging
+
+from django.conf import settings
 from django.utils import timezone, translation
 
 from apps.common.locale import activate_for
@@ -76,3 +80,44 @@ class LocaleAndTimeZoneMiddleware:
         finally:
             timezone.deactivate()
             translation.deactivate()
+
+
+class ProxyConfigurationCheck:
+    """Says so in the log, once, when a proxy is plainly in front and nobody said.
+
+    With `TRUSTED_PROXIES` at 0 behind a proxy, every caller arrives from the
+    proxy's address: they all share one rate-limit bucket, and five failed
+    sign-ins anywhere lock everybody out for a minute. The symptom points at
+    the login, not at the setting, so the setting gets named here.
+
+    «Plainly» is a forwarded header arriving from an address that is not on the
+    internet. It does not change anything --- guessing the count is the mistake
+    this setting exists to avoid --- it only says what to look at.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.warned = False
+
+    def __call__(self, request):
+        if not self.warned and request.META.get("HTTP_X_FORWARDED_FOR"):
+            self._check(request)
+        return self.get_response(request)
+
+    def _check(self, request):
+        if settings.TRUSTED_PROXIES:
+            self.warned = True
+            return
+        try:
+            local = not ipaddress.ip_address(request.META.get("REMOTE_ADDR", "")).is_global
+        except ValueError:
+            return
+        if local:
+            self.warned = True
+            logging.getLogger("security").warning(
+                "Requests arrive with X-Forwarded-For from %s but TRUSTED_PROXIES is 0: every "
+                "caller is counted as that address and they all share one rate limit. Set "
+                "TRUSTED_PROXIES to the number of proxies in front of the API (1 behind a "
+                "single nginx or Caddy).",
+                request.META.get("REMOTE_ADDR"),
+            )
