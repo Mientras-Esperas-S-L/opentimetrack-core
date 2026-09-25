@@ -7,16 +7,16 @@ was inside. Two things follow from that, and the second is the less obvious.
 as they liked. On a filesystem deployment that is the disk; on object storage
 it is the bill.
 
-**Type.** The download endpoint serves with `as_attachment=True`, so a
-filesystem deployment is safe from anything rendering. Object storage is not:
-that path redirects to a signed URL, and the file comes back from the storage
-domain with the content type it was uploaded with and no
-`Content-Disposition`. An `.html` uploaded as a supporting document would
-render there --- somebody else's document, on a domain the company trusts.
+**Type.** The download endpoint serves with `as_attachment=True`, whatever the
+store, so nothing renders today. It used to redirect to the store on object
+storage, and there the file came back with the content type it was uploaded
+with: an `.html` uploaded as a supporting document would render --- somebody
+else's document, on a domain the company trusts.
 
 So both ends: the extensions here, and `ContentDisposition: attachment` on the
-S3 side in settings. Either alone would do for the known case; the pair is what
-survives somebody changing the other later.
+S3 side in settings, for anything that reaches the bucket some other way.
+Either alone would do for the known case; the pair is what survives somebody
+changing the other later.
 """
 
 from __future__ import annotations

@@ -88,11 +88,12 @@ if STORAGE_BACKEND == "s3":
         # against SeaweedFS in development, so the failure would only appear on the
         # day of the first real deployment.
         "signature_version": "s3v4",
-        # Downloaded, never rendered. This path redirects to a signed URL, so the
-        # file comes back from the storage domain and not from ours: without this
-        # header an uploaded .html would render there, on a domain the company
-        # trusts, carrying somebody else's document. The extension whitelist in
-        # apps/absences/uploads.py is the other half.
+        # Downloaded, never rendered, for anything that reaches the bucket by a
+        # signed URL. The application no longer hands those out --- it serves the
+        # bytes itself, see the justification action in apps/absences/views.py ---
+        # but an .html rendering on the storage domain, carrying somebody else's
+        # document, is not a thing to leave to that staying true. The extension
+        # whitelist in apps/absences/uploads.py is the other half.
         "object_parameters": {"ContentDisposition": "attachment"},
         # Providers that are not AWS still want a region in the signature; without
         # one boto sends an empty string and some of them refuse it.

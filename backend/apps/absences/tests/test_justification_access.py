@@ -150,19 +150,23 @@ def test_the_file_path_is_not_in_the_response(company):
 
 @pytest.mark.django_db
 @override_settings(STORAGE_BACKEND="s3")
-def test_with_object_storage_it_redirects_instead_of_proxying(company):
-    """Django does not need to push the bytes when the store can hand out a
-    signed URL --- but only after the same permission check."""
+def test_with_object_storage_it_serves_the_bytes_too(company):
+    """It used to redirect to a signed URL built from STORAGE_ENDPOINT, the
+    address the server uses to reach the store --- often an internal name the
+    browser cannot reach, and then every download fails. Now it never leaves
+    this installation's domain."""
     ana = make(company, "ana@example.com")
     beto = make(company, "beto@example.com")
-    absence = leave_with_file(company, ana)
+    absence = leave_with_file(company, ana, b"%PDF-1.4 contenido en el almacen")
 
     # The check comes first, whatever the backend.
     assert client_for(beto).get(f"/api/absences/{absence.id}/justification/").status_code == 404
 
     mine = client_for(ana).get(f"/api/absences/{absence.id}/justification/")
-    assert mine.status_code == 302
-    assert mine.headers["Location"]
+    assert mine.status_code == 200
+    assert "Location" not in mine.headers
+    assert b"contenido en el almacen" in b"".join(mine.streaming_content)
+    assert "attachment" in mine.headers.get("Content-Disposition", "")
 
 
 @pytest.mark.django_db
@@ -198,10 +202,10 @@ def attach(client, name, content, content_type, day="2026-09-01"):
 
 @pytest.mark.django_db
 def test_a_supporting_document_that_is_not_a_document_is_refused(company):
-    """On object storage this matters more than it looks. That path redirects
-    to a signed URL, so the file comes back from the storage domain with the
-    content type it was uploaded with: an .html would render there, on a domain
-    the company trusts, with somebody else's document inside it."""
+    """Downloads are served as attachments, so today nothing renders. The
+    whitelist is the other half, for the day somebody changes that: an .html
+    would render on a domain the company trusts, with somebody else's document
+    inside it."""
     worker = make(company, "ana@example.com")
 
     response = attach(client_for(worker), "trampa.html", b"<script>alert(1)</script>", "text/html")

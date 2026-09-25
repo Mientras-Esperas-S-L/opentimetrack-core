@@ -10,8 +10,7 @@ from __future__ import annotations
 from datetime import date
 
 import django_filters
-from django.conf import settings
-from django.http import FileResponse, Http404, HttpResponseRedirect
+from django.http import FileResponse, Http404
 from django.utils.dateparse import parse_date
 from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
@@ -597,7 +596,7 @@ class AbsenceViewSet(
         )
         return Response(AbsenceSerializer(absence).data)
 
-    @extend_schema(responses={200: None, 302: None, 404: None})
+    @extend_schema(responses={200: None, 404: None})
     @action(detail=True, methods=["get"])
     def justification(self, request, pk=None):
         """The supporting document, for whoever is entitled to it.
@@ -613,9 +612,16 @@ class AbsenceViewSet(
         worker asking for a colleague's gets a 404 rather than a 403 --- there
         is no reason to confirm the absence even exists.
 
-        With object storage it redirects to a signed URL that expires in five
-        minutes; with a filesystem it serves the bytes. Either way the
-        permission check happened first, which is the part that matters.
+        It serves the bytes, whatever the store. With object storage it used
+        to redirect to a signed URL instead, and that URL is built from
+        STORAGE_ENDPOINT: the address the *server* uses to reach the store,
+        often an internal name the browser cannot resolve --- the example
+        configuration says `http://storage:8333` --- and over http, mixed
+        content under an https page. Then every download fails, and only on
+        the first deployment with a bucket. Serving it here needs no public
+        address for the store at all,
+        and the download always comes from this installation's own domain,
+        with its own headers.
         """
         absence = self.get_object()
         if not absence.justification:
@@ -632,9 +638,6 @@ class AbsenceViewSet(
                 target_label=absence.employee.get_full_name(),
                 changes={"absence": str(absence.pk), "type": absence.absence_type},
             )
-
-        if getattr(settings, "STORAGE_BACKEND", "filesystem") == "s3":
-            return HttpResponseRedirect(absence.justification.url)
 
         return FileResponse(absence.justification.open("rb"), as_attachment=True)
 
