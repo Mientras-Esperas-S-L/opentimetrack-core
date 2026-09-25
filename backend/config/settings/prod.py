@@ -1,24 +1,48 @@
 """Entorno de producción: cabeceras, TLS obligatorio y nada de DEBUG."""
 
+from urllib.parse import urlsplit
+
 from django.core.exceptions import ImproperlyConfigured
 
+from config.public_address import api_url_for, check_for_production, clean, host, origin
+
 from .base import *
-from .base import env
+from .base import PUBLIC_API_URL, PUBLIC_URL, env
 
 DEBUG = False
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS")
+# ------------------------------------------------------------ dirección pública
+#
+# One address, checked before anything starts. FRONTEND_URL counts as the public
+# address when PUBLIC_URL is not there, which is how installations were set up
+# before PUBLIC_URL existed.
+ALLOW_INSECURE_HTTP = env.bool("ALLOW_INSECURE_HTTP", default=False)
+_WEB = PUBLIC_URL or clean(env("FRONTEND_URL", default=""), "FRONTEND_URL")
+API_URL = api_url_for(_WEB, PUBLIC_API_URL)
+check_for_production(web=_WEB, api=API_URL, allow_http=ALLOW_INSECURE_HTTP)
 
-# TLS obligatorio (convención de la API: HTTPS con HSTS).
-SECURE_SSL_REDIRECT = True
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+FRONTEND_URL = clean(env("FRONTEND_URL", default=_WEB), "FRONTEND_URL")
+# Never empty here: empty answers the return from the provider with the session
+# tokens as JSON, in the browser of whoever is signing in.
+SSO_WEB_URL = clean(env("SSO_WEB_URL", default=""), "SSO_WEB_URL") or _WEB
+SSO_REDIRECT_URI = clean(env("SSO_REDIRECT_URI", default=""), "SSO_REDIRECT_URI", exact=True) or (
+    f"{API_URL}/auth/sso/callback/"
+)
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=sorted({host(_WEB), host(API_URL)}))
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[origin(_WEB)])
+
+# TLS obligatorio (convención de la API: HTTPS con HSTS), salvo que se haya pedido
+# http de forma expresa para una red privada: entonces, redirigir a https o marcar
+# las cookies como seguras dejaría la instalación sin poder entrar.
+_HTTPS = urlsplit(_WEB).scheme == "https"
+SECURE_SSL_REDIRECT = _HTTPS
+SECURE_HSTS_SECONDS = 31536000 if _HTTPS else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = _HTTPS
+SECURE_HSTS_PRELOAD = _HTTPS
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = _HTTPS
+CSRF_COOKIE_SECURE = _HTTPS
 SESSION_COOKIE_HTTPONLY = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"

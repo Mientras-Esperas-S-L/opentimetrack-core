@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from typing import ClassVar
 
+from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from drf_spectacular.utils import extend_schema
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -142,4 +143,48 @@ class HealthView(APIView):
                 },
             },
             status=status.HTTP_200_OK if healthy else status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+
+
+class InstanceSerializer(serializers.Serializer):
+    product = serializers.CharField(
+        help_text="Always «OpenTimeTrack»: what answers at this address."
+    )
+    version = serializers.CharField()
+    web_url = serializers.CharField(help_text="Where people use the web app.")
+    api_url = serializers.CharField(help_text="Where the API is, ending in /api.")
+    sso_callback_url = serializers.CharField(
+        help_text="The exact return address to register at an identity provider."
+    )
+
+
+class InstanceView(APIView):
+    """What answers at this address, and where each of its parts lives.
+
+    For whoever is about to connect to this installation. Setting up single
+    sign-on means registering at the identity provider the exact address people
+    come back to, compared character for character; guessing it from where the
+    API happens to answer goes wrong behind a proxy, or with the API on a host
+    of its own. This is the address this installation will actually send.
+
+    Nothing here is secret: it is what a browser sees on the way in.
+    """
+
+    permission_classes: ClassVar[list] = [AllowAny]
+    authentication_classes: ClassVar[list] = []
+
+    @extend_schema(
+        summary="Qué instalación es y dónde vive", auth=[], responses={200: InstanceSerializer}
+    )
+    def get(self, request):
+        from apps.tenants.sso_views import redirect_uri
+
+        return Response(
+            {
+                "product": "OpenTimeTrack",
+                "version": __version__,
+                "web_url": settings.SSO_WEB_URL or settings.FRONTEND_URL,
+                "api_url": settings.API_URL,
+                "sso_callback_url": redirect_uri(request),
+            }
         )

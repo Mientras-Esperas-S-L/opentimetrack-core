@@ -1048,5 +1048,7 @@
   "· sobre {{quien}}": "· sobre {{quien}}",
   "Último acceso con ella: {{dia}}": "Últim accés amb ella: {{dia}}",
   "Último acceso: {{cuando}}": "Últim accés: {{cuando}}",
-  "Último fichaje: {{dia}}": "Últim fitxatge: {{dia}}"
+  "Último fichaje: {{dia}}": "Últim fitxatge: {{dia}}",
+  "Dirección de vuelta para registrar en el proveedor": "Adreça de tornada per registrar al proveïdor",
+  "Cópiala tal cual: el proveedor la compara letra a letra.": "Copia-la tal qual: el proveïdor la compara lletra a lletra."
 }

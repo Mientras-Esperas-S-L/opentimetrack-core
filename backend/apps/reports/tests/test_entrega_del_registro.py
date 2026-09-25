@@ -87,7 +87,7 @@ def se_fue(company):
 
 
 def _url(persona):
-    enlace = build_delivery_link(persona, base_url="http://testserver")
+    enlace = build_delivery_link(persona, api_url="http://testserver/api")
     return enlace.replace("http://testserver", "")
 
 

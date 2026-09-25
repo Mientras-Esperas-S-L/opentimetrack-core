@@ -32,6 +32,9 @@ cp .env.example .env
 podman compose up --build
 ```
 
+Para producción, la dirección de la instalación y el proxy de delante:
+[deploy/direccion-y-proxy.md](deploy/direccion-y-proxy.md).
+
 ## Licencia
 
 **AGPL-3.0.** Ver [LICENSE](LICENSE).
