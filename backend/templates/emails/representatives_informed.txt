@@ -1,4 +1,4 @@
-{% load i18n %}{% blocktranslate %}Hello,
+{% load i18n installation %}{% blocktranslate %}Hello,
 
 You are recorded as a workers' representative at {{ company }}.{% endblocktranslate %}
 
@@ -13,4 +13,4 @@ What they wrote is not reproduced here. Art. 6.2 grants you access to the
 register, so you can consult the entry and its history in the application.{% endblocktranslate %}
 
 -------------------------------------------------------------------------------
-OpenTimeTrack
+{% installation_name %}

@@ -12,6 +12,7 @@ import Typography from '@mui/material/Typography'
 
 import { discoverSso, requestPasswordReset, startSso } from '../services/api.js'
 import { useAuth } from '../hooks/useAuth.js'
+import { INSTALLATION_NAME } from '../installation.js'
 
 export default function SignIn() {
   const { t } = useTranslation()
@@ -128,7 +129,7 @@ export default function SignIn() {
   return (
     <Container maxWidth="xs" sx={{ py: 10 }}>
       <Typography variant="h1" gutterBottom>
-        OpenTimeTrack
+        {INSTALLATION_NAME}
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 4 }}>
         {mode === 'in'

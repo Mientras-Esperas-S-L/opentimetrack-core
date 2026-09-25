@@ -426,6 +426,14 @@ USE_TZ = True
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-reply@opentimetrack.local")
 
+# El nombre que ve la gente en esta instalación: la firma de los correos aquí, y en
+# la web la pantalla de entrada, la barra de arriba, la pestaña y la aplicación
+# instalada en el móvil. «OpenTimeTrack» salvo que la instalación ponga el suyo,
+# como quien lo usa como una pieza de su propio producto. La web lo toma al
+# construirse, de VITE_INSTALLATION_NAME o de este mismo ajuste: los dos, iguales.
+# No cambia lo que /api/instance/ da como producto, que sigue siendo OpenTimeTrack.
+INSTALLATION_NAME = env("INSTALLATION_NAME", default="").strip() or "OpenTimeTrack"
+
 # Where the password links point. The panel lives apart from the API, so it
 # cannot be derived from the request.
 FRONTEND_URL = clean(

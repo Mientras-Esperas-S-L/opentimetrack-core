@@ -150,6 +150,9 @@ class InstanceSerializer(serializers.Serializer):
     product = serializers.CharField(
         help_text="Always «OpenTimeTrack»: what answers at this address."
     )
+    name = serializers.CharField(
+        help_text="What people see here: «OpenTimeTrack», unless the installation sets its own."
+    )
     version = serializers.CharField()
     web_url = serializers.CharField(help_text="Where people use the web app.")
     api_url = serializers.CharField(help_text="Where the API is, ending in /api.")
@@ -182,6 +185,7 @@ class InstanceView(APIView):
         return Response(
             {
                 "product": "OpenTimeTrack",
+                "name": settings.INSTALLATION_NAME,
                 "version": __version__,
                 "web_url": settings.SSO_WEB_URL or settings.FRONTEND_URL,
                 "api_url": settings.API_URL,
