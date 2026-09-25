@@ -73,6 +73,7 @@ MIDDLEWARE = [
     # After authentication: both need to know who is calling.
     "apps.common.middleware.TenantMiddleware",
     "apps.common.middleware.LocaleAndTimeZoneMiddleware",
+    "apps.common.middleware.ProxyConfigurationCheck",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -149,7 +150,21 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # ------------------------------------------------------------------------- API
 
+# How many reverse proxies stand in front of the API and append to
+# X-Forwarded-For. Only the entries they wrote can be trusted, and they are the
+# last ones: the first are whatever the client chose to send. 0 means no proxy,
+# and the address is the connection's own. Behind one nginx or Caddy it is 1.
+#
+# It is a fact about the deployment, not something a request can tell us. See
+# apps/common/network.py for what went wrong when it was guessed.
+TRUSTED_PROXIES = env.int("TRUSTED_PROXIES", default=0)
+if TRUSTED_PROXIES < 0:
+    raise ImproperlyConfigured(f"TRUSTED_PROXIES cannot be negative, and it is {TRUSTED_PROXIES}.")
+
 REST_FRAMEWORK = {
+    # The same number for the rate limits, so the address on a punch and the one
+    # the limits count are always the same address.
+    "NUM_PROXIES": TRUSTED_PROXIES,
     "DEFAULT_AUTHENTICATION_CLASSES": (
         # Applications first: their token carries a prefix, so it is cheap to
         # recognise and it hands over to JWT when it is not one of theirs.

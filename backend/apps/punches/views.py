@@ -14,20 +14,13 @@ from rest_framework.response import Response
 from apps.audit.services import record_view_of_others
 from apps.common.exceptions import BusinessRuleError
 from apps.common.filters import LocalDayRangeFilter
+from apps.common.network import client_ip
 from apps.common.permissions import IsAuthenticatedInTenant
 from apps.common.scope import person_in_scope, visible_people
 from apps.punches import idempotency
 from apps.punches.models import HoursNature, Punch, PunchSource
 from apps.punches.serializers import PunchSerializer, PunchWriteSerializer
 from apps.punches.services import build_day_status, register_punch
-
-
-def client_ip(request) -> str | None:
-    """Real address, honouring a reverse proxy when there is one."""
-    forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.META.get("REMOTE_ADDR")
 
 
 class PunchFilter(LocalDayRangeFilter):
