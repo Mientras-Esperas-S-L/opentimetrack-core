@@ -182,6 +182,7 @@ def test_the_installation_says_which_return_address_to_register():
     assert response.status_code == 200
     assert response.data == {
         "product": "OpenTimeTrack",
+        "name": "OpenTimeTrack",
         "version": response.data["version"],
         "web_url": "https://time.example.test",
         "api_url": "https://time.example.test/api",

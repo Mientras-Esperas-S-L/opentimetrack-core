@@ -55,9 +55,6 @@ const NO_SE_TRADUCE = {
     '{{}} h {{}} min': 'símbolos de duración, iguales en los tres idiomas',
     '{{}} min': 'símbolos de duración, iguales en los tres idiomas',
   },
-  'src/pages/SignIn.jsx': {
-    OpenTimeTrack: 'el nombre del producto',
-  },
   'src/pages/admin/Roster.jsx': {
     Escape: 'el valor de `event.key`, no un texto',
   },
