@@ -33,6 +33,7 @@ import MenuIcon from '@mui/icons-material/Menu'
 import ThemeToggle from '../components/ThemeToggle.jsx'
 import { usePlatformAdmin } from '../hooks/usePlatformAdmin.js'
 import { useAuth } from '../hooks/useAuth.js'
+import { INSTALLATION_NAME } from '../installation.js'
 import { NAV_ADMIN, NAV_PLATFORM, NAV_ME } from './navigation.jsx'
 import BottomNav from './BottomNav.jsx'
 
@@ -199,8 +200,8 @@ export default function AppShell() {
           )}
           <Stack sx={{ minWidth: 0, flexGrow: 1 }}>
             <Typography variant="h2" noWrap sx={{ fontSize: '1.05rem' }}>
-              {/* El nombre del producto no se traduce: es un nombre propio. */}
-              {isDesktop ? t(currentLabel) : 'OpenTimeTrack'}
+              {/* El nombre de la instalación no se traduce: es un nombre propio. */}
+              {isDesktop ? t(currentLabel) : INSTALLATION_NAME}
             </Typography>
             {company?.name && (
               <Typography variant="caption" color="text.secondary" noWrap>
