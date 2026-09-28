@@ -72,7 +72,11 @@ function WeekBars({ week }) {
               {value || ''}
             </Typography>
             <Box
-              title={t('{{dia}}: {{cuantos}} eventos', { dia: dateOf(day), cuantos: value })}
+              title={
+                value === 1
+                  ? t('{{dia}}: un evento', { dia: dateOf(day) })
+                  : t('{{dia}}: {{cuantos}} eventos', { dia: dateOf(day), cuantos: value })
+              }
               sx={{
                 width: '100%',
                 height: `${Math.max(3, (value / max) * 56)}px`,
@@ -224,7 +228,7 @@ export default function Overview() {
             ) : (
               <List disablePadding dense>
                 {data.off_today.map((person) => (
-                  <ListItem key={person.employee} disableGutters>
+                  <ListItem key={person.id} disableGutters>
                     <ListItemText
                       primary={person.name}
                       secondary={t('{{tipo}} · hasta el {{fecha}}', {

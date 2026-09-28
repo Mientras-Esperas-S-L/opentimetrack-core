@@ -41,6 +41,8 @@ export const EMPRESA = {
     // suya porque el art. 19.a solo se aplica a quien cambia de turno, y el
     // saldo que genera se ve en su pantalla y en la de nadie más.
     rotativo: 'turnos@demo.local',
+    // La asesoría laboral: lee la gestión sin gestionar y no ficha.
+    asesoria: 'asesoria@demo.local',
   },
   vecina: {
     nombre: 'Vecina S.L.',
@@ -65,6 +67,16 @@ export const EMPRESA = {
  *  base 36 y cuatro caracteres al azar, y sigue empezando por `p` porque los
  *  filtros de limpieza buscan ese prefijo. */
 export const marca = () => `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+
+/** El último día de un mes `AAAA-MM`, como `AAAA-MM-DD`.
+ *
+ *  Poner siempre `-31` funcionaba mientras el mes más cargado era agosto: en
+ *  septiembre el servidor rechaza el 31 y el campo de fecha no lo admite. */
+export function finDeMes(mes) {
+  const [anio, numero] = mes.split('-').map(Number)
+  const dia = new Date(Date.UTC(anio, numero, 0)).getUTCDate()
+  return `${mes}-${String(dia).padStart(2, '0')}`
+}
 
 /** Entra por el formulario, como una persona.
  *

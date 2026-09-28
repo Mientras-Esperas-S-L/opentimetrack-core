@@ -780,6 +780,18 @@ class Command(BaseCommand):
                 **extra,
             )
 
+        # La asesoría laboral, fuera de `made`: no trabaja aquí, así que no se le
+        # siembra jornada, y la plantilla no la cuenta. Está para poder entrar
+        # con su perfil, que lee la gestión sin gestionar.
+        User.objects.create_user(
+            email="asesoria@demo.local",
+            password=PASSWORD,
+            tenant=company,
+            first_name="Irene",
+            last_name="Soler",
+            role=Role.ADVISOR,
+        )
+
         # El vínculo del relevo, después del bucle: apunta a otra persona de la
         # misma tanda y no existe hasta que las dos están creadas.
         made["relief"].relieves = made["retiring"]

@@ -160,8 +160,12 @@ class OverviewView(APIView):
         )
         if scope is not None:
             approved = approved.filter(employee__in=scope)
+        # Una fila por ausencia, no por persona: puede haber dos aprobadas el
+        # mismo día ---una baja dentro de las vacaciones--- y las dos son
+        # ciertas. Por eso viaja el `id`, que es lo que distingue las filas.
         return [
             {
+                "id": str(a.id),
                 "employee": str(a.employee_id),
                 "name": a.employee.get_full_name(),
                 "type": a.absence_type,
