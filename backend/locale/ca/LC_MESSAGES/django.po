@@ -564,6 +564,10 @@ msgstr "la part de jornada que s'acordi"
 msgid "by the statutory scale, on the size of the workplace"
 msgstr "per l'escala legal, segons la mida del centre"
 
+#: apps/absences/views.py
+msgid "from the holiday balance"
+msgstr "segons el saldo de vacances"
+
 #: apps/absences/views.py:213
 msgid "the time it takes"
 msgstr "el temps indispensable"

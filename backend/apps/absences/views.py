@@ -200,6 +200,11 @@ class LeaveTypeSerializer(serializers.ModelSerializer):
             # mitad de la jornada, y lo que dice el artículo lo pone la nota.
             if obj.can_reduce_the_day:
                 return str(_("the part of the working day that is agreed"))
+            # Las vacaciones tampoco: sus días salen del saldo de cada persona
+            # (los ajustes de la empresa y su convenio), y «el tiempo
+            # indispensable» es lo contrario de lo que son. Salía así al pedirlas.
+            if obj.family == AbsenceType.VACATION:
+                return str(_("from the holiday balance"))
             # El crédito de la representación legal tampoco dura «el tiempo
             # indispensable»: son horas al mes por una escala que depende del
             # tamaño del **centro**, así que no cabe una cifra sola en el

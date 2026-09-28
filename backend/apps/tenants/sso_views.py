@@ -124,7 +124,8 @@ class SsoStartView(APIView):
         destino = _web_url(request)
         if destino and not sso.valid_binding(binding):
             return redirect(f"{destino}/?sso_error=start_from_sign_in")
-        return redirect(sso.authorize_url(provider, redirect_uri(request), binding))
+        hint = request.query_params.get("hint", "")
+        return redirect(sso.authorize_url(provider, redirect_uri(request), binding, hint))
 
 
 class SessionAnswerSerializer(serializers.Serializer):
@@ -193,6 +194,12 @@ class SsoCallbackView(APIView):
             provider, request.query_params.get("code", ""), kept["verifier"], kept["redirect_uri"]
         )
         claims = sso.validated_claims(provider, tokens["id_token"], kept["nonce"])
+        # Antes de buscar a nadie: si vuelve otra cuenta, no se ancla ni se crea nada.
+        if sso.other_account(provider, claims, kept.get("hint", "")):
+            raise BusinessRuleError(
+                code="other_account",
+                message="The provider signed in a different account from the one typed.",
+            )
 
         set_current_tenant(provider.tenant_id)
         person, created = sso.resolve_person(provider, claims)

@@ -680,3 +680,78 @@ def test_el_secreto_no_se_guarda_tal_cual(provider, idp):
     guardado = sso.take_state(state)
     assert PRUEBA not in str(guardado)
     assert guardado["binding"]
+
+
+# ------------------------------------------------- la cuenta que se escribió
+
+
+def _vuelta_con_pista(client, provider, keypair, monkeypatch, *, pista, correo):
+    from django.core.cache import cache as django_cache
+
+    from apps.tenants import sso
+
+    inicio = client.get(f"/api/auth/sso/start/{provider.slug}/", {"binding": PRUEBA, "hint": pista})
+    params = parse_qs(urlparse(inicio["Location"]).query)
+    estado = sso.take_state(params["state"][0])
+    django_cache.set(f"sso:state:{params['state'][0]}", estado, 600)
+    monkeypatch.setattr(
+        sso,
+        "_post_form",
+        lambda url, data: (
+            200,
+            {"id_token": id_token(keypair, nonce=estado["nonce"], email=correo, sub=correo)},
+        ),
+    )
+    respuesta = client.get(
+        "/api/auth/sso/callback/", {"code": "un-codigo", "state": params["state"][0]}
+    )
+    return params, respuesta
+
+
+@pytest.mark.django_db
+def test_si_el_proveedor_devuelve_otra_cuenta_no_se_entra_con_ella(
+    provider, idp, keypair, monkeypatch, company
+):
+    """Escribió su correo y el proveedor tenía abierta la sesión de otra persona.
+
+    Pasó en devel el 28/09/2026: se escribió el correo de una administradora y se
+    entró, sin aviso, como la persona que había usado el navegador antes.
+    """
+    with tenant_context(company.id):
+        for correo in ("marta@contrata.example", "luis@contrata.example"):
+            User.objects.create_user(email=correo, password=PASSWORD, tenant=company)
+
+    with override_settings(SSO_WEB_URL="https://ott.example"):
+        params, respuesta = _vuelta_con_pista(
+            APIClient(),
+            provider,
+            keypair,
+            monkeypatch,
+            pista="Marta@Contrata.example",
+            correo="luis@contrata.example",
+        )
+
+    assert params["login_hint"] == ["marta@contrata.example"]
+    assert respuesta.status_code == 302
+    assert respuesta["Location"] == "https://ott.example/?sso_error=other_account"
+    with tenant_context(company.id):
+        luis = User.objects.get(email="luis@contrata.example")
+    assert not luis.oidc_sub, "no se ancla a nadie con una entrada rechazada"
+
+
+@pytest.mark.django_db
+def test_con_la_misma_cuenta_se_entra_como_siempre(provider, idp, keypair, monkeypatch, company):
+    with tenant_context(company.id):
+        User.objects.create_user(email="marta@contrata.example", password=PASSWORD, tenant=company)
+
+    with override_settings(SSO_WEB_URL="https://ott.example"):
+        _params, respuesta = _vuelta_con_pista(
+            APIClient(),
+            provider,
+            keypair,
+            monkeypatch,
+            pista="marta@contrata.example",
+            correo="marta@contrata.example",
+        )
+
+    assert respuesta["Location"].startswith("https://ott.example/entrando?ticket=")

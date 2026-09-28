@@ -66,6 +66,10 @@ export default function SignIn() {
     // Se llegó al inicio sin el secreto que ata la entrada a este navegador: un
     // enlace guardado o una pestaña de antes. Basta con volver a pulsar el botón.
     start_from_sign_in: t('Vuelve a pulsar el botón de tu empresa para entrar.'),
+    // El proveedor tenía abierta la sesión de otra persona en este navegador.
+    other_account: t(
+      'Has vuelto con otra cuenta, no con la que escribiste. Cierra la sesión en el sistema de tu empresa y vuelve a entrar.',
+    ),
   }
   const avisoDeError =
     error ??
@@ -84,6 +88,11 @@ export default function SignIn() {
   // the server as they type, because the only thing they know is their address:
   // which identity system their employer uses is not their problem.
   const [provider, setProvider] = useState(null)
+  // Alguien con correo de una empresa con proveedor y, aun así, contraseña de
+  // aquí: una cuenta de administración creada antes del enlace. Sin esto no
+  // tenía por dónde entrar, porque el campo de la contraseña desaparecía.
+  const [conContrasena, setConContrasena] = useState(false)
+  const porProveedor = mode === 'in' && provider && !conContrasena
 
   useEffect(() => {
     let vivo = true
@@ -191,7 +200,7 @@ export default function SignIn() {
                 fullWidth
               />
 
-              {mode === 'in' && provider && (
+              {porProveedor && (
                 // Their provider signs them in, so there is no password of ours to
                 // ask for. The field below disappears rather than sitting there
                 // unusable: a box you must not fill in is worse than no box.
@@ -205,13 +214,22 @@ export default function SignIn() {
                     variant="contained"
                     size="large"
                     fullWidth
-                    onClick={() => startSso(provider.slug)}
+                    onClick={() => startSso(provider.slug, email)}
                   >
                     {t('Entrar con {{provider}}', { provider: provider.provider })}
                   </Button>
+                  <Link
+                    component="button"
+                    type="button"
+                    variant="body2"
+                    underline="hover"
+                    onClick={() => setConContrasena(true)}
+                  >
+                    {t('Tengo contraseña de aquí')}
+                  </Link>
                 </Stack>
               )}
-              {mode === 'in' && !provider && (
+              {mode === 'in' && !porProveedor && (
                 <>
                   <TextField
                     label={t('Contraseña')}
@@ -239,7 +257,7 @@ export default function SignIn() {
 
               {/* Con proveedor no hay nada que enviar aquí: el botón de arriba se
                   lleva la entrada, y este sobraría en la pantalla. */}
-              {!(mode === 'in' && provider) && (
+              {!porProveedor && (
                 <Button type="submit" variant="contained" size="large" disabled={busy} fullWidth>
                   {mode === 'in'
                     ? busy
@@ -253,7 +271,7 @@ export default function SignIn() {
 
               {/* Quien entra por su proveedor no tiene contraseña aquí que recuperar:
                   ofrecérsela sería mandarle a un correo que no sirve de nada. */}
-              <Box sx={{ textAlign: 'center', display: mode === 'in' && provider ? 'none' : 'block' }}>
+              <Box sx={{ textAlign: 'center', display: porProveedor ? 'none' : 'block' }}>
                 <Link
                   component="button"
                   type="button"

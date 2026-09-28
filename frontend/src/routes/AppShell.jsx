@@ -266,6 +266,19 @@ export default function AppShell() {
             </IconButton>
           </Tooltip>
           <Menu anchorEl={cuentaEn} open={Boolean(cuentaEn)} onClose={() => setCuentaEn(null)}>
+            {/* Con quién se está dentro. Sin esto, quien volvía de su proveedor con
+                la cuenta de otra persona no tenía dónde verlo. */}
+            {user && (
+              <Box sx={{ px: 2, pt: 1, pb: 1.5 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.email}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {user.email}
+                </Typography>
+              </Box>
+            )}
+            {user && <Divider />}
             {/* Quien entra con la cuenta de su empresa no tiene contraseña aquí. */}
             {!user?.is_federated && (
               <MenuItem

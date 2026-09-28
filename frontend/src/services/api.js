@@ -383,8 +383,9 @@ export const changePassword = async (currentPassword, newPassword) => {
 export const discoverSso = (email) => post('/auth/sso/discover/', { email })
 
 /** Where to send the browser to sign in at the provider. */
-export const ssoStartUrl = (slug, binding) =>
-  `${baseURL.replace(/\/$/, '')}/auth/sso/start/${slug}/?binding=${encodeURIComponent(binding)}`
+export const ssoStartUrl = (slug, binding, hint = '') =>
+  `${baseURL.replace(/\/$/, '')}/auth/sso/start/${slug}/?binding=${encodeURIComponent(binding)}` +
+  (hint ? `&hint=${encodeURIComponent(hint)}` : '')
 
 //  El secreto que ata una entrada por el proveedor a este navegador. En
 //  `localStorage` y no en `sessionStorage`: una pestaña abierta desde el botón no
@@ -397,7 +398,9 @@ const SSO_PROOF = 'ott.sso.proof'
  *  handed over to whoever shows it again, so a return link opened anywhere else
  *  --- one somebody started with their own account and sent to you --- does not
  *  sign you into their account. */
-export const startSso = (slug) => {
+// `hint` es el correo que escribió, si lo escribió: a la vuelta, si el proveedor
+// devuelve otra cuenta, no se entra con ella.
+export const startSso = (slug, hint = '') => {
   const bytes = crypto.getRandomValues(new Uint8Array(32))
   const secret = btoa(String.fromCharCode(...bytes))
     .replace(/\+/g, '-')
@@ -408,7 +411,7 @@ export const startSso = (slug) => {
   } catch {
     // Sin almacenamiento no hay con qué demostrarlo luego, y la recogida lo dirá.
   }
-  window.location.assign(ssoStartUrl(slug, secret))
+  window.location.assign(ssoStartUrl(slug, secret, hint))
 }
 
 /** Collects the session the provider left behind, with the one-use ticket.

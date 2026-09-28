@@ -308,8 +308,12 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
             )}
 
             <Autocomplete
-              options={[...types].sort((a, b) =>
-                t(FAMILIES[a.family] ?? '').localeCompare(t(FAMILIES[b.family] ?? '')),
+              // Las vacaciones primero: es lo que pide casi todo el mundo, y por
+              // orden alfabético quedaban al final de una lista de treinta.
+              options={[...types].sort(
+                (a, b) =>
+                  (b.family === 'VACATION') - (a.family === 'VACATION') ||
+                  t(FAMILIES[a.family] ?? '').localeCompare(t(FAMILIES[b.family] ?? '')),
               )}
               groupBy={(option) =>
                 FAMILIES[option.family] ? t(FAMILIES[option.family]) : t('Otros')
@@ -429,7 +433,9 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
             {/* La nota del artículo, cuando la hay. Es lo que evita la consulta
                 a la gestoría: quién cuenta como familiar, si hay que avisar,
                 hasta cuándo se puede pedir. */}
-            {kind?.note && (
+            {/* Menos en las vacaciones: su nota le habla a quien configura la
+                empresa, no a quien las pide, y el saldo ya está en la pantalla. */}
+            {kind?.note && kind.family !== 'VACATION' && (
               <Alert severity="info" variant="outlined">
                 {conEnfasis(kind.note)}
               </Alert>
