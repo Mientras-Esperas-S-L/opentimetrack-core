@@ -9,7 +9,7 @@ from rest_framework.test import APIClient
 
 from apps.tenants.models import Tenant
 from apps.users.models import User
-from apps.users.passwords import build_token
+from apps.users.passwords import build_token, resolve_token
 
 PASSWORD = "a-sufficiently-long-password"
 NEW_PASSWORD = "another-long-enough-password"
@@ -178,3 +178,25 @@ def test_a_short_password_is_rejected(client, acme):
     )
 
     assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_el_enlace_dice_de_quien_es_la_cuenta(client, acme):
+    """La página de elegir contraseña no decía de qué cuenta era (28/09/2026)."""
+    ana = make_user(acme)
+    uid, token = build_token(ana)
+
+    answer = client.get(reverse("auth:set-password"), {"uid": uid, "token": token})
+    assert answer.status_code == 200
+    assert answer.json() == {"email": "ana@example.com"}
+
+    # Mirarlo no lo gasta: sigue valiendo para elegir la contraseña.
+    assert resolve_token(uid, token) == ana
+
+
+@pytest.mark.django_db
+def test_un_enlace_falso_no_dice_nada(client, acme):
+    make_user(acme)
+    answer = client.get(reverse("auth:set-password"), {"uid": "x", "token": "y"})
+    assert answer.status_code == 400
+    assert "email" not in answer.json()

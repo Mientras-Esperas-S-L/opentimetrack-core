@@ -1060,5 +1060,7 @@
   "Salir de soporte": "Saír de soporte",
   "Soporte": "Soporte",
   "Tengo contraseña de aquí": "Teño contrasinal de aquí",
-  "Has vuelto con otra cuenta, no con la que escribiste. Cierra la sesión en el sistema de tu empresa y vuelve a entrar.": "Volviches con outra conta, non coa que escribiches. Pecha a sesión no sistema da túa empresa e volve entrar."
+  "Has vuelto con otra cuenta, no con la que escribiste. Cierra la sesión en el sistema de tu empresa y vuelve a entrar.": "Volviches con outra conta, non coa que escribiches. Pecha a sesión no sistema da túa empresa e volve entrar.",
+  "Para <cuenta>{{correo}}</cuenta>.": "Para <cuenta>{{correo}}</cuenta>.",
+  "Este enlace ya no vale: ha caducado o ya se ha usado.": "Esta ligazón xa non vale: caducou ou xa se usou."
 }

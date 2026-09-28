@@ -432,6 +432,9 @@ export const collectSsoSession = async (ticket) => {
   return data
 }
 
+/** Whose account the link is for, so the page can say it before anything is chosen. */
+export const linkOwner = ({ uid, token }) => get('/auth/set-password/', { uid, token })
+
 /** Sets the password from the link and signs in with it, so nobody has to type
  *  the password they have just chosen. */
 export const setPasswordFromLink = async (payload) => {

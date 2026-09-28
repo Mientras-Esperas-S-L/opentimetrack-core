@@ -8,7 +8,7 @@ import django_filters
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
@@ -973,6 +973,31 @@ class PasswordSetView(APIView):
     permission_classes = [AllowAny]
     authentication_classes: list = []
     throttle_scope = "login"
+
+    @extend_schema(
+        summary="Whose account the link is for",
+        parameters=[
+            OpenApiParameter("uid", str, required=True),
+            OpenApiParameter("token", str, required=True),
+        ],
+        responses={200: inline_serializer("LinkOwner", {"email": serializers.EmailField()})},
+        auth=[],
+    )
+    def get(self, request):
+        """De quién es la cuenta del enlace, para decirlo antes de elegir.
+
+        La página no lo decía, y quien abre un enlace reenviado o se equivoca de
+        correo elegía la contraseña de una cuenta sin saber cuál. Solo el correo:
+        quien tiene el enlace ya lo sabe, porque es a donde se mandó.
+        """
+        user = resolve_token(
+            request.query_params.get("uid", ""), request.query_params.get("token", "")
+        )
+        if user is None:
+            raise DRFValidationError(
+                {"detail": _("The link is not valid or has already been used.")}
+            )
+        return Response({"email": user.email})
 
     @extend_schema(request=PasswordSetSerializer, responses={200: SessionSerializer}, auth=[])
     def post(self, request):
