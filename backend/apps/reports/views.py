@@ -29,7 +29,7 @@ from apps.reports.payroll import PayrollSummary, period_containing
 from apps.reports.pdf import render_pdf
 from apps.reports.renderers import CSVRenderer, PDFRenderer
 from apps.reports.services import build_report, to_csv
-from apps.users.models import User
+from apps.users.models import Role, User
 
 
 def _parse_date(value: str | None, fallback: date) -> date:
@@ -114,7 +114,7 @@ class ReportView(APIView):
         if requested and str(requested) != str(request.user.id):
             # Asking for somebody else's record requires a management role. The
             # lookup is scoped to the company, so an id from elsewhere is a 404.
-            if not request.user.can_manage:
+            if not request.user.can_read_records:
                 raise ValidationError({"detail": _("You may only request your own record.")})
             # Scoped, and a person out of reach answers the same as one who does
             # not exist: the difference would say who works here.
@@ -170,7 +170,7 @@ class ReportView(APIView):
         somebody's record was read, without saying whose --- which is the
         question the trail exists to answer.
         """
-        if not request.user.can_manage:
+        if not request.user.can_read_records:
             raise ValidationError({"detail": _("You may only request your own record.")})
 
         # Quien está de alta, **más quien ya no está y trabajó en el periodo**.
@@ -192,7 +192,7 @@ class ReportView(APIView):
             timestamp__date__gte=date_from,
             timestamp__date__lte=date_to,
         ).values("employee_id")
-        people = people.filter(Q(is_active=True) | Q(id__in=trabajaron))
+        people = people.filter(Q(is_active=True) | Q(id__in=trabajaron)).exclude(role=Role.ADVISOR)
 
         people = list(people.order_by("last_name", "first_name"))
 
@@ -372,7 +372,7 @@ class PayrollSummaryView(APIView):
         response says who is missing, which is the question somebody running
         payroll actually has.
         """
-        if not request.user.can_manage:
+        if not request.user.can_read_records:
             raise BusinessRuleError(
                 code="not_allowed",
                 message=_("Only a manager or an administrator generates the summaries."),
@@ -383,7 +383,7 @@ class PayrollSummaryView(APIView):
         period = period_containing(anchor, company.payroll_period)
 
         made, skipped = [], []
-        for person in User.objects.filter(tenant=company, is_active=True):
+        for person in User.objects.workforce().filter(tenant=company, is_active=True):
             data = build_report(
                 employee=person,
                 company=company,
@@ -425,7 +425,7 @@ def _employee_for(request):
     wanted = request.query_params.get("employee")
     if not wanted or wanted == str(request.user.id):
         return request.user
-    if not request.user.can_manage:
+    if not request.user.can_read_records:
         raise BusinessRuleError(
             code="not_your_summary",
             message=_("You may only ask for your own summary."),

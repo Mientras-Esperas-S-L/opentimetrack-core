@@ -70,6 +70,8 @@ const ROLES = [
   { value: 'EMPLOYEE', label: alCatalogo('Persona trabajadora') },
   { value: 'MANAGER', label: alCatalogo('Responsable') },
   { value: 'ADMIN', label: alCatalogo('Administración') },
+  // De fuera de la plantilla: lee y exporta el registro, no ficha ni decide.
+  { value: 'ADVISOR', label: alCatalogo('Asesoría laboral') },
 ]
 
 const roleLabel = (value) => ROLES.find((r) => r.value === value)?.label ?? value
@@ -1081,6 +1083,7 @@ export default function People() {
           <MenuItem value="EMPLOYEE">{t('Operario')}</MenuItem>
           <MenuItem value="MANAGER">{t('Responsable')}</MenuItem>
           <MenuItem value="ADMIN">{t('Administración')}</MenuItem>
+          <MenuItem value="ADVISOR">{t('Asesoría laboral')}</MenuItem>
         </TextField>
 
         <FormControlLabel

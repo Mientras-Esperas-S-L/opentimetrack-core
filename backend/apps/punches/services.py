@@ -447,6 +447,11 @@ def register_punch(
             code="employee_inactive",
             message=_("This person is deactivated and cannot clock in or out."),
         )
+    if employee.is_advisor:
+        raise BusinessRuleError(
+            code="advisor_does_not_clock",
+            message=_("A labour advisor is not on the payroll and has no working day to record."),
+        )
 
     # Antes de leer el último fichaje, y esto es lo que hace que la comprobación
     # de abajo sirva de algo: sin el bloqueo, dos peticiones simultáneas de la

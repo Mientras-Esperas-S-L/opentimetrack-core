@@ -103,9 +103,9 @@ class ApplicationAttendanceView(APIView):
             # persona, y era la de la empresa del centro. Se ve contando el SQL,
             # no leyendo el código.
             people = list(
-                User.objects.filter(tenant=company, is_active=True).select_related(
-                    "workplace__tenant", "tenant"
-                )
+                User.objects.workforce()
+                .filter(tenant=company, is_active=True)
+                .select_related("workplace__tenant", "tenant")
             )
 
         return Response(
@@ -347,7 +347,8 @@ class ApplicationAttendanceRangeView(APIView):
             people, count, has_more = [person], 1, False
         else:
             everybody = (
-                User.objects.filter(tenant=company, is_active=True)
+                User.objects.workforce()
+                .filter(tenant=company, is_active=True)
                 .select_related("workplace__tenant", "tenant")
                 .order_by("last_name", "first_name", "id")
             )

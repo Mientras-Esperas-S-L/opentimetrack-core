@@ -19,12 +19,17 @@ import { NAV_ADMIN, NAV_ME } from './navigation.jsx'
  *  file used to carry --- «five is where the labels start truncating» --- describing
  *  a case the code then went and created.
  */
-export default function BottomNav({ canManage }) {
+export default function BottomNav({ canManage, esAsesoria = false }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  const items = canManage ? [...NAV_ME, NAV_ADMIN[0]] : NAV_ME
+  // La asesoría no ficha: el panel y su registro de actividad.
+  const items = esAsesoria
+    ? [NAV_ADMIN[0], ...NAV_ME.filter((item) => item.to === '/actividad')]
+    : canManage
+      ? [...NAV_ME, NAV_ADMIN[0]]
+      : NAV_ME
 
   // Anything under /panel keeps the management tab lit, not just its index.
   const current =

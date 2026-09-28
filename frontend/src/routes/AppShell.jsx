@@ -113,10 +113,17 @@ export default function AppShell() {
   // administración y no está en ninguna, así que estas pantallas le contestan
   // 403 una por una. El menú no debe ofrecérselas.
   const canManage = Boolean(company) && (user?.role === 'MANAGER' || user?.role === 'ADMIN')
+  // La asesoría laboral lee la gestión sin gestionar, y no ficha: de «Mi
+  // trabajo» solo le queda saber quién ha mirado qué.
+  const esAsesoria = Boolean(company) && user?.role === 'ADVISOR'
+  const verGestion = canManage || esAsesoria
+  const mio = esAsesoria ? NAV_ME.filter((item) => item.to === '/actividad') : NAV_ME
   // Alguna entrada de gestión es solo de administración. Ocultar un enlace no
   // es un permiso ---el API decide--- pero enseñar uno que va a contestar 403 sí
   // es un error de interfaz.
-  const management = NAV_ADMIN.filter((item) => !item.adminOnly || user?.role === 'ADMIN')
+  const management = NAV_ADMIN.filter((item) =>
+    esAsesoria ? item.asesoria : !item.adminOnly || user?.role === 'ADMIN',
+  )
   // Y la instalación, que no es de quien administra una empresa: se pregunta al
   // servidor, porque el superusuario de plataforma es el que no pertenece a
   // ninguna y eso no viaja en la sesión.
@@ -135,8 +142,8 @@ export default function AppShell() {
           administra la instalación no está en ninguna, y cada una de estas
           pantallas le contestaría 403: enseñar un enlace que no va a abrirse es
           el mismo error de interfaz que el de abajo, al revés. */}
-      {company && <NavSection title={t('Mi trabajo')} items={NAV_ME} onNavigate={alCerrar} />}
-      {canManage && (
+      {company && <NavSection title={t('Mi trabajo')} items={mio} onNavigate={alCerrar} />}
+      {verGestion && (
         <>
           <Divider sx={{ my: 1, mx: 2 }} />
           <NavSection title={t('Gestión')} items={management} onNavigate={alCerrar} />
@@ -147,7 +154,7 @@ export default function AppShell() {
           {/* El divisor solo si hay algo que separar. Para la cuenta que
               administra la instalación no hay secciones encima, y salía una
               raya suelta en lo alto del menú. */}
-          {(company || canManage) && <Divider sx={{ my: 1, mx: 2 }} />}
+          {(company || verGestion) && <Divider sx={{ my: 1, mx: 2 }} />}
           <NavSection title={t('Instalación')} items={NAV_PLATFORM} onNavigate={alCerrar} />
         </>
       )}
@@ -189,7 +196,7 @@ export default function AppShell() {
               dónde llegarse desde un móvil: la barra lateral solo existe de
               `md` para arriba y la barra de abajo solo lleva al Resumen. Las
               rutas funcionaban si se tecleaban. */}
-          {!isDesktop && canManage && (
+          {!isDesktop && verGestion && (
             <IconButton
               edge="start"
               onClick={() => setMenuAbierto(true)}
@@ -216,9 +223,11 @@ export default function AppShell() {
             label={
               user?.role === 'ADMIN'
                 ? t('Administración')
-                : canManage
-                  ? t('Responsable')
-                  : t('Persona trabajadora')
+                : esAsesoria
+                  ? t('Asesoría laboral')
+                  : canManage
+                    ? t('Responsable')
+                    : t('Persona trabajadora')
             }
             sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           />
@@ -333,7 +342,7 @@ export default function AppShell() {
       {/* Sin empresa, fuera. Fichar, Mi jornada y Mis ausencias son de quien trabaja
           en una, y a la cuenta de la instalación le contestan 403: en el móvil las
           tenía abajo igual. Lo suyo, Instalación, está en el menú. */}
-      {!isDesktop && company && <BottomNav canManage={canManage} />}
+      {!isDesktop && company && <BottomNav canManage={canManage} esAsesoria={esAsesoria} />}
 
       {/* El tema sale de la ruta: `/panel/personas` pide `personas`. Así una
           pantalla nueva no tiene que acordarse de nada, y si no hay artículo para

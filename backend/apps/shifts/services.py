@@ -1116,7 +1116,9 @@ def _check_seniority_without_a_start_date(company, first, last, employee) -> lis
     if not (WorkingTimeRules.for_company(company).seniority_leave or []):
         return []
 
-    quienes = User.objects.filter(tenant=company, is_active=True, contract_start__isnull=True)
+    quienes = User.objects.workforce().filter(
+        tenant=company, is_active=True, contract_start__isnull=True
+    )
     if employee is not None:
         quienes = quienes.filter(pk=employee.pk)
 

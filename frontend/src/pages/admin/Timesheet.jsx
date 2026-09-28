@@ -119,7 +119,7 @@ function TablaDeFichajes({ eventos, employee, zone, conFecha = false, setCorrect
                   sx={{ gap: 1, justifyContent: 'flex-end', alignItems: 'center' }}
                 >
                   <SourceChip source={punch.source} />
-                  {punch.is_active !== false && (
+                  {punch.is_active !== false && setCorrecting && (
                     <Button
                       size="small"
                       sx={{ minWidth: 0, px: 1 }}
@@ -316,6 +316,9 @@ export default function Timesheet() {
   const [employee, setEmployee] = useState('')
   const [employeeName, setEmployeeName] = useState('')
   const [correcting, setCorrecting] = useState(null) // {punch} | {} = new event
+  // La asesoría lee el registro, no lo corrige: el API se lo niega, así que
+  // tampoco se le ofrece el botón.
+  const puedeCorregir = session?.user?.role !== 'ADVISOR'
   const [error, setError] = useState(null)
 
   // A month by default rather than everything. The screen used to ask for the
@@ -403,7 +406,8 @@ export default function Timesheet() {
           'El registro tal y como está guardado. Un fichaje anulado sigue siendo legible: no se borra nada.',
         )}
         action={
-          employee && (
+          employee &&
+          puedeCorregir && (
             <Button
               variant="outlined"
               startIcon={<EditNoteIcon />}
@@ -489,7 +493,7 @@ export default function Timesheet() {
           employee={employee}
           zone={zone}
           conFecha
-          setCorrecting={setCorrecting}
+          setCorrecting={puedeCorregir ? setCorrecting : null}
         />
       ) : (
         <Stack sx={{ gap: 2 }}>
@@ -512,7 +516,7 @@ export default function Timesheet() {
                 eventos={events}
                 employee={employee}
                 zone={zone}
-                setCorrecting={setCorrecting}
+                setCorrecting={puedeCorregir ? setCorrecting : null}
               />
             </Box>
           ))}
