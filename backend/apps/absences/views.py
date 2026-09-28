@@ -671,7 +671,7 @@ class AbsenceViewSet(
         employee = request.user
         wanted = request.query_params.get("employee")
         if wanted and wanted != str(request.user.id):
-            if not request.user.can_manage:
+            if not request.user.can_read_records:
                 raise BusinessRuleError(
                     code="not_your_balance",
                     message=_("You can only see your own balance."),

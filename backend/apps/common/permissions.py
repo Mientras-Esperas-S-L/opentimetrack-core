@@ -95,6 +95,23 @@ class IsManagerOrAdmin(IsAuthenticatedInTenant):
         return super().has_permission(request, view) and request.user.can_manage
 
 
+class ManagesOrReadsRecords(IsAuthenticatedInTenant):
+    """Responsables y administración, como `IsManagerOrAdmin`; la asesoría, solo leyendo.
+
+    Una asesoría consulta la plantilla y sus registros, pero cualquier cosa que no
+    sea leer es decidir sobre ellos, y eso sigue siendo de la empresa.
+    """
+
+    message = _("Manager or administrator profile required.")
+
+    def has_permission(self, request, view) -> bool:
+        if not super().has_permission(request, view):
+            return False
+        if request.user.can_manage:
+            return True
+        return request.user.is_advisor and request.method in SAFE_METHODS
+
+
 class ReadForAllWriteForAdmin(IsAuthenticatedInTenant):
     """Anyone in the company reads; only an administrator writes."""
 
@@ -119,8 +136,10 @@ class IsOwnerOrCanManage(IsAuthenticatedInTenant):
         owner_id = getattr(obj, "employee_id", None)
         if owner_id == request.user.id:
             return True
-        if not request.user.can_manage:
+        if not request.user.can_read_records:
             return False
+        if not request.user.can_manage and request.method not in SAFE_METHODS:
+            return False  # la asesoría lee, no corrige
         # "Their scope" used to mean the whole company. It now means the
         # departments they answer for, and the object check has to agree with
         # the list check or a row hidden from the list is still readable by id.

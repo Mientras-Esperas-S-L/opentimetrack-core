@@ -41,24 +41,48 @@ export const NAV_ME = [
   { to: '/actividad', label: alCatalogo('Actividad'), icon: <PolicyIcon /> },
 ]
 
+// `asesoria`: lo que ve la asesoría laboral. Lee el registro y lo exporta; lo que
+// sirve para decidir o para cambiar la empresa no se le ofrece, porque el API se
+// lo niega igual.
 export const NAV_ADMIN = [
   // `end` como en «Fichar»: sin él, `/panel` casa como prefijo de
   // `/panel/personas` y de todas las demás, y «Resumen» se quedaba encendido a
   // la vez que la pantalla en la que estabas.
-  { to: '/panel', label: alCatalogo('Resumen'), icon: <SpaceDashboardIcon />, end: true },
-  { to: '/panel/personas', label: alCatalogo('Personas'), icon: <GroupsIcon /> },
+  {
+    to: '/panel',
+    label: alCatalogo('Resumen'),
+    icon: <SpaceDashboardIcon />,
+    end: true,
+    asesoria: true,
+  },
+  { to: '/panel/personas', label: alCatalogo('Personas'), icon: <GroupsIcon />, asesoria: true },
   { to: '/panel/departamentos', label: alCatalogo('Departamentos'), icon: <ApartmentIcon /> },
   { to: '/panel/centros', label: alCatalogo('Centros'), icon: <PlaceIcon /> },
-  { to: '/panel/calendario', label: alCatalogo('Calendario'), icon: <CalendarMonthIcon /> },
+  {
+    to: '/panel/calendario',
+    label: alCatalogo('Calendario'),
+    icon: <CalendarMonthIcon />,
+    asesoria: true,
+  },
   { to: '/panel/cuadrante', label: alCatalogo('Cuadrante'), icon: <EditCalendarIcon /> },
   { to: '/panel/turnos', label: alCatalogo('Turnos'), icon: <ScheduleIcon /> },
   // Lo lee cualquiera que gestione: saber cuánto da un permiso es lo que hace
   // falta para resolver una solicitud. Editarlo lo comprueba la propia
   // pantalla, que solo enseña «Cambiar» a administración.
   { to: '/panel/permisos', label: alCatalogo('Permisos'), icon: <EventAvailableIcon /> },
-  { to: '/panel/fichajes', label: alCatalogo('Fichajes'), icon: <AccessTimeIcon /> },
+  {
+    to: '/panel/fichajes',
+    label: alCatalogo('Fichajes'),
+    icon: <AccessTimeIcon />,
+    asesoria: true,
+  },
   { to: '/panel/decisiones', label: alCatalogo('Por decidir'), icon: <RuleIcon /> },
-  { to: '/panel/informes', label: alCatalogo('Informes'), icon: <DescriptionIcon /> },
+  {
+    to: '/panel/informes',
+    label: alCatalogo('Informes'),
+    icon: <DescriptionIcon />,
+    asesoria: true,
+  },
   // Solo administración: autorizar una aplicación es repartir una llave a los
   // registros de la empresa, y el API lo rechaza a un responsable con un 403.
   // Un menú que lo ofrece y una API que lo niega es peor que no ofrecerlo.

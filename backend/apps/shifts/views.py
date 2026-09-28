@@ -424,7 +424,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
     def review(self, request):
         """What the roster departs from, and on what basis. Never a refusal."""
         first, last = self._window(request)
-        employee = None if request.user.can_manage else request.user
+        employee = None if request.user.can_read_records else request.user
         findings = review_roster(
             company=request.user.tenant, first=first, last=last, employee=employee
         )

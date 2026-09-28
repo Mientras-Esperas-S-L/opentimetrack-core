@@ -45,12 +45,14 @@ def representation_hours(employee, company) -> dict | None:
     # hecho: una cifra con su salvedad es un dato, y una sin ella es un hecho
     # que puede estar mal.
     if employee.workplace_id:
-        cuantos = User.objects.filter(
-            tenant=company, is_active=True, workplace_id=employee.workplace_id
-        ).count()
+        cuantos = (
+            User.objects.workforce()
+            .filter(tenant=company, is_active=True, workplace_id=employee.workplace_id)
+            .count()
+        )
         por_centro = True
     else:
-        cuantos = User.objects.filter(tenant=company, is_active=True).count()
+        cuantos = User.objects.workforce().filter(tenant=company, is_active=True).count()
         por_centro = False
 
     return {

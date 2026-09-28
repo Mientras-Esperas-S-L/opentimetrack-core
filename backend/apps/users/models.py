@@ -386,6 +386,11 @@ class Role(models.TextChoices):
     EMPLOYEE = "EMPLOYEE", _("Employee")
     MANAGER = "MANAGER", _("Manager")
     ADMIN = "ADMIN", _("Administrator")
+    #: La asesoría laboral o gestoría: lee el registro de toda la empresa y lo
+    #: exporta, que es lo que pide cuando llama por las nóminas. No ficha, no
+    #: aprueba y no cambia nada: es de fuera, y hasta ahora solo cabía como
+    #: administración, que puede editar fichajes y resolver ausencias.
+    ADVISOR = "ADVISOR", _("Labour advisor")
 
 
 class UserManager(BaseUserManager):
@@ -397,6 +402,15 @@ class UserManager(BaseUserManager):
     """
 
     use_in_migrations = True
+
+    def workforce(self):
+        """La plantilla: todos menos la asesoría, que ni ficha ni tiene jornada.
+
+        Para lo que cuenta gente ---quién falta hoy, el resumen de nómina, los
+        recordatorios, el censo---. Una asesoría contada ahí sale todos los días
+        como alguien que no ha fichado.
+        """
+        return self.exclude(role=Role.ADVISOR)
 
     def _create_user(self, email: str, password: str | None, **extra):
         if not email:
@@ -940,6 +954,15 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     @property
     def is_admin(self) -> bool:
         return self.role == Role.ADMIN
+
+    @property
+    def is_advisor(self) -> bool:
+        return self.role == Role.ADVISOR
+
+    @property
+    def can_read_records(self) -> bool:
+        """Lee el registro de otras personas. `can_manage` es además decidir sobre él."""
+        return self.can_manage or self.is_advisor
 
 
 class ActivityPeriod(TenantOwnedModel):

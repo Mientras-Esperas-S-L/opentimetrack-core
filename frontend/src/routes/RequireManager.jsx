@@ -13,7 +13,7 @@ export default function RequireManager() {
   const { session } = useAuth()
   const role = session?.user?.role
 
-  if (role !== 'MANAGER' && role !== 'ADMIN') {
+  if (role !== 'MANAGER' && role !== 'ADMIN' && role !== 'ADVISOR') {
     return <Navigate to="/" replace />
   }
   return <Outlet />

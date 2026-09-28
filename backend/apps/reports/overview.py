@@ -25,7 +25,7 @@ from apps.common.scope import visible_people
 from apps.punches.corrections import CorrectionStatus, PunchCorrection
 from apps.punches.models import Punch, PunchType
 from apps.punches.services import build_day_status, local_day_bounds
-from apps.users.models import User
+from apps.users.models import Role, User
 
 
 class OverviewView(APIView):
@@ -39,7 +39,7 @@ class OverviewView(APIView):
         today = timezone.localdate()
         start, end = local_day_bounds(company)
 
-        if not request.user.can_manage:
+        if not request.user.can_read_records:
             # An employee gets their own day and nothing about anybody else.
             return Response(
                 {
@@ -54,7 +54,9 @@ class OverviewView(APIView):
         # department is two numbers that do not belong on the same screen.
         scope = visible_people(request.user)
         mine = Q() if scope is None else Q(employee__in=scope)
-        people = User.objects.filter(tenant=company) if scope is None else scope
+        people = (User.objects.filter(tenant=company) if scope is None else scope).exclude(
+            role=Role.ADVISOR
+        )
 
         return Response(
             {

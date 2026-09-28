@@ -30,7 +30,7 @@ from apps.common.network import client_ip
 from apps.common.permissions import (
     IsAdmin,
     IsAuthenticatedInTenant,
-    IsManagerOrAdmin,
+    ManagesOrReadsRecords,
     ReadForAllWriteForAdmin,
 )
 from apps.common.scope import people_queryset, visible_people
@@ -417,7 +417,7 @@ class UserViewSet(viewsets.ModelViewSet):
     # get_queryset, which needs an authenticated caller. Never used at runtime.
     queryset = User.objects.none()
     serializer_class = UserSerializer
-    permission_classes = [IsManagerOrAdmin]
+    permission_classes = [ManagesOrReadsRecords]
     filterset_class = PeopleFilter
     search_fields = ["first_name", "last_name", "email", "employee_id"]
     ordering_fields = ["last_name", "date_joined"]

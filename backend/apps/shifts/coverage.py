@@ -192,7 +192,9 @@ def who_can_cover(*, shift: Shift, company, rules=None) -> list[Candidato]:
     # invisible: los dos bloqueos que podrían frenarlos ---turnos y ausencias---
     # sí filtran por empresa, así que para alguien de fuera venían vacíos.
     # Cuanto más ajena era la persona, mejor candidata parecía.
-    gente = list(User.objects.filter(tenant=company, is_active=True).select_related("workplace"))
+    gente = list(
+        User.objects.workforce().filter(tenant=company, is_active=True).select_related("workplace")
+    )
 
     # Los turnos de esa semana de todo el mundo, de una vez: quien mira esto
     # está mirando a la plantilla entera y una consulta por cabeza convierte una

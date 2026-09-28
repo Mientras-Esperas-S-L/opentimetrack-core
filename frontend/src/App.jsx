@@ -94,7 +94,16 @@ export default function App() {
                 mirar. Se redirige a la ruta de siempre, que ya tiene su guarda. */}
             <Route
               index
-              element={session.tenant ? <Clock /> : <Navigate to="/panel/instalacion" replace />}
+              element={
+                !session.tenant ? (
+                  <Navigate to="/panel/instalacion" replace />
+                ) : session.user?.role === 'ADVISOR' ? (
+                  // La asesoría no tiene jornada: entra por el resumen.
+                  <Navigate to="/panel" replace />
+                ) : (
+                  <Clock />
+                )
+              }
             />
             <Route path="mi-jornada" element={<MyTime />} />
             <Route path="mis-ausencias" element={<MyLeave />} />

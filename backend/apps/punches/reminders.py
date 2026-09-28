@@ -54,7 +54,9 @@ def reminders_due(company, now=None) -> list[DueReminder]:
     entry_tol = timedelta(minutes=rules.entry_tolerance_minutes)
     exit_tol = timedelta(minutes=rules.exit_tolerance_minutes)
 
-    people = User.objects.filter(tenant=company, is_active=True, wants_punch_reminders=True)
+    people = User.objects.workforce().filter(
+        tenant=company, is_active=True, wants_punch_reminders=True
+    )
 
     due: list[DueReminder] = []
     for person in people:

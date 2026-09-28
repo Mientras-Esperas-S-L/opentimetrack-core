@@ -117,6 +117,8 @@ export default function Overview() {
   // Y este número es lo que decide si alguien entra en «Por decidir», así que
   // equivocarlo a la baja no es un detalle: es una cola que nadie mira.
   const espera = data.awaiting_decision
+  // La asesoría no decide: la cifra se le enseña, el camino a resolverla no.
+  const decide = session?.user?.role !== 'ADVISOR'
   const waiting =
     espera.absences +
     espera.corrections +
@@ -157,7 +159,7 @@ export default function Overview() {
           value={waiting}
           label={t('esperando decisión')}
           tone="attention"
-          to="/panel/decisiones"
+          to={decide ? '/panel/decisiones' : undefined}
         />
         <Figure
           value={data.headcount}
@@ -236,7 +238,7 @@ export default function Overview() {
             )}
           </Panel>
 
-          {(waiting > 0 || hayHorasExtra) && (
+          {decide && (waiting > 0 || hayHorasExtra) && (
             <Button
               component={RouterLink}
               to="/panel/decisiones"

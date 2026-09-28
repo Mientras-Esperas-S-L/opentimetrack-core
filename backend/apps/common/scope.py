@@ -65,6 +65,9 @@ def visible_people(user):
     """
     from apps.users.models import Department, User
 
+    if user.is_advisor:
+        # La asesoría lleva la empresa entera; los departamentos son de quien manda.
+        return None
     if not user.can_manage:
         return User.objects.filter(pk=user.pk)
     if user.is_admin or user.tenant.managers_see_whole_company:
@@ -121,7 +124,7 @@ def can_see(user, person) -> bool:
         return True
     scope = visible_people(user)
     if scope is None:
-        return user.can_manage
+        return user.can_read_records
     return scope.filter(pk=person.pk).exists()
 
 
