@@ -41,6 +41,8 @@ export const EMPRESA = {
     // suya porque el art. 19.a solo se aplica a quien cambia de turno, y el
     // saldo que genera se ve en su pantalla y en la de nadie más.
     rotativo: 'turnos@demo.local',
+    // La asesoría laboral: lee la gestión sin gestionar y no ficha.
+    asesoria: 'asesoria@demo.local',
   },
   vecina: {
     nombre: 'Vecina S.L.',
