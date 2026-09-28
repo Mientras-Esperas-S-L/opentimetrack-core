@@ -147,6 +147,9 @@ class AuditAction(models.TextChoices):
     #: nombre y el correo dentro, y no solo el identificador de una fila que ya no
     #: está.
     PERSON_ERASED = "PERSON_ERASED", _("Erased a person who left no record")
+    #: Soporte de la instalación entró en la empresa. Lo que haga dentro sale
+    #: además con su nombre en cada asiento; este dice cuándo y quién abrió.
+    SUPPORT_ENTERED = "SUPPORT_ENTERED", _("Support entered the company")
 
     # Failed sign-ins are deliberately absent. ATOMIC_REQUESTS is on and DRF
     # rolls the transaction back when it returns an error, so an entry written
@@ -276,6 +279,7 @@ class PlatformAction(models.TextChoices):
     ADMIN_CHANGED = "ADMIN_CHANGED", _("Changed an installation account")
     ADMIN_REACTIVATED = "ADMIN_REACTIVATED", _("Reactivated an installation account")
     ADMIN_LINK_SENT = "ADMIN_LINK_SENT", _("Sent an installation account a link to set a password")
+    SUPPORT_ENTERED = "SUPPORT_ENTERED", _("Entered a company as support")
 
 
 class PlatformAuditEntry(models.Model):

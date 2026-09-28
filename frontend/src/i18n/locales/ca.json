@@ -1053,5 +1053,10 @@
   "Cópiala tal cual: el proveedor la compara letra a letra.": "Copia-la tal qual: el proveïdor la compara lletra a lletra.",
   "Vuelve a pulsar el botón de tu empresa para entrar.": "Torna a prémer el botó de la teva empresa per entrar.",
   "Es tuya: la resuelve otra persona.": "És teva: la resol una altra persona.",
-  "Asesoría laboral": "Assessoria laboral"
+  "Asesoría laboral": "Assessoria laboral",
+  "Entrar como soporte": "Entrar com a suport",
+  "No he podido entrar en la empresa.": "No he pogut entrar a l'empresa.",
+  "Estás dentro de {{empresa}} como soporte. Lo que hagas queda en su registro de actividad.": "Ets dins de {{empresa}} com a suport. El que facis queda al seu registre d'activitat.",
+  "Salir de soporte": "Sortir de suport",
+  "Soporte": "Suport"
 }

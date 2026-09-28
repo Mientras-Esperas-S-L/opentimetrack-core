@@ -290,6 +290,7 @@ class UserSerializer(DecimalesTolerantes, serializers.ModelSerializer):
             "wants_punch_reminders",
             "is_active",
             "is_federated",
+            "is_support",
             "date_joined",
         ]
         read_only_fields = [
@@ -299,6 +300,7 @@ class UserSerializer(DecimalesTolerantes, serializers.ModelSerializer):
             "workplace_name",
             "effective_time_zone",
             "is_federated",
+            "is_support",
             "date_joined",
         ]
 

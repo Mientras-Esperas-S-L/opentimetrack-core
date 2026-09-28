@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import Alert from '@mui/material/Alert'
 import AppBar from '@mui/material/AppBar'
+import Button from '@mui/material/Button'
 import Avatar from '@mui/material/Avatar'
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
@@ -33,6 +35,7 @@ import MenuIcon from '@mui/icons-material/Menu'
 import ThemeToggle from '../components/ThemeToggle.jsx'
 import { usePlatformAdmin } from '../hooks/usePlatformAdmin.js'
 import { useAuth } from '../hooks/useAuth.js'
+import { leaveSupport } from '../services/api.js'
 import { INSTALLATION_NAME } from '../installation.js'
 import { NAV_ADMIN, NAV_PLATFORM, NAV_ME } from './navigation.jsx'
 import BottomNav from './BottomNav.jsx'
@@ -99,7 +102,8 @@ function NavSection({ title, items, onNavigate }) {
 
 export default function AppShell() {
   const { t } = useTranslation()
-  const { session, signOut } = useAuth()
+  const { session, signOut, setSession } = useAuth()
+  const navigate = useNavigate()
   const theme = useTheme()
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
   const location = useLocation()
@@ -109,6 +113,14 @@ export default function AppShell() {
 
   const user = session?.user
   const company = session?.tenant
+  //: Soporte de la instalación dentro de esta empresa. Se dice arriba y todo el
+  //: rato: lo que se haga queda en su registro con ese nombre.
+  const esSoporte = Boolean(user?.is_support)
+  const salirDeSoporte = async () => {
+    const vuelta = await leaveSupport()
+    setSession(vuelta)
+    navigate(vuelta ? '/panel/instalacion' : '/', { replace: true })
+  }
   // Y de una empresa: la cuenta que administra la instalación trae rol de
   // administración y no está en ninguna, así que estas pantallas le contestan
   // 403 una por una. El menú no debe ofrecérselas.
@@ -221,13 +233,15 @@ export default function AppShell() {
             size="small"
             variant="outlined"
             label={
-              user?.role === 'ADMIN'
-                ? t('Administración')
-                : esAsesoria
-                  ? t('Asesoría laboral')
-                  : canManage
-                    ? t('Responsable')
-                    : t('Persona trabajadora')
+              esSoporte
+                ? t('Soporte')
+                : user?.role === 'ADMIN'
+                  ? t('Administración')
+                  : esAsesoria
+                    ? t('Asesoría laboral')
+                    : canManage
+                      ? t('Responsable')
+                      : t('Persona trabajadora')
             }
             sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
           />
@@ -283,6 +297,22 @@ export default function AppShell() {
             </IconButton>
           </Tooltip>
         </Toolbar>
+        {esSoporte && (
+          <Alert
+            severity="warning"
+            square
+            action={
+              <Button color="inherit" size="small" onClick={salirDeSoporte}>
+                {t('Salir de soporte')}
+              </Button>
+            }
+          >
+            {t(
+              'Estás dentro de {{empresa}} como soporte. Lo que hagas queda en su registro de actividad.',
+              { empresa: company?.name },
+            )}
+          </Alert>
+        )}
       </AppBar>
 
       {!isDesktop && (
@@ -331,7 +361,8 @@ export default function AppShell() {
           flexGrow: 1,
           minWidth: 0,
           px: { xs: 2, md: 4 },
-          pt: { xs: 10, md: 12 },
+          // Más con el aviso de soporte, que va pegado a la barra de arriba.
+          pt: esSoporte ? { xs: 17, md: 18 } : { xs: 10, md: 12 },
           // Room for the bottom bar on a phone, so the last row is reachable.
           pb: { xs: company ? 12 : 4, md: 5 },
         }}

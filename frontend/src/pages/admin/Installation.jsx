@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
@@ -36,6 +37,7 @@ import {
   PAGE_SIZE,
   resetPlatformAdminPassword,
   getApplicationsOfCompany,
+  enterAsSupport,
   getCompanies,
   getInstance,
   issueCredentialOfCompany,
@@ -56,8 +58,9 @@ import { alCatalogo, localeDeFechas } from '../../i18n/index.js'
  *  encontraba lo mismo.
  *
  *  Es la administración de la **instalación**, no de una empresa: aquí no se ven
- *  sus datos ni se entra en ellos, solo su ficha, cuánta gente tiene y si su
- *  identidad está configurada.
+ *  sus datos, solo su ficha, cuánta gente tiene y si su identidad está
+ *  configurada. Para ayudarla por dentro está «Entrar como soporte», que sale en
+ *  su registro de actividad.
  */
 export default function Installation() {
   const { t } = useTranslation()
@@ -69,6 +72,21 @@ export default function Installation() {
   const [credencialesDe, setCredencialesDe] = useState(null)
   const [fichaDe, setFichaDe] = useState(null)
   const [reciénCreada, setReciénCreada] = useState(null)
+  const { setSession } = useAuth()
+  const navigate = useNavigate()
+  const [entrando, setEntrando] = useState(null)
+
+  const entrarComoSoporte = async (empresa) => {
+    setEntrando(empresa.id)
+    setError(null)
+    try {
+      setSession(await enterAsSupport(empresa.id))
+      navigate('/panel', { replace: true })
+    } catch (fallo) {
+      setError(fallo?.message || t('No he podido entrar en la empresa.'))
+      setEntrando(null)
+    }
+  }
 
   // La lista se pide en el efecto y se escribe **dentro de la promesa**: un
   // `setState` síncrono ahí dispara renders en cascada, y el linter lo para.
@@ -264,6 +282,14 @@ export default function Installation() {
                     </Button>
                     <Button size="small" onClick={() => setIdentidadDe(empresa)}>
                       {t('Identidad')}
+                    </Button>
+                    {/* Para ayudarla por dentro. Queda en su registro como «Soporte». */}
+                    <Button
+                      size="small"
+                      onClick={() => entrarComoSoporte(empresa)}
+                      disabled={!empresa.is_active || entrando !== null}
+                    >
+                      {t('Entrar como soporte')}
                     </Button>
                   </Stack>
                 </TableCell>

@@ -659,7 +659,7 @@ class CompanyAdminsView(_PorEmpresa):
         company = self.empresa(company_id)
         if company is None:
             return self.no_esta()
-        quienes = User.objects.filter(tenant=company, role=Role.ADMIN).order_by(
+        quienes = User.objects.filter(tenant=company, role=Role.ADMIN, is_support=False).order_by(
             "first_name", "last_name", "email"
         )
         return Response({"admins": [_administrador_de_empresa(p) for p in quienes]})
@@ -1368,3 +1368,80 @@ class PlatformAuditView(APIView):
             PlatformAuditEntry.objects.order_by("-at"), request, view=self
         )
         return pagina.get_paginated_response([_asiento(e) for e in filas])
+
+
+#: Lo que dura una entrada de soporte. Corta a propósito: es para ayudar un rato,
+#: no una puerta que se queda abierta una semana como una sesión normal.
+SUPPORT_SESSION = timedelta(hours=2)
+
+
+def support_account(company: Tenant) -> User:
+    """La cuenta de soporte de la empresa, creada la primera vez que hace falta."""
+    cuenta = User.objects.filter(tenant=company, is_support=True).first()
+    if cuenta is None:
+        cuenta = User.objects.create_user(
+            # `.invalid` no existe (RFC 2606): ni recibe correo ni casa con un
+            # proveedor de identidad.
+            email=f"soporte+{company.id.hex}@support.invalid",
+            password=None,
+            tenant=company,
+            first_name="Soporte",
+            last_name="",
+            role=Role.ADMIN,
+            is_support=True,
+            wants_punch_reminders=False,
+        )
+    elif not cuenta.is_active or cuenta.role != Role.ADMIN:
+        cuenta.is_active = True
+        cuenta.role = Role.ADMIN
+        cuenta.save(update_fields=["is_active", "role"])
+    return cuenta
+
+
+@extend_schema(tags=["platform"])
+class CompanySupportView(_PorEmpresa):
+    """Entrar en una empresa como soporte, para ayudarla o configurarle cosas.
+
+    Administra como su administración, pero no aparece en sus listas ni cuenta en
+    su plantilla. Lo que haga sí aparece en su registro de actividad, como
+    «Soporte» y con la cuenta de la instalación que entró: invisible ahí sería un
+    cambio en el registro de jornada sin autor.
+    """
+
+    @extend_schema(request=None, responses={200: dict})
+    def post(self, request, company_id):
+        from rest_framework_simplejwt.tokens import RefreshToken
+
+        company = self.empresa(company_id)
+        if company is None:
+            return self.no_esta()
+        if not company.is_active:
+            return Response(
+                {"detail": _("The company is deactivated: support cannot enter it.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        cuenta = support_account(company)
+        refresh = RefreshToken.for_user(cuenta)
+        refresh.set_exp(lifetime=SUPPORT_SESSION)
+        refresh["support_by"] = request.user.email
+        access = refresh.access_token
+        if access.lifetime > SUPPORT_SESSION:
+            access.set_exp(lifetime=SUPPORT_SESSION)
+
+        record(
+            action=AuditAction.SUPPORT_ENTERED,
+            actor=request.user,
+            actor_label=f"Soporte ({request.user.email})"[:160],
+            company=company,
+            target=company,
+            target_label=company.name,
+        )
+        record_platform(
+            action=PlatformAction.SUPPORT_ENTERED,
+            actor=request.user,
+            company=company,
+            target=company,
+            target_label=company.name,
+        )
+        return Response({"access": str(access), "refresh": str(refresh)})
