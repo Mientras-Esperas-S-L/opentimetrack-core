@@ -43,6 +43,7 @@ def test_an_application_can_ask_who_it_is(company):
         "id": str(company.id),
         "name": "ACME Ltd",
         "time_zone": "Europe/Madrid",
+        "sign_in_url": body["company"]["sign_in_url"],
     }
 
 
@@ -97,3 +98,27 @@ def test_an_unknown_role_is_refused(company):
         format="json",
     )
     assert answer.status_code == 400
+
+
+@pytest.mark.django_db
+def test_la_integracion_sabe_por_donde_entra_su_gente(company, settings):
+    """Con el proveedor ya elegido: por el dominio del correo no entraba quien tiene
+    una dirección de otra contrata."""
+    from apps.tenants.identity import SsoProvider
+
+    settings.SSO_WEB_URL = "https://time.example.test"
+    settings.FIELD_ENCRYPTION_KEY = "MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA="
+    cliente = credential(company)
+    assert (
+        cliente.get("/api/app/me/").json()["company"]["sign_in_url"] == "https://time.example.test"
+    )
+
+    SsoProvider.objects_all_tenants.create(
+        tenant=company,
+        name="GreenCityControl",
+        issuer="https://idp.example/o",
+        client_id="ott",
+        client_secret="secreto",
+    )
+    url = cliente.get("/api/app/me/").json()["company"]["sign_in_url"]
+    assert url == "https://time.example.test/?sso=greencitycontrol"

@@ -33,6 +33,16 @@ export default function SignIn() {
   // quien solo quería fichar.
   const [rechazoDelProveedor] = useState(() => new URLSearchParams(window.location.search).get('sso_error'))
 
+  // Quien llega desde una aplicación integrada trae ya su proveedor (`?sso=`): se
+  // empieza la entrada con él sin preguntar el correo. Por el dominio del correo no
+  // siempre se encuentra ---alguien de otra contrata que trabaja para esta empresa---,
+  // y la integración sí sabe de qué empresa es. El secreto que ata la entrada a este
+  // navegador se genera igual que al pulsar el botón.
+  const [proveedorDeLaIntegracion] = useState(() => new URLSearchParams(window.location.search).get('sso'))
+  useEffect(() => {
+    if (proveedorDeLaIntegracion && !rechazoDelProveedor) startSso(proveedorDeLaIntegracion)
+  }, [proveedorDeLaIntegracion, rechazoDelProveedor])
+
   useEffect(() => {
     // Se limpia de la barra para que recargar no repita el aviso.
     if (rechazoDelProveedor) window.history.replaceState({}, '', window.location.pathname)

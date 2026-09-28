@@ -26,11 +26,38 @@ class CompanyIdentitySerializer(serializers.Serializer):
     id = serializers.UUIDField()
     name = serializers.CharField()
     time_zone = serializers.CharField()
+    sign_in_url = serializers.CharField(
+        help_text="Where this company's people sign in: the web app with their identity "
+        "provider already chosen, when it has one that can sign people in."
+    )
 
 
 class WhoAmISerializer(serializers.Serializer):
     application = ApplicationIdentitySerializer()
     company = CompanyIdentitySerializer()
+
+
+def sign_in_url(company) -> str:
+    """The web app, with the company's provider chosen if it can sign people in.
+
+    For the integration's «open OpenTimeTrack» link. Choosing the provider by the
+    email domain, which is what the sign-in screen does, fails for anybody whose
+    address is not on one of the provider's domains ---a person of another contractor
+    working for this company--- and asking by person would tell anyone which
+    addresses exist here. The integration already knows which company it is.
+    """
+    from urllib.parse import quote
+
+    from django.conf import settings
+
+    from apps.tenants.identity import SsoProvider
+
+    web = (settings.SSO_WEB_URL or settings.FRONTEND_URL).rstrip("/")
+    proveedor = next(
+        (p for p in SsoProvider.objects_all_tenants.filter(tenant=company) if p.can_sign_people_in),
+        None,
+    )
+    return f"{web}/?sso={quote(proveedor.slug)}" if proveedor else web
 
 
 @extend_schema(tags=["applications"])
@@ -56,6 +83,7 @@ class ApplicationMeView(APIView):
                     "id": str(company.id),
                     "name": company.name,
                     "time_zone": company.time_zone,
+                    "sign_in_url": sign_in_url(company),
                 },
             }
         )
