@@ -5477,3 +5477,7 @@ msgstr ""
 "\n"
 "Aquí non se reproduce o que escribiu. O art. 6.2 dávos acceso ao\n"
 "rexistro, así que podedes consultar o asento e o seu historial na aplicación."
+
+#: apps/tenants/platform_views.py
+msgid "This installation cannot store an identity provider's secret: FIELD_ENCRYPTION_KEY is not set on the server."
+msgstr "Esta instalación non pode gardar o segredo dun provedor de identidade: falta FIELD_ENCRYPTION_KEY no servidor."

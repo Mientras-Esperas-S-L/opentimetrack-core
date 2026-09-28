@@ -40,6 +40,19 @@ def _fernet() -> Fernet:
         ) from exc
 
 
+def encryption_ready() -> bool:
+    """Whether this installation can store a secret at all.
+
+    Asked before a secret arrives, so the answer is a sentence and not a 500 in the
+    middle of setting up a company that, once created, cannot be removed.
+    """
+    try:
+        _fernet()
+    except ImproperlyConfigured:
+        return False
+    return True
+
+
 class EncryptedTextField(models.TextField):
     """Text that is stored encrypted and comes back in clear.
 

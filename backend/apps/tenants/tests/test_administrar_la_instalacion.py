@@ -134,6 +134,25 @@ def test_pone_el_proveedor_de_identidad_con_sus_dominios(plataforma, company):
     assert "un-secreto" not in str(respuesta.data)
 
 
+def test_sin_clave_de_cifrado_el_proveedor_se_rechaza_con_su_motivo(plataforma, company):
+    """Antes era un 500 pelado, con la empresa ya creada al otro lado."""
+    with override_settings(FIELD_ENCRYPTION_KEY=""):
+        respuesta = cliente(plataforma).put(
+            reverse("platform-company-identity", args=[company.id]),
+            {
+                "name": "Conector",
+                "issuer": "https://idp.example/o",
+                "client_id": "x",
+                "client_secret": "un-secreto",
+                "domains": ["ejemplo.test"],
+            },
+            format="json",
+        )
+
+    assert respuesta.status_code == 409
+    assert respuesta.data["error"]["code"] == "encryption_key_missing"
+
+
 def test_editar_sin_secreto_deja_el_que_habia(plataforma, company):
     api = cliente(plataforma)
     url = reverse("platform-company-identity", args=[company.id])

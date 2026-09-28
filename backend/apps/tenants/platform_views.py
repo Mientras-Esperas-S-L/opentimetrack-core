@@ -38,6 +38,8 @@ from rest_framework.views import APIView
 
 from apps.audit.models import AuditAction, PlatformAction, PlatformAuditEntry
 from apps.audit.services import record, record_platform
+from apps.common.crypto import encryption_ready
+from apps.common.exceptions import BusinessRuleError
 from apps.common.models import set_current_tenant
 from apps.tenants.application_views import (
     ApplicationSerializer,
@@ -382,6 +384,16 @@ class CompanyIdentityView(APIView):
         proveedor.jwks_uri = v.get("jwks_uri") or ""
         proveedor.client_id = v.get("client_id") or ""
         if v.get("client_secret"):
+            # Antes que nada: sin clave de cifrado el guardado reventaba en un 500 con
+            # la empresa ya creada al otro lado, y quien lo veía no sabía qué faltaba.
+            if not encryption_ready():
+                raise BusinessRuleError(
+                    code="encryption_key_missing",
+                    message=_(
+                        "This installation cannot store an identity provider's secret: "
+                        "FIELD_ENCRYPTION_KEY is not set on the server."
+                    ),
+                )
             proveedor.client_secret = v["client_secret"]
         proveedor.may_act_for_people = v.get("may_act_for_people", False)
         proveedor.is_active = v.get("is_active", True)

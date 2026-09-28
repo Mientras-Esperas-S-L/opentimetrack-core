@@ -159,6 +159,10 @@ class InstanceSerializer(serializers.Serializer):
     sso_callback_url = serializers.CharField(
         help_text="The exact return address to register at an identity provider."
     )
+    sso_ready = serializers.BooleanField(
+        help_text="Whether an identity provider with a client secret can be set up here: "
+        "false while the server has no FIELD_ENCRYPTION_KEY."
+    )
 
 
 class InstanceView(APIView):
@@ -180,6 +184,7 @@ class InstanceView(APIView):
         summary="Qué instalación es y dónde vive", auth=[], responses={200: InstanceSerializer}
     )
     def get(self, request):
+        from apps.common.crypto import encryption_ready
         from apps.tenants.sso_views import redirect_uri
 
         return Response(
@@ -190,5 +195,6 @@ class InstanceView(APIView):
                 "web_url": settings.SSO_WEB_URL or settings.FRONTEND_URL,
                 "api_url": settings.API_URL,
                 "sso_callback_url": redirect_uri(request),
+                "sso_ready": encryption_ready(),
             }
         )
