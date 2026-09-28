@@ -19,6 +19,7 @@ session is `APPLICATION`, never `WEB`, and it carries the application's name.
 
 from __future__ import annotations
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -148,8 +149,33 @@ class SsoProvider(TenantOwnedModel):
             # su nombre, no en cómo se verá en una URL.
             from django.utils.text import slugify
 
-            self.slug = slugify(self.name)[:60]
+            self.slug = self.free_slug(slugify(self.name)[:56] or "provider")
         return super().save(*args, **kwargs)
+
+    def slug_taken(self, slug: str) -> bool:
+        """Whether another provider of **this installation** already answers to it.
+
+        Unique per company was not enough: the sign-in URL carries only the slug, so
+        two companies whose provider is called the same ---both «GreenCityControl»---
+        shared one, and the start picked whichever came first. The second company
+        could not sign anybody in.
+        """
+        return SsoProvider.objects_all_tenants.filter(slug=slug).exclude(pk=self.pk).exists()
+
+    def free_slug(self, base: str) -> str:
+        if not self.slug_taken(base):
+            return base
+        n = 2
+        while self.slug_taken(f"{base}-{n}"):
+            n += 1
+        return f"{base}-{n}"
+
+    def clean(self):
+        super().clean()
+        if self.slug and self.slug_taken(self.slug):
+            raise ValidationError(
+                {"slug": _("Another company of this installation already uses this identifier.")}
+            )
 
     @property
     def expected_audience(self) -> str:

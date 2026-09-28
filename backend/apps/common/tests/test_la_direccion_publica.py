@@ -187,6 +187,7 @@ def test_the_installation_says_which_return_address_to_register():
         "web_url": "https://time.example.test",
         "api_url": "https://time.example.test/api",
         "sso_callback_url": "https://time.example.test/api/auth/sso/callback/",
+        "sso_ready": response.data["sso_ready"],
     }
 
 
@@ -202,3 +203,20 @@ def test_in_development_the_return_address_is_the_one_the_start_sends():
     published = APIClient().get("/api/instance/").data["sso_callback_url"]
 
     assert published == redirect_uri(RequestFactory().get("/"))
+
+
+# ------------------------------------------------ sin clave de cifrado
+
+
+@pytest.mark.django_db
+@override_settings(FIELD_ENCRYPTION_KEY="")
+def test_sin_clave_de_cifrado_la_instalacion_lo_dice():
+    """Quien va a dar de alta una empresa con su proveedor lo sabe antes de crearla,
+    y no con un 500 cuando la empresa ya existe y no se puede borrar."""
+    assert APIClient().get("/api/instance/").data["sso_ready"] is False
+
+
+@pytest.mark.django_db
+@override_settings(FIELD_ENCRYPTION_KEY="MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=")
+def test_con_clave_de_cifrado_puede_guardar_proveedores():
+    assert APIClient().get("/api/instance/").data["sso_ready"] is True

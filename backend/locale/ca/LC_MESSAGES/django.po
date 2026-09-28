@@ -5486,3 +5486,11 @@ msgstr ""
 "Aquí no es reprodueix el que va escriure. L'art. 6.2 us dóna accés al\n"
 "registre, així que podeu consultar l'assentament i el seu historial a "
 "l'aplicació."
+
+#: apps/tenants/platform_views.py
+msgid "This installation cannot store an identity provider's secret: FIELD_ENCRYPTION_KEY is not set on the server."
+msgstr "Aquesta instal·lació no pot desar el secret d'un proveïdor d'identitat: falta FIELD_ENCRYPTION_KEY al servidor."
+
+#: apps/tenants/identity.py
+msgid "Another company of this installation already uses this identifier."
+msgstr "Una altra empresa d'aquesta instal·lació ja fa servir aquest identificador."

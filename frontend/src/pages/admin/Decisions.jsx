@@ -296,7 +296,7 @@ const fmt = (value) => {
  *  deliberate: a refusal is what the person will read and ask about, and it
  *  should not be as effortless as a yes.
  */
-function RequestCard({ title, meta, reason, children, onApprove, onReject, busy, select }) {
+function RequestCard({ title, meta, reason, children, onApprove, onReject, busy, select, own = false }) {
   const { t } = useTranslation()
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
@@ -328,14 +328,22 @@ function RequestCard({ title, meta, reason, children, onApprove, onReject, busy,
           )}
         </Box>
 
-        <Stack direction="row" sx={{ gap: 1, flexShrink: 0 }}>
-          <Button size="small" onClick={onReject} disabled={busy} color="inherit">
-            {t('Rechazar')}
-          </Button>
-          <Button size="small" variant="contained" onClick={onApprove} disabled={busy}>
-            {t('Aprobar')}
-          </Button>
-        </Stack>
+        {/* La propia no se resuelve: el servidor lo rechaza, y ofrecer el botón
+            para luego decir que no es invitar a pulsarlo. */}
+        {own ? (
+          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0, maxWidth: '26ch' }}>
+            {t('Es tuya: la resuelve otra persona.')}
+          </Typography>
+        ) : (
+          <Stack direction="row" sx={{ gap: 1, flexShrink: 0 }}>
+            <Button size="small" onClick={onReject} disabled={busy} color="inherit">
+              {t('Rechazar')}
+            </Button>
+            <Button size="small" variant="contained" onClick={onApprove} disabled={busy}>
+              {t('Aprobar')}
+            </Button>
+          </Stack>
+        )}
       </Stack>
     </Paper>
   )
@@ -859,6 +867,7 @@ export default function Decisions() {
                 title={absence.employee_name}
                 meta={`${leaveLabel(absence)} · ${dayRange(absence.start_date, absence.end_date)} · ${leaveLength(absence)}`}
                 reason={absence.reason}
+                own={String(absence.employee) === String(session?.user?.id)}
                 onApprove={() => decide.mutate({ action: approveAbsence, id: absence.id })}
                 onReject={() => openReject(rejectAbsence, absence.id, false)}
               >
