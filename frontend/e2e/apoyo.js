@@ -24,7 +24,7 @@ export const CLAVE = 'demo-password-2026'
  *  arranque de sesión con un `null` en el almacén, que no señala a ninguna
  *  parte.
  *
- *      OTT_URL=http://localhost:3010 OTT_API_URL=http://localhost:8100/api \
+ *      OTT_URL=http://localhost:3020 OTT_API_URL=http://localhost:8100/api \
  *          npx playwright test
  */
 export const API = process.env.OTT_API_URL ?? 'http://localhost:8000/api'

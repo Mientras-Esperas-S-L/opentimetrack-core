@@ -367,14 +367,9 @@ completo (evidencia y refutación) está en el registro del workflow.
   que «pausas y ausencias llegarán en OpenTimeTrack, no aquí». Así que no hay
   nada que copiar: el hueco es de OTT desde el principio.
 
-## En curso
+## Cerrado
 
-### Vuelta 177 --- El total que no era la suma de sus líneas (29/08) · SIN CERRAR
-
-**El trabajo está hecho y verificado; falta el cierre.** Se paró a mitad, así que
-antes de darla por buena hay que correr `./scripts/la-suite-de-navegador.sh` y
-subir. Lo demás está: los ocho pasos del CI en verde con 1.617 pruebas, las
-propias de la vuelta pasando, los contrastes rojos y las dos pantallas miradas.
+### Vuelta 177 --- El total que no era la suma de sus líneas (29/08, cerrada el 31/08)
 
 Ángulo: **sinsentidos aritméticos**.
 
@@ -394,14 +389,24 @@ ocho horas que caducan en diciembre. Ahora el desglose no aparece cuando no qued
 nada que disfrutar: sirve para saber qué disfrutar y con qué plazo, y sin nada
 que disfrutar no tiene función y sí tiene con qué engañar.
 
-**Tres contrastes; uno no contrastó, y por partida doble.** La primera versión de
-la prueba de navegador miraba el saldo que hubiera y se saltaba sola cuando no
-encajaba: con la demostración recién sembrada nadie ha disfrutado nada, así que
-la comprobación que importa no llegaba a correr **nunca**. Reescrita para
-**construir** el caso ---pedir el descanso, aprobarlo desde otra sesión y
-mirarlo---, cae. Y aun así el caso extremo seguía sin cubrirse: hubo que llevar
-la prueba hasta saldar el total entero, con descansos **por horas** en vez de por
-días para no depender de qué días tiene turno la persona en la demostración.
+**Tres versiones de la misma prueba, y las dos primeras estaban mal.**
+
+1. La primera miraba el saldo que hubiera y se **saltaba sola** con `skip`
+   cuando no encajaba: con la demostración recién sembrada nadie ha disfrutado
+   nada, así que la comprobación que importa no llegaba a correr nunca.
+2. La segunda **construía** el caso ---pedía el descanso, lo aprobaba desde otra
+   sesión y lo miraba--- y no podía deshacerlo: `cancel_absence` solo actúa
+   mientras la ausencia está pendiente, y eso es a propósito porque una aprobada
+   ya ha bloqueado días. Dejaba **tres descansos aprobados en la base**, así que
+   la tanda siguiente empezaba con el saldo movido y la prueba fallaba. Se vio al
+   retomar el lunes: en la tanda completa, la prueba que el viernes pasaba sola.
+3. La tercera **lee**, y el caso vive en la semilla ---un descanso compensatorio
+   ya disfrutado---, que además es donde tiene que estar: una empresa con la
+   deuda intacta es la de la primera semana, no la normal.
+
+Y una cosa que el guard de residuos no ve: `zz-sin-residuos` comprueba personas,
+centros, departamentos, festivos y ajustes, **no ausencias**. Los tres descansos
+estuvieron ahí y la tanda no dijo nada.
 
 ## Cerrado
 
