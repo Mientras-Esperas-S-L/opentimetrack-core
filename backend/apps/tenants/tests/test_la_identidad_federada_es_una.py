@@ -147,3 +147,44 @@ def test_actualizar_a_la_misma_persona_no_choca_consigo_misma(conector):
         )
 
     assert r.status_code in (200, 201), r.json()
+
+
+# -------------------------------------------- un identificador por instalación
+
+
+@pytest.mark.django_db
+def test_dos_empresas_con_el_proveedor_llamado_igual_no_comparten_identificador():
+    """La dirección de entrada lleva solo el identificador: compartido, la segunda
+    empresa mandaba a su gente al proveedor de la primera, y no entraba nadie."""
+    from apps.tenants.identity import SsoProvider
+    from apps.tenants.models import Tenant
+
+    una = Tenant.objects.create(name="Una S.L.", tax_id="B11111111")
+    otra = Tenant.objects.create(name="Otra S.L.", tax_id="B22222222")
+    p1 = SsoProvider.objects_all_tenants.create(
+        tenant=una, name="GreenCityControl", issuer="https://idp.example/o"
+    )
+    p2 = SsoProvider.objects_all_tenants.create(
+        tenant=otra, name="GreenCityControl", issuer="https://idp.example/o"
+    )
+
+    assert p1.slug == "greencitycontrol"
+    assert p2.slug == "greencitycontrol-2"
+
+
+@pytest.mark.django_db
+def test_un_identificador_puesto_a_mano_que_ya_usa_otra_empresa_se_rechaza():
+    from django.core.exceptions import ValidationError
+
+    from apps.tenants.identity import SsoProvider
+    from apps.tenants.models import Tenant
+
+    una = Tenant.objects.create(name="Una S.L.", tax_id="B11111111")
+    otra = Tenant.objects.create(name="Otra S.L.", tax_id="B22222222")
+    SsoProvider.objects_all_tenants.create(
+        tenant=una, name="A", issuer="https://a.example/o", slug="gcc"
+    )
+    repetido = SsoProvider(tenant=otra, name="B", issuer="https://b.example/o", slug="gcc")
+
+    with pytest.raises(ValidationError):
+        repetido.full_clean(exclude=["tenant"])

@@ -380,7 +380,9 @@ class CompanyIdentityView(APIView):
         )
         proveedor.name = v["name"]
         proveedor.issuer = v["issuer"].rstrip("/")
-        proveedor.slug = v.get("slug") or ""
+        # El que ya tenía, si no se manda otro: volver a derivarlo en cada guardado
+        # podía cambiarle la dirección de entrada a una empresa ya en marcha.
+        proveedor.slug = v.get("slug") or proveedor.slug or ""
         proveedor.jwks_uri = v.get("jwks_uri") or ""
         proveedor.client_id = v.get("client_id") or ""
         if v.get("client_secret"):

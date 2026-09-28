@@ -5078,3 +5078,7 @@ msgstr ""
 #: apps/tenants/platform_views.py
 msgid "This installation cannot store an identity provider's secret: FIELD_ENCRYPTION_KEY is not set on the server."
 msgstr "Esta instalación no puede guardar el secreto de un proveedor de identidad: falta FIELD_ENCRYPTION_KEY en el servidor."
+
+#: apps/tenants/identity.py
+msgid "Another company of this installation already uses this identifier."
+msgstr "Otra empresa de esta instalación ya usa este identificador."
