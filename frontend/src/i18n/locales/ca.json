@@ -1060,5 +1060,7 @@
   "Salir de soporte": "Sortir de suport",
   "Soporte": "Suport",
   "Tengo contraseña de aquí": "Tinc contrasenya d'aquí",
-  "Has vuelto con otra cuenta, no con la que escribiste. Cierra la sesión en el sistema de tu empresa y vuelve a entrar.": "Has tornat amb un altre compte, no amb el que vas escriure. Tanca la sessió al sistema de la teva empresa i torna a entrar."
+  "Has vuelto con otra cuenta, no con la que escribiste. Cierra la sesión en el sistema de tu empresa y vuelve a entrar.": "Has tornat amb un altre compte, no amb el que vas escriure. Tanca la sessió al sistema de la teva empresa i torna a entrar.",
+  "Para <cuenta>{{correo}}</cuenta>.": "Per a <cuenta>{{correo}}</cuenta>.",
+  "Este enlace ya no vale: ha caducado o ya se ha usado.": "Aquest enllaç ja no serveix: ha caducat o ja s'ha fet servir."
 }

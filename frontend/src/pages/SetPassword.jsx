@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
@@ -11,7 +11,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 
-import { setPasswordFromLink } from '../services/api.js'
+import { linkOwner, setPasswordFromLink } from '../services/api.js'
 import { ErrorNote } from '../components/common.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 
@@ -29,6 +29,15 @@ export default function SetPassword() {
   const { uid, token } = useParams()
   const { setSession } = useAuth()
   const navigate = useNavigate()
+
+  // De quién es la cuenta. Sin esto se elegía una contraseña sin saber para
+  // quién: un enlace reenviado, o el de otra cuenta abierto por despiste.
+  const owner = useQuery({
+    queryKey: ['link-owner', uid, token],
+    queryFn: () => linkOwner({ uid, token }),
+    retry: false,
+    staleTime: Infinity,
+  })
 
   const [password, setPassword] = useState('')
   const [repeat, setRepeat] = useState('')
@@ -68,9 +77,25 @@ export default function SetPassword() {
         <Typography variant="h6" sx={{ mb: 0.5 }}>
           {t('Elige tu contraseña')}
         </Typography>
+        {owner.data?.email && (
+          <Typography variant="body2" sx={{ mb: 0.5 }}>
+            <Trans
+              i18nKey="Para <cuenta>{{correo}}</cuenta>."
+              values={{ correo: owner.data.email }}
+              components={{ cuenta: <strong /> }}
+            />
+          </Typography>
+        )}
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           {t('Con ella entrarás a partir de ahora. El enlace sirve una sola vez.')}
         </Typography>
+
+        {/* Dicho antes de escribir nada, no después de elegir y repetir. */}
+        {owner.isError && (
+          <Alert severity="error" variant="outlined" sx={{ mb: 2 }}>
+            {t('Este enlace ya no vale: ha caducado o ya se ha usado.')}
+          </Alert>
+        )}
 
         <ErrorNote error={error} onClose={() => setError(null)} />
 
@@ -116,7 +141,7 @@ export default function SetPassword() {
               type="submit"
               variant="contained"
               size="large"
-              disabled={!ready || submit.isPending}
+              disabled={!ready || submit.isPending || owner.isError}
             >
               {t('Guardar y entrar')}
             </Button>

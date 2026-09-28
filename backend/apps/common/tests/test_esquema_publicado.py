@@ -99,9 +99,11 @@ def test_pero_la_puerta_de_entrada_no_declara_un_401(esquema):
     # El tope subió de 8 a 12 el 17/09/2026 al entrar la identidad federada, que son
     # cuatro operaciones necesariamente anónimas: preguntar dónde se entra, ir al
     # proveedor, volver de él, y que el proveedor avise de que una sesión se acabó.
+    # Y a 13 el 28/09/2026: mirar de quién es un enlace de elegir contraseña antes
+    # de elegirla. Anónima por fuerza, como la de guardarla, y solo con el enlace.
     # Sigue siendo un tope: lo que vigila es que la puerta no se ensanche sin que
     # alguien lo mire.
-    assert 3 <= len(abiertas) <= 12, (
+    assert 3 <= len(abiertas) <= 13, (
         f"las operaciones abiertas deberían ser un puñado: {len(abiertas)}"
     )
 
