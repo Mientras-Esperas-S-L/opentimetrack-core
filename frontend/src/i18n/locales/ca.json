@@ -1058,5 +1058,7 @@
   "No he podido entrar en la empresa.": "No he pogut entrar a l'empresa.",
   "Estás dentro de {{empresa}} como soporte. Lo que hagas queda en su registro de actividad.": "Ets dins de {{empresa}} com a suport. El que facis queda al seu registre d'activitat.",
   "Salir de soporte": "Sortir de suport",
-  "Soporte": "Suport"
+  "Soporte": "Suport",
+  "Tengo contraseña de aquí": "Tinc contrasenya d'aquí",
+  "Has vuelto con otra cuenta, no con la que escribiste. Cierra la sesión en el sistema de tu empresa y vuelve a entrar.": "Has tornat amb un altre compte, no amb el que vas escriure. Tanca la sessió al sistema de la teva empresa i torna a entrar."
 }

@@ -272,6 +272,11 @@ def test_the_catalogue_says_what_each_one_grants(company, worker):
     médica = next(r for r in rows if r["code"] == "es.medical")
     assert médica["amount"] is None
     assert médica["measured_in_hours"] is True
+    # Y las vacaciones no duran «el tiempo indispensable»: salen del saldo. Así lo
+    # leía quien las pedía el 28/09/2026.
+    vacaciones = next(r for r in rows if r["code"] == "es.vacation")
+    assert vacaciones["allowance"] == "según el saldo de vacaciones"
+    assert vacaciones["allowance"] != médica["allowance"]
 
 
 @pytest.mark.django_db

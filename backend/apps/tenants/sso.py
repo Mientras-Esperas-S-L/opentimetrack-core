@@ -196,11 +196,15 @@ def _digest(binding: str) -> str:
     return hashlib.sha256((binding or "").encode()).hexdigest()
 
 
-def authorize_url(provider: SsoProvider, redirect_uri: str, binding: str = "") -> str:
+def authorize_url(
+    provider: SsoProvider, redirect_uri: str, binding: str = "", hint: str = ""
+) -> str:
     """Where to send the browser, with the transient state kept here.
 
     `binding` ties this sign-in to the browser that started it; see `take_ticket`.
+    `hint` is the address the person typed, when they typed one; see `other_account`.
     """
+    hint = (hint or "").strip().lower()[:254]
     document = discovery(provider)
     state = secrets.token_urlsafe(32)
     nonce = secrets.token_urlsafe(24)
@@ -214,6 +218,7 @@ def authorize_url(provider: SsoProvider, redirect_uri: str, binding: str = "") -
             "verifier": verifier,
             "redirect_uri": redirect_uri,
             "binding": _digest(binding) if binding else "",
+            "hint": hint,
         },
         STATE_TTL_SECONDS,
     )
@@ -227,7 +232,27 @@ def authorize_url(provider: SsoProvider, redirect_uri: str, binding: str = "") -
         "code_challenge": challenge,
         "code_challenge_method": "S256",
     }
+    if hint:
+        # Lo pide OIDC como sugerencia, y el proveedor puede no hacerle caso: quien
+        # manda es la comprobación a la vuelta (`other_account`), no esto.
+        params["login_hint"] = hint
     return document["authorization_endpoint"] + "?" + urllib.parse.urlencode(params)
+
+
+def other_account(provider: SsoProvider, claims: dict, hint: str) -> bool:
+    """Si el proveedor ha devuelto a otra persona que la que escribió su correo.
+
+    Pasa cuando el proveedor ya tenía abierta la sesión de otra persona en ese
+    navegador: el que se sienta a un ordenador compartido escribe su correo y
+    acaba dentro con la cuenta del anterior, sin que nada se lo diga. Sin correo
+    escrito ---el botón que llega desde la aplicación enlazada--- no hay nada con
+    que comparar, y entra quien el proveedor diga, como siempre.
+    """
+    hint = (hint or "").strip().lower()
+    if not hint:
+        return False
+    email = (claims.get(provider.email_claim) or claims.get("email") or "").strip().lower()
+    return bool(email) and email != hint
 
 
 def take_state(state: str) -> dict:

@@ -525,6 +525,10 @@ msgstr "la parte de jornada que se acuerde"
 msgid "by the statutory scale, on the size of the workplace"
 msgstr "por la escala legal, según el tamaño del centro"
 
+#: apps/absences/views.py
+msgid "from the holiday balance"
+msgstr "según el saldo de vacaciones"
+
 #: apps/absences/views.py:213
 msgid "the time it takes"
 msgstr "el tiempo indispensable"

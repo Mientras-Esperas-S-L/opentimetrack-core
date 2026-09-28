@@ -690,7 +690,11 @@ export default function Decisions() {
   )
   const shownOvertime = overtimeGroups.filter((group) => mine(group) && matches(search, group.name))
 
-  const absencePick = useSelection(shownAbsences)
+  // La propia no entra en la selección: no tiene botones, y marcarla para
+  // aprobarla en bloque acababa en un «no se pudo» del servidor.
+  const esMia = (row) => String(row.employee) === String(session?.user?.id)
+  const absencesToPick = shownAbsences.filter((row) => !esMia(row))
+  const absencePick = useSelection(absencesToPick)
   const correctionPick = useSelection(shownCorrections)
   // «Sin acuerdo» solo se selecciona para **retirar**, nunca para aplicar en
   // bloque. Ver la barra de esa pestaña.
@@ -718,7 +722,7 @@ export default function Decisions() {
    *  la siguiente sería pedirle que se parezca a las demás para poder existir.
    */
   const colaActual = [
-    { pick: absencePick, filas: shownAbsences },
+    { pick: absencePick, filas: absencesToPick },
     { pick: correctionPick, filas: shownCorrections },
     { pick: openPick, filas: shownOpen },
     { pick: overtimePick, filas: shownOvertime },
@@ -863,11 +867,18 @@ export default function Decisions() {
               <RequestCard
                 key={absence.id}
                 busy={decide.isPending || bulking}
-                select={<SelectBox selection={absencePick} item={absence} />}
+                select={
+                  esMia(absence) ? (
+                    // El hueco de la casilla, para que el texto no se descuadre.
+                    <Box sx={{ width: 42, flexShrink: 0, display: { xs: 'none', md: 'block' } }} />
+                  ) : (
+                    <SelectBox selection={absencePick} item={absence} />
+                  )
+                }
                 title={absence.employee_name}
                 meta={`${leaveLabel(absence)} · ${dayRange(absence.start_date, absence.end_date)} · ${leaveLength(absence)}`}
                 reason={absence.reason}
-                own={String(absence.employee) === String(session?.user?.id)}
+                own={esMia(absence)}
                 onApprove={() => decide.mutate({ action: approveAbsence, id: absence.id })}
                 onReject={() => openReject(rejectAbsence, absence.id, false)}
               >
@@ -970,7 +981,7 @@ export default function Decisions() {
                   label: t('Aprobar'),
                   onClick: () =>
                     decideMany(
-                      shownAbsences.filter((row) => absencePick.isSelected(row)),
+                      absencesToPick.filter((row) => absencePick.isSelected(row)),
                       approveAbsence,
                       { done: t('aprobadas') },
                     ).then(absencePick.clear),
@@ -985,7 +996,7 @@ export default function Decisions() {
                   onClick: () =>
                     setRejecting({
                       action: rejectAbsence,
-                      rows: shownAbsences.filter((row) => absencePick.isSelected(row)),
+                      rows: absencesToPick.filter((row) => absencePick.isSelected(row)),
                       needsNote: false,
                       onDone: absencePick.clear,
                     }),
