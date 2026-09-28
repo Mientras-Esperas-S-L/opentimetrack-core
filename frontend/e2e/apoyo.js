@@ -66,6 +66,16 @@ export const EMPRESA = {
  *  filtros de limpieza buscan ese prefijo. */
 export const marca = () => `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
 
+/** El último día de un mes `AAAA-MM`, como `AAAA-MM-DD`.
+ *
+ *  Poner siempre `-31` funcionaba mientras el mes más cargado era agosto: en
+ *  septiembre el servidor rechaza el 31 y el campo de fecha no lo admite. */
+export function finDeMes(mes) {
+  const [anio, numero] = mes.split('-').map(Number)
+  const dia = new Date(Date.UTC(anio, numero, 0)).getUTCDate()
+  return `${mes}-${String(dia).padStart(2, '0')}`
+}
+
 /** Entra por el formulario, como una persona.
  *
  *  Por el formulario y no metiendo un testigo en el almacenamiento: la mitad de

@@ -31,7 +31,13 @@ test.describe('Fichajes', () => {
     // en cincuenta, así que filtrar a la mitad deja igualmente cincuenta a la
     // vista. Contar la página habría dado verde con el filtro desconectado.
     const cuantos = async (consulta) => (await api(page, `/punches/${consulta}`)).body?.count ?? 0
-    const todos = await cuantos('?date_from=2026-08-01&date_to=2026-08-13')
+    // Las dos últimas semanas y no unas fechas fijas: la semilla se siembra
+    // hacia atrás desde hoy, y el tramo de agosto que había aquí se quedó
+    // vacío en cuanto pasó mes y medio. Con cero y cero, «menos que» fallaba.
+    const dia = (atras) => new Date(Date.now() - atras * 86_400_000).toISOString().slice(0, 10)
+    const tramo = `?date_from=${dia(14)}&date_to=${dia(0)}`
+    const todos = await cuantos(tramo)
+    expect(todos, 'no hay fichajes en las dos últimas semanas').toBeGreaterThan(0)
 
     await page.getByRole('combobox', { name: 'Tipo' }).click()
     await page.getByRole('option', { name: 'Entrada' }).click()
@@ -47,9 +53,7 @@ test.describe('Fichajes', () => {
     // Y que no pasó por quedarse vacía: sin esto un grid en blanco lo cumple.
     await expect(filas().first()).toBeVisible()
 
-    expect(await cuantos('?date_from=2026-08-01&date_to=2026-08-13&punch_type=IN')).toBeLessThan(
-      todos,
-    )
+    expect(await cuantos(`${tramo}&punch_type=IN`)).toBeLessThan(todos)
 
     // Y el origen, que es lo que se enseñaba sin poder buscarse.
     await page.getByRole('combobox', { name: 'Tipo' }).click()

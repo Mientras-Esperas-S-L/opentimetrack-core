@@ -1024,6 +1024,7 @@
   "{{dia}} · <destacado>{{exceso}}</destacado> de más ({{trabajadas}} de {{previstas}} previstas)": "{{dia}} · <destacado>{{exceso}}</destacado> de més ({{trabajadas}} de {{previstas}} previstes)",
   "{{dia}} · <destacado>{{exceso}}</destacado> de más ({{trabajadas}} trabajadas de {{previstas}} previstas)": "{{dia}} · <destacado>{{exceso}}</destacado> de més ({{trabajadas}} treballades de {{previstas}} previstes)",
   "{{dia}}: {{cuantos}} eventos": "{{dia}}: {{cuantos}} esdeveniments",
+  "{{dia}}: un evento": "{{dia}}: un esdeveniment",
   "{{hechas}} de {{total}}. No se pudo con: {{fallidas}}.": "{{hechas}} de {{total}}. No s'ha pogut amb: {{fallidas}}.",
   "{{horas}} h de {{origen}}, en los días siguientes ({{articulo}}).": "{{horas}} h de {{origen}}, en els dies següents ({{articulo}}).",
   "{{horas}} h de {{origen}}, fuera de plazo ({{articulo}}).": "{{horas}} h de {{origen}}, fora de termini ({{articulo}}).",

@@ -15,7 +15,7 @@
 
 import { expect, test } from '@playwright/test'
 
-import { api, irA, vigilarConsola } from './apoyo.js'
+import { api, finDeMes, irA, vigilarConsola } from './apoyo.js'
 
 /** El mes con más fichajes de esta persona, y cuántos tiene. */
 async function elMesMasCargado(page) {
@@ -53,7 +53,7 @@ test.describe('Mi jornada · el mes entero', () => {
     // Lo que el servidor dice que hay en ese mes, que es la vara de medir.
     const { body: delMes } = await api(
       page,
-      `/punches/?date_from=${mes}-01&date_to=${mes}-31&ordering=timestamp`,
+      `/punches/?date_from=${mes}-01&date_to=${finDeMes(mes)}&ordering=timestamp`,
     )
     const primerDia = delMes.results[0].timestamp.slice(0, 10)
     expect(delMes.count).toBe(total)

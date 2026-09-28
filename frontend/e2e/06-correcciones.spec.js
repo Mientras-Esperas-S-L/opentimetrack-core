@@ -34,6 +34,10 @@ async function proponerAnulacion(browser) {
   const suPagina = await suyo.newPage()
   await suPagina.goto('/mi-jornada')
 
+  // La misma espera también antes del primero: la prueba anterior de este
+  // fichero acaba fichando, y sin margen la guarda rechazaba este. Solo se
+  // veía en la tanda completa, que es la que las pone seguidas.
+  await suPagina.waitForTimeout(5500)
   const primero = await api(suPagina, '/punches/', { method: 'POST', body: {} })
   // La guarda del doble toque rechaza dos eventos de la misma persona con
   // menos de cinco segundos entre ellos, y hace bien: aquí toca esperarla.

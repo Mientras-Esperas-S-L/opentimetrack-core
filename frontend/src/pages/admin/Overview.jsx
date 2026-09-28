@@ -72,7 +72,11 @@ function WeekBars({ week }) {
               {value || ''}
             </Typography>
             <Box
-              title={t('{{dia}}: {{cuantos}} eventos', { dia: dateOf(day), cuantos: value })}
+              title={
+                value === 1
+                  ? t('{{dia}}: un evento', { dia: dateOf(day) })
+                  : t('{{dia}}: {{cuantos}} eventos', { dia: dateOf(day), cuantos: value })
+              }
               sx={{
                 width: '100%',
                 height: `${Math.max(3, (value / max) * 56)}px`,

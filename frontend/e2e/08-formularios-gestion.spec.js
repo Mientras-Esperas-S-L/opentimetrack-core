@@ -259,8 +259,8 @@ test.describe('Aplicaciones', () => {
     const fila = page.getByRole('listitem').filter({ hasText: nombre })
     await expect(fila).toBeVisible()
 
-    await fila.getByRole('button', { name: 'Emitir token' }).click()
-    const aviso = page.getByRole('dialog').filter({ hasText: 'Copia el token ahora' })
+    await fila.getByRole('button', { name: 'Emitir credencial' }).click()
+    const aviso = page.getByRole('dialog').filter({ hasText: 'Copia la credencial ahora' })
     await expect(aviso).toBeVisible()
 
     // El testigo entero se enseña una sola vez. Lo que queda después es la

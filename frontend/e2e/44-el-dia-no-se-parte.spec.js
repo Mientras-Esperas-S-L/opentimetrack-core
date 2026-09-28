@@ -17,7 +17,7 @@
 
 import { expect, test } from '@playwright/test'
 
-import { api, irA, vigilarConsola } from './apoyo.js'
+import { api, finDeMes, irA, vigilarConsola } from './apoyo.js'
 
 /** El mes más cargado de una persona: quién, qué mes, cuántos y su día mayor.
  *
@@ -72,7 +72,7 @@ test.describe('Fichajes · el día entero', () => {
     ).toBeGreaterThan(50)
 
     await page.getByLabel('Desde').fill(`${mes}-01`)
-    await page.getByLabel('Hasta').fill(`${mes}-31`)
+    await page.getByLabel('Hasta').fill(finDeMes(mes))
     await page.getByLabel('Persona').click()
     await page.getByRole('option', { name: nombre }).first().click()
 
