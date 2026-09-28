@@ -224,7 +224,7 @@ export default function Overview() {
             ) : (
               <List disablePadding dense>
                 {data.off_today.map((person) => (
-                  <ListItem key={person.employee} disableGutters>
+                  <ListItem key={person.id} disableGutters>
                     <ListItemText
                       primary={person.name}
                       secondary={t('{{tipo}} · hasta el {{fecha}}', {

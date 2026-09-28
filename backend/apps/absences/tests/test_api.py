@@ -261,3 +261,32 @@ def test_y_busca_tambien_por_la_persona_sin_acentos(company, people):
 
     assert sin_tilde.status_code == 200
     assert [a["employee_name"] for a in sin_tilde.data["results"]] == ["Lucía García"]
+
+
+@pytest.mark.django_db
+def test_fuera_hoy_da_una_fila_por_ausencia(company, people):
+    """Dos ausencias aprobadas el mismo día ---una baja dentro de las
+    vacaciones--- salen como dos filas que se distinguen.
+
+    La pantalla usaba la persona como clave de la lista, así que con las dos
+    React avisaba de claves repetidas y podía pintar una sola.
+    """
+    from apps.absences.models import Absence, AbsenceStatus
+
+    hoy = date(2026, 8, 13)
+    with tenant_context(company.id):
+        for tipo in (AbsenceType.VACATION, AbsenceType.SICK_LEAVE):
+            Absence.objects.create(
+                tenant=company,
+                employee=people["ana"],
+                absence_type=tipo,
+                start_date=hoy,
+                end_date=hoy,
+                status=AbsenceStatus.APPROVED,
+            )
+
+    with freeze_time("2026-08-13 10:00:00"):
+        fuera = client_for(people["jefa"]).get("/api/overview/").json()["off_today"]
+
+    assert [f["employee"] for f in fuera] == [str(people["ana"].id)] * 2
+    assert len({f["id"] for f in fuera}) == 2
