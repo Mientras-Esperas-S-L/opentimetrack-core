@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-28 10:24+0000\n"
+"POT-Creation-Date: 2026-09-28 10:35+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: OpenTimeTrack contributors\n"
 "Language-Team: Español\n"
@@ -202,17 +202,17 @@ msgid "needs a supporting document"
 msgstr "necesita justificante"
 
 #: apps/absences/models.py:203 apps/absences/models.py:559
-#: apps/audit/models.py:201 apps/audit/models.py:327 apps/punches/models.py:628
+#: apps/audit/models.py:204 apps/audit/models.py:331 apps/punches/models.py:628
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:577 apps/tenants/rules.py:661
-#: apps/users/models.py:1015 apps/users/models.py:1093
+#: apps/users/models.py:1023 apps/users/models.py:1101
 msgid "note"
 msgstr "nota"
 
 #: apps/absences/models.py:204 apps/help/models.py:52 apps/shifts/models.py:84
 #: apps/tenants/applications.py:60 apps/tenants/identity.py:117
 #: apps/tenants/models.py:202 apps/users/models.py:43 apps/users/models.py:206
-#: apps/users/models.py:697
+#: apps/users/models.py:705
 msgid "active"
 msgstr "activo"
 
@@ -245,12 +245,13 @@ msgstr "Cancelada"
 #: apps/punches/models.py:162 apps/punches/models.py:575
 #: apps/punches/models.py:617 apps/reports/payroll.py:97
 #: apps/shifts/models.py:111 apps/users/models.py:105 apps/users/models.py:257
-#: apps/users/models.py:997 apps/users/models.py:1069 apps/users/models.py:1172
+#: apps/users/models.py:1005 apps/users/models.py:1077
+#: apps/users/models.py:1180
 msgid "employee"
 msgstr "persona trabajadora"
 
-#: apps/absences/models.py:286 apps/audit/models.py:194
-#: apps/audit/models.py:323 apps/punches/corrections.py:94
+#: apps/absences/models.py:286 apps/audit/models.py:197
+#: apps/audit/models.py:327 apps/punches/corrections.py:94
 #: apps/punches/models.py:164
 msgid "type"
 msgstr "tipo"
@@ -295,7 +296,7 @@ msgstr "registrado por"
 
 #: apps/absences/models.py:344 apps/absences/models.py:548
 #: apps/punches/corrections.py:104 apps/punches/models.py:621
-#: apps/users/models.py:1184
+#: apps/users/models.py:1192
 msgid "status"
 msgstr "estado"
 
@@ -338,7 +339,7 @@ msgstr "La fecha final no puede ir antes que la inicial."
 msgid "Give both times, or neither: half of a range is not one."
 msgstr "Pon las dos horas o ninguna: media franja no es una franja."
 
-#: apps/absences/models.py:446 apps/users/serializers.py:491
+#: apps/absences/models.py:446 apps/users/serializers.py:493
 msgid "It ends before it starts."
 msgstr "Acaba antes de empezar."
 
@@ -553,8 +554,8 @@ msgstr "Eliminado"
 
 #: apps/absences/views.py:314 apps/absences/views.py:559
 #: apps/punches/correction_views.py:246 apps/reports/views.py:436
-#: apps/users/serializers.py:481 apps/users/serializers.py:757
-#: apps/users/serializers.py:831 apps/users/serializers.py:919
+#: apps/users/serializers.py:483 apps/users/serializers.py:759
+#: apps/users/serializers.py:833 apps/users/serializers.py:921
 msgid "That person is not in this company."
 msgstr "Esa persona no pertenece a esta empresa."
 
@@ -746,127 +747,135 @@ msgstr "Le entregó a alguien su propio registro"
 msgid "Erased a person who left no record"
 msgstr "Retiró un alta que no dejó rastro"
 
-#: apps/audit/models.py:167 apps/audit/models.py:299
+#: apps/audit/models.py:152
+msgid "Support entered the company"
+msgstr "Soporte entró en la empresa"
+
+#: apps/audit/models.py:170 apps/audit/models.py:303
 msgid "when"
 msgstr "cuándo"
 
-#: apps/audit/models.py:173 apps/audit/models.py:319 apps/common/models.py:117
+#: apps/audit/models.py:176 apps/audit/models.py:323 apps/common/models.py:117
 #: apps/tenants/models.py:205 apps/tenants/models.py:233
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:449
 msgid "company"
 msgstr "empresa"
 
-#: apps/audit/models.py:183 apps/audit/models.py:307
+#: apps/audit/models.py:186 apps/audit/models.py:311
 msgid "who"
 msgstr "quién"
 
-#: apps/audit/models.py:187 apps/audit/models.py:309
+#: apps/audit/models.py:190 apps/audit/models.py:313
 msgid "who (as recorded)"
 msgstr "quién (tal y como se registró)"
 
-#: apps/audit/models.py:189 apps/audit/models.py:311
+#: apps/audit/models.py:192 apps/audit/models.py:315
 msgid "action"
 msgstr "acción"
 
-#: apps/audit/models.py:195 apps/audit/models.py:324
+#: apps/audit/models.py:198 apps/audit/models.py:328
 #: apps/tenants/identity.py:59
 msgid "identifier"
 msgstr "identificador"
 
-#: apps/audit/models.py:196 apps/audit/models.py:325
+#: apps/audit/models.py:199 apps/audit/models.py:329
 msgid "what (as recorded)"
 msgstr "sobre qué (tal y como se registró)"
 
-#: apps/audit/models.py:200 apps/audit/models.py:326
+#: apps/audit/models.py:203 apps/audit/models.py:330
 msgid "changes"
 msgstr "cambios"
 
-#: apps/audit/models.py:223
+#: apps/audit/models.py:226
 msgid "audit entry"
 msgstr "entrada de auditoría"
 
-#: apps/audit/models.py:224
+#: apps/audit/models.py:227
 msgid "audit trail"
 msgstr "registro de actividad"
 
-#: apps/audit/models.py:259
+#: apps/audit/models.py:262
 msgid "Created a company"
 msgstr "Creó una empresa"
 
-#: apps/audit/models.py:260
+#: apps/audit/models.py:263
 msgid "Changed a company's details"
 msgstr "Cambió la ficha de una empresa"
 
-#: apps/audit/models.py:261
+#: apps/audit/models.py:264
 msgid "Deactivated a company"
 msgstr "Desactivó una empresa"
 
-#: apps/audit/models.py:262
+#: apps/audit/models.py:265
 msgid "Reactivated a company"
 msgstr "Reactivó una empresa"
 
-#: apps/audit/models.py:265
+#: apps/audit/models.py:268
 msgid "Sent a company administrator a link to set a password"
 msgstr "Mandó a un administrador de empresa el enlace para poner contraseña"
 
-#: apps/audit/models.py:267
+#: apps/audit/models.py:270
 msgid "Changed how a company's people sign in"
 msgstr "Cambió por dónde entra la gente de una empresa"
 
-#: apps/audit/models.py:268
+#: apps/audit/models.py:271
 msgid "Authorised an application"
 msgstr "Autorizó una aplicación"
 
-#: apps/audit/models.py:269
+#: apps/audit/models.py:272
 msgid "Changed an application's permissions"
 msgstr "Cambió los permisos de una aplicación"
 
-#: apps/audit/models.py:270
+#: apps/audit/models.py:273
 msgid "Withdrew an application"
 msgstr "Retiró una aplicación"
 
-#: apps/audit/models.py:271
+#: apps/audit/models.py:274
 msgid "Issued a credential"
 msgstr "Emitió una credencial"
 
-#: apps/audit/models.py:272
+#: apps/audit/models.py:275
 msgid "Revoked a credential"
 msgstr "Revocó una credencial"
 
-#: apps/audit/models.py:273
+#: apps/audit/models.py:276
 msgid "Created an installation account"
 msgstr "Creó una cuenta de la instalación"
 
-#: apps/audit/models.py:274
+#: apps/audit/models.py:277
 msgid "Gave an installation account a new password"
 msgstr "Dio contraseña nueva a una cuenta de la instalación"
 
-#: apps/audit/models.py:275
+#: apps/audit/models.py:278
 msgid "Deactivated an installation account"
 msgstr "Desactivó una cuenta de la instalación"
 
-#: apps/audit/models.py:276
+#: apps/audit/models.py:279
 msgid "Changed an installation account"
 msgstr "Cambió una cuenta de la instalación"
 
-#: apps/audit/models.py:277
+#: apps/audit/models.py:280
 msgid "Reactivated an installation account"
 msgstr "Reactivó una cuenta de la instalación"
 
-#: apps/audit/models.py:278
+#: apps/audit/models.py:281
 msgid "Sent an installation account a link to set a password"
 msgstr "Mandó a una cuenta de la instalación el enlace para poner contraseña"
 
-#: apps/audit/models.py:321
+#: apps/audit/models.py:282
+msgid "Entered a company as support"
+msgstr "Entró en una empresa como soporte"
+
+#: apps/audit/models.py:325
 msgid "company (as recorded)"
 msgstr "empresa (tal y como se registró)"
 
-#: apps/audit/models.py:330
+#: apps/audit/models.py:334
 msgid "installation audit entry"
 msgstr "entrada del registro de la instalación"
 
-#: apps/audit/models.py:331
+#: apps/audit/models.py:335
 msgid "installation audit trail"
 msgstr "registro de la instalación"
 
@@ -906,7 +915,7 @@ msgstr "Registro de actividad"
 msgid "Invalid credential."
 msgstr "Credencial no válida."
 
-#: apps/common/authentication.py:142
+#: apps/common/authentication.py:144
 msgid "This company has been deactivated."
 msgstr "Esta empresa está desactivada."
 
@@ -943,7 +952,7 @@ msgstr "hasta este día, incluido"
 msgid "This listing does not support searching by text."
 msgstr "Este listado no admite búsqueda por texto."
 
-#: apps/common/four_eyes.py:100
+#: apps/common/four_eyes.py:103
 #, python-format
 msgid ""
 "You cannot resolve %(what)s of your own. Another manager or administrator "
@@ -1827,7 +1836,8 @@ msgstr "Esta persona está dada de baja y no puede fichar."
 #: apps/punches/services.py:453
 msgid ""
 "A labour advisor is not on the payroll and has no working day to record."
-msgstr "La asesoría laboral no está en la plantilla y no tiene jornada que registrar."
+msgstr ""
+"La asesoría laboral no está en la plantilla y no tiene jornada que registrar."
 
 #: apps/punches/services.py:490
 msgid "The working day has to be open first."
@@ -3025,7 +3035,7 @@ msgstr "Esta empresa no tiene ningún tipo de permiso con ese código."
 msgid "Display name, e.g. 'Company directory'."
 msgstr "Nombre visible, por ejemplo «Directorio de la empresa»."
 
-#: apps/tenants/identity.py:37 apps/users/models.py:695
+#: apps/tenants/identity.py:37 apps/users/models.py:703
 msgid "issuer"
 msgstr "emisor"
 
@@ -3218,7 +3228,7 @@ msgstr ""
 "Idioma en el que trabaja la empresa. Una persona puede cambiarlo para sí "
 "misma; el ajuste del navegador solo se usa cuando no hay ninguno de los dos."
 
-#: apps/tenants/models.py:73 apps/users/models.py:674
+#: apps/tenants/models.py:73 apps/users/models.py:682
 msgid "annual leave days"
 msgstr "días de vacaciones al año"
 
@@ -3419,7 +3429,7 @@ msgstr "El nombre no puede quedar vacío."
 msgid "The tax number cannot be empty."
 msgstr "El identificador fiscal no puede quedar vacío."
 
-#: apps/tenants/platform_views.py:537 apps/users/serializers.py:582
+#: apps/tenants/platform_views.py:537 apps/users/serializers.py:584
 msgid "A company with this tax number already exists."
 msgstr "Ya existe una empresa con este identificador fiscal."
 
@@ -3519,6 +3529,10 @@ msgid ""
 msgstr ""
 "Es la única cuenta que puede administrar la instalación. Crea otra antes de "
 "desactivarla."
+
+#: apps/tenants/platform_views.py:1420
+msgid "The company is deactivated: support cannot enter it."
+msgstr "La empresa está desactivada: soporte no puede entrar."
 
 #: apps/tenants/rules.py:43
 msgid "Seniority steps are a list."
@@ -3991,7 +4005,7 @@ msgstr ""
 "La consulta previa es de la vía de decisión de la empresa. En un acuerdo, la "
 "negociación es el acuerdo mismo."
 
-#: apps/tenants/views.py:142 apps/users/serializers.py:392
+#: apps/tenants/views.py:142 apps/users/serializers.py:394
 msgid "That workplace belongs to another company."
 msgstr "Ese centro de trabajo es de otra empresa."
 
@@ -4377,11 +4391,15 @@ msgstr ""
 "extraordinarias. Sin ella no se pueden aplicar, y el sistema lo dice en vez "
 "de dar por hecho que la persona es mayor de edad."
 
-#: apps/users/models.py:652
+#: apps/users/models.py:654
+msgid "support access"
+msgstr "acceso de soporte"
+
+#: apps/users/models.py:660
 msgid "workers' representative"
 msgstr "representante de las personas trabajadoras"
 
-#: apps/users/models.py:655
+#: apps/users/models.py:663
 msgid ""
 "Informed when somebody disagrees with a change to their record (art. 4.b), "
 "and entitled to consult the register (art. 6.2)."
@@ -4389,11 +4407,11 @@ msgstr ""
 "Se le informa cuando alguien discrepa de un cambio en su registro (art. "
 "4.b), y tiene derecho a consultar el registro (art. 6.2)."
 
-#: apps/users/models.py:665
+#: apps/users/models.py:673
 msgid "wants clock reminders"
 msgstr "quiere recordatorios de fichaje"
 
-#: apps/users/models.py:668
+#: apps/users/models.py:676
 msgid ""
 "Send a reminder when a shift starts and there is no entry, or when a day is "
 "left open. It prompts the real punch; it never records one."
@@ -4401,7 +4419,7 @@ msgstr ""
 "Envía un recordatorio si empieza el turno y no hay entrada, o si queda una "
 "jornada abierta. Empuja al fichaje real, nunca registra uno."
 
-#: apps/users/models.py:678
+#: apps/users/models.py:686
 msgid ""
 "Overrides the company figure for this person. Empty means the company's. "
 "Part-time and mid-year joiners are the usual reason."
@@ -4409,44 +4427,44 @@ msgstr ""
 "Sustituye la cifra de la empresa para esta persona. Vacío significa la de la "
 "empresa. Lo habitual es la jornada parcial y las altas a mitad de periodo."
 
-#: apps/users/models.py:690
+#: apps/users/models.py:698
 msgid "identity provider subject"
 msgstr "identificador en el proveedor de identidad"
 
-#: apps/users/models.py:698
+#: apps/users/models.py:706
 msgid "admin site access"
 msgstr "acceso al sitio de administración"
 
-#: apps/users/models.py:699
+#: apps/users/models.py:707
 msgid "date joined"
 msgstr "fecha de alta"
 
-#: apps/users/models.py:707
+#: apps/users/models.py:715
 msgid "person"
 msgstr "persona"
 
-#: apps/users/models.py:708
+#: apps/users/models.py:716
 msgid "people"
 msgstr "personas"
 
-#: apps/users/models.py:999
+#: apps/users/models.py:1007
 msgid "activity starts"
 msgstr "la actividad empieza"
 
-#: apps/users/models.py:1001
+#: apps/users/models.py:1009
 msgid "activity ends"
 msgstr "la actividad acaba"
 
-#: apps/users/models.py:1004
+#: apps/users/models.py:1012
 msgid "Empty while the season is open: a campaign knows when it starts."
 msgstr ""
 "Vacío mientras la temporada siga abierta: una campaña sabe cuándo empieza."
 
-#: apps/users/models.py:1007
+#: apps/users/models.py:1015
 msgid "called up on"
 msgstr "llamamiento el"
 
-#: apps/users/models.py:1011
+#: apps/users/models.py:1019
 msgid ""
 "Art. 16.3 ET: the call-up is in writing and with notice. The date is what "
 "shows the notice was given; a tick would not."
@@ -4454,39 +4472,39 @@ msgstr ""
 "Art. 16.3 ET: el llamamiento es por escrito y con antelación. La fecha es lo "
 "que demuestra que se avisó; una casilla marcada, no."
 
-#: apps/users/models.py:1018
+#: apps/users/models.py:1026
 msgid "period of activity"
 msgstr "periodo de actividad"
 
-#: apps/users/models.py:1019
+#: apps/users/models.py:1027
 msgid "periods of activity"
 msgstr "periodos de actividad"
 
-#: apps/users/models.py:1072
+#: apps/users/models.py:1080
 msgid "signed on"
 msgstr "firmado el"
 
-#: apps/users/models.py:1073
+#: apps/users/models.py:1081
 msgid "Art. 5.1: the agreement comes before the remote work starts."
 msgstr "Art. 5.1: el acuerdo va antes de que empiece el trabajo a distancia."
 
-#: apps/users/models.py:1075
+#: apps/users/models.py:1083
 msgid "remote work starts"
 msgstr "el trabajo a distancia empieza"
 
-#: apps/users/models.py:1077
+#: apps/users/models.py:1085
 msgid "remote work ends"
 msgstr "el trabajo a distancia acaba"
 
-#: apps/users/models.py:1080
+#: apps/users/models.py:1088
 msgid "Empty for an open-ended agreement, which is the usual one."
 msgstr "Vacío para un acuerdo sin fecha de fin, que es el corriente."
 
-#: apps/users/models.py:1083
+#: apps/users/models.py:1091
 msgid "share agreed (%)"
 msgstr "porcentaje pactado (%)"
 
-#: apps/users/models.py:1089
+#: apps/users/models.py:1097
 msgid ""
 "Art. 7.f asks the agreement to state it. Left empty it is not checked "
 "against what is actually worked: the figure that binds is on paper."
@@ -4494,61 +4512,61 @@ msgstr ""
 "El art. 7.f pide que el acuerdo lo diga. Vacío no se contrasta con lo que se "
 "trabaja de verdad: la cifra que obliga es la del papel."
 
-#: apps/users/models.py:1096
+#: apps/users/models.py:1104
 msgid "remote work agreement"
 msgstr "acuerdo de trabajo a distancia"
 
-#: apps/users/models.py:1097
+#: apps/users/models.py:1105
 msgid "remote work agreements"
 msgstr "acuerdos de trabajo a distancia"
 
-#: apps/users/models.py:1133
+#: apps/users/models.py:1141
 msgid "In negotiation"
 msgstr "En negociación"
 
-#: apps/users/models.py:1134
+#: apps/users/models.py:1142
 msgid "Accepted"
 msgstr "Aceptada"
 
-#: apps/users/models.py:1135
+#: apps/users/models.py:1143
 msgid "An alternative was proposed"
 msgstr "Se propuso una alternativa"
 
-#: apps/users/models.py:1136
+#: apps/users/models.py:1144
 msgid "Refused"
 msgstr "Denegada"
 
-#: apps/users/models.py:1137
+#: apps/users/models.py:1145
 msgid "Withdrawn by the person"
 msgstr "Retirada por la persona"
 
-#: apps/users/models.py:1175
+#: apps/users/models.py:1183
 msgid "requested on"
 msgstr "solicitada el"
 
-#: apps/users/models.py:1176
+#: apps/users/models.py:1184
 msgid "The fifteen days of art. 34.8 count from here."
 msgstr "Los quince días del art. 34.8 se cuentan desde aquí."
 
-#: apps/users/models.py:1179
+#: apps/users/models.py:1187
 msgid "what is being asked"
 msgstr "qué se pide"
 
-#: apps/users/models.py:1181
+#: apps/users/models.py:1189
 msgid ""
 "Duration, distribution, or the way the work is done --- remote included."
 msgstr ""
 "Duración, distribución o forma de prestación ---incluido a distancia---."
 
-#: apps/users/models.py:1189
+#: apps/users/models.py:1197
 msgid "answered on"
 msgstr "contestada el"
 
-#: apps/users/models.py:1191
+#: apps/users/models.py:1199
 msgid "answer"
 msgstr "respuesta"
 
-#: apps/users/models.py:1195
+#: apps/users/models.py:1203
 msgid ""
 "Art. 34.8 asks for this in writing, and for a reason when the answer is not "
 "a plain yes."
@@ -4556,15 +4574,15 @@ msgstr ""
 "El art. 34.8 lo pide por escrito, y con motivo cuando la respuesta no es un "
 "sí a secas."
 
-#: apps/users/models.py:1205
+#: apps/users/models.py:1213
 msgid "answered by"
 msgstr "contestada por"
 
-#: apps/users/models.py:1209
+#: apps/users/models.py:1217
 msgid "schedule adaptation"
 msgstr "adaptación de jornada"
 
-#: apps/users/models.py:1210
+#: apps/users/models.py:1218
 msgid "schedule adaptations"
 msgstr "adaptaciones de jornada"
 
@@ -4592,54 +4610,54 @@ msgstr ""
 "%(name)s no tiene perfil de responsable, así que ponerle al frente no le "
 "daría nada."
 
-#: apps/users/serializers.py:351
+#: apps/users/serializers.py:353
 msgid "Somebody in this company already uses it."
 msgstr "Ya lo usa alguien de esta empresa."
 
-#: apps/users/serializers.py:383
+#: apps/users/serializers.py:385
 #, python-format
 msgid "%(name)s already uses that staff number."
 msgstr "%(name)s ya usa ese número de empleado."
 
-#: apps/users/serializers.py:399
+#: apps/users/serializers.py:401
 msgid "That department belongs to another company."
 msgstr "Ese departamento es de otra empresa."
 
-#: apps/users/serializers.py:415
+#: apps/users/serializers.py:417
 msgid "It cannot be today or a future date."
 msgstr "No puede ser hoy ni una fecha futura."
 
-#: apps/users/serializers.py:424
+#: apps/users/serializers.py:426
 #, python-format
 msgid "That gives an age of %(age)s, below the minimum working age. %(basis)s"
 msgstr ""
 "Eso da una edad de %(age)s años, por debajo de la edad mínima para trabajar. "
 "%(basis)s"
 
-#: apps/users/serializers.py:428
+#: apps/users/serializers.py:430
 msgid "That gives an age of over a hundred years."
 msgstr "Eso da una edad de más de cien años."
 
-#: apps/users/serializers.py:453
+#: apps/users/serializers.py:455
 msgid ""
 "There is no agreed figure on this regime. Clear it, or choose one that has "
 "hours."
 msgstr ""
 "En este régimen no hay cifra pactada. Bórrala, o elige uno que tenga horas."
 
-#: apps/users/serializers.py:470
+#: apps/users/serializers.py:472
 msgid "Art. 3.b asks for the agreed hours on this regime."
 msgstr "El art. 3.b pide las horas pactadas en este régimen."
 
-#: apps/users/serializers.py:485
+#: apps/users/serializers.py:487
 msgid "A relief contract stands in for somebody else."
 msgstr "Un contrato de relevo sustituye a otra persona."
 
-#: apps/users/serializers.py:494
+#: apps/users/serializers.py:496
 msgid "It has to be above zero."
 msgstr "Tiene que ser mayor que cero."
 
-#: apps/users/serializers.py:514
+#: apps/users/serializers.py:516
 #, python-format
 msgid ""
 "%(basis)s: workers under eighteen may not work at night, so the status "
@@ -4648,7 +4666,7 @@ msgstr ""
 "%(basis)s: los menores de dieciocho años no pueden trabajar de noche, así "
 "que esa condición no les puede corresponder."
 
-#: apps/users/serializers.py:533
+#: apps/users/serializers.py:535
 #, python-format
 msgid ""
 "%(hours)s h a week is above the company's %(ceiling)s h. A contract cannot "
@@ -4657,48 +4675,48 @@ msgstr ""
 "%(hours)s h semanales pasan de las %(ceiling)s h de la empresa. Un contrato "
 "no puede pactar por encima del máximo legal."
 
-#: apps/users/serializers.py:646 apps/users/serializers.py:659
+#: apps/users/serializers.py:648 apps/users/serializers.py:661
 msgid "Wrong credentials."
 msgstr "Credenciales incorrectas."
 
-#: apps/users/serializers.py:784
+#: apps/users/serializers.py:786
 msgid ""
 "Art. 34.8 asks for a reason when the answer is an alternative or a refusal."
 msgstr ""
 "El art. 34.8 pide un motivo cuando la respuesta es una alternativa o una "
 "negativa."
 
-#: apps/users/serializers.py:799
+#: apps/users/serializers.py:801
 msgid "An answer needs the date it was given."
 msgstr "Una respuesta necesita la fecha en que se dio."
 
-#: apps/users/serializers.py:843
+#: apps/users/serializers.py:845
 msgid "A share goes from 0 to 100."
 msgstr "Un porcentaje va de 0 a 100."
 
-#: apps/users/serializers.py:863
+#: apps/users/serializers.py:865
 msgid "The agreement cannot end before it starts."
 msgstr "El acuerdo no puede acabar antes de empezar."
 
-#: apps/users/serializers.py:881
+#: apps/users/serializers.py:883
 #, python-format
 msgid "It overlaps the agreement that starts on %(day)s."
 msgstr "Se solapa con el acuerdo que empieza el %(day)s."
 
-#: apps/users/serializers.py:922
+#: apps/users/serializers.py:924
 msgid "Periods of activity are for permanent-seasonal contracts (art. 16 ET)."
 msgstr ""
 "Los periodos de actividad son para contratos fijos discontinuos (art. 16 ET)."
 
-#: apps/users/serializers.py:941
+#: apps/users/serializers.py:943
 msgid "The season cannot end before it starts."
 msgstr "La temporada no puede acabar antes de empezar."
 
-#: apps/users/serializers.py:948
+#: apps/users/serializers.py:950
 msgid "The call-up comes before the season starts, not after."
 msgstr "El llamamiento va antes de que empiece la temporada, no después."
 
-#: apps/users/serializers.py:961
+#: apps/users/serializers.py:963
 #, python-format
 msgid "It overlaps the period that starts on %(day)s."
 msgstr "Se solapa con el periodo que empieza el %(day)s."

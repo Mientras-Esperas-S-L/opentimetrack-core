@@ -161,7 +161,9 @@ def people_queryset(user):
     from apps.users.models import User
 
     scope = visible_people(user)
-    return User.objects.filter(tenant=user.tenant) if scope is None else scope
+    # Soporte no es nadie de la empresa: ni se lista ni se busca.
+    everybody = User.objects.filter(tenant=user.tenant) if scope is None else scope
+    return everybody.exclude(is_support=True)
 
 
 def person_in_scope(user, pk):

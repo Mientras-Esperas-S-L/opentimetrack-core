@@ -137,6 +137,8 @@ class TenantJWTAuthentication(JWTAuthentication):
 
     def get_user(self, validated_token):
         user = super().get_user(validated_token)
+        # Quién de la instalación abrió esta sesión de soporte, para el registro.
+        user.support_by = validated_token.get("support_by", "")
         if user.tenant_id is not None and not user.tenant.is_active:
             raise exceptions.AuthenticationFailed(
                 _("This company has been deactivated."), code="company_inactive"

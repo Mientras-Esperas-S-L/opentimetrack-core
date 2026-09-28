@@ -678,6 +678,10 @@ def test_every_route_is_covered_by_this_sweep():
         "api/platform/companies/<uuid:company_id>/admins/",
         "api/platform/companies/<uuid:company_id>/admins/<uuid:person_id>/link/",
         "api/platform/companies/<uuid:company_id>/identity/",
+        # Entrar como soporte. Su barrido ---que solo lo abre la instalación y que
+        # lo hecho dentro queda con su nombre--- está en
+        # apps/tenants/tests/test_soporte_entra_y_firma.py.
+        "api/platform/companies/<uuid:company_id>/support/",
         "api/platform/companies/<uuid:company_id>/applications/",
         "api/platform/companies/<uuid:company_id>/applications/<uuid:application_id>/",
         "api/platform/companies/<uuid:company_id>/applications/<uuid:application_id>/credentials/",

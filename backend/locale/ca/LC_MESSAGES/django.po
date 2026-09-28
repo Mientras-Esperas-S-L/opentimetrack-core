@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-28 10:24+0000\n"
+"POT-Creation-Date: 2026-09-28 10:35+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: OpenTimeTrack contributors\n"
 "Language-Team: Catalan\n"
@@ -219,17 +219,17 @@ msgid "needs a supporting document"
 msgstr ""
 
 #: apps/absences/models.py:203 apps/absences/models.py:559
-#: apps/audit/models.py:201 apps/audit/models.py:327 apps/punches/models.py:628
+#: apps/audit/models.py:204 apps/audit/models.py:331 apps/punches/models.py:628
 #: apps/shifts/models.py:126 apps/tenants/holidays.py:85
 #: apps/tenants/rules.py:577 apps/tenants/rules.py:661
-#: apps/users/models.py:1015 apps/users/models.py:1093
+#: apps/users/models.py:1023 apps/users/models.py:1101
 msgid "note"
 msgstr ""
 
 #: apps/absences/models.py:204 apps/help/models.py:52 apps/shifts/models.py:84
 #: apps/tenants/applications.py:60 apps/tenants/identity.py:117
 #: apps/tenants/models.py:202 apps/users/models.py:43 apps/users/models.py:206
-#: apps/users/models.py:697
+#: apps/users/models.py:705
 msgid "active"
 msgstr ""
 
@@ -267,12 +267,13 @@ msgstr "Cancel·lada"
 #: apps/punches/models.py:162 apps/punches/models.py:575
 #: apps/punches/models.py:617 apps/reports/payroll.py:97
 #: apps/shifts/models.py:111 apps/users/models.py:105 apps/users/models.py:257
-#: apps/users/models.py:997 apps/users/models.py:1069 apps/users/models.py:1172
+#: apps/users/models.py:1005 apps/users/models.py:1077
+#: apps/users/models.py:1180
 msgid "employee"
 msgstr "persona treballadora"
 
-#: apps/absences/models.py:286 apps/audit/models.py:194
-#: apps/audit/models.py:323 apps/punches/corrections.py:94
+#: apps/absences/models.py:286 apps/audit/models.py:197
+#: apps/audit/models.py:327 apps/punches/corrections.py:94
 #: apps/punches/models.py:164
 msgid "type"
 msgstr "tipus"
@@ -316,7 +317,7 @@ msgstr "registrat per"
 
 #: apps/absences/models.py:344 apps/absences/models.py:548
 #: apps/punches/corrections.py:104 apps/punches/models.py:621
-#: apps/users/models.py:1184
+#: apps/users/models.py:1192
 msgid "status"
 msgstr "estat"
 
@@ -359,7 +360,7 @@ msgid "Give both times, or neither: half of a range is not one."
 msgstr "Posa les dues hores o cap: mitja franja no és una franja."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/absences/models.py:446 apps/users/serializers.py:491
+#: apps/absences/models.py:446 apps/users/serializers.py:493
 msgid "It ends before it starts."
 msgstr "Acaba abans de començar."
 
@@ -595,8 +596,8 @@ msgstr "Esborrat"
 
 #: apps/absences/views.py:314 apps/absences/views.py:559
 #: apps/punches/correction_views.py:246 apps/reports/views.py:436
-#: apps/users/serializers.py:481 apps/users/serializers.py:757
-#: apps/users/serializers.py:831 apps/users/serializers.py:919
+#: apps/users/serializers.py:483 apps/users/serializers.py:759
+#: apps/users/serializers.py:833 apps/users/serializers.py:921
 msgid "That person is not in this company."
 msgstr "Aquesta persona no pertany a aquesta empresa."
 
@@ -825,12 +826,17 @@ msgstr "Va entregar a algú el seu propi registre"
 msgid "Erased a person who left no record"
 msgstr "Va retirar una alta que no va deixar rastre"
 
-#: apps/audit/models.py:167 apps/audit/models.py:299
+# revisar: traducido sin hablante nativo el 2026-08-27
+#: apps/audit/models.py:152
+msgid "Support entered the company"
+msgstr "Suport ha entrat a l'empresa"
+
+#: apps/audit/models.py:170 apps/audit/models.py:303
 msgid "when"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:173 apps/audit/models.py:319 apps/common/models.py:117
+#: apps/audit/models.py:176 apps/audit/models.py:323 apps/common/models.py:117
 #: apps/tenants/models.py:205 apps/tenants/models.py:233
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:449
@@ -838,135 +844,139 @@ msgid "company"
 msgstr "empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:183 apps/audit/models.py:307
+#: apps/audit/models.py:186 apps/audit/models.py:311
 msgid "who"
 msgstr "qui"
 
-#: apps/audit/models.py:187 apps/audit/models.py:309
+#: apps/audit/models.py:190 apps/audit/models.py:313
 msgid "who (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:189 apps/audit/models.py:311
+#: apps/audit/models.py:192 apps/audit/models.py:315
 msgid "action"
 msgstr ""
 
-#: apps/audit/models.py:195 apps/audit/models.py:324
+#: apps/audit/models.py:198 apps/audit/models.py:328
 #: apps/tenants/identity.py:59
 msgid "identifier"
 msgstr "identificador"
 
-#: apps/audit/models.py:196 apps/audit/models.py:325
+#: apps/audit/models.py:199 apps/audit/models.py:329
 msgid "what (as recorded)"
 msgstr ""
 
-#: apps/audit/models.py:200 apps/audit/models.py:326
+#: apps/audit/models.py:203 apps/audit/models.py:330
 msgid "changes"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:223
+#: apps/audit/models.py:226
 msgid "audit entry"
 msgstr "assentament del rastre"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:224
+#: apps/audit/models.py:227
 msgid "audit trail"
 msgstr "rastre d'auditoria"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:259
+#: apps/audit/models.py:262
 msgid "Created a company"
 msgstr "Va crear una empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:260
+#: apps/audit/models.py:263
 msgid "Changed a company's details"
 msgstr "Va canviar la fitxa d'una empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:261
+#: apps/audit/models.py:264
 msgid "Deactivated a company"
 msgstr "Va desactivar una empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:262
+#: apps/audit/models.py:265
 msgid "Reactivated a company"
 msgstr "Va reactivar una empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:265
+#: apps/audit/models.py:268
 msgid "Sent a company administrator a link to set a password"
 msgstr "Va enviar a un administrador d'empresa l'enllaç per posar contrasenya"
 
-#: apps/audit/models.py:267
+#: apps/audit/models.py:270
 msgid "Changed how a company's people sign in"
 msgstr "Va canviar per on entra la gent d'una empresa"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:268
+#: apps/audit/models.py:271
 msgid "Authorised an application"
 msgstr "Va autoritzar una aplicació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:269
+#: apps/audit/models.py:272
 msgid "Changed an application's permissions"
 msgstr "Va canviar els permisos d'una aplicació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:270
+#: apps/audit/models.py:273
 msgid "Withdrew an application"
 msgstr "Va retirar una aplicació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:271
+#: apps/audit/models.py:274
 msgid "Issued a credential"
 msgstr "Va emetre una credencial"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:272
+#: apps/audit/models.py:275
 msgid "Revoked a credential"
 msgstr "Va revocar una credencial"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:273
+#: apps/audit/models.py:276
 msgid "Created an installation account"
 msgstr "Va crear un compte de la instal·lació"
 
-#: apps/audit/models.py:274
+#: apps/audit/models.py:277
 msgid "Gave an installation account a new password"
 msgstr "Va donar una contrasenya nova a un compte de la instal·lació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:275
+#: apps/audit/models.py:278
 msgid "Deactivated an installation account"
 msgstr "Va desactivar un compte de la instal·lació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:276
+#: apps/audit/models.py:279
 msgid "Changed an installation account"
 msgstr "Va canviar un compte de la instal·lació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:277
+#: apps/audit/models.py:280
 msgid "Reactivated an installation account"
 msgstr "Va reactivar un compte de la instal·lació"
 
-#: apps/audit/models.py:278
+#: apps/audit/models.py:281
 msgid "Sent an installation account a link to set a password"
 msgstr ""
 "Va enviar a un compte de la instal·lació l'enllaç per posar contrasenya"
 
-#: apps/audit/models.py:321
+#: apps/audit/models.py:282
+msgid "Entered a company as support"
+msgstr "Ha entrat a una empresa com a suport"
+
+#: apps/audit/models.py:325
 msgid "company (as recorded)"
 msgstr "empresa (tal com es va registrar)"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:330
+#: apps/audit/models.py:334
 msgid "installation audit entry"
 msgstr "entrada del registre de la instal·lació"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/audit/models.py:331
+#: apps/audit/models.py:335
 msgid "installation audit trail"
 msgstr "registre de la instal·lació"
 
@@ -1008,7 +1018,7 @@ msgid "Invalid credential."
 msgstr "Credencial no vàlida."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/common/authentication.py:142
+#: apps/common/authentication.py:144
 msgid "This company has been deactivated."
 msgstr "Aquesta empresa està desactivada."
 
@@ -1047,7 +1057,7 @@ msgid "This listing does not support searching by text."
 msgstr "Aquest llistat no admet cerca per text."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/common/four_eyes.py:100
+#: apps/common/four_eyes.py:103
 #, python-format
 msgid ""
 "You cannot resolve %(what)s of your own. Another manager or administrator "
@@ -1994,7 +2004,8 @@ msgstr "Aquesta persona està donada de baixa i no pot fitxar."
 #: apps/punches/services.py:453
 msgid ""
 "A labour advisor is not on the payroll and has no working day to record."
-msgstr "L'assessoria laboral no és a la plantilla i no té jornada per registrar."
+msgstr ""
+"L'assessoria laboral no és a la plantilla i no té jornada per registrar."
 
 #: apps/punches/services.py:490
 msgid "The working day has to be open first."
@@ -3303,7 +3314,7 @@ msgstr "Aquesta empresa no té cap tipus de permís amb aquest codi."
 msgid "Display name, e.g. 'Company directory'."
 msgstr "Nom visible, per exemple «Directori de l'empresa»."
 
-#: apps/tenants/identity.py:37 apps/users/models.py:695
+#: apps/tenants/identity.py:37 apps/users/models.py:703
 msgid "issuer"
 msgstr ""
 
@@ -3494,7 +3505,7 @@ msgid ""
 "browser's setting is only used when neither is set."
 msgstr ""
 
-#: apps/tenants/models.py:73 apps/users/models.py:674
+#: apps/tenants/models.py:73 apps/users/models.py:682
 msgid "annual leave days"
 msgstr ""
 
@@ -3688,7 +3699,7 @@ msgid "The tax number cannot be empty."
 msgstr "L'identificador fiscal no pot quedar buit."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/tenants/platform_views.py:537 apps/users/serializers.py:582
+#: apps/tenants/platform_views.py:537 apps/users/serializers.py:584
 msgid "A company with this tax number already exists."
 msgstr "Ja existeix una empresa amb aquest NIF."
 
@@ -3792,6 +3803,10 @@ msgid ""
 msgstr ""
 "És l'únic compte que pot administrar la instal·lació. Crea'n un altre abans "
 "de desactivar-lo."
+
+#: apps/tenants/platform_views.py:1420
+msgid "The company is deactivated: support cannot enter it."
+msgstr "L'empresa està desactivada: el suport no hi pot entrar."
 
 #: apps/tenants/rules.py:43
 msgid "Seniority steps are a list."
@@ -4319,7 +4334,7 @@ msgstr ""
 "Una consulta prèvia pertany a la via de la decisió empresarial. Un acord és "
 "la negociació."
 
-#: apps/tenants/views.py:142 apps/users/serializers.py:392
+#: apps/tenants/views.py:142 apps/users/serializers.py:394
 msgid "That workplace belongs to another company."
 msgstr "Aquest centre de treball és d'una altra empresa."
 
@@ -4704,77 +4719,81 @@ msgid ""
 "an adult."
 msgstr ""
 
-#: apps/users/models.py:652
+#: apps/users/models.py:654
+msgid "support access"
+msgstr "accés de suport"
+
+#: apps/users/models.py:660
 msgid "workers' representative"
 msgstr ""
 
-#: apps/users/models.py:655
+#: apps/users/models.py:663
 msgid ""
 "Informed when somebody disagrees with a change to their record (art. 4.b), "
 "and entitled to consult the register (art. 6.2)."
 msgstr ""
 
-#: apps/users/models.py:665
+#: apps/users/models.py:673
 msgid "wants clock reminders"
 msgstr ""
 
-#: apps/users/models.py:668
+#: apps/users/models.py:676
 msgid ""
 "Send a reminder when a shift starts and there is no entry, or when a day is "
 "left open. It prompts the real punch; it never records one."
 msgstr ""
 
-#: apps/users/models.py:678
+#: apps/users/models.py:686
 msgid ""
 "Overrides the company figure for this person. Empty means the company's. "
 "Part-time and mid-year joiners are the usual reason."
 msgstr ""
 
-#: apps/users/models.py:690
+#: apps/users/models.py:698
 msgid "identity provider subject"
 msgstr ""
 
-#: apps/users/models.py:698
+#: apps/users/models.py:706
 msgid "admin site access"
 msgstr ""
 
-#: apps/users/models.py:699
+#: apps/users/models.py:707
 msgid "date joined"
 msgstr ""
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:707
+#: apps/users/models.py:715
 msgid "person"
 msgstr "persona"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/models.py:708
+#: apps/users/models.py:716
 msgid "people"
 msgstr "persones"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:999
+#: apps/users/models.py:1007
 msgid "activity starts"
 msgstr "l'activitat comença"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1001
+#: apps/users/models.py:1009
 msgid "activity ends"
 msgstr "l'activitat acaba"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1004
+#: apps/users/models.py:1012
 msgid "Empty while the season is open: a campaign knows when it starts."
 msgstr ""
 "Buit mentre la temporada segueixi oberta: una campanya sap quan comença."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1007
+#: apps/users/models.py:1015
 msgid "called up on"
 msgstr "crida el"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1011
+#: apps/users/models.py:1019
 msgid ""
 "Art. 16.3 ET: the call-up is in writing and with notice. The date is what "
 "shows the notice was given; a tick would not."
@@ -4783,47 +4802,47 @@ msgstr ""
 "demostra que es va avisar; una casella marcada, no."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1018
+#: apps/users/models.py:1026
 msgid "period of activity"
 msgstr "període d'activitat"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1019
+#: apps/users/models.py:1027
 msgid "periods of activity"
 msgstr "períodes d'activitat"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1072
+#: apps/users/models.py:1080
 msgid "signed on"
 msgstr "signat el"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1073
+#: apps/users/models.py:1081
 msgid "Art. 5.1: the agreement comes before the remote work starts."
 msgstr "Art. 5.1: l'acord va abans que comenci el treball a distància."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1075
+#: apps/users/models.py:1083
 msgid "remote work starts"
 msgstr "el treball a distància comença"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1077
+#: apps/users/models.py:1085
 msgid "remote work ends"
 msgstr "el treball a distància acaba"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1080
+#: apps/users/models.py:1088
 msgid "Empty for an open-ended agreement, which is the usual one."
 msgstr "Buit per a un acord sense data de fi, que és el corrent."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1083
+#: apps/users/models.py:1091
 msgid "share agreed (%)"
 msgstr "percentatge pactat (%)"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1089
+#: apps/users/models.py:1097
 msgid ""
 "Art. 7.f asks the agreement to state it. Left empty it is not checked "
 "against what is actually worked: the figure that binds is on paper."
@@ -4832,73 +4851,73 @@ msgstr ""
 "treballa de debò: la xifra que obliga és la del paper."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1096
+#: apps/users/models.py:1104
 msgid "remote work agreement"
 msgstr "acord de treball a distància"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1097
+#: apps/users/models.py:1105
 msgid "remote work agreements"
 msgstr "acords de treball a distància"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1133
+#: apps/users/models.py:1141
 msgid "In negotiation"
 msgstr "En negociació"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1134
+#: apps/users/models.py:1142
 msgid "Accepted"
 msgstr "Acceptada"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1135
+#: apps/users/models.py:1143
 msgid "An alternative was proposed"
 msgstr "Es va proposar una alternativa"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1136
+#: apps/users/models.py:1144
 msgid "Refused"
 msgstr "Denegada"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1137
+#: apps/users/models.py:1145
 msgid "Withdrawn by the person"
 msgstr "Retirada per la persona"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1175
+#: apps/users/models.py:1183
 msgid "requested on"
 msgstr "sol·licitada el"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1176
+#: apps/users/models.py:1184
 msgid "The fifteen days of art. 34.8 count from here."
 msgstr "Els quinze dies de l'art. 34.8 es compten des d'aquí."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1179
+#: apps/users/models.py:1187
 msgid "what is being asked"
 msgstr "què es demana"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1181
+#: apps/users/models.py:1189
 msgid ""
 "Duration, distribution, or the way the work is done --- remote included."
 msgstr "Durada, distribució o forma de prestació ---inclòs a distància---."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1189
+#: apps/users/models.py:1197
 msgid "answered on"
 msgstr "contestada el"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1191
+#: apps/users/models.py:1199
 msgid "answer"
 msgstr "resposta"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1195
+#: apps/users/models.py:1203
 msgid ""
 "Art. 34.8 asks for this in writing, and for a reason when the answer is not "
 "a plain yes."
@@ -4907,17 +4926,17 @@ msgstr ""
 "seques."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1205
+#: apps/users/models.py:1213
 msgid "answered by"
 msgstr "contestada per"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1209
+#: apps/users/models.py:1217
 msgid "schedule adaptation"
 msgstr "adaptació de jornada"
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/models.py:1210
+#: apps/users/models.py:1218
 msgid "schedule adaptations"
 msgstr "adaptacions de jornada"
 
@@ -4948,28 +4967,28 @@ msgstr ""
 "concediria res."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:351
+#: apps/users/serializers.py:353
 msgid "Somebody in this company already uses it."
 msgstr "Algú d'aquesta empresa ja el fa servir."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:383
+#: apps/users/serializers.py:385
 #, python-format
 msgid "%(name)s already uses that staff number."
 msgstr "%(name)s ja fa servir aquest número."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:399
+#: apps/users/serializers.py:401
 msgid "That department belongs to another company."
 msgstr "Aquest departament és d'una altra empresa."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:415
+#: apps/users/serializers.py:417
 msgid "It cannot be today or a future date."
 msgstr "No pot ser avui ni una data futura."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:424
+#: apps/users/serializers.py:426
 #, python-format
 msgid "That gives an age of %(age)s, below the minimum working age. %(basis)s"
 msgstr ""
@@ -4977,12 +4996,12 @@ msgstr ""
 "%(basis)s"
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:428
+#: apps/users/serializers.py:430
 msgid "That gives an age of over a hundred years."
 msgstr "Això dóna una edat de més de cent anys."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:453
+#: apps/users/serializers.py:455
 msgid ""
 "There is no agreed figure on this regime. Clear it, or choose one that has "
 "hours."
@@ -4991,22 +5010,22 @@ msgstr ""
 "hores."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:470
+#: apps/users/serializers.py:472
 msgid "Art. 3.b asks for the agreed hours on this regime."
 msgstr "L'art. 3.b demana les hores pactades en aquest règim."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:485
+#: apps/users/serializers.py:487
 msgid "A relief contract stands in for somebody else."
 msgstr "Un contracte de relleu substitueix una altra persona."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:494
+#: apps/users/serializers.py:496
 msgid "It has to be above zero."
 msgstr "Ha de ser més gran que zero."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:514
+#: apps/users/serializers.py:516
 #, python-format
 msgid ""
 "%(basis)s: workers under eighteen may not work at night, so the status "
@@ -5016,7 +5035,7 @@ msgstr ""
 "així que la condició no se'ls pot aplicar."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:533
+#: apps/users/serializers.py:535
 #, python-format
 msgid ""
 "%(hours)s h a week is above the company's %(ceiling)s h. A contract cannot "
@@ -5026,12 +5045,12 @@ msgstr ""
 "contracte no pot pactar més enllà del màxim legal."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/users/serializers.py:646 apps/users/serializers.py:659
+#: apps/users/serializers.py:648 apps/users/serializers.py:661
 msgid "Wrong credentials."
 msgstr "Credencials incorrectes."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:784
+#: apps/users/serializers.py:786
 msgid ""
 "Art. 34.8 asks for a reason when the answer is an alternative or a refusal."
 msgstr ""
@@ -5039,44 +5058,44 @@ msgstr ""
 "negativa."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:799
+#: apps/users/serializers.py:801
 msgid "An answer needs the date it was given."
 msgstr "Una resposta necessita la data en què es va donar."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:843
+#: apps/users/serializers.py:845
 msgid "A share goes from 0 to 100."
 msgstr "Un percentatge va de 0 a 100."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:863
+#: apps/users/serializers.py:865
 msgid "The agreement cannot end before it starts."
 msgstr "L'acord no pot acabar abans de començar."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:881
+#: apps/users/serializers.py:883
 #, python-format
 msgid "It overlaps the agreement that starts on %(day)s."
 msgstr "Se superposa amb l'acord que comença el %(day)s."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:922
+#: apps/users/serializers.py:924
 msgid "Periods of activity are for permanent-seasonal contracts (art. 16 ET)."
 msgstr ""
 "Els períodes d'activitat són per a contractes fixos discontinus (art. 16 ET)."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:941
+#: apps/users/serializers.py:943
 msgid "The season cannot end before it starts."
 msgstr "La temporada no pot acabar abans de començar."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:948
+#: apps/users/serializers.py:950
 msgid "The call-up comes before the season starts, not after."
 msgstr "La crida va abans que comenci la temporada, no després."
 
 # revisar: traducido sin hablante nativo el 2026-08-28
-#: apps/users/serializers.py:961
+#: apps/users/serializers.py:963
 #, python-format
 msgid "It overlaps the period that starts on %(day)s."
 msgstr "Se superposa amb el període que comença el %(day)s."

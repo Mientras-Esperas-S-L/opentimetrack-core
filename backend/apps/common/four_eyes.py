@@ -69,7 +69,10 @@ def someone_else_could_decide(*, company, decider, subject=None) -> bool:
 
     subject = subject if subject is not None else decider
 
-    others = User.objects.filter(tenant=company, is_active=True).exclude(pk=decider.pk)
+    # Soporte no cuenta como segunda persona: es de fuera y entra de paso.
+    others = User.objects.filter(tenant=company, is_active=True, is_support=False).exclude(
+        pk=decider.pk
+    )
 
     # Cualquier otra administradora sirve: leen la empresa entera.
     if others.filter(role=Role.ADMIN).exists():

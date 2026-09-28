@@ -54,8 +54,10 @@ class OverviewView(APIView):
         # department is two numbers that do not belong on the same screen.
         scope = visible_people(request.user)
         mine = Q() if scope is None else Q(employee__in=scope)
-        people = (User.objects.filter(tenant=company) if scope is None else scope).exclude(
-            role=Role.ADVISOR
+        people = (
+            (User.objects.filter(tenant=company) if scope is None else scope)
+            .exclude(role=Role.ADVISOR)
+            .exclude(is_support=True)
         )
 
         return Response(

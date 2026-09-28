@@ -73,6 +73,11 @@ def record(
 def _label_of(actor) -> str:
     if actor is None:
         return "sistema"
+    if getattr(actor, "is_support", False):
+        # Una sola cuenta de soporte por empresa: quién de la instalación estaba
+        # detrás viaja en su sesión, y es lo que el asiento tiene que decir.
+        quien = getattr(actor, "support_by", "")
+        return (f"Soporte ({quien})" if quien else "Soporte")[:160]
     name = getattr(actor, "get_full_name", lambda: "")() or getattr(actor, "email", "")
     return str(name)[:160]
 

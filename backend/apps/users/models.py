@@ -404,13 +404,13 @@ class UserManager(BaseUserManager):
     use_in_migrations = True
 
     def workforce(self):
-        """La plantilla: todos menos la asesoría, que ni ficha ni tiene jornada.
+        """La plantilla: todos menos la asesoría y soporte, que ni fichan ni tienen jornada.
 
         Para lo que cuenta gente ---quién falta hoy, el resumen de nómina, los
         recordatorios, el censo---. Una asesoría contada ahí sale todos los días
         como alguien que no ha fichado.
         """
-        return self.exclude(role=Role.ADVISOR)
+        return self.exclude(role=Role.ADVISOR).exclude(is_support=True)
 
     def _create_user(self, email: str, password: str | None, **extra):
         if not email:
@@ -644,6 +644,14 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
             "so rather than assuming the person is an adult."
         ),
     )
+
+    #: La cuenta con la que soporte de la instalación entra en esta empresa para
+    #: ayudarla. Una por empresa, sin contraseña ni proveedor: solo se abre desde
+    #: la consola de la instalación. No sale en ninguna lista ni recuento, pero lo
+    #: que hace queda en el registro de actividad como «Soporte», con la cuenta de
+    #: la instalación que entró: un cambio en un fichaje sin autor es justo lo que
+    #: la Inspección no admite.
+    is_support = models.BooleanField(_("support access"), default=False, editable=False)
 
     # Art. 4.b: on disagreement over a change, the workers' legal representation
     # must be informed. Art. 6.2 also grants them access to the record. The

@@ -836,6 +836,49 @@ export const amIPlatformAdmin = async () => {
 
 export const getCompanies = async () => (await get('/platform/companies/')).companies
 
+/** Entrar en una empresa como soporte.
+ *
+ *  La sesión de la instalación se aparta, no se tira: al salir se vuelve a ella
+ *  sin teclear otra vez la contraseña. La de soporte dura dos horas y todo lo que
+ *  se hace con ella queda en el registro de la empresa como «Soporte».
+ */
+const VUELTA_DE_SOPORTE = 'ott.support.return'
+
+export const enterAsSupport = async (companyId) => {
+  const sesion = await post(`/platform/companies/${companyId}/support/`, {})
+  localStorage.setItem(
+    VUELTA_DE_SOPORTE,
+    JSON.stringify({ access: tokens.access, refresh: tokens.refresh }),
+  )
+  tokens.save(sesion)
+  return getMe()
+}
+
+/** Salir de soporte: de vuelta a la consola de la instalación, si su sesión vive. */
+export const leaveSupport = async () => {
+  let vuelta
+  try {
+    vuelta = JSON.parse(localStorage.getItem(VUELTA_DE_SOPORTE) ?? 'null')
+  } catch {
+    vuelta = null
+  }
+  localStorage.removeItem(VUELTA_DE_SOPORTE)
+  try {
+    await post('/auth/logout/', { refresh: tokens.refresh })
+  } catch {
+    // La de soporte muere igual en dos horas: no impide volver.
+  }
+  tokens.clear()
+  if (!vuelta?.access || !vuelta?.refresh) return null
+  tokens.save(vuelta)
+  try {
+    return await getMe()
+  } catch {
+    tokens.clear()
+    return null
+  }
+}
+
 export const createCompany = (payload) => post('/platform/companies/', payload)
 
 /** Cambia la ficha de una empresa, o su estado. Desactivar exige `confirm` con su nombre. */

@@ -447,7 +447,7 @@ def register_punch(
             code="employee_inactive",
             message=_("This person is deactivated and cannot clock in or out."),
         )
-    if employee.is_advisor:
+    if employee.is_advisor or employee.is_support:
         raise BusinessRuleError(
             code="advisor_does_not_clock",
             message=_("A labour advisor is not on the payroll and has no working day to record."),
