@@ -6,15 +6,21 @@
  *  lo que faltaba era que la pantalla la dijera. Quien lee el aviso cuenta las
  *  líneas y no le sale.
  *
- *  **La prueba construye el caso.** La primera versión miraba el saldo que
- *  hubiera y se saltaba sola cuando no encajaba: con la demostración recién
- *  sembrada nadie ha disfrutado nada, así que la comprobación que importa no
- *  llegaba a correr nunca. Una prueba que se salta siempre no protege nada.
+ *  **La prueba lee, no crea.** Dos versiones anteriores fallaron por lo mismo:
+ *  la primera se saltaba sola con `skip` cuando la demostración no traía
+ *  descansos disfrutados ---o sea siempre, recién sembrada---; la segunda los
+ *  creaba y los aprobaba, y **no podía deshacerlos**, porque `cancel_absence`
+ *  solo actúa mientras la ausencia está pendiente y eso es a propósito: una
+ *  aprobada ya ha bloqueado días. Dejaba tres descansos en la base y la tanda
+ *  siguiente empezaba con el saldo movido.
+ *
+ *  Ahora el caso vive en la semilla, que además es donde tiene que estar: una
+ *  empresa con la deuda intacta es la de la primera semana, no la normal.
  */
 
 import { expect, test } from '@playwright/test'
 
-import { api, irA, marca } from './apoyo.js'
+import { api, irA } from './apoyo.js'
 
 const elSaldo = (page) =>
   page
@@ -32,135 +38,63 @@ async function lineasDelDesglose(page) {
     .map((m) => Number(m[1].replace(',', '.')))
 }
 
-/** El saldo de esta persona, visto desde su propia sesión. */
-async function saldoDe(browser, hacer) {
-  const contexto = await browser.newContext({ storageState: 'e2e/.sesiones/operario.json' })
-  const suya = await contexto.newPage()
-  try {
-    await irA(suya, '/mis-ausencias', 'Mis ausencias')
-    return await hacer(suya)
-  } finally {
-    await contexto.close()
-  }
-}
-
 test.describe('El total del saldo y la suma de sus líneas', () => {
-  // La administración crea y aprueba; quien trabaja mira. Dos sesiones, porque
-  // una persona no puede aprobarse su propio descanso.
-  test.use({ storageState: 'e2e/.sesiones/admin.json' })
+  test.use({ storageState: 'e2e/.sesiones/operario.json' })
 
-  let creadas = []
+  test('el total es menor que la suma, y la pantalla dice por qué', async ({ page }) => {
+    await irA(page, '/mis-ausencias', 'Mis ausencias')
+    const {
+      body: { rest_debt: deuda },
+    } = await api(page, '/absences/balance/')
 
-  test.afterEach(async ({ page }) => {
-    if (!creadas.length) return
-    const cuales = creadas
-    creadas = []
-    await irA(page, '/panel/decisiones', 'Por decidir')
-    for (const cual of cuales) {
-      await api(page, `/absences/${cual}/cancel/`, { method: 'POST' }).catch(() => {})
-    }
+    expect(deuda, 'la demostración ya no genera deuda de descanso').toBeTruthy()
+    expect(
+      deuda.settled_hours,
+      'la demostración ya no trae ningún descanso disfrutado: sin eso, esta prueba comprueba el caso fácil',
+    ).toBeGreaterThan(0)
+
+    const lineas = await lineasDelDesglose(page)
+    expect(lineas.length, 'no hay desglose que comprobar').toBeGreaterThan(1)
+    const generado = lineas.reduce((a, b) => a + b, 0)
+
+    // El total es menor que la suma, y la diferencia **es** lo devuelto.
+    expect(generado).toBeGreaterThan(deuda.remaining_hours)
+    expect(Math.round((generado - deuda.remaining_hours) * 10) / 10).toBe(deuda.settled_hours)
+
+    // Y la pantalla lo explica, en vez de dejar que quien lee cuente y no le
+    // salga. Sin esta frase las dos cifras se contradicen a la vista.
+    const texto = await elSaldo(page).innerText()
+    expect(texto).toContain(`Ya has disfrutado ${deuda.settled_hours} h`)
+    expect(texto).toMatch(/se restan del total y no de una línea/)
   })
 
-  /** Un descanso de N horas, ya aprobado. **Por horas y no por días**: un día
-   *  entero vale lo que ese día tocaba trabajar y sale del cuadrante, así que
-   *  depender de él ataría la prueba a qué días tiene turno la persona en la
-   *  demostración. Las horas se cuentan tal cual. */
-  async function disfruta(page, quien, descanso, dia, horas) {
-    const { status, body } = await api(page, '/absences/', {
-      method: 'POST',
-      body: {
-        employee: quien.id,
-        absence_type: 'PAID_LEAVE',
-        leave_type: descanso.id,
-        start_date: dia,
-        end_date: dia,
-        start_time: '09:00',
-        end_time: `${String(9 + horas).padStart(2, '0')}:00`,
-        reason: `Desglose ${marca()}`,
-      },
-    })
-    expect(status, `no se pudo registrar el descanso del ${dia}`).toBe(201)
-    creadas.push(body.id)
-    await api(page, `/absences/${body.id}/approve/`, { method: 'POST' })
-  }
-
-  const haceDias = (n) => {
-    const d = new Date()
-    d.setDate(d.getDate() - n)
-    return d.toISOString().slice(0, 10)
-  }
-
-  test('un descanso disfrutado descuadra el total, y la pantalla lo explica', async ({
-    page,
-    browser,
-  }) => {
+  test('las líneas dicen lo generado, no lo que queda', async ({ page }) => {
+    // El contraste de lo anterior. Si el servidor repartiera lo devuelto entre
+    // las fuentes, la suma coincidiría con el total y la frase sobraría --- pero
+    // haría falta una regla de imputación que nadie ha acordado, y cada línea
+    // lleva su plazo, así que restar de la que no toca cambia cuándo vence.
     await irA(page, '/mis-ausencias', 'Mis ausencias')
+    const {
+      body: { rest_debt: deuda },
+    } = await api(page, '/absences/balance/')
 
-    // 1. Antes: el total es exactamente la suma de las líneas.
-    const antes = await saldoDe(browser, async (suya) => {
-      const {
-        body: { rest_debt: deuda },
-      } = await api(suya, '/absences/balance/')
-      return { deuda, lineas: await lineasDelDesglose(suya) }
-    })
-    expect(antes.deuda, 'la demostración ya no genera deuda de descanso').toBeTruthy()
-    expect(antes.deuda.settled_hours, 'la demostración ya trae descansos disfrutados').toBe(0)
-    expect(antes.lineas.length, 'no hay desglose que comprobar').toBeGreaterThan(1)
-    const suma = antes.lineas.reduce((a, b) => a + b, 0)
-    expect(Math.round(suma * 10) / 10).toBe(antes.deuda.remaining_hours)
+    const suma = deuda.sources.reduce((a, f) => a + f.owed_hours, 0)
+    expect(Math.round(suma * 10) / 10).toBe(deuda.owed_hours)
+    expect(deuda.owed_hours).toBeGreaterThan(deuda.remaining_hours)
+  })
 
-    // 2. Se disfruta un día de descanso, aprobado por la administración.
-    const { body: gente } = await api(page, '/employees/?search=operario')
-    const quien = (gente.results ?? gente).find((p) => p.email === 'operario@demo.local')
-    const { body: tipos } = await api(page, '/leave-types/?page_size=200')
-    const descanso = (tipos.results ?? tipos).find((t) => t.code === 'es.compensatory_rest')
+  test('cada línea sigue llevando su artículo y su plazo', async ({ page }) => {
+    // Lo que el desglose existe para decir: de dónde sale cada trozo y hasta
+    // cuándo hay. Es también lo que lo hace peligroso cuando ya no queda nada,
+    // y por eso la pantalla lo esconde en ese caso.
+    await irA(page, '/mis-ausencias', 'Mis ausencias')
+    const texto = await elSaldo(page).innerText()
 
-    await disfruta(page, quien, descanso, haceDias(2), 8)
-
-    // 3. Después: el total baja, las líneas no, y la frase dice por qué.
-    const despues = await saldoDe(browser, async (suya) => {
-      const {
-        body: { rest_debt: deuda },
-      } = await api(suya, '/absences/balance/')
-      return { deuda, texto: await elSaldo(suya).innerText() }
-    })
-
-    expect(
-      despues.deuda.settled_hours,
-      'el descanso no se ha contado como devuelto',
-    ).toBeGreaterThan(0)
-    expect(despues.deuda.remaining_hours).toBeLessThan(antes.deuda.remaining_hours)
-    // Las líneas siguen diciendo lo generado: eso es correcto y es el motivo de
-    // que el total ya no sea su suma.
-    expect(despues.texto).toContain('Ya has disfrutado')
-    expect(despues.texto).toMatch(/se restan del total y no de una línea/)
-
-    // 4. **El extremo.** Disfrutado todo, el desglose desaparece: sus líneas
-    // llevan fechas ---«hasta el 12 dic 2026»--- y un plazo de algo saldado no
-    // corre. «No queda descanso por recuperar» encima de esas líneas hacía creer
-    // que quedaban ocho horas por caducar.
-    let porDisfrutar = despues.deuda.remaining_hours
-    let vuelta = 0
-    while (porDisfrutar > 0 && vuelta < 6) {
-      const cuantas = Math.min(8, Math.ceil(porDisfrutar))
-      await disfruta(page, quien, descanso, haceDias(9 + vuelta * 7), cuantas)
-      porDisfrutar -= cuantas
-      vuelta += 1
+    for (const linea of texto.split('\n').filter((l) => /^[\d.,]+ h de /.test(l))) {
+      expect(linea, `sin artículo: ${linea}`).toMatch(/Art\./)
+      expect(linea, `sin estado de plazo: ${linea}`).toMatch(
+        /hasta el|sin plazo|fuera de plazo|en los días siguientes/,
+      )
     }
-
-    const alFinal = await saldoDe(browser, async (suya) => {
-      const {
-        body: { rest_debt: deuda },
-      } = await api(suya, '/absences/balance/')
-      return {
-        deuda,
-        texto: await elSaldo(suya).innerText(),
-        lineas: await lineasDelDesglose(suya),
-      }
-    })
-
-    expect(alFinal.deuda.remaining_hours, 'no se ha llegado a saldar todo').toBe(0)
-    expect(alFinal.texto).toMatch(/No queda descanso por recuperar/)
-    expect(alFinal.lineas, 'el desglose sigue enseñando horas y plazos ya saldados').toEqual([])
   })
 })

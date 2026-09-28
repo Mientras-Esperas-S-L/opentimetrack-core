@@ -2,6 +2,42 @@
 
 Patrones que me han costado un error. Escritos para no repetirlos.
 
+## Una prueba que crea algo que el producto no deja deshacer, ensucia (31/08/2026)
+
+Reescribí la prueba del desglose para que **construyera** el caso: pedía un
+descanso compensatorio, lo aprobaba desde la sesión de administración y miraba la
+pantalla. Y en el `afterEach`, `POST /cancel/` con un `.catch(() => {})`.
+
+`cancel_absence` solo actúa mientras la ausencia está **pendiente** ---una
+aprobada ya ha bloqueado días, así que deshacerla es una decisión de quien la
+aprobó--- de modo que la limpieza contestaba `already_resolved` y el `catch` se
+lo tragaba. Tres descansos aprobados se quedaron en la base, y la tanda siguiente
+empezó con el saldo movido: la prueba que pasaba sola falló en la suite completa.
+
+**Cómo evitarlo:** antes de que una prueba cree algo, comprobar que el producto
+permite deshacerlo **por el mismo camino**. Si no, el caso va a la semilla ---que
+además suele ser donde debía estar: la demostración con todos los saldos intactos
+es la de la primera semana, no la normal---. Y un `catch` vacío en la limpieza
+esconde exactamente esto: si la limpieza puede fallar, que lo diga.
+
+## El guard de residuos no cubre lo que no se le ha enseñado (31/08/2026)
+
+`zz-sin-residuos` comprueba personas, centros de trabajo, departamentos, festivos
+y ajustes de empresa. **No comprueba ausencias.** Los tres descansos aprendieron
+a vivir ahí sin que nadie dijera nada: la tanda pasó ese guard con el residuo
+delante.
+
+Sus seis fallos de esa tanda venían de otra cosa ---una prueba anterior que
+abortó sin limpiar su centro--- y por un momento parecieron confirmar la
+sospecha equivocada. Correrlo aparte, con el residuo puesto, lo descartó en
+diez segundos.
+
+**Cómo evitarlo:** un guard de limpieza enumera **tipos concretos**, así que
+cubre lo que había el día que se escribió. Al añadir una prueba que cree un tipo
+de dato nuevo, o se añade al guard o se deja de crear. Y antes de atribuirle un
+fallo a un residuo, reproducirlo con el residuo presente: es barato y evita
+arreglar lo que no era.
+
 ## Una prueba que se salta sola no protege nada (29/08/2026)
 
 Escribí la prueba del desglose con `test.skip(deuda?.settled_hours > 0, ...)`

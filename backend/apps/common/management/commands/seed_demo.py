@@ -183,6 +183,7 @@ class Command(BaseCommand):
             self._worked_holiday(company, people)
             self._night_shift(company, people)
             self._changeover(company, people)
+            self._rest_taken(company, people)
 
         self._neighbour()
         self._report(company, people, rules)
@@ -306,6 +307,53 @@ class Command(BaseCommand):
                     punch_type=kind,
                     source=PunchSource.TERMINAL,
                 )
+
+    def _rest_taken(self, company, people):
+        """Un descanso compensatorio **ya disfrutado**, para que el saldo enseñe
+        el caso normal y no solo el de estreno.
+
+        Sin esto, la demostración pone a todo el mundo con la deuda intacta: el
+        total coincide siempre con la suma de sus líneas y la pantalla parece
+        cuadrar sola. En cuanto alguien devuelve algo ---que es lo que pasa en
+        cualquier empresa a los pocos meses--- el total baja y las líneas no,
+        porque cada fuente dice lo que **generó** y lo devuelto se resta una sola
+        vez, del total. Es correcto y hay que explicarlo; sin un caso así en la
+        semilla, ni se enseña ni se puede probar en pantalla.
+
+        Por horas y no por días: un día entero vale lo que ese día tocaba
+        trabajar y sale del cuadrante, así que dependería de qué días tienen
+        turno. Las horas se cuentan tal cual.
+        """
+        from apps.absences.models import Absence, AbsenceStatus, AbsenceType, LeaveType
+
+        quien = people.get("worker")
+        if quien is None:
+            return
+        tipo = LeaveType.objects.filter(code="es.compensatory_rest").first()
+        if tipo is None:
+            return
+
+        # Un martes de hace tres semanas, lejos de los días que usan el festivo
+        # trabajado y el turno de noche.
+        dia = timezone.localdate() - timedelta(days=21)
+        while dia.weekday() != 1:
+            dia -= timedelta(days=1)
+
+        Absence.objects.create(
+            tenant=company,
+            employee=quien,
+            absence_type=AbsenceType.PAID_LEAVE,
+            leave_type=tipo,
+            start_date=dia,
+            end_date=dia,
+            start_time=time(9, 0),
+            end_time=time(17, 0),
+            status=AbsenceStatus.APPROVED,
+            reason="Recupera horas extra",
+            requested_by=quien,
+            approved_by=people["manager"],
+            resolved_at=timezone.now(),
+        )
 
     def _neighbour(self):
         """Una segunda empresa, mínima, para que el aislamiento sea comprobable.

@@ -19,10 +19,26 @@
 # servidor: comparten la base de datos de desarrollo.
 set -euo pipefail
 
-cd "$(dirname "$0")/../frontend"
+# La raíz, resuelta **antes** de movernos: `dirname "$0"` es relativo al
+# directorio de trabajo, así que leerlo después del `cd` buscaba el `.env`
+# dentro de `frontend/`, no lo encontraba y se quedaba con los valores de
+# siempre --- exactamente los que este cambio venía a dejar de usar.
+raiz="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$raiz/frontend"
 
-export OTT_URL="${OTT_URL:-http://localhost:3010}"
-export OTT_API_URL="${OTT_API_URL:-http://localhost:8100/api}"
+# **Los puertos salen del `.env`, no de aquí.** Estaban escritos a mano en este
+# script, en `capturas.mjs` y en un comentario de `apoyo.js`, así que moverlos
+# ---cosa que pasa en cuanto esta máquina levanta otro proyecto--- obligaba a
+# acordarse de tres sitios. El `compose.yml` ya los lee del `.env`; esto hace lo
+# mismo, y los valores de siempre quedan de último recurso.
+leer_del_env() {
+  local clave="$1" defecto="$2" valor=""
+  [ -f "$raiz/.env" ] && valor="$(sed -n "s/^${clave}=\([0-9]\{1,5\}\).*/\1/p" "$raiz/.env" | tail -1)"
+  printf '%s' "${valor:-$defecto}"
+}
+
+export OTT_URL="${OTT_URL:-http://localhost:$(leer_del_env OTT_PORT_WEB 3000)}"
+export OTT_API_URL="${OTT_API_URL:-http://localhost:$(leer_del_env OTT_PORT_API 8000)/api}"
 
 salida="$(mktemp -t ott-e2e-XXXXXX.log)"
 trap 'rm -f "$salida"' EXIT

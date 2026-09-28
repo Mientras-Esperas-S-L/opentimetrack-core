@@ -55,19 +55,55 @@ def record(
         entry = AuditLog(
             tenant=tenant,
             actor=actor if getattr(actor, "pk", None) else None,
-            actor_label=actor_label or _label_of(actor),
+            # **Cortados al límite de su columna, siempre.** El truncado estaba,
+            # pero solo en la rama que deriva la etiqueta de `target`: cuando se
+            # la pasan hecha ---y se la pasan en casi todas las llamadas--- iba
+            # entera. Una razón social de doscientos veintinueve caracteres es
+            # válida para `Tenant.name`, que admite doscientos cincuenta y cinco,
+            # y reventaba esta columna de doscientos: la petición contestaba
+            # **500** y el cambio se revertía entero.
+            #
+            # Cortar es lo correcto y no una rebaja: la etiqueta es «lo que se
+            # vio», un apoyo para leer el rastro. Lo que identifica la fila es
+            # `target_id`, y ese no se toca.
+            actor_label=_cortado(actor_label or _label_of(actor), 160),
             action=action,
             target_type=target_type or (type(target).__name__.lower() if target else ""),
             target_id=getattr(target, "pk", None),
-            target_label=target_label or (str(target)[:200] if target else ""),
+            target_label=_cortado(target_label or (str(target) if target else ""), 200),
             changes=changes or {},
-            note=note[:300],
+            note=_cortado(note, 300),
         )
         # After commit: an entry describing something that then rolled back
         # would be a lie, and a lie in the audit trail is worse than a gap.
-        transaction.on_commit(entry.save)
+        #
+        # Y **envuelto**, porque este `try` no lo cubría: el `save` corre después,
+        # al confirmar, así que cualquier fallo suyo escapaba de aquí y tumbaba
+        # la petición. El docstring prometía «never fatal» y no lo era. Un hueco
+        # en el rastro es malo; un hueco **y** un 500 al cliente es peor, y deja
+        # además sin hacer lo que la persona pedía.
+        transaction.on_commit(lambda: _guardar(entry, action))
     except Exception:
         log.exception("Could not record an audit entry: %s", action)
+
+
+def _cortado(valor: str, largo: int) -> str:
+    """Lo que quepa en su columna. `None` y no cadenas se toleran: esto corre al
+    borde de operaciones que ya salieron bien, y no es sitio para reventar."""
+    return str(valor or "")[:largo]
+
+
+def _guardar(entry, action: str) -> None:
+    """El asiento, ya confirmada la operación que describe.
+
+    Ruidoso al fallar y nunca fatal: aquí la transacción ya se ha cerrado, de
+    modo que lanzar no deshace nada ---solo convierte una operación buena en un
+    error para quien la pidió--- y encima deja el hueco igual.
+    """
+    try:
+        entry.save()
+    except Exception:
+        log.exception("Could not save an audit entry after commit: %s", action)
 
 
 def _label_of(actor) -> str:
@@ -131,10 +167,11 @@ def record_platform(
             company_label=(company.name[:255] if company is not None else ""),
             target_type=target_type or (type(target).__name__.lower() if target else ""),
             target_id=getattr(target, "pk", None),
-            target_label=target_label or (str(target)[:200] if target else ""),
+            target_label=_cortado(target_label or (str(target) if target else ""), 200),
             changes=changes or {},
-            note=note[:300],
+            note=_cortado(note, 300),
         )
-        transaction.on_commit(entry.save)
+        # Lo mismo que en `record`: cortado a su columna y guardado sin tumbar nada.
+        transaction.on_commit(lambda: _guardar(entry, action))
     except Exception:
         log.exception("Could not record an installation audit entry: %s", action)

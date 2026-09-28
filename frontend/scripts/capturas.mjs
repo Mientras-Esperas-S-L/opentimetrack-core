@@ -29,10 +29,28 @@
  */
 
 import { chromium } from '@playwright/test'
-import { mkdir, readdir } from 'node:fs/promises'
+import { mkdir, readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
-const URL_BASE = process.env.OTT_URL ?? 'http://localhost:3010'
+/** El puerto sale del `.env`, que es donde lo decide `compose.yml`.
+ *
+ *  Estaba escrito aquí, en el script de la suite y en un comentario de
+ *  `apoyo.js`: moverlo ---cosa que pasa en cuanto esta máquina levanta otro
+ *  proyecto que ocupe el puerto--- obligaba a acordarse de tres sitios, y el
+ *  que se olvidara fallaría con «no se puede conectar», que no dice por qué.
+ */
+async function delEnv(clave, defecto) {
+  try {
+    const texto = await readFile(new URL('../../.env', import.meta.url), 'utf8')
+    const linea = texto.split('\n').findLast((l) => l.startsWith(`${clave}=`))
+    const valor = linea?.slice(clave.length + 1).match(/^\d{1,5}/)?.[0]
+    return valor || defecto
+  } catch {
+    return defecto
+  }
+}
+
+const URL_BASE = process.env.OTT_URL ?? `http://localhost:${await delEnv('OTT_PORT_WEB', '3000')}`
 const SESIONES = 'e2e/.sesiones'
 const DESTINO = 'scripts/capturas'
 
