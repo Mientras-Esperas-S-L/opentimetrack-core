@@ -16,7 +16,7 @@ import PauseIcon from '@mui/icons-material/PauseCircle'
 
 import { useAuth } from '../hooks/useAuth.js'
 import { clock, getMyShiftToday, getToday } from '../services/api.js'
-import { hhmm, hhmmss, timeOf } from '../components/format.js'
+import { durationOf, hhmm, hhmmss, timeOf } from '../components/format.js'
 import { serverAt, serverClockReady } from '../services/serverClock.js'
 import { alCatalogo, localeDeFechas } from '../i18n/index.js'
 
@@ -255,18 +255,21 @@ export default function Clock() {
 
       {expected?.has_shift && (
         <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
+          {/* En horas y minutos, no en `HH:MM`: «turno de 10:00» se leía como
+              la hora de entrada, y de madrugada «Llevas 09:37 menos» parecía un
+              retraso de nueve horas. */}
           <Trans
-            i18nKey="Hoy tienes turno de <destacado>{{cuanto}}</destacado>."
-            values={{ cuanto: hhmm(expected.expected_minutes * 60) }}
+            i18nKey="Hoy tu turno es de <destacado>{{cuanto}}</destacado>."
+            values={{ cuanto: durationOf(expected.expected_minutes) }}
             components={{ destacado: <strong /> }}
           />{' '}
           {expected.difference_minutes < 0
-            ? t('Llevas {{cuanto}} menos.', {
-                cuanto: hhmm(Math.abs(expected.difference_minutes) * 60),
+            ? t('Te faltan {{cuanto}}.', {
+                cuanto: durationOf(Math.abs(expected.difference_minutes)),
               })
             : expected.difference_minutes > 0
               ? t('Llevas {{cuanto}} de más.', {
-                  cuanto: hhmm(expected.difference_minutes * 60),
+                  cuanto: durationOf(expected.difference_minutes),
                 })
               : t('Vas al día.')}
         </Alert>
