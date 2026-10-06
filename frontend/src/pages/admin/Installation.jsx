@@ -268,6 +268,7 @@ export default function Installation() {
                     empresa={empresa}
                     onIdentidad={() => setIdentidadDe(empresa)}
                     onCredencial={() => setCredencialesDe(empresa)}
+                    onFicha={() => setFichaDe(empresa)}
                   />
                 </TableCell>
                 <TableCell align="right">
@@ -1095,7 +1096,7 @@ function NewAdminDialog({ valores, onClose, onCreada }) {
  *  el servidor ---viene en `missing`---, porque es una regla del producto y el
  *  asistente de alta de cualquier integrador tiene que contestar con la misma.
  */
-function LeFalta({ empresa, onIdentidad, onCredencial }) {
+function LeFalta({ empresa, onIdentidad, onCredencial, onFicha }) {
   const { t } = useTranslation()
   const huecos = empresa.missing ?? []
 
@@ -1104,11 +1105,32 @@ function LeFalta({ empresa, onIdentidad, onCredencial }) {
   }
 
   // Lo que se puede arreglar desde aquí lleva su botón; lo que no ---que entre su
-  // gente--- se dice y ya, porque llega sola cuando la da de alta la aplicación.
+  // gente, sus centros y sus festivos--- se dice y ya: lo pone la empresa desde
+  // dentro, o llega solo cuando lo da de alta la aplicación. Quién administra se
+  // ve y se arregla en su ficha.
   const comoSeArregla = {
+    administrator: {
+      texto: t('Sin administración'),
+      accion: onFicha,
+      ayuda: t('Nadie de la empresa la administra. Nombra a alguien desde su ficha.'),
+    },
     identity: { texto: t('Cómo entran'), accion: onIdentidad },
     application: { texto: t('Credencial'), accion: onCredencial },
-    people: { texto: t('Su gente'), accion: null },
+    workplace: {
+      texto: t('Centro de trabajo'),
+      accion: null,
+      ayuda: t('No tiene ningún centro de trabajo. Lo da de alta la empresa desde dentro.'),
+    },
+    holidays: {
+      texto: t('Festivos de este año'),
+      accion: null,
+      ayuda: t('No tiene festivos de este año. Los importa la empresa desde dentro.'),
+    },
+    people: {
+      texto: t('Su gente'),
+      accion: null,
+      ayuda: t('Su gente llega sola cuando la da de alta la aplicación integrada.'),
+    },
   }
 
   return (
@@ -1124,11 +1146,7 @@ function LeFalta({ empresa, onIdentidad, onCredencial }) {
             variant="outlined"
             label={como.texto}
             onClick={como.accion ?? undefined}
-            title={
-              como.accion
-                ? t('Pulsa para arreglarlo')
-                : t('Su gente llega sola cuando la da de alta la aplicación integrada.')
-            }
+            title={como.ayuda ?? t('Pulsa para arreglarlo')}
           />
         )
       })}
@@ -1579,7 +1597,9 @@ function Actividad({ estado }) {
               : t('Último fichaje: {{dia}}', { dia: diaCorto(estado.last_punch_day) }),
             estado.punches_quiet,
           )
-        : linea(t('Sin fichajes todavía'), false)}
+        : // Con gente dentro y sin un solo fichaje en días, también es silencio:
+          // el servidor lo marca igual que cuando se para de fichar.
+          linea(t('Sin fichajes todavía'), estado.punches_quiet)}
       {estado.applications_detail.length === 0 && (
         <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
           {t('Sin aplicaciones conectadas')}

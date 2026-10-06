@@ -26,7 +26,7 @@ from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Max, Min, Q
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema
@@ -101,24 +101,74 @@ class IsPlatformSuperuser(BasePermission):
 #:
 #: Los códigos viajan sin traducir a propósito: el texto lo pone quien pinta, con su
 #: catálogo, que es donde se corrige un idioma sin tocar el servidor.
+FALTA_ADMINISTRADOR = "administrator"
 FALTA_IDENTIDAD = "identity"
 FALTA_APLICACION = "application"
+FALTA_CENTRO = "workplace"
+FALTA_FESTIVOS = "holidays"
 FALTA_GENTE = "people"
 
 
-def _le_falta(company: Tenant, *, personas: int, aplicaciones: int, proveedor) -> list[str]:
+def _entra_con_contrasena(crudo: dict, proveedor) -> bool:
+    """Si su gente entra con contraseña, y por tanto no le falta ni identidad ni
+    aplicación.
+
+    Pedírselas a todas daba falsas alarmas: una empresa que lleva el registro aquí
+    y entra con su contraseña no está a medias por no tener proveedor ni conector,
+    y la lista la pintaba igual que a una integración sin terminar.
+
+    El criterio sale del modelo, no de una casilla que alguien tenga que marcar:
+    **tiene ya a su gente** (no solo a quien la dio de alta), alguien de ella tiene
+    una contraseña que vale, **nadie es federado** y no se le ha configurado
+    proveedor. Con solo quien la creó no se sabe todavía cómo va a entrar, y se
+    sigue diciendo todo lo que le falta para integrarse, que es el «¿y ahora qué?»
+    del alta. Un proveedor puesto, aunque esté apagado, dice que se quiere federar.
+    """
+    return (
+        proveedor is None
+        and crudo["identity_people"] == 0
+        and crudo["password_people"] > 0
+        and crudo["active_people"] > 1
+    )
+
+
+def _le_falta(company: Tenant, crudo: dict, *, aplicaciones: int, proveedor) -> list[str]:
     huecos = []
-    if proveedor is None or not proveedor.is_active:
-        huecos.append(FALTA_IDENTIDAD)
-    if aplicaciones == 0:
-        huecos.append(FALTA_APLICACION)
+    # Sin nadie que la administre, una empresa no puede dar altas, resolver nada ni
+    # deshacer lo que la dejó así. La cuenta de soporte no cuenta: es de la
+    # instalación y solo se abre desde aquí.
+    if crudo["active_admins"] == 0:
+        huecos.append(FALTA_ADMINISTRADOR)
+    if not _entra_con_contrasena(crudo, proveedor):
+        if proveedor is None or not proveedor.is_active:
+            huecos.append(FALTA_IDENTIDAD)
+        if aplicaciones == 0:
+            huecos.append(FALTA_APLICACION)
+    # El registro se lleva y se inspecciona por centro de trabajo, y los dos
+    # festivos locales son del municipio del centro.
+    if crudo["workplaces"] == 0:
+        huecos.append(FALTA_CENTRO)
+    # Sin festivos del año, cada uno cuenta como un día de trabajo: las
+    # vacaciones que lo cruzan gastan un día de más y el cuadrante lo da por
+    # laborable. Es el año de la empresa, en su zona.
+    if _hoy_en(company).year not in crudo["holiday_years"]:
+        huecos.append(FALTA_FESTIVOS)
     # Una sola persona es la que creó el alta: la empresa existe y no hay nadie
     # dentro. No es un error ---puede estar recién dada de alta--- pero sí es lo
     # siguiente que hay que hacer, y sin decirlo la lista no lo distingue de una
-    # empresa con su plantilla enlazada.
-    if personas <= 1:
+    # empresa con su plantilla enlazada. Sin soporte ni bajas: ni la una ni las
+    # otras son gente que trabaje en ella.
+    if crudo["active_people"] <= 1:
         huecos.append(FALTA_GENTE)
     return huecos
+
+
+def _hoy_en(company: Tenant) -> date:
+    try:
+        zona = ZoneInfo(company.time_zone)
+    except Exception:
+        zona = ZoneInfo("UTC")
+    return timezone.now().astimezone(zona).date()
 
 
 def _callado(desde: date | None, hoy: date) -> bool:
@@ -140,7 +190,13 @@ def _callado(desde: date | None, hoy: date) -> bool:
 
 def _sin_nada() -> dict:
     return {
+        "people": 0,
         "active_people": 0,
+        "active_admins": 0,
+        "password_people": 0,
+        "first_joined": None,
+        "workplaces": 0,
+        "holiday_years": set(),
         "last_punch": None,
         "last_identity_sign_in": None,
         "identity_people": 0,
@@ -148,8 +204,8 @@ def _sin_nada() -> dict:
     }
 
 
-def _estado_de_todas() -> dict:
-    """Cómo está cada empresa, **en cuatro consultas para todas**, no cuatro por empresa.
+def _estado_de_todas(empresas=None) -> dict:
+    """Cómo está cada empresa, **en siete consultas para todas**, no siete por empresa.
 
     Solo fechas y recuentos. Del último fichaje se da **el día**, sin la hora y sin
     quién: la instalación no ve el registro de jornada de nadie, y en una empresa de
@@ -157,22 +213,83 @@ def _estado_de_todas() -> dict:
 
     Con `objects_all_tenants`: el gestor normal no devuelve nada sin inquilino, y
     esta lista saldría con todo a cero sin decir por qué.
+
+    `empresas` acota a esas (ids); sin ella, todas. La ficha de una sola empresa
+    pasa por aquí también, para que la lista y la ficha no contesten distinto a
+    «¿qué le falta?».
     """
+    from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
+
     from apps.punches.models import Punch
+    from apps.tenants.holidays import PublicHoliday
+    from apps.users.models import Workplace
 
     estado: dict = {}
 
     def de(tenant_id):
         return estado.setdefault(tenant_id, _sin_nada())
 
+    def acotado(qs, campo="tenant_id"):
+        return qs if empresas is None else qs.filter(**{f"{campo}__in": empresas})
+
+    # La plantilla: sin soporte, que es de la instalación, ni asesoría, que es de
+    # fuera (`workforce`). Contar la cuenta de soporte hacía que una empresa con
+    # solo quien la creó pareciera tener ya a su gente en cuanto alguien entraba a
+    # ayudarla.
+    activa = Q(is_active=True)
+    con_clave = activa & ~Q(password__startswith=UNUSABLE_PASSWORD_PREFIX) & ~Q(password="")
     for fila in (
-        User.objects.filter(tenant__isnull=False, is_active=True)
+        acotado(User.objects.workforce().filter(tenant__isnull=False))
+        .values("tenant_id")
+        .annotate(
+            total=Count("id"),
+            n=Count("id", filter=activa),
+            con_clave=Count("id", filter=con_clave),
+            # Desde cuándo hay alguien que podría fichar y no es quien administra:
+            # es contra lo que se mide el silencio de una empresa que no ha fichado
+            # nunca.
+            primera=Min("date_joined", filter=activa & ~Q(role=Role.ADMIN)),
+        )
+    ):
+        datos = de(fila["tenant_id"])
+        datos["people"] = fila["total"]
+        datos["active_people"] = fila["n"]
+        datos["password_people"] = fila["con_clave"]
+        datos["first_joined"] = fila["primera"]
+
+    for fila in (
+        acotado(
+            User.objects.filter(
+                tenant__isnull=False, role=Role.ADMIN, is_active=True, is_support=False
+            )
+        )
         .values("tenant_id")
         .annotate(n=Count("id"))
     ):
-        de(fila["tenant_id"])["active_people"] = fila["n"]
+        de(fila["tenant_id"])["active_admins"] = fila["n"]
 
-    for fila in Punch.objects_all_tenants.values("tenant_id").annotate(ultimo=Max("timestamp")):
+    for fila in (
+        acotado(Workplace.objects_all_tenants.filter(is_active=True))
+        .values("tenant_id")
+        .annotate(n=Count("id"))
+    ):
+        de(fila["tenant_id"])["workplaces"] = fila["n"]
+
+    # Los años con algún festivo, de la empresa o de un centro. El «este año» se
+    # decide luego, en la zona de cada empresa: el 1 de enero no llega a la vez a
+    # Madrid y a Canarias.
+    for tenant_id, anio in (
+        acotado(PublicHoliday.objects_all_tenants.all())
+        .values_list("tenant_id", "day__year")
+        .distinct()
+    ):
+        de(tenant_id)["holiday_years"].add(anio)
+
+    for fila in (
+        acotado(Punch.objects_all_tenants.all())
+        .values("tenant_id")
+        .annotate(ultimo=Max("timestamp"))
+    ):
         de(fila["tenant_id"])["last_punch"] = fila["ultimo"]
 
     # Quién ha entrado alguna vez con la identidad se sabe siempre: el sujeto se
@@ -180,7 +297,7 @@ def _estado_de_todas() -> dict:
     # cuando se empezó a anotar `last_login`. Por eso van los dos: sin el recuento,
     # una identidad en uso desde hace días decía «nadie ha entrado».
     for fila in (
-        User.objects.filter(tenant__isnull=False)
+        acotado(User.objects.filter(tenant__isnull=False))
         .exclude(Q(oidc_sub="") | Q(oidc_sub__isnull=True))
         .values("tenant_id")
         .annotate(ultimo=Max("last_login"), n=Count("id"))
@@ -189,7 +306,7 @@ def _estado_de_todas() -> dict:
         de(fila["tenant_id"])["identity_people"] = fila["n"]
 
     for app in (
-        Application.objects_all_tenants.filter(is_active=True)
+        acotado(Application.objects_all_tenants.filter(is_active=True))
         .annotate(ultimo=Max("credentials__last_used_at"))
         .order_by("name")
     ):
@@ -220,19 +337,28 @@ def _estado(company: Tenant, crudo: dict | None) -> dict:
         }
         for a in crudo["apps"]
     ]
+    # Callada es **con gente dentro**. Sin nadie de alta no hay quien fiche, y eso
+    # no es una avería. Con gente y sin un solo fichaje, el silencio se cuenta
+    # desde que llegó la primera persona que no es quien administra: antes salía
+    # «Sin fichajes todavía» sin aviso para siempre, y una empresa que no había
+    # fichado nunca era justo la que más había que mirar.
+    con_gente = crudo["active_people"] > 0
+    callada = con_gente and _callado(fichaje or dia(crudo["first_joined"]), hoy)
     return {
         "active_people": crudo["active_people"],
         "last_punch_day": fichaje.isoformat() if fichaje else None,
-        "punches_quiet": _callado(fichaje, hoy),
+        "punches_quiet": callada,
         "last_identity_sign_in_day": identidad.isoformat() if identidad else None,
         "identity_people": crudo["identity_people"],
         "applications_detail": aplicaciones,
     }
 
 
-def _empresa(company: Tenant, *, personas: int | None = None) -> dict:
+def _empresa(company: Tenant, crudo: dict | None = None) -> dict:
+    if crudo is None:
+        crudo = _estado_de_todas([company.id]).get(company.id)
+    crudo = crudo or _sin_nada()
     proveedor = SsoProvider.objects_all_tenants.filter(tenant=company).first()
-    cuanta_gente = personas if personas is not None else User.objects.filter(tenant=company).count()
     cuantas_apps = Application.objects_all_tenants.filter(tenant=company, is_active=True).count()
     return {
         "id": str(company.id),
@@ -242,14 +368,14 @@ def _empresa(company: Tenant, *, personas: int | None = None) -> dict:
         "time_zone": company.time_zone,
         "language": company.language,
         "is_active": company.is_active,
-        "people": cuanta_gente,
+        # La plantilla, bajas incluidas y sin soporte ni asesoría. Las activas van
+        # en `status.active_people`.
+        "people": crudo["people"],
         # Cuántas aplicaciones puede usar hoy. Sin esto, la lista no distingue una
         # empresa lista para integrarse de otra a la que le falta la credencial, que
         # es el hueco con el que la gente se queda encallada.
         "applications": cuantas_apps,
-        "missing": _le_falta(
-            company, personas=cuanta_gente, aplicaciones=cuantas_apps, proveedor=proveedor
-        ),
+        "missing": _le_falta(company, crudo, aplicaciones=cuantas_apps, proveedor=proveedor),
         "identity": None
         if proveedor is None
         else {
@@ -290,12 +416,12 @@ class CompaniesView(APIView):
 
     @extend_schema(request=None, responses={200: dict})
     def get(self, request):
-        empresas = Tenant.objects.all().annotate(cuantos=Count("users")).order_by("name")
+        empresas = Tenant.objects.all().order_by("name")
         estado = _estado_de_todas()
         return Response(
             {
                 "companies": [
-                    {**_empresa(e, personas=e.cuantos), "status": _estado(e, estado.get(e.id))}
+                    {**_empresa(e, estado.get(e.id)), "status": _estado(e, estado.get(e.id))}
                     for e in empresas
                 ]
             }

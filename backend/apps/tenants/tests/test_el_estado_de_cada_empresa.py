@@ -115,10 +115,13 @@ def test_una_empresa_sin_nada_no_sale_callada(plataforma):
     assert estado["last_punch_day"] is None and estado["punches_quiet"] is False
 
 
-def test_cuatro_consultas_para_todas_por_muchas_que_haya(django_assert_num_queries):
+def test_siete_consultas_para_todas_por_muchas_que_haya(django_assert_num_queries):
+    """Eran cuatro; las tres de más son lo que la lista no miraba ---quién
+    administra, si hay centro y si hay festivos---, y siguen sin crecer con el
+    número de empresas."""
     for n in range(5):
         Tenant.objects.create(name=f"Empresa {n}", tax_id=f"B0000000{n}")
-    with django_assert_num_queries(4):
+    with django_assert_num_queries(7):
         _estado_de_todas()
 
 
@@ -133,3 +136,126 @@ def test_una_identidad_usada_antes_de_anotar_fechas_no_dice_que_nadie_entro(plat
     estado = cliente(plataforma).get("/api/platform/companies/").data["companies"][0]["status"]
     assert estado["last_identity_sign_in_day"] is None
     assert estado["identity_people"] == 1
+
+
+# ------------------------------------------------- qué le falta, sin falsas alarmas
+#
+# La lista decía «Lista» a una empresa sin nadie que la administrara, sin festivos y
+# sin centro, y le pedía proveedor de identidad y aplicación a una que entra con
+# contraseña y no los necesita.
+
+
+def _fila(plataforma, empresa):
+    empresas = cliente(plataforma).get("/api/platform/companies/").data["companies"]
+    return next(e for e in empresas if e["id"] == str(empresa.id))
+
+
+def _empresa_con_contrasena():
+    """Una empresa que entra con contraseña, con centro y festivos de este año."""
+    from apps.tenants.holidays import PublicHoliday
+    from apps.users.models import Workplace
+
+    empresa = Tenant.objects.create(name="ACME Ltd", tax_id="B11111111", time_zone="Europe/Madrid")
+    with tenant_context(empresa.id):
+        User.objects.create_user(
+            email="jefa@acme.test", password="X" * 14, tenant=empresa, role=Role.ADMIN
+        )
+        User.objects.create_user(email="curro@acme.test", password="X" * 14, tenant=empresa)
+        Workplace.objects.create(tenant=empresa, name="Oficina")
+        PublicHoliday.objects.create(tenant=empresa, day=date(2026, 10, 12), name="Fiesta")
+    return empresa
+
+
+@freeze_time("2026-10-07 10:00:00+02:00")
+def test_una_empresa_con_contrasena_no_echa_en_falta_identidad_ni_aplicacion(plataforma):
+    empresa = _empresa_con_contrasena()
+    assert _fila(plataforma, empresa)["missing"] == []
+
+
+@freeze_time("2026-10-07 10:00:00+02:00")
+def test_con_gente_federada_si_le_falta_la_identidad(plataforma):
+    empresa = _empresa_con_contrasena()
+    with tenant_context(empresa.id):
+        User.objects.create_user(
+            email="fede@acme.test", password=None, tenant=empresa, oidc_sub="sub-fede"
+        )
+    assert {"identity", "application"} <= set(_fila(plataforma, empresa)["missing"])
+
+
+@freeze_time("2026-10-07 10:00:00+02:00")
+def test_sin_administracion_activa_lo_dice_y_soporte_no_cuenta(plataforma):
+    from apps.tenants.platform_views import support_account
+
+    empresa = _empresa_con_contrasena()
+    User.objects.filter(tenant=empresa, role=Role.ADMIN).update(is_active=False)
+    support_account(empresa)
+
+    assert "administrator" in _fila(plataforma, empresa)["missing"]
+
+
+@freeze_time("2026-10-07 10:00:00+02:00")
+def test_sin_festivos_de_este_ano_lo_dice(plataforma):
+    from apps.tenants.holidays import PublicHoliday
+
+    empresa = _empresa_con_contrasena()
+    with tenant_context(empresa.id):
+        PublicHoliday.objects.all().update(day=date(2025, 10, 13))
+
+    assert _fila(plataforma, empresa)["missing"] == ["holidays"]
+
+
+@freeze_time("2026-10-07 10:00:00+02:00")
+def test_sin_centro_lo_dice(plataforma):
+    from apps.users.models import Workplace
+
+    empresa = _empresa_con_contrasena()
+    with tenant_context(empresa.id):
+        Workplace.objects.all().delete()
+
+    assert _fila(plataforma, empresa)["missing"] == ["workplace"]
+
+
+@freeze_time("2026-10-07 10:00:00+02:00")
+def test_soporte_y_las_bajas_no_son_gente(plataforma):
+    """Con solo quien la creó, la cuenta de soporte y una baja, no tiene a su gente."""
+    from apps.tenants.platform_views import support_account
+
+    empresa = Tenant.objects.create(name="Nueva", tax_id="B22222222")
+    with tenant_context(empresa.id):
+        User.objects.create_user(
+            email="jefa@nueva.test", password="X" * 14, tenant=empresa, role=Role.ADMIN
+        )
+        User.objects.create_user(
+            email="baja@nueva.test", password="X" * 14, tenant=empresa, is_active=False
+        )
+    support_account(empresa)
+
+    fila = _fila(plataforma, empresa)
+    assert "people" in fila["missing"]
+    assert fila["status"]["active_people"] == 1
+    assert fila["people"] == 2, "la baja cuenta en el total; soporte, no"
+
+
+def test_una_empresa_con_gente_que_no_ha_fichado_nunca_sale_callada(plataforma):
+    """«Sin fichajes todavía» no avisaba nunca, y una empresa con su gente dentro que
+    no ha fichado ni una vez es justo la que hay que mirar."""
+    with freeze_time("2026-09-14 10:00:00+02:00"):  # un lunes
+        empresa = _empresa_con_contrasena()
+
+    with freeze_time("2026-09-21 10:00:00+02:00"):  # una semana después
+        estado = _fila(plataforma, empresa)["status"]
+
+    assert estado["last_punch_day"] is None
+    assert estado["punches_quiet"] is True
+
+
+def test_sin_nadie_de_alta_no_sale_callada(plataforma):
+    """Sin nadie que pueda fichar no hay avería que mirar."""
+    with freeze_time("2026-09-14 10:00:00+02:00"):
+        empresa = _empresa_con_contrasena()
+        User.objects.filter(tenant=empresa).update(is_active=False)
+
+    with freeze_time("2026-09-21 10:00:00+02:00"):
+        estado = _fila(plataforma, empresa)["status"]
+
+    assert estado["punches_quiet"] is False

@@ -1064,5 +1064,10 @@
   "Tengo contraseña de aquí": "Teño contrasinal de aquí",
   "Has vuelto con otra cuenta, no con la que escribiste. Cierra la sesión en el sistema de tu empresa y vuelve a entrar.": "Volviches con outra conta, non coa que escribiches. Pecha a sesión no sistema da túa empresa e volve entrar.",
   "Para <cuenta>{{correo}}</cuenta>.": "Para <cuenta>{{correo}}</cuenta>.",
-  "Este enlace ya no vale: ha caducado o ya se ha usado.": "Esta ligazón xa non vale: caducou ou xa se usou."
+  "Este enlace ya no vale: ha caducado o ya se ha usado.": "Esta ligazón xa non vale: caducou ou xa se usou.",
+  "Sin administración": "Sen administración",
+  "Nadie de la empresa la administra. Nombra a alguien desde su ficha.": "Ninguén da empresa a administra. Nomea a alguén desde a súa ficha.",
+  "No tiene ningún centro de trabajo. Lo da de alta la empresa desde dentro.": "Non ten ningún centro de traballo. Dao de alta a empresa desde dentro.",
+  "Festivos de este año": "Festivos deste ano",
+  "No tiene festivos de este año. Los importa la empresa desde dentro.": "Non ten festivos deste ano. Impórtaos a empresa desde dentro."
 }
