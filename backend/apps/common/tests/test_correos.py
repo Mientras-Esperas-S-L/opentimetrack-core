@@ -193,12 +193,19 @@ def test_los_cuatro_envios_activan_un_idioma():
     from django.conf import settings
 
     raiz = Path(settings.BASE_DIR) / "apps"
+    # `send_without_failing` manda lo que le dan ya escrito: el idioma lo tiene
+    # que activar quien lo llama, así que se mira a quien lo llama y no a él.
+    ayudante = raiz / "common" / "mail.py"
+
+    def manda(texto):
+        return "send_mail(" in texto or "send_without_failing(" in texto
+
     sin_activar = []
     for fichero in raiz.rglob("*.py"):
-        if "test" in fichero.parts or "migrations" in fichero.parts:
+        if "test" in fichero.parts or "migrations" in fichero.parts or fichero == ayudante:
             continue
         texto = fichero.read_text()
-        if "send_mail(" not in texto:
+        if not manda(texto):
             continue
         if "translation.override" not in texto:
             sin_activar.append(str(fichero.relative_to(raiz)))
@@ -208,7 +215,10 @@ def test_los_cuatro_envios_activan_un_idioma():
     manda_correo = [
         str(f.relative_to(raiz))
         for f in raiz.rglob("*.py")
-        if "test" not in f.parts and "migrations" not in f.parts and "send_mail(" in f.read_text()
+        if "test" not in f.parts
+        and "migrations" not in f.parts
+        and f != ayudante
+        and manda(f.read_text())
     ]
     assert len(manda_correo) >= 3, f"solo {len(manda_correo)} ficheros mandan correo"
 

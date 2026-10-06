@@ -24,6 +24,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.common.exceptions import BusinessRuleError
 from apps.common.four_eyes import refuse_self_decision
+from apps.common.mail import send_without_failing
 from apps.common.models import TenantOwnedModel
 from apps.common.texto import validate_texto_legible
 from apps.common.transitions import claim
@@ -517,12 +518,10 @@ def _mail_the_representatives(correction: PunchCorrection, representatives) -> N
     registro por el art. 6.2 y puede consultarlo si le hace falta, que es la
     diferencia entre informar y difundir.
 
-    `fail_silently` por lo mismo que el aviso a la persona: que no salga un
-    correo no puede tumbar la discrepancia, que es justo lo que el artículo
-    protege.
+    `send_without_failing` por lo mismo que el aviso a la persona: que no salga
+    un correo no puede tumbar la discrepancia, que es justo lo que el artículo
+    protege. Pero queda en el log, que con `fail_silently` no quedaba.
     """
-    from django.conf import settings
-    from django.core.mail import send_mail
     from django.template.loader import render_to_string
 
     zone = correction.tenant.tzinfo
@@ -539,12 +538,11 @@ def _mail_the_representatives(correction: PunchCorrection, representatives) -> N
     for quien in representatives:
         if not quien.email:
             continue
-        send_mail(
+        send_without_failing(
             subject=_("Somebody disagrees with a change to their working time record"),
             message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[quien.email],
-            fail_silently=True,
+            to=quien.email,
+            what="the notice to a workers' representative",
         )
 
 
@@ -798,8 +796,6 @@ def notify_employee_of_withdrawal(correction: PunchCorrection) -> None:
     """
     import logging
 
-    from django.conf import settings
-    from django.core.mail import send_mail
     from django.template.loader import render_to_string
 
     log = logging.getLogger(__name__)
@@ -821,12 +817,11 @@ def notify_employee_of_withdrawal(correction: PunchCorrection) -> None:
                     "note": correction.resolution_note,
                 },
             )
-            send_mail(
+            send_without_failing(
                 subject=_("Your employer has withdrawn the proposed change to your record"),
                 message=body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[correction.employee.email],
-                fail_silently=True,
+                to=correction.employee.email,
+                what="the notice of a withdrawn correction",
             )
     except Exception:
         log.exception(
@@ -846,8 +841,6 @@ def notify_employee_of_proposal(correction: PunchCorrection) -> None:
     """
     import logging
 
-    from django.conf import settings
-    from django.core.mail import send_mail
     from django.template.loader import render_to_string
 
     from apps.tenants.rules import WorkingTimeRules
@@ -880,12 +873,11 @@ def notify_employee_of_proposal(correction: PunchCorrection) -> None:
                     "days": rules.correction_consent_days,
                 },
             )
-            send_mail(
+            send_without_failing(
                 subject=_("Your employer proposes a change to your working time record"),
                 message=body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[correction.employee.email],
-                fail_silently=True,
+                to=correction.employee.email,
+                what="the notice of a proposed correction",
             )
     except Exception:
         log.exception(
@@ -926,8 +918,6 @@ def notify_employee(correction: PunchCorrection) -> None:
     """
     import logging
 
-    from django.conf import settings
-    from django.core.mail import send_mail
     from django.template.loader import render_to_string
     from django.utils.formats import date_format
 
@@ -944,14 +934,14 @@ def notify_employee(correction: PunchCorrection) -> None:
 
     try:
         with translation.override(idioma or None):
-            _send_change_notice(correction, settings, send_mail, render_to_string, date_format)
+            _send_change_notice(correction, render_to_string, date_format)
     except Exception:
         # Worth a full trace: silence here means people stop being told their
         # record changed, and nobody would notice.
         log.exception("Could not notify %s of correction %s", correction.employee_id, correction.pk)
 
 
-def _send_change_notice(correction, settings, send_mail, render_to_string, date_format) -> None:
+def _send_change_notice(correction, render_to_string, date_format) -> None:
     zone = correction.tenant.tzinfo
     when = correction.proposed_timestamp or (
         correction.target.timestamp if correction.target else None
@@ -984,10 +974,11 @@ def _send_change_notice(correction, settings, send_mail, render_to_string, date_
         },
     )
 
-    send_mail(
+    # A failed notice must not undo an approved correction, and must not go
+    # unnoticed either.
+    send_without_failing(
         subject=_("Your working time record has changed"),
         message=body,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[correction.employee.email],
-        fail_silently=True,  # a failed notice must not undo an approved correction
+        to=correction.employee.email,
+        what="the notice of an applied correction",
     )

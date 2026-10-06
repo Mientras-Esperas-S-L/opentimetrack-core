@@ -795,6 +795,7 @@ export default function People() {
   // rehacerlo, y si se entera tres días después ya son tres días de ausencias
   // sin justificar.
   const [colgando, setColgando] = useState(0)
+  const [sinInvitacion, setSinInvitacion] = useState(null) // address the invitation failed for
   const [page, setPage] = useState(1)
   const [dept, setDept] = useState('')
   const [place, setPlace] = useState('')
@@ -846,9 +847,12 @@ export default function People() {
   const save = useMutation({
     mutationFn: (payload) =>
       editing ? updateEmployee(editing.id, payload) : createEmployee(payload),
-    onSuccess: () => {
+    onSuccess: (respuesta) => {
       setEditing(undefined)
       setError(null)
+      // El alta se queda aunque el correo falle; lo que no sale es la
+      // invitación, y quien la acaba de dar tiene que saberlo ahora.
+      setSinInvitacion(respuesta?.invitation_sent === false ? respuesta.email : null)
       queryClient.invalidateQueries({ queryKey: ['employees'] })
       queryClient.invalidateQueries({ queryKey: ['overview'] })
     },
@@ -993,6 +997,21 @@ export default function People() {
               turnos: `${colgando} ${plural(colgando, t('turno asignado'), t('turnos asignados'))}`,
             },
           )}
+        </Alert>
+      )}
+
+      {sinInvitacion && (
+        <Alert
+          severity="warning"
+          variant="outlined"
+          onClose={() => setSinInvitacion(null)}
+          sx={{ mb: 2 }}
+        >
+          <Trans
+            i18nKey="Alta hecha, pero la invitación a <destinatario>{{correo}}</destinatario> no ha salido: ha fallado el correo. Mándasela con «Enviar enlace de acceso»."
+            values={{ correo: sinInvitacion }}
+            components={{ destinatario: <strong /> }}
+          />
         </Alert>
       )}
 

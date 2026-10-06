@@ -24,6 +24,7 @@ from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.audit.trail import StructureTrail
 from apps.common.exceptions import BusinessRuleError, IncompleteRequest
+from apps.common.mail import mask_address
 from apps.common.models import set_current_tenant
 from apps.common.network import client_ip
 from apps.common.permissions import (
@@ -529,8 +530,21 @@ class UserViewSet(viewsets.ModelViewSet):
         # side, so it is not left as a second button they have to remember.
         # Unless a password came in the payload, in which case somebody is
         # setting it deliberately and a link would only muddle things.
+        #
+        # Si el correo falla, el alta se queda y la respuesta lo dice
+        # (`invitation_sent: false`). Antes la excepción subía, la petición
+        # contestaba 500 y la transacción se llevaba el alta por delante: la
+        # persona no existía, y quien la daba de alta no sabía si volver a
+        # intentarlo. La invitación se puede reenviar; el alta perdida, no.
         if not serializer.validated_data.get("password"):
-            self._invite(person)
+            try:
+                person.invitation_sent = self._invite(person) or None
+            except Exception:
+                logger.exception(
+                    "Could not send the invitation to %s; the person was created anyway",
+                    mask_address(person.email),
+                )
+                person.invitation_sent = False
 
     @extend_schema(request=None, responses={200: dict})
     @action(detail=True, methods=["post"])
@@ -861,7 +875,14 @@ class PasswordResetRequestView(APIView):
                 # here would set a password that can never be used.
                 logger.info("Recovery requested for a federated account: %s", user.email)
                 continue
-            send_account_email(user, base_url=settings.FRONTEND_URL)
+            # Si el correo falla se contesta igual, 204. Un 500 aquí decía que
+            # esa dirección existe ---a una que no existe no se le intenta mandar
+            # nada---, que es justo lo que esta vista se niega a contar. Queda en
+            # el log, que es donde lo tiene que ver quien administra el correo.
+            try:
+                send_account_email(user, base_url=settings.FRONTEND_URL)
+            except Exception:
+                logger.exception("Could not send the recovery link to %s", mask_address(user.email))
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
