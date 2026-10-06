@@ -81,8 +81,10 @@ export default function SignIn() {
   // job and losing it behind a modal for a flow this short is noise.
   const [mode, setMode] = useState('in')
 
-  // Only asked for when the server says the address exists in more than one
-  // company. Nobody should have to type a tax number to clock in.
+  // Only asked for when the server says the address and password fit more than
+  // one company (`company_required`). Nobody should have to type a tax number to
+  // clock in, and asking for it after a mistyped password sent people looking
+  // for a field that was never the problem.
   const [needsCompany, setNeedsCompany] = useState(false)
   // Their company's identity provider, if their address belongs to one. Asked of
   // the server as they type, because the only thing they know is their address:
@@ -124,8 +126,16 @@ export default function SignIn() {
     try {
       await signIn({ email, password, ...(taxId ? { tax_id: taxId } : {}) })
     } catch (failure) {
-      setError(failure.message)
-      if (!needsCompany) setNeedsCompany(true)
+      if (failure.code === 'company_required') {
+        setError(
+          t(
+            'Ese correo y esa contraseña valen en más de una empresa. Escribe el CIF o NIF de la tuya.',
+          ),
+        )
+        setNeedsCompany(true)
+      } else {
+        setError(failure.message)
+      }
     } finally {
       setBusy(false)
     }
