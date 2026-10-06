@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: OpenTimeTrack\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-28 10:35+0000\n"
+"POT-Creation-Date: 2026-10-06 23:02+0000\n"
 "PO-Revision-Date: 2026-08-12 19:00+0200\n"
 "Last-Translator: OpenTimeTrack contributors\n"
 "Language-Team: Español\n"
@@ -112,7 +112,7 @@ msgid "name"
 msgstr "nombre"
 
 #: apps/absences/models.py:112 apps/help/models.py:126
-#: apps/punches/corrections.py:82 apps/punches/models.py:578
+#: apps/punches/corrections.py:83 apps/punches/models.py:578
 msgid "kind"
 msgstr "tipo"
 
@@ -211,7 +211,7 @@ msgstr "nota"
 
 #: apps/absences/models.py:204 apps/help/models.py:52 apps/shifts/models.py:84
 #: apps/tenants/applications.py:60 apps/tenants/identity.py:117
-#: apps/tenants/models.py:202 apps/users/models.py:43 apps/users/models.py:206
+#: apps/tenants/models.py:234 apps/users/models.py:43 apps/users/models.py:206
 #: apps/users/models.py:705
 msgid "active"
 msgstr "activo"
@@ -232,7 +232,7 @@ msgstr "Pendiente"
 msgid "Approved"
 msgstr "Aprobada"
 
-#: apps/absences/models.py:254 apps/punches/corrections.py:58
+#: apps/absences/models.py:254 apps/punches/corrections.py:59
 msgid "Rejected"
 msgstr "Rechazada"
 
@@ -241,7 +241,7 @@ msgid "Cancelled"
 msgstr "Cancelada"
 
 #: apps/absences/models.py:269 apps/absences/models.py:519
-#: apps/notifications/models.py:34 apps/punches/corrections.py:80
+#: apps/notifications/models.py:34 apps/punches/corrections.py:81
 #: apps/punches/models.py:162 apps/punches/models.py:575
 #: apps/punches/models.py:617 apps/reports/payroll.py:97
 #: apps/shifts/models.py:111 apps/users/models.py:105 apps/users/models.py:257
@@ -251,7 +251,7 @@ msgid "employee"
 msgstr "persona trabajadora"
 
 #: apps/absences/models.py:286 apps/audit/models.py:197
-#: apps/audit/models.py:327 apps/punches/corrections.py:94
+#: apps/audit/models.py:327 apps/punches/corrections.py:95
 #: apps/punches/models.py:164
 msgid "type"
 msgstr "tipo"
@@ -286,7 +286,7 @@ msgstr ""
 "Solo para una suspensión que reduce la jornada en vez de pararla. Vacío "
 "significa el día entero. 40 significa que se sigue trabajando el 60 %."
 
-#: apps/absences/models.py:321 apps/punches/corrections.py:98
+#: apps/absences/models.py:321 apps/punches/corrections.py:99
 msgid "reason"
 msgstr "motivo"
 
@@ -295,16 +295,16 @@ msgid "recorded by"
 msgstr "registrado por"
 
 #: apps/absences/models.py:344 apps/absences/models.py:548
-#: apps/punches/corrections.py:104 apps/punches/models.py:621
+#: apps/punches/corrections.py:105 apps/punches/models.py:621
 #: apps/users/models.py:1192
 msgid "status"
 msgstr "estado"
 
-#: apps/absences/models.py:352 apps/punches/corrections.py:118
+#: apps/absences/models.py:352 apps/punches/corrections.py:119
 msgid "resolved by"
 msgstr "resuelta por"
 
-#: apps/absences/models.py:354 apps/punches/corrections.py:120
+#: apps/absences/models.py:354 apps/punches/corrections.py:121
 msgid "resolved at"
 msgstr "resuelta el"
 
@@ -335,11 +335,11 @@ msgstr "ausencias"
 msgid "The end date cannot precede the start date."
 msgstr "La fecha final no puede ir antes que la inicial."
 
-#: apps/absences/models.py:443 apps/absences/views.py:372
+#: apps/absences/models.py:443 apps/absences/views.py:377
 msgid "Give both times, or neither: half of a range is not one."
 msgstr "Pon las dos horas o ninguna: media franja no es una franja."
 
-#: apps/absences/models.py:446 apps/users/serializers.py:493
+#: apps/absences/models.py:446 apps/users/serializers.py:527
 msgid "It ends before it starts."
 msgstr "Acaba antes de empezar."
 
@@ -394,7 +394,7 @@ msgstr "ausencia que las pisó"
 msgid "days"
 msgstr "días"
 
-#: apps/absences/models.py:541 apps/tenants/models.py:88
+#: apps/absences/models.py:541 apps/tenants/models.py:120
 msgid "counted in working days"
 msgstr "contados en días laborables"
 
@@ -521,29 +521,29 @@ msgstr "El fichero ocupa %(size).1f MB y el límite son %(limit)s MB."
 msgid "the part of the working day that is agreed"
 msgstr "la parte de jornada que se acuerde"
 
-#: apps/absences/views.py:212
-msgid "by the statutory scale, on the size of the workplace"
-msgstr "por la escala legal, según el tamaño del centro"
-
-#: apps/absences/views.py
+#: apps/absences/views.py:207
 msgid "from the holiday balance"
 msgstr "según el saldo de vacaciones"
 
-#: apps/absences/views.py:213
+#: apps/absences/views.py:217
+msgid "by the statutory scale, on the size of the workplace"
+msgstr "por la escala legal, según el tamaño del centro"
+
+#: apps/absences/views.py:218
 msgid "the time it takes"
 msgstr "el tiempo indispensable"
 
-#: apps/absences/views.py:241 apps/shifts/views.py:204
-#: apps/tenants/views.py:181 apps/users/views.py:774 apps/users/views.py:844
-#: apps/users/views.py:1072 apps/users/views.py:1123 apps/users/views.py:1160
+#: apps/absences/views.py:246 apps/shifts/views.py:204
+#: apps/tenants/views.py:181 apps/users/views.py:758 apps/users/views.py:828
+#: apps/users/views.py:1088 apps/users/views.py:1139 apps/users/views.py:1176
 msgid "Added"
 msgstr "Añadido"
 
-#: apps/absences/views.py:269 apps/audit/trail.py:74 apps/users/views.py:1096
+#: apps/absences/views.py:274 apps/audit/trail.py:74 apps/users/views.py:1112
 msgid "Changed"
 msgstr "Cambiado"
 
-#: apps/absences/views.py:287
+#: apps/absences/views.py:292
 #, python-format
 msgid ""
 "%(count)s absences use it. Deactivate it instead: deleting would take the "
@@ -552,26 +552,26 @@ msgstr ""
 "Lo usan %(count)s ausencias. Desactívalo en vez de borrarlo: borrarlo le "
 "quitaría el motivo a registros que tienen que durar cuatro años."
 
-#: apps/absences/views.py:293 apps/audit/trail.py:78
+#: apps/absences/views.py:298 apps/audit/trail.py:78
 msgid "Deleted"
 msgstr "Eliminado"
 
-#: apps/absences/views.py:314 apps/absences/views.py:559
+#: apps/absences/views.py:319 apps/absences/views.py:564
 #: apps/punches/correction_views.py:246 apps/reports/views.py:436
-#: apps/users/serializers.py:483 apps/users/serializers.py:759
-#: apps/users/serializers.py:833 apps/users/serializers.py:921
+#: apps/users/serializers.py:517 apps/users/serializers.py:826
+#: apps/users/serializers.py:900 apps/users/serializers.py:988
 msgid "That person is not in this company."
 msgstr "Esa persona no pertenece a esta empresa."
 
-#: apps/absences/views.py:468
+#: apps/absences/views.py:473
 msgid "Leave can only be requested for yourself."
 msgstr "Solo puedes solicitar ausencias para ti."
 
-#: apps/absences/views.py:478
+#: apps/absences/views.py:483
 msgid "That leave type does not exist or is no longer in use."
 msgstr "Ese tipo de permiso no existe o ya no está en uso."
 
-#: apps/absences/views.py:489
+#: apps/absences/views.py:494
 msgid ""
 "This kind of leave is recorded by the company, not requested. Talk to "
 "whoever manages your working time."
@@ -579,15 +579,15 @@ msgstr ""
 "Este tipo de ausencia la registra la empresa, no se solicita. Habla con "
 "quien gestione tu jornada."
 
-#: apps/absences/views.py:677
+#: apps/absences/views.py:682
 msgid "You can only see your own balance."
 msgstr "Solo puedes consultar tu propio saldo."
 
-#: apps/absences/views.py:691
+#: apps/absences/views.py:696
 msgid "`until` has to be a date, as YYYY-MM-DD."
 msgstr "«until» tiene que ser una fecha, escrita como AAAA-MM-DD."
 
-#: apps/absences/views.py:744 apps/shifts/views.py:264
+#: apps/absences/views.py:749 apps/shifts/views.py:264
 msgid "Give 'from' and 'to' as YYYY-MM-DD."
 msgstr "Indica 'from' y 'to' con el formato AAAA-MM-DD."
 
@@ -760,7 +760,7 @@ msgid "when"
 msgstr "cuándo"
 
 #: apps/audit/models.py:176 apps/audit/models.py:323 apps/common/models.py:117
-#: apps/tenants/models.py:205 apps/tenants/models.py:233
+#: apps/tenants/models.py:237 apps/tenants/models.py:265
 #: apps/tenants/rules.py:123 apps/tenants/rules.py:554
 #: apps/tenants/rules.py:639 apps/users/models.py:449
 msgid "company"
@@ -1052,7 +1052,7 @@ msgstr ""
 "%(chars)s. Quítalos y vuelve a escribirlo: lo que queda registrado tiene que "
 "decir lo mismo que lo que se ve en pantalla."
 
-#: apps/common/transitions.py:76 apps/punches/corrections.py:628
+#: apps/common/transitions.py:76 apps/punches/corrections.py:626
 msgid "This request has already been resolved."
 msgstr "Esta solicitud ya está resuelta."
 
@@ -1067,7 +1067,7 @@ msgstr ""
 msgid "slug"
 msgstr "identificador"
 
-#: apps/help/models.py:48 apps/help/models.py:72 apps/tenants/models.py:60
+#: apps/help/models.py:48 apps/help/models.py:72 apps/tenants/models.py:92
 #: apps/users/models.py:492
 msgid "language"
 msgstr "idioma"
@@ -1180,67 +1180,67 @@ msgstr "Ese fichaje no existe."
 msgid "You can only ask for corrections to your own record."
 msgstr "Solo puedes pedir correcciones de tu propio registro."
 
-#: apps/punches/corrections.py:34
+#: apps/punches/corrections.py:35
 msgid "Add a missing event"
 msgstr "Añadir un fichaje que falta"
 
-#: apps/punches/corrections.py:35
+#: apps/punches/corrections.py:36
 msgid "Change the time of an event"
 msgstr "Cambiar la hora de un fichaje"
 
-#: apps/punches/corrections.py:36
+#: apps/punches/corrections.py:37
 msgid "Void an event that should not exist"
 msgstr "Anular un fichaje que no debió existir"
 
-#: apps/punches/corrections.py:54
+#: apps/punches/corrections.py:55
 msgid "Waiting for the company"
 msgstr "Esperando a la empresa"
 
-#: apps/punches/corrections.py:55
+#: apps/punches/corrections.py:56
 msgid "Waiting for the person concerned"
 msgstr "Esperando a la persona afectada"
 
-#: apps/punches/corrections.py:56
+#: apps/punches/corrections.py:57
 msgid "Applied with agreement"
 msgstr "Aplicada con acuerdo"
 
-#: apps/punches/corrections.py:57
+#: apps/punches/corrections.py:58
 msgid "Applied without agreement, with the disagreement recorded"
 msgstr "Aplicada sin acuerdo, con la discrepancia registrada"
 
-#: apps/punches/corrections.py:64
+#: apps/punches/corrections.py:65
 msgid "Withdrawn by the company"
 msgstr "Retirada por la empresa"
 
-#: apps/punches/corrections.py:91
+#: apps/punches/corrections.py:92
 msgid "event concerned"
 msgstr "fichaje afectado"
 
-#: apps/punches/corrections.py:95
+#: apps/punches/corrections.py:96
 msgid "proposed time"
 msgstr "hora propuesta"
 
-#: apps/punches/corrections.py:99
+#: apps/punches/corrections.py:100
 msgid "Why the record does not match what happened. Required."
 msgstr "Por qué el registro no coincide con lo ocurrido. Obligatorio."
 
-#: apps/punches/corrections.py:110
+#: apps/punches/corrections.py:111
 msgid "requested by"
 msgstr "solicitada por"
 
-#: apps/punches/corrections.py:122
+#: apps/punches/corrections.py:123
 msgid "resolution note"
 msgstr "nota de la resolución"
 
-#: apps/punches/corrections.py:131
+#: apps/punches/corrections.py:132
 msgid "resulting event"
 msgstr "fichaje resultante"
 
-#: apps/punches/corrections.py:140
+#: apps/punches/corrections.py:141
 msgid "the person agrees"
 msgstr "la persona está conforme"
 
-#: apps/punches/corrections.py:144
+#: apps/punches/corrections.py:145
 msgid ""
 "Art. 4.b: a change needs the authorisation of the company and of the person "
 "concerned. Empty means they have not answered."
@@ -1248,15 +1248,15 @@ msgstr ""
 "Art. 4.b: modificar un asiento necesita la autorización de la empresa y de "
 "la persona afectada. Vacío significa que aún no ha respondido."
 
-#: apps/punches/corrections.py:148
+#: apps/punches/corrections.py:149
 msgid "answered at"
 msgstr "respondió el"
 
-#: apps/punches/corrections.py:150
+#: apps/punches/corrections.py:151
 msgid "the person's account"
 msgstr "versión de la persona"
 
-#: apps/punches/corrections.py:154
+#: apps/punches/corrections.py:155
 msgid ""
 "Their version, kept beside the change and never instead of it. Art. 4.b lets "
 "the company record the modification and the person their disagreement, so "
@@ -1266,15 +1266,15 @@ msgstr ""
 "permite que la empresa refleje la modificación y la persona su discrepancia, "
 "de modo que el registro conserva las dos."
 
-#: apps/punches/corrections.py:161
+#: apps/punches/corrections.py:162
 msgid "workers' representatives informed at"
 msgstr "representación legal informada el"
 
-#: apps/punches/corrections.py:164
+#: apps/punches/corrections.py:165
 msgid "how they were informed"
 msgstr "cómo se les informó"
 
-#: apps/punches/corrections.py:168
+#: apps/punches/corrections.py:169
 msgid ""
 "Art. 4.b requires informing the workers' legal representation when there is "
 "disagreement. If the company has not said who they are, that is recorded "
@@ -1284,11 +1284,11 @@ msgstr ""
 "trabajadoras cuando hay discrepancia. Si la empresa no ha dicho quiénes son, "
 "queda anotado aquí en vez de pasarlo por alto."
 
-#: apps/punches/corrections.py:175
+#: apps/punches/corrections.py:176
 msgid "applied without agreement"
 msgstr "aplicada sin acuerdo"
 
-#: apps/punches/corrections.py:178
+#: apps/punches/corrections.py:179
 msgid ""
 "The change went in anyway, which art. 4.b allows. It travels to the "
 "inspection report: a reader has to be able to tell a correction both parties "
@@ -1298,63 +1298,63 @@ msgstr ""
 "informe de Inspección: quien lo lea tiene que poder distinguir una "
 "corrección aceptada por las dos partes de una impuesta sobre una objeción."
 
-#: apps/punches/corrections.py:185
+#: apps/punches/corrections.py:186
 msgid "record correction"
 msgstr "corrección del registro"
 
-#: apps/punches/corrections.py:186
+#: apps/punches/corrections.py:187
 msgid "record corrections"
 msgstr "correcciones del registro"
 
-#: apps/punches/corrections.py:219
+#: apps/punches/corrections.py:220
 msgid "State why the record does not match what happened."
 msgstr "Indica por qué el registro no coincide con lo ocurrido."
 
-#: apps/punches/corrections.py:225
+#: apps/punches/corrections.py:226
 msgid "Say which event is being corrected."
 msgstr "Indica qué fichaje se corrige."
 
-#: apps/punches/corrections.py:231
+#: apps/punches/corrections.py:232
 msgid "Give the time the event actually happened."
 msgstr "Indica la hora real a la que ocurrió."
 
-#: apps/punches/corrections.py:239
+#: apps/punches/corrections.py:240
 msgid "The time cannot be in the future."
 msgstr "La hora no puede ser futura."
 
-#: apps/punches/corrections.py:245
+#: apps/punches/corrections.py:246
 msgid "That event belongs to somebody else."
 msgstr "Ese fichaje es de otra persona."
 
-#: apps/punches/corrections.py:251
+#: apps/punches/corrections.py:252
 msgid "Say whether the missing event is an entry or an exit."
 msgstr "Indica si el fichaje que falta es una entrada o una salida."
 
-#: apps/punches/corrections.py:263
+#: apps/punches/corrections.py:264
 msgid "An event is either an entry or an exit."
 msgstr "Un fichaje es una entrada o una salida."
 
-#: apps/punches/corrections.py:328
+#: apps/punches/corrections.py:329
 msgid "Only the person concerned can accept a change to their record."
 msgstr "Solo la persona afectada puede aceptar un cambio en su registro."
 
-#: apps/punches/corrections.py:354
+#: apps/punches/corrections.py:355
 msgid "Only the person concerned can disagree with a change to their record."
 msgstr "Solo la persona afectada puede discrepar de un cambio en su registro."
 
-#: apps/punches/corrections.py:359
+#: apps/punches/corrections.py:360
 msgid "Say what you think happened. It is recorded beside the change."
 msgstr "Di qué crees que pasó. Queda registrado junto al cambio."
 
-#: apps/punches/corrections.py:397
+#: apps/punches/corrections.py:398
 msgid "The person still has time to answer."
 msgstr "La persona todavía está en plazo para responder."
 
-#: apps/punches/corrections.py:404
+#: apps/punches/corrections.py:405
 msgid "No answer within the period given. Applied without their agreement."
 msgstr "Sin respuesta en el plazo dado. Aplicado sin su conformidad."
 
-#: apps/punches/corrections.py:457
+#: apps/punches/corrections.py:458
 msgid ""
 "Only a proposal still waiting for the person concerned can be withdrawn. "
 "This one is no longer waiting."
@@ -1362,32 +1362,32 @@ msgstr ""
 "Solo se puede retirar una propuesta que siga esperando a la persona "
 "afectada. Esta ya no está esperando."
 
-#: apps/punches/corrections.py:466 apps/punches/corrections.py:671
-#: apps/punches/corrections.py:721
+#: apps/punches/corrections.py:467 apps/punches/corrections.py:669
+#: apps/punches/corrections.py:719
 msgid "a change to the working-time record"
 msgstr "un cambio en el registro de jornada"
 
-#: apps/punches/corrections.py:494
+#: apps/punches/corrections.py:495
 msgid "This change is not waiting for the person concerned."
 msgstr "Este cambio no está esperando a la persona afectada."
 
-#: apps/punches/corrections.py:543
+#: apps/punches/corrections.py:542
 msgid "Somebody disagrees with a change to their working time record"
 msgstr "Alguien discrepa de un cambio en su registro de jornada"
 
-#: apps/punches/corrections.py:569
+#: apps/punches/corrections.py:567
 #, python-format
 msgid "Informed: %(names)s"
 msgstr "Informados: %(names)s"
 
-#: apps/punches/corrections.py:574
+#: apps/punches/corrections.py:572
 msgid ""
 "No workers' representatives are on record. Art. 4.b requires informing them."
 msgstr ""
 "No consta ninguna representación legal de las personas trabajadoras. El art. "
 "4.b exige informarla."
 
-#: apps/punches/corrections.py:595
+#: apps/punches/corrections.py:593
 msgid ""
 "Resolved by the same person who is the subject: no other manager or "
 "administrator exists in the company."
@@ -1395,7 +1395,7 @@ msgstr ""
 "Resuelto por la misma persona a la que afecta: no hay ningún otro "
 "responsable ni administrador en la empresa."
 
-#: apps/punches/corrections.py:621
+#: apps/punches/corrections.py:619
 msgid ""
 "The person concerned has not answered yet. Wait, or apply it without "
 "agreement once the period has passed."
@@ -1403,7 +1403,7 @@ msgstr ""
 "La persona afectada todavía no ha contestado. Espera, o aplícalo sin acuerdo "
 "cuando pase el plazo."
 
-#: apps/punches/corrections.py:658
+#: apps/punches/corrections.py:656
 msgid ""
 "That entry has already been changed by another correction. Ask for a new one "
 "on the entry as it stands now."
@@ -1411,45 +1411,45 @@ msgstr ""
 "Ese fichaje ya lo cambió otra corrección. Pide una nueva sobre el fichaje "
 "tal y como está ahora."
 
-#: apps/punches/corrections.py:825
+#: apps/punches/corrections.py:821
 msgid "Your employer has withdrawn the proposed change to your record"
 msgstr "Tu empresa ha retirado el cambio que proponía en tu registro"
 
-#: apps/punches/corrections.py:884
+#: apps/punches/corrections.py:877
 msgid "Your employer proposes a change to your working time record"
 msgstr "Tu empresa propone un cambio en tu registro de jornada"
 
-#: apps/punches/corrections.py:903
+#: apps/punches/corrections.py:895
 #, python-format
 msgid "Add an entry: %(kind)s at %(when)s."
 msgstr "Añadir un fichaje: %(kind)s a las %(when)s."
 
-#: apps/punches/corrections.py:904
+#: apps/punches/corrections.py:896
 #, python-format
 msgid "Change the time of an entry to %(when)s."
 msgstr "Cambiar la hora de un fichaje a las %(when)s."
 
-#: apps/punches/corrections.py:905
+#: apps/punches/corrections.py:897
 #, python-format
 msgid "Void the entry recorded at %(when)s."
 msgstr "Anular el fichaje registrado a las %(when)s."
 
-#: apps/punches/corrections.py:962
+#: apps/punches/corrections.py:952
 #, python-format
 msgid "An entry was added: %(kind)s at %(when)s."
 msgstr "Se ha añadido un fichaje: %(kind)s a las %(when)s."
 
-#: apps/punches/corrections.py:963
+#: apps/punches/corrections.py:953
 #, python-format
 msgid "The time of an entry was changed to %(when)s."
 msgstr "Se ha cambiado la hora de un fichaje a las %(when)s."
 
-#: apps/punches/corrections.py:964
+#: apps/punches/corrections.py:954
 #, python-format
 msgid "An entry recorded at %(when)s was voided."
 msgstr "Se ha anulado el fichaje registrado a las %(when)s."
 
-#: apps/punches/corrections.py:988
+#: apps/punches/corrections.py:980
 msgid "Your working time record has changed"
 msgstr "Tu registro de jornada ha cambiado"
 
@@ -1643,7 +1643,7 @@ msgstr "lo declaró el dispositivo"
 msgid "received at"
 msgstr "recibido el"
 
-#: apps/punches/models.py:251 apps/tenants/models.py:53
+#: apps/punches/models.py:251 apps/tenants/models.py:85
 #: apps/users/models.py:196
 msgid "time zone"
 msgstr "zona horaria"
@@ -1811,19 +1811,19 @@ msgstr ""
 msgid "overtime"
 msgstr "unas horas extraordinarias"
 
-#: apps/punches/reminders.py:184
+#: apps/punches/reminders.py:183
 msgid "Remember to clock in"
 msgstr "Recuerda fichar la entrada"
 
-#: apps/punches/reminders.py:184
+#: apps/punches/reminders.py:183
 msgid "You have not clocked out yet"
 msgstr "Todavía no has fichado la salida"
 
-#: apps/punches/reminders.py:188
+#: apps/punches/reminders.py:187
 msgid "Your shift has started and you have not clocked in."
 msgstr "Ha empezado tu turno y no has fichado la entrada."
 
-#: apps/punches/reminders.py:190
+#: apps/punches/reminders.py:189
 msgid "Your day is still open. Clock out when you finish."
 msgstr "Tienes la jornada abierta. Ficha la salida cuando acabes."
 
@@ -1919,15 +1919,15 @@ msgstr "Este enlace ya no vale. Pídele otro a la empresa."
 msgid "the person concerned, through their delivery link"
 msgstr "la persona interesada, por su enlace de entrega"
 
-#: apps/reports/payroll.py:37 apps/tenants/models.py:161
+#: apps/reports/payroll.py:37 apps/tenants/models.py:193
 msgid "Monthly"
 msgstr "Mensual"
 
-#: apps/reports/payroll.py:38 apps/tenants/models.py:162
+#: apps/reports/payroll.py:38 apps/tenants/models.py:194
 msgid "Every two weeks"
 msgstr "Quincenal"
 
-#: apps/reports/payroll.py:39 apps/tenants/models.py:163
+#: apps/reports/payroll.py:39 apps/tenants/models.py:195
 msgid "Weekly"
 msgstr "Semanal"
 
@@ -2258,7 +2258,7 @@ msgid "Choose at least one day."
 msgstr "Elige al menos un día."
 
 #: apps/shifts/services.py:151 apps/shifts/views.py:324
-#: apps/users/serializers.py:219
+#: apps/users/serializers.py:226
 msgid "Somebody in that list is not in this company."
 msgstr "Alguien de esa lista no pertenece a esta empresa."
 
@@ -2799,7 +2799,7 @@ msgstr ""
 "mismo código que %(other)s: el REGCON es lo que distingue dos convenios "
 "parecidos"
 
-#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:478
+#: apps/tenants/application_views.py:86 apps/tenants/platform_views.py:606
 #, python-format
 msgid "Unknown permissions: %(list)s."
 msgstr "Permisos desconocidos: %(list)s."
@@ -2808,15 +2808,15 @@ msgstr "Permisos desconocidos: %(list)s."
 msgid "Grant at least one permission, or the application can do nothing."
 msgstr "Concede al menos un permiso; si no, la aplicación no puede hacer nada."
 
-#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:862
+#: apps/tenants/application_views.py:152 apps/tenants/platform_views.py:990
 msgid "Permissions changed"
 msgstr "Cambió los permisos"
 
-#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:941
+#: apps/tenants/application_views.py:186 apps/tenants/platform_views.py:1069
 msgid "Reactivate the application before issuing a credential."
 msgstr "Reactiva la aplicación antes de emitir una credencial."
 
-#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:958
+#: apps/tenants/application_views.py:202 apps/tenants/platform_views.py:1086
 #, python-format
 msgid "Credential issued: …%(hint)s"
 msgstr "Credencial emitida: …%(hint)s"
@@ -2825,7 +2825,7 @@ msgstr "Credencial emitida: …%(hint)s"
 msgid "That credential does not exist or is already revoked."
 msgstr "Esa credencial no existe o ya está revocada."
 
-#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:997
+#: apps/tenants/application_views.py:245 apps/tenants/platform_views.py:1125
 #, python-format
 msgid "Credential revoked: …%(hint)s"
 msgstr "Credencial revocada: …%(hint)s"
@@ -2993,8 +2993,8 @@ msgstr "Como mucho %(days)d días por llamada."
 msgid "Must be a whole number."
 msgstr "Tiene que ser un número entero."
 
-#: apps/tenants/attendance_api.py:344 apps/tenants/people_api.py:276
-#: apps/tenants/people_api.py:362
+#: apps/tenants/attendance_api.py:344 apps/tenants/people_api.py:327
+#: apps/tenants/people_api.py:440
 msgid "No person matches that reference."
 msgstr "Ninguna persona coincide con esa referencia."
 
@@ -3198,33 +3198,33 @@ msgstr "dominios federados"
 msgid "%(value)s is not a valid IANA time zone."
 msgstr "%(value)s no es una zona horaria IANA válida."
 
-#: apps/tenants/models.py:35
+#: apps/tenants/models.py:67
 msgid "legal name"
 msgstr "razón social"
 
-#: apps/tenants/models.py:41
+#: apps/tenants/models.py:73
 msgid "tax identifier"
 msgstr "identificador fiscal"
 
-#: apps/tenants/models.py:44
+#: apps/tenants/models.py:76
 msgid "Company tax number (CIF/NIF, VAT, EIN…)."
 msgstr "Identificador fiscal de la empresa (CIF/NIF, VAT, EIN…)."
 
-#: apps/tenants/models.py:47
+#: apps/tenants/models.py:79
 msgid "country"
 msgstr "país"
 
-#: apps/tenants/models.py:50
+#: apps/tenants/models.py:82
 msgid "ISO 3166-1 alpha-2 code. Selects the applicable legal rules."
 msgstr "Código ISO 3166-1 alfa-2. Determina las reglas legales aplicables."
 
-#: apps/tenants/models.py:57
+#: apps/tenants/models.py:89
 msgid "IANA name. Storage is always UTC; this only affects display."
 msgstr ""
 "Nombre IANA. El almacenamiento siempre es UTC; esto solo afecta a cómo se "
 "muestra."
 
-#: apps/tenants/models.py:65
+#: apps/tenants/models.py:97
 msgid ""
 "Language the company works in. A person can override it for themselves; the "
 "browser's setting is only used when neither is set."
@@ -3232,11 +3232,11 @@ msgstr ""
 "Idioma en el que trabaja la empresa. Una persona puede cambiarlo para sí "
 "misma; el ajuste del navegador solo se usa cuando no hay ninguno de los dos."
 
-#: apps/tenants/models.py:73 apps/users/models.py:682
+#: apps/tenants/models.py:105 apps/users/models.py:682
 msgid "annual leave days"
 msgstr "días de vacaciones al año"
 
-#: apps/tenants/models.py:76
+#: apps/tenants/models.py:108
 msgid ""
 "Days of holiday per reference period, in the unit chosen below. Art. 38 ET "
 "sets a floor of 30 calendar days, which is 22 working days on a five-day "
@@ -3248,7 +3248,7 @@ msgstr ""
 "días son 22 laborables; el convenio puede dar más. A una persona concreta se "
 "le puede poner otra cifra."
 
-#: apps/tenants/models.py:91
+#: apps/tenants/models.py:123
 msgid ""
 "On: only the days the person was due to work are deducted, so a fortnight "
 "off costs ten. Off: every day between the two dates is deducted, weekends "
@@ -3260,11 +3260,11 @@ msgstr ""
 "entre las dos fechas, fines de semana incluidos, y la cifra de arriba debe "
 "ser la de días naturales del convenio."
 
-#: apps/tenants/models.py:98
+#: apps/tenants/models.py:130
 msgid "reference period starts in"
 msgstr "el periodo de cómputo empieza en"
 
-#: apps/tenants/models.py:102
+#: apps/tenants/models.py:134
 msgid ""
 "Month the holiday reference period begins. 1 = calendar year. The period is "
 "not necessarily the calendar year: the agreement decides."
@@ -3272,11 +3272,11 @@ msgstr ""
 "Mes en que empieza el periodo de cómputo de las vacaciones. 1 = año natural. "
 "El periodo no tiene por qué ser el año natural: lo decide el convenio."
 
-#: apps/tenants/models.py:111
+#: apps/tenants/models.py:143
 msgid "managers see the whole company"
 msgstr "los responsables ven toda la empresa"
 
-#: apps/tenants/models.py:114
+#: apps/tenants/models.py:146
 msgid ""
 "Off: a manager reads and resolves only for the departments they were put in "
 "charge of. On: for everybody, which is what a company small enough not to "
@@ -3286,23 +3286,23 @@ msgstr ""
 "lleva. Activado: por todo el mundo, que es lo que quiere una empresa lo "
 "bastante pequeña como para no tener departamentos."
 
-#: apps/tenants/models.py:125
+#: apps/tenants/models.py:157
 msgid "The interface and any integrated application"
 msgstr "La interfaz y cualquier aplicación integrada"
 
-#: apps/tenants/models.py:126
+#: apps/tenants/models.py:158
 msgid "Preferably the integrated application"
 msgstr "Preferiblemente la aplicación integrada"
 
-#: apps/tenants/models.py:127
+#: apps/tenants/models.py:159
 msgid "Shared terminals only"
 msgstr "Solo terminales compartidos"
 
-#: apps/tenants/models.py:130
+#: apps/tenants/models.py:162
 msgid "how people clock in"
 msgstr "cómo ficha la gente"
 
-#: apps/tenants/models.py:135
+#: apps/tenants/models.py:167
 msgid ""
 "When a managing application is the one that knows the context of each punch "
 "(which site, which job), a punch made here arrives without it. Setting this "
@@ -3317,11 +3317,11 @@ msgstr ""
 "aplicación no está disponible, alguien estaría trabajando sin poder "
 "registrar su jornada, y el sistema que responde ante una inspección es este."
 
-#: apps/tenants/models.py:145
+#: apps/tenants/models.py:177
 msgid "how late an offline punch may arrive"
 msgstr "cuánto puede tardar en llegar un fichaje hecho sin cobertura"
 
-#: apps/tenants/models.py:148
+#: apps/tenants/models.py:180
 msgid ""
 "Somebody clocking in out in the field with no signal stays queued on their "
 "device and arrives late. Within this many hours the punch is accepted with "
@@ -3330,11 +3330,11 @@ msgid ""
 "on the record. Zero means every punch counts from when it reached the server."
 msgstr ""
 
-#: apps/tenants/models.py:157
+#: apps/tenants/models.py:189
 msgid "pay period"
 msgstr "periodo de abono"
 
-#: apps/tenants/models.py:166
+#: apps/tenants/models.py:198
 msgid ""
 "Art. 6.1: a copy of the summary for this period goes out with the payslip. "
 "Not necessarily a calendar month --- art. 29.1 ET only caps the interval at "
@@ -3344,11 +3344,11 @@ msgstr ""
 "necesariamente un mes natural: el art. 29.1 ET solo fija el mes como "
 "intervalo máximo."
 
-#: apps/tenants/models.py:181
+#: apps/tenants/models.py:213
 msgid "record retention (years)"
 msgstr "conservación del registro (años)"
 
-#: apps/tenants/models.py:184
+#: apps/tenants/models.py:216
 msgid ""
 "How long clock events are kept, after which they are deleted. Four years is "
 "the floor set by art. 34.9 ET; a longer period needs its own justification, "
@@ -3362,11 +3362,11 @@ msgstr ""
 "base. Las ausencias y los contratos no se ven afectados: no son el registro "
 "de jornada y no viven de este plazo."
 
-#: apps/tenants/models.py:192
+#: apps/tenants/models.py:224
 msgid "security metadata retention (days)"
 msgstr "conservación de los metadatos de seguridad (días)"
 
-#: apps/tenants/models.py:195
+#: apps/tenants/models.py:227
 msgid ""
 "How long the IP address, device and user agent of each event are kept. They "
 "serve to spot anomalies, not to prove working time: purging them leaves the "
@@ -3376,48 +3376,54 @@ msgstr ""
 "de cada fichaje. Sirven para detectar anomalías, no para acreditar la "
 "jornada: borrarlos deja el registro intacto."
 
-#: apps/tenants/models.py:201
+#: apps/tenants/models.py:233
 msgid "settings"
 msgstr "ajustes"
 
-#: apps/tenants/models.py:206
+#: apps/tenants/models.py:238
 msgid "companies"
 msgstr "empresas"
 
-#: apps/tenants/models.py:248
+#: apps/tenants/models.py:280
 msgid "enabled features"
 msgstr "funciones activadas"
 
-#: apps/tenants/models.py:251 apps/tenants/models.py:252
+#: apps/tenants/models.py:283 apps/tenants/models.py:284
 msgid "company limits"
 msgstr "límites de la empresa"
 
-#: apps/tenants/people_api.py:216
+#: apps/tenants/people_api.py:267
 msgid "`since` must be an ISO 8601 timestamp."
 msgstr "`since` tiene que ser una marca de tiempo ISO 8601."
 
-#: apps/tenants/people_api.py:392
+#: apps/tenants/people_api.py:353
+msgid ""
+"An application can only create employees and managers. Administrators and "
+"labour advisors are appointed in OpenTimeTrack."
+msgstr "Una aplicación solo puede dar de alta a empleados y responsables. La administración y la asesoría se nombran en OpenTimeTrack."
+
+#: apps/tenants/people_api.py:469
 msgid "Somebody else in this company already uses that address."
 msgstr "Otra persona de esta empresa ya usa esa dirección."
 
-#: apps/tenants/people_api.py:398
+#: apps/tenants/people_api.py:491
 msgid "Somebody else in this company already uses that staff number."
 msgstr "Otra persona de esta empresa ya usa ese número de empleado."
 
-#: apps/tenants/people_api.py:411
+#: apps/tenants/people_api.py:504
 msgid "Somebody else in this company already uses that identity."
 msgstr "Otra persona de esta empresa ya usa esa identidad."
 
-#: apps/tenants/platform_views.py:87
+#: apps/tenants/platform_views.py:89
 msgid "Only a platform superuser can administer the installation."
 msgstr "Solo un superusuario de plataforma puede administrar la instalación."
 
-#: apps/tenants/platform_views.py:371 apps/tenants/platform_views.py:440
-#: apps/tenants/platform_views.py:509
+#: apps/tenants/platform_views.py:499 apps/tenants/platform_views.py:568
+#: apps/tenants/platform_views.py:637
 msgid "No such company."
 msgstr "Esa empresa no existe."
 
-#: apps/tenants/platform_views.py:395
+#: apps/tenants/platform_views.py:523
 msgid ""
 "This installation cannot store an identity provider's secret: "
 "FIELD_ENCRYPTION_KEY is not set on the server."
@@ -3425,108 +3431,92 @@ msgstr ""
 "Esta instalación no puede guardar el secreto de un proveedor de identidad: "
 "falta FIELD_ENCRYPTION_KEY en el servidor."
 
-#: apps/tenants/platform_views.py:528
+#: apps/tenants/platform_views.py:656
 msgid "The name cannot be empty."
 msgstr "El nombre no puede quedar vacío."
 
-#: apps/tenants/platform_views.py:534
+#: apps/tenants/platform_views.py:662
 msgid "The tax number cannot be empty."
 msgstr "El identificador fiscal no puede quedar vacío."
 
-#: apps/tenants/platform_views.py:537 apps/users/serializers.py:584
+#: apps/tenants/platform_views.py:665 apps/users/serializers.py:628
 msgid "A company with this tax number already exists."
 msgstr "Ya existe una empresa con este identificador fiscal."
 
-#: apps/tenants/platform_views.py:552
+#: apps/tenants/platform_views.py:680
 msgid "Type the company's name exactly to deactivate it."
 msgstr "Escribe el nombre de la empresa tal cual para desactivarla."
 
-#: apps/tenants/platform_views.py:607 apps/tenants/platform_views.py:625
+#: apps/tenants/platform_views.py:735 apps/tenants/platform_views.py:753
 msgid "Changed from the installation console"
 msgstr "Cambiado desde la consola de la instalación"
 
-#: apps/tenants/platform_views.py:684
+#: apps/tenants/platform_views.py:812
 msgid "That person does not administer this company."
 msgstr "Esa persona no administra esta empresa."
 
-#: apps/tenants/platform_views.py:688
+#: apps/tenants/platform_views.py:816
 msgid "The company is deactivated: the link would not let anybody in."
 msgstr "La empresa está desactivada: el enlace no dejaría entrar a nadie."
 
-#: apps/tenants/platform_views.py:690
+#: apps/tenants/platform_views.py:818
 msgid "That account is deactivated: the link would not let them in."
 msgstr "Esa cuenta está desactivada: el enlace no la dejaría entrar."
 
-#: apps/tenants/platform_views.py:693
+#: apps/tenants/platform_views.py:821
 msgid ""
 "That person signs in with their company's account and has no password here."
 msgstr ""
 "Esa persona entra con la cuenta de su empresa y aquí no tiene contraseña."
 
-#: apps/tenants/platform_views.py:708 apps/tenants/platform_views.py:1208
+#: apps/tenants/platform_views.py:836 apps/tenants/platform_views.py:1326
 #, python-format
 msgid "The mail server refuses the address %(email)s. Check that it is right."
 msgstr ""
 "El servidor de correo rechaza la dirección %(email)s. Comprueba que es "
 "correcta."
 
-#: apps/tenants/platform_views.py:719 apps/tenants/platform_views.py:1217
+#: apps/tenants/platform_views.py:847 apps/tenants/platform_views.py:1335
 msgid "The email could not be sent. Nothing has changed; try again later."
 msgstr ""
 "No se ha podido enviar el correo. No ha cambiado nada; vuelve a intentarlo "
 "más tarde."
 
-#: apps/tenants/platform_views.py:730
+#: apps/tenants/platform_views.py:858
 msgid "Sent from the installation console"
 msgstr "Enviado desde la consola de la instalación"
 
-#: apps/tenants/platform_views.py:805
+#: apps/tenants/platform_views.py:933
 msgid "Authorised from the installation console"
 msgstr "Autorizada desde la consola de la instalación"
 
-#: apps/tenants/platform_views.py:840 apps/tenants/platform_views.py:891
-#: apps/tenants/platform_views.py:938
+#: apps/tenants/platform_views.py:968 apps/tenants/platform_views.py:1019
+#: apps/tenants/platform_views.py:1066
 msgid "No such application."
 msgstr "Esa aplicación no existe."
 
-#: apps/tenants/platform_views.py:988
+#: apps/tenants/platform_views.py:1116
 msgid "No such credential."
 msgstr "Esa credencial no existe."
 
-#: apps/tenants/platform_views.py:1043
-msgid "There is already an installation account with that address."
-msgstr "Ya hay una cuenta de la instalación con esa dirección."
-
-#: apps/tenants/platform_views.py:1051
-#, python-format
-msgid ""
-"That address already belongs to somebody in %(company)s. An installation "
-"account with a repeated address could not sign in, because the sign-in "
-"screen would ask which company it is, and this one has none. Use a different "
-"address."
-msgstr ""
-"Esa dirección ya la usa alguien de %(company)s. Una cuenta de la instalación "
-"con una dirección repetida no podría entrar, porque la pantalla de acceso "
-"preguntaría de qué empresa es y esta no tiene ninguna. Usa otra dirección."
-
-#: apps/tenants/platform_views.py:1145 apps/tenants/platform_views.py:1190
-#: apps/tenants/platform_views.py:1239 apps/tenants/platform_views.py:1294
+#: apps/tenants/platform_views.py:1255 apps/tenants/platform_views.py:1308
+#: apps/tenants/platform_views.py:1357 apps/tenants/platform_views.py:1416
 msgid "No such installation account."
 msgstr "Esa cuenta de la instalación no existe."
 
-#: apps/tenants/platform_views.py:1172
+#: apps/tenants/platform_views.py:1290
 msgid "To deactivate an account, use its own action."
 msgstr "Para desactivar una cuenta, usa su propia acción."
 
-#: apps/tenants/platform_views.py:1196
+#: apps/tenants/platform_views.py:1314
 msgid "That account is deactivated: reactivate it before sending the link."
 msgstr "Esa cuenta está desactivada: reactívala antes de mandarle el enlace."
 
-#: apps/tenants/platform_views.py:1298
+#: apps/tenants/platform_views.py:1420
 msgid "You cannot deactivate the account you are using."
 msgstr "No puedes desactivar la cuenta con la que estás dentro."
 
-#: apps/tenants/platform_views.py:1305
+#: apps/tenants/platform_views.py:1427
 msgid ""
 "This is the only account that can administer the installation. Create "
 "another one before deactivating it."
@@ -3534,7 +3524,7 @@ msgstr ""
 "Es la única cuenta que puede administrar la instalación. Crea otra antes de "
 "desactivarla."
 
-#: apps/tenants/platform_views.py:1420
+#: apps/tenants/platform_views.py:1545
 msgid "The company is deactivated: support cannot enter it."
 msgstr "La empresa está desactivada: soporte no puede entrar."
 
@@ -3948,46 +3938,46 @@ msgstr "El proveedor se describe con un emisor distinto."
 msgid "The provider does not say where its keys are."
 msgstr "El proveedor no dice dónde están sus claves."
 
-#: apps/tenants/sso.py:238
+#: apps/tenants/sso.py:263
 msgid "That sign-in attempt expired or was already used."
 msgstr "Ese intento de entrada ha caducado o ya se usó."
 
-#: apps/tenants/sso.py:287
+#: apps/tenants/sso.py:312
 msgid "That sign-in expired or was already collected."
 msgstr "Esa entrada ha caducado o ya se ha recogido."
 
-#: apps/tenants/sso.py:293
+#: apps/tenants/sso.py:318
 msgid "That sign-in was started in another browser. Start again from this one."
 msgstr "Esa entrada se empezó en otro navegador. Vuelve a empezar desde este."
 
-#: apps/tenants/sso.py:314
+#: apps/tenants/sso.py:339
 msgid "The provider did not return a valid token."
 msgstr "El proveedor no ha devuelto un token válido."
 
-#: apps/tenants/sso.py:330
+#: apps/tenants/sso.py:355
 msgid "Could not obtain the provider's signing keys."
 msgstr "No se han podido obtener las claves de firma del proveedor."
 
-#: apps/tenants/sso.py:345
+#: apps/tenants/sso.py:370
 msgid "The provider's token did not pass verification."
 msgstr "El token del proveedor no ha superado la verificación."
 
-#: apps/tenants/sso.py:351
+#: apps/tenants/sso.py:376
 msgid "The provider's answer does not match this sign-in attempt."
 msgstr "La respuesta del proveedor no corresponde a este intento de entrada."
 
-#: apps/tenants/sso.py:372
+#: apps/tenants/sso.py:397
 msgid "The provider's token does not identify anybody."
 msgstr "El token del proveedor no identifica a nadie."
 
-#: apps/tenants/sso.py:390
+#: apps/tenants/sso.py:415
 msgid ""
 "Nobody here matches that account, and this provider does not create people."
 msgstr ""
 "Nadie de aquí coincide con esa cuenta, y este proveedor no da de alta a "
 "nadie."
 
-#: apps/tenants/sso.py:393
+#: apps/tenants/sso.py:418
 msgid "The provider's token carries no address to create anybody with."
 msgstr ""
 "El token del proveedor no trae ninguna dirección con la que dar de alta a "
@@ -4009,9 +3999,50 @@ msgstr ""
 "La consulta previa es de la vía de decisión de la empresa. En un acuerdo, la "
 "negociación es el acuerdo mismo."
 
-#: apps/tenants/views.py:142 apps/users/serializers.py:394
+#: apps/tenants/views.py:142 apps/users/serializers.py:409
 msgid "That workplace belongs to another company."
 msgstr "Ese centro de trabajo es de otra empresa."
+
+#: apps/users/baja.py:56
+msgid ""
+"This is the only active administrator. Appoint another one first, or the "
+"company is left with nobody able to manage it."
+msgstr ""
+"Es el único administrador activo. Nombra antes a otro, o la empresa se queda "
+"sin nadie que pueda gestionarla."
+
+#: apps/users/baja.py:120
+#, python-format
+msgid "Left on %(day)s. %(count)s shift(s) still rostered after that."
+msgstr "Se fue el %(day)s. Le quedan %(count)s turno(s) planificados después."
+
+#: apps/users/baja.py:123
+#, python-format
+msgid "Left on %(day)s."
+msgstr "Se fue el %(day)s."
+
+#: apps/users/direcciones.py:48
+msgid "There is already an installation account with that address."
+msgstr "Ya hay una cuenta de la instalación con esa dirección."
+
+#: apps/users/direcciones.py:54
+#, python-format
+msgid ""
+"That address already belongs to somebody in %(company)s. An installation "
+"account with a repeated address could not sign in, because the sign-in "
+"screen would ask which company it is, and this one has none. Use a different "
+"address."
+msgstr ""
+"Esa dirección ya la usa alguien de %(company)s. Una cuenta de la instalación "
+"con una dirección repetida no podría entrar, porque la pantalla de acceso "
+"preguntaría de qué empresa es y esta no tiene ninguna. Usa otra dirección."
+
+#: apps/users/direcciones.py:63
+msgid ""
+"That address belongs to an account that administers this installation. Use a "
+"different address."
+msgstr ""
+"Ese correo es el de una cuenta que administra esta instalación. Usa otro."
 
 #: apps/users/erase.py:78
 msgid "corrections"
@@ -4600,12 +4631,12 @@ msgstr "Tu cuenta en %(company)s"
 msgid "Reset your password at %(company)s"
 msgstr "Restablecer tu contraseña en %(company)s"
 
-#: apps/users/serializers.py:88
+#: apps/users/serializers.py:95
 #, python-format
 msgid "%(code)s is not a region of %(country)s."
 msgstr "%(code)s no es una comunidad de %(country)s."
 
-#: apps/users/serializers.py:224
+#: apps/users/serializers.py:231
 #, python-format
 msgid ""
 "%(name)s does not have a manager profile, so putting them in charge would "
@@ -4614,54 +4645,54 @@ msgstr ""
 "%(name)s no tiene perfil de responsable, así que ponerle al frente no le "
 "daría nada."
 
-#: apps/users/serializers.py:353
+#: apps/users/serializers.py:368
 msgid "Somebody in this company already uses it."
 msgstr "Ya lo usa alguien de esta empresa."
 
-#: apps/users/serializers.py:385
+#: apps/users/serializers.py:400
 #, python-format
 msgid "%(name)s already uses that staff number."
 msgstr "%(name)s ya usa ese número de empleado."
 
-#: apps/users/serializers.py:401
+#: apps/users/serializers.py:416
 msgid "That department belongs to another company."
 msgstr "Ese departamento es de otra empresa."
 
-#: apps/users/serializers.py:417
+#: apps/users/serializers.py:432
 msgid "It cannot be today or a future date."
 msgstr "No puede ser hoy ni una fecha futura."
 
-#: apps/users/serializers.py:426
+#: apps/users/serializers.py:441
 #, python-format
 msgid "That gives an age of %(age)s, below the minimum working age. %(basis)s"
 msgstr ""
 "Eso da una edad de %(age)s años, por debajo de la edad mínima para trabajar. "
 "%(basis)s"
 
-#: apps/users/serializers.py:430
+#: apps/users/serializers.py:445
 msgid "That gives an age of over a hundred years."
 msgstr "Eso da una edad de más de cien años."
 
-#: apps/users/serializers.py:455
+#: apps/users/serializers.py:489
 msgid ""
 "There is no agreed figure on this regime. Clear it, or choose one that has "
 "hours."
 msgstr ""
 "En este régimen no hay cifra pactada. Bórrala, o elige uno que tenga horas."
 
-#: apps/users/serializers.py:472
+#: apps/users/serializers.py:506
 msgid "Art. 3.b asks for the agreed hours on this regime."
 msgstr "El art. 3.b pide las horas pactadas en este régimen."
 
-#: apps/users/serializers.py:487
+#: apps/users/serializers.py:521
 msgid "A relief contract stands in for somebody else."
 msgstr "Un contrato de relevo sustituye a otra persona."
 
-#: apps/users/serializers.py:496
+#: apps/users/serializers.py:530
 msgid "It has to be above zero."
 msgstr "Tiene que ser mayor que cero."
 
-#: apps/users/serializers.py:516
+#: apps/users/serializers.py:550
 #, python-format
 msgid ""
 "%(basis)s: workers under eighteen may not work at night, so the status "
@@ -4670,7 +4701,7 @@ msgstr ""
 "%(basis)s: los menores de dieciocho años no pueden trabajar de noche, así "
 "que esa condición no les puede corresponder."
 
-#: apps/users/serializers.py:535
+#: apps/users/serializers.py:569
 #, python-format
 msgid ""
 "%(hours)s h a week is above the company's %(ceiling)s h. A contract cannot "
@@ -4679,99 +4710,99 @@ msgstr ""
 "%(hours)s h semanales pasan de las %(ceiling)s h de la empresa. Un contrato "
 "no puede pactar por encima del máximo legal."
 
-#: apps/users/serializers.py:648 apps/users/serializers.py:661
+#: apps/users/serializers.py:702 apps/users/serializers.py:728
 msgid "Wrong credentials."
 msgstr "Credenciales incorrectas."
 
-#: apps/users/serializers.py:786
+#: apps/users/serializers.py:720
+msgid ""
+"That address and password belong to more than one company. Add your "
+"company's tax number."
+msgstr ""
+"Ese correo y esa contraseña valen en más de una empresa. Añade el CIF o NIF "
+"de tu empresa."
+
+#: apps/users/serializers.py:853
 msgid ""
 "Art. 34.8 asks for a reason when the answer is an alternative or a refusal."
 msgstr ""
 "El art. 34.8 pide un motivo cuando la respuesta es una alternativa o una "
 "negativa."
 
-#: apps/users/serializers.py:801
+#: apps/users/serializers.py:868
 msgid "An answer needs the date it was given."
 msgstr "Una respuesta necesita la fecha en que se dio."
 
-#: apps/users/serializers.py:845
+#: apps/users/serializers.py:912
 msgid "A share goes from 0 to 100."
 msgstr "Un porcentaje va de 0 a 100."
 
-#: apps/users/serializers.py:865
+#: apps/users/serializers.py:932
 msgid "The agreement cannot end before it starts."
 msgstr "El acuerdo no puede acabar antes de empezar."
 
-#: apps/users/serializers.py:883
+#: apps/users/serializers.py:950
 #, python-format
 msgid "It overlaps the agreement that starts on %(day)s."
 msgstr "Se solapa con el acuerdo que empieza el %(day)s."
 
-#: apps/users/serializers.py:924
+#: apps/users/serializers.py:991
 msgid "Periods of activity are for permanent-seasonal contracts (art. 16 ET)."
 msgstr ""
 "Los periodos de actividad son para contratos fijos discontinuos (art. 16 ET)."
 
-#: apps/users/serializers.py:943
+#: apps/users/serializers.py:1010
 msgid "The season cannot end before it starts."
 msgstr "La temporada no puede acabar antes de empezar."
 
-#: apps/users/serializers.py:950
+#: apps/users/serializers.py:1017
 msgid "The call-up comes before the season starts, not after."
 msgstr "El llamamiento va antes de que empiece la temporada, no después."
 
-#: apps/users/serializers.py:963
+#: apps/users/serializers.py:1030
 #, python-format
 msgid "It overlaps the period that starts on %(day)s."
 msgstr "Se solapa con el periodo que empieza el %(day)s."
 
-#: apps/users/views.py:220
+#: apps/users/views.py:247
 msgid "No session to renew."
 msgstr "No hay sesión que renovar."
 
-#: apps/users/views.py:253
+#: apps/users/views.py:297
 msgid "The session has expired. Sign in again."
 msgstr "La sesión ha caducado. Vuelve a entrar."
 
-#: apps/users/views.py:279
+#: apps/users/views.py:323
 msgid "Send the refresh token to close the session."
 msgstr "Manda el testigo de refresco para cerrar la sesión."
 
-#: apps/users/views.py:476
-msgid ""
-"This is the only active administrator. Appoint another one first, or the "
-"company is left with nobody able to manage it."
-msgstr ""
-"Es el único administrador activo. Nombra antes a otro, o la empresa se queda "
-"sin nadie que pueda gestionarla."
-
-#: apps/users/views.py:531
+#: apps/users/views.py:562
 msgid "This account signs in through your identity provider."
 msgstr "Esta cuenta entra a través de vuestro proveedor de identidad."
 
-#: apps/users/views.py:533
+#: apps/users/views.py:564
 msgid "Reactivate the account before inviting them."
 msgstr "Vuelve a dar de alta la cuenta antes de invitarla."
 
-#: apps/users/views.py:559
+#: apps/users/views.py:590
 msgid "There is no address to send it to. Add one first."
 msgstr "No hay ninguna dirección a la que mandarlo. Añade una antes."
 
-#: apps/users/views.py:634
+#: apps/users/views.py:671
 msgid "You cannot erase your own account."
 msgstr "No puedes borrar tu propia cuenta."
 
-#: apps/users/views.py:646
+#: apps/users/views.py:683
 #, python-format
 msgid "what is theirs: %(cosas)s"
 msgstr "lo suyo: %(cosas)s"
 
-#: apps/users/views.py:649
+#: apps/users/views.py:686
 #, python-format
 msgid "what they decided about other people: %(cosas)s"
 msgstr "lo que decidió sobre otras personas: %(cosas)s"
 
-#: apps/users/views.py:655
+#: apps/users/views.py:692
 #, python-format
 msgid ""
 "%(quien)s left a record, so their file has to stay and explain it --- "
@@ -4780,21 +4811,11 @@ msgstr ""
 "%(quien)s dejó rastro, así que su ficha tiene que quedarse y explicarlo --- "
 "%(que)s. Dale de baja en su lugar."
 
-#: apps/users/views.py:697
+#: apps/users/views.py:734
 msgid "You cannot deactivate your own account."
 msgstr "No puedes dar de baja tu propia cuenta."
 
-#: apps/users/views.py:753
-#, python-format
-msgid "Left on %(day)s. %(count)s shift(s) still rostered after that."
-msgstr "Se fue el %(day)s. Le quedan %(count)s turno(s) planificados después."
-
-#: apps/users/views.py:756
-#, python-format
-msgid "Left on %(day)s."
-msgstr "Se fue el %(day)s."
-
-#: apps/users/views.py:812
+#: apps/users/views.py:796
 #, python-format
 msgid ""
 "%(count)s people answer for this department. Move them first: leaving them "
@@ -4804,7 +4825,7 @@ msgstr ""
 "De este departamento responden %(count)s personas. Muévelas primero: al "
 "mando de nada, dejan de poder leer los datos de nadie más que los suyos."
 
-#: apps/users/views.py:860
+#: apps/users/views.py:844
 #, python-format
 msgid ""
 "%(count)s people work there. Move them first: without a workplace they lose "
@@ -4813,28 +4834,28 @@ msgstr ""
 "Ahí trabajan %(count)s personas. Muévelas primero: sin centro pierden sus "
 "festivos locales y su zona horaria."
 
-#: apps/users/views.py:932
+#: apps/users/views.py:923
 msgid "An application cannot change somebody's password."
 msgstr "Una aplicación no puede cambiar la contraseña de nadie."
 
-#: apps/users/views.py:937
+#: apps/users/views.py:928
 msgid ""
 "You sign in with your company's account: your password is changed there."
 msgstr "Entras con la cuenta de tu empresa: la contraseña se cambia allí."
 
-#: apps/users/views.py:945
+#: apps/users/views.py:936
 msgid "That is not your current password."
 msgstr "Esa no es tu contraseña actual."
 
-#: apps/users/views.py:985
+#: apps/users/views.py:989 apps/users/views.py:1001
 msgid "The link is not valid or has already been used."
 msgstr "El enlace no es válido o ya se ha usado."
 
-#: apps/users/views.py:1065
+#: apps/users/views.py:1081
 msgid "A schedule adaptation can only be asked for by the person themselves."
 msgstr "Una adaptación de jornada solo la puede pedir la propia persona."
 
-#: apps/users/views.py:1085
+#: apps/users/views.py:1101
 msgid "Only an administrator answers a schedule adaptation."
 msgstr "Solo administración contesta una adaptación de jornada."
 
@@ -5117,9 +5138,3 @@ msgstr ""
 "Aquí no se reproduce lo que escribió. El artículo 6.2 te da acceso al\n"
 "registro, así que puedes consultar el asiento y su historial en la "
 "aplicación."
-
-msgid "That address and password belong to more than one company. Add your company's tax number."
-msgstr "Ese correo y esa contraseña valen en más de una empresa. Añade el CIF o NIF de tu empresa."
-
-msgid "That address belongs to an account that administers this installation. Use a different address."
-msgstr "Ese correo es el de una cuenta que administra esta instalación. Usa otro."

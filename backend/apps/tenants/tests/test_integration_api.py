@@ -146,11 +146,15 @@ def test_the_baja_deactivates_and_keeps_the_record(connector, company):
 
 @pytest.mark.django_db
 def test_pushing_again_brings_a_seasonal_worker_back(connector, company):
-    """Quien viene por temporadas vuelve con el mismo número."""
+    """Quien viene por temporadas vuelve con el mismo número, si el conector lo
+    pide: sin `is_active` el empuje ya no reactiva (ver
+    `test_lo_que_el_conector_no_puede`)."""
     cuerpo = {"email": "rosa@acme.example", "first_name": "Rosa", "employee_id": "EMP-0042"}
     connector.put("/api/app/people/EMP-0042/", cuerpo, format="json")
     connector.delete("/api/app/people/EMP-0042/")
-    vuelta = connector.put("/api/app/people/EMP-0042/", cuerpo, format="json")
+    vuelta = connector.put(
+        "/api/app/people/EMP-0042/", {**cuerpo, "is_active": True}, format="json"
+    )
 
     assert vuelta.json()["is_active"] is True
 
