@@ -52,10 +52,12 @@ from apps.tenants.models import (
     ApplicationCredential,
     ApplicationScope,
     Tenant,
+    companies_with_tax_id,
     validate_time_zone,
 )
+from apps.users.direcciones import correo_ocupado
 from apps.users.models import Role, User
-from apps.users.passwords import send_account_email
+from apps.users.passwords import revoke_sessions, send_account_email
 from apps.users.serializers import SignUpSerializer
 
 log = logging.getLogger(__name__)
@@ -532,7 +534,7 @@ class CompanyChangeSerializer(serializers.Serializer):
         value = value.strip().upper()
         if not value:
             raise serializers.ValidationError(_("The tax number cannot be empty."))
-        otra = Tenant.objects.filter(tax_id=value).exclude(pk=self.context["company"].pk)
+        otra = companies_with_tax_id(value).exclude(pk=self.context["company"].pk)
         if otra.exists():
             raise serializers.ValidationError(_("A company with this tax number already exists."))
         return value
@@ -1031,29 +1033,11 @@ def _administrador(user: User) -> dict:
 def _correo_ocupado(correo: str, *, salvo=None) -> str | None:
     """Por qué no vale ese correo para una cuenta de la instalación, o nada.
 
-    Ni repetido entre ellas, ni de alguien de una empresa. Lo segundo porque con
-    dos cuentas del mismo correo la pantalla de entrada pide el identificador
-    fiscal para saber a cuál se refiere ---y la de la instalación no tiene ninguno---,
-    así que la cuenta se quedaría sin forma de entrar. Pasó en producción el
-    23/09/2026: se creó una, no pudo entrar, y hubo que desactivarla.
+    La regla es común a todas las puertas: ver `apps.users.direcciones`. Pasó en
+    producción el 23/09/2026: se creó una con el correo de alguien de una empresa,
+    no pudo entrar, y hubo que desactivarla.
     """
-    fuera = {"pk": salvo.pk} if salvo is not None else {}
-    de_la_instalacion = User.objects.filter(email__iexact=correo, tenant__isnull=True)
-    if de_la_instalacion.exclude(**fuera).exists():
-        return _("There is already an installation account with that address.")
-    de_una_empresa = (
-        User.objects.filter(email__iexact=correo, tenant__isnull=False)
-        .select_related("tenant")
-        .first()
-    )
-    if de_una_empresa is not None:
-        return _(
-            "That address already belongs to somebody in %(company)s. An "
-            "installation account with a repeated address could not sign in, "
-            "because the sign-in screen would ask which company it is, and this "
-            "one has none. Use a different address."
-        ) % {"company": de_una_empresa.tenant.name}
-    return None
+    return correo_ocupado(correo, de_la_instalacion=True, salvo=salvo)
 
 
 def _los_de_la_instalacion():
@@ -1144,10 +1128,18 @@ class PlatformAdminPasswordView(_UnaCuenta):
             return Response(
                 {"detail": _("No such installation account.")}, status=status.HTTP_404_NOT_FOUND
             )
+        if not cuenta.is_active:
+            # Esta puerta también reactiva, así que mira lo mismo que reactivar.
+            motivo = _correo_ocupado(cuenta.email, salvo=cuenta)
+            if motivo:
+                return Response({"detail": motivo}, status=status.HTTP_400_BAD_REQUEST)
         clave = f"Ott-{secrets.token_urlsafe(12)}"
         cuenta.set_password(clave)
         cuenta.is_active = True
         cuenta.save(update_fields=["password", "is_active"])
+        # Una contraseña nueva es lo que se da cuando la de antes ya no es de
+        # fiar. Quien estuviera dentro con ella sigue dentro si no se le echa.
+        revoke_sessions(cuenta)
         record_platform(
             action=PlatformAction.ADMIN_PASSWORD_RESET,
             actor=request.user,
@@ -1244,10 +1236,14 @@ class PlatformAdminView(_UnaCuenta):
 
         if "email" in v:
             v["email"] = v["email"].lower()
-            if v["email"] != cuenta.email.lower():
-                motivo = _correo_ocupado(v["email"], salvo=cuenta)
-                if motivo:
-                    return Response({"detail": motivo}, status=status.HTTP_400_BAD_REQUEST)
+        reactivando = v.get("is_active") is True and not cuenta.is_active
+        cambia_el_correo = "email" in v and v["email"] != cuenta.email.lower()
+        # Reactivar también: mientras estuvo desactivada, alguien de una empresa
+        # ha podido quedarse con su correo.
+        if cambia_el_correo or reactivando:
+            motivo = _correo_ocupado(v.get("email", cuenta.email), salvo=cuenta)
+            if motivo:
+                return Response({"detail": motivo}, status=status.HTTP_400_BAD_REQUEST)
 
         cambios = {}
         for campo in ("email", "first_name", "last_name"):
@@ -1310,6 +1306,9 @@ class PlatformAdminView(_UnaCuenta):
             )
         cuenta.is_active = False
         cuenta.save(update_fields=["is_active"])
+        # Desactivada y con la sesión abierta seguía renovándola: el acceso mira
+        # `is_active`, el refresco no lo miraba nadie hasta que caducaba.
+        revoke_sessions(cuenta)
         record_platform(
             action=PlatformAction.ADMIN_DEACTIVATED,
             actor=request.user,
@@ -1425,6 +1424,9 @@ class CompanySupportView(_PorEmpresa):
         refresh = RefreshToken.for_user(cuenta)
         refresh.set_exp(lifetime=SUPPORT_SESSION)
         refresh["support_by"] = request.user.email
+        # Para que la renovación compruebe que quien entró sigue activo, aunque
+        # haya cambiado de correo.
+        refresh["support_by_id"] = str(request.user.pk)
         access = refresh.access_token
         if access.lifetime > SUPPORT_SESSION:
             access.set_exp(lifetime=SUPPORT_SESSION)

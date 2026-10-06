@@ -5522,3 +5522,9 @@ msgstr ""
 "\n"
 "Aquí non se reproduce o que escribiu. O art. 6.2 dávos acceso ao\n"
 "rexistro, así que podedes consultar o asento e o seu historial na aplicación."
+
+msgid "That address and password belong to more than one company. Add your company's tax number."
+msgstr "Ese correo e esa contrasinal valen en máis dunha empresa. Engade o CIF ou NIF da túa empresa."
+
+msgid "That address belongs to an account that administers this installation. Use a different address."
+msgstr "Ese correo é o dunha conta que administra esta instalación. Usa outro."

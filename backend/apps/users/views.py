@@ -24,7 +24,7 @@ from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.audit.trail import StructureTrail
 from apps.common.clock import local_today
-from apps.common.exceptions import BusinessRuleError
+from apps.common.exceptions import BusinessRuleError, IncompleteRequest
 from apps.common.models import set_current_tenant
 from apps.common.network import client_ip
 from apps.common.permissions import (
@@ -47,6 +47,7 @@ from apps.users.models import (
 )
 from apps.users.passwords import resolve_token, revoke_sessions, send_account_email
 from apps.users.serializers import (
+    COMPANY_REQUIRED,
     ActivityPeriodSerializer,
     DepartmentSerializer,
     PasswordResetRequestSerializer,
@@ -125,6 +126,13 @@ class SignInView(APIView):
             # comes from the address given, so a wrong one records nothing --
             # there is no company to scope the entry to.
             self._record_failed_attempt(request)
+            # «Falta la empresa» sale con su propio código y no como un error de
+            # validación más: es lo que le dice a la pantalla que pida el
+            # identificador fiscal, y que no confunda el caso con una contraseña
+            # mal escrita.
+            for motivo in serializer.errors.get("non_field_errors", []):
+                if getattr(motivo, "code", None) == COMPANY_REQUIRED:
+                    raise IncompleteRequest(code=COMPANY_REQUIRED, message=str(motivo))
             serializer.is_valid(raise_exception=True)
 
         user = serializer.validated_data["user"]
@@ -190,6 +198,24 @@ class RefreshRequestSerializer(serializers.Serializer):
     refresh = serializers.CharField()
 
 
+def _support_session_still_valid(refresh) -> None:
+    """Una entrada de soporte se renueva solo mientras quien la abrió siga activo.
+
+    La sesión es de la cuenta de soporte de la empresa, no de la de la instalación
+    que entró, así que desactivar esta no cerraba nada: el refresco seguía
+    renovándose como si nada hubiera pasado.
+    """
+    quien_id = refresh.payload.get("support_by_id")
+    instalacion = User.objects.filter(tenant__isnull=True, is_active=True)
+    if quien_id:
+        sigue = instalacion.filter(pk=quien_id).exists()
+    else:
+        # Las abiertas antes de que el token llevara el identificador.
+        sigue = instalacion.filter(email__iexact=refresh.payload["support_by"]).exists()
+    if not sigue:
+        raise TokenError("the installation account behind this support session is not active")
+
+
 @extend_schema(tags=["auth"])
 class RefreshView(APIView):
     """Trades a refresh token for a fresh access token.
@@ -239,13 +265,30 @@ class RefreshView(APIView):
             # estaba abierta se renovaba una semana entera después de la baja.
             if User.objects.filter(pk=quien, tenant__is_active=False).exists():
                 raise TokenError("the company behind this token is deactivated")
-            access = str(refresh.access_token)
+            soporte = "support_by" in refresh.payload
+            if soporte:
+                _support_session_still_valid(refresh)
+            access_token = refresh.access_token
+            if soporte and access_token["exp"] > refresh["exp"]:
+                # Ni el acceso pasa del final de la entrada de soporte.
+                access_token["exp"] = refresh["exp"]
+            access = str(access_token)
             if settings.SIMPLE_JWT.get("ROTATE_REFRESH_TOKENS"):
                 if settings.SIMPLE_JWT.get("BLACKLIST_AFTER_ROTATION"):
                     refresh.blacklist()
                 refresh.set_jti()
-                refresh.set_exp()
+                # Una entrada de soporte conserva su final. `set_exp()` sin plazo
+                # aplica el de una sesión normal ---siete días--- y cada
+                # renovación la alargaba: las dos horas que fija quien la abre
+                # se quedaban en el primer refresco.
+                if not soporte:
+                    refresh.set_exp()
                 refresh.set_iat()
+                # Y el nuevo, en la lista de los vivos. Sin esto `revoke_sessions`
+                # solo alcanzaba al refresco que dio la entrada: una sesión que
+                # se hubiera renovado una vez ---cualquiera, a los quince minutos---
+                # sobrevivía al cambio de contraseña y a la baja.
+                refresh.outstand()
         except TokenError as exc:
             # Expired, blacklisted or forged: all the same answer. Telling them
             # apart would say whether a token ever existed.
@@ -578,6 +621,12 @@ class UserViewSet(viewsets.ModelViewSet):
         if new_role:
             self._refuse_if_it_leaves_no_admin(serializer.instance, new_role=new_role)
         person = serializer.save()
+
+        # Dar de baja por aquí ---`is_active: false` en la ficha--- cierra sus
+        # sesiones igual que hacerlo con su botón. Si no, el refresco seguía
+        # vivo y volvía a valer el día que se le reactivase.
+        if was_active and not person.is_active:
+            revoke_sessions(person)
 
         # Giving somebody their access back is not an ordinary edit, and the
         # trail should not make it look like one: it is the reverse of

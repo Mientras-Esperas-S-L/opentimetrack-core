@@ -13,7 +13,14 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps import legal
 from apps.common.campos import DecimalesTolerantes
 from apps.common.clock import local_today
-from apps.tenants.models import Tenant, validate_time_zone
+from apps.tenants.models import (
+    Tenant,
+    companies_with_tax_id,
+    normalise_tax_id,
+    validate_time_zone,
+)
+from apps.users.backends import CompanyRequired
+from apps.users.direcciones import correo_ocupado
 from apps.users.models import (
     ActivityPeriod,
     AdaptationStatus,
@@ -442,6 +449,25 @@ class UserWriteSerializer(DecimalesTolerantes, serializers.ModelSerializer):
         from apps.users.models import HoursPeriod, WorkingTimeRegime
 
         current = self.instance
+
+        # Si va a quedar activa, que su correo no sea el de una cuenta activa de
+        # la instalación. Aquí y no en `validate_email` porque se llega también
+        # sin tocar el correo: reactivar a alguien que ya lo tenía.
+        #
+        # Solo al darla de alta, cambiarle el correo o reactivarla. Un choque
+        # que ya existiera no puede dejar la ficha sin poder editarse.
+        email = attrs.get("email", getattr(current, "email", ""))
+        active = attrs.get("is_active", getattr(current, "is_active", True))
+        toca_el_correo = (
+            current is None
+            or email.lower() != current.email.lower()
+            or (active and not current.is_active)
+        )
+        if active and toca_el_correo:
+            motivo = correo_ocupado(email, de_la_instalacion=False, salvo=current)
+            if motivo:
+                raise serializers.ValidationError({"email": motivo})
+
         regime = attrs.get("regime", getattr(current, "regime", WorkingTimeRegime.FULL_TIME))
         hours = attrs.get("contracted_hours", getattr(current, "contracted_hours", None))
         period = attrs.get(
@@ -562,6 +588,13 @@ class UserWriteSerializer(DecimalesTolerantes, serializers.ModelSerializer):
         if password:
             instance.set_password(password)
         instance.save()
+        if password:
+            # Una contraseña puesta por la administración es la respuesta a «me
+            # han visto la clave» o «he perdido el móvil». Si las sesiones de
+            # antes siguen vivas, no ha servido de nada.
+            from apps.users.passwords import revoke_sessions
+
+            revoke_sessions(instance)
         return instance
 
 
@@ -580,8 +613,17 @@ class SignUpSerializer(serializers.Serializer):
 
     def validate_tax_id(self, value: str) -> str:
         value = value.strip().upper()
-        if Tenant.objects.filter(tax_id=value).exists():
+        # Sin separadores al comparar: «B-12345678» y «B12345678» son la misma
+        # empresa, y dejar dar de alta las dos haría que la pantalla de entrada
+        # encontrase una cualquiera.
+        if companies_with_tax_id(value).exists():
             raise serializers.ValidationError(_("A company with this tax number already exists."))
+        return value
+
+    def validate_email(self, value: str) -> str:
+        motivo = correo_ocupado(value, de_la_instalacion=False)
+        if motivo:
+            raise serializers.ValidationError(motivo)
         return value
 
     def validate_time_zone(self, value: str) -> str:
@@ -635,6 +677,10 @@ class SignUpSerializer(serializers.Serializer):
         return {"company": company, "user": admin}
 
 
+#: El código con el que la pantalla de entrada sabe que tiene que pedir la empresa.
+COMPANY_REQUIRED = "company_required"
+
+
 class SignInSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -642,22 +688,35 @@ class SignInSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         company_id = None
-        if attrs.get("tax_id"):
-            company = Tenant.objects.filter(tax_id=attrs["tax_id"].strip().upper()).first()
+        if normalise_tax_id(attrs.get("tax_id")):
+            company = companies_with_tax_id(attrs["tax_id"]).first()
             if company is None:
                 raise serializers.ValidationError(_("Wrong credentials."))
             company_id = company.id
 
-        user = authenticate(
-            self.context.get("request"),
-            email=attrs["email"],
-            password=attrs["password"],
-            tenant_id=company_id,
-        )
+        try:
+            user = authenticate(
+                self.context.get("request"),
+                email=attrs["email"],
+                password=attrs["password"],
+                tenant_id=company_id,
+                distinguish_missing_company=True,
+            )
+        except CompanyRequired:
+            # Lo único que se distingue, y solo para quien ya ha dado una
+            # contraseña que vale: que esa cuenta existe en más de una empresa y
+            # falta decir cuál. Con «credenciales incorrectas» la pantalla no
+            # sabía que tenía que pedir el identificador fiscal.
+            raise serializers.ValidationError(
+                _(
+                    "That address and password belong to more than one company. "
+                    "Add your company's tax number."
+                ),
+                code=COMPANY_REQUIRED,
+            ) from None
         if user is None:
-            # Deliberately vague: whether the address exists, whether it is
-            # ambiguous or whether the company is deactivated are all things the
-            # caller does not get to learn.
+            # Deliberately vague: whether the address exists or whether the
+            # company is deactivated are things the caller does not get to learn.
             raise serializers.ValidationError(_("Wrong credentials."))
 
         attrs["user"] = user

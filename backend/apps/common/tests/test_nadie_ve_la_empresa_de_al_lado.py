@@ -141,6 +141,10 @@ SIN_EMPRESA_A_PROPOSITO = {
     ("users/backends.py", "pk=user_id"): "recuperar la sesión por su propio id",
     ("users/views.py", "email__iexact"): "recuperar contraseña va por correo, sin empresa",
     (
+        "users/direcciones.py",
+        "email__iexact",
+    ): "el choque es entre la instalación y las empresas: mira las dos y solo devuelve un motivo",
+    (
         "users/views.py",
         "pk=quien, is_active=True",
     ): "renovar la sesión es anónimo: el token trae el id y todavía no hay empresa",
