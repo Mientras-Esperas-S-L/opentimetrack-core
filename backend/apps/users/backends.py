@@ -15,6 +15,20 @@ from django.db.models import Q
 
 User = get_user_model()
 
+#: Cuántas cuentas con el mismo correo se prueban sin que se nombre la empresa.
+MAX_CANDIDATES = 10
+
+
+class CompanyRequired(Exception):
+    """El correo y la contraseña valen en más de una empresa: falta decir cuál.
+
+    Solo sale de `authenticate` cuando quien llama lo pide
+    (`distinguish_missing_company=True`), que es la pantalla de entrada: ahí se
+    convierte en una respuesta propia para que pida el identificador fiscal. El
+    resto ---el formulario del admin de Django, cualquier otro--- sigue recibiendo
+    `None`, que es lo que espera.
+    """
+
 
 class TenantEmailBackend(ModelBackend):
     """Authenticate by email, scoped to a company when it is known.
@@ -28,13 +42,21 @@ class TenantEmailBackend(ModelBackend):
     exist. Covered by the tests in `test_identity.py`.
 
     - Given `tenant_id`, the lookup is scoped to that company.
-    - Without it, an address matching exactly one active person is accepted.
-    - An address present in several companies is rejected. That is deliberate:
-      picking one would be guessing, and the right answer is for the caller to
-      name the company.
+    - Without it, the password is tried against every active account with that
+      address, and the one that accepts it signs in.
+    - If it fits several, it is rejected. That is deliberate: picking one would
+      be guessing, and the right answer is for the caller to name the company.
     """
 
-    def authenticate(self, request, email=None, password=None, tenant_id=None, **kwargs):
+    def authenticate(
+        self,
+        request,
+        email=None,
+        password=None,
+        tenant_id=None,
+        distinguish_missing_company=False,
+        **kwargs,
+    ):
         # Django's own login form always calls this with `username=`, whatever
         # USERNAME_FIELD is named, so the alias is not optional: without it the
         # admin site cannot sign anybody in.
@@ -43,31 +65,54 @@ class TenantEmailBackend(ModelBackend):
         if not email or password is None:
             return None
 
-        lookup = Q(email__iexact=email.strip(), is_active=True)
+        # Quien es de una empresa desactivada no entra, así que tampoco cuenta
+        # como candidato. Contarlo dejaba fuera a otra cuenta con el mismo
+        # correo ---la de la instalación, sobre todo, que no tiene identificador
+        # fiscal con el que desempatar---.
+        lookup = Q(email__iexact=email.strip(), is_active=True) & (
+            Q(tenant__isnull=True) | Q(tenant__is_active=True)
+        )
         if tenant_id is not None:
             lookup &= Q(tenant_id=tenant_id)
 
-        candidates = list(User.objects.filter(lookup)[:2])
+        candidates = list(
+            User.objects.filter(lookup).select_related("tenant")[: MAX_CANDIDATES + 1]
+        )
 
-        if not candidates:
-            # Hash a throwaway password anyway, so response time does not reveal
-            # whether the address exists.
+        if len(candidates) > MAX_CANDIDATES:
+            # Probar la contraseña contra cada una sería una petición que cuesta
+            # lo que el atacante quiera: el alta de empresas es libre y cada
+            # cuenta añade un hash. Con tantas, la empresa la tiene que decir.
             User().set_password(password)
+            if distinguish_missing_company:
+                raise CompanyRequired
             return None
 
-        if len(candidates) > 1:
-            return None
+        # La contraseña se prueba contra **todas** las candidatas, y con eso se
+        # decide. Antes, con dos o más, se rechazaba sin mirarla: quien tenía el
+        # mismo correo en una empresa y en la instalación no entraba nunca, por
+        # buena que fuera su contraseña.
+        #
+        # Un hash por candidata, también por las que no tienen contraseña de aquí
+        # (las federadas), y uno si no hay ninguna: así el tiempo de respuesta no
+        # dice si el correo existe ni si es de una cuenta federada.
+        accepted = []
+        for user in candidates:
+            # A federated account has no usable password here: its identity is
+            # governed by the provider.
+            if not user.has_usable_password():
+                User().set_password(password)
+                continue
+            if user.check_password(password) and self.user_can_authenticate(user):
+                accepted.append(user)
+        if not candidates:
+            User().set_password(password)
 
-        user = candidates[0]
-
-        # A federated account has no usable password here: its identity is
-        # governed by the provider. `check_password` already rejects it, but
-        # being explicit is worth the two lines.
-        if user.is_federated and not user.has_usable_password():
-            return None
-
-        if user.check_password(password) and self.user_can_authenticate(user):
-            return user
+        if len(accepted) == 1:
+            return accepted[0]
+        if len(accepted) > 1 and distinguish_missing_company:
+            # La contraseña vale en más de una empresa: elegir una sería adivinar.
+            raise CompanyRequired
         return None
 
     def user_can_authenticate(self, user) -> bool:

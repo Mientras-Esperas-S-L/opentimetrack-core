@@ -45,7 +45,9 @@ from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import HasApplicationScope
 from apps.tenants.applications import ApplicationScope
+from apps.users.direcciones import correo_ocupado
 from apps.users.models import Role, User
+from apps.users.passwords import revoke_sessions
 
 
 class PersonFromApplicationSerializer(serializers.Serializer):
@@ -365,6 +367,9 @@ class ApplicationPersonView(APIView):
         if person.is_active:
             person.is_active = False
             person.save(update_fields=["is_active", "updated_at"])
+            # Como la baja desde la pantalla: sin esto el móvil de quien se fue
+            # seguía renovando su sesión.
+            revoke_sessions(person)
             record(
                 action=AuditAction.PERSON_DEACTIVATED,
                 actor=None,
@@ -392,6 +397,20 @@ def _refuse_collisions(person: User, company) -> None:
             message=_("Somebody else in this company already uses that address."),
             details={"email": person.email},
         )
+    # El empuje deja a la persona activa, así que tampoco puede llevarse el
+    # correo de una cuenta activa de la instalación. Solo si es nueva, cambia de
+    # correo o vuelve de una baja: un choque que ya existiera no puede dejar al
+    # conector sin poder actualizar a esa persona.
+    antes = User.objects.filter(tenant=company, pk=person.pk).values("email", "is_active").first()
+    toca_el_correo = (
+        antes is None or antes["email"].lower() != person.email.lower() or not antes["is_active"]
+    )
+    if toca_el_correo:
+        motivo = correo_ocupado(person.email, de_la_instalacion=False, salvo=person)
+        if motivo:
+            raise BusinessRuleError(
+                code="email_taken", message=motivo, details={"email": person.email}
+            )
     if person.employee_id and otros.filter(employee_id__iexact=person.employee_id).exists():
         raise BusinessRuleError(
             code="staff_number_taken",

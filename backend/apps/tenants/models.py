@@ -25,6 +25,38 @@ def validate_time_zone(value: str) -> None:
         )
 
 
+#: Lo que se escribe entre los caracteres de un identificador fiscal y no forma
+#: parte de él: «B-12345678», «B 12345678» y «B.12.345.678» son «B12345678».
+_SEPARADORES_DEL_CIF = ("-", " ", ".")
+
+
+def normalise_tax_id(value: str) -> str:
+    """El identificador fiscal sin separadores y en mayúsculas, para comparar."""
+    limpio = (value or "").strip()
+    for separador in _SEPARADORES_DEL_CIF:
+        limpio = limpio.replace(separador, "")
+    return limpio.upper()
+
+
+def companies_with_tax_id(value: str):
+    """Las empresas cuyo identificador fiscal es ese, escrito como se escriba.
+
+    Se compara sin separadores **en los dos lados**: el guardado puede llevarlos
+    ---se guarda como se dio de alta--- y el que se teclea en la pantalla de
+    entrada también. Comparando tal cual, «B-12345678» no encontraba a la empresa
+    dada de alta como «B12345678», y la respuesta era «credenciales incorrectas».
+    """
+    from django.db.models import F, Value
+    from django.db.models.functions import Replace, Upper
+
+    limpio = F("tax_id")
+    for separador in _SEPARADORES_DEL_CIF:
+        limpio = Replace(limpio, Value(separador), Value(""))
+    return Tenant.objects.annotate(_cif_normalizado=Upper(limpio)).filter(
+        _cif_normalizado=normalise_tax_id(value)
+    )
+
+
 def default_time_zone() -> str:
     return settings.DEFAULT_TENANT_TIME_ZONE
 

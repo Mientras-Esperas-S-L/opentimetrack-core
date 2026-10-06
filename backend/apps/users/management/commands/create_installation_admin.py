@@ -23,6 +23,7 @@ import secrets
 
 from django.core.management.base import BaseCommand, CommandError
 
+from apps.users.direcciones import correo_ocupado
 from apps.users.models import User
 
 
@@ -46,6 +47,11 @@ class Command(BaseCommand):
                 f"{email} already administers this installation. "
                 "Its password is reset from the Installation screen."
             )
+        # Ni el de alguien activo de una empresa: la cuenta no podría entrar si
+        # las dos aceptan la contraseña, porque no tiene empresa que nombrar.
+        motivo = correo_ocupado(email, de_la_instalacion=True)
+        if motivo:
+            raise CommandError(str(motivo))
 
         password = options["password"] or f"Ott-{secrets.token_urlsafe(12)}"
         User.objects.create_superuser(
