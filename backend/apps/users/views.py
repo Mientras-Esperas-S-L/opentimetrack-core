@@ -602,19 +602,44 @@ class UserViewSet(viewsets.ModelViewSet):
         )
         return Response({"sent_to": person.email})
 
+    def _refuse_deactivating_yourself(self, person) -> None:
+        # Found by deactivating the wrong account while testing the panel and
+        # then being unable to sign back in. Undoing it needs somebody else with
+        # the same privilege, and there may not be one.
+        if person.id == self.request.user.id:
+            raise BusinessRuleError(
+                code="cannot_deactivate_yourself",
+                message=_("You cannot deactivate your own account."),
+            )
+
     def perform_update(self, serializer):
         before = serializer.instance.role
         was_active = serializer.instance.is_active
         new_role = serializer.validated_data.get("role")
-        if new_role:
+
+        # Dar de baja por aquí ---`is_active: false` en la ficha, que es lo que
+        # manda la baja en lote de Personas--- es la misma baja que la del botón.
+        # Antes solo apagaba `is_active` y cerraba sesiones: se podía dejar a la
+        # empresa sin su última administradora, darse de baja a uno mismo, y la
+        # baja quedaba sin fecha de fin y sin su asiento. Las reglas se comprueban
+        # **antes** de guardar nada, y la baja en sí la hace `deactivate`.
+        se_va = was_active and serializer.validated_data.get("is_active") is False
+        if se_va:
+            self._refuse_deactivating_yourself(serializer.instance)
+            self._refuse_if_it_leaves_no_admin(
+                serializer.instance, new_role=new_role, deactivating=True
+            )
+            serializer.validated_data.pop("is_active")
+        elif new_role:
             self._refuse_if_it_leaves_no_admin(serializer.instance, new_role=new_role)
         person = serializer.save()
 
-        # Dar de baja por aquí ---`is_active: false` en la ficha--- cierra sus
-        # sesiones igual que hacerlo con su botón. Si no, el refresco seguía
-        # vivo y volvía a valer el día que se le reactivase.
-        if was_active and not person.is_active:
-            revoke_sessions(person)
+        if se_va:
+            deactivate(person, actor=self.request.user)
+            # Si no venía nada más que la baja, su asiento es el de
+            # PERSON_DEACTIVATED y no hace falta otro de «ficha editada».
+            if not serializer.validated_data:
+                return
 
         # Giving somebody their access back is not an ordinary edit, and the
         # trail should not make it look like one: it is the reverse of
@@ -725,14 +750,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         """Deactivate rather than delete: their clock events must survive."""
-        # Found by deactivating the wrong account while testing the panel and
-        # then being unable to sign back in. Undoing it needs somebody else with
-        # the same privilege, and there may not be one.
-        if instance.id == self.request.user.id:
-            raise BusinessRuleError(
-                code="cannot_deactivate_yourself",
-                message=_("You cannot deactivate your own account."),
-            )
+        self._refuse_deactivating_yourself(instance)
 
         # La fecha de fin, el cierre de sesiones, los turnos que quedan y el
         # asiento: lo mismo que la baja desde una aplicación, en un solo sitio.
