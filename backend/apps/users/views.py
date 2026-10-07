@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import smtplib
 
 import django_filters
 from django.conf import settings
@@ -23,7 +24,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.audit.trail import StructureTrail
-from apps.common.exceptions import BusinessRuleError, IncompleteRequest
+from apps.common.exceptions import BusinessRuleError, IncompleteRequest, MailNotSent
 from apps.common.mail import mask_address
 from apps.common.models import set_current_tenant
 from apps.common.network import client_ip
@@ -555,7 +556,31 @@ class UserViewSet(viewsets.ModelViewSet):
         created before this existed never got one.
         """
         person = self.get_object()
-        if not self._invite(person):
+
+        # El correo es lo único que esto hace: si no sale, se dice, con un 502 y
+        # su motivo. Antes la excepción subía y contestaba 500 sin cuerpo, y la
+        # pantalla decía «No hay conexión con el servidor». No queda nada a
+        # medias: el enlace no se guarda en ningún sitio ---se firma al vuelo y
+        # el siguiente envío lleva uno nuevo--- y el asiento de la invitación
+        # solo se escribe si salió.
+        try:
+            enviada = self._invite(person)
+        except smtplib.SMTPRecipientsRefused:
+            # Rechazo de la dirección, no avería: reintentar no lo arregla.
+            logger.warning("The mail relay refused %s", mask_address(person.email))
+            raise MailNotSent(
+                code="mail_address_refused",
+                message=_("The mail server refuses the address %(email)s. Check that it is right.")
+                % {"email": person.email},
+            ) from None
+        except Exception:
+            logger.exception("Could not send the invitation to %s", mask_address(person.email))
+            raise MailNotSent(
+                code="mail_not_sent",
+                message=_("The email could not be sent. Nothing has changed; try again later."),
+            ) from None
+
+        if not enviada:
             raise BusinessRuleError(
                 code="cannot_invite",
                 message=(

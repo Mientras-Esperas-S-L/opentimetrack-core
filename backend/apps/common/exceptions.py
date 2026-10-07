@@ -75,6 +75,27 @@ class IncompleteRequest(exceptions.APIException):
         super().__init__(detail=message, code=code)
 
 
+class MailNotSent(exceptions.APIException):
+    """El servidor de correo no ha aceptado el mensaje. Contesta 502.
+
+    Para las acciones cuyo único efecto es mandar un correo ---reenviar una
+    invitación---: si no sale, hay que decirlo en vez de contestar «enviado».
+    502 y no 500 porque lo que falla es el servidor de correo, no esta API, y con
+    el formato de siempre para que la pantalla enseñe el motivo: un 500 llega sin
+    cuerpo y la pantalla decía «No hay conexión con el servidor».
+    """
+
+    status_code = 502
+    default_code = "mail_not_sent"
+    default_detail = "The email could not be sent."
+
+    def __init__(self, code: str, message: str, details: dict | None = None):
+        self.code = code
+        self.message = message
+        self.details = details or {}
+        super().__init__(detail=message, code=code)
+
+
 def _mensaje_de_espera(segundos) -> str:
     """Lo que se le dice a quien ha agotado el límite de intentos.
 
@@ -132,7 +153,7 @@ def api_exception_handler(exc, context):
         logger.exception("Unhandled exception in %s", context.get("view"))
         return None
 
-    if isinstance(exc, BusinessRuleError | IncompleteRequest):
+    if isinstance(exc, BusinessRuleError | IncompleteRequest | MailNotSent):
         code, message, details = exc.code, exc.message, exc.details
     elif isinstance(exc, exceptions.Throttled):
         code, message, details = "throttled", _mensaje_de_espera(exc.wait), {}
