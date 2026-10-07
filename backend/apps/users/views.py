@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import smtplib
 
 import django_filters
 from django.conf import settings
@@ -23,7 +24,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.audit.trail import StructureTrail
-from apps.common.exceptions import BusinessRuleError, IncompleteRequest
+from apps.common.exceptions import BusinessRuleError, IncompleteRequest, MailNotSent
 from apps.common.mail import mask_address
 from apps.common.models import set_current_tenant
 from apps.common.network import client_ip
@@ -555,7 +556,31 @@ class UserViewSet(viewsets.ModelViewSet):
         created before this existed never got one.
         """
         person = self.get_object()
-        if not self._invite(person):
+
+        # El correo es lo único que esto hace: si no sale, se dice, con un 502 y
+        # su motivo. Antes la excepción subía y contestaba 500 sin cuerpo, y la
+        # pantalla decía «No hay conexión con el servidor». No queda nada a
+        # medias: el enlace no se guarda en ningún sitio ---se firma al vuelo y
+        # el siguiente envío lleva uno nuevo--- y el asiento de la invitación
+        # solo se escribe si salió.
+        try:
+            enviada = self._invite(person)
+        except smtplib.SMTPRecipientsRefused:
+            # Rechazo de la dirección, no avería: reintentar no lo arregla.
+            logger.warning("The mail relay refused %s", mask_address(person.email))
+            raise MailNotSent(
+                code="mail_address_refused",
+                message=_("The mail server refuses the address %(email)s. Check that it is right.")
+                % {"email": person.email},
+            ) from None
+        except Exception:
+            logger.exception("Could not send the invitation to %s", mask_address(person.email))
+            raise MailNotSent(
+                code="mail_not_sent",
+                message=_("The email could not be sent. Nothing has changed; try again later."),
+            ) from None
+
+        if not enviada:
             raise BusinessRuleError(
                 code="cannot_invite",
                 message=(
@@ -602,19 +627,44 @@ class UserViewSet(viewsets.ModelViewSet):
         )
         return Response({"sent_to": person.email})
 
+    def _refuse_deactivating_yourself(self, person) -> None:
+        # Found by deactivating the wrong account while testing the panel and
+        # then being unable to sign back in. Undoing it needs somebody else with
+        # the same privilege, and there may not be one.
+        if person.id == self.request.user.id:
+            raise BusinessRuleError(
+                code="cannot_deactivate_yourself",
+                message=_("You cannot deactivate your own account."),
+            )
+
     def perform_update(self, serializer):
         before = serializer.instance.role
         was_active = serializer.instance.is_active
         new_role = serializer.validated_data.get("role")
-        if new_role:
+
+        # Dar de baja por aquí ---`is_active: false` en la ficha, que es lo que
+        # manda la baja en lote de Personas--- es la misma baja que la del botón.
+        # Antes solo apagaba `is_active` y cerraba sesiones: se podía dejar a la
+        # empresa sin su última administradora, darse de baja a uno mismo, y la
+        # baja quedaba sin fecha de fin y sin su asiento. Las reglas se comprueban
+        # **antes** de guardar nada, y la baja en sí la hace `deactivate`.
+        se_va = was_active and serializer.validated_data.get("is_active") is False
+        if se_va:
+            self._refuse_deactivating_yourself(serializer.instance)
+            self._refuse_if_it_leaves_no_admin(
+                serializer.instance, new_role=new_role, deactivating=True
+            )
+            serializer.validated_data.pop("is_active")
+        elif new_role:
             self._refuse_if_it_leaves_no_admin(serializer.instance, new_role=new_role)
         person = serializer.save()
 
-        # Dar de baja por aquí ---`is_active: false` en la ficha--- cierra sus
-        # sesiones igual que hacerlo con su botón. Si no, el refresco seguía
-        # vivo y volvía a valer el día que se le reactivase.
-        if was_active and not person.is_active:
-            revoke_sessions(person)
+        if se_va:
+            deactivate(person, actor=self.request.user)
+            # Si no venía nada más que la baja, su asiento es el de
+            # PERSON_DEACTIVATED y no hace falta otro de «ficha editada».
+            if not serializer.validated_data:
+                return
 
         # Giving somebody their access back is not an ordinary edit, and the
         # trail should not make it look like one: it is the reverse of
@@ -725,14 +775,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         """Deactivate rather than delete: their clock events must survive."""
-        # Found by deactivating the wrong account while testing the panel and
-        # then being unable to sign back in. Undoing it needs somebody else with
-        # the same privilege, and there may not be one.
-        if instance.id == self.request.user.id:
-            raise BusinessRuleError(
-                code="cannot_deactivate_yourself",
-                message=_("You cannot deactivate your own account."),
-            )
+        self._refuse_deactivating_yourself(instance)
 
         # La fecha de fin, el cierre de sesiones, los turnos que quedan y el
         # asiento: lo mismo que la baja desde una aplicación, en un solo sitio.
