@@ -28,7 +28,15 @@ se despliega--- y reintentar no puede crear duplicados. Ese identificador es
 
 Los fichajes viven cuatro años y sobreviven a la persona que los hizo. Un
 `DELETE` aquí desactiva: quien se fue deja de fichar y su registro sigue
-entero, que es lo que pide el art. 34.9.
+entero, que es lo que pide el art. 34.9. Y es **la misma baja que la de la
+pantalla** (`apps.users.baja`): con su fecha de fin, sus sesiones cerradas y sin
+dejar a la empresa sin administrador.
+
+## Lo que una aplicación no puede
+
+Nombrar administradores: es la llave de toda la empresa y la da quien ya la
+tiene, aquí dentro. Tampoco ve ni toca la cuenta de soporte, que es de la
+instalación y no de la empresa.
 """
 
 from __future__ import annotations
@@ -45,9 +53,22 @@ from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import HasApplicationScope
 from apps.tenants.applications import ApplicationScope
+from apps.users.baja import deactivate
 from apps.users.direcciones import correo_ocupado
 from apps.users.models import Role, User
-from apps.users.passwords import revoke_sessions
+
+#: Los papeles que una aplicación puede dar al crear a alguien.
+#:
+#: Sin administración: una credencial con `write:people` creaba administradores, o
+#: sea que quien tuviera el secreto de un conector podía darse a sí mismo las
+#: llaves de toda la empresa ---leer el registro de todos, cambiar fichajes,
+#: crear otras aplicaciones---. No hay un permiso de aplicación que lo autorice, y
+#: no se crea uno: nombrar a quien administra se hace aquí dentro.
+#:
+#: Sin asesoría tampoco, por lo mismo en pequeño: lee y exporta el registro de
+#: toda la empresa, y es alguien de fuera que la empresa elige, no una persona de
+#: la plantilla que un sistema de altas tenga que conocer.
+ROLES_FOR_APPLICATIONS = (Role.EMPLOYEE, Role.MANAGER)
 
 
 class PersonFromApplicationSerializer(serializers.Serializer):
@@ -74,8 +95,28 @@ class PersonFromApplicationSerializer(serializers.Serializer):
     )
     #: Honoured **only when the person is created**. Whoever administers time here
     #: decides the role of people who already exist, not the connector.
+    #:
+    #: Every role is accepted by the field so that a connector which sends the
+    #: current role of somebody who already exists ---an administrator included---
+    #: keeps working. Creating with `ADMIN` or `ADVISOR` is refused in `put`.
     role = serializers.ChoiceField(
-        choices=Role.choices, required=False, allow_blank=True, default=""
+        choices=Role.choices,
+        required=False,
+        allow_blank=True,
+        default="",
+        help_text="Only on creation, and only EMPLOYEE or MANAGER.",
+    )
+    #: Whether the person is active. **Only acted on when it comes in the body.**
+    #:
+    #: The push used to reactivate everybody it touched, so a connector syncing
+    #: daily undid every deactivation made here the next morning. Leaving it out
+    #: keeps the state as it is; a new person starts active.
+    is_active = serializers.BooleanField(
+        required=False,
+        help_text=(
+            "Leave it out to keep the current state. `true` reactivates, `false` "
+            "deactivates exactly like `DELETE`. New people start active."
+        ),
     )
     department = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
 
@@ -91,12 +132,19 @@ def _resolve(reference: str, company) -> User | None:
     if not reference:
         return None
 
-    return User.objects.filter(
-        Q(oidc_sub__iexact=reference)
-        | Q(employee_id__iexact=reference)
-        | Q(email__iexact=reference),
-        tenant=company,
-    ).first()
+    # Sin la cuenta de soporte: es de la instalación, no de la empresa, y es
+    # administración. Alcanzable por su correo, un conector podía cambiarle el
+    # nombre o darla de baja ---y con ella, la forma de entrar a ayudar---.
+    return (
+        User.objects.filter(
+            Q(oidc_sub__iexact=reference)
+            | Q(employee_id__iexact=reference)
+            | Q(email__iexact=reference),
+            tenant=company,
+        )
+        .exclude(is_support=True)
+        .first()
+    )
 
 
 def _as_dict(person: User) -> dict:
@@ -192,7 +240,8 @@ class ApplicationPeopleView(APIView):
     )
     def get(self, request):
         company = request.user.application.tenant
-        people = User.objects.filter(tenant=company)
+        # Soporte no es nadie de la empresa, como en `people_queryset`.
+        people = User.objects.filter(tenant=company).exclude(is_support=True)
 
         if request.query_params.get("active") in ("1", "true", "True"):
             people = people.filter(is_active=True)
@@ -297,6 +346,16 @@ class ApplicationPersonView(APIView):
         person = _resolve(reference, company)
         creado = person is None
 
+        if creado and data.get("role") and data["role"] not in ROLES_FOR_APPLICATIONS:
+            raise BusinessRuleError(
+                code="role_not_allowed",
+                message=_(
+                    "An application can only create employees and managers. "
+                    "Administrators and labour advisors are appointed in OpenTimeTrack."
+                ),
+                details={"role": data["role"]},
+            )
+
         if creado:
             # Sin contraseña: entra por el proveedor de identidad, o pide un
             # enlace. Un conector no debería poder fijar la contraseña de nadie.
@@ -316,19 +375,36 @@ class ApplicationPersonView(APIView):
             person.oidc_issuer = data["oidc_issuer"].strip()
         if creado and data.get("role"):
             person.role = data["role"]
-        # Reactivar es parte del empuje: alguien de temporada vuelve, y la
-        # aplicación de gestión lo da de alta otra vez con el mismo número.
-        person.is_active = True
+
+        # Solo si lo pide. Reactivar sigue siendo parte del empuje ---alguien de
+        # temporada vuelve, y la aplicación de gestión lo da de alta otra vez con
+        # el mismo número--- pero tiene que decirlo: si no, cada sincronización
+        # diaria deshacía la baja que se había dado aquí.
+        pide = data.get("is_active")
+        if creado:
+            person.is_active = pide is not False
+        elif pide is True:
+            person.is_active = True
+        dar_de_baja = not creado and pide is False and person.is_active
 
         if data.get("department"):
             from apps.users.models import Department
 
-            person.department, _ = Department.objects.get_or_create(
+            person.department, _nuevo = Department.objects.get_or_create(
                 tenant=company, name=data["department"].strip()
             )
 
         _refuse_collisions(person, company)
         person.save()
+
+        if dar_de_baja:
+            # La misma baja que el `DELETE`, no un `is_active = False` suelto.
+            deactivate(
+                person,
+                actor=None,
+                actor_label=f"aplicación · {request.user.application.name}",
+                company=company,
+            )
 
         record(
             action=AuditAction.PERSON_CREATED if creado else AuditAction.PERSON_UPDATED,
@@ -365,19 +441,15 @@ class ApplicationPersonView(APIView):
             )
 
         if person.is_active:
-            person.is_active = False
-            person.save(update_fields=["is_active", "updated_at"])
-            # Como la baja desde la pantalla: sin esto el móvil de quien se fue
-            # seguía renovando su sesión.
-            revoke_sessions(person)
-            record(
-                action=AuditAction.PERSON_DEACTIVATED,
+            # La misma que la de la pantalla: fecha de fin de contrato, sesiones
+            # cerradas, y nunca al último administrador. Antes solo se apagaba
+            # `is_active`, y un conector podía dejar a la empresa sin nadie que la
+            # administrara.
+            deactivate(
+                person,
                 actor=None,
                 actor_label=f"aplicación · {request.user.application.name}",
                 company=company,
-                target=person,
-                target_type="user",
-                target_label=person.get_full_name() or person.email,
             )
         return Response(_as_dict(person))
 
@@ -397,13 +469,15 @@ def _refuse_collisions(person: User, company) -> None:
             message=_("Somebody else in this company already uses that address."),
             details={"email": person.email},
         )
-    # El empuje deja a la persona activa, así que tampoco puede llevarse el
-    # correo de una cuenta activa de la instalación. Solo si es nueva, cambia de
-    # correo o vuelve de una baja: un choque que ya existiera no puede dejar al
-    # conector sin poder actualizar a esa persona.
+    # Una persona activa tampoco puede llevarse el correo de una cuenta activa de
+    # la instalación. Solo si es nueva, cambia de correo o vuelve de una baja: un
+    # choque que ya existiera no puede dejar al conector sin poder actualizar a
+    # esa persona.
     antes = User.objects.filter(tenant=company, pk=person.pk).values("email", "is_active").first()
     toca_el_correo = (
-        antes is None or antes["email"].lower() != person.email.lower() or not antes["is_active"]
+        antes is None
+        or antes["email"].lower() != person.email.lower()
+        or (not antes["is_active"] and person.is_active)
     )
     if toca_el_correo:
         motivo = correo_ocupado(person.email, de_la_instalacion=False, salvo=person)

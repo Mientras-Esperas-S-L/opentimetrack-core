@@ -23,8 +23,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.audit.trail import StructureTrail
-from apps.common.clock import local_today
 from apps.common.exceptions import BusinessRuleError, IncompleteRequest
+from apps.common.mail import mask_address
 from apps.common.models import set_current_tenant
 from apps.common.network import client_ip
 from apps.common.permissions import (
@@ -35,6 +35,7 @@ from apps.common.permissions import (
 )
 from apps.common.scope import people_queryset, visible_people
 from apps.reports.delivery import send_delivery_email
+from apps.users.baja import deactivate, refuse_if_it_leaves_no_admin
 from apps.users.erase import rastro_de
 from apps.users.models import (
     ActivityPeriod,
@@ -492,34 +493,8 @@ class UserViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def _refuse_if_it_leaves_no_admin(self, person, *, new_role=None, deactivating=False):
-        """Stops a company ending up with nobody able to administer it.
-
-        A company in that state cannot add people, resolve requests, or undo
-        whatever caused it: the only way out is somebody with database access.
-
-        The realistic way in is **not** deactivation --- only an administrator can
-        deactivate, so their own existence guarantees another one remains --- but
-        **demotion**: the sole administrator changing their own role to employee.
-        That is one dropdown away and answers 200 happily.
-
-        `get_queryset`, not `User.objects`: people are not a TenantOwnedModel,
-        because sign-in has to find them before the company is known, so the
-        default manager spans every company. Counting with it would let another
-        company's administrator stand in for this one's.
-        """
-        stays_admin = not deactivating and (new_role or person.role) == Role.ADMIN
-        if stays_admin:
-            return
-
-        others = self.get_queryset().filter(role=Role.ADMIN, is_active=True).exclude(pk=person.pk)
-        if person.role == Role.ADMIN and person.is_active and not others.exists():
-            raise BusinessRuleError(
-                code="last_administrator",
-                message=_(
-                    "This is the only active administrator. Appoint another one first, "
-                    "or the company is left with nobody able to manage it."
-                ),
-            )
+        """Que la empresa no se quede sin nadie que la administre. Ver `apps.users.baja`."""
+        refuse_if_it_leaves_no_admin(person, new_role=new_role, deactivating=deactivating)
 
     def _invite(self, person) -> bool:
         """Sends the link to set a password, unless it would be useless.
@@ -555,8 +530,21 @@ class UserViewSet(viewsets.ModelViewSet):
         # side, so it is not left as a second button they have to remember.
         # Unless a password came in the payload, in which case somebody is
         # setting it deliberately and a link would only muddle things.
+        #
+        # Si el correo falla, el alta se queda y la respuesta lo dice
+        # (`invitation_sent: false`). Antes la excepción subía, la petición
+        # contestaba 500 y la transacción se llevaba el alta por delante: la
+        # persona no existía, y quien la daba de alta no sabía si volver a
+        # intentarlo. La invitación se puede reenviar; el alta perdida, no.
         if not serializer.validated_data.get("password"):
-            self._invite(person)
+            try:
+                person.invitation_sent = self._invite(person) or None
+            except Exception:
+                logger.exception(
+                    "Could not send the invitation to %s; the person was created anyway",
+                    mask_address(person.email),
+                )
+                person.invitation_sent = False
 
     @extend_schema(request=None, responses={200: dict})
     @action(detail=True, methods=["post"])
@@ -746,65 +734,12 @@ class UserViewSet(viewsets.ModelViewSet):
                 message=_("You cannot deactivate your own account."),
             )
 
-        self._refuse_if_it_leaves_no_admin(instance, deactivating=True)
-
-        # Una baja sin fecha no se puede responder, y eso es justo lo que
-        # faltaba. `is_active` es un sí o un no sin día, así que nada de lo que
-        # razona por fechas ---la revisión del cuadrante, las ausencias--- podía
-        # enterarse: quien se iba seguía con sus turnos del mes que viene
-        # asignados, y como el cuadrante es contra lo que se comparan los
-        # fichajes, iba a salir como ausencia sin justificar cada día.
-        #
-        # La fecha es hoy, en la zona de la empresa. Se pisa un `contract_end`
-        # posterior porque irse antes de que venza el contrato es lo corriente
-        # ---una baja voluntaria, un despido--- y lo que la fecha tiene que
-        # decir es el último día que la relación cubre. Uno anterior no se toca:
-        # ese contrato ya había terminado y la baja solo lo formaliza en el
-        # sistema.
-        campos = ["is_active"]
-        hoy = local_today(instance)
-        if instance.contract_end is None or instance.contract_end > hoy:
-            instance.contract_end = hoy
-            campos.append("contract_end")
-
-        instance.is_active = False
-        instance.save(update_fields=campos)
-
-        # Y se cierran sus sesiones. El acceso deja de valer al instante ---la
-        # autenticación mira `is_active`--- pero el refresco vivía siete días y
-        # rotando, así que el móvil de quien acaba de irse seguía teniendo una
-        # credencial viva.
-        #
-        # Lo que lo hace concreto es que la baja es **reversible**: medido, al
-        # reincorporar a la persona su sesión de antes volvía a funcionar sin que
-        # hubiera vuelto a escribir la contraseña.
-        revoke_sessions(instance)
-
-        # Los turnos que le quedaban no se borran, que es la promesa de esta
-        # pantalla: dar de baja no borra nada. Se cuentan para decirlo, y a
-        # partir de ahora la revisión del cuadrante los marca sola, porque ya
-        # hay una fecha contra la que compararlos.
-        from apps.shifts.models import Shift
-
-        pendientes = Shift.objects.filter(employee=instance, day__gt=hoy).count()
-        # Se guarda para que `destroy` lo devuelva: quien acaba de dar la baja es
-        # quien tiene que ir a rehacer el cuadrante, y el momento de enterarse
-        # es ahora y no cuando alguien abra la pantalla del cuadrante.
-        self._turnos_pendientes = pendientes
-
-        record(
-            action=AuditAction.PERSON_DEACTIVATED,
-            actor=self.request.user,
-            target=instance,
-            target_label=instance.get_full_name() or instance.email,
-            changes={"contract_end": hoy.isoformat(), "future_shifts": pendientes},
-            note=(
-                str(_("Left on %(day)s. %(count)s shift(s) still rostered after that."))
-                % {"day": hoy.isoformat(), "count": pendientes}
-                if pendientes
-                else str(_("Left on %(day)s.")) % {"day": hoy.isoformat()}
-            ),
-        )
+        # La fecha de fin, el cierre de sesiones, los turnos que quedan y el
+        # asiento: lo mismo que la baja desde una aplicación, en un solo sitio.
+        # Se guarda lo que cuenta para que `destroy` lo devuelva: quien acaba de
+        # dar la baja es quien tiene que ir a rehacer el cuadrante, y el momento
+        # de enterarse es ahora y no cuando alguien abra el cuadrante.
+        self._turnos_pendientes = deactivate(instance, actor=self.request.user)
 
 
 @extend_schema(tags=["organisation"])
@@ -940,7 +875,14 @@ class PasswordResetRequestView(APIView):
                 # here would set a password that can never be used.
                 logger.info("Recovery requested for a federated account: %s", user.email)
                 continue
-            send_account_email(user, base_url=settings.FRONTEND_URL)
+            # Si el correo falla se contesta igual, 204. Un 500 aquí decía que
+            # esa dirección existe ---a una que no existe no se le intenta mandar
+            # nada---, que es justo lo que esta vista se niega a contar. Queda en
+            # el log, que es donde lo tiene que ver quien administra el correo.
+            try:
+                send_account_email(user, base_url=settings.FRONTEND_URL)
+            except Exception:
+                logger.exception("Could not send the recovery link to %s", mask_address(user.email))
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

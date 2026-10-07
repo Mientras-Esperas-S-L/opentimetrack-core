@@ -317,6 +317,10 @@ class UserSerializer(DecimalesTolerantes, serializers.ModelSerializer):
 
 class UserWriteSerializer(DecimalesTolerantes, serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, min_length=12)
+    #: Solo en el alta: si la invitación salió (`true`), si el correo falló
+    #: (`false`) o si no tocaba mandarla (`null`: federada, o con contraseña).
+    #: Con `false` la persona está creada igual, y la invitación se reenvía.
+    invitation_sent = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -347,8 +351,12 @@ class UserWriteSerializer(DecimalesTolerantes, serializers.ModelSerializer):
             "wants_punch_reminders",
             "is_active",
             "password",
+            "invitation_sent",
         ]
         read_only_fields = ["id"]
+
+    def get_invitation_sent(self, obj) -> bool | None:
+        return getattr(obj, "invitation_sent", None)
 
     def validate_email(self, value: str) -> str:
         value = value.strip().lower()

@@ -532,8 +532,9 @@ def test_una_empresa_recien_creada_dice_que_le_falta_todo(plataforma):
     )
 
     assert creada.status_code == 201
-    # Identidad y credencial no las trae el alta, y dentro solo está quien la creó.
-    assert creada.data["missing"] == ["identity", "application", "people"]
+    # Identidad y credencial no las trae el alta, ni centro ni festivos, y dentro
+    # solo está quien la creó. Administración sí: es quien la creó.
+    assert creada.data["missing"] == ["identity", "application", "workplace", "holidays", "people"]
 
 
 def test_cada_hueco_se_cierra_por_separado(plataforma, company):

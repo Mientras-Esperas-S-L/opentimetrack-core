@@ -1064,5 +1064,11 @@
   "Tengo contraseña de aquí": "Tinc contrasenya d'aquí",
   "Has vuelto con otra cuenta, no con la que escribiste. Cierra la sesión en el sistema de tu empresa y vuelve a entrar.": "Has tornat amb un altre compte, no amb el que vas escriure. Tanca la sessió al sistema de la teva empresa i torna a entrar.",
   "Para <cuenta>{{correo}}</cuenta>.": "Per a <cuenta>{{correo}}</cuenta>.",
-  "Este enlace ya no vale: ha caducado o ya se ha usado.": "Aquest enllaç ja no serveix: ha caducat o ja s'ha fet servir."
+  "Este enlace ya no vale: ha caducado o ya se ha usado.": "Aquest enllaç ja no serveix: ha caducat o ja s'ha fet servir.",
+  "Sin administración": "Sense administració",
+  "Nadie de la empresa la administra. Nombra a alguien desde su ficha.": "Ningú de l'empresa l'administra. Nomena algú des de la seva fitxa.",
+  "No tiene ningún centro de trabajo. Lo da de alta la empresa desde dentro.": "No té cap centre de treball. El dona d'alta l'empresa des de dins.",
+  "Festivos de este año": "Festius d'aquest any",
+  "No tiene festivos de este año. Los importa la empresa desde dentro.": "No té festius d'aquest any. Els importa l'empresa des de dins.",
+  "Alta hecha, pero la invitación a <destinatario>{{correo}}</destinatario> no ha salido: ha fallado el correo. Mándasela con «Enviar enlace de acceso».": "Alta feta, però la invitació a <destinatario>{{correo}}</destinatario> no ha sortit: ha fallat el correu. Envia-la-hi amb «Enviar enllaç d'accés»."
 }

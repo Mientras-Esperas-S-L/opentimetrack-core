@@ -153,12 +153,11 @@ def _deliver(item) -> None:
     """
     import logging
 
-    from django.conf import settings
-    from django.core.mail import send_mail
     from django.template.loader import render_to_string
     from django.utils import translation
     from django.utils.translation import gettext as _
 
+    from apps.common.mail import send_without_failing
     from apps.notifications.push import send_push
 
     log = logging.getLogger(__name__)
@@ -201,12 +200,8 @@ def _deliver(item) -> None:
         )
 
         if person.email:
-            send_mail(
-                subject=subject,
-                message=body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[person.email],
-                fail_silently=True,
+            send_without_failing(
+                subject=subject, message=body, to=person.email, what="a punch reminder"
             )
     except Exception:
         log.exception("Could not send punch reminder to %s", person.pk)
