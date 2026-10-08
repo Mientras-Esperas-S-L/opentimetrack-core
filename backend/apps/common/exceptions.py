@@ -124,6 +124,33 @@ def _mensaje_de_espera(segundos) -> str:
     )
 
 
+def _sin_jerga_de_clave(detalle):
+    """Cambia el «no existe» de DRF por algo que se entienda.
+
+    Cuando lo elegido en un desplegable ---un departamento, un centro--- se borra
+    mientras otra persona tiene la ficha abierta, DRF contesta «Clave primaria
+    "…" inválida - objeto no existe.», con el identificador interno dentro. Quien
+    lo lee no sabe qué es una clave primaria; lo que necesita saber es que eso ya
+    no está y que tiene que volver a elegir.
+
+    Aquí y no campo a campo: el mensaje lo ponen los campos que DRF crea solo para
+    cada clave ajena, y hay uno en casi cada serializer.
+    """
+    if isinstance(detalle, dict):
+        return {campo: _sin_jerga_de_clave(v) for campo, v in detalle.items()}
+    if isinstance(detalle, list):
+        return [_sin_jerga_de_clave(v) for v in detalle]
+    if isinstance(detalle, exceptions.ErrorDetail) and detalle.code == "does_not_exist":
+        return exceptions.ErrorDetail(
+            _(
+                "That choice no longer exists: someone may have just deleted it. "
+                "Reload and choose again."
+            ),
+            code="does_not_exist",
+        )
+    return detalle
+
+
 def api_exception_handler(exc, context):
     """Envuelve la respuesta de DRF en el formato de error único."""
     if isinstance(exc, Http404):
@@ -168,7 +195,7 @@ def api_exception_handler(exc, context):
         elif isinstance(detail, dict):
             # Errores de validación por campo.
             message = "Los datos enviados no son válidos."
-            details = detail
+            details = _sin_jerga_de_clave(detail)
         elif isinstance(detail, list | tuple):
             # Una lista de errores sin campo al que colgarlos: la produce
             # `ValidationError([...])`, y es lo que sale cuando una regla no es

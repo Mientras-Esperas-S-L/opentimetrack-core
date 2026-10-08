@@ -5581,3 +5581,6 @@ msgstr "Aquest dia ja és festiu a tota l'empresa."
 
 msgid "That day is already a holiday at that workplace."
 msgstr "Aquest dia ja és festiu en aquest centre."
+
+msgid "That choice no longer exists: someone may have just deleted it. Reload and choose again."
+msgstr "Això ja no existeix: potser algú ho acaba d'esborrar. Torna a carregar la pàgina i tria de nou."
