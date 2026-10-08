@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
@@ -49,25 +49,29 @@ function initialsOf(user) {
   return (first + last).toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'
 }
 
+function Cabecera({ children }) {
+  return (
+    <ListSubheader
+      sx={{
+        bgcolor: 'transparent',
+        fontSize: '0.7rem',
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        lineHeight: 2.4,
+      }}
+    >
+      {children}
+    </ListSubheader>
+  )
+}
+
 function NavSection({ title, items, onNavigate }) {
   const { t } = useTranslation()
 
   return (
     <List
       dense
-      subheader={
-        <ListSubheader
-          sx={{
-            bgcolor: 'transparent',
-            fontSize: '0.7rem',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            lineHeight: 2.4,
-          }}
-        >
-          {title}
-        </ListSubheader>
-      }
+      subheader={<Cabecera>{title}</Cabecera>}
     >
       {items.map(({ to, label, icon, end }) => (
         <ListItemButton
@@ -145,11 +149,46 @@ export default function AppShell() {
   //  para ella, el cajón abre por el índice.
   const [ayudaAbierta, setAyudaAbierta] = useState(false)
 
+  //  Lo que ocupa la barra de arriba, medido. El menú lateral empieza debajo, y
+  //  con un `<Toolbar />` de hueco solo dejaba sitio a la fila de los botones:
+  //  en soporte el aviso amarillo se comía la parte de arriba del menú, que es
+  //  donde va la vuelta a la instalación. El aviso cambia de alto al partirse en
+  //  líneas, así que se mide en vez de suponerlo.
+  const [altoBarra, setAltoBarra] = useState(null)
+  const medirBarra = useCallback((barra) => {
+    if (!barra) return undefined
+    const observador = new ResizeObserver(() => setAltoBarra(barra.offsetHeight))
+    observador.observe(barra)
+    return () => observador.disconnect()
+  }, [])
+  const huecoBarra = altoBarra ? <Box sx={{ height: altoBarra, flexShrink: 0 }} /> : <Toolbar />
+
   // `alCerrar` es lo que `NavSection` esperaba en su `onNavigate` desde el
   // principio y nadie le pasaba: en un cajón que se superpone, elegir una
   // pantalla tiene que cerrarlo. En el permanente no hay nada que cerrar.
   const menu = (alCerrar) => (
     <Box sx={{ overflowY: 'auto', pb: 2 }}>
+      {/* Dentro de una empresa como soporte, la vuelta a la consola solo estaba
+          en el aviso de arriba, y no se buscaba ahí: se volvía escribiendo la
+          dirección. Va la primera, con el mismo título que tenía antes de
+          entrar: debajo de toda la gestión había que bajar para encontrarla. */}
+      {esSoporte && (
+        <>
+          <List dense subheader={<Cabecera>{t('Instalación')}</Cabecera>}>
+            <ListItemButton
+              onClick={() => {
+                alCerrar?.()
+                salirDeSoporte()
+              }}
+              sx={{ mx: 1, borderRadius: 0.6 }}
+            >
+              <ListItemIcon sx={{ minWidth: 38 }}>{NAV_PLATFORM[0].icon}</ListItemIcon>
+              <ListItemText primary={t('Volver a la instalación')} />
+            </ListItemButton>
+          </List>
+          <Divider sx={{ my: 1, mx: 2 }} />
+        </>
+      )}
       {/* «Mi trabajo» es de quien trabaja en una empresa. La cuenta que
           administra la instalación no está en ninguna, y cada una de estas
           pantallas le contestaría 403: enseñar un enlace que no va a abrirse es
@@ -168,26 +207,6 @@ export default function AppShell() {
               raya suelta en lo alto del menú. */}
           {(company || verGestion) && <Divider sx={{ my: 1, mx: 2 }} />}
           <NavSection title={t('Instalación')} items={NAV_PLATFORM} onNavigate={alCerrar} />
-        </>
-      )}
-      {/* Dentro de una empresa como soporte, la vuelta a la consola solo estaba
-          en el aviso de arriba, y no se buscaba ahí: se volvía escribiendo la
-          dirección. En el menú, donde estaba Instalación antes de entrar. */}
-      {esSoporte && (
-        <>
-          <Divider sx={{ my: 1, mx: 2 }} />
-          <List dense>
-            <ListItemButton
-              onClick={() => {
-                alCerrar?.()
-                salirDeSoporte()
-              }}
-              sx={{ mx: 1, borderRadius: 0.6 }}
-            >
-              <ListItemIcon sx={{ minWidth: 38 }}>{NAV_PLATFORM[0].icon}</ListItemIcon>
-              <ListItemText primary={t('Volver a la instalación')} />
-            </ListItemButton>
-          </List>
         </>
       )}
     </Box>
@@ -213,6 +232,7 @@ export default function AppShell() {
   return (
     <Box sx={{ display: 'flex', minHeight: '100dvh', bgcolor: 'background.default' }}>
       <AppBar
+        ref={medirBarra}
         position="fixed"
         elevation={0}
         color="inherit"
@@ -362,7 +382,7 @@ export default function AppShell() {
             },
           }}
         >
-          <Toolbar />
+          {huecoBarra}
           {navigationConCierre}
         </Drawer>
       )}
@@ -383,7 +403,7 @@ export default function AppShell() {
             },
           }}
         >
-          <Toolbar />
+          {huecoBarra}
           {navigation}
         </Drawer>
       )}
