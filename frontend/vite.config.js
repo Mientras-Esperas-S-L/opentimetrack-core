@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import process from 'node:process'
@@ -13,7 +14,10 @@ function installationName(env) {
 }
 
 const escapeHtml = (text) =>
-  text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+  text.replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+  )
 
 // The manifest lives in public/ and is copied as it is; after the build, its name is
 // the installation's. Without that, the app installed on a phone would still be
@@ -41,10 +45,32 @@ function withInstallationName(name) {
   }
 }
 
+// Cada build, una huella: va dentro del código y a `version.json`. Una pestaña
+// abierta que lee en `version.json` otra que la suya sabe que se ha quedado atrás
+// y lo avisa (src/hooks/useNewVersion.js). Al azar y no del contenido: lo que
+// importa es que dos builds no coincidan, no que sean reproducibles.
+function buildVersion() {
+  const build = randomUUID()
+  let outDir = 'dist'
+  let building = false
+  return {
+    name: 'build-version',
+    config: () => ({ define: { 'import.meta.env.VITE_BUILD_ID': JSON.stringify(build) } }),
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir)
+      building = config.command === 'build'
+    },
+    closeBundle() {
+      if (!building) return
+      writeFileSync(resolve(outDir, 'version.json'), `${JSON.stringify({ build })}\n`)
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const name = installationName({ ...loadEnv(mode, process.cwd(), ''), ...process.env })
   return {
-    plugins: [react(), withInstallationName(name)],
+    plugins: [react(), withInstallationName(name), buildVersion()],
     define: { 'import.meta.env.VITE_INSTALLATION_NAME': JSON.stringify(name) },
     server: {
       port: 3000,
