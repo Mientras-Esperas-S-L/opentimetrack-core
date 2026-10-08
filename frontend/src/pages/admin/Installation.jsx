@@ -969,18 +969,23 @@ function PlatformAdmins({ onCambio }) {
                     {t('Mandar enlace')}
                   </Button>
                 )}
-                <Button
-                  size="small"
-                  disabled={trabajando}
-                  onClick={() =>
-                    hacer(async () => {
-                      const dicha = await resetPlatformAdminPassword(cuenta.id)
-                      setReciénDicha(dicha)
-                    })
-                  }
-                >
-                  {t('Nueva contraseña')}
-                </Button>
+                {/* La propia tampoco: cierra las sesiones de esa cuenta, y con un
+                    clic echaba de la consola a quien lo pulsaba. Lo suyo es
+                    «Cambiar la contraseña», en el menú de la cuenta. */}
+                {cuenta.id !== session?.user?.id && (
+                  <Button
+                    size="small"
+                    disabled={trabajando}
+                    onClick={() =>
+                      hacer(async () => {
+                        const dicha = await resetPlatformAdminPassword(cuenta.id)
+                        setReciénDicha(dicha)
+                      })
+                    }
+                  >
+                    {t('Nueva contraseña')}
+                  </Button>
+                )}
                 {/* La propia no: el servidor no deja desactivarse a uno mismo, y
                     un botón que siempre contesta que no es un error de pantalla. */}
                 {cuenta.id === session?.user?.id ? null : cuenta.is_active ? (

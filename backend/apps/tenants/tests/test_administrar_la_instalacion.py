@@ -470,6 +470,21 @@ def test_restablecer_la_contrasena_la_enseña_una_vez(plataforma):
     assert User.objects.get(pk=creada["id"]).check_password(nueva.data["password"])
 
 
+def test_no_se_da_contrasena_nueva_a_si_mismo(plataforma):
+    """Cerraba sus propias sesiones: un clic y fuera de la consola.
+
+    Con la clave en pantalla, sí, pero quien no la apuntaba a tiempo se quedaba
+    sin entrar. La propia se cambia con «Cambiar la contraseña».
+    """
+    respuesta = cliente(plataforma).post(
+        f"/api/platform/admins/{plataforma.pk}/password/", format="json"
+    )
+
+    assert respuesta.status_code == 400
+    plataforma.refresh_from_db()
+    assert plataforma.check_password("X" * 14)
+
+
 def test_no_se_puede_desactivar_la_unica_cuenta(plataforma):
     """Quedarse sin ninguna deja la instalación sin quien la administre.
 

@@ -1254,6 +1254,19 @@ class PlatformAdminPasswordView(_UnaCuenta):
             return Response(
                 {"detail": _("No such installation account.")}, status=status.HTTP_404_NOT_FOUND
             )
+        if cuenta.pk == request.user.pk:
+            # La propia no. Dar una contraseña nueva cierra las sesiones de esa
+            # cuenta, así que a uno mismo lo echaba de la consola con la clave en
+            # pantalla y un clic, sin confirmar: quien no la apuntaba a tiempo se
+            # quedaba fuera. Lo suyo es «Cambiar la contraseña», que pide la actual.
+            return Response(
+                {
+                    "detail": _(
+                        "To change your own password, use “Change password” in your account menu."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         if not cuenta.is_active:
             # Esta puerta también reactiva, así que mira lo mismo que reactivar.
             motivo = _correo_ocupado(cuenta.email, salvo=cuenta)

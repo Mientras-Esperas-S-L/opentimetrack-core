@@ -306,3 +306,26 @@ def test_a_type_in_use_is_not_deleted(company, worker):
     assert response.status_code >= 400
     with tenant_context(company.id):
         assert LeaveType.objects.filter(pk=kind.pk).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("campo", ["amount", "extra_when_travelling"])
+def test_un_permiso_no_da_dias_en_negativo(company, campo):
+    """«-5 días» se guardaba desde la pantalla de Permisos sin queja."""
+    with tenant_context(company.id):
+        admin = User.objects.create_user(
+            email="admin@negativo.test",
+            password="x" * 14,
+            tenant=company,
+            first_name="Ana",
+            role=Role.ADMIN,
+        )
+        seed_leave_types(company)
+        kind = LeaveType.objects.get(code="es.moving_house")
+        antes = getattr(kind, campo)
+
+    response = client_for(admin).patch(f"/api/leave-types/{kind.id}/", {campo: -5}, format="json")
+
+    assert response.status_code == 400
+    kind.refresh_from_db()
+    assert getattr(kind, campo) == antes
