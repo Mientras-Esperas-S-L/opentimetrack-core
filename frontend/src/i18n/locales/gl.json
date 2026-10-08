@@ -1088,5 +1088,12 @@
   "Por qué se retira": "Por que se retira",
   "Retirar las {{cuantas}}": "Retirar as {{cuantas}}",
   "Retirar {{cuantas}} propuestas": "Retirar {{cuantas}} propostas",
-  "retiradas": "retiradas"
+  "retiradas": "retiradas",
+  "¿Contraseña nueva para {{correo}}?": "Contrasinal novo para {{correo}}?",
+  "La que tiene deja de valer y se cierran sus sesiones abiertas.": "O que ten deixa de valer e péchanse as súas sesións abertas.",
+  "La nueva se enseña aquí una sola vez. Si lo que quieres es que la elija esa persona, usa «Mandar enlace».": "O novo amósase aquí unha soa vez. Se o que queres é que o escolla esa persoa, usa «Enviar a ligazón».",
+  "Dar contraseña nueva": "Dar contrasinal novo",
+  "¿Desactivar {{correo}}?": "Desactivar {{correo}}?",
+  "No podrá entrar, y se cierran sus sesiones abiertas.": "Non poderá entrar, e péchanse as súas sesións abertas.",
+  "Se deshace con «Reactivar».": "Desfaise con «Reactivar»."
 }
