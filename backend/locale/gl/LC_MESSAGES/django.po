@@ -5546,3 +5546,24 @@ msgstr ""
 
 msgid "To change your own password, use “Change password” in your account menu."
 msgstr "Para cambiar o teu propio contrasinal, usa «Cambiar o contrasinal» no menú da túa conta."
+
+msgid "There is already one like this."
+msgstr "Xa hai un igual."
+
+msgid "There is already a workplace with that name."
+msgstr "Xa hai un centro con ese nome."
+
+msgid "There is already a department with that name."
+msgstr "Xa hai un departamento con ese nome."
+
+msgid "There is already a shift with that name."
+msgstr "Xa hai unha quenda con ese nome."
+
+msgid "There is already an application with that name."
+msgstr "Xa hai unha aplicación con ese nome."
+
+msgid "That day is already a holiday for the whole company."
+msgstr "Ese día xa é festivo en toda a empresa."
+
+msgid "That day is already a holiday at that workplace."
+msgstr "Ese día xa é festivo nese centro."

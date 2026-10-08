@@ -1082,5 +1082,11 @@
   "En el iPhone, los avisos de fichaje solo llegan con la aplicación instalada.": "No iPhone, os avisos de fichaxe só chegan coa aplicación instalada.",
   "Ya la tengo instalada": "Xa a teño instalada",
   "Actualizar": "Actualizar",
-  "Hay una versión nueva de la aplicación.": "Hai unha versión nova da aplicación."
+  "Hay una versión nueva de la aplicación.": "Hai unha versión nova da aplicación.",
+  "El navegador no ha dejado copiarla. Selecciónala y cópiala a mano.": "O navegador non deixou copiala. Selecciónaa e cópiaa a man.",
+  "El registro se queda como estaba y la propuesta consta como retirada. La persona ya no tiene que contestar.": "O rexistro queda como estaba e a proposta consta como retirada. A persoa xa non ten que contestar.",
+  "Por qué se retira": "Por que se retira",
+  "Retirar las {{cuantas}}": "Retirar as {{cuantas}}",
+  "Retirar {{cuantas}} propuestas": "Retirar {{cuantas}} propostas",
+  "retiradas": "retiradas"
 }

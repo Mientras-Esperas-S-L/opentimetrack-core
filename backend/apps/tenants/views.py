@@ -20,6 +20,7 @@ from apps.audit.services import record
 from apps.audit.trail import StructureTrail
 from apps.common.permissions import IsAdmin, IsAuthenticatedInTenant, ReadForAllWriteForAdmin
 from apps.common.scope import department_scoping_in_use, unassigned_managers
+from apps.common.unicidad import SinRepetidos
 from apps.tenants.holidays import HolidayScope, PublicHoliday
 from apps.tenants.models import Tenant, validate_time_zone
 from apps.tenants.rules import RecordArrangement, RecordBasis
@@ -119,7 +120,18 @@ class RecordArrangementSerializer(serializers.ModelSerializer):
         }
 
 
-class PublicHolidaySerializer(serializers.ModelSerializer):
+class PublicHolidaySerializer(SinRepetidos, serializers.ModelSerializer):
+    repetidos = {
+        "one_company_holiday_per_day": (
+            "day",
+            _("That day is already a holiday for the whole company."),
+        ),
+        "one_workplace_holiday_per_day": (
+            "day",
+            _("That day is already a holiday at that workplace."),
+        ),
+    }
+
     workplace_name = serializers.CharField(source="workplace.name", read_only=True, default=None)
     scope_display = serializers.CharField(source="get_scope_display", read_only=True)
 

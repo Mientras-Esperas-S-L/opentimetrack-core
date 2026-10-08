@@ -13,6 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps import legal
 from apps.common.campos import DecimalesTolerantes
 from apps.common.clock import local_today
+from apps.common.unicidad import SinRepetidos
 from apps.tenants.models import (
     Tenant,
     companies_with_tax_id,
@@ -46,7 +47,11 @@ class TenantSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 
-class WorkplaceSerializer(serializers.ModelSerializer):
+class WorkplaceSerializer(SinRepetidos, serializers.ModelSerializer):
+    repetidos = {
+        "unique_workplace_per_company": ("name", _("There is already a workplace with that name.")),
+    }
+
     people_count = serializers.SerializerMethodField()
     region_name = serializers.SerializerMethodField()
     #: What the workplace's day is actually sliced in, resolved. The field can
@@ -103,7 +108,14 @@ class WorkplaceSerializer(serializers.ModelSerializer):
         return value
 
 
-class DepartmentSerializer(serializers.ModelSerializer):
+class DepartmentSerializer(SinRepetidos, serializers.ModelSerializer):
+    repetidos = {
+        "unique_department_per_company": (
+            "name",
+            _("There is already a department with that name."),
+        ),
+    }
+
     people_count = serializers.SerializerMethodField()
     manager_names = serializers.SerializerMethodField()
 
