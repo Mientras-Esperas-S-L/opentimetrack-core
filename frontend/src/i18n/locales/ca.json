@@ -1071,5 +1071,7 @@
   "Festivos de este año": "Festius d'aquest any",
   "No tiene festivos de este año. Los importa la empresa desde dentro.": "No té festius d'aquest any. Els importa l'empresa des de dins.",
   "Alta hecha, pero la invitación a <destinatario>{{correo}}</destinatario> no ha salido: ha fallado el correo. Mándasela con «Enviar enlace de acceso».": "Alta feta, però la invitació a <destinatario>{{correo}}</destinatario> no ha sortit: ha fallat el correu. Envia-la-hi amb «Enviar enllaç d'accés».",
-  "Volver a la instalación": "Tornar a la instal·lació"
+  "Volver a la instalación": "Tornar a la instal·lació",
+  "Recargar": "Recarregar",
+  "Algo ha fallado en esta pantalla. Lo que ya estaba guardado sigue guardado.": "Alguna cosa ha fallat en aquesta pantalla. El que ja estava desat continua desat."
 }
