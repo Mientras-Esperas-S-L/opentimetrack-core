@@ -5543,3 +5543,6 @@ msgstr ""
 "\n"
 "Aquí non se reproduce o que escribiu. O art. 6.2 dávos acceso ao\n"
 "rexistro, así que podedes consultar o asento e o seu historial na aplicación."
+
+msgid "To change your own password, use “Change password” in your account menu."
+msgstr "Para cambiar o teu propio contrasinal, usa «Cambiar o contrasinal» no menú da túa conta."

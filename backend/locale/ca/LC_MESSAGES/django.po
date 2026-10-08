@@ -5557,3 +5557,6 @@ msgstr ""
 "Aquí no es reprodueix el que va escriure. L'art. 6.2 us dóna accés al\n"
 "registre, així que podeu consultar l'assentament i el seu historial a "
 "l'aplicació."
+
+msgid "To change your own password, use “Change password” in your account menu."
+msgstr "Per canviar la teva pròpia contrasenya, fes servir «Canviar la contrasenya» al menú del teu compte."

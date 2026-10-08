@@ -5138,3 +5138,6 @@ msgstr ""
 "Aquí no se reproduce lo que escribió. El artículo 6.2 te da acceso al\n"
 "registro, así que puedes consultar el asiento y su historial en la "
 "aplicación."
+
+msgid "To change your own password, use “Change password” in your account menu."
+msgstr "Para cambiar tu propia contraseña, usa «Cambiar la contraseña» en el menú de tu cuenta."
