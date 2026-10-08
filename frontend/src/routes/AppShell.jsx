@@ -33,6 +33,7 @@ import HelpDrawer from '../components/HelpDrawer.jsx'
 import { temaDeAyuda } from '../components/temaDeAyuda.js'
 import MenuIcon from '@mui/icons-material/Menu'
 
+import InstallButton, { InstallMenuItem } from '../components/InstallButton.jsx'
 import ThemeToggle from '../components/ThemeToggle.jsx'
 import { usePlatformAdmin } from '../hooks/usePlatformAdmin.js'
 import { useAuth } from '../hooks/useAuth.js'
@@ -291,6 +292,7 @@ export default function AppShell() {
               <HelpIcon />
             </IconButton>
           </Tooltip>
+          <InstallButton />
           <ThemeToggle />
           {/* Botón y no solo dibujo: abre la cuenta propia. La etiqueta va aquí y no
               en el Tooltip, que en MUI no deja `aria-label` en el DOM. */}
@@ -331,6 +333,7 @@ export default function AppShell() {
                 {t('Cambiar la contraseña')}
               </MenuItem>
             )}
+            <InstallMenuItem onClick={() => setCuentaEn(null)} />
             <MenuItem
               onClick={() => {
                 setCuentaEn(null)

@@ -35,8 +35,8 @@ self.addEventListener('push', (event) => {
       // iguales.
       tag: message.tag || 'opentimetrack',
       renotify: Boolean(message.tag),
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: '/icono-192.png',
+      badge: '/icono-192.png',
       data: { url: message.url || '/' },
     }),
   )

@@ -45,6 +45,9 @@ const NO_SE_TRADUCE = {
     Safari: 'nombre del navegador',
     Notification: 'la API del navegador, que se comprueba por su nombre',
   },
+  'src/services/install.js': {
+    '(display-mode: standalone)': 'consulta de medios de CSS, no un texto',
+  },
   'src/services/api.js': {
     'Bearer {{}}': 'la cabecera HTTP se escribe así o no autentica',
     '[catálogo] {{}} tiene {{}} elementos y se han traído {{}}:':
