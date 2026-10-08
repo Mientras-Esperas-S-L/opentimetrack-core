@@ -9,6 +9,7 @@ ya no está y que hay que volver a elegir.
 from __future__ import annotations
 
 import pytest
+from django.utils import translation
 from rest_framework import exceptions
 from rest_framework.test import APIClient, APIRequestFactory
 
@@ -22,7 +23,9 @@ PASSWORD = "a-sufficiently-long-password"
 
 def _manejar(exc):
     contexto = {"view": None, "request": APIRequestFactory().get("/")}
-    return api_exception_handler(exc, contexto).data["error"]
+    # En inglés fijo: otra prueba puede dejar activo otro idioma.
+    with translation.override("en"):
+        return api_exception_handler(exc, contexto).data["error"]
 
 
 def _no_existe(pk):
