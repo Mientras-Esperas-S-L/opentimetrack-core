@@ -45,7 +45,7 @@ import { dateOf } from '../../components/format.js'
  *  so before somebody closes it. */
 function TokenDialog({ token, onClose }) {
   const { t } = useTranslation()
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(null)
 
   return (
     <Dialog open={Boolean(token)} onClose={onClose} fullWidth maxWidth="sm">
@@ -73,17 +73,30 @@ function TokenDialog({ token, onClose }) {
           <IconButton
             size="small"
             aria-label={t('Copiar la credencial')}
-            onClick={() => {
-              navigator.clipboard?.writeText(token)
-              setCopied(true)
+            // «Copiado» solo si se copió. Antes lo decía siempre, también cuando
+            // el navegador negaba el permiso o no había portapapeles (fuera de
+            // https), y esta credencial no se vuelve a enseñar: quien se fiaba
+            // y cerraba la perdía.
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(token)
+                setCopied('si')
+              } catch {
+                setCopied('no')
+              }
             }}
           >
             <ContentCopyIcon fontSize="small" />
           </IconButton>
         </Paper>
-        {copied && (
+        {copied === 'si' && (
           <Typography variant="caption" color="success.main" sx={{ display: 'block', mt: 1 }}>
             {t('Copiado al portapapeles.')}
+          </Typography>
+        )}
+        {copied === 'no' && (
+          <Typography variant="caption" color="error.main" sx={{ display: 'block', mt: 1 }}>
+            {t('El navegador no ha dejado copiarla. Selecciónala y cópiala a mano.')}
           </Typography>
         )}
         <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
