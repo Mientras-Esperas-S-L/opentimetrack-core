@@ -30,6 +30,7 @@ from apps.audit.models import AuditAction
 from apps.audit.services import record
 from apps.common.exceptions import BusinessRuleError
 from apps.common.permissions import IsAdmin
+from apps.common.unicidad import SinRepetidos
 from apps.tenants.models import Application, ApplicationCredential, ApplicationScope
 
 
@@ -53,7 +54,14 @@ class CredentialSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class ApplicationSerializer(serializers.ModelSerializer):
+class ApplicationSerializer(SinRepetidos, serializers.ModelSerializer):
+    repetidos = {
+        "unique_application_per_company": (
+            "name",
+            _("There is already an application with that name."),
+        ),
+    }
+
     credentials = CredentialSerializer(many=True, read_only=True)
     created_by_name = serializers.CharField(
         source="created_by.get_full_name", read_only=True, default=""

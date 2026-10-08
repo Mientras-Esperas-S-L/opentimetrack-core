@@ -29,6 +29,7 @@ from apps.common.permissions import (
     ReadForAllWriteForAdmin,
 )
 from apps.common.scope import visible_people
+from apps.common.unicidad import SinRepetidos
 from apps.shifts.models import Shift, ShiftPattern, validate_segments
 from apps.shifts.services import (
     assign_pattern,
@@ -41,7 +42,14 @@ from apps.shifts.services import (
 from apps.tenants.rules import ComputationRuleChange, SpecialRegime, WorkingTimeRules
 
 
-class ShiftPatternSerializer(serializers.ModelSerializer):
+class ShiftPatternSerializer(SinRepetidos, serializers.ModelSerializer):
+    repetidos = {
+        "shift_pattern_name_unique_per_company": (
+            "name",
+            _("There is already a shift with that name."),
+        ),
+    }
+
     minutes = serializers.IntegerField(read_only=True)
     #: How many published days use it. Deleting one is SET_NULL, so nothing is
     #: lost, but the days it was painted on quietly stop naming a shift --- and

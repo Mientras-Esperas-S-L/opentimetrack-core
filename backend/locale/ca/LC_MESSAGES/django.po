@@ -5560,3 +5560,24 @@ msgstr ""
 
 msgid "To change your own password, use “Change password” in your account menu."
 msgstr "Per canviar la teva pròpia contrasenya, fes servir «Canviar la contrasenya» al menú del teu compte."
+
+msgid "There is already one like this."
+msgstr "Ja n'hi ha un d'igual."
+
+msgid "There is already a workplace with that name."
+msgstr "Ja hi ha un centre amb aquest nom."
+
+msgid "There is already a department with that name."
+msgstr "Ja hi ha un departament amb aquest nom."
+
+msgid "There is already a shift with that name."
+msgstr "Ja hi ha un torn amb aquest nom."
+
+msgid "There is already an application with that name."
+msgstr "Ja hi ha una aplicació amb aquest nom."
+
+msgid "That day is already a holiday for the whole company."
+msgstr "Aquest dia ja és festiu a tota l'empresa."
+
+msgid "That day is already a holiday at that workplace."
+msgstr "Aquest dia ja és festiu en aquest centre."
