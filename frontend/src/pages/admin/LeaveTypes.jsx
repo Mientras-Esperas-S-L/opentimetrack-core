@@ -249,10 +249,10 @@ export default function LeaveTypes() {
     mutationFn: ({ id, ...cambios }) => updateLeaveType(id, cambios),
     onSuccess: () => {
       setEditando(null)
-      setError(null)
       queryClient.invalidateQueries({ queryKey: ['leave-types'] })
     },
-    onError: setError,
+    // Sin `onError: setError`: el fallo de guardar lo dice el diálogo, que es
+    // donde se está mirando. Copiado arriba, se quedaba en la página al cancelar.
   })
 
   const cargar = useMutation({
@@ -373,7 +373,12 @@ export default function LeaveTypes() {
         kind={editando}
         saving={guardar.isPending}
         error={guardar.error}
-        onClose={() => setEditando(null)}
+        // `reset` para que el error de un guardado fallido no salga al abrir
+        // el siguiente permiso, como hacen los demás diálogos con su `setError(null)`.
+        onClose={() => {
+          setEditando(null)
+          guardar.reset()
+        }}
         onSave={guardar.mutate}
       />
     </>

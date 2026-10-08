@@ -189,6 +189,12 @@ class LeaveTypeSerializer(serializers.ModelSerializer):
         # re-seeding (the original comes back as a duplicate) or trips the
         # unique constraint. Renaming is what `name` is for.
         read_only_fields = ["id", "code", "allowance", "measured_in_hours"]
+        # Nada en negativo. «-5 días» se guardaba sin queja desde la pantalla de
+        # Permisos (08/10/2026), y un permiso que resta días no existe.
+        extra_kwargs = {
+            "amount": {"min_value": 0},
+            "extra_when_travelling": {"min_value": 0},
+        }
 
     def get_allowance(self, obj) -> str:
         if obj.amount is None:
