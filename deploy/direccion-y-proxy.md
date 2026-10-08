@@ -115,6 +115,11 @@ fichaje.miempresa.example {
     }
     handle {
         root * /srv/web
+        # Ver «La caché del frontal», más abajo.
+        @asset path /assets/*
+        header @asset Cache-Control "public, max-age=31536000, immutable"
+        @page not path /assets/*
+        header @page Cache-Control "no-cache"
         try_files {path} /index.html
         file_server
     }
@@ -136,8 +141,18 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    root /srv/web;
+
+    # Ver «La caché del frontal», más abajo.
+    location = /index.html {
+        expires -1;
+    }
+
+    location /assets/ {
+        expires 1y;
+    }
+
     location / {
-        root /srv/web;
         try_files $uri /index.html;
     }
 }
@@ -156,6 +171,21 @@ nada y siguen siendo 1.
 
 Las cabeceras que protegen al frontal (CSP y compañía) van en este mismo servidor:
 ver [cabeceras.md](cabeceras.md).
+
+### La caché del frontal
+
+`index.html` cambia en cada despliegue y apunta a ficheros de `assets/` con una
+huella en el nombre, que no cambian nunca. Sin cabecera de caché, el navegador
+decide por su cuenta guardarse `index.html` un rato, y sigue enseñando la
+versión anterior aunque el despliegue haya ido bien. En el ordenador se arregla
+recargando a la fuerza; en un móvil no hay cómo.
+
+Por eso, `index.html` con `no-cache` (se pregunta cada vez y, si no ha cambiado,
+el servidor contesta 304 sin mandarlo) y `assets/` con un año.
+
+Las pestañas que ya estaban abiertas durante el despliegue las avisa la propia
+aplicación: cada build deja su huella en `version.json`, y la página que ve otra
+distinta de la suya ofrece «Actualizar».
 
 ## Comprobar que está bien
 
