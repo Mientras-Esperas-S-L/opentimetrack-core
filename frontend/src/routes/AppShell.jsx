@@ -170,6 +170,26 @@ export default function AppShell() {
           <NavSection title={t('Instalación')} items={NAV_PLATFORM} onNavigate={alCerrar} />
         </>
       )}
+      {/* Dentro de una empresa como soporte, la vuelta a la consola solo estaba
+          en el aviso de arriba, y no se buscaba ahí: se volvía escribiendo la
+          dirección. En el menú, donde estaba Instalación antes de entrar. */}
+      {esSoporte && (
+        <>
+          <Divider sx={{ my: 1, mx: 2 }} />
+          <List dense>
+            <ListItemButton
+              onClick={() => {
+                alCerrar?.()
+                salirDeSoporte()
+              }}
+              sx={{ mx: 1, borderRadius: 0.6 }}
+            >
+              <ListItemIcon sx={{ minWidth: 38 }}>{NAV_PLATFORM[0].icon}</ListItemIcon>
+              <ListItemText primary={t('Volver a la instalación')} />
+            </ListItemButton>
+          </List>
+        </>
+      )}
     </Box>
   )
 

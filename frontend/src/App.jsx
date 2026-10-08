@@ -131,12 +131,13 @@ export default function App() {
               <Route element={<RequireAdmin />}>
                 <Route path="aplicaciones" element={<Applications />} />
               </Route>
+            </Route>
 
-              {/* Y la instalación, que no es de quien administra una empresa:
-                dar de alta otras es de quien administra el sistema entero. */}
-              <Route element={<RequirePlatformAdmin />}>
-                <Route path="instalacion" element={<Installation />} />
-              </Route>
+            {/* Y la instalación, que no es de quien administra una empresa:
+              dar de alta otras es de quien administra el sistema entero. Fuera
+              de `RequireManager`, que pide empresa, y esta cuenta no tiene. */}
+            <Route path="panel/instalacion" element={<RequirePlatformAdmin />}>
+              <Route index element={<Installation />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />
