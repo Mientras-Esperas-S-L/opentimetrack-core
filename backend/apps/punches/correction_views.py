@@ -348,8 +348,11 @@ class CorrectionViewSet(
         return Response(CorrectionSerializer(correction).data)
 
     @extend_schema(
-        summary="Reject a correction",
-        description="Turns it down. The request stays: a refused claim is history too.",
+        summary="Withdraw the company's own proposal",
+        description=(
+            "The company takes back a proposal still waiting for the person. The record "
+            "stays as it was and the proposal is kept, withdrawn."
+        ),
         request=ResolutionSerializer,
         responses={200: CorrectionSerializer},
     )

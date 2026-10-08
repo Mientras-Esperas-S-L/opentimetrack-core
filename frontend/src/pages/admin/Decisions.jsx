@@ -33,6 +33,7 @@ import {
   getScheduleAdaptations,
   rejectAbsence,
   rejectCorrection,
+  withdrawCorrection,
 } from '../../services/api.js'
 import {
   ConfirmDialog,
@@ -296,7 +297,17 @@ const fmt = (value) => {
  *  deliberate: a refusal is what the person will read and ask about, and it
  *  should not be as effortless as a yes.
  */
-function RequestCard({ title, meta, reason, children, onApprove, onReject, busy, select, own = false }) {
+function RequestCard({
+  title,
+  meta,
+  reason,
+  children,
+  onApprove,
+  onReject,
+  busy,
+  select,
+  own = false,
+}) {
   const { t } = useTranslation()
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
@@ -331,7 +342,11 @@ function RequestCard({ title, meta, reason, children, onApprove, onReject, busy,
         {/* La propia no se resuelve: el servidor lo rechaza, y ofrecer el botón
             para luego decir que no es invitar a pulsarlo. */}
         {own ? (
-          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0, maxWidth: '26ch' }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ flexShrink: 0, maxWidth: '26ch' }}
+          >
             {t('Es tuya: la resuelve otra persona.')}
           </Typography>
         ) : (
@@ -389,39 +404,71 @@ const seleccionadas = (filas, seleccion) => filas.filter((fila) => seleccion.isS
  *  avisa, para que nadie escriba «no procede» pensando en un caso y se lo
  *  mande a cinco.
  */
-function RejectDialog({ open, onClose, onConfirm, needsNote, count = 1, busy }) {
+/** Rechazar lo que alguien pidió, o retirar una propuesta de la empresa.
+ *
+ *  `retirar`: «Sin acuerdo» usaba este mismo diálogo diciendo «Rechazar la
+ *  solicitud» sobre una propuesta propia, y además llamaba a la ruta de
+ *  rechazar, que a una propuesta en espera le contesta 409: el botón no
+ *  funcionaba nunca.
+ */
+function RejectDialog({
+  open,
+  onClose,
+  onConfirm,
+  needsNote,
+  count = 1,
+  busy,
+  error,
+  retirar = false,
+}) {
   const { t } = useTranslation()
   const [note, setNote] = useState('')
   const many = count > 1
 
-  const confirm = () => {
-    onConfirm(note)
-    setNote('')
-  }
+  // El motivo no se borra al pulsar: si el rechazo falla, se perdía lo escrito.
+  // Se vacía al abrir otra vez, porque quien lo monta le cambia la `key`.
+  const confirm = () => onConfirm(note)
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
-        {many
-          ? t('Rechazar {{cuantas}} solicitudes', { cuantas: count })
-          : t('Rechazar la solicitud')}
+        {retirar
+          ? many
+            ? t('Retirar {{cuantas}} propuestas', { cuantas: count })
+            : t('Retirar la propuesta')
+          : many
+            ? t('Rechazar {{cuantas}} solicitudes', { cuantas: count })
+            : t('Rechazar la solicitud')}
       </DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {many
+          {retirar
             ? t(
-                'El mismo motivo se enviará a todas. Se conservan rechazadas: que alguien lo pidiera y se le dijera que no también es parte del historial.',
+                'El registro se queda como estaba y la propuesta consta como retirada. La persona ya no tiene que contestar.',
               )
-            : t(
-                'La solicitud se conserva rechazada: que alguien lo pidiera y se le dijera que no también es parte del historial.',
-              )}
+            : many
+              ? t(
+                  'El mismo motivo se enviará a todas. Se conservan rechazadas: que alguien lo pidiera y se le dijera que no también es parte del historial.',
+                )
+              : t(
+                  'La solicitud se conserva rechazada: que alguien lo pidiera y se le dijera que no también es parte del historial.',
+                )}
         </Typography>
+        {/* Dentro, y no solo en la página: el fallo se pintaba detrás del
+            diálogo, que se quedaba abierto sin decir nada. */}
+        <ErrorNote error={error} />
         <TextField
           autoFocus
           fullWidth
           multiline
           minRows={3}
-          label={needsNote ? t('Motivo del rechazo') : t('Motivo del rechazo (opcional)')}
+          label={
+            retirar
+              ? t('Por qué se retira')
+              : needsNote
+                ? t('Motivo del rechazo')
+                : t('Motivo del rechazo (opcional)')
+          }
           placeholder={
             many
               ? t('Lo leerán todas las personas afectadas.')
@@ -441,7 +488,13 @@ function RejectDialog({ open, onClose, onConfirm, needsNote, count = 1, busy }) 
           color="secondary"
           disabled={busy || (needsNote && !note.trim())}
         >
-          {many ? t('Rechazar las {{cuantas}}', { cuantas: count }) : t('Rechazar')}
+          {retirar
+            ? many
+              ? t('Retirar las {{cuantas}}', { cuantas: count })
+              : t('Retirar')
+            : many
+              ? t('Rechazar las {{cuantas}}', { cuantas: count })
+              : t('Rechazar')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -551,7 +604,10 @@ export default function Decisions() {
     onError: alFallar(setError, refresh),
   })
 
-  const openReject = (action, id, needsNote) => setRejecting({ action, id, needsNote })
+  const openReject = (action, id, needsNote, retirar = false) => {
+    decide.reset()
+    setRejecting({ action, id, needsNote, retirar })
+  }
 
   // La misma decisión sobre varias solicitudes de golpe. En serie y sin parar
   // en el primer fallo: que una estuviera ya resuelta por otra persona no es
@@ -1209,7 +1265,7 @@ export default function Decisions() {
                       size="small"
                       color="inherit"
                       disabled={decide.isPending}
-                      onClick={() => openReject(rejectCorrection, correction.id, true)}
+                      onClick={() => openReject(withdrawCorrection, correction.id, true, true)}
                     >
                       {t('Retirar la propuesta')}
                     </Button>
@@ -1252,9 +1308,10 @@ export default function Decisions() {
                   color: 'inherit',
                   onClick: () =>
                     setRejecting({
-                      action: rejectCorrection,
+                      action: withdrawCorrection,
                       rows: shownOpen.filter((row) => openPick.isSelected(row)),
                       needsNote: true,
+                      retirar: true,
                       onDone: openPick.clear,
                     }),
                 },
@@ -1450,8 +1507,11 @@ export default function Decisions() {
       />
 
       <RejectDialog
+        key={rejecting ? (rejecting.id ?? 'bloque') : 'cerrado'}
+        error={rejecting?.id ? decide.error : null}
         open={Boolean(rejecting)}
         needsNote={rejecting?.needsNote}
+        retirar={Boolean(rejecting?.retirar)}
         count={rejecting?.rows?.length ?? 1}
         busy={decide.isPending || bulking}
         onClose={() => setRejecting(null)}
@@ -1459,7 +1519,9 @@ export default function Decisions() {
           if (rejecting.rows) {
             const { rows, action, onDone } = rejecting
             setRejecting(null)
-            decideMany(rows, (id) => action(id, note), { done: t('rechazadas') }).then(onDone)
+            decideMany(rows, (id) => action(id, note), {
+              done: rejecting.retirar ? t('retiradas') : t('rechazadas'),
+            }).then(onDone)
             return
           }
           decide.mutate({ action: rejecting.action, id: rejecting.id, note })

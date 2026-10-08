@@ -28,7 +28,7 @@ import AddIcon from '@mui/icons-material/Add'
 import LeaveDialog from '../../components/LeaveDialog.jsx'
 import Alert from '@mui/material/Alert'
 
-import { Empty, Loading, PageHeader, StatusChip } from '../../components/common.jsx'
+import { Empty, ErrorNote, Loading, PageHeader, StatusChip } from '../../components/common.jsx'
 import {
   capitalised,
   dayRange,
@@ -48,7 +48,7 @@ import { PickFilter } from '../../components/filters.jsx'
  *  view is for --- "can I approve August?" is the question it exists to answer
  *  --- so the answer belongs here.
  */
-function AbsenceDialog({ absence, canDecide, busy, onClose, onApprove, onReject }) {
+function AbsenceDialog({ absence, canDecide, busy, error, onClose, onApprove, onReject }) {
   const { t } = useTranslation()
   const pending = absence?.status === 'PENDING'
 
@@ -73,6 +73,7 @@ function AbsenceDialog({ absence, canDecide, busy, onClose, onApprove, onReject 
               {absence.reason}
             </Typography>
           )}
+          <ErrorNote error={error} />
         </Stack>
       </DialogContent>
       <DialogActions>
@@ -165,6 +166,11 @@ export default function TeamCalendar() {
       queryClient.invalidateQueries({ queryKey: ['absences'] })
       queryClient.invalidateQueries({ queryKey: ['overview'] })
     },
+    // No tenía: si aprobar o rechazar fallaba ---otra persona la había
+    // resuelto ya, por ejemplo--- no se decía nada en ningún sitio y el diálogo
+    // seguía ofreciendo los mismos botones. El error sale dentro del diálogo, y
+    // se refresca para que lo de detrás diga cómo está de verdad.
+    onError: () => queryClient.invalidateQueries({ queryKey: ['absence-calendar'] }),
   })
 
   // Registrar una ausencia en nombre de alguien: la baja que llama por
@@ -338,7 +344,11 @@ export default function TeamCalendar() {
         absence={open}
         canDecide={canManage}
         busy={decide.isPending}
-        onClose={() => setOpen(null)}
+        error={open ? decide.error : null}
+        onClose={() => {
+          setOpen(null)
+          decide.reset()
+        }}
         onApprove={() => decide.mutate({ action: approveAbsence, id: open.id })}
         onReject={() => decide.mutate({ action: rejectAbsence, id: open.id })}
       />

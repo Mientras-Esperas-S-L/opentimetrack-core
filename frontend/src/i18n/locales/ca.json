@@ -1083,5 +1083,10 @@
   "Ya la tengo instalada": "Ja la tinc instal·lada",
   "Actualizar": "Actualitzar",
   "Hay una versión nueva de la aplicación.": "Hi ha una versió nova de l'aplicació.",
-  "El navegador no ha dejado copiarla. Selecciónala y cópiala a mano.": "El navegador no ha deixat copiar-la. Selecciona-la i copia-la a mà."
+  "El navegador no ha dejado copiarla. Selecciónala y cópiala a mano.": "El navegador no ha deixat copiar-la. Selecciona-la i copia-la a mà.",
+  "El registro se queda como estaba y la propuesta consta como retirada. La persona ya no tiene que contestar.": "El registre es queda com estava i la proposta consta com a retirada. La persona ja no ha de contestar.",
+  "Por qué se retira": "Per què es retira",
+  "Retirar las {{cuantas}}": "Retirar-ne {{cuantas}}",
+  "Retirar {{cuantas}} propuestas": "Retirar {{cuantas}} propostes",
+  "retiradas": "retirades"
 }

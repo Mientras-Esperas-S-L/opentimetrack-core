@@ -478,6 +478,9 @@ export const getAllCorrections = (params) => periodoEntero('/corrections/', para
 export const requestCorrection = (payload) => post('/corrections/', payload)
 export const approveCorrection = (id, note = '') => post(`/corrections/${id}/approve/`, { note })
 export const rejectCorrection = (id, note = '') => post(`/corrections/${id}/reject/`, { note })
+// Su propia propuesta, la que espera a la persona: eso no se rechaza, se retira.
+// `reject` contesta 409 a una propuesta en espera.
+export const withdrawCorrection = (id, note = '') => post(`/corrections/${id}/withdraw/`, { note })
 
 // Art. 4.b: cambiar un asiento necesita la autorización de las dos partes, y
 // sin acuerdo la empresa lo aplica dejando constancia de la discrepancia. Las

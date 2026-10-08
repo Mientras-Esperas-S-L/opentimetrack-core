@@ -236,7 +236,7 @@ function CorrectionDialog({ open, onClose, onSubmit, saving, error, punches = []
  *  to weigh against it, which helps nobody --- least of all the person, whose
  *  side is the one that would be missing.
  */
-function DisputeDialog({ open, correction, onClose, onConfirm, busy }) {
+function DisputeDialog({ open, correction, onClose, onConfirm, busy, error }) {
   const { t } = useTranslation()
   const [account, setAccount] = useState('')
 
@@ -245,8 +245,9 @@ function DisputeDialog({ open, correction, onClose, onConfirm, busy }) {
       <form
         onSubmit={(event) => {
           event.preventDefault()
+          // Sin vaciarlo aquí: si el envío falla, se perdía lo escrito. Se vacía
+          // al abrir otra vez, porque quien lo monta le cambia la `key`.
           onConfirm(account)
-          setAccount('')
         }}
       >
         <DialogTitle>{t('No estoy de acuerdo')}</DialogTitle>
@@ -264,6 +265,7 @@ function DisputeDialog({ open, correction, onClose, onConfirm, busy }) {
               {correction.reason}
             </Typography>
           )}
+          <ErrorNote error={error} />
           <TextField
             autoFocus
             required
@@ -619,7 +621,10 @@ export default function MyTime() {
                 zone={zone}
                 busy={answer.isPending}
                 onAccept={() => answer.mutate({ action: acceptCorrection, id: correction.id })}
-                onDispute={() => setDisputing(correction)}
+                onDispute={() => {
+                  answer.reset()
+                  setDisputing(correction)
+                }}
               />
             ))}
           </Stack>
@@ -760,6 +765,8 @@ export default function MyTime() {
       <MyAdaptations />
 
       <DisputeDialog
+        key={disputing?.id ?? 'cerrado'}
+        error={disputing ? answer.error : null}
         open={Boolean(disputing)}
         correction={disputing}
         busy={answer.isPending}
