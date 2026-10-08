@@ -71,7 +71,11 @@ function LeaveTypeDialog({ open, kind, onClose, onSave, saving, error }) {
   }
   if (!open && form !== null) setForm(null)
 
-  if (!form) return null
+  // `!open` también, y no solo `!form`. Al cancelar, `kind` llega ya a `null`
+  // pero `form` sigue lleno en este pintado ---el `setForm(null)` de arriba vale
+  // para el siguiente---, así que se seguía hasta `kind.name` y la página entera
+  // se quedaba en blanco.
+  if (!open || !form) return null
 
   const set = (campo) => (event) => setForm({ ...form, [campo]: event.target.value })
 

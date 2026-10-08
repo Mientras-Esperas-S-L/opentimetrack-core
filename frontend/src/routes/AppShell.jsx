@@ -28,6 +28,7 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import HelpIcon from '@mui/icons-material/Help'
 
 import ChangePasswordDialog from '../components/ChangePasswordDialog.jsx'
+import FalloDePantalla from '../components/FalloDePantalla.jsx'
 import HelpDrawer from '../components/HelpDrawer.jsx'
 import { temaDeAyuda } from '../components/temaDeAyuda.js'
 import MenuIcon from '@mui/icons-material/Menu'
@@ -420,7 +421,9 @@ export default function AppShell() {
           pb: { xs: company ? 12 : 4, md: 5 },
         }}
       >
-        <Outlet />
+        <FalloDePantalla key={location.pathname}>
+          <Outlet />
+        </FalloDePantalla>
       </Box>
 
       {/* Sin empresa, fuera. Fichar, Mi jornada y Mis ausencias son de quien trabaja
