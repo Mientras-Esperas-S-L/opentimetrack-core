@@ -46,7 +46,7 @@ import {
   saveCompanyIdentity,
   withdrawApplicationOfCompany,
 } from '../../services/api.js'
-import { Pager } from '../../components/common.jsx'
+import { ConfirmDialog, Pager } from '../../components/common.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 import { alCatalogo, localeDeFechas } from '../../i18n/index.js'
 
@@ -842,6 +842,9 @@ function PlatformAdmins({ onCambio }) {
   const [reciénDicha, setReciénDicha] = useState(null)
   const [nueva, setNueva] = useState(null)
   const [vuelta, setVuelta] = useState(0)
+  // Las dos que dejan a otra persona fuera, en el acto, preguntan antes: con un
+  // clic se echaba a alguien de la consola por rozar el botón equivocado.
+  const [confirmando, setConfirmando] = useState(null)
 
   useEffect(() => {
     let vivo = true
@@ -977,9 +980,18 @@ function PlatformAdmins({ onCambio }) {
                     size="small"
                     disabled={trabajando}
                     onClick={() =>
-                      hacer(async () => {
-                        const dicha = await resetPlatformAdminPassword(cuenta.id)
-                        setReciénDicha(dicha)
+                      setConfirmando({
+                        title: t('¿Contraseña nueva para {{correo}}?', { correo: cuenta.email }),
+                        body: t('La que tiene deja de valer y se cierran sus sesiones abiertas.'),
+                        detail: t(
+                          'La nueva se enseña aquí una sola vez. Si lo que quieres es que la elija esa persona, usa «Mandar enlace».',
+                        ),
+                        verb: t('Dar contraseña nueva'),
+                        run: () =>
+                          hacer(async () => {
+                            const dicha = await resetPlatformAdminPassword(cuenta.id)
+                            setReciénDicha(dicha)
+                          }),
                       })
                     }
                   >
@@ -993,7 +1005,15 @@ function PlatformAdmins({ onCambio }) {
                     size="small"
                     color="error"
                     disabled={trabajando}
-                    onClick={() => hacer(() => deactivatePlatformAdmin(cuenta.id))}
+                    onClick={() =>
+                      setConfirmando({
+                        title: t('¿Desactivar {{correo}}?', { correo: cuenta.email }),
+                        body: t('No podrá entrar, y se cierran sus sesiones abiertas.'),
+                        detail: t('Se deshace con «Reactivar».'),
+                        verb: t('Desactivar'),
+                        run: () => hacer(() => deactivatePlatformAdmin(cuenta.id)),
+                      })
+                    }
                   >
                     {t('Desactivar')}
                   </Button>
@@ -1021,6 +1041,12 @@ function PlatformAdmins({ onCambio }) {
           setVuelta((n) => n + 1)
           onCambio?.()
         }}
+      />
+
+      <ConfirmDialog
+        request={confirmando}
+        busy={trabajando}
+        onClose={() => setConfirmando(null)}
       />
 
       <NewAdminDialog

@@ -1088,5 +1088,12 @@
   "Por qué se retira": "Per què es retira",
   "Retirar las {{cuantas}}": "Retirar-ne {{cuantas}}",
   "Retirar {{cuantas}} propuestas": "Retirar {{cuantas}} propostes",
-  "retiradas": "retirades"
+  "retiradas": "retirades",
+  "¿Contraseña nueva para {{correo}}?": "Contrasenya nova per a {{correo}}?",
+  "La que tiene deja de valer y se cierran sus sesiones abiertas.": "La que té deixa de valer i es tanquen les seves sessions obertes.",
+  "La nueva se enseña aquí una sola vez. Si lo que quieres es que la elija esa persona, usa «Mandar enlace».": "La nova es mostra aquí una sola vegada. Si el que vols és que la triï aquesta persona, fes servir «Enviar l'enllaç».",
+  "Dar contraseña nueva": "Donar contrasenya nova",
+  "¿Desactivar {{correo}}?": "Desactivar {{correo}}?",
+  "No podrá entrar, y se cierran sus sesiones abiertas.": "No podrà entrar, i es tanquen les seves sessions obertes.",
+  "Se deshace con «Reactivar».": "Es desfà amb «Reactivar»."
 }
