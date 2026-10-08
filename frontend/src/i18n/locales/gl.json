@@ -1073,5 +1073,12 @@
   "Alta hecha, pero la invitación a <destinatario>{{correo}}</destinatario> no ha salido: ha fallado el correo. Mándasela con «Enviar enlace de acceso».": "Alta feita, pero a invitación a <destinatario>{{correo}}</destinatario> non saíu: fallou o correo. Mándalla con «Enviar ligazón de acceso».",
   "Volver a la instalación": "Volver á instalación",
   "Recargar": "Recargar",
-  "Algo ha fallado en esta pantalla. Lo que ya estaba guardado sigue guardado.": "Algo fallou nesta pantalla. O que xa estaba gardado segue gardado."
+  "Algo ha fallado en esta pantalla. Lo que ya estaba guardado sigue guardado.": "Algo fallou nesta pantalla. O que xa estaba gardado segue gardado.",
+  "Instalar la aplicación": "Instalar a aplicación",
+  "Instalar en el iPhone": "Instalar no iPhone",
+  "Pulsa el botón de compartir": "Preme o botón de compartir",
+  "Elige «Añadir a pantalla de inicio».": "Escolle «Engadir á pantalla de inicio».",
+  "Pulsa «Añadir».": "Preme «Engadir».",
+  "En el iPhone, los avisos de fichaje solo llegan con la aplicación instalada.": "No iPhone, os avisos de fichaxe só chegan coa aplicación instalada.",
+  "Ya la tengo instalada": "Xa a teño instalada"
 }

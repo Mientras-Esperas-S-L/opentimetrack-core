@@ -1073,5 +1073,12 @@
   "Alta hecha, pero la invitación a <destinatario>{{correo}}</destinatario> no ha salido: ha fallado el correo. Mándasela con «Enviar enlace de acceso».": "Alta feta, però la invitació a <destinatario>{{correo}}</destinatario> no ha sortit: ha fallat el correu. Envia-la-hi amb «Enviar enllaç d'accés».",
   "Volver a la instalación": "Tornar a la instal·lació",
   "Recargar": "Recarregar",
-  "Algo ha fallado en esta pantalla. Lo que ya estaba guardado sigue guardado.": "Alguna cosa ha fallat en aquesta pantalla. El que ja estava desat continua desat."
+  "Algo ha fallado en esta pantalla. Lo que ya estaba guardado sigue guardado.": "Alguna cosa ha fallat en aquesta pantalla. El que ja estava desat continua desat.",
+  "Instalar la aplicación": "Instal·lar l'aplicació",
+  "Instalar en el iPhone": "Instal·lar a l'iPhone",
+  "Pulsa el botón de compartir": "Prem el botó de compartir",
+  "Elige «Añadir a pantalla de inicio».": "Tria «Afegeix a la pantalla d'inici».",
+  "Pulsa «Añadir».": "Prem «Afegeix».",
+  "En el iPhone, los avisos de fichaje solo llegan con la aplicación instalada.": "A l'iPhone, els avisos de fitxatge només arriben amb l'aplicació instal·lada.",
+  "Ya la tengo instalada": "Ja la tinc instal·lada"
 }
