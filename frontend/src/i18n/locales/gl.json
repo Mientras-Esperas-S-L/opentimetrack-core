@@ -1070,5 +1070,6 @@
   "No tiene ningún centro de trabajo. Lo da de alta la empresa desde dentro.": "Non ten ningún centro de traballo. Dao de alta a empresa desde dentro.",
   "Festivos de este año": "Festivos deste ano",
   "No tiene festivos de este año. Los importa la empresa desde dentro.": "Non ten festivos deste ano. Impórtaos a empresa desde dentro.",
-  "Alta hecha, pero la invitación a <destinatario>{{correo}}</destinatario> no ha salido: ha fallado el correo. Mándasela con «Enviar enlace de acceso».": "Alta feita, pero a invitación a <destinatario>{{correo}}</destinatario> non saíu: fallou o correo. Mándalla con «Enviar ligazón de acceso»."
+  "Alta hecha, pero la invitación a <destinatario>{{correo}}</destinatario> no ha salido: ha fallado el correo. Mándasela con «Enviar enlace de acceso».": "Alta feita, pero a invitación a <destinatario>{{correo}}</destinatario> non saíu: fallou o correo. Mándalla con «Enviar ligazón de acceso».",
+  "Volver a la instalación": "Volver á instalación"
 }

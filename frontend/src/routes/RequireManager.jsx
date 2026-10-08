@@ -23,7 +23,10 @@ export default function RequireManager() {
   const { pathname } = useLocation()
   const role = session?.user?.role
 
-  if (role !== 'MANAGER' && role !== 'ADMIN' && role !== 'ADVISOR') {
+  // Sin empresa no hay nada que gestionar. La cuenta de la instalación trae rol
+  // de administración y pasaba: volviendo atrás desde soporte aterrizaba en el
+  // Resumen, que le pintaba la última empresa de la caché. `/` la manda a lo suyo.
+  if (!session?.tenant || (role !== 'MANAGER' && role !== 'ADMIN' && role !== 'ADVISOR')) {
     return <Navigate to="/" replace />
   }
   if (role === 'ADVISOR' && !DE_LA_ASESORIA.has(pathname.replace(/\/+$/, ''))) {

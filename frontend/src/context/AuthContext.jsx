@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 
 import {
   getMe,
@@ -10,8 +11,30 @@ import {
 } from '../services/api.js'
 import { AuthContext } from './authContext.js'
 
+/** Quién está dentro y en qué empresa. Con esto cambia lo que se puede leer. */
+const identidad = (sesion) => (sesion ? `${sesion.user?.id}:${sesion.tenant?.id ?? ''}` : null)
+
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(null)
+  const queryClient = useQueryClient()
+  const [session, guardarSesion] = useState(null)
+  //: Lo que se ha leído es de la cuenta que lo leyó. Al salir de soporte, la
+  //: cuenta de la instalación volvía atrás en el navegador y el Resumen le
+  //: enseñaba, de la caché, el de la última empresa en la que había estado. Lo
+  //: mismo pasaba al cerrar sesión y entrar otra persona en la misma pestaña.
+  //: Cambiar de persona o de empresa vacía la caché; cambiar un dato de la
+  //: misma sesión (el idioma, la ficha de la empresa) no.
+  const quienEs = useRef(null)
+  const setSession = useCallback(
+    (nueva) => {
+      const clave = identidad(nueva)
+      if (clave !== quienEs.current) {
+        quienEs.current = clave
+        queryClient.clear()
+      }
+      guardarSesion(nueva)
+    },
+    [queryClient],
+  )
   const [loading, setLoading] = useState(true)
   //: No se pudo comprobar la sesión, y **no** porque no valga.
   //:
@@ -86,7 +109,7 @@ export function AuthProvider({ children }) {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [setSession])
 
   // Cuando el servidor da la sesión por muerta, la pantalla tiene que
   // enterarse. Sin esto, `tokens.clear()` vaciaba el almacén y aquí no cambiaba
@@ -98,23 +121,23 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     onSessionLost(() => setSession(null))
     return () => onSessionLost(null)
-  }, [])
+  }, [setSession])
 
   const signIn = useCallback(async (credentials) => {
     const data = await apiSignIn(credentials)
     setPreferredLanguage(data)
     setSession({ user: data.user, tenant: data.tenant })
     return data
-  }, [])
+  }, [setSession])
 
   const signOut = useCallback(async () => {
     await apiSignOut()
     setSession(null)
-  }, [])
+  }, [setSession])
 
   const value = useMemo(
     () => ({ session, loading, unreachable, signIn, signOut, setSession }),
-    [session, loading, unreachable, signIn, signOut],
+    [session, loading, unreachable, signIn, signOut, setSession],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

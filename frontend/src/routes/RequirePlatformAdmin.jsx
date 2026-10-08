@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 
+import { useAuth } from '../hooks/useAuth.js'
 import { usePlatformAdmin } from '../hooks/usePlatformAdmin.js'
 
 /** Guarda la administración de la instalación.
@@ -13,9 +14,13 @@ import { usePlatformAdmin } from '../hooks/usePlatformAdmin.js'
  *  puede.
  */
 export default function RequirePlatformAdmin() {
+  const { session } = useAuth()
   const esAdmin = usePlatformAdmin()
 
   if (esAdmin === null) return null
-  if (!esAdmin) return <Navigate to="/panel" replace />
+  // Sin empresa no hay otro sitio al que mandarla: el Resumen pide empresa y la
+  // devuelve aquí, y un «no» por un fallo de red las haría rebotar sin fin. Se
+  // queda, y la pantalla dice lo que conteste el servidor.
+  if (!esAdmin && session?.tenant) return <Navigate to="/panel" replace />
   return <Outlet />
 }
