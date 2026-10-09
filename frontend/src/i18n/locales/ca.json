@@ -436,7 +436,6 @@
   "Justificante": "Justificant",
   "L-V 09:00-17:00": "Dl-Dv 09:00-17:00",
   "La Ley 10/2021 se aplica desde el 30 % de la jornada a distancia en tres meses. A partir de ahí hace falta acuerdo por escrito, y firmado antes de empezar.": "La Llei 10/2021 s'aplica des del 30 % de la jornada a distància en tres mesos. A partir d'aquí cal un acord per escrit, i signat abans de començar.",
-  "La corrección queda registrada con tu nombre, el momento y el motivo. El fichaje original no se borra: queda anulado y legible, y se avisará a la persona.": "La correcció queda registrada amb el teu nom, el moment i el motiu. El fitxatge original no s'esborra: queda anul·lat i llegible, i s'avisarà la persona.",
   "La de la empresa.": "La de l'empresa.",
   "La duración de la jornada se ha estimado: no hay cuadrante de ese día.": "La durada de la jornada s'ha estimat: no hi ha quadrant d'aquell dia.",
   "La empresa está desactivada.": "L'empresa està desactivada.",
@@ -1095,5 +1094,10 @@
   "Dar contraseña nueva": "Donar contrasenya nova",
   "¿Desactivar {{correo}}?": "Desactivar {{correo}}?",
   "No podrá entrar, y se cierran sus sesiones abiertas.": "No podrà entrar, i es tanquen les seves sessions obertes.",
-  "Se deshace con «Reactivar».": "Es desfà amb «Reactivar»."
+  "Se deshace con «Reactivar».": "Es desfà amb «Reactivar».",
+  "No se aplica todavía: se le propone a {{quien}} y cambia cuando lo acepte. Queda registrada con tu nombre, el momento y el motivo, y el fichaje original no se borra.": "Encara no s'aplica: es proposa a {{quien}} i canvia quan ho accepti. Queda registrada amb el teu nom, el moment i el motiu, i el fitxatge original no s'esborra.",
+  "la persona": "la persona",
+  "Ver la propuesta": "Veure la proposta",
+  "Corrección propuesta a {{quien}}. El fichaje no cambia hasta que la acepte; mientras, está en «Por decidir», pestaña «Sin acuerdo».": "Correcció proposada a {{quien}}. El fitxatge no canvia fins que l'accepti; mentrestant, és a «Per decidir», pestanya «Sense acord».",
+  "Corrección registrada. El fichaje no cambia hasta que se apruebe en «Por decidir».": "Correcció registrada. El fitxatge no canvia fins que s'aprovi a «Per decidir»."
 }

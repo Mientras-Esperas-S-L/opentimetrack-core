@@ -436,7 +436,6 @@
   "Justificante": "Xustificante",
   "L-V 09:00-17:00": "L-V 09:00-17:00",
   "La Ley 10/2021 se aplica desde el 30 % de la jornada a distancia en tres meses. A partir de ahí hace falta acuerdo por escrito, y firmado antes de empezar.": "A Lei 10/2021 aplícase desde o 30 % da xornada a distancia en tres meses. A partir de aí fai falta acordo por escrito, e asinado antes de comezar.",
-  "La corrección queda registrada con tu nombre, el momento y el motivo. El fichaje original no se borra: queda anulado y legible, y se avisará a la persona.": "A corrección queda rexistrada co teu nome, o momento e o motivo. A fichaxe orixinal non se borra: queda anulada e lexible, e avisarase á persoa.",
   "La de la empresa.": "A da empresa.",
   "La duración de la jornada se ha estimado: no hay cuadrante de ese día.": "A duración da xornada estimouse: non hai cadro dese día.",
   "La empresa está desactivada.": "A empresa está desactivada.",
@@ -1095,5 +1094,10 @@
   "Dar contraseña nueva": "Dar contrasinal novo",
   "¿Desactivar {{correo}}?": "Desactivar {{correo}}?",
   "No podrá entrar, y se cierran sus sesiones abiertas.": "Non poderá entrar, e péchanse as súas sesións abertas.",
-  "Se deshace con «Reactivar».": "Desfaise con «Reactivar»."
+  "Se deshace con «Reactivar».": "Desfaise con «Reactivar».",
+  "No se aplica todavía: se le propone a {{quien}} y cambia cuando lo acepte. Queda registrada con tu nombre, el momento y el motivo, y el fichaje original no se borra.": "Aínda non se aplica: proponselle a {{quien}} e cambia cando o acepte. Queda rexistrada co teu nome, o momento e o motivo, e o fichaxe orixinal non se borra.",
+  "la persona": "a persoa",
+  "Ver la propuesta": "Ver a proposta",
+  "Corrección propuesta a {{quien}}. El fichaje no cambia hasta que la acepte; mientras, está en «Por decidir», pestaña «Sin acuerdo».": "Corrección proposta a {{quien}}. O fichaxe non cambia ata que a acepte; mentres, está en «Por decidir», lapela «Sen acordo».",
+  "Corrección registrada. El fichaje no cambia hasta que se apruebe en «Por decidir».": "Corrección rexistrada. O fichaxe non cambia ata que se aprobe en «Por decidir»."
 }
