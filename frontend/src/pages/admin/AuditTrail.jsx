@@ -18,6 +18,7 @@ import { dateOf, firstOfThisMonth, today } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { alCatalogo, localeDeFechas } from '../../i18n/index.js'
+import { CAMPOS, lineasDelCambio, VALORES } from '../../components/camposDelRegistro.js'
 
 /** Entries that are somebody reading, as opposed to somebody changing.
  *
@@ -56,31 +57,38 @@ function when(iso) {
  *
  *  Vacío se escribe con una raya, que es como se escribe vacío en una tabla.
  */
-const legible = (valor) => {
+const legible = (valor, campo, t) => {
   if (valor === null || valor === undefined || valor === '') return '—'
-  if (typeof valor === 'boolean') return valor ? 'sí' : 'no'
-  return String(valor)
+  if (typeof valor === 'boolean') return valor ? t('sí') : t('no')
+  // «sí» y «no» también llegan escritos: el servidor convierte así los
+  // interruptores de centros, turnos y festivos antes de guardarlos.
+  if (valor === 'sí' || valor === 'no') return t(valor)
+  if (Array.isArray(valor)) return valor.map((v) => legible(v, campo, t)).join(', ')
+  if (typeof valor === 'object') return JSON.stringify(valor)
+  const opcion = VALORES[campo]?.[valor]
+  return opcion ? t(opcion) : String(valor)
 }
 
 /** {campo: [antes, después]} en una línea legible. */
 function Changes({ changes }) {
-  const entries = Object.entries(changes ?? {})
-  if (entries.length === 0) return null
+  const { t } = useTranslation()
+  const lineas = lineasDelCambio(changes)
+  if (lineas.length === 0) return null
 
   return (
     <Stack sx={{ mt: 0.5, gap: 0.25 }}>
-      {entries.map(([field, value]) => (
+      {lineas.map(([field, ...valores]) => (
         <Typography key={field} variant="caption" color="text.secondary">
-          {field}:{' '}
-          {Array.isArray(value) && value.length === 2 ? (
+          {CAMPOS[field] ? t(CAMPOS[field]) : field}:{' '}
+          {valores.length === 2 ? (
             <>
               <Box component="span" sx={{ textDecoration: 'line-through' }}>
-                {legible(value[0])}
+                {legible(valores[0], field, t)}
               </Box>{' '}
-              → <strong>{legible(value[1])}</strong>
+              → <strong>{legible(valores[1], field, t)}</strong>
             </>
           ) : (
-            legible(value)
+            legible(valores[0], field, t)
           )}
         </Typography>
       ))}
