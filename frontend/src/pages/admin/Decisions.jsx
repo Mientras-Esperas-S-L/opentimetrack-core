@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useLocation } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import Badge from '@mui/material/Badge'
 import Box from '@mui/material/Box'
@@ -510,7 +511,10 @@ export default function Decisions() {
   const zone = session?.tenant?.time_zone
   const queryClient = useQueryClient()
 
-  const [tab, setTab] = useState(0)
+  // Fichajes manda aquí a quien acaba de proponer una corrección, y la busca en
+  // «Sin acuerdo», que es donde espera la respuesta de la persona.
+  const { state: llegada } = useLocation()
+  const [tab, setTab] = useState(llegada?.pestaña === 'sin-acuerdo' ? 2 : 0)
   const [error, setError] = useState(null)
   const [rejecting, setRejecting] = useState(null)
   const [confirming, setConfirming] = useState(null)

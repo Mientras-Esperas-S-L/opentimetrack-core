@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
@@ -230,7 +231,8 @@ function CorrectionDialog({
           <ErrorNote error={error} />
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {t(
-              'La corrección queda registrada con tu nombre, el momento y el motivo. El fichaje original no se borra: queda anulado y legible, y se avisará a la persona.',
+              'No se aplica todavía: se le propone a {{quien}} y cambia cuando lo acepte. Queda registrada con tu nombre, el momento y el motivo, y el fichaje original no se borra.',
+              { quien: subject || t('la persona') },
             )}
           </Typography>
           <Stack sx={{ gap: 2, pt: 0.5 }}>
@@ -320,6 +322,11 @@ export default function Timesheet() {
   // tampoco se le ofrece el botón.
   const puedeCorregir = session?.user?.role !== 'ADVISOR'
   const [error, setError] = useState(null)
+  // Lo que se acaba de proponer. El fichaje no cambia hasta que la persona lo
+  // acepta (art. 4.b), así que cerrar el diálogo sin más se leía como un fallo:
+  // la hora seguía igual y nada decía dónde había ido a parar la corrección.
+  const [propuesta, setPropuesta] = useState(null)
+  const navigate = useNavigate()
 
   // A month by default rather than everything. The screen used to ask for the
   // whole history and show whichever fifty rows came back first, with no way to
@@ -383,9 +390,10 @@ export default function Timesheet() {
 
   const correct = useMutation({
     mutationFn: requestCorrection,
-    onSuccess: () => {
+    onSuccess: (hecha) => {
       setCorrecting(null)
       setError(null)
+      setPropuesta(hecha)
       refrescar()
     },
     onError: alFallar(setError, refrescar),
@@ -474,6 +482,32 @@ export default function Timesheet() {
           width={170}
         />
       </Stack>
+
+      {propuesta && (
+        <Alert
+          severity="success"
+          sx={{ mb: 2 }}
+          onClose={() => setPropuesta(null)}
+          action={
+            propuesta.status === 'AWAITING_EMPLOYEE' && (
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => navigate('/panel/decisiones', { state: { pestaña: 'sin-acuerdo' } })}
+              >
+                {t('Ver la propuesta')}
+              </Button>
+            )
+          }
+        >
+          {propuesta.status === 'AWAITING_EMPLOYEE'
+            ? t(
+                'Corrección propuesta a {{quien}}. El fichaje no cambia hasta que la acepte; mientras, está en «Por decidir», pestaña «Sin acuerdo».',
+                { quien: propuesta.employee_name },
+              )
+            : t('Corrección registrada. El fichaje no cambia hasta que se apruebe en «Por decidir».')}
+        </Alert>
+      )}
 
       {faltan && (
         <Alert severity="warning" variant="outlined" sx={{ mb: 2 }}>
