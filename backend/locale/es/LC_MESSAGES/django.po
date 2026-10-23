@@ -5276,3 +5276,12 @@ msgstr "Lo cambió: %(changed_by)s."
 
 msgid "Open the app and press «Understood» so that it is recorded that you have seen it.\n\nIf something does not add up, tell whoever manages your working time."
 msgstr "Abre la aplicación y pulsa «Entendido» para que conste que lo has visto.\n\nSi algo no cuadra, díselo a quien gestione tu jornada."
+
+msgid "pending shift change"
+msgstr "cambio de turno pendiente de avisar"
+
+msgid "pending shift changes"
+msgstr "cambios de turno pendientes de avisar"
+
+msgid "what it was"
+msgstr "lo que había"

@@ -492,6 +492,13 @@ if SCHEDULER not in ("cron", "celery"):
 # el intervalo que se documenta para la crontab y el que programa celery-beat.
 REMINDER_EVERY_MINUTES = env.int("REMINDER_EVERY_MINUTES", default=5)
 
+# Cuánto tiene que estar quieto el cuadrante de alguien antes de avisarle del
+# cambio. El cuadrante se corrige a trazos ---pintar, deshacer, volver a
+# pintar--- y avisar de cada uno mandaba avisos que se anulaban entre sí. Ver
+# `apps.shifts.notices.publicar`. Lo envía `send_shift_notices`, que corre cada
+# `REMINDER_EVERY_MINUTES`: el aviso sale entre esta espera y esta más esa.
+SHIFT_NOTICE_WAIT_MINUTES = env.int("SHIFT_NOTICE_WAIT_MINUTES", default=5)
+
 # El mismo Redis que la caché salvo que se diga otra cosa: quien separa los
 # dos ya sabe por qué lo hace, y quien no, no tiene que montar dos.
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=REDIS_URL)

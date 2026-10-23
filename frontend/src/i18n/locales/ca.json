@@ -13,7 +13,7 @@
   "<destacado>{{cuantos}}</destacado> solicitados sin resolver": "<destacado>{{cuantos}}</destacado> demanats sense resoldre",
   "A distancia": "A distància",
   "A quién": "A qui",
-  "A quien le cambia el turno se le avisa por correo, en el navegador y en la aplicación. Aquí consta cuándo le llegó y cuándo dijo que lo había visto.": "A qui li canvia el torn se li avisa per correu, al navegador i a l’aplicació. Aquí consta quan li va arribar i quan va dir que ho havia vist.",
+  "A quien le cambia el turno se le avisa por correo, en el navegador y en la aplicación, unos minutos después del último cambio y solo con lo que de verdad cambió. Aquí consta cuándo le llegó y cuándo dijo que lo había visto.": "A qui li canvia el torn se li avisa per correu, al navegador i a l’aplicació, uns minuts després de l’últim canvi i només amb el que ha canviat de debò. Aquí consta quan li va arribar i quan va dir que ho havia vist.",
   "Abrir el menú": "Obrir el menú",
   "Acaba": "Acaba",
   "Acciones": "Accions",

@@ -55,6 +55,11 @@ def register_periodic_jobs(sender, **kwargs):
         name="recordatorios de fichaje",
     )
     sender.add_periodic_task(
+        crontab(minute=f"*/{settings.REMINDER_EVERY_MINUTES}"),
+        send_shift_notices.s(),
+        name="avisos de cambio de turno",
+    )
+    sender.add_periodic_task(
         crontab(hour=3, minute=30),
         purge_security_metadata.s(),
         name="purga de metadatos de seguridad",
@@ -84,6 +89,15 @@ def send_punch_reminders() -> int:
     from django.core.management import call_command
 
     return call_command("send_punch_reminders")
+
+
+@app.task(name="shifts.send_notices")
+def send_shift_notices() -> None:
+    """Los avisos de cambio de turno que llevan un rato quietos. Idempotente: lo
+    avisado sale de la cola. Ver `apps.shifts.notices.publicar`."""
+    from django.core.management import call_command
+
+    call_command("send_shift_notices")
 
 
 @app.task(name="users.flush_expired_tokens")

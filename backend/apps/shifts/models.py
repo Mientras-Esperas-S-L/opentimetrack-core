@@ -307,3 +307,46 @@ class ShiftNotice(TenantOwnedModel):
 
     def __str__(self) -> str:
         return f"{self.employee_id} {self.first_day}"
+
+
+class PendingShiftChange(TenantOwnedModel):
+    """Un día de alguien que ha cambiado y del que aún no se ha avisado.
+
+    El cuadrante se corrige a trazos: se pinta, se deshace, se vuelve a pintar.
+    Avisar de cada trazo mandaba a la persona un aviso por cada uno ---y dos
+    seguidos, que se anulan, por pintar y deshacer---. Así que lo que cambia se
+    apunta aquí, con lo que había **antes del primer cambio**, y el aviso sale
+    cuando lleva unos minutos quieto, con lo que de verdad cambió. Si se quedó
+    como estaba, no sale nada. Ver `apps.shifts.notices.publicar`.
+
+    No es prueba de nada: es una cola. La prueba es el `ShiftNotice`.
+    """
+
+    employee = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="pending_shift_changes",
+        verbose_name=_("employee"),
+    )
+    day = models.DateField(_("day"))
+    original = models.JSONField(_("what it was"), null=True, blank=True)
+    changed_by = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("changed by"),
+    )
+
+    class Meta:
+        verbose_name = _("pending shift change")
+        verbose_name_plural = _("pending shift changes")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["employee", "day"], name="one_pending_change_per_person_and_day"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.employee_id} {self.day}"

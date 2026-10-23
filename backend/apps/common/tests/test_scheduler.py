@@ -82,6 +82,9 @@ def test_with_celery_beat_schedules_every_job(settings):
     register_periodic_jobs(sender)
     assert sender.scheduled == [
         "recordatorios de fichaje",
+        # Sin él, el correo y la notificación de un cambio de turno no salen: el
+        # aviso se queda en la cola hasta que la persona abre la aplicación.
+        "avisos de cambio de turno",
         "purga de metadatos de seguridad",
         # La tercera faltaba, y sin ella la lista negra de testigos crece sin
         # techo: con la rotación activada cada renovación deja dos filas, y cada

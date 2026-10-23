@@ -5695,3 +5695,12 @@ msgstr "Ho va canviar: %(changed_by)s."
 
 msgid "Open the app and press «Understood» so that it is recorded that you have seen it.\n\nIf something does not add up, tell whoever manages your working time."
 msgstr "Obre l'aplicació i prem «Entesos» perquè consti que ho has vist.\n\nSi alguna cosa no quadra, digues-ho a qui gestioni la teva jornada."
+
+msgid "pending shift change"
+msgstr "canvi de torn pendent d'avisar"
+
+msgid "pending shift changes"
+msgstr "canvis de torn pendents d'avisar"
+
+msgid "what it was"
+msgstr "el que hi havia"

@@ -82,3 +82,40 @@ test.describe('El aviso de cambio de turno', () => {
     }
   })
 })
+
+test('pintar y deshacer no le manda nada', async ({ browser }) => {
+  const admin = await browser.newPage({ storageState: 'e2e/.sesiones/admin.json' })
+  const operario = await browser.newPage({ storageState: 'e2e/.sesiones/operario.json' })
+  await irA(admin, '/panel/cuadrante', 'Cuadrante')
+  // En una pantalla que no pide sus avisos: si los pidiera entre los dos
+  // trazos, vería el intermedio, que es lo que debe pasar si está mirando.
+  await operario.goto('/mi-jornada')
+
+  const yo = (await api(operario, '/auth/me/')).body
+  const quien = yo.id ?? yo.user?.id
+  const dentro = new Date()
+  dentro.setDate(dentro.getDate() + 13)
+  const dia = iso(dentro)
+  const antes = (await api(admin, `/shifts/roster/?from=${dia}&to=${dia}`)).body.find(
+    (s) => s.employee === quien,
+  )
+  const comoEstaba = antes
+    ? { employee: quien, day: dia, segments: antes.segments, pattern: antes.pattern }
+    : { employee: quien, day: dia }
+  const nuevo = antes?.segments?.[0]?.start === TARDE[0].start ? NOCHE : TARDE
+
+  try {
+    await api(admin, '/shifts/paint/', {
+      method: 'POST',
+      body: { cells: [{ employee: quien, day: dia, segments: nuevo }] },
+    })
+    await api(admin, '/shifts/paint/', { method: 'POST', body: { cells: [comoEstaba] } })
+
+    // Abrir sus avisos publica lo pendiente al momento: si hubiera algo, saldría.
+    const suyos = (await api(operario, '/shift-notices/?mine=true&unread=true')).body.results
+    expect(suyos.filter((a) => a.changes.some((c) => c.day === dia))).toEqual([])
+  } finally {
+    await admin.close()
+    await operario.close()
+  }
+})

@@ -7,19 +7,27 @@ electrónico, poder probar la transmisión y la recepción (art. 6).
 
 Las horas de la prueba las pone el servidor y la base de datos no deja
 reescribirlas: si pudiera, no probarían nada.
+
+El aviso no sale en el momento del trazo: sale cuando el cuadrante de esa persona
+lleva unos minutos quieto, con lo que de verdad cambió. Por eso casi todas las
+pruebas llaman a `publicar_ya` antes de mirar.
 """
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 import pytest
 from django.core import mail
+from django.core.management import call_command
 from django.db import IntegrityError, InternalError, ProgrammingError, transaction
 from freezegun import freeze_time
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken
 
 from apps.common.models import tenant_context
-from apps.shifts.models import Shift, ShiftNotice
+from apps.shifts.models import PendingShiftChange, Shift, ShiftNotice
+from apps.shifts.notices import publicar
 from apps.tenants.models import Tenant
 from apps.users.models import Role, User
 
@@ -58,6 +66,11 @@ def cliente(quien):
     return c
 
 
+def publicar_ya(empresa):
+    with tenant_context(empresa.id):
+        return publicar(empresa, espera=timedelta(0))
+
+
 def pintar(jefa, persona, dia, tramos=None):
     celda = {"employee": str(persona.pk), "day": dia}
     if tramos:
@@ -70,15 +83,16 @@ def pintar(jefa, persona, dia, tramos=None):
 def test_cambiar_un_turno_futuro_avisa_por_correo(
     empresa, gente, django_capture_on_commit_callbacks
 ):
+    pintar(gente["jefa"], gente["ana"], "2026-10-27", MAÑANA)
+    publicar_ya(empresa)
+    respuesta = pintar(gente["jefa"], gente["ana"], "2026-10-27", TARDE)
     with django_capture_on_commit_callbacks(execute=True):
-        pintar(gente["jefa"], gente["ana"], "2026-10-27", MAÑANA)
-    with django_capture_on_commit_callbacks(execute=True):
-        respuesta = pintar(gente["jefa"], gente["ana"], "2026-10-27", TARDE)
+        publicar_ya(empresa)
 
     assert respuesta.status_code == 200
     assert respuesta.json()["notified"] == 1
     with tenant_context(empresa.id):
-        # Dos avisos con el reloj parado: el del turno nuevo y el del cambio.
+        # Dos avisos: el del turno nuevo y el del cambio.
         avisos = list(ShiftNotice.objects.filter(employee=gente["ana"]))
     assert len(avisos) == 2
     aviso = next(a for a in avisos if a.changes[0]["before"])
@@ -95,6 +109,7 @@ def test_cambiar_un_turno_futuro_avisa_por_correo(
 @pytest.mark.django_db
 def test_menos_preaviso_del_que_pide_la_empresa_queda_dicho(empresa, gente):
     pintar(gente["jefa"], gente["ana"], "2026-10-24", MAÑANA)
+    publicar_ya(empresa)
 
     with tenant_context(empresa.id):
         aviso = ShiftNotice.objects.get(employee=gente["ana"])
@@ -109,20 +124,24 @@ def test_rellenar_dias_pasados_no_avisa(empresa, gente):
     respuesta = pintar(gente["jefa"], gente["ana"], "2026-10-20", MAÑANA)
 
     assert respuesta.json()["notified"] == 0
+    publicar_ya(empresa)
     with tenant_context(empresa.id):
         assert not ShiftNotice.objects.exists()
+        assert not PendingShiftChange.objects.exists()
 
 
 @freeze_time(f"{HOY} 09:00:00")
 @pytest.mark.django_db
 def test_pasar_un_turno_a_otra_persona_avisa_a_las_dos(empresa, gente):
     pintar(gente["jefa"], gente["ana"], "2026-10-28", MAÑANA)
+    publicar_ya(empresa)
     with tenant_context(empresa.id):
         turno = Shift.objects.get(employee=gente["ana"])
 
     cliente(gente["jefa"]).post(
         f"/api/shifts/{turno.pk}/reassign/", {"employee": str(gente["luis"].pk)}, format="json"
     )
+    publicar_ya(empresa)
 
     with tenant_context(empresa.id):
         de_ana = [a.changes[0] for a in ShiftNotice.objects.filter(employee=gente["ana"])]
@@ -135,6 +154,7 @@ def test_pasar_un_turno_a_otra_persona_avisa_a_las_dos(empresa, gente):
 @pytest.mark.django_db
 def test_llega_cuando_lo_ve_ella_no_cuando_lo_mira_la_jefa(empresa, gente):
     pintar(gente["jefa"], gente["ana"], "2026-10-28", MAÑANA)
+    publicar_ya(empresa)
 
     cliente(gente["jefa"]).get("/api/shift-notices/")
     with tenant_context(empresa.id):
@@ -169,6 +189,7 @@ def test_desde_otra_aplicacion_consta_cual(empresa, gente):
 @pytest.mark.django_db
 def test_solo_lo_lee_quien_lo_recibe_y_la_hora_no_se_mueve(empresa, gente):
     pintar(gente["jefa"], gente["ana"], "2026-10-28", MAÑANA)
+    publicar_ya(empresa)
     with tenant_context(empresa.id):
         aviso = ShiftNotice.objects.get()
 
@@ -197,6 +218,7 @@ def test_solo_lo_lee_quien_lo_recibe_y_la_hora_no_se_mueve(empresa, gente):
 def test_lo_que_dice_un_aviso_no_se_reescribe(empresa, gente, cambio):
     with freeze_time(f"{HOY} 09:00:00"):
         pintar(gente["jefa"], gente["ana"], "2026-10-24", MAÑANA)
+        publicar_ya(empresa)
 
     with tenant_context(empresa.id):
         aviso = ShiftNotice.objects.get()
@@ -225,6 +247,7 @@ def test_una_hora_ya_puesta_no_se_cambia_ni_se_borra_el_aviso(empresa, gente):
 @pytest.mark.django_db
 def test_la_empresa_se_lo_puede_llevar_y_la_plantilla_no(empresa, gente):
     pintar(gente["jefa"], gente["ana"], "2026-10-28", MAÑANA)
+    publicar_ya(empresa)
 
     suyo = cliente(gente["jefa"]).get("/api/shift-notices/export/")
     ajeno = cliente(gente["luis"]).get("/api/shift-notices/export/")
@@ -242,3 +265,65 @@ def test_cada_uno_ve_solo_los_suyos(empresa, gente):
 
     assert cliente(gente["luis"]).get("/api/shift-notices/").json()["count"] == 0
     assert cliente(gente["ana"]).get("/api/shift-notices/").json()["count"] == 1
+
+
+@freeze_time(f"{HOY} 09:00:00")
+@pytest.mark.django_db
+def test_pintar_y_deshacer_no_avisa(empresa, gente):
+    """El cuadrante se corrige a trazos. Un día que vuelve a como estaba no
+    cambió, y la persona no tiene que enterarse de nada."""
+    pintar(gente["jefa"], gente["ana"], "2026-10-28", MAÑANA)
+    publicar_ya(empresa)
+    pintar(gente["jefa"], gente["ana"], "2026-10-28", TARDE)
+    pintar(gente["jefa"], gente["ana"], "2026-10-28", MAÑANA)
+    enviados = len(mail.outbox)
+
+    assert publicar_ya(empresa) == []
+    with tenant_context(empresa.id):
+        assert ShiftNotice.objects.count() == 1
+        assert not PendingShiftChange.objects.exists()
+    assert len(mail.outbox) == enviados
+
+
+@pytest.mark.django_db
+def test_espera_a_que_el_cuadrante_se_quede_quieto(
+    empresa, gente, django_capture_on_commit_callbacks
+):
+    """Varios trazos seguidos son un solo aviso, con lo que había antes del
+    primero y lo que hay después del último."""
+    with freeze_time(f"{HOY} 09:00:00"):
+        pintar(gente["jefa"], gente["ana"], "2026-10-28", MAÑANA)
+    with freeze_time(f"{HOY} 09:03:00"):
+        pintar(gente["jefa"], gente["ana"], "2026-10-28", TARDE)
+        pintar(gente["jefa"], gente["ana"], "2026-10-29", TARDE)
+    with freeze_time(f"{HOY} 09:06:00"), tenant_context(empresa.id):
+        # A los tres minutos del último cambio todavía no.
+        assert publicar(empresa) == []
+
+    with (
+        freeze_time(f"{HOY} 09:09:00"),
+        django_capture_on_commit_callbacks(execute=True),
+    ):
+        call_command("send_shift_notices")
+
+    with tenant_context(empresa.id):
+        aviso = ShiftNotice.objects.get()
+    assert aviso.changes == [
+        {"day": "2026-10-28", "before": None, "after": TARDE},
+        {"day": "2026-10-29", "before": None, "after": TARDE},
+    ]
+    assert aviso.emailed_at is not None
+    assert mail.outbox[-1].to == ["ana@example.com"]
+
+
+@freeze_time(f"{HOY} 09:00:00")
+@pytest.mark.django_db
+def test_si_ella_abre_sus_avisos_no_espera(empresa, gente):
+    """La espera es para no mandar correos a mitad de una corrección. Quien abre
+    la aplicación tiene que ver ya cómo le ha quedado el turno."""
+    pintar(gente["jefa"], gente["ana"], "2026-10-28", MAÑANA)
+
+    filas = cliente(gente["ana"]).get("/api/shift-notices/?mine=true").json()["results"]
+
+    assert len(filas) == 1
+    assert filas[0]["changes"][0]["after"] == MAÑANA

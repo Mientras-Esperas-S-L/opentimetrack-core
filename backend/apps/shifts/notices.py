@@ -12,9 +12,14 @@ La forma de usarlo es una foto antes y otra después de escribir:
     with avisando(company=..., actor=..., pairs=[(persona, día), ...]):
         ... lo que cambie el cuadrante ...
 
-Lo que difiere entre las dos fotos es lo que se avisa. Así da igual por qué
-camino cambió el turno ---pintar, asignar, borrar, cubrir a otro--- y ningún
-camino nuevo se queda sin aviso por olvidar llamar a algo.
+Lo que difiere entre las dos fotos se apunta. Así da igual por qué camino cambió
+el turno ---pintar, asignar, borrar, cubrir a otro--- y ningún camino nuevo se
+queda sin aviso por olvidar llamar a algo.
+
+Apuntar no es avisar. El aviso sale cuando el cuadrante de esa persona lleva
+unos minutos quieto (`publicar`, desde `send_shift_notices`), con lo que de
+verdad cambió: pintar y deshacer no avisa de nada. O antes, si la persona abre
+sus avisos.
 
 Solo se avisa de los días de hoy en adelante. Rellenar el cuadrante de la semana
 pasada es poner en orden lo que ya pasó, no un cambio que alguien tenga que
@@ -26,14 +31,16 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from contextlib import contextmanager
+from datetime import date, timedelta
 
+from django.conf import settings
 from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import formats, timezone, translation
 from django.utils.translation import gettext as _
 
 from apps.common.clock import local_today
-from apps.shifts.models import Shift, ShiftNotice
+from apps.shifts.models import PendingShiftChange, Shift, ShiftNotice
 
 log = logging.getLogger(__name__)
 
@@ -58,57 +65,134 @@ def foto(pairs) -> dict:
 
 @contextmanager
 def avisando(*, company, actor, pairs):
-    """Avisa de lo que cambie dentro del bloque. Ver el módulo."""
+    """Apunta lo que cambie dentro del bloque para avisar de ello. Ver el módulo.
+
+    `resultado["personas"]` dice a cuántas personas se avisará.
+    """
     pares = list(pairs)
     antes = foto(pares)
-    resultado = {"avisos": []}
+    resultado = {"personas": 0}
     yield resultado
-    resultado["avisos"] = avisar(company=company, actor=actor, antes=antes, despues=foto(pares))
+    resultado["personas"] = anotar(company=company, actor=actor, antes=antes, despues=foto(pares))
 
 
-def avisar(*, company, actor, antes: dict, despues: dict) -> list[ShiftNotice]:
-    """Un aviso por persona con todo lo que le cambió, y su envío al confirmar."""
-    from apps.tenants.rules import WorkingTimeRules
+def anotar(*, company, actor, antes: dict, despues: dict) -> int:
+    """Apunta cada día que cambió, guardando lo que había antes del primer cambio.
+
+    No avisa todavía: eso lo hace `publicar` cuando el cuadrante de esa persona
+    lleva un rato quieto. Devuelve a cuántas personas les queda algo pendiente
+    por esta operación.
+    """
     from apps.users.models import User
 
     por_persona = defaultdict(list)
     for persona, dia in antes.keys() | despues.keys():
         era, es = antes.get((persona, dia)), despues.get((persona, dia))
         if era != es:
-            por_persona[persona].append((dia, era, es))
+            por_persona[persona].append((dia, era))
     if not por_persona:
-        return []
+        return 0
 
-    minimo = int(WorkingTimeRules.for_company(company).roster_notice_days or 0)
-    avisos = []
+    personas = 0
     # Quien está de baja no tiene a quién avisar: sus turnos se limpian al darle
     # de baja, y eso no es un cambio que tenga que organizar.
     for persona in User.objects.filter(tenant=company, pk__in=list(por_persona), is_active=True):
         hoy = local_today(persona)
-        filas = sorted(f for f in por_persona[str(persona.pk)] if f[0] >= hoy)
-        if not filas:
-            continue
-        primero = filas[0][0]
-        dias = (primero - hoy).days
-        avisos.append(
-            ShiftNotice.objects.create(
+        filas = [f for f in por_persona[str(persona.pk)] if f[0] >= hoy]
+        for dia, era in filas:
+            pendiente, nuevo = PendingShiftChange.objects.get_or_create(
                 tenant=company,
                 employee=persona,
-                changed_by=actor,
-                changes=[
-                    {"day": dia.isoformat(), "before": era, "after": es} for dia, era, es in filas
-                ],
+                day=dia,
+                defaults={"original": era, "changed_by": actor},
+            )
+            if not nuevo:
+                # Lo que había antes del **primer** cambio se queda; lo que se
+                # mueve es quién tocó el último y cuándo.
+                pendiente.changed_by = actor
+                pendiente.save(update_fields=["changed_by"])
+        personas += bool(filas)
+    return personas
+
+
+def publicar(company, *, employee=None, espera: timedelta | None = None) -> list[ShiftNotice]:
+    """Convierte lo pendiente en avisos, uno por persona, con lo que de verdad cambió.
+
+    Solo de quien lleva `espera` sin cambios ---por defecto
+    `SHIFT_NOTICE_WAIT_MINUTES`---, para no avisar a mitad de una corrección.
+    Con `espera=timedelta(0)` sale ya: es lo que pasa cuando la propia persona
+    abre sus avisos, que tiene que ver lo último y no esperar al correo.
+
+    Se compara lo que había antes del primer cambio con lo que hay ahora. Un día
+    pintado y deshecho no cambió, y no se avisa.
+    """
+    from apps.tenants.rules import WorkingTimeRules
+
+    if espera is None:
+        espera = timedelta(minutes=settings.SHIFT_NOTICE_WAIT_MINUTES)
+    limite = timezone.now() - espera
+
+    pendientes = PendingShiftChange.objects.filter(tenant=company).select_related(
+        "employee", "changed_by"
+    )
+    if employee is not None:
+        pendientes = pendientes.filter(employee=employee)
+
+    por_persona = defaultdict(list)
+    for fila in pendientes:
+        por_persona[fila.employee_id].append(fila)
+
+    minimo = None
+    avisos = []
+    for filas in por_persona.values():
+        if max(f.updated_at for f in filas) > limite:
+            continue
+        with transaction.atomic():
+            # Bloqueadas y por identificador: un cambio que entre mientras tanto
+            # crea su propia fila, que se queda para la próxima vuelta.
+            ids = [f.pk for f in filas]
+            filas = list(
+                PendingShiftChange.objects.select_for_update(of=("self",))
+                .filter(pk__in=ids)
+                .select_related("employee", "changed_by")
+                .order_by("day")
+            )
+            if not filas:
+                continue
+            persona = filas[0].employee
+            ahora = foto((persona.pk, f.day) for f in filas)
+            hoy = local_today(persona)
+            cambios = [
+                {
+                    "day": f.day.isoformat(),
+                    "before": f.original,
+                    "after": ahora[(str(persona.pk), f.day)],
+                }
+                for f in filas
+                if f.day >= hoy and f.original != ahora[(str(persona.pk), f.day)]
+            ]
+            PendingShiftChange.objects.filter(pk__in=[f.pk for f in filas]).delete()
+            if not cambios:
+                continue
+
+            if minimo is None:
+                minimo = int(WorkingTimeRules.for_company(company).roster_notice_days or 0)
+            ultima = max(filas, key=lambda f: f.updated_at)
+            primero = date.fromisoformat(cambios[0]["day"])
+            dias = (primero - hoy).days
+            aviso = ShiftNotice.objects.create(
+                tenant=company,
+                employee=persona,
+                changed_by=ultima.changed_by,
+                changes=cambios,
                 first_day=primero,
                 notice_days=dias,
                 short_notice=minimo > 0 and dias < minimo,
             )
-        )
-
-    ids = [a.pk for a in avisos]
-    if ids:
-        # Después de confirmar: si la operación se deshace, no se avisa de un
-        # cambio que no ocurrió.
-        transaction.on_commit(lambda: enviar(ids))
+            avisos.append(aviso)
+            # Después de confirmar: si algo se deshace, no se avisa de lo que no
+            # quedó.
+            transaction.on_commit(lambda pk=aviso.pk: enviar([pk]))
     return avisos
 
 

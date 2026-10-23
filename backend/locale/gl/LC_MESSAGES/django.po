@@ -5681,3 +5681,12 @@ msgstr "Cambiouno: %(changed_by)s."
 
 msgid "Open the app and press «Understood» so that it is recorded that you have seen it.\n\nIf something does not add up, tell whoever manages your working time."
 msgstr "Abre a aplicación e preme «Entendido» para que conste que o viches.\n\nSe algo non cadra, dillo a quen xestione a túa xornada."
+
+msgid "pending shift change"
+msgstr "cambio de quenda pendente de avisar"
+
+msgid "pending shift changes"
+msgstr "cambios de quenda pendentes de avisar"
+
+msgid "what it was"
+msgstr "o que había"

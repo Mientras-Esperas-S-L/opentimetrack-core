@@ -7,6 +7,7 @@ Ver `apps.shifts.notices` para por qué existen.
 from __future__ import annotations
 
 import io
+from datetime import timedelta
 
 from django.http import HttpResponse
 from django.utils import timezone
@@ -23,7 +24,7 @@ from apps.common.permissions import IsAuthenticatedInTenant, IsManagerOrAdmin
 from apps.common.scope import visible_people
 from apps.punches.views import acting_application_name
 from apps.shifts.models import ShiftNotice
-from apps.shifts.notices import entregados, leido, lineas
+from apps.shifts.notices import entregados, leido, lineas, publicar
 
 
 class ShiftNoticeSerializer(serializers.ModelSerializer):
@@ -113,6 +114,9 @@ class ShiftNoticeViewSet(viewsets.ReadOnlyModelViewSet):
         ]
     )
     def list(self, request, *args, **kwargs):
+        # Lo suyo que aún esperaba a que el cuadrante se quedara quieto sale ya:
+        # quien abre sus avisos tiene que ver lo último, no esperar al correo.
+        publicar(request.user.tenant, employee=request.user, espera=timedelta(0))
         qs = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(qs)
         filas = self._entregar(list(page if page is not None else qs))

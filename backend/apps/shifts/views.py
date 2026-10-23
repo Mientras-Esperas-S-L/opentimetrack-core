@@ -397,7 +397,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
         return Response(
             {
                 "created": created,
-                "notified": len(aviso["avisos"]),
+                "notified": aviso["personas"],
                 "findings": [f.as_dict() for f in findings],
             },
             status=201,
@@ -430,7 +430,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
         return Response(
             {
                 **result,
-                "notified": len(aviso["avisos"]),
+                "notified": aviso["personas"],
                 "findings": [f.as_dict() for f in findings],
             }
         )
@@ -472,7 +472,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
                 "to": data["date_to"].isoformat(),
             },
         )
-        return Response({"removed": removed, "notified": len(aviso["avisos"])})
+        return Response({"removed": removed, "notified": aviso["personas"]})
 
     @extend_schema(
         parameters=[

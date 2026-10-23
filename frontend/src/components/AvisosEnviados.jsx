@@ -41,7 +41,7 @@ export default function AvisosEnviados() {
     <Panel
       title={t('Avisos de cambios de turno')}
       hint={t(
-        'A quien le cambia el turno se le avisa por correo, en el navegador y en la aplicación. Aquí consta cuándo le llegó y cuándo dijo que lo había visto.',
+        'A quien le cambia el turno se le avisa por correo, en el navegador y en la aplicación, unos minutos después del último cambio y solo con lo que de verdad cambió. Aquí consta cuándo le llegó y cuándo dijo que lo había visto.',
       )}
       action={
         <Button
