@@ -252,7 +252,10 @@ function Holidays({ workplaces }) {
           ))}
         </TextField>
         <Typography variant="body2" color="text.secondary">
-          {t('{{cuantos}} de los 14 del art. 37.2', { cuantos: holidays.length })}
+          {/* Suma los de todos los centros: puede pasar de 14. */}
+          {t('{{cuantos}} festivos entre todos los centros. El art. 37.2 da 14 a cada persona.', {
+            cuantos: holidays.length,
+          })}
         </Typography>
       </Stack>
 

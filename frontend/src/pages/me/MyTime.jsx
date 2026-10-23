@@ -35,6 +35,7 @@ import {
 import { save } from '../../services/download.js'
 import { alFallar } from '../../services/stale.js'
 import {
+  ConfirmDialog,
   Empty,
   ErrorNote,
   Loading,
@@ -46,7 +47,7 @@ import {
 import {
   capitalised,
   dateOf,
-  hhmm,
+  durationOf,
   monthBounds,
   monthName,
   plural,
@@ -438,6 +439,7 @@ export default function MyTime() {
 
   const [asking, setAsking] = useState(false)
   const [disputing, setDisputing] = useState(null)
+  const [aceptando, setAceptando] = useState(null)
   // The screen showed the fifty most recent events --- about twenty-five days ---
   // with no way to look further back. This is somebody's own record, which the
   // law says they may consult and which is kept for four years, so "as far back
@@ -610,10 +612,12 @@ export default function MyTime() {
           <Stack direction="row" sx={{ gap: 3, flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <Box>
               <Typography variant="h5" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                {hhmm(resumen.total_seconds)}
+                {durationOf(resumen.total_seconds / 60)}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {t('trabajadas en {{cuantos}} {{unidad}}', {
+                {/* `days` cuenta los días con horas **o con ausencia**: unas
+                    vacaciones salían como días trabajados. */}
+                {t('trabajadas · {{cuantos}} {{unidad}} con fichajes o ausencias', {
                   cuantos: resumen.days,
                   unidad: plural(resumen.days, t('día'), t('días')),
                 })}
@@ -622,10 +626,10 @@ export default function MyTime() {
             {resumen.overtime_seconds > 0 && (
               <Box>
                 <Typography variant="h6" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {hhmm(resumen.overtime_seconds)}
+                  {durationOf(resumen.overtime_seconds / 60)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {t('de más sobre lo previsto')}
+                  {t('horas extra registradas')}
                 </Typography>
               </Box>
             )}
@@ -657,7 +661,19 @@ export default function MyTime() {
                 correction={correction}
                 zone={zone}
                 busy={answer.isPending}
-                onAccept={() => answer.mutate({ action: acceptCorrection, id: correction.id })}
+                // Con confirmación: aplica el cambio en el acto y deja escrito que
+                // fue con tu conformidad. «No estoy de acuerdo» ya pedía un paso más.
+                onAccept={() =>
+                  setAceptando({
+                    title: t('Aceptar el cambio'),
+                    body: correction.kind_display,
+                    detail: t(
+                      'Se aplica a tu registro ahora y consta que fue con tu conformidad. No se puede deshacer.',
+                    ),
+                    verb: t('Aceptar el cambio'),
+                    run: () => answer.mutate({ action: acceptCorrection, id: correction.id }),
+                  })
+                }
                 onDispute={() => {
                   answer.reset()
                   setDisputing(correction)
@@ -705,7 +721,7 @@ export default function MyTime() {
               color="text.secondary"
               sx={{ fontVariantNumeric: 'tabular-nums', ml: 1 }}
             >
-              {t('Total {{horas}}', { horas: hhmm(horasDelMes.total_seconds) })}
+              {t('Total {{horas}}', { horas: durationOf(horasDelMes.total_seconds / 60) })}
             </Typography>
           )}
         </Stack>
@@ -748,7 +764,9 @@ export default function MyTime() {
                     component="span"
                     sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 650, fontSize: '1.1rem' }}
                   >
-                    {hhmm(seconds)}
+                    {/* En palabras: «07:30» al lado de «08:00 – 15:30» se leía
+                        como hora de entrada. */}
+                    {durationOf(seconds / 60)}
                     {summary.openSince && (
                       <Chip
                         size="small"
@@ -823,6 +841,12 @@ export default function MyTime() {
       />
 
       <MyAdaptations />
+
+      <ConfirmDialog
+        request={aceptando}
+        busy={answer.isPending}
+        onClose={() => setAceptando(null)}
+      />
 
       <DisputeDialog
         key={disputing?.id ?? 'cerrado'}

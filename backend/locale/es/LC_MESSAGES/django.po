@@ -1823,10 +1823,6 @@ msgstr "Todavía no has fichado la salida"
 msgid "Your shift has started and you have not clocked in."
 msgstr "Ha empezado tu turno y no has fichado la entrada."
 
-#: apps/punches/reminders.py:189
-msgid "Your day is still open. Clock out when you finish."
-msgstr "Tienes la jornada abierta. Ficha la salida cuando acabes."
-
 #: apps/punches/serializers.py:95
 #, python-format
 msgid ""
@@ -1835,7 +1831,7 @@ msgstr "La evidencia ocupa %(size)s caracteres y el límite son %(max)s."
 
 #: apps/punches/services.py:448
 msgid "This person is deactivated and cannot clock in or out."
-msgstr "Esta persona está dada de baja y no puede fichar."
+msgstr "Esta cuenta está desactivada y no puede fichar."
 
 #: apps/punches/services.py:453
 msgid ""
@@ -1863,14 +1859,6 @@ msgstr ""
 "complementarias, salvo las de fuerza mayor para prevenir o reparar daños "
 "urgentes."
 
-#: apps/punches/services.py:595
-msgid "The device says this punch happened later than it arrived."
-msgstr "El dispositivo dice que este fichaje ocurrió después de llegar."
-
-#: apps/punches/services.py:602
-msgid "This company records every punch from the moment it reaches the system."
-msgstr "Esta empresa registra todos los fichajes desde que llegan al sistema."
-
 #: apps/punches/services.py:608
 #, python-format
 msgid ""
@@ -1881,10 +1869,6 @@ msgstr ""
 "Este fichaje se hizo hace más de %(hours)s horas, así que no se registra "
 "directamente. Pídelo por corrección, donde se aprueba y queda constancia del "
 "cambio."
-
-#: apps/punches/services.py:652
-msgid "You cannot clock in: you have approved leave for today."
-msgstr "No puedes fichar: tienes una ausencia aprobada para hoy."
 
 #: apps/punches/views.py:87
 msgid ""
@@ -2035,10 +2019,6 @@ msgid "Exit"
 msgstr "Salida"
 
 #: apps/reports/pdf.py:167 apps/reports/services.py:627
-msgid "Hours"
-msgstr "Horas"
-
-#: apps/reports/pdf.py:167 apps/reports/services.py:627
 msgid "Notes"
 msgstr "Observaciones"
 
@@ -2050,21 +2030,9 @@ msgstr "Sin registros en este periodo"
 msgid "Total for the period"
 msgstr "Total del periodo"
 
-#: apps/reports/pdf.py:222 apps/reports/services.py:653
-msgid "Breaks, not counted as working time"
-msgstr "Pausas, que no computan como jornada"
-
 #: apps/reports/pdf.py:227 apps/reports/services.py:658
 msgid "Waiting time, not counted as working time"
 msgstr "Tiempo de espera, que no computa como jornada"
-
-#: apps/reports/pdf.py:254
-msgid ""
-"Times are recorded by the server, never by the device that requested them, "
-"and are shown in the time zone stated above."
-msgstr ""
-"Las horas las registra el servidor, nunca el dispositivo que las solicitó, y "
-"se muestran en la zona horaria indicada arriba."
 
 #: apps/reports/pdf.py:260 apps/reports/services.py:662
 msgid "Generated"
@@ -2126,14 +2094,6 @@ msgstr "registrado sin cobertura y recibido después"
 #: apps/reports/services.py:548
 msgid "changed without the person's agreement (art. 4.b)"
 msgstr "modificado sin la conformidad de la persona (art. 4.b)"
-
-#: apps/reports/services.py:621
-msgid "Days with activity"
-msgstr "Días con actividad"
-
-#: apps/reports/services.py:647
-msgid "Total"
-msgstr "Total"
 
 #: apps/reports/views.py:41
 msgid "Dates must be written as YYYY-MM-DD."
@@ -4918,42 +4878,6 @@ msgstr ""
 "Si no has sido tú, ignora este mensaje: no cambia nada hasta que se use el "
 "enlace."
 
-#: templates/emails/punch_reminder.txt:1
-#, python-format
-msgid ""
-"Hello %(first_name)s,\n"
-"\n"
-"You have a shift at %(company)s today and have not clocked in yet.\n"
-"\n"
-"Clock in when you can, so your working day is recorded at the real time."
-msgstr ""
-"Hola %(first_name)s:\n"
-"\n"
-"Hoy tienes turno en %(company)s y todavía no has fichado la entrada.\n"
-"\n"
-"Ficha cuando puedas, para que tu jornada quede registrada a la hora real."
-
-#: templates/emails/punch_reminder.txt:5
-#, python-format
-msgid ""
-"Hello %(first_name)s,\n"
-"\n"
-"Your working day of %(day)s at %(company)s is still open: you clocked in and "
-"not out.\n"
-"\n"
-"Clock out when you finish. The server sets the time from your punch, so it "
-"is\n"
-"recorded exactly as it happens, overtime included if you stay longer today."
-msgstr ""
-"Hola %(first_name)s:\n"
-"\n"
-"Tu jornada del %(day)s en %(company)s sigue abierta: fichaste la entrada y "
-"no la salida.\n"
-"\n"
-"Ficha la salida cuando termines. El servidor pone la hora con tu fichaje, "
-"así que queda registrada tal cual, incluidas las horas de más si hoy te "
-"quedas más tiempo."
-
 #: templates/emails/punch_reminder.txt:12
 msgid ""
 "This is only a reminder: nothing has been recorded for you. You can turn "
@@ -4999,7 +4923,8 @@ msgstr ""
 "informa\n"
 "a la representación legal de las personas trabajadoras.\n"
 "\n"
-"Tienes %(days)s días para responder. Pasado ese plazo la empresa puede "
+"Tienes %(days)s días naturales, desde hoy, para responder. Pasado ese plazo "
+"la empresa puede "
 "aplicar\n"
 "el cambio, y quedará anotado que se hizo sin tu conformidad."
 
@@ -5226,20 +5151,8 @@ msgstr "Días de preaviso"
 msgid "Under the minimum notice"
 msgstr "Por debajo del preaviso mínimo"
 
-msgid "Email accepted"
-msgstr "Correo aceptado"
-
-msgid "Browser notification accepted"
-msgstr "Notificación del navegador aceptada"
-
 msgid "Reached their app"
 msgstr "Llegó a su aplicación"
-
-msgid "Through"
-msgstr "Por dónde"
-
-msgid "Read"
-msgstr "Leído"
 
 msgid "yes"
 msgstr "sí"
@@ -5288,3 +5201,57 @@ msgstr "cambios de turno pendientes de avisar"
 
 msgid "what it was"
 msgstr "lo que había"
+
+msgid "Your day is still open. Clock out when you finish, or ask for a correction if you already left."
+msgstr "Tu jornada sigue abierta. Ficha la salida cuando termines, o pide una corrección si ya te fuiste."
+
+msgid "This punch was not saved: your device's clock is ahead. Set it right and clock again."
+msgstr "Este fichaje no se ha guardado: el reloj de tu dispositivo va adelantado. Corrígelo y vuelve a fichar."
+
+msgid "This punch was not saved: this company does not accept the device's time for punches made without coverage. Ask for a correction with the real time."
+msgstr "Este fichaje no se ha guardado: esta empresa no acepta la hora del dispositivo en los fichajes hechos sin cobertura. Pide una corrección con la hora real."
+
+msgid "You cannot clock in: you have approved leave today. If you are going to work, ask whoever manages your working time to cancel it."
+msgstr "No puedes fichar la entrada: hoy tienes una ausencia aprobada. Si vas a trabajar, pide a quien gestione tu jornada que la anule."
+
+msgid "Worked (h:min)"
+msgstr "Trabajado (h:min)"
+
+msgid "Times are set by the server when it receives each punch. A punch made without coverage keeps the time its device declared, and the Notes column says so. All times are in the time zone stated above."
+msgstr "Las horas las pone el servidor al recibir cada fichaje. Un fichaje hecho sin cobertura conserva la hora que declaró su dispositivo, y la columna Observaciones lo indica. Todas las horas están en la zona horaria indicada arriba."
+
+msgid "Breaks, included in the total as working time"
+msgstr "Pausas, incluidas en el total como tiempo de trabajo"
+
+msgid "Breaks, taken off the total except on days they counted as working time"
+msgstr "Pausas, descontadas del total salvo los días en que contaban como trabajo"
+
+msgid "Breaks, already taken off the total"
+msgstr "Pausas, ya descontadas del total"
+
+msgid "Days with work or leave"
+msgstr "Días con trabajo o ausencia"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Email sent"
+msgstr "Correo enviado"
+
+msgid "Browser notification sent"
+msgstr "Aviso del navegador enviado"
+
+msgid "Reached through"
+msgstr "Llegó por"
+
+msgid "Seen (pressed Understood)"
+msgstr "Visto (pulsó Entendido)"
+
+msgid "Seen in"
+msgstr "Visto en"
+
+msgid "Hello %(first_name)s,\n\nYou have a shift at %(company)s today and have not clocked in yet.\n\nClock in as soon as you arrive. If you started earlier, ask for a correction with the\nreal time: clocking in now records the time it is now."
+msgstr "Hola, %(first_name)s:\n\nHoy tienes turno en %(company)s y todavía no has fichado la entrada.\n\nFicha en cuanto llegues. Si empezaste antes, pide una corrección con la hora\nreal: fichar ahora registra la hora de ahora."
+
+msgid "Hello %(first_name)s,\n\nYour working day of %(day)s at %(company)s is still open: you clocked in and not out.\n\nClock out when you finish. If you have already left, do not clock out now: it would\nrecord the time it is now. Ask for a correction with the real time you left."
+msgstr "Hola, %(first_name)s:\n\nTu jornada del %(day)s en %(company)s sigue abierta: fichaste la entrada y no la salida.\n\nFicha la salida cuando termines. Si ya te fuiste, no fiches ahora: quedaría\nla hora de ahora. Pide una corrección con la hora real a la que saliste."

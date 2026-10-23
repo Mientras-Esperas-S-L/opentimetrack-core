@@ -337,7 +337,22 @@ function Balance({ balance }) {
   const pct = (value) => (entitled > 0 ? (value / entitled) * 100 : 0)
   // Which unit the three figures are in. Without it "quedan 9" is ambiguous by
   // about a third, which is exactly how far the balance used to be wrong.
-  const unit = balance.working_days ? t('laborables') : t('naturales')
+  //
+  // Y diciendo que **quedan**. Ponía «12 días laborables de 22» y quien había
+  // pedido 5 + 5 lo leyó como 12 gastados: la cifra grande es lo que le falta
+  // por pedir, y sin el verbo cualquiera de las tres cifras cabe en esa frase.
+  // Frases enteras y no trozos, para que «queda/quedan» concuerde en cada idioma.
+  const queQuedan = balance.working_days
+    ? plural(
+        remaining,
+        t('día laborable que te queda, de {{total}}', { total: entitled }),
+        t('días laborables que te quedan, de {{total}}', { total: entitled }),
+      )
+    : plural(
+        remaining,
+        t('día natural que te queda, de {{total}}', { total: entitled }),
+        t('días naturales que te quedan, de {{total}}', { total: entitled }),
+      )
 
   return (
     <Panel
@@ -359,11 +374,7 @@ function Balance({ balance }) {
           {remaining}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {t('{{unidad}} {{computo}} de {{total}}', {
-            unidad: plural(remaining, t('día'), t('días')),
-            computo: unit,
-            total: entitled,
-          })}
+          {queQuedan}
         </Typography>
       </Stack>
 
@@ -415,7 +426,9 @@ function Balance({ balance }) {
       <Stack direction="row" sx={{ gap: 3, flexWrap: 'wrap' }}>
         <Typography variant="caption" color="text.secondary">
           <Trans
-            i18nKey="<destacado>{{cuantos}}</destacado> disfrutados"
+            // «Disfrutados» contaba también lo aprobado para agosto: quien lo
+            // leía en marzo veía diez días descansados sin haber descansado uno.
+            i18nKey="<destacado>{{cuantos}}</destacado> aprobados"
             values={{ cuantos: taken }}
             components={{ destacado: <strong /> }}
           />

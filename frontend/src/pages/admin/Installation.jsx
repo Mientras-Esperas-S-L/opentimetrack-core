@@ -221,7 +221,7 @@ export default function Installation() {
                   {empresa.status?.active_people ?? empresa.people}
                   {empresa.status && empresa.status.active_people !== empresa.people && (
                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                      {t('de {{total}}', { total: empresa.people })}
+                      {t('de alta, de {{total}} en total', { total: empresa.people })}
                     </Typography>
                   )}
                 </TableCell>

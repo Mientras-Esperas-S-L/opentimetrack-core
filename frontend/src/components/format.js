@@ -183,5 +183,7 @@ export const leaveLength = (absence) => {
       porcentaje: share % 1 === 0 ? share : share.toFixed(1).replace('.', ','),
     })
   }
-  return `${absence.days} ${plural(absence.days, t('día'), t('días'))}`
+  // Naturales, y dicho: `days` es de la primera fecha a la última. Quien
+  // aprobaba «1–14 ago · 14 días» creía gastar 14 de 22, y al saldo le cuestan 10.
+  return `${absence.days} ${plural(absence.days, t('día natural'), t('días naturales'))}`
 }

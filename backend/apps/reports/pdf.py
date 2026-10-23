@@ -23,7 +23,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from apps.reports.services import ReportData, _format_hours, day_notes
+from apps.reports.services import ReportData, _format_hours, breaks_label, day_notes
 
 INK = colors.HexColor("#1a1a1a")
 MUTED = colors.HexColor("#5f6b66")
@@ -164,7 +164,7 @@ def render_pdf(data: ReportData, *, para_nomina: bool = False) -> bytes:
     )
     story += [header, Spacer(1, 6 * mm)]
 
-    rows = [[_("Date"), _("Entry"), _("Exit"), _("Hours"), _("Notes")]]
+    rows = [[_("Date"), _("Entry"), _("Exit"), _("Worked (h:min)"), _("Notes")]]
     for row in data.rows:
         if not row.entries and not row.absence:
             continue
@@ -218,9 +218,7 @@ def render_pdf(data: ReportData, *, para_nomina: bool = False) -> bytes:
     # de quien nunca ficha pausas es ruido en un documento que se lee entero.
     lineas = [[_("Total for the period"), _format_hours(data.total_seconds)]]
     if data.total_break_seconds:
-        lineas.append(
-            [_("Breaks, not counted as working time"), _format_hours(data.total_break_seconds)]
-        )
+        lineas.append([breaks_label(data), _format_hours(data.total_break_seconds)])
     if data.total_standby_seconds:
         lineas.append(
             [
@@ -251,8 +249,9 @@ def render_pdf(data: ReportData, *, para_nomina: bool = False) -> bytes:
     story += [
         Paragraph(
             _(
-                "Times are recorded by the server, never by the device that requested them, "
-                "and are shown in the time zone stated above."
+                "Times are set by the server when it receives each punch. A punch made "
+                "without coverage keeps the time its device declared, and the Notes column "
+                "says so. All times are in the time zone stated above."
             ),
             small,
         ),

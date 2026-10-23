@@ -17,7 +17,7 @@ import PauseIcon from '@mui/icons-material/PauseCircle'
 import AvisosDeTurno from '../components/AvisosDeTurno.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import { clock, getMyShiftToday, getToday } from '../services/api.js'
-import { durationOf, hhmm, hhmmss, timeOf } from '../components/format.js'
+import { durationOf, hhmmss, timeOf } from '../components/format.js'
 import { serverAt, serverClockReady } from '../services/serverClock.js'
 import { alCatalogo, localeDeFechas } from '../i18n/index.js'
 
@@ -184,6 +184,9 @@ export default function Clock() {
   const { data: expected } = useQuery({
     queryKey: ['my-shift-today'],
     queryFn: getMyShiftToday,
+    // «Te faltan 3 h» se quedaba así una hora entera mientras el contador de al
+    // lado avanzaba: solo se pedía al fichar o al volver a la pestaña.
+    refetchInterval: 60 * 1000,
   })
 
   //: El día en la zona de la persona, que es la que la pantalla enseña. Sirve
@@ -448,7 +451,9 @@ export default function Clock() {
                   )}
                 </Stack>
                 <Typography variant="body2" color="text.secondary">
-                  {hhmm(segment.seconds)}
+                  {/* Duración en palabras: «07:30» al lado de «07:00 → 14:30» se
+                      leía como otra hora del reloj. */}
+                  {durationOf(segment.seconds / 60)}
                 </Typography>
               </Stack>
             ))}
@@ -457,7 +462,7 @@ export default function Clock() {
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
               {t(
                 '{{cuanto}} de pausa. Si tu convenio dice que el descanso es tiempo de trabajo, ya está contado en las horas de arriba.',
-                { cuanto: hhmm(today.break_seconds) },
+                { cuanto: durationOf(today.break_seconds / 60) },
               )}
             </Typography>
           )}

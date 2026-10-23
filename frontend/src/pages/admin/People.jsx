@@ -1153,7 +1153,7 @@ export default function People() {
                     .map((p) => `${p.first_name} ${p.last_name}`.trim() || p.email)
                     .join(', '),
                   detail: t(
-                    'Dejan de poder fichar. No se borra nada: sus registros se conservan los años que diga la empresa, y volver a darles de alta es inmediato.',
+                    'Dejan de poder fichar. No se borra nada: sus registros se conservan los años que diga la empresa. Su fin de contrato pasa a ser hoy, y no se recupera al volver a darles de alta.',
                   ),
                   verb: t('Dar de baja'),
                   run: () => enLote(t('Dando de baja'), { is_active: false }),
@@ -1283,7 +1283,7 @@ export default function People() {
                             title: t('Dar de baja'),
                             body: `${person.first_name} ${person.last_name}`.trim() || person.email,
                             detail: t(
-                              'Deja de poder fichar y de entrar. Sus registros se conservan y puede volver a darse de alta cuando haga falta.',
+                              'Deja de poder fichar y de entrar. Sus registros se conservan y puede volver a darse de alta cuando haga falta. Su fin de contrato pasa a ser hoy, y no se recupera al volver a darle de alta.',
                             ),
                             verb: t('Dar de baja'),
                             run: () => deactivate.mutate(person.id),

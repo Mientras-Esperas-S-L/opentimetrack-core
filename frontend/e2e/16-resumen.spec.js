@@ -41,7 +41,7 @@ async function loQueEspera(page) {
 test.describe('Resumen', () => {
   test.use({ storageState: 'e2e/.sesiones/admin.json' })
 
-  test('la cifra de «esperando decisión» cuenta todas las colas', async ({ page }) => {
+  test('la cifra de pendientes cuenta todas las colas', async ({ page }) => {
     const ruido = vigilarConsola(page)
     await irA(page, '/panel', 'Resumen')
 
@@ -57,7 +57,7 @@ test.describe('Resumen', () => {
     // tarjeta pinta el número y el rótulo en dos elementos, así que la frase
     // completa no es ningún nodo.
     await expect(page.locator('body')).toContainText(`${total}`)
-    await expect(page.locator('body')).toContainText('esperando decisión')
+    await expect(page.locator('body')).toContainText('pendientes en «Por decidir»')
     await expect(page.getByRole('link', { name: new RegExp(`^${total}\\b`) })).toBeVisible()
 
     expect(ruido()).toEqual([])

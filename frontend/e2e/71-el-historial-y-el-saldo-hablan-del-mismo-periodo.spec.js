@@ -5,7 +5,7 @@
  *  se contradecía a dos centímetros:
  *
  *      Vacaciones · Periodo del 01 sept 2025 al 31 ago 2026
- *      24 días laborables de 24 · 0 disfrutados
+ *      24 días laborables que te quedan, de 24 · 0 disfrutados
  *      ...
  *      Historial · Año 2026
  *      Vacaciones 08 oct → 15 oct · 8 días · Aprobada

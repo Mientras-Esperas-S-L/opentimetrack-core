@@ -165,12 +165,14 @@ class ShiftNoticeViewSet(viewsets.ReadOnlyModelViewSet):
                 _("Changes"),
                 _("Days of notice"),
                 _("Under the minimum notice"),
-                _("Email accepted"),
-                _("Browser notification accepted"),
+                # Lo que aceptó cada canal es que se ENVIÓ, no que la persona
+                # aceptara nada: «aceptado» se leía como su conformidad.
+                _("Email sent"),
+                _("Browser notification sent"),
                 _("Reached their app"),
-                _("Through"),
-                _("Read"),
-                _("Through"),
+                _("Reached through"),
+                _("Seen (pressed Understood)"),
+                _("Seen in"),
             ]
         )
         for aviso in self.filter_queryset(self.get_queryset()).iterator(chunk_size=500):

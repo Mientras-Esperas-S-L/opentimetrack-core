@@ -636,12 +636,11 @@ export default function Settings() {
             <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
               {form.leave_days_are_working_days
                 ? t(
-                    'Solo se descuentan los días que la persona tenía que trabajar, según su cuadrante. Una quincena cuesta diez.',
+                    'Solo se descuentan los días que la persona tenía que trabajar, según su cuadrante: ni fines de semana ni los festivos de su centro. Una quincena cuesta diez.',
                   )
                 : t(
-                    'Se descuentan todos los días entre las dos fechas, fines de semana incluidos. La cifra de arriba debe ser la de días naturales del convenio.',
-                  )}{' '}
-              {t('Los festivos todavía no se descuentan: el sistema aún no los conoce.')}
+                    'Se descuentan todos los días entre las dos fechas, fines de semana y festivos incluidos. La cifra de arriba debe ser la de días naturales del convenio.',
+                  )}
             </Typography>
             <TextField
               select

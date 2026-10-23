@@ -16,7 +16,7 @@ import {
 } from '../services/api.js'
 import { alCatalogo } from '../i18n/index.js'
 import { dateOf } from './format.js'
-import { Empty, ErrorNote, Loading } from './common.jsx'
+import { ConfirmDialog, Empty, ErrorNote, Loading } from './common.jsx'
 
 /** Cómo se ve cada estado, y con qué color. */
 const COMO_QUEDÓ = {
@@ -43,6 +43,7 @@ export default function MyAdaptations() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [error, setError] = useState(null)
+  const [confirmando, setConfirmando] = useState(null)
   const [pidiendo, setPidiendo] = useState(false)
   const [texto, setTexto] = useState('')
 
@@ -124,7 +125,17 @@ export default function MyAdaptations() {
                       size="small"
                       color="inherit"
                       disabled={retirar.isPending}
-                      onClick={() => retirar.mutate(suya.id)}
+                      // Sin vuelta atrás: retirada, hay que pedirla de nuevo y el
+                      // plazo de quince días del art. 34.8 empieza otra vez.
+                      onClick={() =>
+                        setConfirmando({
+                          title: t('Retirar la petición'),
+                          body: suya.asked_for,
+                          detail: t('No se puede deshacer: tendrías que pedirla de nuevo.'),
+                          verb: t('Retirar'),
+                          run: () => retirar.mutate(suya.id),
+                        })
+                      }
                     >
                       {t('Retirar')}
                     </Button>
@@ -178,6 +189,12 @@ export default function MyAdaptations() {
           {t('Pedir una adaptación')}
         </Button>
       )}
+
+      <ConfirmDialog
+        request={confirmando}
+        busy={retirar.isPending}
+        onClose={() => setConfirmando(null)}
+      />
     </Box>
   )
 }

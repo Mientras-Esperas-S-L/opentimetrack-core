@@ -52,11 +52,11 @@ test.describe('Los días por antigüedad', () => {
     // Lo que sí se comprueba aquí, y es lo que ve quien la abre: que los números
     // de la pantalla son los del saldo servido, y no otros.
     const conteo = await page
-      .getByText(/días laborables de/i)
+      .getByText(/(días? laborables? que te quedan?|días? naturales? que te quedan?), de/i)
       .first()
       .innerText()
-    // El total al que se compara: «días laborables de 24». Lo que queda va en
-    // el número grande, que es otro elemento.
+    // El total al que se compara: «días laborables que te quedan, de 24». Lo que
+    // queda va en el número grande, que es otro elemento.
     expect(conteo).toContain(String(saldo.entitled))
   })
 })

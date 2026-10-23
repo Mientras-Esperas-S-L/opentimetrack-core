@@ -128,7 +128,7 @@ async function abrirCola(page, nombre) {
 test('las cinco colas ofrecen seleccionar, salvo donde no debe', async ({ page }) => {
   const ruido = vigilarConsola(page)
 
-  for (const cola of ['Ausencias', 'Fichajes', 'Sin acuerdo', 'Horas extra']) {
+  for (const cola of ['Ausencias', 'Fichajes', 'Sin acuerdo', 'Días con horas extra']) {
     if (!(await abrirCola(page, cola))) continue
 
     // La casilla de cabecera vive en la barra de filtros y es común a las
@@ -166,7 +166,7 @@ test('«sin acuerdo» deja retirar en bloque pero no aplicar', async ({ page }) 
 })
 
 test('las horas extra se saldan en bloque, y con las dos formas separadas', async ({ page }) => {
-  const hay = await abrirCola(page, 'Horas extra')
+  const hay = await abrirCola(page, 'Días con horas extra')
   test.skip(!hay, 'no hay horas extra por resolver')
 
   await page.getByRole('checkbox', { name: 'Seleccionar todo' }).check()

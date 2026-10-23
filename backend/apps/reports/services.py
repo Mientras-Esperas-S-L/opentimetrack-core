@@ -112,6 +112,11 @@ class ReportData:
     total_break_seconds: int = 0
     total_standby_seconds: int = 0
     total_overtime_seconds: int = 0
+    #: Cómo se trataron las pausas en el total: `"descontadas"`, `"contadas"` o
+    #: `"segun_el_dia"` si en el periodo cambió la regla. El informe ponía
+    #: «Pausas, que no computan como jornada» también cuando sí computaban, y
+    #: debajo de una cabecera que decía lo contrario.
+    break_treatment: str = ""
 
 
 def _add_span(row: DayRow, opening, start: datetime, end: datetime, seconds: int) -> None:
@@ -286,6 +291,7 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
 
     rows: list[DayRow] = []
     total = 0
+    tratos_de_pausa = set()
     monthly: dict[str, int] = {}
 
     # Corrections applied without the person's agreement, by the day they
@@ -391,6 +397,8 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
         de_ese_dia = ComputationRuleChange.in_force_on(company, row.day)
         if not de_ese_dia.break_counts_as_work:
             row.seconds = max(row.seconds - row.break_seconds, 0)
+        if row.break_seconds:
+            tratos_de_pausa.add(de_ese_dia.break_counts_as_work)
 
         # Al final, y con las horas ya sumadas: la cifra es la que hay en el
         # registro. Lo que se añade es el aviso de que ese día no cuadra con su
@@ -428,9 +436,25 @@ def build_report(*, employee, company, date_from: date, date_to: date) -> Report
         total_break_seconds=sum(r.break_seconds for r in rows),
         total_standby_seconds=sum(r.standby_seconds for r in rows),
         total_overtime_seconds=sum(r.overtime_seconds for r in rows),
+        break_treatment=(
+            "segun_el_dia"
+            if len(tratos_de_pausa) > 1
+            else "contadas"
+            if tratos_de_pausa == {True}
+            else "descontadas"
+        ),
     )
     data.fingerprint = _fingerprint(data)
     return data
+
+
+def breaks_label(data: ReportData) -> str:
+    """Qué se hizo con las pausas en el total, según la regla de cada día."""
+    if data.break_treatment == "contadas":
+        return _("Breaks, included in the total as working time")
+    if data.break_treatment == "segun_el_dia":
+        return _("Breaks, taken off the total except on days they counted as working time")
+    return _("Breaks, already taken off the total")
 
 
 def _fingerprint(data: ReportData) -> str:
@@ -618,13 +642,13 @@ def to_csv(data: ReportData, *, para_nomina: bool = False) -> str:
             [
                 _("Overtime"),
                 _format_hours(data.total_overtime_seconds),
-                _("Days with activity"),
+                _("Days with work or leave"),
                 len([r for r in data.rows if r.seconds or r.absence]),
             ]
         )
 
     writer.writerow([])
-    writer.writerow([_("Date"), _("Entry"), _("Exit"), _("Hours"), _("Notes")])
+    writer.writerow([_("Date"), _("Entry"), _("Exit"), _("Worked (h:min)"), _("Notes")])
 
     for row in data.rows:
         if not row.entries and not row.absence:
@@ -644,14 +668,13 @@ def to_csv(data: ReportData, *, para_nomina: bool = False) -> str:
             )
 
     writer.writerow([])
+    # «Total» a secas a propósito: hay quien lee el fichero buscando esa fila.
     writer.writerow([_("Total"), _format_hours(data.total_seconds)])
     # Aparte del total y no dentro: ver el comentario en `pdf.py`. Los dos
     # formatos lo dicen igual porque el informe es el mismo documento en dos
     # envases, y que uno cuente algo que el otro calla ya pasó una vez.
     if data.total_break_seconds:
-        writer.writerow(
-            [_("Breaks, not counted as working time"), _format_hours(data.total_break_seconds)]
-        )
+        writer.writerow([breaks_label(data), _format_hours(data.total_break_seconds)])
     if data.total_standby_seconds:
         writer.writerow(
             [
