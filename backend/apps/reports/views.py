@@ -60,7 +60,15 @@ MAX_PEOPLE_PER_EXPORT = 200
         OpenApiParameter("employee", str, description="Employee id. Defaults to the caller."),
         OpenApiParameter("date_from", str, description="YYYY-MM-DD. Defaults to 30 days ago."),
         OpenApiParameter("date_to", str, description="YYYY-MM-DD. Defaults to today."),
-        OpenApiParameter("format", str, enum=["pdf", "csv"], description="Defaults to pdf."),
+        OpenApiParameter(
+            "format",
+            str,
+            enum=["pdf", "csv", "json"],
+            description=(
+                "Defaults to pdf. json returns the totals and each worked day's hours, "
+                "for one person only."
+            ),
+        ),
         OpenApiParameter(
             "scope",
             str,
@@ -86,7 +94,8 @@ class ReportView(APIView):
     permission_classes = [IsAuthenticatedInTenant]
     # Declared so `?format=pdf` and `?format=csv` are understood as content
     # negotiation. Without them DRF answers 404 to a format it does not know.
-    renderer_classes = [PDFRenderer, CSVRenderer]
+    # JSON el último: sin `?format=` sigue saliendo el PDF de siempre.
+    renderer_classes = [PDFRenderer, CSVRenderer, JSONRenderer]
 
     def get(self, request):
         company = request.user.tenant
@@ -99,6 +108,8 @@ class ReportView(APIView):
         if date_to < date_from:
             raise ValidationError({"detail": _("The end date cannot precede the start date.")})
 
+        wanted = request.query_params.get("format", "pdf").lower()
+
         # An inspection asks for the workforce, not for one person at a time.
         # Producing two hundred documents one by one was the only way, which in
         # practice means it does not get done.
@@ -107,6 +118,8 @@ class ReportView(APIView):
             or request.query_params.get("department")
             or request.query_params.get("workplace")
         ):
+            if wanted == "json":
+                raise ValidationError({"detail": _("The totals are given one person at a time.")})
             return self._many(request, company, date_from, date_to)
 
         employee = request.user
@@ -126,13 +139,21 @@ class ReportView(APIView):
             employee=employee, company=company, date_from=date_from, date_to=date_to
         )
 
+        # «¿Cuánto he trabajado esta semana, este mes, entre estas fechas?»
+        # Con las cifras del documento y no con una suma hecha en la pantalla:
+        # la pausa que no cuenta, la jornada que cruza la medianoche y la regla
+        # de cada día ya están resueltas aquí, y si la pantalla sumara por su
+        # cuenta acabaría diciendo otra cosa que el informe que se entrega.
+        if wanted == "json":
+            return Response(_totals(data, employee))
+
         # Saneado: el apellido es texto libre y va dentro de unas comillas sin
         # escapar en la cabecera. Ver `apps/common/descargas.py`.
         stem = nombre_seguro(
             f"working-time_{employee.last_name}_{date_from}_{date_to}", respaldo="working-time"
         )
 
-        if request.query_params.get("format", "pdf").lower() == "csv":
+        if wanted == "csv":
             response = HttpResponse(to_csv(data), content_type="text/csv; charset=utf-8")
             response["Content-Disposition"] = f'attachment; filename="{stem}.csv"'
         else:
@@ -268,6 +289,22 @@ class ReportView(APIView):
         response = HttpResponse(buffer.getvalue(), content_type="application/zip")
         response["Content-Disposition"] = f'attachment; filename="{stem}.zip"'
         return response
+
+
+def _totals(data, employee) -> dict:
+    """Las horas de un periodo, en cifras. Los días sin horas no van: no suman."""
+    return {
+        "employee": str(employee.id),
+        "date_from": data.date_from.isoformat(),
+        "date_to": data.date_to.isoformat(),
+        "total_seconds": data.total_seconds,
+        "break_seconds": data.total_break_seconds,
+        "overtime_seconds": data.total_overtime_seconds,
+        "contracted_hours": data.contracted_hours,
+        "days": [
+            {"day": row.day.isoformat(), "seconds": row.seconds} for row in data.rows if row.seconds
+        ],
+    }
 
 
 class PayrollRunRequestSerializer(serializers.Serializer):

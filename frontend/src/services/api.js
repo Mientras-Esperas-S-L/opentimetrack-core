@@ -807,9 +807,14 @@ export const getOverview = () => get('/overview/')
 
 // --------------------------------------------------------------------- reports
 
-/** The report is always a file --- PDF or CSV --- never JSON, so there is only
- *  this one call. `format` is a query parameter, not an Accept header: the view
- *  declares renderers for both so DRF treats it as content negotiation.
+/** Las horas de un periodo, en cifras: las mismas del informe, sin el documento.
+ *  Total, pausas, horas de más y lo trabajado cada día. Solo de una persona. */
+export const getHoursWorked = (params) =>
+  get('/reports/working-time/', { ...params, format: 'json' })
+
+/** The report as a file --- PDF or CSV. `format` is a query parameter, not an
+ *  Accept header: the view declares renderers for both so DRF treats it as
+ *  content negotiation.
  *
  *  Returns the blob and the filename the server chose, plus the fingerprint it
  *  puts in a header so a consumer can check the document without opening it.

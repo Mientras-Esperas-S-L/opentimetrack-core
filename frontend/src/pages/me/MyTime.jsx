@@ -29,6 +29,7 @@ import {
   downloadPayrollSummary,
   getPayrollSummary,
   getAllPunches,
+  getHoursWorked,
   requestCorrection,
 } from '../../services/api.js'
 import { save } from '../../services/download.js'
@@ -51,22 +52,18 @@ import {
   plural,
   timeOf,
 } from '../../components/format.js'
+import MisHoras from '../../components/MisHoras.jsx'
 import MyAdaptations from '../../components/MyAdaptations.jsx'
 import ChangeOnTheRecord from '../../components/ChangeOnTheRecord.jsx'
 import RemindersControl from '../../components/RemindersControl.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 
-/** Pairs the day's events into segments and adds them up.
- *
- *  An unmatched clock-in is left open rather than guessed at: inventing a
- *  closing time would put a number on screen that is not in the record.
- */
-function summarise(events, zone) {
-  const ordered = [...events].sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+/** Pairs one kind of interval's events into segments. */
+function pair(events, interval) {
   const segments = []
   let open = null
-
-  for (const event of ordered) {
+  for (const event of events) {
+    if ((event.interval ?? 'WORK') !== interval) continue
     if (event.punch_type === 'IN') {
       open = event
     } else if (open) {
@@ -74,12 +71,38 @@ function summarise(events, zone) {
       open = null
     }
   }
+  return { segments, open }
+}
 
-  const seconds = segments.reduce(
-    (total, s) => total + (new Date(s.to) - new Date(s.from)) / 1000,
-    0,
-  )
-  return { segments, seconds, openSince: open?.timestamp ?? null, zone }
+const length = (segments) =>
+  segments.reduce((total, s) => total + (new Date(s.to) - new Date(s.from)) / 1000, 0)
+
+/** Pairs the day's events into segments and adds them up.
+ *
+ *  An unmatched clock-in is left open rather than guessed at: inventing a
+ *  closing time would put a number on screen that is not in the record.
+ *
+ *  La pausa va **dentro** de la jornada, con sus propios IN y OUT. Emparejarlo
+ *  todo junto cerraba la jornada al empezar la pausa y perdía el resto: un día
+ *  de 8:00 a 15:00 con media hora de pausa salía como 0:30. Cada intervalo se
+ *  empareja con los suyos.
+ *
+ *  `seconds` es la cuenta de aquí, solo para mientras llega la del servidor:
+ *  la que se enseña es la del informe, que sabe si la pausa cuenta como
+ *  trabajo y qué hacer con la jornada que cruza la medianoche.
+ */
+function summarise(events, zone) {
+  const ordered = [...events].sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+  const work = pair(ordered, 'WORK')
+  const breaks = pair(ordered, 'BREAK')
+  const seconds = Math.max(length(work.segments) - length(breaks.segments), 0)
+  return {
+    segments: work.segments,
+    breaks: breaks.segments,
+    seconds,
+    openSince: work.open?.timestamp ?? null,
+    zone,
+  }
 }
 
 function byDay(punches, zone) {
@@ -439,6 +462,18 @@ export default function MyTime() {
     onError: setError,
   })
 
+  // Lo trabajado cada día del mes, con la cuenta del informe. La de la
+  // pantalla se queda para mientras llega.
+  const { data: horasDelMes } = useQuery({
+    queryKey: ['hours', 'mine', range.from, range.to],
+    queryFn: () => getHoursWorked({ date_from: range.from, date_to: range.to }),
+    placeholderData: (previous) => previous,
+    enabled: Boolean(me),
+  })
+  const horasDelDia = new Map((horasDelMes?.days ?? []).map((d) => [d.day, d.seconds]))
+  const delMesQueSeVe =
+    horasDelMes?.date_from === range.from && horasDelMes?.date_to === range.to
+
   const { data: punches, isLoading } = useQuery({
     queryKey: ['punches', 'mine', range],
     queryFn: () =>
@@ -552,6 +587,8 @@ export default function MyTime() {
 
       <ErrorNote error={error} onClose={() => setError(null)} />
 
+      <MisHoras />
+
       {/* Anything the company has proposed on this person's record, first and
           apart. Art. 4.b needs their authorisation, and until this existed the
           screen showed a chip saying their answer was awaited with no way to
@@ -662,6 +699,15 @@ export default function MyTime() {
           >
             <ChevronRightIcon />
           </IconButton>
+          {delMesQueSeVe && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontVariantNumeric: 'tabular-nums', ml: 1 }}
+            >
+              {t('Total {{horas}}', { horas: hhmm(horasDelMes.total_seconds) })}
+            </Typography>
+          )}
         </Stack>
         {!isThisMonth && (
           <Button size="small" onClick={() => setMonth(thisMonth())}>
@@ -686,6 +732,7 @@ export default function MyTime() {
         <Stack sx={{ gap: 1.5 }}>
           {days.map(([day, events]) => {
             const summary = summarise(events, zone)
+            const seconds = delMesQueSeVe ? (horasDelDia.get(day) ?? 0) : summary.seconds
             return (
               <Paper key={day} variant="outlined" sx={{ p: 2 }}>
                 <Stack
@@ -701,7 +748,7 @@ export default function MyTime() {
                     component="span"
                     sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 650, fontSize: '1.1rem' }}
                   >
-                    {hhmm(summary.seconds)}
+                    {hhmm(seconds)}
                     {summary.openSince && (
                       <Chip
                         size="small"
@@ -723,6 +770,19 @@ export default function MyTime() {
                       sx={{ fontVariantNumeric: 'tabular-nums' }}
                     >
                       {timeOf(segment.from, zone)} – {timeOf(segment.to, zone)}
+                    </Typography>
+                  ))}
+                  {summary.breaks.map((pausa) => (
+                    <Typography
+                      key={pausa.from}
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ fontVariantNumeric: 'tabular-nums' }}
+                    >
+                      {t('pausa {{desde}} – {{hasta}}', {
+                        desde: timeOf(pausa.from, zone),
+                        hasta: timeOf(pausa.to, zone),
+                      })}
                     </Typography>
                   ))}
                   {summary.openSince && (
