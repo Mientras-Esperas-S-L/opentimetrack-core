@@ -2344,6 +2344,9 @@ msgstr "Aquesta persona no existeix."
 msgid "Nobody worked in that period."
 msgstr "Ningú no va treballar en aquest període."
 
+msgid "The totals are given one person at a time."
+msgstr "Els totals es donen d'una persona en una."
+
 #: apps/reports/views.py:227
 #, python-format
 msgid ""
