@@ -1,10 +1,11 @@
 # Trabajos periódicos: cron o Celery
 
-OpenTimeTrack tiene cuatro trabajos que se repiten solos:
+OpenTimeTrack tiene cinco trabajos que se repiten solos:
 
 | Trabajo | Cada cuánto | Qué hace |
 |---|---|---|
 | `send_punch_reminders` | Cada pocos minutos | Avisa a quien empezó su turno y no ha fichado, o dejó la jornada abierta. Nunca ficha por nadie |
+| `send_shift_notices` | Cada pocos minutos | Avisa a quien le han cambiado el turno, cuando su cuadrante lleva `SHIFT_NOTICE_WAIT_MINUTES` (5 por defecto) sin cambios, con lo que de verdad cambió: pintar y deshacer no avisa. Si la persona abre sus avisos antes, los ve ya. Sin este trabajo el correo y la notificación no salen |
 | `purge_security_metadata` | Una vez al día | Borra la IP y el dispositivo de los fichajes que ya cumplieron su plazo de conservación |
 | `flushexpiredtokens` | Una vez al día | Tira los testigos de sesión caducados. Con la rotación activada se acumulan del orden de dos millones de filas al año en una empresa de doscientas personas, y cada una dice de quién era la sesión (art. 5.1.e RGPD) |
 | `purge_expired_records` | Una vez al día | Borra los fichajes que pasaron el plazo de conservación de su empresa. **El único trabajo que borra registro de jornada**: nunca por debajo de los cuatro años del art. 34.9 ET, corta por día entero en la zona de la empresa, no toca ausencias ni contratos, y deja asiento de cuántos borró |
@@ -33,6 +34,7 @@ que vigilarlo y toda la configuración son dos líneas.
 
 ```cron
 */5 * * * *  cd /srv/opentimetrack/backend && /srv/venv/bin/python manage.py send_punch_reminders
+*/5 * * * *  cd /srv/opentimetrack/backend && /srv/venv/bin/python manage.py send_shift_notices
 30 3 * * *   cd /srv/opentimetrack/backend && /srv/venv/bin/python manage.py purge_security_metadata
 0 4 * * *    cd /srv/opentimetrack/backend && /srv/venv/bin/python manage.py flushexpiredtokens
 30 4 * * *   cd /srv/opentimetrack/backend && /srv/venv/bin/python manage.py purge_expired_records

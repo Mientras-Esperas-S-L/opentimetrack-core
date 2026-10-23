@@ -5573,3 +5573,123 @@ msgstr "Ese día xa é festivo nese centro."
 
 msgid "That choice no longer exists: someone may have just deleted it. Reload and choose again."
 msgstr "Iso xa non existe: quizais alguén acaba de borralo. Recarga a páxina e volve escoller."
+
+msgid "changed by"
+msgstr "modificado por"
+
+msgid "first day affected"
+msgstr "primeiro día afectado"
+
+msgid "days of notice"
+msgstr "días de preaviso"
+
+msgid "under the company's minimum notice"
+msgstr "por debaixo do preaviso mínimo da empresa"
+
+msgid "emailed at"
+msgstr "enviado por correo"
+
+msgid "pushed at"
+msgstr "notificado no navegador"
+
+msgid "delivered at"
+msgstr "chegou"
+
+msgid "delivered through"
+msgstr "chegou por"
+
+msgid "read at"
+msgstr "lido"
+
+msgid "read through"
+msgstr "lido en"
+
+msgid "shift change notice"
+msgstr "aviso de cambio de quenda"
+
+msgid "shift change notices"
+msgstr "avisos de cambio de quenda"
+
+msgid "Only the person it was sent to can say they have seen it."
+msgstr "Só pode dicir que o viu a persoa á que se lle enviou."
+
+msgid "Sent"
+msgstr "Enviado"
+
+msgid "Person"
+msgstr "Persoa"
+
+msgid "Changed by"
+msgstr "Cambiado por"
+
+msgid "Changes"
+msgstr "Cambios"
+
+msgid "Days of notice"
+msgstr "Días de preaviso"
+
+msgid "Under the minimum notice"
+msgstr "Por debaixo do preaviso mínimo"
+
+msgid "Email accepted"
+msgstr "Correo aceptado"
+
+msgid "Browser notification accepted"
+msgstr "Notificación do navegador aceptada"
+
+msgid "Reached their app"
+msgstr "Chegou á súa aplicación"
+
+msgid "Through"
+msgstr "Por onde"
+
+msgid "Read"
+msgstr "Lido"
+
+msgid "yes"
+msgstr "si"
+
+msgid "no"
+msgstr "non"
+
+msgid "no shift"
+msgstr "sen quenda"
+
+msgid "%(first)s and %(rest)s"
+msgstr "%(first)s e %(rest)s"
+
+msgid "new shift, %(after)s"
+msgstr "quenda nova, %(after)s"
+
+msgid "cancelled, it was %(before)s"
+msgstr "anulada, era %(before)s"
+
+msgid "%(before)s, now %(after)s"
+msgstr "%(before)s, agora %(after)s"
+
+msgid "Your shift has changed"
+msgstr "Cambiáronche a quenda"
+
+msgid "%(count)s days of your roster have changed."
+msgstr "Cambiaron %(count)s días do teu cadro de quendas."
+
+msgid "shift changes they made"
+msgstr "cambios de quenda que fixo"
+
+msgid "Hello %(first_name)s,\n\nYour shift has changed at %(company)s."
+msgstr "Ola, %(first_name)s:\n\nCambiáronche a quenda en %(company)s."
+
+msgid "Changed by: %(changed_by)s."
+msgstr "Cambiouno: %(changed_by)s."
+
+msgid "Open the app and press «Understood» so that it is recorded that you have seen it.\n\nIf something does not add up, tell whoever manages your working time."
+msgstr "Abre a aplicación e preme «Entendido» para que conste que o viches.\n\nSe algo non cadra, dillo a quen xestione a túa xornada."
+
+msgid "pending shift change"
+msgstr "cambio de quenda pendente de avisar"
+
+msgid "pending shift changes"
+msgstr "cambios de quenda pendentes de avisar"
+
+msgid "what it was"
+msgstr "o que había"

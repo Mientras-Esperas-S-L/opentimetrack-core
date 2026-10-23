@@ -240,3 +240,113 @@ def working_days_between(first: date, last: date):
     while current <= last:
         yield current
         current += timedelta(days=1)
+
+
+class ShiftNotice(TenantOwnedModel):
+    """Que a alguien le cambiaron el turno, y la prueba de que lo supo.
+
+    El RD 723/2026 pide a la empresa avisar de los cambios de jornada y de turno
+    con un preaviso mínimo (art. 3.2.g) y, si lo hace por un canal electrónico,
+    poder probar que el aviso se transmitió y se recibió (art. 6). Hasta ahora
+    el cuadrante se cambiaba y la persona se enteraba ---o no--- mirando la
+    pantalla: no quedaba ni el aviso ni cuándo llegó.
+
+    Un aviso por persona y por operación, con lo que cambió día a día. Las horas
+    las pone el servidor y **no se pueden reescribir**: cada una se rellena una
+    vez y la base de datos rechaza cualquier otro cambio, y también borrar
+    (migración `0004`). Sin eso no prueba nada: quien tendría interés en
+    retocarla es justo quien la presenta.
+
+    - `created_at`: cuándo se envió.
+    - `emailed_at` y `pushed_at`: cuándo lo aceptó cada canal. Que lo aceptara
+      no es que llegara.
+    - `delivered_at`: cuándo llegó a una aplicación de la persona, la nuestra o
+      la de otro producto con su sesión. `delivered_via` dice cuál.
+    - `read_at`: cuándo la persona dijo que lo había visto.
+    """
+
+    employee = models.ForeignKey(
+        "users.User",
+        # Un aviso es parte del rastro de esa persona: quien lo tiene no se
+        # borra, se da de baja. Ver `apps.users.erase`.
+        on_delete=models.PROTECT,
+        related_name="shift_notices",
+        verbose_name=_("employee"),
+    )
+    changed_by = models.ForeignKey(
+        "users.User",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="shift_notices_sent",
+        verbose_name=_("changed by"),
+    )
+    #: `[{"day": "2026-10-27", "before": [spans] | null, "after": [spans] | null}]`.
+    #: `null` es «sin turno»: antes nulo es un turno nuevo, después nulo es uno
+    #: anulado.
+    changes = models.JSONField(_("changes"))
+    first_day = models.DateField(_("first day affected"))
+    #: Días entre el aviso y el primer día que cambia, y si quedó por debajo del
+    #: preaviso que la empresa tenía puesto **en ese momento**. Se guardan porque
+    #: el ajuste puede cambiar después, y la pregunta es si se cumplió entonces.
+    notice_days = models.IntegerField(_("days of notice"))
+    short_notice = models.BooleanField(_("under the company's minimum notice"), default=False)
+
+    emailed_at = models.DateTimeField(_("emailed at"), null=True, blank=True)
+    pushed_at = models.DateTimeField(_("pushed at"), null=True, blank=True)
+    delivered_at = models.DateTimeField(_("delivered at"), null=True, blank=True)
+    delivered_via = models.CharField(_("delivered through"), max_length=120, blank=True)
+    read_at = models.DateTimeField(_("read at"), null=True, blank=True)
+    read_via = models.CharField(_("read through"), max_length=120, blank=True)
+
+    class Meta:
+        verbose_name = _("shift change notice")
+        verbose_name_plural = _("shift change notices")
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["employee", "read_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.employee_id} {self.first_day}"
+
+
+class PendingShiftChange(TenantOwnedModel):
+    """Un día de alguien que ha cambiado y del que aún no se ha avisado.
+
+    El cuadrante se corrige a trazos: se pinta, se deshace, se vuelve a pintar.
+    Avisar de cada trazo mandaba a la persona un aviso por cada uno ---y dos
+    seguidos, que se anulan, por pintar y deshacer---. Así que lo que cambia se
+    apunta aquí, con lo que había **antes del primer cambio**, y el aviso sale
+    cuando lleva unos minutos quieto, con lo que de verdad cambió. Si se quedó
+    como estaba, no sale nada. Ver `apps.shifts.notices.publicar`.
+
+    No es prueba de nada: es una cola. La prueba es el `ShiftNotice`.
+    """
+
+    employee = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="pending_shift_changes",
+        verbose_name=_("employee"),
+    )
+    day = models.DateField(_("day"))
+    original = models.JSONField(_("what it was"), null=True, blank=True)
+    changed_by = models.ForeignKey(
+        "users.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("changed by"),
+    )
+
+    class Meta:
+        verbose_name = _("pending shift change")
+        verbose_name_plural = _("pending shift changes")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["employee", "day"], name="one_pending_change_per_person_and_day"
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.employee_id} {self.day}"

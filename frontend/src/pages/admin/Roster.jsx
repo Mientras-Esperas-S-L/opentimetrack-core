@@ -38,6 +38,7 @@ import {
   reviewRoster,
 } from '../../services/api.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
+import AvisosEnviados from '../../components/AvisosEnviados.jsx'
 import CoberturaPendiente from '../../components/CoberturaPendiente.jsx'
 import { ConfirmDialog, Empty, ErrorNote, Loading, PageHeader } from '../../components/common.jsx'
 import { capitalised, dateOf, monthName, plural } from '../../components/format.js'
@@ -608,6 +609,8 @@ export default function Roster() {
           trabajar, y mientras sigan así esa persona sale cada día como
           ausencia sin justificar. */}
       <CoberturaPendiente from={from} to={to} />
+
+      <AvisosEnviados />
 
       {patterns.length === 0 && (
         <Alert severity="info" sx={{ mb: 2 }}>

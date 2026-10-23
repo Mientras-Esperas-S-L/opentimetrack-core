@@ -730,6 +730,18 @@ export const getCoverage = (from, to) => get('/shifts/coverage/', { from, to })
 export const reassignShift = (id, employee) => post(`/shifts/${id}/reassign/`, { employee })
 export const getMyShiftToday = () => get('/shifts/today/')
 
+/** Los avisos de cambio de turno. Pedirlos la propia persona es lo que hace
+ *  constar que le llegaron; `readShiftNotice` es ella diciendo que lo ha visto. */
+export const getMyShiftNotices = async () =>
+  page(await get('/shift-notices/', { mine: true, unread: true }))
+export const readShiftNotice = (id) => post(`/shift-notices/${id}/read/`)
+/** Los de la gente que lleva quien gestiona, con cuándo llegó y se leyó cada uno. */
+export const getShiftNotices = async (params) => page(await get('/shift-notices/', params))
+export const downloadShiftNotices = async () => {
+  const response = await api.get('/shift-notices/export/', { responseType: 'blob' })
+  saveBlob(response, 'avisos-de-turno.csv')
+}
+
 export const getWorkingTimeRules = () => get('/working-time-rules/')
 export const updateWorkingTimeRules = async (payload) =>
   (await api.patch('/working-time-rules/', payload)).data

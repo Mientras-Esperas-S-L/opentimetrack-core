@@ -180,6 +180,9 @@ def _lo_suyo(m):
         ("GET", "/api/reports/payroll-summary/", None),
         ("GET", "/api/shifts/review/?from=2026-09-01&to=2026-09-30", None),
         ("GET", "/api/shifts/coverage/?from=2026-09-01&to=2026-09-30", None),
+        # Los avisos de cambio de turno de su gente, y la prueba en un fichero.
+        ("GET", "/api/shift-notices/", None),
+        ("GET", "/api/shift-notices/export/", None),
         (
             "POST",
             "/api/shifts/",

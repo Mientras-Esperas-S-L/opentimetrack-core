@@ -31,6 +31,7 @@ from apps.common.permissions import (
 from apps.common.scope import visible_people
 from apps.common.unicidad import SinRepetidos
 from apps.shifts.models import Shift, ShiftPattern, validate_segments
+from apps.shifts.notices import avisando
 from apps.shifts.services import (
     assign_pattern,
     clear_shifts,
@@ -257,8 +258,33 @@ class ShiftViewSet(viewsets.ModelViewSet):
             return [IsManagerOrAdmin()]
         return super().get_permissions()
 
+    # Los tres de un turno suelto también avisan. Ver `apps.shifts.notices`.
     def perform_create(self, serializer):
-        serializer.save(tenant=self.request.user.tenant)
+        datos = serializer.validated_data
+        with avisando(
+            company=self.request.user.tenant,
+            actor=self.request.user,
+            pairs=[(datos["employee"].pk, datos["day"])],
+        ):
+            serializer.save(tenant=self.request.user.tenant)
+
+    def perform_update(self, serializer):
+        turno = serializer.instance
+        datos = serializer.validated_data
+        pares = {
+            (turno.employee_id, turno.day),
+            (datos.get("employee", turno.employee).pk, datos.get("day", turno.day)),
+        }
+        with avisando(company=self.request.user.tenant, actor=self.request.user, pairs=pares):
+            serializer.save()
+
+    def perform_destroy(self, instance):
+        with avisando(
+            company=self.request.user.tenant,
+            actor=self.request.user,
+            pairs=[(instance.employee_id, instance.day)],
+        ):
+            instance.delete()
 
     def _window(self, request):
         try:
@@ -333,12 +359,17 @@ class ShiftViewSet(viewsets.ModelViewSet):
             )
 
         created = 0
-        for person in people:
-            created += len(
-                assign_pattern(
-                    employee=person, company=request.user.tenant, pattern=pattern, days=days
+        with avisando(
+            company=request.user.tenant,
+            actor=request.user,
+            pairs=[(person.pk, day) for person in people for day in days],
+        ) as aviso:
+            for person in people:
+                created += len(
+                    assign_pattern(
+                        employee=person, company=request.user.tenant, pattern=pattern, days=days
+                    )
                 )
-            )
 
         # Una entrada por operación, no una por turno: pintar un mes a veinte
         # personas son seiscientas filas, y seiscientas entradas idénticas no
@@ -364,7 +395,12 @@ class ShiftViewSet(viewsets.ModelViewSet):
             company=request.user.tenant, first=data["date_from"], last=data["date_to"]
         )
         return Response(
-            {"created": created, "findings": [f.as_dict() for f in findings]}, status=201
+            {
+                "created": created,
+                "notified": aviso["personas"],
+                "findings": [f.as_dict() for f in findings],
+            },
+            status=201,
         )
 
     @extend_schema(request=PaintSerializer, responses={200: dict})
@@ -382,11 +418,22 @@ class ShiftViewSet(viewsets.ModelViewSet):
         form.is_valid(raise_exception=True)
         cells = form.validated_data["cells"]
 
-        result = paint_cells(company=request.user.tenant, cells=cells)
+        with avisando(
+            company=request.user.tenant,
+            actor=request.user,
+            pairs=[(cell["employee"], cell["day"]) for cell in cells],
+        ) as aviso:
+            result = paint_cells(company=request.user.tenant, cells=cells)
 
         days = [cell["day"] for cell in cells]
         findings = review_roster(company=request.user.tenant, first=min(days), last=max(days))
-        return Response({**result, "findings": [f.as_dict() for f in findings]})
+        return Response(
+            {
+                **result,
+                "notified": aviso["personas"],
+                "findings": [f.as_dict() for f in findings],
+            }
+        )
 
     @extend_schema(request=ClearSerializer, responses={200: dict})
     @action(detail=False, methods=["post"])
@@ -400,8 +447,14 @@ class ShiftViewSet(viewsets.ModelViewSet):
         from apps.users.models import User
 
         removed = 0
-        for person in User.objects.filter(tenant=request.user.tenant, pk__in=data["employees"]):
-            removed += clear_shifts(employee=person, days=days)
+        people = list(User.objects.filter(tenant=request.user.tenant, pk__in=data["employees"]))
+        with avisando(
+            company=request.user.tenant,
+            actor=request.user,
+            pairs=[(person.pk, day) for person in people for day in days],
+        ) as aviso:
+            for person in people:
+                removed += clear_shifts(employee=person, days=days)
 
         # De las tres del cuadrante esta es la que más falta hace que conste:
         # borra. Un mes que desaparece sin que nadie figure haciéndolo es
@@ -419,7 +472,7 @@ class ShiftViewSet(viewsets.ModelViewSet):
                 "to": data["date_to"].isoformat(),
             },
         )
-        return Response({"removed": removed})
+        return Response({"removed": removed, "notified": aviso["personas"]})
 
     @extend_schema(
         parameters=[
@@ -492,8 +545,13 @@ class ShiftViewSet(viewsets.ModelViewSet):
             )
 
         antes = shift.employee
-        shift.employee = destino
-        shift.save(update_fields=["employee"])
+        with avisando(
+            company=request.user.tenant,
+            actor=request.user,
+            pairs=[(antes.pk, shift.day), (destino.pk, shift.day)],
+        ):
+            shift.employee = destino
+            shift.save(update_fields=["employee"])
 
         record(
             action=AuditAction.SHIFT_REASSIGNED,

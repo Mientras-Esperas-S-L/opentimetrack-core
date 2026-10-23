@@ -31,7 +31,7 @@ from apps.common.clock import local_today
 from apps.common.models import tenant_context
 from apps.punches.corrections import CorrectionKind, request_correction
 from apps.punches.services import register_punch
-from apps.shifts.models import Shift, ShiftPattern
+from apps.shifts.models import Shift, ShiftNotice, ShiftPattern
 from apps.tenants.holidays import PublicHoliday
 from apps.tenants.models import Tenant
 from apps.users.models import (
@@ -110,6 +110,14 @@ def build_company(name, tax_id, email_domain):
             pattern=pattern,
             segments=pattern.segments,
         )
+        notice = ShiftNotice.objects.create(
+            tenant=company,
+            employee=worker,
+            changed_by=admin,
+            changes=[{"day": "2026-09-01", "before": None, "after": pattern.segments}],
+            first_day=date(2026, 9, 1),
+            notice_days=10,
+        )
         worker.seasonal = True
         worker.save(update_fields=["seasonal"])
         season = ActivityPeriod.objects.create(
@@ -153,6 +161,7 @@ def build_company(name, tax_id, email_domain):
         "correction": correction,
         "pattern": pattern,
         "shift": shift,
+        "notice": notice,
         "season": season,
         "remote": remote,
         "adaptation": adaptation,
@@ -191,6 +200,7 @@ def detail_urls(world):
         "leave type": f"/api/leave-types/{world['leave_type'].id}/",
         "shift": f"/api/shifts/{world['shift'].id}/",
         "shift pattern": f"/api/shift-patterns/{world['pattern'].id}/",
+        "shift notice": f"/api/shift-notices/{world['notice'].id}/",
         "audit entry": f"/api/audit/{world['audit'].id}/",
         "period of activity": f"/api/activity-periods/{world['season'].id}/",
         "remote work agreement": f"/api/remote-work-agreements/{world['remote'].id}/",
@@ -213,6 +223,8 @@ COLLECTIONS = [
     "/api/leave-types/usage/",
     "/api/shifts/",
     "/api/shift-patterns/",
+    "/api/shift-notices/",
+    "/api/shift-notices/export/",
     "/api/audit/",
     "/api/overview/",
     "/api/company/",
@@ -283,6 +295,7 @@ def test_writing_without_a_session_is_refused(ours):
         ("PATCH", "/api/working-time-rules/", {"weekly_hours": 60}),
         ("POST", "/api/shifts/assign/", {}),
         ("POST", "/api/shifts/paint/", {}),
+        ("POST", f"/api/shift-notices/{ours['notice'].id}/read/", {}),
     ]
     leaked = []
 
@@ -318,6 +331,7 @@ def test_no_collection_shows_another_companys_rows(ours, theirs):
         "/api/leave-types/",
         "/api/shifts/",
         "/api/shift-patterns/",
+        "/api/shift-notices/",
         "/api/activity-periods/",
         "/api/remote-work-agreements/",
         "/api/schedule-adaptations/",
@@ -553,7 +567,13 @@ def test_a_worker_sees_only_their_own_rows(ours):
     """Their own record is a right; a colleague's is not."""
     colleague = client_for(ours["other"])
 
-    for url in ["/api/punches/", "/api/absences/", "/api/corrections/", "/api/shifts/"]:
+    for url in [
+        "/api/punches/",
+        "/api/absences/",
+        "/api/corrections/",
+        "/api/shifts/",
+        "/api/shift-notices/",
+    ]:
         body = colleague.get(url).json()
         rows = body.get("results", body) if isinstance(body, dict) else body
         assert rows == [], f"{url} showed a colleague's rows"
@@ -781,6 +801,10 @@ def test_every_route_is_covered_by_this_sweep():
         "api/^shifts/(?P<pk>[^/.]+)/reassign/$",
         "api/^shift-patterns/$",
         "api/^shift-patterns/(?P<pk>[^/.]+)/$",
+        "api/^shift-notices/$",
+        "api/^shift-notices/(?P<pk>[^/.]+)/$",
+        "api/^shift-notices/(?P<pk>[^/.]+)/read/$",
+        "api/^shift-notices/export/$",
         "api/^applications/$",
         "api/^applications/scopes/$",
         "api/^applications/(?P<pk>[^/.]+)/$",
