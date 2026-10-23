@@ -64,7 +64,7 @@ def rastro_de(persona) -> Rastro:
     from apps.punches.corrections import PunchCorrection
     from apps.punches.models import OvertimeDecision, Punch
     from apps.reports.payroll import PayrollSummary
-    from apps.shifts.models import Shift
+    from apps.shifts.models import Shift, ShiftNotice
     from apps.tenants.applications import Application
     from apps.tenants.rules import ComputationRuleChange
 
@@ -84,6 +84,9 @@ def rastro_de(persona) -> Rastro:
         # Un turno es lo que se esperaba de esa persona, y el cuadrante es contra
         # lo que se contrasta el registro. Un alta equivocada no tiene ninguno.
         _("rostered shifts"): cuantos(Shift, employee=persona),
+        # Cada uno prueba que se le avisó de un cambio. No se borran: ver
+        # `apps.shifts.notices`.
+        _("shift change notices"): cuantos(ShiftNotice, employee=persona),
     }
 
     #: Lo que decidió sobre otras personas. Estos son `SET_NULL`: borrarla no
@@ -98,6 +101,7 @@ def rastro_de(persona) -> Rastro:
         _("clock events they recorded for others"): cuantos(Punch, recorded_by=persona),
         _("changes to how time is counted"): cuantos(ComputationRuleChange, recorded_by=persona),
         _("application credentials they created"): cuantos(Application, created_by=persona),
+        _("shift changes they made"): cuantos(ShiftNotice, changed_by=persona),
     }
 
     return Rastro(

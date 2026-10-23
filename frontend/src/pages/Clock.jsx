@@ -14,6 +14,7 @@ import LoginIcon from '@mui/icons-material/Login'
 import LogoutIcon from '@mui/icons-material/Logout'
 import PauseIcon from '@mui/icons-material/PauseCircle'
 
+import AvisosDeTurno from '../components/AvisosDeTurno.jsx'
 import { useAuth } from '../hooks/useAuth.js'
 import { clock, getMyShiftToday, getToday } from '../services/api.js'
 import { durationOf, hhmm, hhmmss, timeOf } from '../components/format.js'
@@ -252,6 +253,9 @@ export default function Clock() {
           month: 'long',
         })}
       </Typography>
+
+      {/* Antes que el turno de hoy: si se lo han cambiado, lo primero es saberlo. */}
+      <AvisosDeTurno />
 
       {expected?.has_shift && (
         <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>

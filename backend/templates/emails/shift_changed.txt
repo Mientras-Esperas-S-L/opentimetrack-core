@@ -1,0 +1,14 @@
+{% load i18n installation %}{% blocktranslate %}Hello {{ first_name }},
+
+Your shift has changed at {{ company }}.{% endblocktranslate %}
+
+{% for line in changes %}- {{ line }}
+{% endfor %}
+{% if changed_by %}{% blocktranslate %}Changed by: {{ changed_by }}.{% endblocktranslate %}
+
+{% endif %}{% blocktranslate %}Open the app and press «Understood» so that it is recorded that you have seen it.
+
+If something does not add up, tell whoever manages your working time.{% endblocktranslate %}
+
+-------------------------------------------------------------------------------
+{% installation_name %}

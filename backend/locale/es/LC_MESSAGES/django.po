@@ -5165,3 +5165,114 @@ msgstr "Ese día ya es festivo en ese centro."
 
 msgid "That choice no longer exists: someone may have just deleted it. Reload and choose again."
 msgstr "Eso ya no existe: puede que alguien acabe de borrarlo. Recarga la página y vuelve a elegir."
+
+msgid "changed by"
+msgstr "modificado por"
+
+msgid "first day affected"
+msgstr "primer día afectado"
+
+msgid "days of notice"
+msgstr "días de preaviso"
+
+msgid "under the company's minimum notice"
+msgstr "por debajo del preaviso mínimo de la empresa"
+
+msgid "emailed at"
+msgstr "enviado por correo"
+
+msgid "pushed at"
+msgstr "notificado en el navegador"
+
+msgid "delivered at"
+msgstr "llegó"
+
+msgid "delivered through"
+msgstr "llegó por"
+
+msgid "read at"
+msgstr "leído"
+
+msgid "read through"
+msgstr "leído en"
+
+msgid "shift change notice"
+msgstr "aviso de cambio de turno"
+
+msgid "shift change notices"
+msgstr "avisos de cambio de turno"
+
+msgid "Only the person it was sent to can say they have seen it."
+msgstr "Solo puede decir que lo ha visto la persona a quien se envió."
+
+msgid "Sent"
+msgstr "Enviado"
+
+msgid "Person"
+msgstr "Persona"
+
+msgid "Changed by"
+msgstr "Cambiado por"
+
+msgid "Changes"
+msgstr "Cambios"
+
+msgid "Days of notice"
+msgstr "Días de preaviso"
+
+msgid "Under the minimum notice"
+msgstr "Por debajo del preaviso mínimo"
+
+msgid "Email accepted"
+msgstr "Correo aceptado"
+
+msgid "Browser notification accepted"
+msgstr "Notificación del navegador aceptada"
+
+msgid "Reached their app"
+msgstr "Llegó a su aplicación"
+
+msgid "Through"
+msgstr "Por dónde"
+
+msgid "Read"
+msgstr "Leído"
+
+msgid "yes"
+msgstr "sí"
+
+msgid "no"
+msgstr "no"
+
+msgid "no shift"
+msgstr "sin turno"
+
+msgid "%(first)s and %(rest)s"
+msgstr "%(first)s y %(rest)s"
+
+msgid "new shift, %(after)s"
+msgstr "turno nuevo, %(after)s"
+
+msgid "cancelled, it was %(before)s"
+msgstr "anulado, era %(before)s"
+
+msgid "%(before)s, now %(after)s"
+msgstr "%(before)s, ahora %(after)s"
+
+msgid "Your shift has changed"
+msgstr "Te han cambiado el turno"
+
+msgid "%(count)s days of your roster have changed."
+msgstr "Han cambiado %(count)s días de tu cuadrante."
+
+msgid "shift changes they made"
+msgstr "cambios de turno que hizo"
+
+msgid "Hello %(first_name)s,\n\nYour shift has changed at %(company)s."
+msgstr "Hola, %(first_name)s:\n\nTe han cambiado el turno en %(company)s."
+
+msgid "Changed by: %(changed_by)s."
+msgstr "Lo cambió: %(changed_by)s."
+
+msgid "Open the app and press «Understood» so that it is recorded that you have seen it.\n\nIf something does not add up, tell whoever manages your working time."
+msgstr "Abre la aplicación y pulsa «Entendido» para que conste que lo has visto.\n\nSi algo no cuadra, díselo a quien gestione tu jornada."

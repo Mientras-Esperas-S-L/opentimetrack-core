@@ -5584,3 +5584,114 @@ msgstr "Aquest dia ja és festiu en aquest centre."
 
 msgid "That choice no longer exists: someone may have just deleted it. Reload and choose again."
 msgstr "Això ja no existeix: potser algú ho acaba d'esborrar. Torna a carregar la pàgina i tria de nou."
+
+msgid "changed by"
+msgstr "modificat per"
+
+msgid "first day affected"
+msgstr "primer dia afectat"
+
+msgid "days of notice"
+msgstr "dies de preavís"
+
+msgid "under the company's minimum notice"
+msgstr "per sota del preavís mínim de l'empresa"
+
+msgid "emailed at"
+msgstr "enviat per correu"
+
+msgid "pushed at"
+msgstr "notificat al navegador"
+
+msgid "delivered at"
+msgstr "va arribar"
+
+msgid "delivered through"
+msgstr "va arribar per"
+
+msgid "read at"
+msgstr "llegit"
+
+msgid "read through"
+msgstr "llegit a"
+
+msgid "shift change notice"
+msgstr "avís de canvi de torn"
+
+msgid "shift change notices"
+msgstr "avisos de canvi de torn"
+
+msgid "Only the person it was sent to can say they have seen it."
+msgstr "Només pot dir que l'ha vist la persona a qui es va enviar."
+
+msgid "Sent"
+msgstr "Enviat"
+
+msgid "Person"
+msgstr "Persona"
+
+msgid "Changed by"
+msgstr "Canviat per"
+
+msgid "Changes"
+msgstr "Canvis"
+
+msgid "Days of notice"
+msgstr "Dies de preavís"
+
+msgid "Under the minimum notice"
+msgstr "Per sota del preavís mínim"
+
+msgid "Email accepted"
+msgstr "Correu acceptat"
+
+msgid "Browser notification accepted"
+msgstr "Notificació del navegador acceptada"
+
+msgid "Reached their app"
+msgstr "Va arribar a la seva aplicació"
+
+msgid "Through"
+msgstr "Per on"
+
+msgid "Read"
+msgstr "Llegit"
+
+msgid "yes"
+msgstr "sí"
+
+msgid "no"
+msgstr "no"
+
+msgid "no shift"
+msgstr "sense torn"
+
+msgid "%(first)s and %(rest)s"
+msgstr "%(first)s i %(rest)s"
+
+msgid "new shift, %(after)s"
+msgstr "torn nou, %(after)s"
+
+msgid "cancelled, it was %(before)s"
+msgstr "anul·lat, era %(before)s"
+
+msgid "%(before)s, now %(after)s"
+msgstr "%(before)s, ara %(after)s"
+
+msgid "Your shift has changed"
+msgstr "T'han canviat el torn"
+
+msgid "%(count)s days of your roster have changed."
+msgstr "Han canviat %(count)s dies del teu quadrant."
+
+msgid "shift changes they made"
+msgstr "canvis de torn que va fer"
+
+msgid "Hello %(first_name)s,\n\nYour shift has changed at %(company)s."
+msgstr "Hola, %(first_name)s:\n\nT'han canviat el torn a %(company)s."
+
+msgid "Changed by: %(changed_by)s."
+msgstr "Ho va canviar: %(changed_by)s."
+
+msgid "Open the app and press «Understood» so that it is recorded that you have seen it.\n\nIf something does not add up, tell whoever manages your working time."
+msgstr "Obre l'aplicació i prem «Entesos» perquè consti que ho has vist.\n\nSi alguna cosa no quadra, digues-ho a qui gestioni la teva jornada."

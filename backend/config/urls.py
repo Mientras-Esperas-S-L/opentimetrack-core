@@ -23,6 +23,7 @@ from apps.punches.views import PunchViewSet
 from apps.reports.delivery import RecordDeliveryView
 from apps.reports.overview import OverviewView
 from apps.reports.views import PayrollSummaryView, ReportView
+from apps.shifts.notice_views import ShiftNoticeViewSet
 from apps.shifts.views import ShiftPatternViewSet, ShiftViewSet, WorkingTimeRulesView
 from apps.tenants.application_views import ApplicationViewSet
 from apps.tenants.attendance_api import ApplicationAttendanceRangeView, ApplicationAttendanceView
@@ -92,6 +93,7 @@ router.register("corrections", CorrectionViewSet, basename="correction")
 router.register("absences", AbsenceViewSet, basename="absence")
 router.register("shift-patterns", ShiftPatternViewSet, basename="shift-pattern")
 router.register("shifts", ShiftViewSet, basename="shift")
+router.register("shift-notices", ShiftNoticeViewSet, basename="shift-notice")
 router.register("workplaces", WorkplaceViewSet, basename="workplace")
 router.register("holidays", PublicHolidayViewSet, basename="holiday")
 router.register("leave-types", LeaveTypeViewSet, basename="leave-type")
