@@ -25,7 +25,13 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import EditNoteIcon from '@mui/icons-material/EditNote'
 
-import { getAllPunches, getPunches, PAGE_SIZE, requestCorrection } from '../../services/api.js'
+import {
+  getAllPunches,
+  getEmployee,
+  getPunches,
+  PAGE_SIZE,
+  requestCorrection,
+} from '../../services/api.js'
 import { alFallar } from '../../services/stale.js'
 import EmployeePicker from '../../components/EmployeePicker.jsx'
 import { PickFilter } from '../../components/filters.jsx'
@@ -39,7 +45,7 @@ import {
   SourceChip,
 } from '../../components/common.jsx'
 import { firstOfThisMonth, today } from '../../components/format.js'
-import { dateOf, timeOf, timeOfWithSeconds } from '../../components/format.js'
+import { dateOf, instantFromLocal, timeOf, timeOfWithSeconds } from '../../components/format.js'
 import { useAuth } from '../../hooks/useAuth.js'
 import { alCatalogo } from '../../i18n/index.js'
 
@@ -180,12 +186,21 @@ function CorrectionDialog({
   employee,
   employeeName,
   punch,
+  zone,
   onClose,
   onSubmit,
   saving,
   error,
 }) {
   const { t } = useTranslation()
+  // La zona de la persona, no la del navegador de quien corrige: la del
+  // fichaje si lo hay; si no, la de su ficha; y si no, la de la empresa.
+  const { data: ficha } = useQuery({
+    queryKey: ['employee', employee],
+    queryFn: () => getEmployee(employee),
+    enabled: open && !punch && Boolean(employee),
+  })
+  const suZona = punch?.time_zone ?? ficha?.effective_time_zone ?? zone
   const [form, setForm] = useState({ kind: 'ADD', proposed_type: 'OUT', when: '', reason: '' })
   const [loaded, setLoaded] = useState(null)
 
@@ -217,7 +232,7 @@ function CorrectionDialog({
             target: punch?.id,
             kind: form.kind,
             proposed_type: form.kind === 'ADD' ? form.proposed_type : undefined,
-            proposed_timestamp: form.when ? new Date(form.when).toISOString() : undefined,
+            proposed_timestamp: instantFromLocal(form.when, suZona),
             reason: form.reason,
           })
         }}
@@ -240,8 +255,8 @@ function CorrectionDialog({
               <Alert severity="info" variant="outlined">
                 {t('Fichaje seleccionado: {{tipo}} de las {{hora}} del {{fecha}}', {
                   tipo: punch.punch_type === 'IN' ? t('entrada') : t('salida'),
-                  hora: timeOf(punch.timestamp),
-                  fecha: dateOf(punch.timestamp),
+                  hora: timeOf(punch.timestamp, suZona),
+                  fecha: dateOf(punch.timestamp, { timeZone: suZona }),
                 })}
               </Alert>
             ) : (
@@ -268,7 +283,9 @@ function CorrectionDialog({
                 required
                 fullWidth
                 type="datetime-local"
-                label={t('Hora real')}
+                label={
+                  suZona ? t('Hora real, en hora de {{zona}}', { zona: suZona }) : t('Hora real')
+                }
                 value={form.when}
                 onChange={set('when')}
                 slotProps={{ inputLabel: { shrink: true } }}
@@ -571,6 +588,7 @@ export default function Timesheet() {
       <CorrectionDialog
         open={correcting !== null}
         punch={correcting?.punch}
+        zone={zone}
         employee={employee}
         employeeName={employeeName}
         saving={correct.isPending}

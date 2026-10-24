@@ -55,6 +55,15 @@ from apps.common.texto import validate_texto_legible
 from apps.punches.rest_debt import rest_debt
 
 
+class RejectSerializer(serializers.Serializer):
+    """El motivo de un rechazo, que lee quien la pidió."""
+
+    # El validador aquí y no en el servicio: aquí sale como un 400 que se lee.
+    note = serializers.CharField(
+        required=False, allow_blank=True, max_length=1000, validators=[validate_texto_legible]
+    )
+
+
 class AbsenceSerializer(serializers.ModelSerializer):
     employee_name = serializers.CharField(source="employee.get_full_name", read_only=True)
     type_display = serializers.CharField(source="get_absence_type_display", read_only=True)
@@ -136,6 +145,7 @@ class AbsenceSerializer(serializers.ModelSerializer):
             "short_notice",
             "notice_days",
             "reason",
+            "resolution_note",
             "status",
             "status_display",
             "approved_by",
@@ -589,10 +599,13 @@ class AbsenceViewSet(
         )
         return Response(AbsenceSerializer(absence).data)
 
-    @extend_schema(request=None, responses={200: AbsenceSerializer})
+    @extend_schema(request=RejectSerializer, responses={200: AbsenceSerializer})
     @action(detail=True, methods=["post"], permission_classes=[IsManagerOrAdmin])
     def reject(self, request, pk=None):
-        absence = reject_absence(self.get_object(), resolved_by=request.user)
+        forma = RejectSerializer(data=request.data)
+        forma.is_valid(raise_exception=True)
+        nota = forma.validated_data.get("note", "")
+        absence = reject_absence(self.get_object(), resolved_by=request.user, note=nota)
         record(
             action=AuditAction.ABSENCE_REJECTED,
             actor=request.user,

@@ -563,7 +563,8 @@ export const plazoParaSubir = (bytes) => {
   return 10_000 + Math.ceil(peso / SUBIDA_BYTES_POR_SEGUNDO) * 1000
 }
 export const approveAbsence = (id) => post(`/absences/${id}/approve/`)
-export const rejectAbsence = (id) => post(`/absences/${id}/reject/`)
+/** Con el motivo: «Por decidir» lo pedía y no lo enviaba, así que se perdía. */
+export const rejectAbsence = (id, note = '') => post(`/absences/${id}/reject/`, { note })
 export const cancelAbsence = (id) => post(`/absences/${id}/cancel/`)
 
 /** Downloads a supporting document.

@@ -29,6 +29,7 @@ import LeaveDialog from '../../components/LeaveDialog.jsx'
 import Alert from '@mui/material/Alert'
 
 import { Empty, ErrorNote, Loading, PageHeader, StatusChip } from '../../components/common.jsx'
+import RejectDialog from '../../components/RejectDialog.jsx'
 import {
   capitalised,
   dayRange,
@@ -159,9 +160,10 @@ export default function TeamCalendar() {
   })
 
   const decide = useMutation({
-    mutationFn: ({ action, id }) => action(id),
+    mutationFn: ({ action, id, note }) => action(id, note),
     onSuccess: () => {
       setOpen(null)
+      setRechazando(false)
       queryClient.invalidateQueries({ queryKey: ['absence-calendar'] })
       queryClient.invalidateQueries({ queryKey: ['absences'] })
       queryClient.invalidateQueries({ queryKey: ['overview'] })
@@ -178,6 +180,9 @@ export default function TeamCalendar() {
   // una huelga, una suspensión. El servidor pone en vigor directamente lo que
   // registra la empresa; lo demás entra en la cola como siempre.
   const [recording, setRecording] = useState(false)
+  // Rechazar pide motivo, como en «Por decidir»: aquí se rechazaba al primer
+  // clic, sin confirmar y sin decirle a la persona por qué.
+  const [rechazando, setRechazando] = useState(false)
   //: Qué se enseña del mes. Con una plantilla grande el calendario se llena y
   //: la pregunta concreta ---«¿quién tiene vacaciones en agosto?», «¿qué queda
   //: sin resolver?»--- se pierde entre lo demás.
@@ -350,7 +355,20 @@ export default function TeamCalendar() {
           decide.reset()
         }}
         onApprove={() => decide.mutate({ action: approveAbsence, id: open.id })}
-        onReject={() => decide.mutate({ action: rejectAbsence, id: open.id })}
+        onReject={() => {
+          decide.reset()
+          setRechazando(true)
+        }}
+      />
+
+      <RejectDialog
+        key={rechazando ? open?.id : 'cerrado'}
+        open={rechazando && Boolean(open)}
+        needsNote={false}
+        busy={decide.isPending}
+        error={rechazando ? decide.error : null}
+        onClose={() => setRechazando(false)}
+        onConfirm={(note) => decide.mutate({ action: rejectAbsence, id: open.id, note })}
       />
 
       {isLoading ? (
