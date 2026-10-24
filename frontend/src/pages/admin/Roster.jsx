@@ -321,6 +321,8 @@ export default function Roster() {
   // people to trust it, and the roster is not the record --- if the undo runs
   // out, the answer is to redraw, not to hunt through history.
   const [undo, setUndo] = useState(null)
+  const diasDelTrazo = new Set((undo ?? []).map((celda) => celda.day)).size
+  const personasDelTrazo = new Set((undo ?? []).map((celda) => celda.employee)).size
   // Held in a ref as well: the window-level pointerup handler is registered
   // once and would otherwise close over the drag as it was when it mounted.
   const dragRef = useRef(null)
@@ -865,7 +867,7 @@ export default function Roster() {
               // happen on the first click. Saying how much it removes is the
               // difference between a warning and a formality.
               detail: t(
-                'Se borran {{turnos}} de {{personas}}. Los fichajes ya registrados no se tocan: el cuadrante es lo previsto, no lo trabajado.',
+                'Se borran {{turnos}} de {{personas}}. Los fichajes ya registrados no se tocan: el cuadrante es lo previsto, no lo trabajado. A cada persona se le avisa de los días de hoy en adelante que pierde.',
                 {
                   turnos: `${rows.length} ${plural(rows.length, t('turno'), t('turnos'))}`,
                   personas: `${rostered.length} ${plural(rostered.length, t('persona'), t('personas'))}`,
@@ -916,9 +918,11 @@ export default function Roster() {
             </Button>
           }
         >
-          {t('Cuadrante actualizado en {{cuantos}} {{unidad}}.', {
-            cuantos: undo?.length,
-            unidad: plural(undo?.length, t('día'), t('días')),
+          {/* Por días y personas: contar celdas decía «15 días» por pintar
+              cinco días a tres personas. */}
+          {t('Cuadrante actualizado: {{dias}} de {{personas}}.', {
+            dias: `${diasDelTrazo} ${plural(diasDelTrazo, t('día'), t('días'))}`,
+            personas: `${personasDelTrazo} ${plural(personasDelTrazo, t('persona'), t('personas'))}`,
           })}
         </Alert>
       </Snackbar>

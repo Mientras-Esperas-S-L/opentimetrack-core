@@ -1990,10 +1990,6 @@ msgstr "Encara no has fitxat la sortida"
 msgid "Your shift has started and you have not clocked in."
 msgstr "Ha començat el teu torn i no has fitxat l'entrada."
 
-#: apps/punches/reminders.py:189
-msgid "Your day is still open. Clock out when you finish."
-msgstr "Tens la jornada oberta. Fitxa la sortida quan acabis."
-
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/punches/serializers.py:95
 #, python-format
@@ -2003,7 +1999,7 @@ msgstr "L'evidència és massa gran: %(size)s caràcters, i el límit és %(max)
 
 #: apps/punches/services.py:448
 msgid "This person is deactivated and cannot clock in or out."
-msgstr "Aquesta persona està donada de baixa i no pot fitxar."
+msgstr "Aquest compte està desactivat i no pot fitxar."
 
 #: apps/punches/services.py:453
 msgid ""
@@ -2030,15 +2026,6 @@ msgstr ""
 "complementàries, tret de les de força major per prevenir o reparar danys "
 "urgents."
 
-#: apps/punches/services.py:595
-msgid "The device says this punch happened later than it arrived."
-msgstr "El dispositiu diu que aquest fitxatge va passar després d'arribar."
-
-#: apps/punches/services.py:602
-msgid "This company records every punch from the moment it reaches the system."
-msgstr ""
-"Aquesta empresa registra tots els fitxatges des que arriben al sistema."
-
 #: apps/punches/services.py:608
 #, python-format
 msgid ""
@@ -2049,10 +2036,6 @@ msgstr ""
 "Aquest fitxatge es va fer fa més de %(hours)s hores, així que no es registra "
 "directament. Demana'l per correcció, on s'aprova i queda constància del "
 "canvi."
-
-#: apps/punches/services.py:652
-msgid "You cannot clock in: you have approved leave for today."
-msgstr "No pots fitxar: tens una absència aprovada per a avui."
 
 #: apps/punches/views.py:87
 msgid ""
@@ -2219,10 +2202,6 @@ msgid "Exit"
 msgstr "Sortida"
 
 #: apps/reports/pdf.py:167 apps/reports/services.py:627
-msgid "Hours"
-msgstr "Hores"
-
-#: apps/reports/pdf.py:167 apps/reports/services.py:627
 msgid "Notes"
 msgstr "Observacions"
 
@@ -2236,22 +2215,9 @@ msgstr "Cap registre en aquest període"
 msgid "Total for the period"
 msgstr "Total del període"
 
-#: apps/reports/pdf.py:222 apps/reports/services.py:653
-msgid "Breaks, not counted as working time"
-msgstr "Pauses, que no computen com a jornada"
-
 #: apps/reports/pdf.py:227 apps/reports/services.py:658
 msgid "Waiting time, not counted as working time"
 msgstr "Temps d'espera, que no computa com a jornada"
-
-# revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/pdf.py:254
-msgid ""
-"Times are recorded by the server, never by the device that requested them, "
-"and are shown in the time zone stated above."
-msgstr ""
-"Les hores les registra el servidor, mai el dispositiu que les demana, i es "
-"mostren en el fus horari indicat més amunt."
 
 #: apps/reports/pdf.py:260 apps/reports/services.py:662
 msgid "Generated"
@@ -2318,15 +2284,6 @@ msgstr "registrat sense cobertura i rebut després"
 #: apps/reports/services.py:548
 msgid "changed without the person's agreement (art. 4.b)"
 msgstr "modificat sense la conformitat de la persona (art. 4.b)"
-
-# revisar: traducido sin hablante nativo el 2026-08-27
-#: apps/reports/services.py:621
-msgid "Days with activity"
-msgstr "Dies amb activitat"
-
-#: apps/reports/services.py:647
-msgid "Total"
-msgstr "Total"
 
 #: apps/reports/views.py:41
 msgid "Dates must be written as YYYY-MM-DD."
@@ -5321,45 +5278,6 @@ msgstr ""
 "faci servir l'enllaç."
 
 # revisar: traducido sin hablante nativo el 2026-08-27
-#: templates/emails/punch_reminder.txt:1
-#, python-format
-msgid ""
-"Hello %(first_name)s,\n"
-"\n"
-"You have a shift at %(company)s today and have not clocked in yet.\n"
-"\n"
-"Clock in when you can, so your working day is recorded at the real time."
-msgstr ""
-"Hola %(first_name)s,\n"
-"\n"
-"Avui tens un torn a %(company)s i encara no has fitxat l'entrada.\n"
-"\n"
-"Fitxa quan puguis, perquè la teva jornada quedi registrada a l'hora real."
-
-# revisar: traducido sin hablante nativo el 2026-08-27
-#: templates/emails/punch_reminder.txt:5
-#, python-format
-msgid ""
-"Hello %(first_name)s,\n"
-"\n"
-"Your working day of %(day)s at %(company)s is still open: you clocked in and "
-"not out.\n"
-"\n"
-"Clock out when you finish. The server sets the time from your punch, so it "
-"is\n"
-"recorded exactly as it happens, overtime included if you stay longer today."
-msgstr ""
-"Hola %(first_name)s,\n"
-"\n"
-"La teva jornada del %(day)s a %(company)s encara és oberta: has fitxat "
-"l'entrada i no la sortida.\n"
-"\n"
-"Fitxa la sortida quan acabis. L'hora la posa el servidor a partir del teu "
-"fitxatge,\n"
-"així que queda registrada tal com passa, amb les hores extres incloses si "
-"avui et quedes més estona."
-
-# revisar: traducido sin hablante nativo el 2026-08-27
 #: templates/emails/punch_reminder.txt:12
 msgid ""
 "This is only a reminder: nothing has been recorded for you. You can turn "
@@ -5409,7 +5327,8 @@ msgstr ""
 "la\n"
 "representació legal de les persones treballadores.\n"
 "\n"
-"Tens %(days)s dies per respondre. Passat aquest termini l'empresa pot "
+"Tens %(days)s dies naturals, des d'avui, per respondre. Passat aquest "
+"termini l'empresa pot "
 "aplicar el canvi,\n"
 "i quedarà registrat com a fet sense el teu acord."
 
@@ -5645,20 +5564,8 @@ msgstr "Dies de preavís"
 msgid "Under the minimum notice"
 msgstr "Per sota del preavís mínim"
 
-msgid "Email accepted"
-msgstr "Correu acceptat"
-
-msgid "Browser notification accepted"
-msgstr "Notificació del navegador acceptada"
-
 msgid "Reached their app"
 msgstr "Va arribar a la seva aplicació"
-
-msgid "Through"
-msgstr "Per on"
-
-msgid "Read"
-msgstr "Llegit"
 
 msgid "yes"
 msgstr "sí"
@@ -5707,3 +5614,57 @@ msgstr "canvis de torn pendents d'avisar"
 
 msgid "what it was"
 msgstr "el que hi havia"
+
+msgid "Your day is still open. Clock out when you finish, or ask for a correction if you already left."
+msgstr "La teva jornada continua oberta. Fitxa la sortida quan acabis, o demana una correcció si ja te n'has anat."
+
+msgid "This punch was not saved: your device's clock is ahead. Set it right and clock again."
+msgstr "Aquest fitxatge no s'ha desat: el rellotge del teu dispositiu va avançat. Corregeix-lo i torna a fitxar."
+
+msgid "This punch was not saved: this company does not accept the device's time for punches made without coverage. Ask for a correction with the real time."
+msgstr "Aquest fitxatge no s'ha desat: aquesta empresa no accepta l'hora del dispositiu en els fitxatges fets sense cobertura. Demana una correcció amb l'hora real."
+
+msgid "You cannot clock in: you have approved leave today. If you are going to work, ask whoever manages your working time to cancel it."
+msgstr "No pots fitxar l'entrada: avui tens una absència aprovada. Si has de treballar, demana a qui gestioni la teva jornada que l'anul·li."
+
+msgid "Worked (h:min)"
+msgstr "Treballat (h:min)"
+
+msgid "Times are set by the server when it receives each punch. A punch made without coverage keeps the time its device declared, and the Notes column says so. All times are in the time zone stated above."
+msgstr "Les hores les posa el servidor en rebre cada fitxatge. Un fitxatge fet sense cobertura conserva l'hora que va declarar el seu dispositiu, i la columna Observacions ho indica. Totes les hores són a la zona horària indicada a dalt."
+
+msgid "Breaks, included in the total as working time"
+msgstr "Pauses, incloses en el total com a temps de treball"
+
+msgid "Breaks, taken off the total except on days they counted as working time"
+msgstr "Pauses, descomptades del total excepte els dies que comptaven com a treball"
+
+msgid "Breaks, already taken off the total"
+msgstr "Pauses, ja descomptades del total"
+
+msgid "Days with work or leave"
+msgstr "Dies amb treball o absència"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Email sent"
+msgstr "Correu enviat"
+
+msgid "Browser notification sent"
+msgstr "Avís del navegador enviat"
+
+msgid "Reached through"
+msgstr "Va arribar per"
+
+msgid "Seen (pressed Understood)"
+msgstr "Vist (va prémer Entesos)"
+
+msgid "Seen in"
+msgstr "Vist a"
+
+msgid "Hello %(first_name)s,\n\nYou have a shift at %(company)s today and have not clocked in yet.\n\nClock in as soon as you arrive. If you started earlier, ask for a correction with the\nreal time: clocking in now records the time it is now."
+msgstr "Hola, %(first_name)s:\n\nAvui tens torn a %(company)s i encara no has fitxat l'entrada.\n\nFitxa tan bon punt arribis. Si vas començar abans, demana una correcció amb l'hora\nreal: fitxar ara registra l'hora d'ara."
+
+msgid "Hello %(first_name)s,\n\nYour working day of %(day)s at %(company)s is still open: you clocked in and not out.\n\nClock out when you finish. If you have already left, do not clock out now: it would\nrecord the time it is now. Ask for a correction with the real time you left."
+msgstr "Hola, %(first_name)s:\n\nLa teva jornada del %(day)s a %(company)s continua oberta: vas fitxar l'entrada i no la sortida.\n\nFitxa la sortida quan acabis. Si ja te n'has anat, no fitxis ara: quedaria\nl'hora d'ara. Demana una correcció amb l'hora real a la qual vas sortir."

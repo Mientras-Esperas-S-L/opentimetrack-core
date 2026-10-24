@@ -592,14 +592,20 @@ def _accepted_time(company, *, declared_at, received_at):
     if declared_at > received_at + _CLOCK_SKEW:
         raise BusinessRuleError(
             code="declared_time_in_the_future",
-            message=_("The device says this punch happened later than it arrived."),
+            message=_(
+                "This punch was not saved: your device's clock is ahead. "
+                "Set it right and clock again."
+            ),
         )
 
     margen = timedelta(hours=company.offline_punch_grace_hours)
     if not margen:
         raise BusinessRuleError(
             code="declared_time_not_accepted",
-            message=_("This company records every punch from the moment it reaches the system."),
+            message=_(
+                "This punch was not saved: this company does not accept the device's time "
+                "for punches made without coverage. Ask for a correction with the real time."
+            ),
         )
     if received_at - declared_at > margen:
         raise BusinessRuleError(
@@ -649,6 +655,9 @@ def _check_no_approved_absence(employee, company) -> None:
     if absence is not None:
         raise BusinessRuleError(
             code="punch_blocked_by_absence",
-            message=_("You cannot clock in: you have approved leave for today."),
+            message=_(
+                "You cannot clock in: you have approved leave today. If you are going to "
+                "work, ask whoever manages your working time to cancel it."
+            ),
             details={"absence_id": str(absence.id), "date": today.isoformat()},
         )

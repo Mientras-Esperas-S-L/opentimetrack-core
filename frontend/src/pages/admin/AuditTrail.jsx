@@ -30,7 +30,9 @@ const READS = new Set(['RECORD_VIEWED', 'REPORT_EXPORTED', 'DOCUMENT_DOWNLOADED'
 
 const GROUPS = [
   { value: '', label: alCatalogo('Todo') },
-  { value: 'RECORD_VIEWED', label: alCatalogo('Lecturas de registros ajenos') },
+  // «Ajenos» le decía a quien trabaja que eso no iba con él, y es justo lo que
+  // viene a buscar: quién ha mirado **su** registro.
+  { value: 'RECORD_VIEWED', label: alCatalogo('Consultas del registro de una persona') },
   { value: 'DOCUMENT_DOWNLOADED', label: alCatalogo('Descargas de justificantes') },
   { value: 'REPORT_EXPORTED', label: alCatalogo('Exportaciones de informes') },
   { value: 'ROLE_CHANGED', label: alCatalogo('Cambios de perfil') },

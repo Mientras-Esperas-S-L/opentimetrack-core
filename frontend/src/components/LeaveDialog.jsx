@@ -226,10 +226,14 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
   // horas cuando constan veinticuatro debería pasar al escribirlo, no al recibir
   // el rechazo.
   const esDescansoCompensatorio = kind?.code === 'es.compensatory_rest'
+  const esVacaciones = kind?.family === 'VACATION'
   const { data: saldoDeDescanso } = useQuery({
     queryKey: ['leave-balance', subject],
     queryFn: () => getLeaveBalance(forPerson && person ? person : undefined),
-    enabled: open && esDescansoCompensatorio && (!forPerson || Boolean(person)),
+    // También para vacaciones: es el que dice si la empresa cuenta en días
+    // laborables o naturales, y la frase de debajo depende de eso.
+    enabled:
+      open && (esDescansoCompensatorio || esVacaciones) && (!forPerson || Boolean(person)),
   })
   const deuda = esDescansoCompensatorio ? (saldoDeDescanso?.rest_debt ?? null) : null
 
@@ -384,8 +388,8 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                 <Trans
                   i18nKey={
                     forPerson
-                      ? 'Lleva <destacado>{{usado}}</destacado> de {{total}} {{unidad}} {{periodo}}.'
-                      : 'Llevas <destacado>{{usado}}</destacado> de {{total}} {{unidad}} {{periodo}}.'
+                      ? 'Entre lo aprobado y lo pendiente, lleva <destacado>{{usado}}</destacado> de {{total}} {{unidad}} {{periodo}}.'
+                      : 'Entre lo aprobado y lo pendiente, llevas <destacado>{{usado}}</destacado> de {{total}} {{unidad}} {{periodo}}.'
                   }
                   values={{
                     usado: formatAmount(left.used),
@@ -532,15 +536,27 @@ export default function LeaveDialog({ open, onClose, onSubmit, saving, error, fo
                       values={{
                         cuantos: days,
                         unidad: plural(days, t('día'), t('días')),
+                        // Lo que cuenta la pantalla es de lunes a viernes, sin
+                        // festivos ni cuadrante; el servidor sí los quita. Decía
+                        // «11 días laborables» y luego se descontaban 10.
                         aclaracion:
-                          asked != null && kind?.unit !== 'DAYS_CALENDAR'
-                            ? ` (${formatAmount(asked)} ${unidadDe(t, kind.unit, asked)})`
-                            : '',
+                          asked != null && kind?.unit === 'DAYS_WORKING'
+                            ? ` (${t('{{cuantos}} de lunes a viernes', { cuantos: formatAmount(asked) })})`
+                            : asked != null && kind?.unit !== 'DAYS_CALENDAR'
+                              ? ` (${formatAmount(asked)} ${unidadDe(t, kind.unit, asked)})`
+                              : '',
                       }}
                       components={{ destacado: <strong /> }}
                     />
-                    {kind?.family === 'VACATION' &&
-                      ` ${t('Del saldo solo salen los que se iban a trabajar: ni fines de semana ni festivos.')}`}
+                    {/* Solo si la empresa cuenta en laborables: en naturales salen
+                        todos, y la frase decía lo contrario de lo que pasa. */}
+                    {esVacaciones &&
+                      saldoDeDescanso &&
+                      ` ${
+                        saldoDeDescanso.working_days
+                          ? t('Del saldo solo salen los que se iban a trabajar: ni fines de semana ni festivos.')
+                          : t('Tu empresa cuenta las vacaciones en días naturales: del saldo salen todos, también fines de semana y festivos.')
+                      }`}
                   </Typography>
                 )}
 

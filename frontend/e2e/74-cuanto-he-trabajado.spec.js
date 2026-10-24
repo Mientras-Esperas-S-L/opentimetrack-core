@@ -14,10 +14,14 @@ import { expect, test } from '@playwright/test'
 
 import { api, irA, vigilarConsola } from './apoyo.js'
 
-const hhmm = (segundos) =>
-  `${String(Math.floor(segundos / 3600)).padStart(2, '0')}:${String(
-    Math.floor((segundos % 3600) / 60),
-  ).padStart(2, '0')}`
+// Como `durationOf`: «146 h», «7 h 40 min», «30 min».
+const duracion = (segundos) => {
+  const total = Math.round(segundos / 60)
+  const h = Math.floor(total / 60)
+  const m = total % 60
+  if (!h) return `${m} min`
+  return m ? `${h} h ${m} min` : `${h} h`
+}
 
 const iso = (fecha) => fecha.toLocaleDateString('sv-SE')
 
@@ -41,7 +45,7 @@ test.describe('Mi jornada · cuánto he trabajado', () => {
     expect(informe.status).toBe(200)
     expect(informe.body.total_seconds).toBeGreaterThan(0)
 
-    await expect(panel.getByText(hhmm(informe.body.total_seconds), { exact: true })).toBeVisible()
+    await expect(panel.getByText(duracion(informe.body.total_seconds), { exact: true })).toBeVisible()
     // Un mes se desglosa por semanas.
     await expect(panel.getByText(/^Semana /).first()).toBeVisible()
 
@@ -72,7 +76,7 @@ test.describe('Mi jornada · cuánto he trabajado', () => {
 
     // El total del mes junto a su nombre, y el mismo que el del informe.
     await expect(
-      page.getByText(`Total ${hhmm(informe.body.total_seconds)}`, { exact: true }),
+      page.getByText(`Total ${duracion(informe.body.total_seconds)}`, { exact: true }),
     ).toBeVisible()
     // Y alguna pausa a la vista, que es el caso que se contaba mal.
     await expect(page.getByText(/^pausa \d\d:\d\d – \d\d:\d\d$/).first()).toBeVisible()

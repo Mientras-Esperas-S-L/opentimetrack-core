@@ -67,7 +67,7 @@ test.describe('Un catálogo más largo que una página', () => {
       ).toBeVisible()
 
       // Y el contador tiene que contarlos todos, no cincuenta.
-      await expect(page.getByText(`${CUANTOS} de los 14`)).toBeVisible()
+      await expect(page.getByText(`${CUANTOS} festivos entre todos los centros`, { exact: false })).toBeVisible()
 
       expect(ruido()).toEqual([])
     } finally {

@@ -158,10 +158,13 @@ export default function Overview() {
         }}
       >
         <Figure value={data.working_now.length} label={t('trabajando ahora')} />
-        <Figure value={data.off_today.length} label={t('fuera hoy')} />
+        {/* Cuenta ausencias: una baja dentro de unas vacaciones son dos. */}
+        <Figure value={data.off_today.length} label={t('ausencias hoy')} />
         <Figure
           value={waiting}
-          label={t('esperando decisión')}
+          // No son solo solicitudes: también propuestas que esperan a la
+          // persona, días con horas extra y vacaciones por recuperar.
+          label={t('pendientes en «Por decidir»')}
           tone="attention"
           to={decide ? '/panel/decisiones' : undefined}
         />
@@ -218,7 +221,10 @@ export default function Overview() {
         </Panel>
 
         <Stack sx={{ gap: 2 }}>
-          <Panel title={t('La semana')} hint={t('Eventos de fichaje por día. No son horas.')}>
+          <Panel
+            title={t('Últimos 7 días')}
+            hint={t('Eventos de fichaje por día. No son horas.')}
+          >
             <WeekBars week={data.week} />
           </Panel>
 
@@ -251,10 +257,7 @@ export default function Overview() {
               fullWidth
             >
               {waiting > 0
-                ? t('Resolver {{cuantas}} {{unidad}}', {
-                    cuantas: waiting,
-                    unidad: plural(waiting, t('solicitud'), t('solicitudes')),
-                  })
+                ? t('Ir a «Por decidir» ({{cuantas}})', { cuantas: waiting })
                 : t('Ver las horas extra por resolver')}
             </Button>
           )}
@@ -262,10 +265,10 @@ export default function Overview() {
             <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center' }}>
               {horasExtra === 1
                 ? t(
-                    'Uno de ellos son horas extra del mes, con cuatro meses de plazo para compensarse con descanso (art. 35.1).',
+                    'Uno de ellos es un día con horas extra de los últimos 31 días, con cuatro meses de plazo para compensarse con descanso (art. 35.1).',
                   )
                 : t(
-                    '{{cuantos}} de ellos son horas extra del mes, con cuatro meses de plazo para compensarse con descanso (art. 35.1).',
+                    '{{cuantos}} de ellos son días con horas extra de los últimos 31 días, con cuatro meses de plazo para compensarse con descanso (art. 35.1).',
                     { cuantos: horasExtra },
                   )}
             </Typography>

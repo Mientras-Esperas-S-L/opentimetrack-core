@@ -75,7 +75,8 @@ export default function AvisosDeTurno() {
               : t('Cambiado el {{dia}} a las {{hora}}.', {
                   dia: dateOf(aviso.created_at),
                   hora: timeOf(aviso.created_at),
-                })}
+                })}{' '}
+            {t('Al pulsar «Entendido» queda constancia de que lo has visto.')}
           </Typography>
         </Alert>
       ))}

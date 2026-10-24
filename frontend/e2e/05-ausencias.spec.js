@@ -51,7 +51,9 @@ test.describe('Pedir una ausencia', () => {
     // «Quedan 9» significa cosas distintas en días naturales y en laborables, y
     // la diferencia en una quincena son cinco días.
     await irA(page, '/mis-ausencias', 'Mis ausencias')
-    await expect(page.getByText(/días (laborables|naturales) de/)).toBeVisible()
+    await expect(
+      page.getByText(/días? (laborables?|naturales?) que te quedan?, de/),
+    ).toBeVisible()
   })
 
   test('pedirla para uno mismo no la aprueba sola', async ({ page }) => {

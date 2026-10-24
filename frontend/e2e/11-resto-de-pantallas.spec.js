@@ -138,7 +138,7 @@ test.describe('Por decidir', () => {
       'Ausencias',
       'Fichajes',
       'Sin acuerdo',
-      'Horas extra',
+      'Días con horas extra',
       'Vacaciones por recuperar',
     ]) {
       const pestaña = page.getByRole('tab', { name: new RegExp(`^${cola}`) })

@@ -856,7 +856,8 @@ export default function Decisions() {
               color="secondary"
               sx={{ pr: 1.5 }}
             >
-              {t('Horas extra')}
+              {/* El número son días con horas extra, no horas. */}
+              {t('Días con horas extra')}
             </Badge>
           }
         />
@@ -995,7 +996,7 @@ export default function Decisions() {
                       />
                     ) : (
                       <Trans
-                        i18nKey="Con esto se pasaría del tope: lleva <destacado>{{lleva}}</destacado> de {{tope}} en este periodo."
+                        i18nKey="Con esto se pasaría del tope: contando esta y las pendientes, sumaría <destacado>{{lleva}}</destacado> de {{tope}} en este periodo."
                         values={{
                           lleva: fmt(absence.over_the_limit.used),
                           tope: fmt(absence.over_the_limit.allowance),

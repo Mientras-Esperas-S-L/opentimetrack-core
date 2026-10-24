@@ -12,7 +12,15 @@ import DownloadIcon from '@mui/icons-material/Download'
 import { downloadReport, getHoursWorked } from '../services/api.js'
 import { save } from '../services/download.js'
 import { alCatalogo } from '../i18n/index.js'
-import { capitalised, dateOf, dayRange, hhmm, monthBounds, monthName, plural } from './format.js'
+import {
+  capitalised,
+  dateOf,
+  dayRange,
+  durationOf,
+  monthBounds,
+  monthName,
+  plural,
+} from './format.js'
 import { ErrorNote, Loading, Panel } from './common.jsx'
 
 const PERIODOS = [
@@ -200,7 +208,7 @@ export default function MisHoras() {
           >
             <Box>
               <Typography variant="h5" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                {hhmm(data.total_seconds)}
+                {durationOf(data.total_seconds / 60)}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {t('trabajadas en {{cuantos}} {{unidad}}', {
@@ -212,10 +220,11 @@ export default function MisHoras() {
             {data.overtime_seconds > 0 && (
               <Box>
                 <Typography variant="h6" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {hhmm(data.overtime_seconds)}
+                  {durationOf(data.overtime_seconds / 60)}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {t('de más sobre lo previsto')}
+                  {/* Son las que se ficharon como extra, no lo que pasa del turno. */}
+                  {t('horas extra registradas')}
                 </Typography>
               </Box>
             )}
@@ -241,7 +250,7 @@ export default function MisHoras() {
                     color={fila.seconds ? 'text.primary' : 'text.secondary'}
                     sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}
                   >
-                    {fila.seconds ? hhmm(fila.seconds) : '—'}
+                    {fila.seconds ? durationOf(fila.seconds / 60) : '—'}
                   </Typography>
                 </Stack>
                 <Box sx={{ height: 4, borderRadius: 2, bgcolor: 'action.hover', mt: 0.25 }}>

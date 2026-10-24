@@ -126,8 +126,8 @@ const PANTALLAS = [
     titulo: { es: 'Permisos', ca: 'Permisos', gl: 'Permisos' },
     propio: {
       es: 'La ley es el suelo',
-      ca: 'La llei és el sòl',
-      gl: 'A lei é o piso',
+      ca: 'La llei és el mínim',
+      gl: 'A lei é o mínimo',
     },
     control: {
       es: 'Buscar por nombre o artículo',

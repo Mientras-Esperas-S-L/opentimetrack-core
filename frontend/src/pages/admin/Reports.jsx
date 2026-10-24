@@ -242,7 +242,8 @@ export default function Reports() {
               disabled={generate.isPending}
               onClick={() => generate.mutate(payrollDay)}
             >
-              {t('Generar los de toda la plantilla')}
+              {/* Solo quien está de alta hoy, y rehace los ya generados. */}
+              {t('Generar los de quien está de alta hoy')}
             </Button>
 
             {generate.data && (

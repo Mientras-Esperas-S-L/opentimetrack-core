@@ -186,7 +186,10 @@ def _deliver(item) -> None:
             push_body = (
                 _("Your shift has started and you have not clocked in.")
                 if clock_in
-                else _("Your day is still open. Clock out when you finish.")
+                else _(
+                    "Your day is still open. Clock out when you finish, "
+                    "or ask for a correction if you already left."
+                )
             )
 
         send_push(
