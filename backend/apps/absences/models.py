@@ -319,6 +319,12 @@ class Absence(TenantOwnedModel):
         ),
     )
     reason = models.TextField(_("reason"), blank=True, validators=[validate_texto_legible])
+    #: Por qué se rechazó, para quien la pidió. La pantalla de decidir pedía el
+    #: motivo y decía «lo leerá la persona que lo solicitó», y no se guardaba en
+    #: ninguna parte: el «no» llegaba sin explicación.
+    resolution_note = models.TextField(
+        _("why it was refused"), blank=True, validators=[validate_texto_legible]
+    )
 
     #: Quién la metió, que no siempre es de quién es.
     #:

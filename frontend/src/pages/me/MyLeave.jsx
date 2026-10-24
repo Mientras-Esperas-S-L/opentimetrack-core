@@ -652,6 +652,12 @@ export default function MyLeave() {
                       {absence.reason}
                     </Typography>
                   )}
+                  {/* El porqué del «no», que antes no llegaba a ningún sitio. */}
+                  {absence.status === 'REJECTED' && absence.resolution_note && (
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>
+                      {t('Motivo del rechazo: {{motivo}}', { motivo: absence.resolution_note })}
+                    </Typography>
+                  )}
                   {absence.resolved_by_name && (
                     <Typography variant="caption" color="text.secondary">
                       {t('Resuelta por {{quien}} el {{fecha}}', {

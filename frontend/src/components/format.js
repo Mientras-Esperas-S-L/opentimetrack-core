@@ -112,6 +112,49 @@ export function timeOfWithSeconds(iso, timeZone) {
   })
 }
 
+/** Lo que da un `<input type="datetime-local">`, leído en la zona de quien fichó.
+ *
+ *  `new Date('2026-10-23T08:00')` lo lee en la zona **del navegador**. Una jefa en
+ *  Madrid corrigiendo a alguien de Las Palmas escribía «08:00» pensando en la
+ *  hora de Canarias y se guardaban las 07:00 de allí. Se busca el instante cuya
+ *  hora en `timeZone` es la escrita; dos pasadas cubren el cambio de hora.
+ */
+export function instantFromLocal(local, timeZone) {
+  if (!local) return undefined
+  if (!timeZone) return new Date(local).toISOString()
+  const [fecha, hora] = local.split('T')
+  const [y, m, d] = fecha.split('-').map(Number)
+  const [hh, mm] = hora.split(':').map(Number)
+  const deseado = Date.UTC(y, m - 1, d, hh, mm)
+  const formato = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+  const desfase = (instante) => {
+    const partes = Object.fromEntries(
+      formato.formatToParts(new Date(instante)).map((p) => [p.type, p.value]),
+    )
+    const comoUtc = Date.UTC(
+      Number(partes.year),
+      Number(partes.month) - 1,
+      Number(partes.day),
+      Number(partes.hour),
+      Number(partes.minute),
+      Number(partes.second),
+    )
+    return comoUtc - instante
+  }
+  let instante = deseado - desfase(deseado)
+  instante = deseado - desfase(instante)
+  return new Date(instante).toISOString()
+}
+
 export function dateOf(value, options = {}) {
   if (!value) return '—'
   const asDate = value.length === 10 ? new Date(`${value}T00:00:00`) : new Date(value)

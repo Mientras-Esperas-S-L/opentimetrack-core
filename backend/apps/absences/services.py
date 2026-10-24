@@ -814,7 +814,7 @@ def approve_absence(absence: Absence, *, resolved_by) -> Absence:
     return absence
 
 
-def reject_absence(absence: Absence, *, resolved_by) -> Absence:
+def reject_absence(absence: Absence, *, resolved_by, note: str = "") -> Absence:
     """Turned down requests are kept: a refused claim is history too."""
     absence = _must_be_open(absence)
 
@@ -830,7 +830,10 @@ def reject_absence(absence: Absence, *, resolved_by) -> Absence:
     absence.status = AbsenceStatus.REJECTED
     absence.approved_by = resolved_by
     absence.resolved_at = timezone.now()
-    absence.save(update_fields=["status", "approved_by", "resolved_at", "updated_at"])
+    absence.resolution_note = (note or "").strip()
+    absence.save(
+        update_fields=["status", "approved_by", "resolved_at", "resolution_note", "updated_at"]
+    )
     return absence
 
 

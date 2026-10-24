@@ -48,6 +48,7 @@ import {
   capitalised,
   dateOf,
   durationOf,
+  instantFromLocal,
   monthBounds,
   monthName,
   plural,
@@ -143,9 +144,8 @@ function CorrectionDialog({ open, onClose, onSubmit, saving, error, punches = []
       // una hora fallaba **siempre**, con un error que quien lo lee no puede
       // resolver.
       target: form.kind === 'MODIFY' ? form.target : undefined,
-      proposed_timestamp: form.proposed_timestamp
-        ? new Date(form.proposed_timestamp).toISOString()
-        : undefined,
+      // En la zona de la persona: el navegador puede estar en otra.
+      proposed_timestamp: instantFromLocal(form.proposed_timestamp, zone),
       reason: form.reason,
     })
   }
@@ -217,7 +217,7 @@ function CorrectionDialog({ open, onClose, onSubmit, saving, error, punches = []
               required
               fullWidth
               type="datetime-local"
-              label={t('Hora real')}
+              label={zone ? t('Hora real, en hora de {{zona}}', { zona: zone }) : t('Hora real')}
               value={form.proposed_timestamp}
               onChange={set('proposed_timestamp')}
               slotProps={{ inputLabel: { shrink: true } }}
