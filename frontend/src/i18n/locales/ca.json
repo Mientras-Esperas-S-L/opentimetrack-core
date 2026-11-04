@@ -1265,5 +1265,9 @@
   "sistema": "sistema",
   "sí": "sí",
   "un pago específico": "un pagament específic",
-  "Ámbito": "Àmbit"
+  "Ámbito": "Àmbit",
+  "Pedir la salida que falta": "Demanar la sortida que falta",
+  "Tu entrada del {{dia}} a las {{hora}} no tiene salida.": "La teva entrada del {{dia}} a les {{hora}} no té sortida.",
+  "Si pulsas el botón de fichar, empiezas una jornada nueva.": "Si prems el botó de fitxar, comences una jornada nova.",
+  "Falta la salida de la jornada que empezó el {{dia}} a las {{hora}}.": "Falta la sortida de la jornada que va començar el {{dia}} a les {{hora}}."
 }

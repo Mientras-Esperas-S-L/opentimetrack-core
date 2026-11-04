@@ -250,6 +250,72 @@ def break_is_open(employee, *, rules=None) -> bool:
     return ultimo is not None and ultimo.punch_type == PunchType.IN
 
 
+#: Hasta dónde se mira atrás buscando una entrada que se quedó sin salida. Una
+#: semana: lo que alguien todavía recuerda para pedir la hora que falta, y no
+#: tanto como para avisar de por vida de un olvido que ya no le toca resolver.
+UNCLOSED_LOOKBACK_DAYS = 7
+
+
+def unclosed_clock_in(employee, *, rules=None):
+    """La última entrada de jornada que se quedó sin salida, si la hay.
+
+    `infer_type` deja de verla pasado el tope, y hace bien: la entrada de hoy no
+    puede cerrar el olvido de ayer. Pero la persona no lo sabía. El sábado
+    31/10/2026 alguien pulsó para cerrar el viernes, el botón decía «Fichar
+    entrada» y se le abrió una jornada nueva --- un día que no trabajó. La
+    pantalla necesita esto para avisar **antes** de pulsar y ofrecer pedir la
+    salida que falta.
+
+    Una entrada está sin cerrar si no la sigue ninguna salida dentro del tope,
+    que es la misma regla con la que `assign_workdays` da una jornada por
+    abandonada, y si el tope ya ha pasado. La que sigue abierta dentro del tope
+    es la jornada en curso, no un olvido.
+
+    Si ya hay algo pedido sobre ella ---la salida que falta, o anularla--- y está
+    sin resolver, no se avisa: el aviso empujaría a pedirlo dos veces.
+    """
+    from apps.punches.corrections import CorrectionKind, CorrectionStatus, PunchCorrection
+
+    tope = timedelta(hours=max_open_hours(employee, rules=rules))
+    ahora = timezone.now()
+    eventos = Punch.objects.filter(
+        employee=employee,
+        is_active=True,
+        interval=PunchInterval.WORK,
+        timestamp__gte=ahora - timedelta(days=UNCLOSED_LOOKBACK_DAYS),
+    ).order_by("timestamp")
+
+    abierta = None
+    sin_cerrar = None
+    for punch in eventos:
+        if abierta is not None and punch.timestamp - abierta.timestamp > tope:
+            sin_cerrar, abierta = abierta, None
+        if punch.punch_type == PunchType.IN:
+            abierta = abierta or punch
+        else:
+            abierta = None
+    if abierta is not None and ahora - abierta.timestamp > tope:
+        sin_cerrar = abierta
+
+    if sin_cerrar is None:
+        return None
+
+    sin_resolver = PunchCorrection.objects.filter(
+        employee=employee,
+        status__in=[CorrectionStatus.PENDING, CorrectionStatus.AWAITING_EMPLOYEE],
+    )
+    ya_pedida = (
+        sin_resolver.filter(target=sin_cerrar).exists()
+        or sin_resolver.filter(
+            kind=CorrectionKind.ADD,
+            proposed_type=PunchType.OUT,
+            proposed_timestamp__gt=sin_cerrar.timestamp,
+            proposed_timestamp__lte=sin_cerrar.timestamp + tope,
+        ).exists()
+    )
+    return None if ya_pedida else sin_cerrar
+
+
 def infer_type(employee, company, interval: str = PunchInterval.WORK, *, rules=None) -> str:
     """Opens or closes, worked out from the last event **of that interval**.
 

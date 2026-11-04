@@ -12,6 +12,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.audit.services import record_view_of_others
+from apps.common.clock import local_date_of
 from apps.common.exceptions import BusinessRuleError
 from apps.common.filters import LocalDayRangeFilter
 from apps.common.network import client_ip
@@ -20,7 +21,7 @@ from apps.common.scope import person_in_scope, visible_people
 from apps.punches import idempotency
 from apps.punches.models import HoursNature, Punch, PunchSource
 from apps.punches.serializers import PunchSerializer, PunchWriteSerializer
-from apps.punches.services import build_day_status, register_punch
+from apps.punches.services import build_day_status, register_punch, unclosed_clock_in
 
 
 class PunchFilter(LocalDayRangeFilter):
@@ -296,8 +297,18 @@ class PunchViewSet(
     @action(detail=False, methods=["get"])
     def today(self, request):
         estado = build_day_status(request.user, request.user.tenant)
+        # Una entrada de otra jornada que se quedó sin salida. Aparte del estado
+        # del día porque no es de hoy: es lo que la pantalla tiene que avisar
+        # antes de que el siguiente toque abra una jornada nueva sin querer.
+        olvido = unclosed_clock_in(request.user)
         return Response(
             {
+                "unclosed": {
+                    "timestamp": olvido.timestamp.isoformat(),
+                    "workday": local_date_of(olvido.timestamp, request.user).isoformat(),
+                }
+                if olvido
+                else None,
                 "employee": str(request.user.id),
                 # La de la persona, no la de la empresa. Esta zona es la del
                 # reloj de pared que la pantalla de fichar enseña, y la que
