@@ -112,6 +112,22 @@ export function timeOfWithSeconds(iso, timeZone) {
   })
 }
 
+/** Un instante escrito como lo quiere un `<input type="datetime-local">`, en la
+ *  zona de quien fichó. Lo contrario de `instantFromLocal`. */
+export function localInputOf(iso, timeZone) {
+  if (!iso) return undefined
+  return new Date(iso)
+    .toLocaleString('sv-SE', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+    .replace(' ', 'T')
+}
+
 /** Lo que da un `<input type="datetime-local">`, leído en la zona de quien fichó.
  *
  *  `new Date('2026-10-23T08:00')` lo lee en la zona **del navegador**. Una jefa en

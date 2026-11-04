@@ -15,9 +15,10 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import PauseIcon from '@mui/icons-material/PauseCircle'
 
 import AvisosDeTurno from '../components/AvisosDeTurno.jsx'
+import CorrectionDialog from '../components/CorrectionDialog.jsx'
 import { useAuth } from '../hooks/useAuth.js'
-import { clock, getMyShiftToday, getToday } from '../services/api.js'
-import { durationOf, hhmmss, timeOf } from '../components/format.js'
+import { clock, getMyShiftToday, getToday, requestCorrection } from '../services/api.js'
+import { dateOf, durationOf, hhmmss, localInputOf, timeOf } from '../components/format.js'
 import { serverAt, serverClockReady } from '../services/serverClock.js'
 import { alCatalogo, localeDeFechas } from '../i18n/index.js'
 
@@ -237,6 +238,20 @@ export default function Clock() {
     },
   })
 
+  // La salida que falta de una jornada anterior, pedida desde aquí mismo. Es
+  // donde la persona se da cuenta del olvido: mandarla a «Mi jornada» a buscar
+  // el botón es justo lo que hizo que se pulsara el de fichar.
+  const [pidiendo, setPidiendo] = useState(false)
+  const pedir = useMutation({
+    mutationFn: requestCorrection,
+    onSuccess: () => {
+      setPidiendo(false)
+      queryClient.invalidateQueries({ queryKey: ['today'] })
+      queryClient.invalidateQueries({ queryKey: ['corrections'] })
+    },
+  })
+  const olvido = today?.unclosed
+
   const working = today?.state === 'WORKING'
   const enPausa = today?.state === 'ON_BREAK'
   const seconds = useLiveSeconds(today, working)
@@ -280,6 +295,53 @@ export default function Clock() {
                 })
               : t('Vas al día.')}
         </Alert>
+      )}
+
+      {/* Una entrada de otra jornada sin salida. Pasado el tope ya no cuenta
+          como abierta, así que el botón de abajo dice «Fichar entrada», y quien
+          viene a cerrar el olvido abre sin querer una jornada nueva: le pasó a
+          alguien un sábado (31/10/2026). Se avisa antes del toque y se ofrece
+          pedir la salida aquí. El fichaje no se bloquea: si hoy también
+          trabaja, su entrada tiene que quedar. */}
+      {olvido && (
+        <Alert severity="warning" variant="outlined" sx={{ mb: 2 }}>
+          {t('Tu entrada del {{dia}} a las {{hora}} no tiene salida.', {
+            dia: dateOf(olvido.timestamp, { weekday: 'long', timeZone: today.time_zone }),
+            hora: timeOf(olvido.timestamp, today.time_zone),
+          })}{' '}
+          {t('Si pulsas el botón de fichar, empiezas una jornada nueva.')}
+          <Box sx={{ mt: 1 }}>
+            <Button
+              color="warning"
+              variant="outlined"
+              size="small"
+              onClick={() => setPidiendo(true)}
+            >
+              {t('Pedir la salida que falta')}
+            </Button>
+          </Box>
+        </Alert>
+      )}
+
+      {olvido && (
+        <CorrectionDialog
+          key={pidiendo ? olvido.timestamp : 'cerrado'}
+          open={pidiendo}
+          saving={pedir.isPending}
+          error={pedir.error}
+          zone={today.time_zone}
+          initial={{ kind: 'ADD', proposed_type: 'OUT' }}
+          desde={localInputOf(olvido.timestamp, today.time_zone)}
+          contexto={t('Falta la salida de la jornada que empezó el {{dia}} a las {{hora}}.', {
+            dia: dateOf(olvido.timestamp, { weekday: 'long', timeZone: today.time_zone }),
+            hora: timeOf(olvido.timestamp, today.time_zone),
+          })}
+          onClose={() => {
+            setPidiendo(false)
+            pedir.reset()
+          }}
+          onSubmit={pedir.mutate}
+        />
       )}
 
       <Paper variant="outlined" sx={{ p: { xs: 3, sm: 4 }, textAlign: 'center' }}>
