@@ -18,6 +18,12 @@ django-cors-headers==4.9.0
 redis==8.1.0
 django-redis==7.0.0
 celery==5.6.3
+# Fijado, y `packaging` declarado a mano. kombu 5.7.0 importa `packaging` en su
+# transporte de Redis y no lo declara: sin fijar, el despliegue del 04/11/2026 trajo
+# esa versión y el worker y el beat de producción no arrancaron. En el CI no se ve,
+# porque pytest trae `packaging` por su cuenta.
+kombu==5.7.0
+packaging==26.3
 
 # Almacenamiento: disco o S3 compatible (SeaweedFS en desarrollo)
 django-storages==1.14.6

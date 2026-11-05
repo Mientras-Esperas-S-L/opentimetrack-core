@@ -38,7 +38,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements/ /app/requirements/
+# El import comprueba que Celery carga con lo que trae `prod.txt`, sin lo de
+# desarrollo: el 04/11/2026 a kombu le faltaba `packaging` y solo se vio al
+# arrancar el worker en producción.
 RUN pip install -r requirements/prod.txt \
+    && python -c "import celery, kombu.transport.redis" \
     && apt-get purge -y build-essential libpq-dev \
     && apt-get autoremove -y
 
