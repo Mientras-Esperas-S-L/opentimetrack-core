@@ -1,0 +1,52 @@
+# Despliegue a PRODUCCIÓN EN SOLITARIO, sin la aprobación de una segunda persona.
+# Copia del de Geosian (05/11/2026, actuación 650).
+#
+# CUÁNDO SE USA. Solo cuando la otra persona técnica no está y nadie puede aprobar el flujo
+# normal. Estando los dos, el camino es «Desplegar producción».
+#
+# QUÉ LO ACOTA: un motivo escrito de al menos 30 caracteres, y la anotación automática de
+# la actuación en el registro del CT111, marcada como hecha en solitario y pendiente de
+# revisión diferida (medida compensatoria MC-01). También si el despliegue falla.
+name: Desplegar producción EN SOLITARIO
+
+on:
+  workflow_dispatch:
+    inputs:
+      motivo:
+        description: >-
+          POR QUÉ no puede esperar a que la otra persona apruebe. Mínimo 30 caracteres.
+          Queda escrito en el registro y no se puede cambiar después.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desplegar-produccion
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    name: Desplegar producción en solitario (CT121)
+    environment: produccion-solitario
+    runs-on: [self-hosted, ott]
+    timeout-minutes: 30
+    steps:
+      - name: Comprobar el motivo
+        env:
+          MOTIVO: ${{ inputs.motivo }}
+        run: |
+          if [ "${#MOTIVO}" -lt 30 ]; then
+            echo "El motivo tiene ${#MOTIVO} caracteres y hacen falta 30." >&2
+            echo "Di POR QUÉ no podía esperar. No se ha desplegado nada." >&2
+            exit 1
+          fi
+          echo "Motivo aceptado (${#MOTIVO} caracteres)."
+
+      - name: Desplegar
+        env:
+          DESPLIEGUE_QUIEN: actions:${{ github.actor }}
+          DESPLIEGUE_MOTIVO: ${{ inputs.motivo }}
+          DESPLIEGUE_SHA: ${{ github.sha }}
+        run: sudo /usr/local/bin/desplegar-ott-prod-solo

@@ -1,0 +1,39 @@
+# Despliegue de DEVEL desde Actions (05/11/2026, actuación 650).
+#
+# Solo, después de que el CI pase en main, y también a botón. El runner `ct102-ott` vive
+# en el CT102, no en producción: da la orden al CT121 por SSH con una llave cuya orden
+# forzada solo admite desplegar la cabeza de main.
+name: Desplegar devel
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desplegar-devel
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    name: Desplegar devel (CT121)
+    # Solo el CI de un push a main, no el de un PR que venga de una rama llamada main.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    runs-on: [self-hosted, ott]
+    environment: devel
+    timeout-minutes: 25
+    steps:
+      # Sin checkout: el código lo trae el CT121, y así el runner no materializa nada.
+      - name: Desplegar
+        env:
+          DESPLIEGUE_QUIEN: actions:${{ github.actor }}
+          DESPLIEGUE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: sudo /usr/local/bin/desplegar-ott devel

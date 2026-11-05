@@ -1,0 +1,41 @@
+# Despliegue de PRODUCCIÓN desde Actions (05/11/2026, actuación 650). Copia del de Geosian.
+#
+#   1. Solo a botón. Un merge no puede acabar en producción sin que alguien lo mire.
+#   2. Con autorización registrada. El entorno `produccion` exige la aprobación de
+#      greencity-dev o pgonzalez-greencity, y con `prevent_self_review` quien lo lanza no
+#      puede aprobarse a sí mismo. Queda escrito quién aprobó y cuándo.
+#   3. El runner NO vive en producción. Corre en el CT102 y da la orden al CT121 por SSH
+#      con una llave de orden forzada, `from=10.0.0.5`, sin shell ni túneles.
+#   4. Lo aprobado es lo que entra. DESPLIEGUE_SHA es el commit con el que se lanzó, el que
+#      ve quien aprueba; si main se ha movido entretanto, el despliegue se para.
+#
+# El CT121 hace una copia de las bases antes de migrar. Las migraciones se aplican siempre,
+# como hasta ahora con `ott-desplegar`.
+#
+# A mano, `ott-desplegar prod` en el CT121 se rechaza salvo con `--sin-actions --motivo`.
+name: Desplegar producción
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desplegar-produccion
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    name: Desplegar producción (CT121)
+    environment: produccion
+    runs-on: [self-hosted, ott]
+    timeout-minutes: 30
+    steps:
+      # Aquí el actor es quien PULSÓ el botón. Quién lo AUTORIZÓ queda en el registro del
+      # entorno `produccion`, y no puede ser la misma persona.
+      - name: Desplegar
+        env:
+          DESPLIEGUE_QUIEN: actions:${{ github.actor }}
+          DESPLIEGUE_SHA: ${{ github.sha }}
+        run: sudo /usr/local/bin/desplegar-ott prod
