@@ -63,6 +63,11 @@ SE_USAN_DESDE_LA_CONSOLA = {
         "configuración. Es una comodidad del equipo: quitarlo no rompe nada y el "
         "shell cae al de Python"
     ),
+    "packaging": (
+        "lo importa kombu en su transporte de Redis sin declararlo (kombu 5.7.0). "
+        "Sin esta línea, el worker y el beat de producción no arrancaron el "
+        "04/11/2026. El Dockerfile de producción comprueba que Celery carga"
+    ),
 }
 
 
