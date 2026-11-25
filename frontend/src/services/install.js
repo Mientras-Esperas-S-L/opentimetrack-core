@@ -13,6 +13,8 @@
  *  el botón no instala, explica cómo hacerlo.
  */
 
+import { isNativeApp } from '../native.js'
+
 let deferred = null
 const listeners = new Set()
 const notify = () => listeners.forEach((listener) => listener())
@@ -45,7 +47,9 @@ if (typeof window !== 'undefined') {
 
 /** Si esta pantalla ya es la aplicación instalada: entonces no se ofrece. */
 const runningInstalled = () =>
-  window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true
+  isNativeApp ||
+  window.matchMedia?.('(display-mode: standalone)').matches ||
+  window.navigator.standalone === true
 
 /** iPhone o iPad. El iPad se presenta como un Mac, y se le reconoce por la
  *  pantalla táctil. */

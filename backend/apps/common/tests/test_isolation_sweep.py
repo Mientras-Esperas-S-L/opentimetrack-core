@@ -241,6 +241,7 @@ COLLECTIONS = [
     "/api/overtime/",
     "/api/holiday-recoveries/",
     "/api/push/subscriptions/",
+    "/api/push/devices/",
     "/api/reports/payroll-summary/",
 ]
 
@@ -817,6 +818,7 @@ def test_every_route_is_covered_by_this_sweep():
         "api/overtime/",
         "api/holiday-recoveries/",
         "api/push/subscriptions/",
+        "api/push/devices/",
         "api/company/",
         "api/company/record-arrangement/",
         "api/working-time-rules/",

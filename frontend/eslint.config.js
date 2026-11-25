@@ -8,7 +8,8 @@ export default [
   // interfaz empaquetada y minificada: 739 errores que no son de nadie. En la CI
   // no se notaba ---checkout limpio, no existen--- así que `npm run lint` solo
   // se rompía en local, y justo para quien acababa de correr las pruebas.
-  { ignores: ['dist', 'node_modules', 'e2e-report', 'test-results'] },
+  // `dist-android` y `android` los genera `npm run android`: la web compilada y Capacitor.
+  { ignores: ['dist', 'dist-android', 'android', 'node_modules', 'e2e-report', 'test-results'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {

@@ -27,6 +27,7 @@ import logging
 
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 log = logging.getLogger(__name__)
 
@@ -40,21 +41,41 @@ def push_is_configured() -> bool:
     return bool(settings.WEBPUSH_PUBLIC_KEY and settings.WEBPUSH_PRIVATE_KEY)
 
 
-def send_push(person, *, title: str, body: str, url: str = "/", tag: str = "") -> int:
-    """Notify every browser this person registered. Returns how many took it.
+def send_push(
+    person, *, title: str, body: str, url: str = "/", tag: str = "", personal: bool = False
+) -> int:
+    """Notify every browser and every app this person registered. Returns how
+    many took it.
+
+    `personal` says the body carries details of this person's working time (a
+    shift that moved, its hours). Web Push encrypts for the browser alone, so it
+    goes as it is; the app's relay (FCM) can read what it carries, so there the
+    body is swapped for a neutral line and the details stay one tap away.
 
     Never raises. A notification that fails is a notification that did not
     arrive, which is the same as the person having their phone off --- the
     caller has already recorded what it needed to record.
     """
+    try:
+        delivered = _send_to_apps(
+            person, title=title, body=body, url=url, tag=tag, personal=personal
+        )
+    except Exception:
+        log.exception("no se pudo avisar en la aplicación a %s", person.pk)
+        delivered = 0
     if not push_is_configured():
-        return 0
+        return delivered
 
     from apps.notifications.models import PushSubscription
 
     subscriptions = list(PushSubscription.objects.filter(employee=person))
     if not subscriptions:
-        return 0
+        return delivered
+    return delivered + _send_to_browsers(subscriptions, title=title, body=body, url=url, tag=tag)
+
+
+def _send_to_browsers(subscriptions, *, title: str, body: str, url: str, tag: str) -> int:
+    from apps.notifications.models import PushSubscription
 
     payload = json.dumps({"title": title, "body": body, "url": url, "tag": tag})
     delivered, dead = 0, []
@@ -71,6 +92,35 @@ def send_push(person, *, title: str, body: str, url: str = "/", tag: str = "") -
         PushSubscription.objects.filter(
             pk__in=[s.pk for s in subscriptions if s.pk not in dead]
         ).update(last_sent_at=timezone.now())
+    return delivered
+
+
+def _send_to_apps(person, *, title: str, body: str, url: str, tag: str, personal: bool) -> int:
+    from apps.notifications import fcm
+    from apps.notifications.models import NativePushDevice
+
+    if not fcm.fcm_is_configured():
+        return 0
+    devices = list(NativePushDevice.objects.filter(employee=person))
+    if not devices:
+        return 0
+
+    if personal:
+        body = str(_("Open the app to see it."))
+    delivered, dead = 0, []
+    for device in devices:
+        outcome = fcm.send_one(device.token, title=title, body=body, url=url, tag=tag)
+        if outcome == "gone":
+            dead.append(device.pk)
+        elif outcome == "sent":
+            delivered += 1
+
+    if dead:
+        NativePushDevice.objects.filter(pk__in=dead).delete()
+    if delivered:
+        NativePushDevice.objects.filter(pk__in=[d.pk for d in devices if d.pk not in dead]).update(
+            last_sent_at=timezone.now()
+        )
     return delivered
 
 

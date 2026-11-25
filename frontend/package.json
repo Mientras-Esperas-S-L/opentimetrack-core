@@ -12,6 +12,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "android": "vite build --mode android && cap sync android",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write \"src/**/*.{js,jsx,css}\"",
     "e2e": "playwright test",
@@ -19,6 +20,9 @@
     "i18n:check": "node scripts/comprobar-catalogos.mjs && node scripts/comprobar-lo-visible.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/push-notifications": "8.1.3",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^9.3.1",
@@ -34,6 +38,7 @@
   "devDependencies": {
     "@babel/parser": "^7.29.8",
     "@babel/traverse": "^7.29.8",
+    "@capacitor/cli": "8.5.3",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.62.1",
     "@vitejs/plugin-react": "^6.0.5",

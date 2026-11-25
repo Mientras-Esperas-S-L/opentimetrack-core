@@ -547,6 +547,13 @@ WEBPUSH_SUBJECT = env("WEBPUSH_SUBJECT", default=f"mailto:{DEFAULT_FROM_EMAIL}")
 # nada, confunde.
 WEBPUSH_TTL_SECONDS = env.int("WEBPUSH_TTL_SECONDS", default=6 * 60 * 60)
 
+# Avisos en la aplicación de Android. Dentro de una aplicación no hay Web Push: el
+# único camino es Firebase Cloud Messaging, que sí exige una cuenta (un proyecto de
+# Firebase). Aquí va la ruta del JSON de una cuenta de servicio de ese proyecto con
+# solo el rol `roles/firebasecloudmessaging.admin`. Sin fichero, la aplicación no
+# recibe avisos y lo demás sigue igual. Ver apps/notifications/fcm.py.
+FCM_CREDENTIALS_FILE = env("FCM_CREDENTIALS_FILE", default="")
+
 # ------------------------------------------------------------------------ registro
 
 LOGGING = {

@@ -47,3 +47,9 @@ minio-data/
 # Uploaded files. Test runs leave sample documents here.
 backend/media/
 compose.override.yml
+
+# La copia de la web que va dentro del APK (npm run android)
+frontend/dist-android/
+# La configuración de Firebase de una instalación concreta: se copia al compilar
+# el APK, no se versiona (lleva una clave de la API de Google).
+frontend/android/app/google-services.json
