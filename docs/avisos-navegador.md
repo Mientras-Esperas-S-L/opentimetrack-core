@@ -57,3 +57,34 @@ Un recordatorio empuja a fichar; **nunca ficha**. Puede llegar tarde, no llegar,
 o llegar a un móvil apagado, y nada de eso toca el registro: no hay fichaje que
 dependa de que un aviso se entregue. Es exactamente por eso que un fallo aquí es
 una molestia y no una incidencia legal.
+
+## En la aplicación de Android
+
+La aplicación instalada desde el APK no es un navegador y Web Push no le llega.
+En Android, la única forma de despertarla con un aviso es el relevo de Google,
+Firebase Cloud Messaging (FCM). Aquí sí hay una cuenta de por medio:
+
+1. Un proyecto de Firebase con la aplicación Android dada de alta con el mismo
+   identificador que `appId` en `frontend/capacitor.config.json`. Su
+   `google-services.json` va en `frontend/android/app/` al construir el APK, y
+   no se sube al repositorio.
+2. Una cuenta de servicio de ese proyecto con **solo** el rol
+   `roles/firebasecloudmessaging.admin`, y una clave JSON suya.
+3. Esa clave, en el servidor, legible por el proceso que envía los avisos (la API
+   y el trabajo de recordatorios), y su ruta en el `.env`:
+
+```ini
+FCM_CREDENTIALS_FILE=/ruta/dentro/del/contenedor/fcm.json
+```
+
+Sin ese fichero, el canal está apagado como Web Push sin sus claves: la API
+contesta `app_enabled: false` y la aplicación no enseña el interruptor.
+
+Lo que conviene saber:
+
+- **Google ve el aviso.** Por eso lo personal no viaja por FCM: un cambio de
+  turno llega como "Abre la aplicación para verlo", y el horario se ve dentro.
+- **La clave es un secreto**, del mismo rango que la del correo. Si se filtra,
+  se borra en Google Cloud y se crea otra; los móviles no tienen que hacer nada.
+- **Un móvil que cambia de manos** deja de avisar a la persona anterior en
+  cuanto entra la nueva, y cerrar sesión lo da de baja.
