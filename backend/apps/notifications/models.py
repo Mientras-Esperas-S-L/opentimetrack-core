@@ -49,3 +49,36 @@ class PushSubscription(TenantOwnedModel):
 
     def __str__(self) -> str:
         return f"{self.employee_id} · {self.device_label or self.endpoint[:40]}"
+
+
+class NativePushDevice(TenantOwnedModel):
+    """One install of the Android app that agreed to be notified.
+
+    Web Push does not exist inside an app's web view, so the app registers with
+    Firebase Cloud Messaging instead and hands over the token Firebase gave it.
+    That token is the whole address: unlike a browser subscription there are no
+    keys of ours, and what is sent is readable by the relay. That is why the
+    sending side keeps personal details out of it (see `push.send_push`).
+
+    Keyed by `token` for the same reason a subscription is keyed by its
+    endpoint: registering again from the same install returns the same token, so
+    it updates instead of piling up copies of every notification.
+    """
+
+    employee = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="native_push_devices",
+        verbose_name=_("employee"),
+    )
+    # FCM tokens are ~160 characters today and Google promises no ceiling.
+    token = models.CharField(_("token"), max_length=500, unique=True)
+    device_label = models.CharField(_("device"), max_length=80, blank=True)
+    last_sent_at = models.DateTimeField(_("last used"), null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("app device")
+        verbose_name_plural = _("app devices")
+
+    def __str__(self) -> str:
+        return f"{self.employee_id} · {self.device_label or self.token[:20]}"

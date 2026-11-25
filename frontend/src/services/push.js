@@ -10,17 +10,26 @@
  *  *por dónde*.
  */
 
-import { getPushKey, subscribePush, unsubscribePush } from './api.js'
+import {
+  getPushKey,
+  registerAppDevice,
+  subscribePush,
+  unregisterAppDevice,
+  unsubscribePush,
+} from './api.js'
+import { isNativeApp } from '../native.js'
 
 /** Si el navegador puede hacer esto. Safari en iOS solo desde la aplicación
  *  añadida a la pantalla de inicio, y ningún navegador lo permite sin HTTPS
  *  (localhost aparte), así que hay que preguntar antes de ofrecerlo. */
 export const pushSupported = () =>
-  'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
+  isNativeApp ||
+  ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window)
 
 /** El estado real, leído del navegador y no de lo que creamos recordar:
  *  `denied`, `unsupported`, `on` u `off`. */
 export async function pushState() {
+  if (isNativeApp) return appPushState()
   if (!pushSupported()) return 'unsupported'
   if (Notification.permission === 'denied') return 'denied'
   const registration = await navigator.serviceWorker.getRegistration('/sw.js')
@@ -35,6 +44,7 @@ export async function pushState() {
  *  responde con «bloquear» y ya no hay vuelta atrás.
  */
 export async function enablePush() {
+  if (isNativeApp) return enableAppPush()
   if (!pushSupported()) return 'unsupported'
 
   const { enabled, public_key: publicKey } = await getPushKey()
@@ -71,6 +81,7 @@ export async function enablePush() {
  *  deja una fila muerta que el servidor descubre cuando ya ha fallado un envío.
  */
 export async function disablePush() {
+  if (isNativeApp) return disableAppPush()
   if (!pushSupported()) return 'unsupported'
   const registration = await navigator.serviceWorker.getRegistration('/sw.js')
   const subscription = await registration?.pushManager.getSubscription()
@@ -116,4 +127,129 @@ function fromBase64Url(value) {
     .replace(/_/g, '/')
   const raw = atob(padded)
   return Uint8Array.from(raw, (c) => c.charCodeAt(0))
+}
+
+// ------------------------------------------------- la aplicación de Android
+//
+// Dentro del APK no hay Web Push: la vista web de Android no lo tiene. Avisa
+// Firebase Cloud Messaging, a través del plugin de Capacitor. Mismo trato que en
+// el navegador: el permiso se pide al encender el interruptor y nunca al
+// entrar, y la baja se hace en los dos lados.
+//
+// El plugin se carga solo dentro del APK, con import(): en la web no pinta nada.
+
+const APP_TOKEN = 'ott.appPushToken'
+
+const savedToken = () => {
+  try {
+    return localStorage.getItem(APP_TOKEN)
+  } catch {
+    return null
+  }
+}
+
+const saveToken = (token) => {
+  try {
+    if (token) localStorage.setItem(APP_TOKEN, token)
+    else localStorage.removeItem(APP_TOKEN)
+  } catch {
+    // Sin almacenamiento el interruptor saldrá apagado; el servidor sí lo sabe.
+  }
+}
+
+// Devuelve el módulo y no el plugin: el plugin de Capacitor es un proxy que
+// responde a cualquier método, también a `then`, así que devolverlo desde una
+// función asíncrona hace que `await` lo tome por una promesa y falle con
+// «PushNotifications.then() is not implemented».
+const pluginModule = () => import('@capacitor/push-notifications')
+
+async function appPushState() {
+  const { app_enabled: enabled } = await getPushKey()
+  if (!enabled) return 'unconfigured'
+  const { PushNotifications } = await pluginModule()
+  const { receive } = await PushNotifications.checkPermissions()
+  if (receive === 'denied') return 'denied'
+  return receive === 'granted' && savedToken() ? 'on' : 'off'
+}
+
+/** El token que Firebase da a esta instalación. Llega por un evento, no como
+ *  respuesta de `register()`, así que se espera al evento, con un límite: sin
+ *  servicios de Google en el móvil no llega nunca. */
+async function firebaseToken(PushNotifications) {
+  const handles = []
+  try {
+    return await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('FCM: no token')), 20000)
+      Promise.all([
+        PushNotifications.addListener('registration', ({ value }) => {
+          clearTimeout(timer)
+          resolve(value)
+        }),
+        PushNotifications.addListener('registrationError', (error) => {
+          clearTimeout(timer)
+          reject(new Error(error?.error || 'FCM: registration failed'))
+        }),
+      ])
+        .then((added) => {
+          handles.push(...added)
+          return PushNotifications.register()
+        })
+        .catch((error) => {
+          clearTimeout(timer)
+          reject(error)
+        })
+    })
+  } finally {
+    handles.forEach((handle) => handle.remove())
+  }
+}
+
+async function enableAppPush() {
+  const { app_enabled: enabled } = await getPushKey()
+  if (!enabled) return 'unconfigured'
+
+  const { PushNotifications } = await pluginModule()
+  let { receive } = await PushNotifications.checkPermissions()
+  if (receive !== 'granted' && receive !== 'denied') {
+    receive = (await PushNotifications.requestPermissions()).receive
+  }
+  if (receive !== 'granted') return receive === 'denied' ? 'denied' : 'off'
+
+  const token = await firebaseToken(PushNotifications)
+  await registerAppDevice({ token, device_label: 'Android' })
+  saveToken(token)
+  return 'on'
+}
+
+async function disableAppPush() {
+  await forgetThisPhone()
+  return 'off'
+}
+
+/** Deja de avisar en este móvil a quien tiene la sesión abierta. Se llama
+ *  también al cerrar sesión: el móvil puede ser compartido, y los avisos de una
+ *  persona no deben seguir llegando a un aparato que ya no usa. */
+export async function forgetThisPhone() {
+  if (!isNativeApp) return
+  const token = savedToken()
+  if (!token) return
+  await unregisterAppDevice(token).catch(() => {})
+  saveToken(null)
+  const { PushNotifications } = await pluginModule()
+  await PushNotifications.unregister().catch(() => {})
+}
+
+/** Al pulsar un aviso, la aplicación abre la pantalla que dice el aviso. Se
+ *  cambia la dirección sin recargar: React Router escucha `popstate`. */
+export async function listenToAppNotifications() {
+  if (!isNativeApp) return
+  const { PushNotifications } = await pluginModule()
+  await PushNotifications.addListener('pushNotificationActionPerformed', ({ notification }) => {
+    const url = notification?.data?.url
+    // Solo rutas propias: un aviso no debe poder sacar la aplicación a otra web.
+    if (typeof url === 'string' && url.startsWith('/') && !url.startsWith('//')) {
+      window.history.pushState({}, '', url)
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    }
+  })
 }

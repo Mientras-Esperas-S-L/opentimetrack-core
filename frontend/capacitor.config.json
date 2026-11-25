@@ -1,0 +1,10 @@
+{
+  "appId": "com.greencitycontrol.ott",
+  "appName": "OpenTimeTrack",
+  "webDir": "dist-android",
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}

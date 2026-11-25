@@ -44,6 +44,8 @@ const NO_SE_TRADUCE = {
     Firefox: 'nombre del navegador',
     Safari: 'nombre del navegador',
     Notification: 'la API del navegador, que se comprueba por su nombre',
+    'FCM: no token': 'error interno: la pantalla no lo enseña, relee el estado',
+    'FCM: registration failed': 'error interno: la pantalla no lo enseña, relee el estado',
   },
   'src/services/install.js': {
     '(display-mode: standalone)': 'consulta de medios de CSS, no un texto',

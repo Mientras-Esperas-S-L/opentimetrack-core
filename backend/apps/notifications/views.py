@@ -15,7 +15,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.common.permissions import IsAuthenticatedInTenant
-from apps.notifications.models import PushSubscription
+from apps.notifications.fcm import fcm_is_configured
+from apps.notifications.models import NativePushDevice, PushSubscription
 from apps.notifications.push import push_is_configured
 
 
@@ -37,6 +38,8 @@ class PushKeyView(APIView):
             {
                 "enabled": push_is_configured(),
                 "public_key": settings.WEBPUSH_PUBLIC_KEY if push_is_configured() else "",
+                # La aplicación de Android no usa la clave: le basta saber si hay envío.
+                "app_enabled": fcm_is_configured(),
             }
         )
 
@@ -117,5 +120,77 @@ class PushSubscriptionView(APIView):
         # but guessing one must not let somebody silence another person's phone.
         if endpoint:
             rows = rows.filter(endpoint=endpoint)
+        rows.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class NativePushDeviceSerializer(serializers.Serializer):
+    token = serializers.CharField(max_length=500)
+    device_label = serializers.CharField(
+        max_length=80, required=False, allow_blank=True, default=""
+    )
+
+
+class NativePushDeviceUnregisterSerializer(serializers.Serializer):
+    token = serializers.CharField(
+        required=False,
+        help_text="Sin él se dan de baja todas las instalaciones de esta persona.",
+    )
+
+
+class NativePushDeviceView(APIView):
+    """The caller's own installs of the Android app.
+
+    The same three rules as for browsers: only one's own, registering twice
+    updates, and nobody can silence somebody else's phone by guessing a token.
+    """
+
+    permission_classes = [IsAuthenticatedInTenant]
+
+    @extend_schema(
+        tags=["notifications"], request=NativePushDeviceSerializer, responses={201: dict}
+    )
+    def post(self, request):
+        form = NativePushDeviceSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+        data = form.validated_data
+
+        # Un móvil que cambia de manos: el token es de la instalación, no de la
+        # persona. Quien entra ahora se lo queda y el anterior deja de recibir
+        # aquí avisos que ya no son suyos. Se busca en todas las empresas por lo
+        # mismo: el token es único en la tabla entera.
+        NativePushDevice.objects_all_tenants.filter(token=data["token"]).exclude(
+            employee=request.user
+        ).delete()
+        NativePushDevice.objects.update_or_create(
+            token=data["token"],
+            defaults={
+                "tenant": request.user.tenant,
+                "employee": request.user,
+                "device_label": data.get("device_label", ""),
+            },
+        )
+        return Response({"registered": True}, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        tags=["notifications"],
+        request=NativePushDeviceUnregisterSerializer,
+        parameters=[
+            OpenApiParameter(
+                "token",
+                str,
+                description=(
+                    "Cuál se da de baja. **Sin él se dan de baja todas las de esta "
+                    "persona.** Se acepta también en el cuerpo."
+                ),
+            )
+        ],
+        responses={204: None},
+    )
+    def delete(self, request):
+        token = request.data.get("token") or request.query_params.get("token")
+        rows = NativePushDevice.objects.filter(employee=request.user)
+        if token:
+            rows = rows.filter(token=token)
         rows.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

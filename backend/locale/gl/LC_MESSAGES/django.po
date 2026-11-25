@@ -5655,3 +5655,16 @@ msgstr "Ola, %(first_name)s:\n\nHoxe tes quenda en %(company)s e aínda non fich
 
 msgid "Hello %(first_name)s,\n\nYour working day of %(day)s at %(company)s is still open: you clocked in and not out.\n\nClock out when you finish. If you have already left, do not clock out now: it would\nrecord the time it is now. Ask for a correction with the real time you left."
 msgstr "Ola, %(first_name)s:\n\nA túa xornada do %(day)s en %(company)s segue aberta: fichaches a entrada e non a saída.\n\nFicha a saída cando remates. Se xa marchaches, non fiches agora: quedaría\na hora de agora. Pide unha corrección coa hora real á que saíches."
+
+#: apps/notifications/push.py
+msgid "Open the app to see it."
+msgstr "Abre a aplicación para velo."
+
+msgid "app device"
+msgstr "dispositivo coa aplicación"
+
+msgid "app devices"
+msgstr "dispositivos coa aplicación"
+
+msgid "token"
+msgstr "token"

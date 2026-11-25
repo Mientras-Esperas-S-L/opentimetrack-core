@@ -67,11 +67,37 @@ function buildVersion() {
   }
 }
 
+// La copia que va dentro del APK (`npm run android`). En el APK no hay proxy
+// delante que lleve `/api` al servidor: la dirección de la API tiene que ser
+// completa, y es la de una instalación concreta. Sin ella el APK arrancaría y no
+// podría entrar nadie, así que mejor no compilarlo.
+function androidApiUrl(env) {
+  const url = (env.VITE_API_URL || '').trim()
+  // `http://localhost:<puerto>/api` solo sirve para probar contra la pila local con
+  // `adb reverse`, y solo en la compilación de depuración: la de publicación no deja
+  // salir por HTTP sin cifrar (ver android/app/src/debug/AndroidManifest.xml).
+  if (!/^(https:\/\/[^/]+|http:\/\/localhost(:\d+)?)\/api\/?$/.test(url)) {
+    throw new Error(
+      'El APK necesita VITE_API_URL con la API de la instalación, completa y por HTTPS: ' +
+        'https://<dominio>/api (por ejemplo, en frontend/.env.android.local).',
+    )
+  }
+  return url.replace(/\/$/, '')
+}
+
 export default defineConfig(({ mode }) => {
-  const name = installationName({ ...loadEnv(mode, process.cwd(), ''), ...process.env })
+  const env = { ...loadEnv(mode, process.cwd(), ''), ...process.env }
+  const name = installationName(env)
+  const android = mode === 'android'
   return {
     plugins: [react(), withInstallationName(name), buildVersion()],
-    define: { 'import.meta.env.VITE_INSTALLATION_NAME': JSON.stringify(name) },
+    define: {
+      'import.meta.env.VITE_INSTALLATION_NAME': JSON.stringify(name),
+      'import.meta.env.VITE_NATIVE': JSON.stringify(android ? 'android' : ''),
+      ...(android && { 'import.meta.env.VITE_API_URL': JSON.stringify(androidApiUrl(env)) }),
+    },
+    // Aparte de `dist`, para que compilar el APK no pise la web.
+    build: android ? { outDir: 'dist-android' } : {},
     server: {
       port: 3000,
       host: true,

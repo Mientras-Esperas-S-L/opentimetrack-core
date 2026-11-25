@@ -13,6 +13,8 @@
 
 import { useEffect, useState } from 'react'
 
+import { isNativeApp } from '../native.js'
+
 const CURRENT = import.meta.env.VITE_BUILD_ID
 const EVERY_MS = 60_000
 
@@ -21,7 +23,8 @@ export function useNewVersion() {
 
   useEffect(() => {
     // En desarrollo no hay `version.json`, y Vite ya recarga solo.
-    if (import.meta.env.DEV || !CURRENT || available) return undefined
+    // En el APK tampoco: ver src/native.js.
+    if (import.meta.env.DEV || isNativeApp || !CURRENT || available) return undefined
     let cancelled = false
 
     const check = async () => {

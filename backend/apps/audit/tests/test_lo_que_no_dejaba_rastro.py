@@ -226,6 +226,7 @@ SIN_RASTRO_A_PROPOSITO = {
     "DelegatedPunchView": "igual: el fichaje delegado guarda quién lo registró",
     # Preferencias del aparato o de la persona sobre sí misma.
     "PushSubscriptionView": "un móvil apuntándose a los avisos",
+    "NativePushDeviceView": "la aplicación de Android apuntándose a los avisos",
     "MeView": "idioma y recordatorios propios",
     # El resumen de nómina **es** la evidencia de haberlo entregado.
     "PayrollSummaryView": "el resumen generado es la propia constancia",

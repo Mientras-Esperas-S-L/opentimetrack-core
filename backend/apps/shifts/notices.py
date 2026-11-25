@@ -274,7 +274,14 @@ def enviar(ids) -> None:
                 ShiftNotice.objects_all_tenants.filter(pk=aviso.pk, emailed_at__isnull=True).update(
                     emailed_at=timezone.now()
                 )
-            if send_push(persona, title=asunto, body=corto, url="/fichar", tag=f"turno-{aviso.pk}"):
+            if send_push(
+                persona,
+                title=asunto,
+                body=corto,
+                url="/fichar",
+                tag=f"turno-{aviso.pk}",
+                personal=True,
+            ):
                 ShiftNotice.objects_all_tenants.filter(pk=aviso.pk, pushed_at__isnull=True).update(
                     pushed_at=timezone.now()
                 )

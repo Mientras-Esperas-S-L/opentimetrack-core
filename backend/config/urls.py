@@ -15,7 +15,7 @@ from apps.absences.views import AbsenceViewSet, LeaveTypeViewSet
 from apps.audit.views import AuditLogViewSet
 from apps.common.views import HealthView, InstanceView
 from apps.help.views import HelpArticleView, HelpIndexView, HelpSearchView
-from apps.notifications.views import PushKeyView, PushSubscriptionView
+from apps.notifications.views import NativePushDeviceView, PushKeyView, PushSubscriptionView
 from apps.punches.correction_views import CorrectionViewSet
 from apps.punches.delegated import DelegatedPunchView
 from apps.punches.overtime_views import OvertimeView
@@ -260,6 +260,7 @@ urlpatterns = [
     ),
     path("api/push/key/", PushKeyView.as_view(), name="push-key"),
     path("api/push/subscriptions/", PushSubscriptionView.as_view(), name="push-subscriptions"),
+    path("api/push/devices/", NativePushDeviceView.as_view(), name="push-devices"),
     path("api/", include(router.urls)),
 ]
 

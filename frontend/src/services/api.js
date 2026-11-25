@@ -515,6 +515,10 @@ export const getPushKey = () => get('/push/key/')
 export const subscribePush = (payload) => post('/push/subscriptions/', payload)
 export const unsubscribePush = (endpoint) =>
   api.delete('/push/subscriptions/', { data: { endpoint } })
+/** Lo mismo para la aplicación de Android, que avisa por Firebase y no por Web
+ *  Push: lo que se registra es el token que Firebase dio a esta instalación. */
+export const registerAppDevice = (payload) => post('/push/devices/', payload)
+export const unregisterAppDevice = (token) => api.delete('/push/devices/', { data: { token } })
 /** El saldo de vacaciones. `until` pregunta la hipótesis: «si el contrato
  *  terminara ese día, ¿cuánto quedaría por liquidar?». No cambia nada. */
 export const getLeaveBalance = (employee, until) =>

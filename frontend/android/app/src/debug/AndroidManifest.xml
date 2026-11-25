@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Solo en la compilación de depuración: deja hablar por HTTP sin cifrar con la API
+     de la pila local (http://localhost con `adb reverse`). La de publicación no lo
+     lleva, y en ella Android solo deja HTTPS. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application android:usesCleartextTraffic="true" tools:replace="android:usesCleartextTraffic" />
+</manifest>

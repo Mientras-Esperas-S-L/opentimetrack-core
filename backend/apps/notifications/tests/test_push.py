@@ -155,16 +155,18 @@ def test_a_reminder_survives_push_failing(settings, company, worker):
 def test_the_public_key_is_public(settings, company):
     settings.WEBPUSH_PUBLIC_KEY = "clave-publica"
     settings.WEBPUSH_PRIVATE_KEY = "clave-privada"
+    settings.FCM_CREDENTIALS_FILE = ""
     body = client_for().get("/api/push/key/").json()
-    assert body == {"enabled": True, "public_key": "clave-publica"}
+    assert body == {"enabled": True, "public_key": "clave-publica", "app_enabled": False}
 
 
 @pytest.mark.django_db
 def test_without_keys_the_api_says_so_instead_of_offering_it(settings):
     settings.WEBPUSH_PUBLIC_KEY = ""
     settings.WEBPUSH_PRIVATE_KEY = ""
+    settings.FCM_CREDENTIALS_FILE = ""
     body = client_for().get("/api/push/key/").json()
-    assert body == {"enabled": False, "public_key": ""}
+    assert body == {"enabled": False, "public_key": "", "app_enabled": False}
 
 
 @pytest.mark.django_db

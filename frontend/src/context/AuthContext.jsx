@@ -9,6 +9,7 @@ import {
   signOut as apiSignOut,
   tokens,
 } from '../services/api.js'
+import { forgetThisPhone } from '../services/push.js'
 import { AuthContext } from './authContext.js'
 
 /** Quién está dentro y en qué empresa. Con esto cambia lo que se puede leer. */
@@ -131,6 +132,8 @@ export function AuthProvider({ children }) {
   }, [setSession])
 
   const signOut = useCallback(async () => {
+    // Antes de cerrar: para dar de baja este móvil hace falta aún la sesión.
+    await forgetThisPhone().catch(() => {})
     await apiSignOut()
     setSession(null)
   }, [setSession])
