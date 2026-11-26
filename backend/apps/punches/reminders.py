@@ -17,6 +17,12 @@ Two nudges, both keyed off the reconciliation between roster and record:
 
 Ran every few minutes by cron or celery-beat. `PunchReminder` is what stops it
 sending the same nudge on every tick until the person finally clocks.
+
+**It insists, a little.** A notification that arrives while the phone is in a
+pocket is easy to miss, so while the punch is still overdue the nudge comes back
+every `REPEAT_EVERY`, up to `TIMES` in all, and then stops. The repeats go to the
+phone and the browser only: the mail goes once, because three identical mails
+are noise in an inbox and the inbox is not where the nudge has to be noticed.
 """
 
 from __future__ import annotations
@@ -24,10 +30,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, timedelta
 
+from django.db.models import F
 from django.utils import timezone
 
 from apps.punches.models import PunchReminder
 from apps.shifts.services import day_reconciliation
+
+# Tres avisos como mucho, con diez minutos entre uno y otro. El trabajo corre
+# cada cinco, así que la repetición llega a los diez o quince minutos.
+TIMES = 3
+REPEAT_EVERY = timedelta(minutes=10)
 
 
 @dataclass(frozen=True)
@@ -35,6 +47,8 @@ class DueReminder:
     employee: object
     day: date
     kind: str  # PunchReminder.Kind
+    # Cuántas veces se ha mandado ya: 0 es el primero, que también va por correo.
+    already: int = 0
 
 
 def reminders_due(company, now=None) -> list[DueReminder]:
@@ -42,8 +56,9 @@ def reminders_due(company, now=None) -> list[DueReminder]:
 
     Reads the person's own clock: their today and their now, in their
     workplace's zone, so a shift in the Canary delegation is judged an hour
-    behind Madrid. Excludes anyone who opted out, anyone already reminded of
-    that thing on that day, and every case where the punch is not overdue yet.
+    behind Madrid. Excludes anyone who opted out, anyone reminded of that thing
+    on that day less than `REPEAT_EVERY` ago or already `TIMES` times, and every
+    case where the punch is not overdue yet.
     """
     from apps.shifts.models import Shift
     from apps.tenants.rules import WorkingTimeRules
@@ -88,17 +103,19 @@ def reminders_due(company, now=None) -> list[DueReminder]:
                 day == today
                 and recon.status == "MISSING"
                 and planned_start + entry_tol <= local_now <= planned_end
-                and not _already_sent(person, day, PunchReminder.Kind.CLOCK_IN)
+                and (already := _times_due(person, day, PunchReminder.Kind.CLOCK_IN, now))
+                is not None
             ):
-                due.append(DueReminder(person, day, PunchReminder.Kind.CLOCK_IN))
+                due.append(DueReminder(person, day, PunchReminder.Kind.CLOCK_IN, already))
 
             # Open day: the shift's end has passed and they are still clocked in.
             if (
                 recon.status == "OPEN"
                 and local_now >= planned_end + exit_tol
-                and not _already_sent(person, day, PunchReminder.Kind.CLOCK_OUT)
+                and (already := _times_due(person, day, PunchReminder.Kind.CLOCK_OUT, now))
+                is not None
             ):
-                due.append(DueReminder(person, day, PunchReminder.Kind.CLOCK_OUT))
+                due.append(DueReminder(person, day, PunchReminder.Kind.CLOCK_OUT, already))
 
     return due
 
@@ -118,25 +135,49 @@ def _asleep(when, rules) -> bool:
     return when >= desde or when < hasta
 
 
-def _already_sent(person, day, kind) -> bool:
-    return PunchReminder.objects.filter(employee=person, day=day, kind=kind).exists()
+def _times_due(person, day, kind, now) -> int | None:
+    """Cuántas veces se ha mandado ya, si toca mandarlo ahora; si no, None."""
+    sent = PunchReminder.objects.filter(employee=person, day=day, kind=kind).first()
+    if sent is None:
+        return 0
+    if sent.times >= TIMES:
+        return None
+    if (sent.last_sent_at or sent.sent_at) > now - REPEAT_EVERY:
+        return None
+    return sent.times
 
 
 def send_reminders(company, now=None) -> int:
-    """Send every due reminder once, and record that it went out.
+    """Send every due reminder, and record that it went out.
 
     The record is written whether or not the mail leaves: an SMTP hiccup must
     not turn into the same nudge every five minutes. A reminder is a courtesy,
     not part of the register --- losing one is a worse day for somebody, not a
     hole in the record.
+
+    Two runs can overlap (a slow tick and the next one). The first send is
+    guarded by the unique row, and a repeat by updating the count only if it is
+    still the one this run read: whichever run loses sends nothing.
     """
+    now = now or timezone.now()
     sent = 0
     for item in reminders_due(company, now):
-        _, created = PunchReminder.objects.get_or_create(
-            tenant=company, employee=item.employee, day=item.day, kind=item.kind
-        )
-        if not created:
-            continue
+        if item.already == 0:
+            _, created = PunchReminder.objects.get_or_create(
+                tenant=company,
+                employee=item.employee,
+                day=item.day,
+                kind=item.kind,
+                defaults={"last_sent_at": now},
+            )
+            if not created:
+                continue
+        else:
+            won = PunchReminder.objects.filter(
+                employee=item.employee, day=item.day, kind=item.kind, times=item.already
+            ).update(times=F("times") + 1, last_sent_at=now)
+            if not won:
+                continue
         _deliver(item)
         sent += 1
     return sent
@@ -149,7 +190,7 @@ def _deliver(item) -> None:
     it is the one that arrives while somebody is still at work --- which is the
     only moment a "remember to clock out" is any use --- and the mail goes
     anyway, because a browser that was never registered would otherwise be
-    silence.
+    silence. The mail goes only the first time: repeats are for the phone.
     """
     import logging
 
@@ -200,9 +241,11 @@ def _deliver(item) -> None:
             # One notification per person, day and kind: the same tag replaces
             # the previous one instead of stacking three identical cards.
             tag=f"punch-{item.kind}-{item.day.isoformat()}",
+            # En el móvil, por el canal que suena y cae sobre la pantalla.
+            urgent=True,
         )
 
-        if person.email:
+        if person.email and item.already == 0:
             send_without_failing(
                 subject=subject, message=body, to=person.email, what="a punch reminder"
             )

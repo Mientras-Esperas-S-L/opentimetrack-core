@@ -1733,6 +1733,12 @@ msgstr "día"
 msgid "sent at"
 msgstr "enviado el"
 
+msgid "times sent"
+msgstr "veces enviado"
+
+msgid "last sent at"
+msgstr "último envío"
+
 #: apps/punches/models.py:582
 msgid "clock reminder"
 msgstr "recordatorio de fichaje"

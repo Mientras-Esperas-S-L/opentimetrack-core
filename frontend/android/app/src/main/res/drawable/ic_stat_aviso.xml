@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El icono pequeño de los avisos, en la barra de arriba. Android lo pinta de un
+     solo color con la transparencia como forma: el reloj del logo, sin el disco. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <path
+        android:pathData="M9,32a23,23 0 1,0 46,0a23,23 0 1,0 -46,0"
+        android:strokeWidth="5"
+        android:strokeColor="#FFFFFFFF" />
+    <path
+        android:pathData="M32,17v16h11"
+        android:strokeWidth="7"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

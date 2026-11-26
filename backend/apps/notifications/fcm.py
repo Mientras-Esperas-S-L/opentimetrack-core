@@ -33,6 +33,10 @@ from django.conf import settings
 log = logging.getLogger(__name__)
 
 SCOPE = "https://www.googleapis.com/auth/firebase.messaging"
+# El canal de Android que suena, vibra y cae sobre la pantalla. Lo crea la
+# aplicación al arrancar (frontend/src/services/push.js) con el mismo nombre; un
+# móvil con una versión anterior, que no lo tiene, usa el canal por defecto.
+URGENT_CHANNEL = "recordatorios"
 TIMEOUT_SECONDS = 10
 
 _token_lock = threading.Lock()
@@ -99,7 +103,7 @@ def _access_token(creds: dict) -> str:
         return _token["value"]
 
 
-def send_one(token: str, *, title: str, body: str, url: str, tag: str) -> str:
+def send_one(token: str, *, title: str, body: str, url: str, tag: str, channel: str = "") -> str:
     """`sent`, `gone` (the app was uninstalled: delete the row) or `failed`."""
     creds = _credentials()
     if creds is None:
@@ -115,7 +119,10 @@ def send_one(token: str, *, title: str, body: str, url: str, tag: str) -> str:
             "priority": "high",
             "ttl": f"{settings.WEBPUSH_TTL_SECONDS}s",
             # El mismo tag sustituye al aviso anterior en vez de apilarlos, como en la web.
-            "notification": {"tag": tag} if tag else {},
+            "notification": {
+                **({"tag": tag} if tag else {}),
+                **({"channel_id": channel} if channel else {}),
+            },
         },
     }
     try:
