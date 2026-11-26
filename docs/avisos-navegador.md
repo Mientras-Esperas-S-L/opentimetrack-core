@@ -88,3 +88,6 @@ Lo que conviene saber:
   se borra en Google Cloud y se crea otra; los móviles no tienen que hacer nada.
 - **Un móvil que cambia de manos** deja de avisar a la persona anterior en
   cuanto entra la nueva, y cerrar sesión lo da de baja.
+- **Con la aplicación abierta**, Android no pinta el aviso por su cuenta: se lo
+  entrega a la aplicación. Lo pinta el plugin porque `presentationOptions` lleva
+  `alert` en `frontend/capacitor.config.json`. Sin eso, el aviso llega pero no se ve.
