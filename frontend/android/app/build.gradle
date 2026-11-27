@@ -11,6 +11,16 @@ if (ficheroDeFirma && file(ficheroDeFirma).exists()) {
     file(ficheroDeFirma).withInputStream { firma.load(it) }
 }
 
+// La versión la pone scripts/publicar-apk.sh (-PottVersion=AAAA.MM.DD.HHMM, la misma
+// que lleva la web compilada dentro, que es con la que compara al buscar una nueva).
+// El versionCode tiene que crecer en cada versión o Android no deja instalar encima:
+// AAMMDDHHmm con el año desde 2020 cabe en un entero hasta 2041.
+def ottVersion = project.findProperty('ottVersion') ?: '2026.01.01.0000'
+def ottVersionCode = { String v ->
+    def p = v.tokenize('.')
+    ((p[0] as int) - 2020) * 100000000 + (p[1] as int) * 1000000 + (p[2] as int) * 10000 + (p[3] as int)
+}
+
 android {
     namespace = "com.greencitycontrol.ott"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -18,8 +28,8 @@ android {
         applicationId "com.greencitycontrol.ott"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode ottVersionCode(ottVersion)
+        versionName ottVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

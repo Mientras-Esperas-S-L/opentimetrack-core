@@ -44,8 +44,38 @@ Lo que conviene saber:
   de la máquina que compila.
 - **Pasar del APK de pruebas al de publicación** obliga a desinstalar el de
   pruebas: las firmas no coinciden.
-- **Cada versión sube `versionCode`** en `frontend/android/app/build.gradle`.
-  Android no instala encima una versión con el mismo número o uno menor.
+- **Cada versión sube `versionCode`**, o Android no la instala encima.
+  `scripts/publicar-apk.sh` lo saca de la fecha de compilación.
+
+## Publicar una versión y que los móviles se enteren
+
+Sin tienda, el APK se reparte desde una carpeta pública de la web, y cada
+versión avisa a las anteriores:
+
+```bash
+cd frontend
+OTT_ANDROID_FIRMA=/ruta/firma.properties \
+APK_PUBLIC_URL=https://descargas.example.com/descargas \
+APK_UPLOAD=/ruta/subir.sh \
+  scripts/publicar-apk.sh --publicar
+```
+
+La versión es la fecha y hora de la compilación, `AAAA.MM.DD.HHMM`; de ella sale
+también el `versionCode`, que así crece solo. El guion deja en `dist-apk/` el APK
+de esa versión, el mismo con nombre fijo (`ott.apk`, el enlace que se reparte) y
+`ott.json`, con la versión, el APK y su SHA-256. Con `--publicar` llama a
+`APK_UPLOAD` con cada uno, el `.json` el último: así ningún móvil ve anunciada una
+versión cuyo APK aún no está. Cómo se sube (scp, un bucket, lo que sea) es de cada
+instalación y vive fuera del repositorio.
+
+La aplicación pide ese `.json` al abrirse, al volver a la pantalla y al volver la
+red. Si la versión publicada es mayor, avisa: "Hay una versión nueva de la
+aplicación", con "Descargar" y "Ahora no". Descargar abre el APK en el navegador
+del sistema y Android pide confirmar la instalación encima. Solo se instala si va
+firmado con la misma clave.
+
+El servidor que sirva la carpeta tiene que dar los `.apk` como
+`application/vnd.android.package-archive` y el `.json` sin caché.
 
 ## Entrar con el proveedor de la empresa (SSO)
 

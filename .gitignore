@@ -50,6 +50,8 @@ compose.override.yml
 
 # La copia de la web que va dentro del APK (npm run android)
 frontend/dist-android/
+# Lo que deja scripts/publicar-apk.sh para subir
+frontend/dist-apk/
 # La configuración de Firebase de una instalación concreta: se copia al compilar
 # el APK, no se versiona (lleva una clave de la API de Google).
 frontend/android/app/google-services.json
