@@ -6,6 +6,7 @@
 | [Alcance y cobertura](cobertura-legal.md) | Dónde está la línea de lo que hace OpenTimeTrack, y qué situaciones de la legislación laboral cubre hoy |
 | [Trabajos periódicos](trabajos-periodicos.md) | Recordatorios y purga: ejecutarlos por cron o por Celery, y cómo se elige |
 | [Avisos en el navegador](avisos-navegador.md) | Web Push: generar las claves del despliegue, y qué pasa si no las generas |
+| [La aplicación de Android](aplicacion-android.md) | Construir y firmar el APK, la clave de publicación y su copia, el SSO y las descargas dentro de la app |
 | [Idiomas](traducciones.md) | Qué está traducido, qué se deja sin traducir a propósito, y qué pide revisión de un hablante nativo |
 | [Dependencias](dependencias.md) | Qué se instala y por qué, las licencias, y cómo se revisa la próxima vez |
 

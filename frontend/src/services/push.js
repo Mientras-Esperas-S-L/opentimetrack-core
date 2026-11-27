@@ -242,6 +242,37 @@ async function enableAppPush() {
   return 'on'
 }
 
+// Si ya se le ofreció en este móvil, aceptara o no. Se ofrece una vez y nunca más:
+// quien dice que no tiene el interruptor de "Mi jornada" para cambiar de idea.
+const OFFERED = 'ott.appPushOffered'
+
+/** En el APK, ofrece los avisos la primera vez que se entra, sin esperar a que
+ *  la persona encuentre el interruptor.
+ *
+ *  En el navegador eso sería un error ---una web que pide permiso nada más
+ *  entrar se responde con "bloquear"---, pero una aplicación instalada para
+ *  fichar que pregunta si puede avisar es lo que se espera de ella, y quien la
+ *  instala precisamente para que le recuerden fichar no tiene por qué saber que
+ *  hay que ir a buscar un interruptor. Devuelve el estado resultante, o null si
+ *  no se ha hecho nada. */
+export async function offerAppPushOnce() {
+  if (!isNativeApp) return null
+  try {
+    if (localStorage.getItem(OFFERED)) return null
+  } catch {
+    return null
+  }
+  const state = await appPushState()
+  // Sin avisos en esta instalación no se gasta la oferta: se hará cuando los haya.
+  if (state === 'unconfigured') return null
+  try {
+    localStorage.setItem(OFFERED, '1')
+  } catch {
+    return null
+  }
+  return state === 'off' ? enableAppPush() : state
+}
+
 async function disableAppPush() {
   await forgetThisPhone()
   return 'off'
@@ -252,6 +283,13 @@ async function disableAppPush() {
  *  persona no deben seguir llegando a un aparato que ya no usa. */
 export async function forgetThisPhone() {
   if (!isNativeApp) return
+  // Quien entre después en este móvil es otra persona, y a ella también se le
+  // ofrecen. Si el permiso de Android quedó denegado, no se le vuelve a pedir.
+  try {
+    localStorage.removeItem(OFFERED)
+  } catch {
+    // Nada que olvidar.
+  }
   const token = savedToken()
   if (!token) return
   await unregisterAppDevice(token).catch(() => {})

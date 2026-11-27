@@ -1,5 +1,16 @@
 apply plugin: 'com.android.application'
 
+// La firma de publicación. La clave no está en el repositorio, que es público:
+// OTT_ANDROID_FIRMA apunta a un fichero de propiedades (storeFile, storePassword,
+// keyAlias, keyPassword) que vive fuera. Sin él, `assembleRelease` sale sin firmar
+// y Android no lo instala, que es mejor que firmarlo con una clave de pega.
+// Ver docs/aplicacion-android.md.
+def firma = new Properties()
+def ficheroDeFirma = System.getenv('OTT_ANDROID_FIRMA')
+if (ficheroDeFirma && file(ficheroDeFirma).exists()) {
+    file(ficheroDeFirma).withInputStream { firma.load(it) }
+}
+
 android {
     namespace = "com.greencitycontrol.ott"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,8 +27,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (firma.storeFile) {
+            release {
+                storeFile file(firma.storeFile)
+                storePassword firma.storePassword
+                keyAlias firma.keyAlias
+                keyPassword firma.keyPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            if (firma.storeFile) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

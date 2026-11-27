@@ -197,12 +197,18 @@ def _digest(binding: str) -> str:
 
 
 def authorize_url(
-    provider: SsoProvider, redirect_uri: str, binding: str = "", hint: str = ""
+    provider: SsoProvider,
+    redirect_uri: str,
+    binding: str = "",
+    hint: str = "",
+    app: bool = False,
 ) -> str:
     """Where to send the browser, with the transient state kept here.
 
     `binding` ties this sign-in to the browser that started it; see `take_ticket`.
     `hint` is the address the person typed, when they typed one; see `other_account`.
+    `app` says the sign-in started in the Android app, so the way back goes there
+    and not to the web; see `state_is_for_app`.
     """
     hint = (hint or "").strip().lower()[:254]
     document = discovery(provider)
@@ -219,6 +225,7 @@ def authorize_url(
             "redirect_uri": redirect_uri,
             "binding": _digest(binding) if binding else "",
             "hint": hint,
+            "app": app,
         },
         STATE_TTL_SECONDS,
     )
@@ -253,6 +260,16 @@ def other_account(provider: SsoProvider, claims: dict, hint: str) -> bool:
         return False
     email = (claims.get(provider.email_claim) or claims.get("email") or "").strip().lower()
     return bool(email) and email != hint
+
+
+def state_is_for_app(state: str) -> bool:
+    """Si esta entrada empezó en la aplicación de Android. Sin gastar el estado.
+
+    Hace falta antes de saber si la vuelta sale bien: un rechazo del proveedor
+    también tiene que acabar en la aplicación, y no en una web que la persona no
+    tiene abierta.
+    """
+    return bool((cache.get(f"{_STATE_PREFIX}{state or ''}") or {}).get("app"))
 
 
 def take_state(state: str) -> dict:

@@ -439,7 +439,7 @@ def test_un_cierre_de_un_emisor_desconocido_no_cierra_nada(provider, idp, keypai
 # ------------------------------------------- la vuelta a la aplicación web
 
 
-def _hasta_el_callback(client, provider, keypair, monkeypatch):
+def _hasta_el_callback(client, provider, keypair, monkeypatch, **extra):
     """Deja el viaje a punto de volver, y devuelve la respuesta del callback."""
     from django.core.cache import cache as django_cache
 
@@ -447,7 +447,9 @@ def _hasta_el_callback(client, provider, keypair, monkeypatch):
 
     params = parse_qs(
         urlparse(
-            client.get(f"/api/auth/sso/start/{provider.slug}/", {"binding": PRUEBA})["Location"]
+            client.get(f"/api/auth/sso/start/{provider.slug}/", {"binding": PRUEBA, **extra})[
+                "Location"
+            ]
         ).query
     )
     estado = sso.take_state(params["state"][0])
@@ -755,3 +757,80 @@ def test_con_la_misma_cuenta_se_entra_como_siempre(provider, idp, keypair, monke
         )
 
     assert respuesta["Location"].startswith("https://ott.example/entrando?ticket=")
+
+
+# ------------------------------------------------- desde la aplicación de Android
+#
+# En la aplicación la entrada se abre en el navegador del sistema, porque los
+# proveedores no dejan entrar desde una vista web. La vuelta tiene que acabar otra
+# vez en la aplicación, por su esquema propio, y no en una web que no está abierta.
+
+APP = "com.greencitycontrol.ott://sso"
+
+
+@pytest.mark.django_db
+def test_desde_la_aplicacion_la_vuelta_acaba_en_la_aplicacion(
+    provider, idp, keypair, monkeypatch, company
+):
+    with tenant_context(company.id):
+        User.objects.create_user(
+            email="marta@contrata.example", password=PASSWORD, tenant=company, first_name="Marta"
+        )
+
+    client = APIClient()
+    with override_settings(SSO_WEB_URL="https://ott.example", SSO_APP_URL=APP):
+        vuelta = _hasta_el_callback(client, provider, keypair, monkeypatch, app="android")
+
+    assert vuelta.status_code == 302
+    assert vuelta["Location"].startswith(f"{APP}?ticket=")
+    # Y el vale sigue atado a quien empezó: sin su secreto no da sesión.
+    vale = parse_qs(urlparse(vuelta["Location"]).query)["ticket"][0]
+    bien = client.post("/api/auth/sso/ticket/", {"ticket": vale, "proof": PRUEBA}, format="json")
+    assert bien.json()["access"]
+
+
+@pytest.mark.django_db
+def test_un_rechazo_del_proveedor_tambien_vuelve_a_la_aplicacion(provider, idp, settings):
+    settings.SSO_WEB_URL = "https://ott.example"
+    settings.SSO_APP_URL = APP
+    client = APIClient()
+    inicio = client.get(
+        f"/api/auth/sso/start/{provider.slug}/", {"binding": PRUEBA, "app": "android"}
+    )
+    state = parse_qs(urlparse(inicio["Location"]).query)["state"][0]
+
+    vuelta = client.get("/api/auth/sso/callback/", {"state": state, "error": "access_denied"})
+
+    assert vuelta["Location"] == f"{APP}?sso_error=provider_refused"
+
+
+@pytest.mark.django_db
+def test_desde_la_aplicacion_tampoco_se_empieza_sin_atar(provider, idp, settings):
+    settings.SSO_WEB_URL = "https://ott.example"
+    settings.SSO_APP_URL = APP
+
+    answer = APIClient().get(f"/api/auth/sso/start/{provider.slug}/", {"app": "android"})
+
+    assert answer["Location"] == f"{APP}?sso_error=start_from_sign_in"
+
+
+@pytest.mark.django_db
+def test_la_vuelta_a_la_aplicacion_no_la_elige_quien_llama(provider, idp, settings):
+    """Solo `app=android`, y a la dirección de los ajustes: un valor inventado no
+    convierte esta vuelta en una redirección a cualquier sitio."""
+    settings.SSO_WEB_URL = "https://ott.example"
+    settings.SSO_APP_URL = APP
+
+    for raro in ("https://otro.example", "ios", "evil://x"):
+        answer = APIClient().get(f"/api/auth/sso/start/{provider.slug}/", {"app": raro})
+        assert answer["Location"] == "https://ott.example/?sso_error=start_from_sign_in"
+
+
+@pytest.mark.django_db
+def test_sin_esquema_de_aplicacion_configurado_vuelve_a_la_web(provider, idp, settings):
+    settings.SSO_WEB_URL = "https://ott.example"
+    settings.SSO_APP_URL = ""
+
+    answer = APIClient().get(f"/api/auth/sso/start/{provider.slug}/", {"app": "android"})
+
+    assert answer["Location"] == "https://ott.example/?sso_error=start_from_sign_in"

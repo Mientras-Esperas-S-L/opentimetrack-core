@@ -440,6 +440,11 @@ FRONTEND_URL = clean(
     env("FRONTEND_URL", default=PUBLIC_URL or "http://localhost:3000"), "FRONTEND_URL"
 )
 
+# Por donde vuelve a la aplicación de Android una entrada por SSO que empezó en
+# ella: su esquema propio, el `appId` de frontend/capacitor.config.json. Vacío, la
+# aplicación no ofrece SSO por esa vía y la vuelta va a la web, como siempre.
+SSO_APP_URL = env("SSO_APP_URL", default="com.greencitycontrol.ott://sso")
+
 # How long an account link lasts, in seconds.
 PASSWORD_RESET_TIMEOUT = env.int("PASSWORD_RESET_TIMEOUT", default=60 * 60 * 24)
 
