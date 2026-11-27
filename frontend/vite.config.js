@@ -85,6 +85,18 @@ function androidApiUrl(env) {
   return url.replace(/\/$/, '')
 }
 
+// Dónde mira el APK si hay una versión nueva (el `.json` que publica
+// scripts/publicar-apk.sh), y qué versión es la que se compila. Las dos las pone
+// ese guion; sin ellas el APK no busca versiones nuevas, que es lo que se quiere
+// en uno de pruebas.
+function apkVersionUrl(env) {
+  const url = (env.APK_VERSION_URL || '').trim()
+  if (url && !url.startsWith('https://')) {
+    throw new Error('APK_VERSION_URL tiene que ser https://: es de donde sale lo que se instala.')
+  }
+  return url
+}
+
 export default defineConfig(({ mode }) => {
   const env = { ...loadEnv(mode, process.cwd(), ''), ...process.env }
   const name = installationName(env)
@@ -94,7 +106,11 @@ export default defineConfig(({ mode }) => {
     define: {
       'import.meta.env.VITE_INSTALLATION_NAME': JSON.stringify(name),
       'import.meta.env.VITE_NATIVE': JSON.stringify(android ? 'android' : ''),
-      ...(android && { 'import.meta.env.VITE_API_URL': JSON.stringify(androidApiUrl(env)) }),
+      ...(android && {
+        'import.meta.env.VITE_API_URL': JSON.stringify(androidApiUrl(env)),
+        'import.meta.env.VITE_APK_VERSION': JSON.stringify(env.APK_VERSION || ''),
+        'import.meta.env.VITE_APK_VERSION_URL': JSON.stringify(apkVersionUrl(env)),
+      }),
     },
     // Aparte de `dist`, para que compilar el APK no pise la web.
     build: android ? { outDir: 'dist-android' } : {},

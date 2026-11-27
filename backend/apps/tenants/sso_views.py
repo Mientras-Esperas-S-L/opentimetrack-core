@@ -8,9 +8,10 @@ telling us somebody's session must end.
 from __future__ import annotations
 
 import logging
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 from django.conf import settings
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers, status
@@ -39,6 +40,40 @@ def redirect_uri(request) -> str:
     """
     configured = getattr(settings, "SSO_REDIRECT_URI", "") or ""
     return configured or request.build_absolute_uri("/api/auth/sso/callback/")
+
+
+def _app_url() -> str:
+    """La dirección por la que el sistema devuelve la entrada a la aplicación de
+    Android. Un esquema propio (`SSO_APP_URL`), fijo en los ajustes: nunca sale de
+    la petición, que es lo que impide usar esta vuelta para mandar a la gente a
+    otro sitio.
+
+    Que otra aplicación del móvil pudiera registrar el mismo esquema no le daría
+    nada: el vale solo se canjea con el secreto que guardó la aplicación que
+    empezó la entrada (`sso.take_ticket`).
+    """
+    return (getattr(settings, "SSO_APP_URL", "") or "").rstrip("/")
+
+
+class _ToTheApp(HttpResponseRedirect):
+    """Una redirección al esquema de la aplicación. Django solo deja http, https y
+    ftp, y con razón; aquí se añade uno, y solo el de los ajustes."""
+
+    def __init__(self, url: str):
+        self.allowed_schemes = [*HttpResponseRedirect.allowed_schemes, urlparse(_app_url()).scheme]
+        super().__init__(url)
+
+
+def _back_to(request, app: bool, query: str):
+    """La vuelta a quien empezó la entrada: la aplicación o la web, o None si no
+    hay web configurada (una instalación que solo usa la API)."""
+    if app and _app_url():
+        return _ToTheApp(f"{_app_url()}?{query}")
+    destino = _web_url(request)
+    if not destino:
+        return None
+    path = "/entrando" if query.startswith("ticket=") else "/"
+    return redirect(f"{destino}{path}?{query}")
 
 
 def _web_url(request) -> str:
@@ -121,11 +156,14 @@ class SsoStartView(APIView):
         # mandar su vale a otra persona. Quien llega sin él ---un enlace guardado, una
         # pestaña de antes--- vuelve a la pantalla de entrada, que lo genera.
         binding = request.query_params.get("binding", "")
-        destino = _web_url(request)
-        if destino and not sso.valid_binding(binding):
-            return redirect(f"{destino}/?sso_error=start_from_sign_in")
+        # Desde la aplicación de Android la entrada se abre en el navegador del
+        # sistema, porque los proveedores no dejan entrar desde una vista web, y la
+        # vuelta tiene que acabar otra vez en la aplicación.
+        app = request.query_params.get("app") == "android" and bool(_app_url())
+        if (app or _web_url(request)) and not sso.valid_binding(binding):
+            return _back_to(request, app, "sso_error=start_from_sign_in")
         hint = request.query_params.get("hint", "")
-        return redirect(sso.authorize_url(provider, redirect_uri(request), binding, hint))
+        return redirect(sso.authorize_url(provider, redirect_uri(request), binding, hint, app))
 
 
 class SessionAnswerSerializer(serializers.Serializer):
@@ -161,16 +199,17 @@ class SsoCallbackView(APIView):
         acierto se devuelve con el vale. Sin aplicación web configurada se responde
         como antes, que es lo que esperan las instalaciones que solo usan la API.
         """
+        app = sso.state_is_for_app(request.query_params.get("state", ""))
         try:
-            return self._volver(request)
+            return self._volver(request, app)
         except BusinessRuleError as refusal:
-            destino = _web_url(request)
-            if not destino:
+            back = _back_to(request, app, f"sso_error={quote(refusal.code)}")
+            if back is None:
                 raise
             logger.info("sso: sign-in refused (%s)", refusal.code)
-            return redirect(f"{destino}/?sso_error={quote(refusal.code)}")
+            return back
 
-    def _volver(self, request):
+    def _volver(self, request, app: bool):
         from apps.users.serializers import issue_tokens
 
         error = request.query_params.get("error")
@@ -225,10 +264,9 @@ class SsoCallbackView(APIView):
         # Los testigos no viajan en esa redirección a propósito: quedarían en el
         # historial, en el registro del servidor web y en el `Referer` de la primera
         # imagen que cargara la página.
-        destino = _web_url(request)
-        if destino:
+        if (app and _app_url()) or _web_url(request):
             ticket = sso.leave_ticket(sesion, kept.get("binding", ""))
-            return redirect(f"{destino}/entrando?ticket={ticket}")
+            return _back_to(request, app, f"ticket={ticket}")
 
         # Sin aplicación web configurada ---una instalación que solo use la API---
         # se responde como antes, que es lo que esperan sus integraciones.

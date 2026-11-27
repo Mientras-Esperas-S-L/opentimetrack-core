@@ -1,5 +1,8 @@
 import axios from 'axios'
 
+import { isNativeApp } from '../native.js'
+import { forTheApp, openInSystemBrowser } from './appLinks.js'
+import { save } from './download.js'
 import { noteServerTime } from './serverClock.js'
 import i18next from '../i18n/index.js'
 
@@ -411,6 +414,11 @@ export const startSso = (slug, hint = '') => {
   } catch {
     // Sin almacenamiento no hay con qué demostrarlo luego, y la recogida lo dirá.
   }
+  if (isNativeApp) {
+    // En el APK, en el navegador del sistema: ver services/appLinks.js.
+    openInSystemBrowser(forTheApp(ssoStartUrl(slug, secret, hint)))
+    return
+  }
   window.location.assign(ssoStartUrl(slug, secret, hint))
 }
 
@@ -580,14 +588,7 @@ export const cancelAbsence = (id) => post(`/absences/${id}/cancel/`)
  */
 export const downloadJustification = async (id, filename = 'justificante') => {
   const response = await api.get(`/absences/${id}/justification/`, { responseType: 'blob' })
-  const url = URL.createObjectURL(response.data)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  URL.revokeObjectURL(url)
+  await save({ blob: response.data, filename })
 }
 
 // ---------------------------------------------------------------------- people
@@ -744,7 +745,7 @@ export const readShiftNotice = (id) => post(`/shift-notices/${id}/read/`)
 export const getShiftNotices = async (params) => page(await get('/shift-notices/', params))
 export const downloadShiftNotices = async () => {
   const response = await api.get('/shift-notices/export/', { responseType: 'blob' })
-  saveBlob(response, 'avisos-de-turno.csv')
+  await saveBlob(response, 'avisos-de-turno.csv')
 }
 
 export const getWorkingTimeRules = () => get('/working-time-rules/')
@@ -796,21 +797,14 @@ export const revokeCredential = async (id, credential) =>
  *  screen already had once. */
 export const downloadAuditTrail = async (params) => {
   const response = await api.get('/audit/export/', { params, responseType: 'blob' })
-  saveBlob(response, 'actividad.csv')
+  await saveBlob(response, 'actividad.csv')
 }
 
 /** Saves a downloaded blob under the name the server gave it. */
 const saveBlob = (response, fallback) => {
   const disposition = response.headers['content-disposition'] ?? ''
   const named = /filename="?([^"]+)"?/.exec(disposition)
-  const url = URL.createObjectURL(response.data)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = named ? named[1] : fallback
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  URL.revokeObjectURL(url)
+  return save({ blob: response.data, filename: named ? named[1] : fallback })
 }
 
 // -------------------------------------------------------------------- company

@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQueryClient } from '@tanstack/react-query'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Alert from '@mui/material/Alert'
 import AppBar from '@mui/material/AppBar'
@@ -37,6 +38,7 @@ import InstallButton, { InstallMenuItem } from '../components/InstallButton.jsx'
 import ThemeToggle from '../components/ThemeToggle.jsx'
 import { usePlatformAdmin } from '../hooks/usePlatformAdmin.js'
 import { useAuth } from '../hooks/useAuth.js'
+import { offerAppPushOnce } from '../services/push.js'
 import { leaveSupport } from '../services/api.js'
 import { INSTALLATION_NAME } from '../installation.js'
 import { NAV_ADMIN, NAV_PLATFORM, NAV_ME } from './navigation.jsx'
@@ -71,10 +73,7 @@ function NavSection({ title, items, onNavigate }) {
   const { t } = useTranslation()
 
   return (
-    <List
-      dense
-      subheader={<Cabecera>{title}</Cabecera>}
-    >
+    <List dense subheader={<Cabecera>{title}</Cabecera>}>
       {items.map(({ to, label, icon, end }) => (
         <ListItemButton
           key={to}
@@ -135,6 +134,17 @@ export default function AppShell() {
   // trabajo» solo le queda saber quién ha mirado qué.
   const esAsesoria = Boolean(company) && user?.role === 'ADVISOR'
   const verGestion = canManage || esAsesoria
+
+  // En el APK, la primera vez que se entra se ofrecen los avisos (ver
+  // offerAppPushOnce). Solo a quien ficha y quiere recordatorios.
+  const queryClient = useQueryClient()
+  const ofrecerAvisos = Boolean(company) && !esAsesoria && user?.wants_punch_reminders !== false
+  useEffect(() => {
+    if (!ofrecerAvisos) return
+    offerAppPushOnce()
+      .then((state) => state && queryClient.setQueryData(['push', 'state'], state))
+      .catch(() => {})
+  }, [ofrecerAvisos, queryClient])
   const mio = esAsesoria ? NAV_ME.filter((item) => item.to === '/actividad') : NAV_ME
   // Alguna entrada de gestión es solo de administración. Ocultar un enlace no
   // es un permiso ---el API decide--- pero enseñar uno que va a contestar 403 sí

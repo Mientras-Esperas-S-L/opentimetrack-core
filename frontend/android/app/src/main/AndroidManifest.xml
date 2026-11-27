@@ -22,6 +22,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- La vuelta del SSO desde el navegador del sistema (src/services/appLinks.js). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.greencitycontrol.ott" android:host="sso" />
+            </intent-filter>
+
         </activity>
 
         <provider
