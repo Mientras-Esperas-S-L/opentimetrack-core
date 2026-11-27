@@ -255,6 +255,44 @@ def test_a_reminder_is_sent_once(company, worker):
 
 
 @pytest.mark.django_db
+def test_a_reminder_insists_on_the_phone_and_then_stops(company, worker):
+    """Tres veces como mucho, con diez minutos entre una y otra. El correo, solo
+    la primera: tres correos iguales son ruido."""
+    from unittest.mock import patch
+
+    from apps.punches.reminders import REPEAT_EVERY, TIMES
+
+    morning_shift(company, worker, date(2026, 9, 1))
+    first = datetime(2026, 9, 1, 8, 0, tzinfo=UTC)
+    with patch("apps.notifications.push.send_push") as push, tenant_context(company.id):
+        assert send_reminders(company, first) == 1
+        # Al siguiente paso del trabajo, cinco minutos después, todavía no.
+        assert send_reminders(company, first + REPEAT_EVERY / 2) == 0
+        assert send_reminders(company, first + REPEAT_EVERY) == 1
+        assert send_reminders(company, first + 2 * REPEAT_EVERY) == 1
+        # Y ya no más, aunque siga sin fichar.
+        assert send_reminders(company, first + 3 * REPEAT_EVERY) == 0
+        assert PunchReminder.objects.get().times == TIMES
+
+    assert push.call_count == TIMES
+    assert all(call.kwargs["urgent"] for call in push.call_args_list)
+    assert len(mail.outbox) == 1
+
+
+@pytest.mark.django_db
+def test_a_reminder_stops_insisting_once_they_clock_in(company, worker):
+    from apps.punches.reminders import REPEAT_EVERY
+
+    morning_shift(company, worker, date(2026, 9, 1))
+    first = datetime(2026, 9, 1, 8, 0, tzinfo=UTC)
+    with tenant_context(company.id):
+        assert send_reminders(company, first) == 1
+    punch_at(company, worker, first + REPEAT_EVERY / 2, PunchType.IN)
+    with tenant_context(company.id):
+        assert send_reminders(company, first + REPEAT_EVERY) == 0
+
+
+@pytest.mark.django_db
 def test_opting_out_stops_them(company, worker):
     with tenant_context(company.id):
         worker.wants_punch_reminders = False

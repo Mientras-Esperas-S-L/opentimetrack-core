@@ -17,6 +17,7 @@ import {
   unregisterAppDevice,
   unsubscribePush,
 } from './api.js'
+import i18next from '../i18n/index.js'
 import { isNativeApp } from '../native.js'
 
 /** Si el navegador puede hacer esto. Safari en iOS solo desde la aplicación
@@ -163,6 +164,26 @@ const saveToken = (token) => {
 // «PushNotifications.then() is not implemented».
 const pluginModule = () => import('@capacitor/push-notifications')
 
+/** El canal por el que llegan los recordatorios de fichar: suena, vibra y cae
+ *  sobre lo que haya en pantalla, que es lo que hace falta para que un aviso en
+ *  el bolsillo se note. El servidor lo nombra igual (`URGENT_CHANNEL` en
+ *  backend/apps/notifications/fcm.py). Crearlo dos veces no hace nada, y la
+ *  importancia, una vez creado, ya solo la cambia la persona en los ajustes del
+ *  móvil: eso es de Android, y está bien que sea así. */
+async function ensureReminderChannel(PushNotifications) {
+  await PushNotifications.createChannel({
+    id: 'recordatorios',
+    name: i18next.t('Recordatorios de fichar'),
+    description: i18next.t(
+      'Cuando empieza tu turno y no has fichado, o se queda la jornada abierta.',
+    ),
+    // 4 es IMPORTANCE_HIGH de Android: el mínimo para que el aviso caiga encima.
+    importance: 4,
+    visibility: 1,
+    vibration: true,
+  })
+}
+
 async function appPushState() {
   const { app_enabled: enabled } = await getPushKey()
   if (!enabled) return 'unconfigured'
@@ -244,6 +265,7 @@ export async function forgetThisPhone() {
 export async function listenToAppNotifications() {
   if (!isNativeApp) return
   const { PushNotifications } = await pluginModule()
+  await ensureReminderChannel(PushNotifications).catch(() => {})
   await PushNotifications.addListener('pushNotificationActionPerformed', ({ notification }) => {
     const url = notification?.data?.url
     // Solo rutas propias: un aviso no debe poder sacar la aplicación a otra web.

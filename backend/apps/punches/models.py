@@ -556,12 +556,13 @@ class Punch(TenantOwnedModel):
 
 
 class PunchReminder(TenantOwnedModel):
-    """Proof a reminder already went out, so it goes out once.
+    """Proof a reminder already went out, and how many times.
 
     Not the reminder's content, its *having happened*: the scheduled job runs
     every few minutes, and without this it would send the same nudge on every
-    tick until the person finally clocked. One row per person, day and kind is
-    the whole model.
+    tick until the person finally clocked. One row per person, day and kind;
+    `times` and `last_sent_at` are what lets the nudge insist a couple of times
+    on the phone, spaced out, and then stop.
     """
 
     class Kind(models.TextChoices):
@@ -577,6 +578,8 @@ class PunchReminder(TenantOwnedModel):
     day = models.DateField(_("day"))
     kind = models.CharField(_("kind"), max_length=10, choices=Kind)
     sent_at = models.DateTimeField(_("sent at"), auto_now_add=True)
+    times = models.PositiveSmallIntegerField(_("times sent"), default=1)
+    last_sent_at = models.DateTimeField(_("last sent at"), null=True, blank=True)
 
     class Meta:
         verbose_name = _("clock reminder")

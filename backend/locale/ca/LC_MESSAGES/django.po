@@ -1890,6 +1890,12 @@ msgstr ""
 msgid "sent at"
 msgstr ""
 
+msgid "times sent"
+msgstr "vegades enviat"
+
+msgid "last sent at"
+msgstr "darrer enviament"
+
 # revisar: traducido sin hablante nativo el 2026-08-27
 #: apps/punches/models.py:582
 msgid "clock reminder"

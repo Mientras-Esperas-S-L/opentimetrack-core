@@ -277,3 +277,44 @@ def test_unregistering_ones_own_phone(company, worker):
 def test_registering_needs_a_session(db):
     answer = client_for().post("/api/push/devices/", {"token": "x"}, format="json")
     assert answer.status_code == 401
+
+
+# ------------------------------------------------------ el canal que suena
+
+
+@pytest.mark.django_db
+def test_only_the_urgent_ones_go_through_the_channel_that_rings(
+    credentials, settings, company, worker
+):
+    """Un recordatorio de fichar cae sobre la pantalla; un turno que cambia la
+    semana que viene no tiene por qué."""
+    settings.WEBPUSH_PUBLIC_KEY = settings.WEBPUSH_PRIVATE_KEY = ""
+    register(company, worker, "token-a")
+    with (
+        patch("apps.notifications.fcm.send_one", return_value="sent") as sent,
+        tenant_context(company.id),
+    ):
+        send_push(worker, title="t", body="b", urgent=True)
+        send_push(worker, title="t", body="b")
+
+    urgent, calm = sent.call_args_list
+    assert urgent.kwargs["channel"] == fcm.URGENT_CHANNEL
+    assert calm.kwargs["channel"] == ""
+
+
+def test_the_channel_travels_in_the_android_part(credentials):
+    sends = []
+
+    def fake_urlopen(request, timeout):
+        if "oauth2" in request.full_url:
+            return FakeResponse(json.dumps({"access_token": "acceso", "expires_in": 3600}).encode())
+        sends.append(json.loads(request.data)["message"])
+        return FakeResponse(b"{}")
+
+    with patch("urllib.request.urlopen", side_effect=fake_urlopen):
+        fcm.send_one("t", title="t", body="b", url="/", tag="x", channel="recordatorios")
+        fcm.send_one("t", title="t", body="b", url="/", tag="")
+
+    assert sends[0]["android"]["notification"] == {"tag": "x", "channel_id": "recordatorios"}
+    # Sin canal ni tag no se manda nada: un channel_id vacío Google lo rechaza.
+    assert sends[1]["android"]["notification"] == {}
